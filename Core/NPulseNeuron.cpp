@@ -52,9 +52,9 @@ NPulseNeuron::~NPulseNeuron(void)
 // ћетоды доступа к временным переменным
 // --------------------------
 // ¬озвращает указатель на модель низкопороговой зоны
-NPulseLTZone* NPulseNeuron::GetLTZone(void)
+NLTZone* NPulseNeuron::GetLTZone(void)
 {
- return dynamic_pointer_cast<NPulseLTZone>(LTZone.Get());// &(*LTZone);
+ return dynamic_pointer_cast<NLTZone>(LTZone.Get());// &(*LTZone);
 }
 
 // ¬озвращает указатель на модель источника возбуждаюшего потенциала
@@ -206,7 +206,7 @@ NPulseNeuron* NPulseNeuron::New(void)
 bool NPulseNeuron::CheckComponentType(UEPtr<NAContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseMembrane>(comp) ||
-	dynamic_pointer_cast<NPulseLTZone>(comp) ||
+	dynamic_pointer_cast<NLTZone>(comp) ||
 //	dynamic_cast<const NPulseSynapse*>(comp) ||
 	dynamic_pointer_cast<NConstGenerator>(comp))
   return true;

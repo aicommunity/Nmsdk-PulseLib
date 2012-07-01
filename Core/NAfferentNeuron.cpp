@@ -58,7 +58,7 @@ NAfferentNeuron* NAfferentNeuron::New(void)
 bool NAfferentNeuron::CheckComponentType(UEPtr<NAContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseMembrane>(comp) ||
-	dynamic_pointer_cast<NPulseLTZone>(comp) ||
+	dynamic_pointer_cast<NLTZone>(comp) ||
 	dynamic_pointer_cast<NReceptor>(comp) ||
 	dynamic_pointer_cast<NConstGenerator>(comp))
   return true;

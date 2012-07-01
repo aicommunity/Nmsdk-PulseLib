@@ -55,7 +55,7 @@ virtual ~NPulseNeuron(void);
 // ћетоды доступа к временным переменным
 // --------------------------
 // ¬озвращает указатель на модель низкопороговой зоны
-NPulseLTZone* GetLTZone(void);
+NLTZone* GetLTZone(void);
 
 // ¬озвращает указатель на модель источника возбуждаюшего потенциала
 NConstGenerator* GetPosGenerator(void);

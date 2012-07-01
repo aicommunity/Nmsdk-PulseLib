@@ -69,6 +69,11 @@ void NPulseLibrary::ACreateClassSamples(NStorage *storage)
  cont->Default();
  UploadClass("NPLTZone",cont);
 
+ cont=new NContinuesLTZone;
+ cont->SetName("CLTZone");
+ cont->Default();
+ UploadClass("NCLTZone",cont);
+
  cont=new NPulseMembrane;
  cont->SetName("PMembrane");
  cont->Default();
@@ -88,6 +93,11 @@ void NPulseLibrary::ACreateClassSamples(NStorage *storage)
  cont->SetName("PChannel");
  cont->Default();
  UploadClass("NPSynChannel",cont);
+
+ cont=new NContinuesSynChannel;
+ cont->SetName("CChannel");
+ cont->Default();
+ UploadClass("NCSynChannel",cont);
 
  cont=new NPulseHebbSynapse;
  cont->SetName("PHebbSynapse");
