@@ -74,6 +74,17 @@ void NPulseLibrary::ACreateClassSamples(NStorage *storage)
  cont->Default();
  UploadClass("NCLTZone",cont);
 
+ cont=new NPulseSimpleLTZone;
+ cont->SetName("PLTZone");
+ cont->Default();
+ UploadClass("NPSimpleLTZone",cont);
+
+ cont=new NContinuesSimpleLTZone;
+ cont->SetName("CLTZone");
+ cont->Default();
+ UploadClass("NCSimpleLTZone",cont);
+
+
  cont=new NPulseMembrane;
  cont->SetName("PMembrane");
  cont->Default();

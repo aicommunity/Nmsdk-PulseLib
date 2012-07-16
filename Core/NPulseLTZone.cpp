@@ -448,5 +448,221 @@ bool NContinuesLTZone::ACalculate(void)
  return true;
 }
 // --------------------------
+
+// Методы NPulseSimpleLTZone
+// --------------------------
+// Конструкторы и деструкторы
+// --------------------------
+NPulseSimpleLTZone::NPulseSimpleLTZone(void)
+{
+}
+
+NPulseSimpleLTZone::~NPulseSimpleLTZone(void)
+{
+}
+// --------------------------
+
+// --------------------------
+// Методы управления общедоступными свойствами
+// --------------------------
+// --------------------------
+
+
+// --------------------------
+// Системные методы управления объектом
+// --------------------------
+// Выделяет память для новой чистой копии объекта этого класса
+NPulseSimpleLTZone* NPulseSimpleLTZone::New(void)
+{
+ return new NPulseSimpleLTZone;
+}
+// --------------------------
+
+// --------------------------
+// Методы доступа к компонентам
+// --------------------------
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
+bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UAContainer> comp) const
+{
+// if(dynamic_cast<const NConnector*>(comp))
+//  return true;
+
+ return false;
+}
+// --------------------------
+
+
+// --------------------------
+// Скрытые методы управления счетом
+// --------------------------
+// Восстановление настроек по умолчанию и сброс процесса счета
+bool NPulseSimpleLTZone::ADefault(void)
+{
+ NPulseLTZone::ADefault();
+ generator.Default();
+
+ return true;
+}
+
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
+bool NPulseSimpleLTZone::ABuild(void)
+{
+ generator.Build();
+ return NPulseLTZone::ABuild();
+}
+
+// Сброс процесса счета.
+bool NPulseSimpleLTZone::AReset(void)
+{
+ generator.Reset();
+ return NPulseLTZone::AReset();
+}
+
+// Выполняет расчет этого объекта
+bool NPulseSimpleLTZone::ACalculate(void)
+{
+ // расчет на шаге
+ NeuralPotential=0;
+
+// NeuralPotential=GetFullSumInput();
+ if(NumInputs>0)
+ {
+  size_t inpsize;
+  for(int i=0;i<NumInputs;i++)
+  {
+   if((inpsize=GetInputDataSize(i)) >0)
+   {
+	real *data=&(GetInputData(i)->Double[0]);
+	for(size_t j=0;j<inpsize;j++,++data)
+	 NeuralPotential.v+=*data;
+   }
+  }
+  NeuralPotential.v/=NumInputs;
+ }
+
+ generator.Amplitude=PulseAmplitude;
+ generator.Frequency=NeuralPotential.v;
+ generator.Calculate();
+
+ POutputData[0].Double[0]=generator.GetOutputData(0).Double[0];
+ POutputData[1].Double[0]=generator.GetOutputData(0).Double[0];
+ POutputData[2].Double[0]=NeuralPotential.v;
+
+ if(MainOwner)
+  static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=static_cast<real>(GetNumAConnectors(0));
+
+ return true;
+}
+// --------------------------
+
+// Методы NContinuesSimpleLTZone
+// --------------------------
+// Конструкторы и деструкторы
+// --------------------------
+NContinuesSimpleLTZone::NContinuesSimpleLTZone(void)
+{
+}
+
+NContinuesSimpleLTZone::~NContinuesSimpleLTZone(void)
+{
+}
+// --------------------------
+
+// --------------------------
+// Методы управления общедоступными свойствами
+// --------------------------
+// --------------------------
+
+
+// --------------------------
+// Системные методы управления объектом
+// --------------------------
+// Выделяет память для новой чистой копии объекта этого класса
+NContinuesSimpleLTZone* NContinuesSimpleLTZone::New(void)
+{
+ return new NContinuesSimpleLTZone;
+}
+// --------------------------
+
+// --------------------------
+// Методы доступа к компонентам
+// --------------------------
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
+bool NContinuesSimpleLTZone::CheckComponentType(UEPtr<UAContainer> comp) const
+{
+// if(dynamic_cast<const NConnector*>(comp))
+//  return true;
+
+ return false;
+}
+// --------------------------
+
+
+// --------------------------
+// Скрытые методы управления счетом
+// --------------------------
+// Восстановление настроек по умолчанию и сброс процесса счета
+bool NContinuesSimpleLTZone::ADefault(void)
+{
+ return NContinuesLTZone::ADefault();
+}
+
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
+bool NContinuesSimpleLTZone::ABuild(void)
+{
+ return NContinuesLTZone::ABuild();
+}
+
+// Сброс процесса счета.
+bool NContinuesSimpleLTZone::AReset(void)
+{
+ return NContinuesLTZone::AReset();
+}
+
+// Выполняет расчет этого объекта
+bool NContinuesSimpleLTZone::ACalculate(void)
+{
+ // расчет на шаге
+ NeuralPotential=0;
+
+// NeuralPotential=GetFullSumInput();
+ if(NumInputs>0)
+ {
+  size_t inpsize;
+  for(int i=0;i<NumInputs;i++)
+  {
+   if((inpsize=GetInputDataSize(i)) >0)
+   {
+	real *data=&(GetInputData(i)->Double[0]);
+	for(size_t j=0;j<inpsize;j++,++data)
+	 NeuralPotential.v+=*data;
+   }
+  }
+  NeuralPotential.v/=NumInputs;
+ }
+
+ POutputData[0].Double[0]=NeuralPotential.v;
+ POutputData[1].Double[0]=NeuralPotential.v;
+ POutputData[2].Double[0]=NeuralPotential.v;
+
+ if(MainOwner)
+  static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=static_cast<real>(GetNumAConnectors(0));
+
+ return true;
+}
+// --------------------------
+
 }
 #endif
