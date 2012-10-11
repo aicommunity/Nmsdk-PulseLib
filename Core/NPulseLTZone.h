@@ -84,19 +84,19 @@ protected: // Основные свойства
 
 protected: // Временные переменные
 // Суммарный потенциал
-RDK::ULStateProperty<real,NPulseLTZone> NeuralPotential;
+RDK::ULProperty<real,NPulseLTZone,ptPubState> NeuralPotential;
 
 // Промежуточное значение потенциала
-RDK::ULStateProperty<real,NPulseLTZone> PrePotential;
+RDK::ULProperty<real,NPulseLTZone,ptPubState> PrePotential;
 
 // Флаг наличия генерации
-RDK::ULStateProperty<int,NPulseLTZone> PulseCounter;
+RDK::ULProperty<int,NPulseLTZone,ptPubState> PulseCounter;
 
 // Средняя частота за заданный интервал времени
-RDK::UCLStateProperty<list<real>,NPulseLTZone> AvgFrequencyCounter;
+RDK::UCLProperty<list<real>,NPulseLTZone,ptPubState> AvgFrequencyCounter;
 
 // Признак текущей генерации импульса
-RDK::ULStateProperty<bool,NPulseLTZone> PulseFlag;
+RDK::ULProperty<bool,NPulseLTZone,ptPubState> PulseFlag;
 
 public: // Методы
 // --------------------------
@@ -176,19 +176,19 @@ protected: // Основные свойства
 
 protected: // Временные переменные
 // Суммарный потенциал
-RDK::ULStateProperty<real,NContinuesLTZone> NeuralPotential;
+RDK::ULProperty<real,NContinuesLTZone,ptPubState> NeuralPotential;
 
 // Промежуточное значение потенциала
-RDK::ULStateProperty<real,NContinuesLTZone> PrePotential;
+RDK::ULProperty<real,NContinuesLTZone,ptPubState> PrePotential;
 
 // Флаг наличия генерации
-RDK::ULStateProperty<int,NContinuesLTZone> PulseCounter;
+RDK::ULProperty<int,NContinuesLTZone,ptPubState> PulseCounter;
 
 // Средняя частота за заданный интервал времени
-RDK::UCLStateProperty<list<real>,NContinuesLTZone> AvgFrequencyCounter;
+RDK::UCLProperty<list<real>,NContinuesLTZone,ptPubState> AvgFrequencyCounter;
 
 // Признак текущей генерации импульса
-RDK::ULStateProperty<bool,NContinuesLTZone> PulseFlag;
+RDK::ULProperty<bool,NContinuesLTZone,ptPubState> PulseFlag;
 
 public: // Методы
 // --------------------------

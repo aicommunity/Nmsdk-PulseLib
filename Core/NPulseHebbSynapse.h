@@ -44,11 +44,11 @@ RDK::ULProperty<real,NPulseHebbSynapse> GsGain;
 protected: // Основные свойства
 
 protected: // Временные переменные
-RDK::ULStateProperty<real,NPulseHebbSynapse> G;
-RDK::ULStateProperty<real,NPulseHebbSynapse> Gd;
-RDK::UCLStateProperty<vector<real>,NPulseHebbSynapse> Gs;
-RDK::ULStateProperty<real,NPulseHebbSynapse> Win;
-RDK::ULStateProperty<real,NPulseHebbSynapse> Wout;
+RDK::ULProperty<real,NPulseHebbSynapse,ptPubState> G;
+RDK::ULProperty<real,NPulseHebbSynapse,ptPubState> Gd;
+RDK::UCLProperty<vector<real>,NPulseHebbSynapse,ptPubState> Gs;
+RDK::ULProperty<real,NPulseHebbSynapse,ptPubState> Win;
+RDK::ULProperty<real,NPulseHebbSynapse,ptPubState> Wout;
 
 public: // Методы
 // --------------------------

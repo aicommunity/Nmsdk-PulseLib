@@ -48,7 +48,7 @@ protected: // Основные свойства
 
 protected: // Временные переменные
 // Промежуточное значение эффективности синапса
-RDK::ULStateProperty<real,NPulseSynapse> PreOutput;
+RDK::ULProperty<real,NPulseSynapse,ptPubState> PreOutput;
 
 // Постоянные времени выделения и распада медиатора в единицах шага интегрирования
 real VSecretionTC,VDissociationTC;

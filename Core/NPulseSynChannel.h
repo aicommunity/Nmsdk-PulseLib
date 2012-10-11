@@ -42,7 +42,7 @@ RDK::ULProperty<real,NPulseSynChannel> SynapseResistance;
 
 public: // Данные
 // Промежуточное значение эффективности синапса
-RDK::ULStateProperty<vector<real>,NPulseSynChannel> PreOutput;
+RDK::ULProperty<vector<real>,NPulseSynChannel,ptPubState> PreOutput;
 
 // Постоянные времени выделения и распада медиатора в единицах шага интегрирования
 real VSecretionTC,VDissociationTC;
@@ -173,7 +173,7 @@ RDK::ULProperty<real,NContinuesSynChannel> SynapseResistance;
 
 public: // Данные
 // Промежуточное значение эффективности синапса
-RDK::ULStateProperty<vector<real>,NContinuesSynChannel> PreOutput;
+RDK::ULProperty<vector<real>,NContinuesSynChannel,ptPubState> PreOutput;
 
 // Постоянные времени выделения и распада медиатора в единицах шага интегрирования
 real VSecretionTC,VDissociationTC;

@@ -32,7 +32,7 @@ RDK::ULProperty<real,NPulseMembrane> FeedbackGain;
 
 public: // Данные
 // Значение обратной связи
-RDK::ULStateProperty<real,NPulseMembrane> Feedback;
+RDK::ULProperty<real,NPulseMembrane,ptPubState> Feedback;
 
 protected: // Временные переменные
 // Ионные механизмы деполяризации
