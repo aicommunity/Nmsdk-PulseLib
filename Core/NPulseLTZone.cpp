@@ -147,7 +147,7 @@ bool NPulseLTZone::ADefault(void)
  NLTZone::ADefault();
  vector<size_t> size;
 
- SetNumOutputs(3);
+ SetNumOutputs(4);
  size.resize(NumOutputs);
  for(size_t i=0;i<size.size();i++)
   size[i]=1;
@@ -224,7 +224,6 @@ bool NPulseLTZone::ACalculate(void)
   POutputData[1].Double[0]=PulseAmplitude.v;
   if(!PulseFlag)
    AvgFrequencyCounter->push_back(GetDoubleTime());
-
   PulseFlag=true;
  }
  else
@@ -268,6 +267,11 @@ bool NPulseLTZone::ACalculate(void)
  else
   POutputData[2].Double[0]=0;
 
+ I=AvgFrequencyCounter->begin();
+ J=AvgFrequencyCounter->end();
+ SetOutputDataSize(3,AvgFrequencyCounter->size(),true);
+ for(int i=0;i<POutputData[3].GetSize();i++,++I)
+  POutputData[3].Double[i]=*I;
 
  if(MainOwner)
   static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=static_cast<double>(GetNumAConnectors(0));
@@ -358,7 +362,7 @@ bool NContinuesLTZone::ADefault(void)
  NLTZone::ADefault();
  vector<size_t> size;
 
- SetNumOutputs(3);
+ SetNumOutputs(4);
  size.resize(NumOutputs);
  for(size_t i=0;i<size.size();i++)
   size[i]=1;
