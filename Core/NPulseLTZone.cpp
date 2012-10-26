@@ -551,12 +551,17 @@ bool NPulseSimpleLTZone::ACalculate(void)
  }
 
  generator.Amplitude=PulseAmplitude;
- generator.Frequency=NeuralPotential.v;
+ if(NeuralPotential.v>0)
+  generator.Frequency=NeuralPotential.v;
+ else
+  generator.Frequency=0;
  generator.Calculate();
 
  POutputData[0].Double[0]=generator.GetOutputData(0).Double[0];
  POutputData[1].Double[0]=generator.GetOutputData(0).Double[0];
  POutputData[2].Double[0]=NeuralPotential.v;
+
+ POutputData[3]=generator.GetOutputData(3);
 
  if(MainOwner)
   static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=static_cast<double>(GetNumAConnectors(0));
