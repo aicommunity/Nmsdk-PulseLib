@@ -524,6 +524,7 @@ bool NPulseSimpleLTZone::ABuild(void)
 // —брос процесса счета.
 bool NPulseSimpleLTZone::AReset(void)
 {
+ generator.SetActivity(true);
  generator.Reset();
  return NPulseLTZone::AReset();
 }
@@ -551,8 +552,16 @@ bool NPulseSimpleLTZone::ACalculate(void)
  }
 
  generator.Amplitude=PulseAmplitude;
+ if(NeuralPotential.v>200)
+  NeuralPotential.v=200;
  if(NeuralPotential.v>0)
-  generator.Frequency=NeuralPotential.v;
+ {
+  if(fabs(generator.Frequency.v-NeuralPotential.v)>0.001)
+  {
+   generator.Frequency=NeuralPotential.v;
+   generator.Reset();
+  }
+ }
  else
   generator.Frequency=0;
  generator.Calculate();
