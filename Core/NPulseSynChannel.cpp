@@ -101,7 +101,12 @@ bool NPulseSynChannel::SetDissociationTC(real value)
 bool NPulseSynChannel::SetInhibitionCoeff(real value)
 {
  if(SynapseResistance.v > 0)
-  OutputConstData=4.0*(value+1)/SynapseResistance.v;
+ {
+  if(value>0)
+   OutputConstData=4.0*(value+1)/SynapseResistance.v;
+  else
+   OutputConstData=1.0/SynapseResistance.v;
+ }
  else
   OutputConstData=0;
 
@@ -114,7 +119,10 @@ bool NPulseSynChannel::SetSynapseResistance(real value)
  if(value<=0)
   return false;
 
- OutputConstData=4.0*InhibitionCoeff.v/value;
+ if(InhibitionCoeff.v>0)
+  OutputConstData=4.0*InhibitionCoeff.v/value;
+ else
+  OutputConstData=1.0/value;
 
  return true;
 }
