@@ -202,7 +202,7 @@ bool NPulseSynChannel::ADefault(void)
  DissociationTC=0.01;
 
  // Коэффициент пресинаптического торможения
- InhibitionCoeff=1;
+ InhibitionCoeff=0;
 
  // Вес (эффективность синапса) синапса
  SynapseResistance=1.e8;

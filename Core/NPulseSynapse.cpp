@@ -79,7 +79,12 @@ bool NPulseSynapse::SetDissociationTC(real value)
 bool NPulseSynapse::SetInhibitionCoeff(real value)
 {
  if(Resistance.v > 0)
-  OutputConstData=4.0*(value+1)/Resistance.v;
+ {
+  if(value>0)
+   OutputConstData=4.0*(value+1)/Resistance.v;
+  else
+   OutputConstData=1.0/Resistance.v;
+ }
  else
   OutputConstData=0;
 
@@ -92,7 +97,10 @@ bool NPulseSynapse::SetResistance(real value)
  if(value<=0)
   return false;
 
- OutputConstData=4.0*InhibitionCoeff.v/value;
+ if(InhibitionCoeff.v>0)
+  OutputConstData=4.0*InhibitionCoeff.v/value;
+ else
+  OutputConstData=1.0/value;
 
  return true;
 }
@@ -126,7 +134,7 @@ bool NPulseSynapse::ADefault(void)
  DissociationTC=0.01;
 
  // Коэффициент пресинаптического торможения
- InhibitionCoeff=1;
+ InhibitionCoeff=0;
 
  // Вес (эффективность синапса) синапса
  Resistance=1.0e8;
