@@ -443,10 +443,13 @@ real NMuscle::MuscularReduction(real in)
  mr[0] = in;
  mr[1] = mrOld[0] - MulCoeffs[2] * mrOld[6];
  mr[2] = mrOld[1] - MulCoeffs[0] * mrOld[3];
- mr[3] = 1.0 / (TC[0] * mrOld[2] + mrOld[3])*TimeStep;
+ if(mrOld[2] || mrOld[3])
+  mr[3] = 1.0 / (TC[0] * mrOld[2] + mrOld[3])*TimeStep;
  mr[4] = mrOld[3] - MulCoeffs[1] * mrOld[5];
- mr[5] = 1.0 / (TC[1] * mrOld[4] + mrOld[5])*TimeStep;
- mr[6] = 1.0 / (TC[2] * mrOld[5] + mrOld[6])*TimeStep;
+ if(mrOld[4] || mrOld[5])
+  mr[5] = 1.0 / (TC[1] * mrOld[4] + mrOld[5])*TimeStep;
+ if(mrOld[5] || mrOld[6])
+  mr[6] = 1.0 / (TC[2] * mrOld[5] + mrOld[6])*TimeStep;
 
  return mr[6];
 }
