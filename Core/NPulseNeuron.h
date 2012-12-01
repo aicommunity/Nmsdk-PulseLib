@@ -20,6 +20,7 @@ See file license.txt for more information
 #include "NPulseLTZone.h"
 #include "../SourceLib/NConstGenerator.h"
 #include "NPulseMembrane.h"
+#include "NAfferentNeuron.h"
 
 namespace NMSDK {
 

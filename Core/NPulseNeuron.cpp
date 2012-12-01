@@ -35,7 +35,7 @@ NPulseNeuron::NPulseNeuron(void)
   NumActivePosInputs("NumActivePosInputs",this),
   NumActiveNegInputs("NumActiveNegInputs",this),
 
-  LTZone(this,"LTZone")
+  LTZone("LTZone",this)
 {
 // LTZone=0;
  PosGenerator=0;

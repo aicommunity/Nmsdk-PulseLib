@@ -400,7 +400,7 @@ bool NMuscle::ACalculate(void)
  }
           */
  real res;
- res=y[7];
+ res=y[11];
  POutputData[0].Double[0]=res;
 
  FirstStep = false;
@@ -444,12 +444,12 @@ real NMuscle::MuscularReduction(real in)
  mr[1] = mrOld[0] - MulCoeffs[2] * mrOld[6];
  mr[2] = mrOld[1] - MulCoeffs[0] * mrOld[3];
  if(mrOld[2] || mrOld[3])
-  mr[3] = 1.0 / (TC[0] * mrOld[2] + mrOld[3])*TimeStep;
+  mr[3] = 1.0 / ((TC[0] * mrOld[2] + mrOld[3])*TimeStep);
  mr[4] = mrOld[3] - MulCoeffs[1] * mrOld[5];
  if(mrOld[4] || mrOld[5])
-  mr[5] = 1.0 / (TC[1] * mrOld[4] + mrOld[5])*TimeStep;
+  mr[5] = 1.0 / ((TC[1] * mrOld[4] + mrOld[5])*TimeStep);
  if(mrOld[5] || mrOld[6])
-  mr[6] = 1.0 / (TC[2] * mrOld[5] + mrOld[6])*TimeStep;
+  mr[6] = 1.0 / ((TC[2] * mrOld[5] + mrOld[6])*TimeStep);
 
  return mr[6];
 }

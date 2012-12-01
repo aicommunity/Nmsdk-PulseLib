@@ -80,18 +80,21 @@ bool NEyeMuscle::ADefault(void)
 {
  Real value;
  value.resize(3);
- value[0]=0.4;
- value[1]=0.12;
- value[2]=0.0015;
+ value[0]=0.74;//0.4;
+ value[1]=0.75;//0.12;
+ value[2]=0.5;//0.0015;
  MulCoeffs=value;
 
  K=0.2;
 
  value.resize(3);
- value[0]=1;
- value[1]=1;
- value[2]=1;
+ value[0]=0.003;//1;
+ value[1]=0.0092;//1;
+ value[2]=0.0327;//1;
  TC=value;
+ SetTimeStep(1000);
+ SetNumInputs(1);
+ SetNumOutputs(3);
  return true;
 }
 
@@ -118,6 +121,8 @@ bool NEyeMuscle::AReset(void)
  P2.assign(GetOutputDataSize(0),0);
  P3.assign(GetOutputDataSize(0),0);
  L.assign(GetOutputDataSize(0),0);
+ Speed.assign(GetOutputDataSize(0),0);
+ Acceleration.assign(GetOutputDataSize(0),0);
 
  // Порог
  Threshold.assign(GetOutputDataSize(0),0.5);
@@ -129,21 +134,39 @@ bool NEyeMuscle::AReset(void)
 bool NEyeMuscle::ACalculate(void)
 {
  size_t k=0;
+ SetOutputDataSize(0,NumInputs);
+ SetOutputDataSize(1,NumInputs);
+ SetOutputDataSize(2,NumInputs);
  for(int i=0;i<NumInputs;i++)
+ {
+  P1.resize(GetOutputDataSize(0),0);
+  P2.resize(GetOutputDataSize(0),0);
+  P3.resize(GetOutputDataSize(0),0);
+  L.resize(GetOutputDataSize(0),0);
+  Speed.resize(GetOutputDataSize(0),0);
+  Acceleration.resize(GetOutputDataSize(0),0);
+  Threshold.resize(GetOutputDataSize(0),0.5);
+
   for(size_t j=0;j<GetInputDataSize(i);j++)
   {
    if(k >= GetOutputDataSize(0))
 	break;
 
    real in=GetInputData(i)->Double[j];
-   in/=100;
    ThresholdCount(k);
    in*=Threshold[k];
 
-   L[k]=MuscularReduction(k,in)*K;
-   POutputData[0].Double[k]=L[k];
+   real leng=MuscularReduction(k,in)*K;
+   real speed=(leng-L[k])*TimeStep;
+   Acceleration[k]=(speed-Speed[k])*TimeStep;
+   Speed[k]=speed;
+   L[k]=leng;
+   POutputData[0].Double[k]=Acceleration[k];
+   POutputData[1].Double[k]=L[k];
+   POutputData[2].Double[k]=Speed[k];
    ++k;
   }
+ }
 
  return true;
 }
@@ -156,9 +179,14 @@ bool NEyeMuscle::ACalculate(void)
 // мускульное сокращение
 real NEyeMuscle::MuscularReduction(size_t k,real in)
 {
- P1[k]=(P1[k]+in-P3[k]*MulCoeffs[2]-P1[k]*MulCoeffs[0])/(TC[0]*TimeStep);
- P2[k]=(P2[k]+P1[k]-P2[k]*MulCoeffs[1])/(TC[1]*TimeStep);
- P3[k]=(P3[k]+P2[k])/(TC[2]*TimeStep);
+ double p[3];
+ p[0]=P1[k]+(in-P3[k]*MulCoeffs[2]-P1[k]*MulCoeffs[0])/(TC[0]*TimeStep);
+ p[1]=P2[k]+(p[0]-P2[k]*MulCoeffs[1])/(TC[1]*TimeStep);
+ p[2]=P3[k]+(p[1])/(TC[2]*TimeStep);
+ P1[k]=p[0];
+ P2[k]=p[1];
+ P3[k]=p[2];
+
  return P3[k];
 }
 
