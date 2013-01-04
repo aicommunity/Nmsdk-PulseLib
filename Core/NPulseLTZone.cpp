@@ -20,7 +20,7 @@ See file license.txt for more information
 #include "NPulseLTZone.h"
 #include "NPulseChannel.h"
 #include "NPulseNeuron.h"
-#include "../BCL/NConnector.h"
+//#include "../BCL/NConnector.h"
 
 
 namespace NMSDK {

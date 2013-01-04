@@ -16,7 +16,6 @@ See file license.txt for more information
 #ifndef NPULSE_SYN_CHANNEL_H
 #define NPULSE_SYN_CHANNEL_H
 
-#include "../../Kernel/NBios.h"
 #include "NPulseChannel.h"
 
 namespace NMSDK {
@@ -111,7 +110,7 @@ virtual NPulseSynChannel* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<NAContainer> comp) const;
+virtual bool CheckComponentType(UEPtr<UAContainer> comp) const;
 // --------------------------
 
 // --------------------------
@@ -242,7 +241,7 @@ virtual NContinuesSynChannel* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<NAContainer> comp) const;
+virtual bool CheckComponentType(UEPtr<UAContainer> comp) const;
 // --------------------------
 
 // --------------------------

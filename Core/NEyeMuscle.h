@@ -16,13 +16,13 @@ See file license.txt for more information
 #ifndef NEYEMUSCLE_H
 #define NEYEMUSCLE_H
 
-#include "../../Kernel/NBios.h"
+#include "../../Kernel/NSupport.h"
 
 namespace NMSDK {
 
 //using namespace MySDK;
 
-class NEyeMuscle: public NANet
+class NEyeMuscle: public UANet
 {
 public: // Общедоступные свойства
 // Коэффициенты

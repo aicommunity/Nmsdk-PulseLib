@@ -16,12 +16,12 @@ See file license.txt for more information
 #ifndef NPULSE_CHANNEL_H
 #define NPULSE_CHANNEL_H
 
-#include "../../Kernel/NBios.h"
+#include "../../Kernel/NSupport.h"
 #include "NPulseSynapse.h"
 
 namespace NMSDK {
 
-class NPulseChannel: public NANet
+class NPulseChannel: public UANet
 {
 public: // Общедоступные свойства
 // Емкость мембраны
@@ -81,7 +81,7 @@ bool SetFBResistance(real value);
 // Подключает синапс хебба synapse к низкопороговой зоне нейрона-владельца
 // Возвращает false только если произошла ошибка установки связи
 // Если synapse == 0, то подключает все синапсы хебба
-bool InstallHebbSynapses(UEPtr<NAContainer> synapse=0);
+bool InstallHebbSynapses(UEPtr<UAContainer> synapse=0);
 // --------------------------
 
 // --------------------------
@@ -98,7 +98,7 @@ virtual NPulseChannel* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<NAContainer> comp) const;
+virtual bool CheckComponentType(UEPtr<UAContainer> comp) const;
 // --------------------------
 
 // --------------------------

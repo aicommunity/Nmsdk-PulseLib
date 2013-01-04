@@ -81,12 +81,12 @@ NPulseMembrane* NPulseNeuron::ElongateDendrite(const UId &id, bool feedback)
  if(!Storage)
   return 0;
 
- UEPtr<NAContainer> cont=GetComponent(id);
+ UEPtr<UAContainer> cont=GetComponent(id);
  if(!cont)
   return 0;
 
 
- UEPtr<NAContainer> newcont=static_pointer_cast<NAContainer>(Storage->TakeObject(cont->GetClass()));
+ UEPtr<UAContainer> newcont=static_pointer_cast<UAContainer>(Storage->TakeObject(cont->GetClass()));
  if(!newcont)
   return 0;
 
@@ -107,7 +107,7 @@ NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
   return 0;
 
 
- UEPtr<NAContainer> cont=static_pointer_cast<NAContainer>(Storage->TakeObject(dendrite->GetClass()));
+ UEPtr<UAContainer> cont=static_pointer_cast<UAContainer>(Storage->TakeObject(dendrite->GetClass()));
  if(!AddComponent(cont))
  {
 //  Storage->ReturnObject(cont);
@@ -134,7 +134,7 @@ NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
   size=cont->GetNumComponents();
  for(int k=0;k<size;k++)
  {
-  UEPtr<NADItem> channel=static_pointer_cast<NADItem>(dendrite->GetComponentByIndex(k));
+  UEPtr<UADItem> channel=static_pointer_cast<UADItem>(dendrite->GetComponentByIndex(k));
   for(int i=0;i<channel->GetNumOutputs();i++)
    for(int j=0;j<channel->GetNumAConnectors(i);j++)
    {
@@ -203,7 +203,7 @@ NPulseNeuron* NPulseNeuron::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseNeuron::CheckComponentType(UEPtr<NAContainer> comp) const
+bool NPulseNeuron::CheckComponentType(UEPtr<UAContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseMembrane>(comp) ||
 	dynamic_pointer_cast<NLTZone>(comp) ||

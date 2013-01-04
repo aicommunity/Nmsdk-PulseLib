@@ -16,15 +16,15 @@ See file license.txt for more information
 #ifndef NPULSE_SYNAPSE_H
 #define NPULSE_SYNAPSE_H
 
-#include "../../Kernel/NBios.h"
-#include "../BCL/NConnector.h"
+#include "../../Kernel/NSupport.h"
+#include "../BCL/NNet.h"
 
 
 namespace NMSDK {
 
 class NPulseNeuron;
 
-class NPulseSynapse: public NConnector
+class NPulseSynapse: public UANet
 {
 public: // Общедоступные свойства
 // Амплитуда входных импульсов

@@ -91,7 +91,7 @@ NMuscle* NMuscle::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NMuscle::CheckComponentType(UEPtr<NAContainer> comp) const
+bool NMuscle::CheckComponentType(UEPtr<UAContainer> comp) const
 {
  if(//dynamic_cast<const NItem*>(comp) ||
 	dynamic_pointer_cast<NReceptor>(comp))

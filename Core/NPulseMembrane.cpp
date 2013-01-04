@@ -96,7 +96,7 @@ NPulseMembrane* NPulseMembrane::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseMembrane::CheckComponentType(UEPtr<NAContainer> comp) const
+bool NPulseMembrane::CheckComponentType(UEPtr<UAContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseChannel>(comp))
   return true;

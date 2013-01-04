@@ -20,7 +20,7 @@ See file license.txt for more information
 #include "NPulseMembrane.h"
 #include "NPulseNeuron.h"
 #include "../NeuronLifeLib/NPulseLifeNeuron.h"
-#include "../BCL/NConnector.h"
+//#include "../BCL/NConnector.h"
 #include "../ReceiverLib/NReceptor.h"
 
 
@@ -150,7 +150,7 @@ NPulseSynChannel* NPulseSynChannel::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseSynChannel::CheckComponentType(UEPtr<NAContainer> comp) const
+bool NPulseSynChannel::CheckComponentType(UEPtr<UAContainer> comp) const
 {
 // if(dynamic_cast<const NPulseSynapse*>(comp))
 //  return true;
@@ -448,7 +448,7 @@ NContinuesSynChannel* NContinuesSynChannel::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NContinuesSynChannel::CheckComponentType(UEPtr<NAContainer> comp) const
+bool NContinuesSynChannel::CheckComponentType(UEPtr<UAContainer> comp) const
 {
 // if(dynamic_cast<const NPulseSynapse*>(comp))
 //  return true;

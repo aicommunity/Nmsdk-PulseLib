@@ -36,7 +36,7 @@ NPulseLibrary PulseLibrary;
 // Конструкторы и деструкторы
 // --------------------------
 NPulseLibrary::NPulseLibrary(void)
- : NLibrary("PulseLibrary","1.0")
+ : UALibrary("PulseLibrary","1.0")
 {
 }
 // --------------------------
@@ -46,9 +46,9 @@ NPulseLibrary::NPulseLibrary(void)
 // --------------------------
 // Заполняет массив ClassSamples готовыми экземплярами образцов и их именами.
 // Не требуется предварительная очистка массива и уборка памяти.
-void NPulseLibrary::ACreateClassSamples(NStorage *storage)
+void NPulseLibrary::CreateClassSamples(UAStorage *storage)
 {
- NAContainer *cont;
+ UAContainer *cont;
 
  cont=new NPulseNeuron;
  cont->SetName("PNeuron");

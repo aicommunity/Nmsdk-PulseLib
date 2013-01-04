@@ -22,7 +22,7 @@ See file license.txt for more information
 #include "NPulseNeuron.h"
 #include "NPulseHebbSynapse.h"
 #include "../NeuronLifeLib/NPulseLifeNeuron.h"
-#include "../BCL/NConnector.h"
+//#include "../BCL/NConnector.h"
 
 
 namespace NMSDK {
@@ -99,7 +99,7 @@ bool NPulseChannel::SetFBResistance(real value)
 // Подключает синапс хебба synapse к низкопороговой зоне нейрона-владельца
 // Возвращает false только если произошла ошибка установки связи
 // Если synapse == 0, то подключает все синапсы хебба
-bool NPulseChannel::InstallHebbSynapses(UEPtr<NAContainer> synapse)
+bool NPulseChannel::InstallHebbSynapses(UEPtr<UAContainer> synapse)
 {
  bool res=true;
  UEPtr<NPulseNeuron> mowner=dynamic_pointer_cast<NPulseNeuron>(MainOwner);
@@ -198,7 +198,7 @@ NPulseChannel* NPulseChannel::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseChannel::CheckComponentType(UEPtr<NAContainer> comp) const
+bool NPulseChannel::CheckComponentType(UEPtr<UAContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseSynapse>(comp))
   return true;
@@ -274,7 +274,7 @@ bool NPulseChannel::ACalculate(void)
 
  // Получение доступа к данным синапса
  for(int i=0;i<NumComponents;i++)
-  G+=static_pointer_cast<NADItem>(PComponents[i])->GetOutputData(0).Double[0];
+  G+=static_pointer_cast<UADItem>(PComponents[i])->GetOutputData(0).Double[0];
  
  // Получение данных канала
  if(FullInputDataSize>0)

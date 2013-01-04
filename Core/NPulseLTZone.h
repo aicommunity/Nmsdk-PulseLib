@@ -16,7 +16,7 @@ See file license.txt for more information
 #ifndef NPULSE_LTZONE_H
 #define NPULSE_LTZONE_H
 
-#include "../../Kernel/NBios.h"
+#include "../../Kernel/NSupport.h"
 #include "../SourceLib/NPulseGenerator.h"
 
 
@@ -24,7 +24,7 @@ namespace NMSDK {
 
 class NPulseNeuron;
 
-class NLTZone: public NANet
+class NLTZone: public UANet
 {
 public: // Общедоступные свойства
 // Порог нейрона

@@ -16,7 +16,7 @@ See file license.txt for more information
 #ifndef NMUSCLE_H
 #define NMUSCLE_H
 
-#include "../../Kernel/NBios.h"
+#include "../../Kernel/NSupport.h"
 #include "../BCL/NItem.h"
 #include "../ReceiverLib/NReceptor.h"
 
@@ -24,7 +24,7 @@ namespace NMSDK {
 
 //using namespace MySDK;
 
-class NMuscle: public NANet
+class NMuscle: public UANet
 {
 public: // Общедоступные свойства
 // Коэффициенты
@@ -102,7 +102,7 @@ virtual NMuscle* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<NAContainer> comp) const;
+virtual bool CheckComponentType(UEPtr<UAContainer> comp) const;
 // --------------------------
 
 // --------------------------
