@@ -17,7 +17,7 @@ See file license.txt for more information
 #define NMUSCLE_CPP
 //#pragma hdrstop
 
-#include "../BCL/NItem.h"
+//#include "../BCL/NItem.h"
 #include "NMuscle.h"
 
 namespace NMSDK {

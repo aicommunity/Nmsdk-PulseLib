@@ -17,7 +17,7 @@ See file license.txt for more information
 #define NMUSCLE_H
 
 #include "../../Kernel/NSupport.h"
-#include "../BCL/NItem.h"
+//#include "../BCL/NItem.h"
 #include "../ReceiverLib/NReceptor.h"
 
 namespace NMSDK {
