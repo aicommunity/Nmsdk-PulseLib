@@ -24,7 +24,9 @@ See file license.txt for more information
 #include "NPulseLTZone.cpp"
 #include "NPulseMembrane.cpp"
 #include "NPulseNeuron.cpp"
-#include "NPulseSynapse.cpp"
+#include "NPulseSynapse.cpp"       
+#include "NPac.cpp"
+#include "NReceptor.cpp"
 
 
 namespace NMSDK {   
@@ -123,7 +125,18 @@ void NPulseLibrary::CreateClassSamples(UAStorage *storage)
  cont=new NMuscle;
  cont->SetName("Muscle");
  cont->Default();
- UploadClass("NMuscle",cont);
+ UploadClass("NMuscle",cont);    
+ 
+ cont=new NPac;
+ cont->SetName("Pac");
+ cont->Default();
+ UploadClass("NPac",cont);  
+
+ cont=new NReceptor;
+ cont->SetName("Receptor");
+ cont->Default();
+ UploadClass("NReceptor",cont);
+
 /*
  cont=new NNeuronLife("NeuronLife");
  cont->Default();

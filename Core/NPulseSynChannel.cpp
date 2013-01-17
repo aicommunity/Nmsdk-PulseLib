@@ -21,7 +21,7 @@ See file license.txt for more information
 #include "NPulseNeuron.h"
 #include "../NeuronLifeLib/NPulseLifeNeuron.h"
 //#include "../BCL/NConnector.h"
-#include "../ReceiverLib/NReceptor.h"
+#include "NReceptor.h"
 
 
 namespace NMSDK {

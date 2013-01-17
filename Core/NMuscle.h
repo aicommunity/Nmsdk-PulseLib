@@ -18,7 +18,7 @@ See file license.txt for more information
 
 #include "../../Kernel/NSupport.h"
 //#include "../BCL/NItem.h"
-#include "../ReceiverLib/NReceptor.h"
+#include "NReceptor.h"
 
 namespace NMSDK {
 

@@ -19,7 +19,7 @@ See file license.txt for more information
 #include "NAfferentNeuron.h"
 #include "NPulseMembrane.h"
 #include "NPulseLTZone.h"
-#include "../ReceiverLib/NReceptor.h"
+#include "NReceptor.h"
 #include "../SourceLib/NConstGenerator.h"
 
 namespace NMSDK {
