@@ -157,6 +157,8 @@ bool NPac::ACalculate(void)
  {
   for(size_t j=0;j<size;j++)
   {
+   if(!GetInputData(i))
+    continue;
    input=GetInputData(i)->Double[j];
 
    Ts=(fabs(input)>0)?SecretionTC[i][j]:DissociationTC[i][j];
