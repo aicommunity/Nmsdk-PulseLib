@@ -99,7 +99,7 @@ bool NPulseChannel::SetFBResistance(real value)
 // Подключает синапс хебба synapse к низкопороговой зоне нейрона-владельца
 // Возвращает false только если произошла ошибка установки связи
 // Если synapse == 0, то подключает все синапсы хебба
-bool NPulseChannel::InstallHebbSynapses(UEPtr<UAContainer> synapse)
+bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
 {
  bool res=true;
  UEPtr<NPulseNeuron> mowner=dynamic_pointer_cast<NPulseNeuron>(MainOwner);
@@ -198,7 +198,7 @@ NPulseChannel* NPulseChannel::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseChannel::CheckComponentType(UEPtr<UAContainer> comp) const
+bool NPulseChannel::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseSynapse>(comp))
   return true;
@@ -214,7 +214,7 @@ bool NPulseChannel::CheckComponentType(UEPtr<UAContainer> comp) const
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NPulseChannel::AAddComponent(UEPtr<UAContainer> comp, UEPtr<UIPointer> pointer)
+bool NPulseChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  InstallHebbSynapses(comp);
  return true;
@@ -224,7 +224,7 @@ bool NPulseChannel::AAddComponent(UEPtr<UAContainer> comp, UEPtr<UIPointer> poin
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NPulseChannel::ADelComponent(UEPtr<UAContainer> comp)
+bool NPulseChannel::ADelComponent(UEPtr<UContainer> comp)
 {
  return true;
 }

@@ -96,7 +96,7 @@ NPulseMembrane* NPulseMembrane::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseMembrane::CheckComponentType(UEPtr<UAContainer> comp) const
+bool NPulseMembrane::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseChannel>(comp))
   return true;
@@ -112,7 +112,7 @@ bool NPulseMembrane::CheckComponentType(UEPtr<UAContainer> comp) const
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NPulseMembrane::AAddComponent(UEPtr<UAContainer> comp, UEPtr<UIPointer> pointer)
+bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  UEPtr<NPulseChannel> channel=dynamic_pointer_cast<NPulseChannel>(comp);
  vector<NPulseChannel* >::iterator I;
@@ -147,7 +147,7 @@ bool NPulseMembrane::AAddComponent(UEPtr<UAContainer> comp, UEPtr<UIPointer> poi
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NPulseMembrane::ADelComponent(UEPtr<UAContainer> comp)
+bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
 {
  UEPtr<NPulseChannel> channel=dynamic_pointer_cast<NPulseChannel>(comp);
  vector<NPulseChannel*>::iterator I;

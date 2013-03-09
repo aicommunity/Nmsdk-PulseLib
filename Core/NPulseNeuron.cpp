@@ -81,12 +81,12 @@ NPulseMembrane* NPulseNeuron::ElongateDendrite(const UId &id, bool feedback)
  if(!Storage)
   return 0;
 
- UEPtr<UAContainer> cont=GetComponent(id);
+ UEPtr<UContainer> cont=GetComponent(id);
  if(!cont)
   return 0;
 
 
- UEPtr<UAContainer> newcont=static_pointer_cast<UAContainer>(Storage->TakeObject(cont->GetClass()));
+ UEPtr<UContainer> newcont=static_pointer_cast<UContainer>(Storage->TakeObject(cont->GetClass()));
  if(!newcont)
   return 0;
 
@@ -107,7 +107,7 @@ NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
   return 0;
 
 
- UEPtr<UAContainer> cont=static_pointer_cast<UAContainer>(Storage->TakeObject(dendrite->GetClass()));
+ UEPtr<UContainer> cont=static_pointer_cast<UContainer>(Storage->TakeObject(dendrite->GetClass()));
  if(!AddComponent(cont))
  {
 //  Storage->ReturnObject(cont);
@@ -203,7 +203,7 @@ NPulseNeuron* NPulseNeuron::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseNeuron::CheckComponentType(UEPtr<UAContainer> comp) const
+bool NPulseNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseMembrane>(comp) ||
 	dynamic_pointer_cast<NLTZone>(comp) ||
@@ -222,7 +222,7 @@ bool NPulseNeuron::CheckComponentType(UEPtr<UAContainer> comp) const
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NPulseNeuron::AAddComponent(UEPtr<UAContainer> comp, UEPtr<UIPointer> pointer)
+bool NPulseNeuron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  if(!NNeuron::AAddComponent(comp,pointer))
   return false;
@@ -281,7 +281,7 @@ bool NPulseNeuron::AAddComponent(UEPtr<UAContainer> comp, UEPtr<UIPointer> point
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NPulseNeuron::ADelComponent(UEPtr<UAContainer> comp)
+bool NPulseNeuron::ADelComponent(UEPtr<UContainer> comp)
 {
 /* if(comp == LTZone)
   LTZone=0;

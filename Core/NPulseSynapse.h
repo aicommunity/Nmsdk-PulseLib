@@ -24,7 +24,7 @@ namespace NMSDK {
 
 class NPulseNeuron;
 
-class NPulseSynapse: public UANet
+class NPulseSynapse: public UNet
 {
 public: // Общедоступные свойства
 // Амплитуда входных импульсов

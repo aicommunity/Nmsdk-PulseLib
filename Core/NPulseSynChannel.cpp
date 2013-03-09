@@ -150,7 +150,7 @@ NPulseSynChannel* NPulseSynChannel::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseSynChannel::CheckComponentType(UEPtr<UAContainer> comp) const
+bool NPulseSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NPulseSynapse*>(comp))
 //  return true;
@@ -166,7 +166,7 @@ bool NPulseSynChannel::CheckComponentType(UEPtr<UAContainer> comp) const
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-/*bool NPulseSynChannel::AAddComponent(UEPtr<UAContainer> comp, UEPtr<UIPointer> pointer)
+/*bool NPulseSynChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  InstallHebbSynapses(comp);
  return true;
@@ -176,7 +176,7 @@ bool NPulseSynChannel::CheckComponentType(UEPtr<UAContainer> comp) const
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-/*bool NPulseSynChannel::ADelComponent(UEPtr<UAContainer> comp)
+/*bool NPulseSynChannel::ADelComponent(UEPtr<UContainer> comp)
 {
  return true;
 }                     */
@@ -448,7 +448,7 @@ NContinuesSynChannel* NContinuesSynChannel::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NContinuesSynChannel::CheckComponentType(UEPtr<UAContainer> comp) const
+bool NContinuesSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NPulseSynapse*>(comp))
 //  return true;
@@ -464,7 +464,7 @@ bool NContinuesSynChannel::CheckComponentType(UEPtr<UAContainer> comp) const
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-/*bool NContinuesSynChannel::AAddComponent(UEPtr<UAContainer> comp, UEPtr<UIPointer> pointer)
+/*bool NContinuesSynChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  InstallHebbSynapses(comp);
  return true;
@@ -474,7 +474,7 @@ bool NContinuesSynChannel::CheckComponentType(UEPtr<UAContainer> comp) const
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-/*bool NContinuesSynChannel::ADelComponent(UEPtr<UAContainer> comp)
+/*bool NContinuesSynChannel::ADelComponent(UEPtr<UContainer> comp)
 {
  return true;
 }                     */

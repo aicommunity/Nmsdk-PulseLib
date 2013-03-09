@@ -35,7 +35,7 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-class NPulseLibrary: public UALibrary
+class NPulseLibrary: public ULibrary
 {
 public: // Методы
 // --------------------------
@@ -49,7 +49,7 @@ NPulseLibrary(void);
 // --------------------------
 // Заполняет массив ClassSamples готовыми экземплярами образцов и их именами.
 // Не требуется предварительная очистка массива и уборка памяти.
-virtual void CreateClassSamples(UAStorage *storage);
+virtual void CreateClassSamples(UStorage *storage);
 // --------------------------
 };                  
 

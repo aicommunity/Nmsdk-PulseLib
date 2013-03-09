@@ -128,7 +128,7 @@ NPulseLTZone* NPulseLTZone::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseLTZone::CheckComponentType(UEPtr<UAContainer> comp) const
+bool NPulseLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NConnector*>(comp))
 //  return true;
@@ -343,7 +343,7 @@ NContinuesLTZone* NContinuesLTZone::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NContinuesLTZone::CheckComponentType(UEPtr<UAContainer> comp) const
+bool NContinuesLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NConnector*>(comp))
 //  return true;
@@ -489,7 +489,7 @@ NPulseSimpleLTZone* NPulseSimpleLTZone::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UAContainer> comp) const
+bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NConnector*>(comp))
 //  return true;
@@ -616,7 +616,7 @@ NContinuesSimpleLTZone* NContinuesSimpleLTZone::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NContinuesSimpleLTZone::CheckComponentType(UEPtr<UAContainer> comp) const
+bool NContinuesSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NConnector*>(comp))
 //  return true;

@@ -91,7 +91,7 @@ NMuscle* NMuscle::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NMuscle::CheckComponentType(UEPtr<UAContainer> comp) const
+bool NMuscle::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(//dynamic_cast<const NItem*>(comp) ||
 	dynamic_pointer_cast<NReceptor>(comp))
@@ -108,7 +108,7 @@ bool NMuscle::CheckComponentType(UEPtr<UAContainer> comp) const
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NMuscle::AAddComponent(UEPtr<UAContainer> comp, UEPtr<UIPointer> pointer)
+bool NMuscle::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
 /* NItem* item=dynamic_cast<NItem*>(comp);
  if(item)
@@ -156,7 +156,7 @@ bool NMuscle::AAddComponent(UEPtr<UAContainer> comp, UEPtr<UIPointer> pointer)
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NMuscle::ADelComponent(UEPtr<UAContainer> comp)
+bool NMuscle::ADelComponent(UEPtr<UContainer> comp)
 {
   // Указатели на дополнительные выходы
 /*  if(comp == ActivePower)

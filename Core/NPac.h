@@ -20,7 +20,7 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-class NPac: public UANet
+class NPac: public UNet
 {
 public: // Общедоступные свойства
 // Амплитуда входных импульсов
