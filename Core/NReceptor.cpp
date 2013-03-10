@@ -50,7 +50,7 @@ NReceptor::~NReceptor(void)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Коэффициент усиления входного сигнала
-bool NReceptor::SetGain(real value)
+bool NReceptor::SetGain(const real &value)
 {
  if(value <=0)
   return false;

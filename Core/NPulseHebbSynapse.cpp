@@ -135,7 +135,7 @@ bool NPulseHebbSynapse::ADefault(void)
 	Min=10;
 	Mout=10;
 	Md=10;
-	Kmot=1;
+	Kmot->resize(1);
 	Kin=100;
 	Kout=100;
 

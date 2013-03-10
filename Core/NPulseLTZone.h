@@ -50,7 +50,7 @@ virtual ~NLTZone(void);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает порог нейрона
-bool SetThreshold(real value);
+bool SetThreshold(const real &value);
 // --------------------------
 
 // --------------------------
@@ -110,10 +110,10 @@ virtual ~NPulseLTZone(void);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает значение постоянной времени
-bool SetTimeConstant(real value);
+bool SetTimeConstant(const real &value);
 
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(real value);
+bool SetPulseAmplitude(const real &value);
 // --------------------------
 
 // --------------------------
@@ -202,10 +202,10 @@ virtual ~NContinuesLTZone(void);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает значение постоянной времени
-bool SetTimeConstant(real value);
+bool SetTimeConstant(const real &value);
 
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(real value);
+bool SetPulseAmplitude(const real &value);
 // --------------------------
 
 // --------------------------
@@ -332,10 +332,10 @@ virtual ~NContinuesSimpleLTZone(void);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает значение постоянной времени
-bool SetTimeConstant(real value);
+bool SetTimeConstant(const real &value);
 
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(real value);
+bool SetPulseAmplitude(const real &value);
 // --------------------------
 
 // --------------------------

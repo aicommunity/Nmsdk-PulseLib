@@ -43,25 +43,25 @@ NPac::~NPac(void)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool NPac::SetPulseAmplitude(vector<Real> value)
+bool NPac::SetPulseAmplitude(const vector<Real> &value)
 {
  return true;
 }
 
 // Постоянная времени выделения медиатора
-bool NPac::SetSecretionTC(vector<Real> value)
+bool NPac::SetSecretionTC(const vector<Real> &value)
 {
  return true;
 }
 
 // Постоянная времени распада медиатора
-bool NPac::SetDissociationTC(vector<Real> value)
+bool NPac::SetDissociationTC(const vector<Real> &value)
 {
  return true;
 }
 
 // Усиление
-bool NPac::SetGain(vector<Real> value)
+bool NPac::SetGain(const vector<Real> &value)
 {
  return true;
 }

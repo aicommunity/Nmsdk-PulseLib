@@ -66,7 +66,7 @@ UEPtr<NPulseSynapse> NPulseChannel::GetSynapse(size_t i)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Емкость мембраны
-bool NPulseChannel::SetCapacity(real value)
+bool NPulseChannel::SetCapacity(const real &value)
 {
  if(value <= 0)
   return false;
@@ -75,7 +75,7 @@ bool NPulseChannel::SetCapacity(real value)
 }
 
 // Сопротивление мембраны
-bool NPulseChannel::SetResistance(real value)
+bool NPulseChannel::SetResistance(const real &value)
 {
  if(value <= 0)
   return false;
@@ -84,7 +84,7 @@ bool NPulseChannel::SetResistance(real value)
 }
 
 // Сопротивление перезаряда мембраны
-bool NPulseChannel::SetFBResistance(real value)
+bool NPulseChannel::SetFBResistance(const real &value)
 {
  if(value <= 0)
   return false;

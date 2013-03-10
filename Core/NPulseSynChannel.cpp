@@ -70,13 +70,13 @@ NPulseSynapse* NPulseSynChannel::GetSynapse(size_t i)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool NPulseSynChannel::SetPulseAmplitude(real value)
+bool NPulseSynChannel::SetPulseAmplitude(const real &value)
 {
  return true;
 }
 
 // Постоянная времени выделения медиатора
-bool NPulseSynChannel::SetSecretionTC(real value)
+bool NPulseSynChannel::SetSecretionTC(const real &value)
 {
  if(value <= 0)
   return false;
@@ -87,7 +87,7 @@ bool NPulseSynChannel::SetSecretionTC(real value)
 }
 
 // Постоянная времени распада медиатора
-bool NPulseSynChannel::SetDissociationTC(real value)
+bool NPulseSynChannel::SetDissociationTC(const real &value)
 {
  if(value <= 0)
   return false;
@@ -98,7 +98,7 @@ bool NPulseSynChannel::SetDissociationTC(real value)
 }
 
 // Коэффициент пресинаптического торможения
-bool NPulseSynChannel::SetInhibitionCoeff(real value)
+bool NPulseSynChannel::SetInhibitionCoeff(const real &value)
 {
  if(SynapseResistance.v > 0)
  {
@@ -114,7 +114,7 @@ bool NPulseSynChannel::SetInhibitionCoeff(real value)
 }
 
 // Вес (эффективность синапса) синапса
-bool NPulseSynChannel::SetSynapseResistance(real value)
+bool NPulseSynChannel::SetSynapseResistance(const real &value)
 {
  if(value<=0)
   return false;
@@ -376,13 +376,13 @@ NPulseSynapse* NContinuesSynChannel::GetSynapse(size_t i)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool NContinuesSynChannel::SetPulseAmplitude(real value)
+bool NContinuesSynChannel::SetPulseAmplitude(const real &value)
 {
  return true;
 }
 
 // Постоянная времени выделения медиатора
-bool NContinuesSynChannel::SetSecretionTC(real value)
+bool NContinuesSynChannel::SetSecretionTC(const real &value)
 {
  if(value <= 0)
   return false;
@@ -393,7 +393,7 @@ bool NContinuesSynChannel::SetSecretionTC(real value)
 }
 
 // Постоянная времени распада медиатора
-bool NContinuesSynChannel::SetDissociationTC(real value)
+bool NContinuesSynChannel::SetDissociationTC(const real &value)
 {
  if(value <= 0)
   return false;
@@ -404,7 +404,7 @@ bool NContinuesSynChannel::SetDissociationTC(real value)
 }
 
 // Коэффициент пресинаптического торможения
-bool NContinuesSynChannel::SetInhibitionCoeff(real value)
+bool NContinuesSynChannel::SetInhibitionCoeff(const real &value)
 {
  if(SynapseResistance.v > 0)
   OutputConstData=4.0*(value+1)/SynapseResistance.v;
@@ -415,7 +415,7 @@ bool NContinuesSynChannel::SetInhibitionCoeff(real value)
 }
 
 // Вес (эффективность синапса) синапса
-bool NContinuesSynChannel::SetSynapseResistance(real value)
+bool NContinuesSynChannel::SetSynapseResistance(const real &value)
 {
  if(value<=0)
   return false;

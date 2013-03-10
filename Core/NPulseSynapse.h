@@ -69,19 +69,19 @@ protected:
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(real value);
+bool SetPulseAmplitude(const real &value);
 
 // Постоянная времени выделения медиатора
-bool SetSecretionTC(real value);
+bool SetSecretionTC(const real &value);
 
 // Постоянная времени распада медиатора
-bool SetDissociationTC(real value);
+bool SetDissociationTC(const real &value);
 
 // Коэффициент пресинаптического торможения
-bool SetInhibitionCoeff(real value);
+bool SetInhibitionCoeff(const real &value);
 
 // Вес (эффективность синапса) синапса
-bool SetResistance(real value);
+bool SetResistance(const real &value);
 // --------------------------
 
 public:

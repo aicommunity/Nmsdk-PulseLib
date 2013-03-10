@@ -65,7 +65,7 @@ NPulseChannel* GetNegChannel(size_t i);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Коэффициент обратной связи
-bool SetFeedbackGain(real value);
+bool SetFeedbackGain(const real &value);
 // --------------------------
 
 // --------------------------

@@ -48,13 +48,13 @@ NPulseSynapse::~NPulseSynapse(void)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool NPulseSynapse::SetPulseAmplitude(real value)
+bool NPulseSynapse::SetPulseAmplitude(const real &value)
 {
  return true;
 }
 
 // Постоянная времени выделения медиатора
-bool NPulseSynapse::SetSecretionTC(real value)
+bool NPulseSynapse::SetSecretionTC(const real &value)
 {
  if(value <= 0)
   return false;
@@ -65,7 +65,7 @@ bool NPulseSynapse::SetSecretionTC(real value)
 }
 
 // Постоянная времени распада медиатора
-bool NPulseSynapse::SetDissociationTC(real value)
+bool NPulseSynapse::SetDissociationTC(const real &value)
 {
  if(value <= 0)
   return false;
@@ -76,7 +76,7 @@ bool NPulseSynapse::SetDissociationTC(real value)
 }
 
 // Коэффициент пресинаптического торможения
-bool NPulseSynapse::SetInhibitionCoeff(real value)
+bool NPulseSynapse::SetInhibitionCoeff(const real &value)
 {
  if(Resistance.v > 0)
  {
@@ -92,7 +92,7 @@ bool NPulseSynapse::SetInhibitionCoeff(real value)
 }
 
 // Вес (эффективность синапса) синапса
-bool NPulseSynapse::SetResistance(real value)
+bool NPulseSynapse::SetResistance(const real &value)
 {
  if(value<=0)
   return false;

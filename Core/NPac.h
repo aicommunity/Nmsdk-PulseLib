@@ -54,16 +54,16 @@ protected:
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(vector<Real> value);
+bool SetPulseAmplitude(const vector<Real> &value);
 
 // Постоянная времени выделения медиатора
-bool SetSecretionTC(vector<Real> value);
+bool SetSecretionTC(const vector<Real> &value);
 
 // Постоянная времени распада медиатора
-bool SetDissociationTC(vector<Real> value);
+bool SetDissociationTC(const vector<Real> &value);
 
 // Усиление
-bool SetGain(vector<Real> value);
+bool SetGain(const vector<Real> &value);
 // --------------------------
 
 public:

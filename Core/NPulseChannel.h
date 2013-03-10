@@ -66,13 +66,13 @@ UEPtr<NPulseSynapse> GetSynapse(size_t i);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Емкость мембраны
-bool SetCapacity(real value);
+bool SetCapacity(const real &value);
 
 // Сопротивление мембраны
-bool SetResistance(real value);
+bool SetResistance(const real &value);
 
 // Сопротивление перезаряда мембраны
-bool SetFBResistance(real value);
+bool SetFBResistance(const real &value);
 // --------------------------
 
 // --------------------------
