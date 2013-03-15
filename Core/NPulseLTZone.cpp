@@ -158,7 +158,7 @@ bool NPulseLTZone::ADefault(void)
  TimeConstant=0.005;
  PulseAmplitude=1;
  PulseLength=0.001;
- Threshold=0.00001;
+ Threshold=0;//0.00001;
  AvgInterval=1;
 
 // NumInputs=2;
