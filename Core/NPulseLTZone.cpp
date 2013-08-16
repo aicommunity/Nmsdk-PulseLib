@@ -223,7 +223,7 @@ bool NPulseLTZone::ACalculate(void)
   POutputData[0].Double[0]=PulseAmplitude.v;
   POutputData[1].Double[0]=PulseAmplitude.v;
   if(!PulseFlag)
-   AvgFrequencyCounter->push_back(GetDoubleTime());
+   AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
   PulseFlag=true;
  }
  else
@@ -244,7 +244,7 @@ bool NPulseLTZone::ACalculate(void)
  {
   while(I != J)
   {
-   if(GetDoubleTime()-*I>AvgInterval)// && AvgFrequencyCounter->size()>3)
+   if(Environment->GetTime().GetDoubleTime()-*I>AvgInterval)// && AvgFrequencyCounter->size()>3)
    {
 	K=I;
 	++I;
@@ -524,6 +524,7 @@ bool NPulseSimpleLTZone::ABuild(void)
 // —брос процесса счета.
 bool NPulseSimpleLTZone::AReset(void)
 {
+ generator.SetEnvironment(GetEnvironment());
  generator.SetActivity(true);
  generator.Reset();
  return NPulseLTZone::AReset();
