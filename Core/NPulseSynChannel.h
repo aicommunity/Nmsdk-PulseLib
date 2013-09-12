@@ -25,29 +25,29 @@ class NPulseSynChannel: public NPulseChannel
 public: // Общедоступные свойства
 // Параметры синапсов
 // Амплитуда входных импульсов
-RDK::ULProperty<real,NPulseSynChannel> PulseAmplitude;
+RDK::ULProperty<double,NPulseSynChannel> PulseAmplitude;
 
 // Постоянная времени выделения медиатора
-RDK::ULProperty<real,NPulseSynChannel> SecretionTC;
+RDK::ULProperty<double,NPulseSynChannel> SecretionTC;
 
 // Постоянная времени распада медиатора
-RDK::ULProperty<real,NPulseSynChannel> DissociationTC;
+RDK::ULProperty<double,NPulseSynChannel> DissociationTC;
 
 // Коэффициент пресинаптического торможения
-RDK::ULProperty<real,NPulseSynChannel> InhibitionCoeff;
+RDK::ULProperty<double,NPulseSynChannel> InhibitionCoeff;
 
 // Вес (эффективность синапса) синапса
-RDK::ULProperty<real,NPulseSynChannel> SynapseResistance;
+RDK::ULProperty<double,NPulseSynChannel> SynapseResistance;
 
 public: // Данные
 // Промежуточное значение эффективности синапса
-RDK::ULProperty<vector<real>,NPulseSynChannel,ptPubState> PreOutput;
+RDK::ULProperty<vector<double>,NPulseSynChannel,ptPubState> PreOutput;
 
 // Постоянные времени выделения и распада медиатора в единицах шага интегрирования
-real VSecretionTC,VDissociationTC;
+double VSecretionTC,VDissociationTC;
 
 // Постоянная составляющая результатов вычислений
-real OutputConstData;
+double OutputConstData;
 
 
 protected: // Основные свойства
@@ -76,19 +76,19 @@ NPulseSynapse* GetSynapse(size_t i);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const real &value);
+bool SetPulseAmplitude(const double &value);
 
 // Постоянная времени выделения медиатора
-bool SetSecretionTC(const real &value);
+bool SetSecretionTC(const double &value);
 
 // Постоянная времени распада медиатора
-bool SetDissociationTC(const real &value);
+bool SetDissociationTC(const double &value);
 
 // Коэффициент пресинаптического торможения
-bool SetInhibitionCoeff(const real &value);
+bool SetInhibitionCoeff(const double &value);
 
 // Вес (эффективность синапса) синапса
-bool SetSynapseResistance(const real &value);
+bool SetSynapseResistance(const double &value);
 // --------------------------
 
 // --------------------------
@@ -156,29 +156,29 @@ class NContinuesSynChannel: public NPulseChannel
 public: // Общедоступные свойства
 // Параметры синапсов
 // Амплитуда входных импульсов
-RDK::ULProperty<real,NContinuesSynChannel> PulseAmplitude;
+RDK::ULProperty<double,NContinuesSynChannel> PulseAmplitude;
 
 // Постоянная времени выделения медиатора
-RDK::ULProperty<real,NContinuesSynChannel> SecretionTC;
+RDK::ULProperty<double,NContinuesSynChannel> SecretionTC;
 
 // Постоянная времени распада медиатора
-RDK::ULProperty<real,NContinuesSynChannel> DissociationTC;
+RDK::ULProperty<double,NContinuesSynChannel> DissociationTC;
 
 // Коэффициент пресинаптического торможения
-RDK::ULProperty<real,NContinuesSynChannel> InhibitionCoeff;
+RDK::ULProperty<double,NContinuesSynChannel> InhibitionCoeff;
 
 // Вес (эффективность синапса) синапса
-RDK::ULProperty<real,NContinuesSynChannel> SynapseResistance;
+RDK::ULProperty<double,NContinuesSynChannel> SynapseResistance;
 
 public: // Данные
 // Промежуточное значение эффективности синапса
-RDK::ULProperty<vector<real>,NContinuesSynChannel,ptPubState> PreOutput;
+RDK::ULProperty<vector<double>,NContinuesSynChannel,ptPubState> PreOutput;
 
 // Постоянные времени выделения и распада медиатора в единицах шага интегрирования
-real VSecretionTC,VDissociationTC;
+double VSecretionTC,VDissociationTC;
 
 // Постоянная составляющая результатов вычислений
-real OutputConstData;
+double OutputConstData;
 
 
 protected: // Основные свойства
@@ -207,19 +207,19 @@ NPulseSynapse* GetSynapse(size_t i);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const real &value);
+bool SetPulseAmplitude(const double &value);
 
 // Постоянная времени выделения медиатора
-bool SetSecretionTC(const real &value);
+bool SetSecretionTC(const double &value);
 
 // Постоянная времени распада медиатора
-bool SetDissociationTC(const real &value);
+bool SetDissociationTC(const double &value);
 
 // Коэффициент пресинаптического торможения
-bool SetInhibitionCoeff(const real &value);
+bool SetInhibitionCoeff(const double &value);
 
 // Вес (эффективность синапса) синапса
-bool SetSynapseResistance(const real &value);
+bool SetSynapseResistance(const double &value);
 // --------------------------
 
 // --------------------------

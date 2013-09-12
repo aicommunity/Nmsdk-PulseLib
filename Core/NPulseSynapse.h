@@ -28,19 +28,19 @@ class NPulseSynapse: public UNet
 {
 public: // Общедоступные свойства
 // Амплитуда входных импульсов
-RDK::ULProperty<real,NPulseSynapse> PulseAmplitude;
+RDK::ULProperty<double,NPulseSynapse> PulseAmplitude;
 
 // Постоянная времени выделения медиатора
-RDK::ULProperty<real,NPulseSynapse> SecretionTC;
+RDK::ULProperty<double,NPulseSynapse> SecretionTC;
 
 // Постоянная времени распада медиатора
-RDK::ULProperty<real,NPulseSynapse> DissociationTC;
+RDK::ULProperty<double,NPulseSynapse> DissociationTC;
 
 // Коэффициент пресинаптического торможения
-RDK::ULProperty<real,NPulseSynapse> InhibitionCoeff;
+RDK::ULProperty<double,NPulseSynapse> InhibitionCoeff;
 
 // Вес (эффективность синапса) синапса
-RDK::ULProperty<real,NPulseSynapse> Resistance;
+RDK::ULProperty<double,NPulseSynapse> Resistance;
 
 public: // Данные
 
@@ -48,13 +48,13 @@ protected: // Основные свойства
 
 protected: // Временные переменные
 // Промежуточное значение эффективности синапса
-RDK::ULProperty<real,NPulseSynapse,ptPubState> PreOutput;
+RDK::ULProperty<double,NPulseSynapse,ptPubState> PreOutput;
 
 // Постоянные времени выделения и распада медиатора в единицах шага интегрирования
-real VSecretionTC,VDissociationTC;
+double VSecretionTC,VDissociationTC;
 
 // Постоянная составляющая результатов вычислений
-real OutputConstData;
+double OutputConstData;
 
 public: // Методы
 // --------------------------
@@ -69,19 +69,19 @@ protected:
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const real &value);
+bool SetPulseAmplitude(const double &value);
 
 // Постоянная времени выделения медиатора
-bool SetSecretionTC(const real &value);
+bool SetSecretionTC(const double &value);
 
 // Постоянная времени распада медиатора
-bool SetDissociationTC(const real &value);
+bool SetDissociationTC(const double &value);
 
 // Коэффициент пресинаптического торможения
-bool SetInhibitionCoeff(const real &value);
+bool SetInhibitionCoeff(const double &value);
 
 // Вес (эффективность синапса) синапса
-bool SetResistance(const real &value);
+bool SetResistance(const double &value);
 // --------------------------
 
 public:

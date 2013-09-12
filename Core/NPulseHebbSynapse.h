@@ -25,30 +25,30 @@ namespace NMSDK {
 class NPulseHebbSynapse: public NPulseSynapse
 {
 public: // Общедоступные свойства
-RDK::ULProperty<real,NPulseHebbSynapse> Min;
-RDK::ULProperty<real,NPulseHebbSynapse> Mout;
-RDK::ULProperty<real,NPulseHebbSynapse> Md;
-RDK::UCLProperty<vector<real>,NPulseHebbSynapse> ActiveMs;
-RDK::UCLProperty<vector<real>,NPulseHebbSynapse> PassiveMs;
-RDK::UCLProperty<vector<real>,NPulseHebbSynapse> Kmot;
-RDK::ULProperty<real,NPulseHebbSynapse> Kin;
-RDK::ULProperty<real,NPulseHebbSynapse> Kout;
+RDK::ULProperty<double,NPulseHebbSynapse> Min;
+RDK::ULProperty<double,NPulseHebbSynapse> Mout;
+RDK::ULProperty<double,NPulseHebbSynapse> Md;
+RDK::UCLProperty<vector<double>,NPulseHebbSynapse> ActiveMs;
+RDK::UCLProperty<vector<double>,NPulseHebbSynapse> PassiveMs;
+RDK::UCLProperty<vector<double>,NPulseHebbSynapse> Kmot;
+RDK::ULProperty<double,NPulseHebbSynapse> Kin;
+RDK::ULProperty<double,NPulseHebbSynapse> Kout;
 
 // К-т усиления динамической связи
-RDK::ULProperty<real,NPulseHebbSynapse> GdGain;
+RDK::ULProperty<double,NPulseHebbSynapse> GdGain;
 
 // К-т усиления статической связи
-RDK::ULProperty<real,NPulseHebbSynapse> GsGain;
+RDK::ULProperty<double,NPulseHebbSynapse> GsGain;
 
 
 protected: // Основные свойства
 
 protected: // Временные переменные
-RDK::ULProperty<real,NPulseHebbSynapse,ptPubState> G;
-RDK::ULProperty<real,NPulseHebbSynapse,ptPubState> Gd;
-RDK::UCLProperty<vector<real>,NPulseHebbSynapse,ptPubState> Gs;
-RDK::ULProperty<real,NPulseHebbSynapse,ptPubState> Win;
-RDK::ULProperty<real,NPulseHebbSynapse,ptPubState> Wout;
+RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> G;
+RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> Gd;
+RDK::UCLProperty<vector<double>,NPulseHebbSynapse,ptPubState> Gs;
+RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> Win;
+RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> Wout;
 
 public: // Методы
 // --------------------------
@@ -63,19 +63,19 @@ protected:
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-//bool SetPulseAmplitude(real value);
+//bool SetPulseAmplitude(double value);
 
 // Постоянная времени выделения медиатора
-//bool SetSecretionTC(real value);
+//bool SetSecretionTC(double value);
 
 // Постоянная времени распада медиатора
-//bool SetDissociationTC(real value);
+//bool SetDissociationTC(double value);
 
 // Коэффициент пресинаптического торможения
-//bool SetInhibitionCoeff(real value);
+//bool SetInhibitionCoeff(double value);
 
 // Вес (эффективность синапса) синапса
-//bool SetResistance(real value);
+//bool SetResistance(double value);
 // --------------------------
 
 public:

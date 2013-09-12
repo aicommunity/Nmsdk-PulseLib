@@ -25,22 +25,22 @@ class NReceptor: public NSource
 {
 public: // Общедоступные свойства
 // Коэффициент усиления входного сигнала
-RDK::ULProperty<real,NReceptor> Gain;
+RDK::ULProperty<double,NReceptor> Gain;
 
 // Рабочий диапазон входного сигнала
-RDK::ULProperty<real,NReceptor> MinInputRange, MaxInputRange;
+RDK::ULProperty<double,NReceptor> MinInputRange, MaxInputRange;
 
 // Рабочий диапазон выходного сигнала
-RDK::ULProperty<real,NReceptor> MinOutputRange, MaxOutputRange;
+RDK::ULProperty<double,NReceptor> MinOutputRange, MaxOutputRange;
 
 // Коэффициент масштабирования для режима 2
-RDK::ULProperty<real,NReceptor> ExpCoeff;
+RDK::ULProperty<double,NReceptor> ExpCoeff;
 
 // Слагаемое для режима 1
-RDK::ULProperty<real,NReceptor> SumCoeff;
+RDK::ULProperty<double,NReceptor> SumCoeff;
 
 // Постоянная времени забывания границ входного диапазона
-RDK::ULProperty<real,NReceptor> InputAdaptationArrestingTC;
+RDK::ULProperty<double,NReceptor> InputAdaptationArrestingTC;
 
 
 // Режим адаптации диапазона входного сигнала
@@ -63,8 +63,8 @@ RDK::ULProperty<int,NReceptor> OutputAdaptationMode;
 protected: // Основные свойства
 
 protected: // Временные переменные
-real InputRange;
-real OutputRange;
+double InputRange;
+double OutputRange;
 
 
 
@@ -81,7 +81,7 @@ protected:
 // Методы управления общедоступными свойствами
 // --------------------------
 // Коэффициент усиления входного сигнала
-bool SetGain(const real &value);
+bool SetGain(const double &value);
 // --------------------------
 
 public:

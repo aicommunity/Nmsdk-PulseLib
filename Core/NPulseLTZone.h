@@ -28,7 +28,7 @@ class NLTZone: public UNet
 {
 public: // Общедоступные свойства
 // Порог нейрона
-RDK::ULProperty<real,NLTZone> Threshold;
+RDK::ULProperty<double,NLTZone> Threshold;
 
 public: // Данные
 // Нейрон владелец мембраны канала
@@ -50,7 +50,7 @@ virtual ~NLTZone(void);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает порог нейрона
-bool SetThreshold(const real &value);
+bool SetThreshold(const double &value);
 // --------------------------
 
 // --------------------------
@@ -67,16 +67,16 @@ class NPulseLTZone: public NLTZone
 {
 public: // Общедоступные свойства
 // Постоянная времени
-RDK::ULProperty<real,NPulseLTZone> TimeConstant;
+RDK::ULProperty<double,NPulseLTZone> TimeConstant;
 
 // Амплитуда импульсов
-RDK::ULProperty<real,NPulseLTZone> PulseAmplitude;
+RDK::ULProperty<double,NPulseLTZone> PulseAmplitude;
 
 // Длительность импульса
-RDK::ULProperty<real,NPulseLTZone> PulseLength;
+RDK::ULProperty<double,NPulseLTZone> PulseLength;
 
 // Интервал времени оценки частоты генерации
-RDK::ULProperty<real,NPulseLTZone> AvgInterval;
+RDK::ULProperty<double,NPulseLTZone> AvgInterval;
 
 public: // Данные
 
@@ -84,16 +84,16 @@ protected: // Основные свойства
 
 protected: // Временные переменные
 // Суммарный потенциал
-RDK::ULProperty<real,NPulseLTZone,ptPubState> NeuralPotential;
+RDK::ULProperty<double,NPulseLTZone,ptPubState> NeuralPotential;
 
 // Промежуточное значение потенциала
-RDK::ULProperty<real,NPulseLTZone,ptPubState> PrePotential;
+RDK::ULProperty<double,NPulseLTZone,ptPubState> PrePotential;
 
 // Флаг наличия генерации
 RDK::ULProperty<int,NPulseLTZone,ptPubState> PulseCounter;
 
 // Средняя частота за заданный интервал времени
-RDK::UCLProperty<list<real>,NPulseLTZone,ptPubState> AvgFrequencyCounter;
+RDK::UCLProperty<list<double>,NPulseLTZone,ptPubState> AvgFrequencyCounter;
 
 // Признак текущей генерации импульса
 RDK::ULProperty<bool,NPulseLTZone,ptPubState> PulseFlag;
@@ -110,10 +110,10 @@ virtual ~NPulseLTZone(void);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает значение постоянной времени
-bool SetTimeConstant(const real &value);
+bool SetTimeConstant(const double &value);
 
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const real &value);
+bool SetPulseAmplitude(const double &value);
 // --------------------------
 
 // --------------------------
@@ -159,16 +159,16 @@ class NContinuesLTZone: public NLTZone
 {
 public: // Общедоступные свойства
 // Постоянная времени
-RDK::ULProperty<real,NContinuesLTZone> TimeConstant;
+RDK::ULProperty<double,NContinuesLTZone> TimeConstant;
 
 // Амплитуда импульсов
-RDK::ULProperty<real,NContinuesLTZone> PulseAmplitude;
+RDK::ULProperty<double,NContinuesLTZone> PulseAmplitude;
 
 // Длительность импульса
-RDK::ULProperty<real,NContinuesLTZone> PulseLength;
+RDK::ULProperty<double,NContinuesLTZone> PulseLength;
 
 // Интервал времени оценки частоты генерации
-RDK::ULProperty<real,NContinuesLTZone> AvgInterval;
+RDK::ULProperty<double,NContinuesLTZone> AvgInterval;
 
 public: // Данные
 
@@ -176,16 +176,16 @@ protected: // Основные свойства
 
 protected: // Временные переменные
 // Суммарный потенциал
-RDK::ULProperty<real,NContinuesLTZone,ptPubState> NeuralPotential;
+RDK::ULProperty<double,NContinuesLTZone,ptPubState> NeuralPotential;
 
 // Промежуточное значение потенциала
-RDK::ULProperty<real,NContinuesLTZone,ptPubState> PrePotential;
+RDK::ULProperty<double,NContinuesLTZone,ptPubState> PrePotential;
 
 // Флаг наличия генерации
 RDK::ULProperty<int,NContinuesLTZone,ptPubState> PulseCounter;
 
 // Средняя частота за заданный интервал времени
-RDK::UCLProperty<list<real>,NContinuesLTZone,ptPubState> AvgFrequencyCounter;
+RDK::UCLProperty<list<double>,NContinuesLTZone,ptPubState> AvgFrequencyCounter;
 
 // Признак текущей генерации импульса
 RDK::ULProperty<bool,NContinuesLTZone,ptPubState> PulseFlag;
@@ -202,10 +202,10 @@ virtual ~NContinuesLTZone(void);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает значение постоянной времени
-bool SetTimeConstant(const real &value);
+bool SetTimeConstant(const double &value);
 
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const real &value);
+bool SetPulseAmplitude(const double &value);
 // --------------------------
 
 // --------------------------
@@ -332,10 +332,10 @@ virtual ~NContinuesSimpleLTZone(void);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает значение постоянной времени
-bool SetTimeConstant(const real &value);
+bool SetTimeConstant(const double &value);
 
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const real &value);
+bool SetPulseAmplitude(const double &value);
 // --------------------------
 
 // --------------------------

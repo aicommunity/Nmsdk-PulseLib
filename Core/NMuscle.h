@@ -36,17 +36,17 @@ RDK::UCLProperty<Real,NMuscle> Param;
 RDK::UCLProperty<Real,NMuscle> TC;
 
 // Масса
-RDK::ULProperty<real,NMuscle> Mass;
+RDK::ULProperty<double,NMuscle> Mass;
 
 // Порог
-RDK::ULProperty<real,NMuscle> Threshold;
+RDK::ULProperty<double,NMuscle> Threshold;
 
 // Величина ускорения свободного падения
-RDK::ULProperty<real,NMuscle> G;
+RDK::ULProperty<double,NMuscle> G;
 
 public: // Временные переменные
-real y[15], yOld[15], mr[7], mrOld[7],vereteno1, vereteno2, goldgi;
-real MaxActionPower;
+double y[15], yOld[15], mr[7], mrOld[7],vereteno1, vereteno2, goldgi;
+double MaxActionPower;
 bool FirstStep;
 
 // Указатель на вход по длине
@@ -81,10 +81,10 @@ protected:
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду синуса
-//bool SetAmplitude(real value);
+//bool SetAmplitude(double value);
 
 // Устанавливает частоту генерации
-//bool SetFrequency(real value);
+//bool SetFrequency(double value);
 // --------------------------
 
 public:
@@ -147,17 +147,17 @@ virtual bool ACalculate(void);
 // --------------------------
 protected:
 // Апериодическое звено
-real AperiodicSection(real in, real inOld, real param1, real param2);
+double AperiodicSection(double in, double inOld, double param1, double param2);
 
 // Порог
-real CompareThreshold(real);
+double CompareThreshold(double);
 
 // мускульное сокращение
-real MuscularReduction(real);
+double MuscularReduction(double);
 
 // Инерционный элемент ОС мышцы
-real MuscleFeedback(real x_new, real x_old, real y_old,
-					  real k, real T1, real T2);
+double MuscleFeedback(double x_new, double x_old, double y_old,
+					  double k, double T1, double T2);
 // --------------------------
 };
 

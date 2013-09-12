@@ -70,7 +70,7 @@ NPulseChannel* NPulseMembrane::GetNegChannel(size_t i)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Коэффициент обратной связи
-bool NPulseMembrane::SetFeedbackGain(const real &value)
+bool NPulseMembrane::SetFeedbackGain(const double &value)
 {
  if(value < 0)
   return false;

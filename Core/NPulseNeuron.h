@@ -28,13 +28,13 @@ class NPulseNeuron: public NNeuron
 {
 public: // Статистика
 // Число связей организованных этим нейроном на других (и себе)
-RDK::ULProperty<real,NPulseNeuron,ptPubState> NumActiveOutputs;
+RDK::ULProperty<double,NPulseNeuron,ptPubState> NumActiveOutputs;
 
 // Число возбуждающих связей организованных другими нейронами на этом
-RDK::ULProperty<real,NPulseNeuron,ptPubState> NumActivePosInputs;
+RDK::ULProperty<double,NPulseNeuron,ptPubState> NumActivePosInputs;
 
 // Число тормозных связей организованных другими нейронами на этом
-RDK::ULProperty<real,NPulseNeuron,ptPubState> NumActiveNegInputs;
+RDK::ULProperty<double,NPulseNeuron,ptPubState> NumActiveNegInputs;
 
 protected: // Временные переменные
 //NPulseLTZone *LTZone;

@@ -70,13 +70,13 @@ NPulseSynapse* NPulseSynChannel::GetSynapse(size_t i)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool NPulseSynChannel::SetPulseAmplitude(const real &value)
+bool NPulseSynChannel::SetPulseAmplitude(const double &value)
 {
  return true;
 }
 
 // Постоянная времени выделения медиатора
-bool NPulseSynChannel::SetSecretionTC(const real &value)
+bool NPulseSynChannel::SetSecretionTC(const double &value)
 {
  if(value <= 0)
   return false;
@@ -87,7 +87,7 @@ bool NPulseSynChannel::SetSecretionTC(const real &value)
 }
 
 // Постоянная времени распада медиатора
-bool NPulseSynChannel::SetDissociationTC(const real &value)
+bool NPulseSynChannel::SetDissociationTC(const double &value)
 {
  if(value <= 0)
   return false;
@@ -98,7 +98,7 @@ bool NPulseSynChannel::SetDissociationTC(const real &value)
 }
 
 // Коэффициент пресинаптического торможения
-bool NPulseSynChannel::SetInhibitionCoeff(const real &value)
+bool NPulseSynChannel::SetInhibitionCoeff(const double &value)
 {
  if(SynapseResistance.v > 0)
  {
@@ -114,7 +114,7 @@ bool NPulseSynChannel::SetInhibitionCoeff(const real &value)
 }
 
 // Вес (эффективность синапса) синапса
-bool NPulseSynChannel::SetSynapseResistance(const real &value)
+bool NPulseSynChannel::SetSynapseResistance(const double &value)
 {
  if(value<=0)
   return false;
@@ -243,14 +243,14 @@ bool NPulseSynChannel::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseSynChannel::ACalculate(void)
 {
- real channel_input=0;
+ double channel_input=0;
  size_t num_connected_channels=0;
- real G=0;
+ double G=0;
 
  // Расчет синапсов
- real input=0;
+ double input=0;
  size_t num_connected_synapsis=0;
- real syn_output=0;
+ double syn_output=0;
 
 
  for(int n=0;n<NumInputs;n++)
@@ -264,7 +264,7 @@ bool NPulseSynChannel::ACalculate(void)
    size_t inpsize=0;
    if((inpsize=GetInputDataSize(n)) >0)
    {
-    real *data=&(GetInputData(n)->Double[0]);
+    double *data=&(GetInputData(n)->Double[0]);
     for(size_t j=0;j<inpsize;j++,++data)
      channel_input+=*data;
     ++num_connected_channels;
@@ -305,14 +305,14 @@ bool NPulseSynChannel::ACalculate(void)
  if(num_connected_channels)
   channel_input/=num_connected_channels;
 
- real feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
+ double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
  // Получение информации об обратной связи
  if(Owner)
   channel_input-=feedback;
 
  // Расчет
- real *out=&POutputData[0].Double[0];
- real Ti,sum_u;
+ double *out=&POutputData[0].Double[0];
+ double Ti,sum_u;
 
  if(!feedback)
  {
@@ -376,13 +376,13 @@ NPulseSynapse* NContinuesSynChannel::GetSynapse(size_t i)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool NContinuesSynChannel::SetPulseAmplitude(const real &value)
+bool NContinuesSynChannel::SetPulseAmplitude(const double &value)
 {
  return true;
 }
 
 // Постоянная времени выделения медиатора
-bool NContinuesSynChannel::SetSecretionTC(const real &value)
+bool NContinuesSynChannel::SetSecretionTC(const double &value)
 {
  if(value <= 0)
   return false;
@@ -393,7 +393,7 @@ bool NContinuesSynChannel::SetSecretionTC(const real &value)
 }
 
 // Постоянная времени распада медиатора
-bool NContinuesSynChannel::SetDissociationTC(const real &value)
+bool NContinuesSynChannel::SetDissociationTC(const double &value)
 {
  if(value <= 0)
   return false;
@@ -404,7 +404,7 @@ bool NContinuesSynChannel::SetDissociationTC(const real &value)
 }
 
 // Коэффициент пресинаптического торможения
-bool NContinuesSynChannel::SetInhibitionCoeff(const real &value)
+bool NContinuesSynChannel::SetInhibitionCoeff(const double &value)
 {
  if(SynapseResistance.v > 0)
   OutputConstData=4.0*(value+1)/SynapseResistance.v;
@@ -415,7 +415,7 @@ bool NContinuesSynChannel::SetInhibitionCoeff(const real &value)
 }
 
 // Вес (эффективность синапса) синапса
-bool NContinuesSynChannel::SetSynapseResistance(const real &value)
+bool NContinuesSynChannel::SetSynapseResistance(const double &value)
 {
  if(value<=0)
   return false;
@@ -541,14 +541,14 @@ bool NContinuesSynChannel::AReset(void)
 // Выполняет расчет этого объекта
 bool NContinuesSynChannel::ACalculate(void)
 {
- real channel_input=0;
+ double channel_input=0;
  size_t num_connected_channels=0;
- real G=0;
+ double G=0;
 
  // Расчет синапсов
- real input=0;
+ double input=0;
  size_t num_connected_synapsis=0;
- real syn_output=0;
+ double syn_output=0;
 
 
  for(int n=0;n<NumInputs;n++)
@@ -562,7 +562,7 @@ bool NContinuesSynChannel::ACalculate(void)
    size_t inpsize=0;
    if((inpsize=GetInputDataSize(n)) >0)
    {
-    real *data=&(GetInputData(n)->Double[0]);
+    double *data=&(GetInputData(n)->Double[0]);
     for(size_t j=0;j<inpsize;j++,++data)
      channel_input+=*data;
     ++num_connected_channels;
@@ -604,8 +604,8 @@ bool NContinuesSynChannel::ACalculate(void)
   channel_input/=num_connected_channels;
 
  // Расчет
- real *out=&POutputData[0].Double[0];
- real Ti,sum_u;
+ double *out=&POutputData[0].Double[0];
+ double Ti,sum_u;
 
  Ti=Capacity/(G+1.0/Resistance);
  sum_u=(1.0+G*Resistance);

@@ -47,13 +47,13 @@ NEyeMuscle::~NEyeMuscle(void)
 // ћетоды управлени€ общедоступными свойствами
 // --------------------------
 // ”станавливает амплитуду синуса
-bool NEyeMuscle::SetAmplitude(real value)
+bool NEyeMuscle::SetAmplitude(double value)
 {
  return true;
 }
 
 // ”станавливает частоту
-bool NEyeMuscle::SetFrequency(real value)
+bool NEyeMuscle::SetFrequency(double value)
 {
  if(value <=0)
   return false;
@@ -152,12 +152,12 @@ bool NEyeMuscle::ACalculate(void)
    if(k >= GetOutputDataSize(0))
 	break;
 
-   real in=GetInputData(i)->Double[j];
+   double in=GetInputData(i)->Double[j];
    ThresholdCount(k);
    in*=Threshold[k];
 
-   real leng=MuscularReduction(k,in)*K;
-   real speed=(leng-L[k])*TimeStep;
+   double leng=MuscularReduction(k,in)*K;
+   double speed=(leng-L[k])*TimeStep;
    Acceleration[k]=(speed-Speed[k])*TimeStep;
    Speed[k]=speed;
    L[k]=leng;
@@ -177,7 +177,7 @@ bool NEyeMuscle::ACalculate(void)
 // ƒополнительные скрытые методы управлени€ счетом
 // --------------------------
 // мускульное сокращение
-real NEyeMuscle::MuscularReduction(size_t k,real in)
+double NEyeMuscle::MuscularReduction(size_t k,double in)
 {
  double p[3];
  p[0]=P1[k]+(in-P3[k]*MulCoeffs[2]-P1[k]*MulCoeffs[0])/(TC[0]*TimeStep);

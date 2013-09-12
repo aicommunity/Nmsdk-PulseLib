@@ -66,7 +66,7 @@ UEPtr<NPulseSynapse> NPulseChannel::GetSynapse(size_t i)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Емкость мембраны
-bool NPulseChannel::SetCapacity(const real &value)
+bool NPulseChannel::SetCapacity(const double &value)
 {
  if(value <= 0)
   return false;
@@ -75,7 +75,7 @@ bool NPulseChannel::SetCapacity(const real &value)
 }
 
 // Сопротивление мембраны
-bool NPulseChannel::SetResistance(const real &value)
+bool NPulseChannel::SetResistance(const double &value)
 {
  if(value <= 0)
   return false;
@@ -84,7 +84,7 @@ bool NPulseChannel::SetResistance(const real &value)
 }
 
 // Сопротивление перезаряда мембраны
-bool NPulseChannel::SetFBResistance(const real &value)
+bool NPulseChannel::SetFBResistance(const double &value)
 {
  if(value <= 0)
   return false;
@@ -269,8 +269,8 @@ bool NPulseChannel::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseChannel::ACalculate(void)
 {
- real channel_input=0;
- real G=0;
+ double channel_input=0;
+ double G=0;
 
  // Получение доступа к данным синапса
  for(int i=0;i<NumComponents;i++)
@@ -284,7 +284,7 @@ bool NPulseChannel::ACalculate(void)
   {
    if((inpsize=GetInputDataSize(i)) >0)
    {
-	real *data=&(GetInputData(i)->Double[0]);
+	double *data=&(GetInputData(i)->Double[0]);
 	for(size_t j=0;j<inpsize;j++,++data)
 	 channel_input+=*data;
    }
@@ -292,14 +292,14 @@ bool NPulseChannel::ACalculate(void)
   channel_input/=FullInputDataSize;
  }
 
- real feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
+ double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
  // Получение информации об обратной связи
  if(Owner)
   channel_input-=feedback;
 
  // Расчет
- real *out=&POutputData[0].Double[0];
- real Ti,sum_u;
+ double *out=&POutputData[0].Double[0];
+ double Ti,sum_u;
 
  if(!feedback)
  {

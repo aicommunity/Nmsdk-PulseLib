@@ -44,7 +44,7 @@ NLTZone::~NLTZone(void)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает порог нейрона
-bool NLTZone::SetThreshold(const real &value)
+bool NLTZone::SetThreshold(const double &value)
 {
  return true;
 }
@@ -92,7 +92,7 @@ NPulseLTZone::~NPulseLTZone(void)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает значение постоянной времени
-bool NPulseLTZone::SetTimeConstant(const real &value)
+bool NPulseLTZone::SetTimeConstant(const double &value)
 {
  if(value <= 0)
   return false;
@@ -101,7 +101,7 @@ bool NPulseLTZone::SetTimeConstant(const real &value)
 }
 
 // Устанавливает амплитуду импульсов
-bool NPulseLTZone::SetPulseAmplitude(const real &value)
+bool NPulseLTZone::SetPulseAmplitude(const double &value)
 {
  if(value <= 0)
   return false;
@@ -307,7 +307,7 @@ NContinuesLTZone::~NContinuesLTZone(void)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает значение постоянной времени
-bool NContinuesLTZone::SetTimeConstant(const real &value)
+bool NContinuesLTZone::SetTimeConstant(const double &value)
 {
  if(value <= 0)
   return false;
@@ -316,7 +316,7 @@ bool NContinuesLTZone::SetTimeConstant(const real &value)
 }
 
 // Устанавливает амплитуду импульсов
-bool NContinuesLTZone::SetPulseAmplitude(const real &value)
+bool NContinuesLTZone::SetPulseAmplitude(const double &value)
 {
  if(value <= 0)
   return false;

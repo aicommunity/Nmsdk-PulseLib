@@ -28,11 +28,11 @@ class NPulseMembrane: public UNet
 {
 public: // Основные свойства
 // Коэффициент обратной связи
-RDK::ULProperty<real,NPulseMembrane> FeedbackGain;
+RDK::ULProperty<double,NPulseMembrane> FeedbackGain;
 
 public: // Данные
 // Значение обратной связи
-RDK::ULProperty<real,NPulseMembrane,ptPubState> Feedback;
+RDK::ULProperty<double,NPulseMembrane,ptPubState> Feedback;
 
 protected: // Временные переменные
 // Ионные механизмы деполяризации
@@ -65,7 +65,7 @@ NPulseChannel* GetNegChannel(size_t i);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Коэффициент обратной связи
-bool SetFeedbackGain(const real &value);
+bool SetFeedbackGain(const double &value);
 // --------------------------
 
 // --------------------------

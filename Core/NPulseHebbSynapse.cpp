@@ -57,13 +57,13 @@ NPulseHebbSynapse::~NPulseHebbSynapse(void)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-/*bool NPulseHebbSynapse::SetPulseAmplitude(real value)
+/*bool NPulseHebbSynapse::SetPulseAmplitude(double value)
 {
  return true;
 }
 
 // Постоянная времени выделения медиатора
-bool NPulseHebbSynapse::SetSecretionTC(real value)
+bool NPulseHebbSynapse::SetSecretionTC(double value)
 {
  if(value <= 0)
   return false;
@@ -74,7 +74,7 @@ bool NPulseHebbSynapse::SetSecretionTC(real value)
 }
 
 // Постоянная времени распада медиатора
-bool NPulseHebbSynapse::SetDissociationTC(real value)
+bool NPulseHebbSynapse::SetDissociationTC(double value)
 {
  if(value <= 0)
   return false;
@@ -85,7 +85,7 @@ bool NPulseHebbSynapse::SetDissociationTC(real value)
 }
 
 // Коэффициент пресинаптического торможения
-bool NPulseHebbSynapse::SetInhibitionCoeff(real value)
+bool NPulseHebbSynapse::SetInhibitionCoeff(double value)
 {
  if(Resistance.v > 0)
   OutputConstData=4.0*(value+1)/Resistance.v;
@@ -96,7 +96,7 @@ bool NPulseHebbSynapse::SetInhibitionCoeff(real value)
 }
 
 // Вес (эффективность синапса) синапса
-bool NPulseHebbSynapse::SetResistance(real value)
+bool NPulseHebbSynapse::SetResistance(double value)
 {
  if(value<=0)
   return false;
@@ -197,9 +197,9 @@ bool NPulseHebbSynapse::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseHebbSynapse::ACalculate(void)
 {
- real input=0;
- real ltzoneoutput=0;
- vector<real> motivation;
+ double input=0;
+ double ltzoneoutput=0;
+ vector<double> motivation;
 
 
  if(!NPulseSynapse::ACalculate())
@@ -236,7 +236,7 @@ bool NPulseHebbSynapse::ACalculate(void)
   else
    Gs[i] += (motivation[i]*Gd.v - PassiveMs[i]*Gs[i])/TimeStep;
 
- real gs_res=0;
+ double gs_res=0;
  for(size_t i=0;i<Gs->size();i++)
   gs_res+=Gs[i];
  G.v = (Gd.v*GdGain + gs_res*GsGain);

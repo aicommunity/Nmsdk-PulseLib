@@ -25,18 +25,18 @@ class NPulseChannel: public UNet
 {
 public: // Общедоступные свойства
 // Емкость мембраны
-RDK::ULProperty<real,NPulseChannel> Capacity;
+RDK::ULProperty<double,NPulseChannel> Capacity;
 
 // Сопротивление мембраны
-RDK::ULProperty<real,NPulseChannel> Resistance;
+RDK::ULProperty<double,NPulseChannel> Resistance;
 
 // Сопротивление перезаряда мембраны
-RDK::ULProperty<real,NPulseChannel> FBResistance;
+RDK::ULProperty<double,NPulseChannel> FBResistance;
 
 // Тип ионного механизма
 // <0 - накапливает отрицательный вклад в потенциал
 // >0 - накапливает положительный вклад в потенциал
-RDK::ULProperty<real,NPulseChannel> Type;
+RDK::ULProperty<double,NPulseChannel> Type;
 
 public: // Данные
 
@@ -66,13 +66,13 @@ UEPtr<NPulseSynapse> GetSynapse(size_t i);
 // Методы управления общедоступными свойствами
 // --------------------------
 // Емкость мембраны
-bool SetCapacity(const real &value);
+bool SetCapacity(const double &value);
 
 // Сопротивление мембраны
-bool SetResistance(const real &value);
+bool SetResistance(const double &value);
 
 // Сопротивление перезаряда мембраны
-bool SetFBResistance(const real &value);
+bool SetFBResistance(const double &value);
 // --------------------------
 
 // --------------------------

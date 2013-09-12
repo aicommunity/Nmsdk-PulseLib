@@ -364,7 +364,7 @@ bool NMuscle::ACalculate(void)
 // vereteno2 = AperiodicSection( y[14], yOld[14], MulCoeffs[15], MulCoeffs[16]);
   /*
  // Указатели на дополнительные выходы
- real res;
+ double res;
  // Активная сила
  if(ActivePower)
  {
@@ -399,7 +399,7 @@ bool NMuscle::ACalculate(void)
   Tendon->SetOutput(&res,1);
  }
           */
- real res;
+ double res;
  res=y[11];
  POutputData[0].Double[0]=res;
 
@@ -414,7 +414,7 @@ bool NMuscle::ACalculate(void)
 // Дополнительные скрытые методы управления счетом
 // --------------------------
 // Апериодическое звено
-real NMuscle::AperiodicSection(real in, real inOld, real param1, real param2)
+double NMuscle::AperiodicSection(double in, double inOld, double param1, double param2)
 {
  if ( FirstStep == true )
    return param1*in;
@@ -429,13 +429,13 @@ real NMuscle::AperiodicSection(real in, real inOld, real param1, real param2)
 }
 
 // Порог
-real NMuscle::CompareThreshold(real in)
+double NMuscle::CompareThreshold(double in)
 {
  return ((in>Threshold) ? (in-Threshold) : 0);
 }
 
 // мускульное сокращение
-real NMuscle::MuscularReduction(real in)
+double NMuscle::MuscularReduction(double in)
 {
  for (int i=0; i<7; i++)
   mrOld[i] = mr[i];
@@ -456,10 +456,10 @@ real NMuscle::MuscularReduction(real in)
 
 
 // Инерционный элемент ОС мышцы
-real NMuscle::MuscleFeedback(real x_new, real x_old, real y_old,
-					  real k, real T1, real T2)
+double NMuscle::MuscleFeedback(double x_new, double x_old, double y_old,
+					  double k, double T1, double T2)
 {
- real res=0;
+ double res=0;
 
  res=(1.0-1.0/(T2*TimeStep))*y_old+(k/TimeStep-T1)*x_old/T2+T1*x_new/T2;
 

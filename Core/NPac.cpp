@@ -146,8 +146,8 @@ bool NPac::AReset(void)
 bool NPac::ACalculate(void)
 {
  size_t size=(MinInputDataSize<GetOutputDataSize(0))?MinInputDataSize:GetOutputDataSize(0);
- real Ts;
- real input;
+ double Ts;
+ double input;
 
  PreOutput->resize(NumInputs);
  for(int i=0;i<NumInputs;i++)

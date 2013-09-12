@@ -28,7 +28,7 @@ public: // Общедоступные свойства
 // Коэффициенты
 RDK::UCLProperty<Real,NEyeMuscle> MulCoeffs;
 
-RDK::ULProperty<real,NEyeMuscle> K;
+RDK::ULProperty<double,NEyeMuscle> K;
 
 // Постоянные времени
 RDK::UCLProperty<Real,NEyeMuscle> TC;
@@ -58,10 +58,10 @@ protected:
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду синуса
-bool SetAmplitude(real value);
+bool SetAmplitude(double value);
 
 // Устанавливает частоту генерации
-bool SetFrequency(real value);
+bool SetFrequency(double value);
 // --------------------------
 
 public:
@@ -97,7 +97,7 @@ virtual bool ACalculate(void);
 // --------------------------
 protected:
 // мускульное сокращение
-real MuscularReduction(size_t k,real in);
+double MuscularReduction(size_t k,double in);
 
 // Пороговая функция
 void ThresholdCount(size_t k);
