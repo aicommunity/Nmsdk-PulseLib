@@ -49,6 +49,8 @@ double VSecretionTC,VDissociationTC;
 // Постоянная составляющая результатов вычислений
 double OutputConstData;
 
+//Значение выхода синапса
+double syn_output;
 
 protected: // Основные свойства
 
@@ -71,7 +73,8 @@ size_t GetNumSynapses(void) const;
 // Возвращает синапс по индексу
 NPulseSynapse* GetSynapse(size_t i);
 // --------------------------
-
+double GetSynOutput(void);
+bool ResetOut(void);
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------

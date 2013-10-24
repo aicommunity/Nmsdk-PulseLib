@@ -84,7 +84,7 @@ virtual NPulseMembrane* New(void);
 // и 'false' в случае некорректного типа
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
-
+virtual bool UpdateChannelData(UEPtr<NPulseChannel> comp, UEPtr<UIPointer> pointer=0);
 // --------------------------
 // Скрытые методы управления компонентами
 // --------------------------

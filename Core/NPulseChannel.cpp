@@ -36,7 +36,7 @@ NPulseChannel::NPulseChannel(void)
 : Capacity("Capacity",this,&NPulseChannel::SetCapacity),
 Resistance("Resistance",this,&NPulseChannel::SetResistance),
 FBResistance("FBResistance",this,&NPulseChannel::SetFBResistance),
-Type("Type",this)
+Type("Type",this, &NPulseChannel::SetType)
 {
 }
 
@@ -90,7 +90,24 @@ bool NPulseChannel::SetFBResistance(const double &value)
   return false;
 
  return true;
+
 }
+
+//
+bool NPulseChannel::SetType(const double &value)
+{
+
+ Type.v=value;
+
+ UEPtr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(Owner);
+ if(membr)
+ {
+  membr->UpdateChannelData(this);
+ }
+
+ return true;
+}
+
 // --------------------------
 
 // --------------------------
@@ -229,7 +246,15 @@ bool NPulseChannel::ADelComponent(UEPtr<UContainer> comp)
  return true;
 }
 // --------------------------
+double NPulseChannel::GetSynOutput(void)
+{
+	 return 0;
+}
 
+bool NPulseChannel::ResetOut(void)
+{
+	 return false;
+}
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
@@ -269,13 +294,13 @@ bool NPulseChannel::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseChannel::ACalculate(void)
 {
- double channel_input=0;
+ /*double*/ channel_input=0;
  double G=0;
 
  // Получение доступа к данным синапса
  for(int i=0;i<NumComponents;i++)
   G+=static_pointer_cast<UADItem>(PComponents[i])->GetOutputData(0).Double[0];
- 
+
  // Получение данных канала
  if(FullInputDataSize>0)
  {

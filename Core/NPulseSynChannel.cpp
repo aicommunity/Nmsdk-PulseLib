@@ -185,6 +185,16 @@ bool NPulseSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
+double NPulseSynChannel::GetSynOutput()
+{
+    return syn_output;
+}
+
+bool NPulseSynChannel::ResetOut()
+{
+	POutputData[0].Double[0]=channel_input;
+    return true;
+}
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseSynChannel::ADefault(void)
 {
@@ -243,14 +253,14 @@ bool NPulseSynChannel::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseSynChannel::ACalculate(void)
 {
- double channel_input=0;
+ /*double*/ channel_input=0;
  size_t num_connected_channels=0;
  double G=0;
 
  // Расчет синапсов
  double input=0;
  size_t num_connected_synapsis=0;
- double syn_output=0;
+ /*double*/ syn_output=0;
 
 
  for(int n=0;n<NumInputs;n++)

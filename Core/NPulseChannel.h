@@ -40,6 +40,9 @@ RDK::ULProperty<double,NPulseChannel> Type;
 
 public: // Данные
 
+double channel_input;
+//double out;
+
 protected: // Основные свойства
 
 protected: // Временные переменные
@@ -61,7 +64,8 @@ size_t GetNumSynapses(void) const;
 // Возвращает синапс по индексу
 UEPtr<NPulseSynapse> GetSynapse(size_t i);
 // --------------------------
-
+virtual double GetSynOutput(void);// метод-заглушка
+virtual bool ResetOut(void);
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
@@ -73,6 +77,11 @@ bool SetResistance(const double &value);
 
 // Сопротивление перезаряда мембраны
 bool SetFBResistance(const double &value);
+
+//
+bool SetType(const double &value);
+
+
 // --------------------------
 
 // --------------------------

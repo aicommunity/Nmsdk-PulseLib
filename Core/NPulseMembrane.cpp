@@ -143,6 +143,30 @@ bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poin
  return true;
 }
 
+bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPointer> pointer)
+{
+  vector<NPulseChannel* >::iterator I;
+  if(channel->Type() < 0)
+  {
+   if(find(PosChannels.begin(),PosChannels.end(),channel) == PosChannels.end())
+	PosChannels.push_back(channel);
+   if((I=find(NegChannels.begin(),NegChannels.end(),channel)) != NegChannels.end())
+	NegChannels.erase(I);
+  }
+  else
+  if(channel->Type() > 0)
+  {
+   if(find(NegChannels.begin(),NegChannels.end(),channel) == NegChannels.end())
+	NegChannels.push_back(channel);
+   if((I=find(PosChannels.begin(),PosChannels.end(),channel)) != PosChannels.end())
+	PosChannels.erase(I);
+  }
+
+ else
+  return false;
+
+ return true;
+}
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
@@ -150,12 +174,16 @@ bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poin
 bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
 {
  UEPtr<NPulseChannel> channel=dynamic_pointer_cast<NPulseChannel>(comp);
- vector<NPulseChannel*>::iterator I;
- if((I=find(PosChannels.begin(),PosChannels.end(),channel)) != PosChannels.end())
-  PosChannels.erase(I);
- if((I=find(NegChannels.begin(),NegChannels.end(),channel)) != NegChannels.end())
-  NegChannels.erase(I);
-
+ if(channel)
+ {
+  vector<NPulseChannel*>::iterator I;
+  I=find(PosChannels.begin(),PosChannels.end(),channel);
+  if(I != PosChannels.end())
+   PosChannels.erase(I);
+  I=find(NegChannels.begin(),NegChannels.end(),channel);
+  if(I != NegChannels.end())
+   NegChannels.erase(I);
+ }
  return true;
 }
 // --------------------------
@@ -190,6 +218,18 @@ bool NPulseMembrane::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseMembrane::ACalculate(void)
 {
+if(!PosChannels.empty() && !NegChannels.empty())
+{
+	if(PosChannels[0]->GetSynOutput() > 1.0e-10)
+	{
+		NegChannels[0]->ResetOut();
+	}
+	else
+	if(NegChannels[0]->GetSynOutput() > 1.0e-10)
+	{
+		PosChannels[0]->ResetOut();
+	}
+}
  // Получение данных канала
 // Feedback=GetFullSumInput();
  Feedback=0;
