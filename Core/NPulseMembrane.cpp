@@ -31,7 +31,8 @@ namespace NMSDK {
 NPulseMembrane::NPulseMembrane(void)
 //: NADItem(name),
  : Feedback("Feedback",this),
-  FeedbackGain("FeedbackGain",this,&NPulseMembrane::SetFeedbackGain)
+  FeedbackGain("FeedbackGain",this,&NPulseMembrane::SetFeedbackGain),
+  ResetAvailable("ResetAvailable",this)
 {
 }
 
@@ -195,6 +196,7 @@ bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
 bool NPulseMembrane::ADefault(void)
 {
  FeedbackGain=2;
+ ResetAvailable=true;
 
  return true;
 }
@@ -218,7 +220,7 @@ bool NPulseMembrane::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseMembrane::ACalculate(void)
 {
-if(!PosChannels.empty() && !NegChannels.empty())
+if(!PosChannels.empty() && !NegChannels.empty() && ResetAvailable)
 {
 	if(PosChannels[0]->GetSynOutput() > 1.0e-10)
 	{

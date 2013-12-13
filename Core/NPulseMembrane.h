@@ -30,6 +30,9 @@ public: // Основные свойства
 // Коэффициент обратной связи
 RDK::ULProperty<double,NPulseMembrane> FeedbackGain;
 
+//Наличие механизма сброса
+RDK::ULProperty<bool,NPulseMembrane> ResetAvailable;
+
 public: // Данные
 // Значение обратной связи
 RDK::ULProperty<double,NPulseMembrane,ptPubState> Feedback;
