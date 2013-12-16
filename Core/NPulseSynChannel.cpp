@@ -243,10 +243,20 @@ bool NPulseSynChannel::AReset(void)
   return false;
 
  // —брос временных переменных
-// PreOutput=0;
- PreOutput->assign(PreOutput->size(),0);
+ if(Type>0)
+ {
+  POutputData[0].Double[0]=1;
+ }
+ else
+ if(Type<1)
+ {
+  POutputData[0].Double[0]=-1;
+ }
+ else
+ {
+  FillOutputData();
+ }
 
- FillOutputData();
  return true;
 }
 

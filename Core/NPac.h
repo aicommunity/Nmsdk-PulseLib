@@ -35,6 +35,11 @@ RDK::UCLProperty<vector<Real>,NPac> DissociationTC;
 // Коэффициент усиления
 RDK::UCLProperty<vector<Real>,NPac> Gain;
 
+/// Режим работы
+/// 0 - Обычный режим
+/// 1 - Со сбросом при одновременной активации обоих каналов
+RDK::ULProperty<int,NPac> Mode;
+
 protected: // Основные свойства
 
 protected: // Временные переменные

@@ -29,6 +29,7 @@ NPac::NPac(void)
 SecretionTC("SecretionTC",this,&NPac::SetSecretionTC),
 DissociationTC("DissociationTC",this,&NPac::SetDissociationTC),
 Gain("Gain",this,&NPac::SetGain),
+Mode("Mode",this),
 PreOutput("PreOutput",this)
 {
 }
@@ -121,6 +122,7 @@ bool NPac::ADefault(void)
  values[3][1]=-30;
  Gain=values;
 
+ Mode=0;
  return true;
 }
 
@@ -153,27 +155,71 @@ bool NPac::ACalculate(void)
  for(int i=0;i<NumInputs;i++)
   PreOutput[i].resize(size);
 
- for(int i=0;i<NumInputs;i++)
+ if(Mode == 0)
  {
-  for(size_t j=0;j<size;j++)
+  for(int i=0;i<NumInputs;i++)
   {
-   if(!GetInputData(i))
-    continue;
-   input=GetInputData(i)->Double[j];
+   for(size_t j=0;j<size;j++)
+   {
+	if(!GetInputData(i))
+	 continue;
+	input=GetInputData(i)->Double[j];
 
-   Ts=(fabs(input)>0)?SecretionTC[i][j]:DissociationTC[i][j];
-   PreOutput[i][j]+=(input/PulseAmplitude[i][j]-PreOutput[i][j])/(Ts*TimeStep);
+	Ts=(fabs(input)>0)?SecretionTC[i][j]:DissociationTC[i][j];
+	PreOutput[i][j]+=(input/PulseAmplitude[i][j]-PreOutput[i][j])/(Ts*TimeStep);
+   }
+  }
+
+  for(size_t j=0;j<size;j++)
+   POutputData[0].Double[j]=0;
+
+  for(int i=0;i<NumInputs;i++)
+  {
+   for(size_t j=0;j<size;j++)
+   {
+	POutputData[0].Double[j]+=PreOutput[i][j]*Gain[i][j];
+   }
   }
  }
-
- for(size_t j=0;j<size;j++)
-  POutputData[0].Double[j]=0;
-
- for(int i=0;i<NumInputs;i++)
+ else
+ if(Mode == 1)
  {
+  for(int i=0;i<NumInputs;i++)
+  {
+   for(size_t j=0;j<size;j++)
+   {
+	if(!GetInputData(i))
+	 continue;
+	input=GetInputData(i)->Double[j];
+
+	Ts=(fabs(input)>0)?SecretionTC[i][j]:DissociationTC[i][j];
+	PreOutput[i][j]+=(input/PulseAmplitude[i][j]-PreOutput[i][j])/(Ts*TimeStep);
+   }
+  }
+
+  for(size_t j=0;j<size;j++)
+   POutputData[0].Double[j]=0;
+
   for(size_t j=0;j<size;j++)
   {
-   POutputData[0].Double[j]+=PreOutput[i][j]*Gain[i][j];
+   double pos_values=0;
+   double neg_values=0;
+   for(int i=0;i<NumInputs;i++)
+   {
+	if(PreOutput[i][j]*Gain[i][j]>0)
+	 pos_values+=PreOutput[i][j]*Gain[i][j];
+	if(PreOutput[i][j]*Gain[i][j]<0)
+	 neg_values+=PreOutput[i][j]*Gain[i][j];
+   }
+   if(pos_values>1e-5 && neg_values<-1e-5)
+   {
+	for(int i=0;i<NumInputs;i++)
+	 PreOutput[i][j]=0;
+
+	POutputData[0].Double[j]=0.0;
+   }
+   else
+    POutputData[0].Double[j]=pos_values+neg_values;
   }
  }
 

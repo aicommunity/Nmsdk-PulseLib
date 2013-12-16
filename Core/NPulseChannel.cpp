@@ -287,7 +287,14 @@ bool NPulseChannel::ABuild(void)
 // —брос процесса счета.
 bool NPulseChannel::AReset(void)
 {
- FillOutputData();
+ if(Type>0)
+  POutputData[0].Double[0]=1;
+ else
+ if(Type<0)
+  POutputData[0].Double[0]=-1;
+ else
+  FillOutputData();
+
  return true;
 }
 
