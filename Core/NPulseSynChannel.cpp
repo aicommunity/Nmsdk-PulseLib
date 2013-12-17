@@ -120,7 +120,7 @@ bool NPulseSynChannel::SetSynapseResistance(const double &value)
   return false;
 
  if(InhibitionCoeff.v>0)
-  OutputConstData=4.0*InhibitionCoeff.v/value;
+  OutputConstData=4.0*(InhibitionCoeff.v+1)/value;
  else
   OutputConstData=1.0/value;
 
