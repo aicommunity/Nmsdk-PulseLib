@@ -533,6 +533,7 @@ bool NPulseSimpleLTZone::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseSimpleLTZone::ACalculate(void)
 {
+ generator.SetEnvironment(GetEnvironment());
  // расчет на шаге
  NeuralPotential=0;
 
