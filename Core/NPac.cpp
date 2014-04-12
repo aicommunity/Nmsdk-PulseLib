@@ -30,6 +30,7 @@ SecretionTC("SecretionTC",this,&NPac::SetSecretionTC),
 DissociationTC("DissociationTC",this,&NPac::SetDissociationTC),
 Gain("Gain",this,&NPac::SetGain),
 Mode("Mode",this),
+TCMode("TCMode",this),
 PreOutput("PreOutput",this)
 {
 }
@@ -62,6 +63,7 @@ bool NPac::SetDissociationTC(const vector<Real> &value)
 }
 
 // Усиление
+
 bool NPac::SetGain(const vector<Real> &value)
 {
  return true;
@@ -123,6 +125,7 @@ bool NPac::ADefault(void)
  Gain=values;
 
  Mode=0;
+ TCMode=1;
  return true;
 }
 
@@ -155,7 +158,22 @@ bool NPac::ACalculate(void)
  for(int i=0;i<NumInputs;i++)
   PreOutput[i].resize(size);
 
- if(Mode == 0)
+ if(TCMode == 0)
+ {
+  for(int i=0;i<NumInputs;i++)
+  {
+   for(size_t j=0;j<size;j++)
+   {
+	if(!GetInputData(i))
+	 continue;
+	input=GetInputData(i)->Double[j];
+
+	PreOutput[i][j]=input/PulseAmplitude[i][j];
+   }
+  }
+ }
+ else
+ if(TCMode == 1)
  {
   for(int i=0;i<NumInputs;i++)
   {
@@ -169,10 +187,12 @@ bool NPac::ACalculate(void)
 	PreOutput[i][j]+=(input/PulseAmplitude[i][j]-PreOutput[i][j])/(Ts*TimeStep);
    }
   }
-
+ }
   for(size_t j=0;j<size;j++)
    POutputData[0].Double[j]=0;
 
+ if(Mode == 0)
+ {
   for(int i=0;i<NumInputs;i++)
   {
    for(size_t j=0;j<size;j++)
@@ -184,22 +204,6 @@ bool NPac::ACalculate(void)
  else
  if(Mode == 1)
  {
-  for(int i=0;i<NumInputs;i++)
-  {
-   for(size_t j=0;j<size;j++)
-   {
-	if(!GetInputData(i))
-	 continue;
-	input=GetInputData(i)->Double[j];
-
-	Ts=(fabs(input)>0)?SecretionTC[i][j]:DissociationTC[i][j];
-	PreOutput[i][j]+=(input/PulseAmplitude[i][j]-PreOutput[i][j])/(Ts*TimeStep);
-   }
-  }
-
-  for(size_t j=0;j<size;j++)
-   POutputData[0].Double[j]=0;
-
   for(size_t j=0;j<size;j++)
   {
    double pos_values=0;

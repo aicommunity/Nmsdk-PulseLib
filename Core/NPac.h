@@ -40,6 +40,11 @@ RDK::UCLProperty<vector<Real>,NPac> Gain;
 /// 1 - Со сбросом при одновременной активации обоих каналов
 RDK::ULProperty<int,NPac> Mode;
 
+/// Режим накопления
+/// 0 - Выключен
+/// 1 - Включен
+RDK::ULProperty<int,NPac> TCMode;
+
 protected: // Основные свойства
 
 protected: // Временные переменные
