@@ -137,6 +137,12 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->Default();
  UploadClass("NReceptor",cont);
 
+ cont=new NCPac;
+ cont->SetName("Pac");
+ cont->Default();
+ dynamic_pointer_cast<NCPac>(UEPtr<UContainer>(cont))->TCMode=0;
+ UploadClass("NCPac",cont);
+
 /*
  cont=new NNeuronLife("NeuronLife");
  cont->Default();
