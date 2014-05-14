@@ -36,7 +36,8 @@ NPulseChannel::NPulseChannel(void)
 : Capacity("Capacity",this,&NPulseChannel::SetCapacity),
 Resistance("Resistance",this,&NPulseChannel::SetResistance),
 FBResistance("FBResistance",this,&NPulseChannel::SetFBResistance),
-Type("Type",this, &NPulseChannel::SetType)
+Type("Type",this, &NPulseChannel::SetType),
+PotentialSummaryMode("PotentialSummaryMode",this, &NPulseChannel::SetPotentialSummaryMode)
 {
 }
 
@@ -108,6 +109,10 @@ bool NPulseChannel::SetType(const double &value)
  return true;
 }
 
+bool NPulseChannel::SetPotentialSummaryMode(const int &value)
+{
+ return true;
+}
 // --------------------------
 
 // --------------------------
@@ -272,6 +277,8 @@ bool NPulseChannel::ADefault(void)
 
  Type=0;
 
+ PotentialSummaryMode=0;
+
  return true;
 }
 
@@ -321,7 +328,18 @@ bool NPulseChannel::ACalculate(void)
 	 channel_input+=*data;
    }
   }
-  channel_input/=FullInputDataSize;
+  switch(PotentialSummaryMode)
+  {
+  case 0:
+   channel_input/=FullInputDataSize;
+  break;
+
+  case 1:
+  break;
+
+  default:
+  ;
+  }
  }
 
  double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;

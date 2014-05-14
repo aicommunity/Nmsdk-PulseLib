@@ -322,8 +322,19 @@ bool NPulseSynChannel::ACalculate(void)
  }
 
  // Получение данных канала
- if(num_connected_channels)
-  channel_input/=num_connected_channels;
+  switch(PotentialSummaryMode)
+  {
+  case 0:
+   if(num_connected_channels)
+    channel_input/=num_connected_channels;
+  break;
+
+  case 1:
+  break;
+
+  default:
+   ;
+  }
 
  double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
  // Получение информации об обратной связи
@@ -620,8 +631,19 @@ bool NContinuesSynChannel::ACalculate(void)
  }
 
  // Получение данных канала
- if(num_connected_channels)
-  channel_input/=num_connected_channels;
+  switch(PotentialSummaryMode)
+  {
+  case 0:
+   if(num_connected_channels)
+    channel_input/=num_connected_channels;
+  break;
+
+  case 1:
+  break;
+
+  default:
+   ;
+  }
 
  // Расчет
  double *out=&POutputData[0].Double[0];

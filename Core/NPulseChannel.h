@@ -38,6 +38,11 @@ RDK::ULProperty<double,NPulseChannel> FBResistance;
 // >0 - накапливает положительный вклад в потенциал
 RDK::ULProperty<double,NPulseChannel> Type;
 
+// Тип суммации потенциалов в узлах ветвления
+// С усреднением
+// Алгебраическая сумма
+RDK::ULProperty<int,NPulseChannel> PotentialSummaryMode;
+
 public: // Данные
 
 double channel_input;
@@ -81,7 +86,7 @@ bool SetFBResistance(const double &value);
 //
 bool SetType(const double &value);
 
-
+bool SetPotentialSummaryMode(const int &value);
 // --------------------------
 
 // --------------------------

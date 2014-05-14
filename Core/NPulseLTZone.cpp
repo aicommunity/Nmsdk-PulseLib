@@ -537,7 +537,6 @@ bool NPulseSimpleLTZone::ACalculate(void)
  // расчет на шаге
  NeuralPotential=0;
 
-// NeuralPotential=GetFullSumInput();
  if(NumInputs>0)
  {
   size_t inpsize;
@@ -561,7 +560,6 @@ bool NPulseSimpleLTZone::ACalculate(void)
   if(fabs(generator.Frequency.v-NeuralPotential.v)>0.001)
   {
    generator.Frequency=NeuralPotential.v;
- //  generator.PulseCounter.v=-TimeStep/generator.Frequency.v;
    generator.Reset();
   }
  }
