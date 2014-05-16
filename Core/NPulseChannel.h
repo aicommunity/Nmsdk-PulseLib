@@ -42,6 +42,7 @@ RDK::ULProperty<double,NPulseChannel> Type;
 // С усреднением
 // Алгебраическая сумма
 RDK::ULProperty<int,NPulseChannel> PotentialSummaryMode;
+RDK::ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
 
 public: // Данные
 

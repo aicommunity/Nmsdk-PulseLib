@@ -266,6 +266,18 @@ bool NPulseNeuron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointe
   UEPtr<NPulseMembrane> membrane=dynamic_pointer_cast<NPulseMembrane>(comp);
   if(membrane)
   {
+  vector<NPulseMembrane*>::iterator I;
+  bool exists = false;
+  for(I=Membranes.begin();I!=Membranes.end();I++)
+  {
+   if(comp==*I)
+   {
+	exists=true;
+	break;
+   }
+  }
+  if(!exists)
+   Membranes.push_back(membrane);
    // Подключаем синапсы хебба если они есть
    for(int i=0;i<membrane->GetNumComponents();i++)
    {
@@ -291,7 +303,18 @@ bool NPulseNeuron::ADelComponent(UEPtr<UContainer> comp)
  else
  if(comp == NegGenerator)
   NegGenerator=0;
-
+ else
+ {
+  vector<NPulseMembrane*>::iterator I;
+  for(I=Membranes.begin();I!=Membranes.end();I++)
+  {
+   if(comp==*I)
+   {
+	Membranes.erase(I);
+	break;
+   }
+  }
+ }
  return NNeuron::ADelComponent(comp);
 }
 // --------------------------
@@ -349,6 +372,25 @@ bool NPulseNeuron::ACalculate(void)
  return true;
 }
 // --------------------------
+int NPulseNeuron::GetNumOfConnectedSynToPosCh(NPulseMembrane* membr)
+{
+  int temp=0;
+  for(int i=0;i<membr->GetNumPosChannels();i++)
+  {
+   temp+=membr->GetPosChannel(i)->NumConnectedSynapsis;
+  }
+  return temp;
+}
+
+int NPulseNeuron::GetNumOfConnectedSynToNegCh(NPulseMembrane* membr)
+{
+  int temp=0;
+  for(int i=0;i<membr->GetNumNegChannels();i++)
+  {
+   temp+=membr->GetNegChannel(i)->NumConnectedSynapsis;
+  }
+  return temp;
+}
 
 }
 #endif

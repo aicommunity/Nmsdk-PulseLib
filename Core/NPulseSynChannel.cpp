@@ -296,7 +296,7 @@ bool NPulseSynChannel::ACalculate(void)
    if(PreOutput->size()<num_connected_synapsis)
    {
 	PreOutput->resize(num_connected_synapsis);
-    PreOutput.v[num_connected_synapsis-1]=0;
+	PreOutput.v[num_connected_synapsis-1]=0;
    }
 
    input=GetInputData(n)->Double[0];
@@ -310,9 +310,9 @@ bool NPulseSynChannel::ACalculate(void)
    }
 
    if(input>0)
-    PreOutput.v[num_connected_synapsis-1]+=(input/PulseAmplitude.v-PreOutput.v[num_connected_synapsis-1])/VSecretionTC;
+	PreOutput.v[num_connected_synapsis-1]+=(input/PulseAmplitude.v-PreOutput.v[num_connected_synapsis-1])/VSecretionTC;
    else
-    PreOutput.v[num_connected_synapsis-1]-=PreOutput.v[num_connected_synapsis-1]/VDissociationTC;
+	PreOutput.v[num_connected_synapsis-1]-=PreOutput.v[num_connected_synapsis-1]/VDissociationTC;
 
    syn_output=OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v[num_connected_synapsis-1])*PreOutput.v[num_connected_synapsis-1];
 
@@ -320,7 +320,7 @@ bool NPulseSynChannel::ACalculate(void)
 	G+=syn_output;
   }
  }
-
+ NumConnectedSynapsis=num_connected_synapsis;
  // Получение данных канала
   switch(PotentialSummaryMode)
   {
@@ -629,6 +629,7 @@ bool NContinuesSynChannel::ACalculate(void)
 	G+=syn_output;
   }
  }
+ NumConnectedSynapsis=num_connected_synapsis;
 
  // Получение данных канала
   switch(PotentialSummaryMode)

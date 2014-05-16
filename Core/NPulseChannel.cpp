@@ -37,7 +37,8 @@ NPulseChannel::NPulseChannel(void)
 Resistance("Resistance",this,&NPulseChannel::SetResistance),
 FBResistance("FBResistance",this,&NPulseChannel::SetFBResistance),
 Type("Type",this, &NPulseChannel::SetType),
-PotentialSummaryMode("PotentialSummaryMode",this, &NPulseChannel::SetPotentialSummaryMode)
+PotentialSummaryMode("PotentialSummaryMode",this, &NPulseChannel::SetPotentialSummaryMode),
+NumConnectedSynapsis("NumConnectedSynapsis",this)
 {
 }
 
@@ -278,6 +279,8 @@ bool NPulseChannel::ADefault(void)
  Type=0;
 
  PotentialSummaryMode=0;
+
+ NumConnectedSynapsis = 0;
 
  return true;
 }

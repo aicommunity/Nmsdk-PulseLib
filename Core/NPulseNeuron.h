@@ -44,6 +44,8 @@ RDK::UEPointer<NPulseLTZone,NPulseNeuron> LTZone;
 
 NConstGenerator *PosGenerator,*NegGenerator;
 
+vector<NPulseMembrane*> Membranes;
+
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
@@ -137,6 +139,9 @@ virtual bool AReset(void);
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
+public:
+int GetNumOfConnectedSynToPosCh(NPulseMembrane* membr);
+int GetNumOfConnectedSynToNegCh(NPulseMembrane* membr);
 };
 
 }
