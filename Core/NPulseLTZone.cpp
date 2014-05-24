@@ -560,11 +560,13 @@ bool NPulseSimpleLTZone::ACalculate(void)
   if(fabs(generator.Frequency.v-NeuralPotential.v)>0.001)
   {
    generator.Frequency=NeuralPotential.v;
-   generator.Reset();
+//   generator.Reset();
   }
  }
  else
   generator.Frequency=0;
+
+ generator.AvgInterval=AvgInterval;
  generator.Calculate();
 
  POutputData[0].Double[0]=generator.GetOutputData(0).Double[0];
