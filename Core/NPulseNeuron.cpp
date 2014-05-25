@@ -375,7 +375,7 @@ bool NPulseNeuron::ACalculate(void)
 int NPulseNeuron::GetNumOfConnectedSynToPosCh(NPulseMembrane* membr)
 {
   int temp=0;
-  for(int i=0;i<membr->GetNumPosChannels();i++)
+  for(size_t i=0;i<membr->GetNumPosChannels();i++)
   {
    temp+=membr->GetPosChannel(i)->NumConnectedSynapsis;
   }
@@ -385,7 +385,7 @@ int NPulseNeuron::GetNumOfConnectedSynToPosCh(NPulseMembrane* membr)
 int NPulseNeuron::GetNumOfConnectedSynToNegCh(NPulseMembrane* membr)
 {
   int temp=0;
-  for(int i=0;i<membr->GetNumNegChannels();i++)
+  for(size_t i=0;i<membr->GetNumNegChannels();i++)
   {
    temp+=membr->GetNegChannel(i)->NumConnectedSynapsis;
   }
