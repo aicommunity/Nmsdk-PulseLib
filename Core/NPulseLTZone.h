@@ -24,7 +24,7 @@ namespace NMSDK {
 
 class NPulseNeuron;
 
-class NLTZone: public UNet
+class RDK_LIB_TYPE NLTZone: public UNet
 {
 public: // Общедоступные свойства
 // Порог нейрона
@@ -63,7 +63,7 @@ virtual bool ADefault(void);
 };
 
 
-class NPulseLTZone: public NLTZone
+class RDK_LIB_TYPE NPulseLTZone: public NLTZone
 {
 public: // Общедоступные свойства
 // Постоянная времени
@@ -155,7 +155,7 @@ virtual bool ACalculate(void);
 // --------------------------
 };
 
-class NContinuesLTZone: public NLTZone
+class RDK_LIB_TYPE NContinuesLTZone: public NLTZone
 {
 public: // Общедоступные свойства
 // Постоянная времени
@@ -247,7 +247,7 @@ virtual bool ACalculate(void);
 // --------------------------
 };
 
-class NPulseSimpleLTZone: public NPulseLTZone
+class RDK_LIB_TYPE NPulseSimpleLTZone: public NPulseLTZone
 {
 public: // Общедоступные свойства
 
@@ -310,7 +310,7 @@ virtual bool ACalculate(void);
 // --------------------------
 };
 
-class NContinuesSimpleLTZone: public NContinuesLTZone
+class RDK_LIB_TYPE NContinuesSimpleLTZone: public NContinuesLTZone
 {
 public: // Общедоступные свойства
 

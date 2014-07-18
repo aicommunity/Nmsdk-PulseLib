@@ -24,7 +24,7 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-class NPulseNeuron: public NNeuron
+class RDK_LIB_TYPE NPulseNeuron: public NNeuron
 {
 public: // Статистика
 // Число связей организованных этим нейроном на других (и себе)
