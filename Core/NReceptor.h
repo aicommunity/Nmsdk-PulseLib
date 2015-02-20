@@ -21,7 +21,7 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-class NReceptor: public NSource
+class RDK_LIB_TYPE NReceptor: public NSource
 {
 public: // Общедоступные свойства
 // Коэффициент усиления входного сигнала

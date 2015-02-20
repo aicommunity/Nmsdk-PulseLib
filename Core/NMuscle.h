@@ -24,7 +24,7 @@ namespace NMSDK {
 
 //using namespace MySDK;
 
-class NMuscle: public UNet
+class RDK_LIB_TYPE NMuscle: public UNet
 {
 public: // Общедоступные свойства
 // Коэффициенты

@@ -35,7 +35,7 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-class NPulseLibrary: public ULibrary
+class RDK_LIB_TYPE NPulseLibrary: public ULibrary
 {
 public: // Ìועמהû
 // --------------------------
@@ -53,7 +53,7 @@ virtual void CreateClassSamples(UStorage *storage);
 // --------------------------
 };                  
 
-extern NPulseLibrary PulseLibrary;
+extern RDK_LIB_TYPE NPulseLibrary PulseLibrary;
 
 }
 

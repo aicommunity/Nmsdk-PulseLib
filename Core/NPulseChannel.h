@@ -21,7 +21,7 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-class NPulseChannel: public UNet
+class RDK_LIB_TYPE NPulseChannel: public UNet
 {
 public: // Общедоступные свойства
 // Емкость мембраны

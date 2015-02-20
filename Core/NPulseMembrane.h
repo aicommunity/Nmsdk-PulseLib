@@ -24,7 +24,7 @@ namespace NMSDK {
 
 class NPulseNeuron;
 
-class NPulseMembrane: public UNet
+class RDK_LIB_TYPE NPulseMembrane: public UNet
 {
 public: // Основные свойства
 // Коэффициент обратной связи

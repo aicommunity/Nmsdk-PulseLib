@@ -22,7 +22,7 @@ namespace NMSDK {
 
 //using namespace MySDK;
 
-class NEyeMuscle: public UNet
+class RDK_LIB_TYPE NEyeMuscle: public UNet
 {
 public: // Общедоступные свойства
 // Коэффициенты

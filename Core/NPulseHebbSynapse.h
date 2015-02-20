@@ -22,7 +22,7 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-class NPulseHebbSynapse: public NPulseSynapse
+class RDK_LIB_TYPE NPulseHebbSynapse: public NPulseSynapse
 {
 public: // Общедоступные свойства
 RDK::ULProperty<double,NPulseHebbSynapse> Min;

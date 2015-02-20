@@ -20,7 +20,7 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-class NPulseSynChannel: public NPulseChannel
+class RDK_LIB_TYPE NPulseSynChannel: public NPulseChannel
 {
 public: // Общедоступные свойства
 // Параметры синапсов
@@ -154,7 +154,7 @@ virtual bool ACalculate(void);
 // --------------------------
 };
 
-class NContinuesSynChannel: public NPulseChannel
+class RDK_LIB_TYPE NContinuesSynChannel: public NPulseChannel
 {
 public: // Общедоступные свойства
 // Параметры синапсов
