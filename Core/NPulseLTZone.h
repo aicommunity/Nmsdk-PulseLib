@@ -37,6 +37,8 @@ NPulseNeuron* Neuron;
 protected: // Основные свойства
 
 protected: // Временные переменные
+/// Число подключенных синапсов к этой низкопороговой зоне
+int CachedNumAConnectors;
 
 public: // Методы
 // --------------------------
@@ -59,6 +61,9 @@ bool SetThreshold(const double &value);
 protected:
 // Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
+
+// Сброс процесса счета.
+virtual bool AReset(void);
 // --------------------------
 };
 

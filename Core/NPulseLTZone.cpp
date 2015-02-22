@@ -62,6 +62,12 @@ bool NLTZone::ADefault(void)
  return true;
 }
 
+// —брос процесса счета.
+bool NLTZone::AReset(void)
+{
+ CachedNumAConnectors=static_cast<double>(GetNumAConnectors(0));
+ return true;
+}
 // --------------------------
 
 
@@ -178,6 +184,7 @@ bool NPulseLTZone::ABuild(void)
 // —брос процесса счета.
 bool NPulseLTZone::AReset(void)
 {
+ NLTZone::AReset();
  // —брос временных переменных
  NeuralPotential=0;
  PrePotential=0;
@@ -274,7 +281,7 @@ bool NPulseLTZone::ACalculate(void)
   POutputData[3].Double[i]=*I;
 
  if(MainOwner)
-  static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=static_cast<double>(GetNumAConnectors(0));
+  static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
@@ -393,6 +400,7 @@ bool NContinuesLTZone::ABuild(void)
 // —брос процесса счета.
 bool NContinuesLTZone::AReset(void)
 {
+ NLTZone::AReset();
  // —брос временных переменных
  NeuralPotential=0;
  PrePotential=0;
@@ -447,7 +455,7 @@ bool NContinuesLTZone::ACalculate(void)
   POutputData[2].Double[0]=POutputData[0].Double[0];
 
  if(MainOwner)
-  static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=static_cast<double>(GetNumAConnectors(0));
+  static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
@@ -576,7 +584,7 @@ bool NPulseSimpleLTZone::ACalculate(void)
  POutputData[3]=generator.GetOutputData(3);
 
  if(MainOwner)
-  static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=static_cast<double>(GetNumAConnectors(0));
+  static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
@@ -679,7 +687,7 @@ bool NContinuesSimpleLTZone::ACalculate(void)
  POutputData[2].Double[0]=NeuralPotential.v;
 
  if(MainOwner)
-  static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=static_cast<double>(GetNumAConnectors(0));
+  static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
