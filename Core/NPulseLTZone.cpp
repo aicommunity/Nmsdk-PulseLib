@@ -225,12 +225,13 @@ bool NPulseLTZone::ACalculate(void)
 // if(PulseCounter.v > 0)
 //  --PulseCounter;
 
+ double current_time=GetTime().GetDoubleTime();
  if(PrePotential.v>=Threshold.v)
  {
   POutputData[0].Double[0]=PulseAmplitude.v;
   POutputData[1].Double[0]=PulseAmplitude.v;
   if(!PulseFlag)
-   AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
+   AvgFrequencyCounter->push_back(current_time);
   PulseFlag=true;
  }
  else
@@ -251,7 +252,7 @@ bool NPulseLTZone::ACalculate(void)
  {
   while(I != J)
   {
-   if(Environment->GetTime().GetDoubleTime()-*I>AvgInterval)// && AvgFrequencyCounter->size()>3)
+   if(current_time-*I>AvgInterval)// && AvgFrequencyCounter->size()>3)
    {
 	K=I;
 	++I;

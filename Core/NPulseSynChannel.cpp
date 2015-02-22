@@ -285,7 +285,8 @@ bool NPulseSynChannel::ACalculate(void)
 
  for(int n=0;n<NumInputs;n++)
  {
-  if(GetInputDataSize(n) == 0)
+  size_t inpsize=GetInputDataSize(n);
+  if(inpsize == 0)
    continue;
 //  const UCItem& item=GetCItem(n);
 //  if(dynamic_cast<NPulseChannel*>(item.Item) ||
@@ -293,14 +294,10 @@ bool NPulseSynChannel::ACalculate(void)
 //	 dynamic_cast<NConstGenerator*>(item.Item))
   if(!SynapseInputFlagsList[n])
   {
-   size_t inpsize=0;
-   if((inpsize=GetInputDataSize(n)) >0)
-   {
-    double *data=&(GetInputData(n)->Double[0]);
-    for(size_t j=0;j<inpsize;j++,++data)
-     channel_input+=*data;
-    ++num_connected_channels;
-   }
+	double *data=&(GetInputData(n)->Double[0]);
+	for(size_t j=0;j<inpsize;j++,++data)
+	 channel_input+=*data;
+	++num_connected_channels;
   }
   else // Остальные подключенные компоненты считаем входами синапсов
   {
