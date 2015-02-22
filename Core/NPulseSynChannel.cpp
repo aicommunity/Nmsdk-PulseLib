@@ -257,6 +257,16 @@ bool NPulseSynChannel::AReset(void)
   FillOutputData();
  }
 
+ SynapseInputFlagsList.resize(NumInputs,true);
+ for(int n=0;n<NumInputs;n++)
+ {
+  const UCItem& item=GetCItem(n);
+  if(dynamic_cast<NPulseChannel*>(item.Item) ||
+	 dynamic_cast<NReceptor*>(item.Item) ||
+	 dynamic_cast<NConstGenerator*>(item.Item))
+   SynapseInputFlagsList[n]=false;
+ }
+
  return true;
 }
 
@@ -277,9 +287,11 @@ bool NPulseSynChannel::ACalculate(void)
  {
   if(GetInputDataSize(n) == 0)
    continue;
-  if(dynamic_cast<NPulseChannel*>(GetCItem(n).Item) ||
-     dynamic_cast<NReceptor*>(GetCItem(n).Item) ||
-	 dynamic_cast<NConstGenerator*>(GetCItem(n).Item))
+//  const UCItem& item=GetCItem(n);
+//  if(dynamic_cast<NPulseChannel*>(item.Item) ||
+//	 dynamic_cast<NReceptor*>(item.Item) ||
+//	 dynamic_cast<NConstGenerator*>(item.Item))
+  if(!SynapseInputFlagsList[n])
   {
    size_t inpsize=0;
    if((inpsize=GetInputDataSize(n)) >0)

@@ -55,6 +55,8 @@ double syn_output;
 protected: // Основные свойства
 
 protected: // Временные переменные
+/// Массив признаков является ли вход синапсом или нет
+std::vector<bool> SynapseInputFlagsList;
 
 public: // Методы
 // --------------------------
