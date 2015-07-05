@@ -16,7 +16,7 @@ See file license.txt for more information
 #ifndef NEYEMUSCLE_H
 #define NEYEMUSCLE_H
 
-#include "../../Kernel/NSupport.h"
+#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 
 namespace NMSDK {
 

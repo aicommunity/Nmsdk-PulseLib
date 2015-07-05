@@ -16,8 +16,8 @@ See file license.txt for more information
 #ifndef NPULSE_SYNAPSE_H
 #define NPULSE_SYNAPSE_H
 
-#include "../../Kernel/NSupport.h"
-#include "../BCL/NNet.h"
+#include "../../Nmsdk-BasicLib/Core/NSupport.h"
+#include "../../Nmsdk-BasicLib/Core/NNet.h"
 
 
 namespace NMSDK {

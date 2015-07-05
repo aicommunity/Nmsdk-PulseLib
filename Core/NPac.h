@@ -15,7 +15,7 @@ See file license.txt for more information
 #ifndef NPAC_H
 #define NPAC_H
 
-#include "../BCL/NNet.h"
+#include "../../Nmsdk-BasicLib/Core/NNet.h"
 
 
 namespace NMSDK {

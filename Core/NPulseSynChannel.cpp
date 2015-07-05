@@ -19,8 +19,7 @@ See file license.txt for more information
 #include "NPulseSynChannel.h"
 #include "NPulseMembrane.h"
 #include "NPulseNeuron.h"
-#include "../NeuronLifeLib/NPulseLifeNeuron.h"
-//#include "../BCL/NConnector.h"
+#include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
 #include "NReceptor.h"
 
 

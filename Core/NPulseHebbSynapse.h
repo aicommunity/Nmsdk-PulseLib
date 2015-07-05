@@ -16,7 +16,7 @@ See file license.txt for more information
 #ifndef NPULSE_HEBB_SYNAPSE_H
 #define NPULSE_HEBB_SYNAPSE_H
 
-#include "../../Kernel/NSupport.h"
+#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "NPulseSynapse.h"
 
 

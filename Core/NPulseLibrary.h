@@ -14,7 +14,7 @@ See file license.txt for more information
 #ifndef NPulseLibraryH
 #define NPulseLibraryH
 
-#include "../../Kernel/NSupport.h"
+#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 
 #include "NAfferentNeuron.h"
 #include "NEyeMuscle.h"

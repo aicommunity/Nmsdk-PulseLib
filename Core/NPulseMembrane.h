@@ -16,7 +16,7 @@ See file license.txt for more information
 #ifndef NPULSE_MEMBRANE_H
 #define NPULSE_MEMBRANE_H
 
-#include "../../Kernel/NSupport.h"
+#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "NPulseChannel.h"
 
 

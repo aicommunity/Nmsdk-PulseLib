@@ -16,11 +16,11 @@ See file license.txt for more information
 #ifndef NPULSE_NEURON_H
 #define NPULSE_NEURON_H
 
-#include "../BCL/NNeuron.h"
+#include "../../Nmsdk-BasicLib/Core/NNeuron.h"
 #include "NPulseLTZone.h"
-#include "../SourceLib/NConstGenerator.h"
+#include "../../Nmsdk-SourceLib/Core/NConstGenerator.h"
 #include "NPulseMembrane.h"
-#include "NAfferentNeuron.h"
+//#include "NAfferentNeuron.h"
 
 namespace NMSDK {
 

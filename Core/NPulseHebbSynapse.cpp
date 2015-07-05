@@ -17,7 +17,7 @@ See file license.txt for more information
 #define NPULSE_HEBB_SYNAPSE_CPP
 
 #include "NPulseHebbSynapse.h"
-#include "../NeuronLifeLib/NPulseLifeNeuron.h"
+#include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
 #include "NPulseChannel.h"
 
 namespace NMSDK {

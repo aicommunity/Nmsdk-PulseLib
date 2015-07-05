@@ -16,7 +16,7 @@ See file license.txt for more information
 #ifndef NMUSCLE_H
 #define NMUSCLE_H
 
-#include "../../Kernel/NSupport.h"
+#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 //#include "../BCL/NItem.h"
 #include "NReceptor.h"
 
