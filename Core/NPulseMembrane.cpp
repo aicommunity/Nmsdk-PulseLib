@@ -237,7 +237,7 @@ if(!PosChannels.empty() && !NegChannels.empty() && ResetAvailable)
  Feedback=0;
 
  for(int i=0;i<NumInputs;i++)
-  for(size_t j=0;j<GetInputDataSize(i);j++)
+  for(size_t j=0;j<GetInputDataSize(i)[1];j++)
    Feedback.v+=GetInputData(i)->Double[j];
 
  Feedback.v*=FeedbackGain.v;

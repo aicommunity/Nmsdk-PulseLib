@@ -104,12 +104,13 @@ bool NEyeMuscle::ADefault(void)
 // в случае успешной сборки
 bool NEyeMuscle::ABuild(void)
 {
- P1.resize(GetOutputDataSize(0));
- P2.resize(GetOutputDataSize(0));
- P3.resize(GetOutputDataSize(0));
- L.resize(GetOutputDataSize(0));
+ int size=GetOutputDataSize(0)[1];
+ P1.resize(size);
+ P2.resize(size);
+ P3.resize(size);
+ L.resize(size);
 
- Threshold.assign(GetOutputDataSize(0),0.5);
+ Threshold.assign(size,0.5);
 
  return true;
 }
@@ -117,15 +118,16 @@ bool NEyeMuscle::ABuild(void)
 // Сброс процесса счета.
 bool NEyeMuscle::AReset(void)
 {
- P1.assign(GetOutputDataSize(0),0);
- P2.assign(GetOutputDataSize(0),0);
- P3.assign(GetOutputDataSize(0),0);
- L.assign(GetOutputDataSize(0),0);
- Speed.assign(GetOutputDataSize(0),0);
- Acceleration.assign(GetOutputDataSize(0),0);
+ int size=GetOutputDataSize(0)[1];
+ P1.assign(size,0);
+ P2.assign(size,0);
+ P3.assign(size,0);
+ L.assign(size,0);
+ Speed.assign(size,0);
+ Acceleration.assign(size,0);
 
  // Порог
- Threshold.assign(GetOutputDataSize(0),0.5);
+ Threshold.assign(size,0.5);
 
  return true;
 }
@@ -133,23 +135,24 @@ bool NEyeMuscle::AReset(void)
 // Выполняет расчет этого объекта
 bool NEyeMuscle::ACalculate(void)
 {
- size_t k=0;
- SetOutputDataSize(0,NumInputs);
- SetOutputDataSize(1,NumInputs);
- SetOutputDataSize(2,NumInputs);
+ int k=0;
+ SetOutputDataSize(0,MMatrixSize(1,NumInputs));
+ SetOutputDataSize(1,MMatrixSize(1,NumInputs));
+ SetOutputDataSize(2,MMatrixSize(1,NumInputs));
+ int size=GetOutputDataSize(0)[1];
  for(int i=0;i<NumInputs;i++)
  {
-  P1.resize(GetOutputDataSize(0),0);
-  P2.resize(GetOutputDataSize(0),0);
-  P3.resize(GetOutputDataSize(0),0);
-  L.resize(GetOutputDataSize(0),0);
-  Speed.resize(GetOutputDataSize(0),0);
-  Acceleration.resize(GetOutputDataSize(0),0);
-  Threshold.resize(GetOutputDataSize(0),0.5);
+  P1.resize(size,0);
+  P2.resize(size,0);
+  P3.resize(size,0);
+  L.resize(size,0);
+  Speed.resize(size,0);
+  Acceleration.resize(size,0);
+  Threshold.resize(size,0.5);
 
-  for(size_t j=0;j<GetInputDataSize(i);j++)
+  for(int j=0;j<GetInputDataSize(i)[1];j++)
   {
-   if(k >= GetOutputDataSize(0))
+   if(k >= size)
 	break;
 
    double in=GetInputData(i)->Double[j];

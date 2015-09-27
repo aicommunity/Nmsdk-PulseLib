@@ -168,7 +168,7 @@ bool NPulseSynapse::ACalculate(void)
 {
  double input=0;
 
- if(NumInputs >0 && GetInputDataSize(0)>0)
+ if(NumInputs >0 && GetInputDataSize(0)[1]>0)
  {
   input=GetInputData(0)->Double[0];
   if(MainOwner && Owner)

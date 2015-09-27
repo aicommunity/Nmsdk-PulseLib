@@ -150,7 +150,7 @@ bool NPac::AReset(void)
 // Выполняет расчет этого объекта
 bool NPac::ACalculate(void)
 {
- size_t size=(MinInputDataSize<GetOutputDataSize(0))?MinInputDataSize:GetOutputDataSize(0);
+ size_t size=(MinInputDataSize<GetOutputDataSize(0)[1])?MinInputDataSize:GetOutputDataSize(0)[1];
  double Ts;
  double input;
 

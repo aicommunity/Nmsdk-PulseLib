@@ -128,9 +128,8 @@ bool NPulseHebbSynapse::ADefault(void)
   return false;
 
  SetNumOutputs(6);
- vector<size_t> size;
- size.assign(NumOutputs,1);
- SetOutputDataSize(size);
+ for(int i=0;i<NumOutputs;i++)
+  SetOutputDataSize(i,MMatrixSize(1,1));
 
 	Min=10;
 	Mout=10;
@@ -205,7 +204,7 @@ bool NPulseHebbSynapse::ACalculate(void)
  if(!NPulseSynapse::ACalculate())
   return false;
 
- if(NumInputs <2 || GetInputDataSize(0)<=0 || GetInputDataSize(1)<=0)
+ if(NumInputs <2 || GetInputDataSize(0)[1]<=0 || GetInputDataSize(1)[1]<=0)
   return true;
 
  motivation.assign(Kmot->size(),0);
@@ -213,9 +212,9 @@ bool NPulseHebbSynapse::ACalculate(void)
  ltzoneoutput=GetInputData(1)->Double[0];
 
  // Применяем мотивацию если есть
- if(NumInputs > 2 && GetInputDataSize(2)>0)
+ if(NumInputs > 2 && GetInputDataSize(2)[1]>0)
  {
-  size_t motmin=(Kmot->size()<GetInputDataSize(2))?Kmot->size():GetInputDataSize(2);
+  size_t motmin=(Kmot->size()<GetInputDataSize(2)[1])?Kmot->size():GetInputDataSize(2)[1];
   for(size_t i=0;i<motmin;i++)
    motivation[i]=GetInputData(2)->Double[i]*Kmot[i];
  }

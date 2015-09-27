@@ -284,7 +284,7 @@ bool NPulseSynChannel::ACalculate(void)
 
  for(int n=0;n<NumInputs;n++)
  {
-  size_t inpsize=GetInputDataSize(n);
+  size_t inpsize=GetInputDataSize(n)[1];
   if(inpsize == 0)
    continue;
 //  const UCItem& item=GetCItem(n);
@@ -603,7 +603,7 @@ bool NContinuesSynChannel::ACalculate(void)
 
  for(int n=0;n<NumInputs;n++)
  {
-  if(GetInputDataSize(n) == 0)
+  if(GetInputDataSize(n)[1] == 0)
    continue;
 //  if(dynamic_cast<NPulseChannel*>(GetCItem(n).Item) ||
 //     dynamic_cast<NReceptor*>(GetCItem(n).Item) ||
@@ -611,7 +611,7 @@ bool NContinuesSynChannel::ACalculate(void)
   if(!SynapseInputFlagsList[n])
   {
    size_t inpsize=0;
-   if((inpsize=GetInputDataSize(n)) >0)
+   if((inpsize=GetInputDataSize(n)[1]) >0)
    {
     double *data=&(GetInputData(n)->Double[0]);
     for(size_t j=0;j<inpsize;j++,++data)

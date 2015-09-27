@@ -326,10 +326,8 @@ bool NPulseNeuron::ADelComponent(UEPtr<UContainer> comp)
 bool NPulseNeuron::ADefault(void)
 {
  SetNumOutputs(3);
- vector<size_t> size;
- size.assign(3,1);
-
- SetOutputDataSize(size);
+ for(int i=0;i<NumOutputs;i++)
+  SetOutputDataSize(i,MMatrixSize(1,1));
 
  return true;
 }

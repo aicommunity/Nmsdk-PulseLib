@@ -325,7 +325,7 @@ bool NPulseChannel::ACalculate(void)
   size_t inpsize;
   for(int i=0;i<NumInputs;i++)
   {
-   if((inpsize=GetInputDataSize(i)) >0)
+   if((inpsize=GetInputDataSize(i)[1]) >0)
    {
 	double *data=&(GetInputData(i)->Double[0]);
 	for(size_t j=0;j<inpsize;j++,++data)

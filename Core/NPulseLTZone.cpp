@@ -154,11 +154,8 @@ bool NPulseLTZone::ADefault(void)
  vector<size_t> size;
 
  SetNumOutputs(4);
- size.resize(NumOutputs);
- for(size_t i=0;i<size.size();i++)
-  size[i]=1;
-
- SetOutputDataSize(size);
+ for(int i=0;i<NumOutputs;i++)
+  SetOutputDataSize(i,MMatrixSize(1,1));
 
  // Начальные значения всем параметрам
  TimeConstant=0.005;
@@ -208,7 +205,7 @@ bool NPulseLTZone::ACalculate(void)
   size_t inpsize;
   for(int i=0;i<NumInputs;i++)
   {
-   if((inpsize=GetInputDataSize(i)) >0)
+   if((inpsize=GetInputDataSize(i)[1]) >0)
    {
 	double *data=&(GetInputData(i)->Double[0]);
 	for(size_t j=0;j<inpsize;j++,++data)
@@ -277,7 +274,7 @@ bool NPulseLTZone::ACalculate(void)
 
  I=AvgFrequencyCounter->begin();
  J=AvgFrequencyCounter->end();
- SetOutputDataSize(3,AvgFrequencyCounter->size(),true);
+ SetOutputDataSize(3,MMatrixSize(1,AvgFrequencyCounter->size()),true);
  for(int i=0;i<POutputData[3].GetSize();i++,++I)
   POutputData[3].Double[i]=*I;
 
@@ -368,14 +365,10 @@ bool NContinuesLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 bool NContinuesLTZone::ADefault(void)
 {
  NLTZone::ADefault();
- vector<size_t> size;
 
  SetNumOutputs(4);
- size.resize(NumOutputs);
- for(size_t i=0;i<size.size();i++)
-  size[i]=1;
-
- SetOutputDataSize(size);
+ for(int i=0;i<NumOutputs;i++)
+  SetOutputDataSize(i,MMatrixSize(1,1));
 
  // Начальные значения всем параметрам
  TimeConstant=0.005;
@@ -425,7 +418,7 @@ bool NContinuesLTZone::ACalculate(void)
   size_t inpsize;
   for(int i=0;i<NumInputs;i++)
   {
-   if((inpsize=GetInputDataSize(i)) >0)
+   if((inpsize=GetInputDataSize(i)[1]) >0)
    {
 	double *data=&(GetInputData(i)->Double[0]);
 	for(size_t j=0;j<inpsize;j++,++data)
@@ -551,7 +544,7 @@ bool NPulseSimpleLTZone::ACalculate(void)
   size_t inpsize;
   for(int i=0;i<NumInputs;i++)
   {
-   if((inpsize=GetInputDataSize(i)) >0)
+   if((inpsize=GetInputDataSize(i)[1]) >0)
    {
 	double *data=&(GetInputData(i)->Double[0]);
 	for(size_t j=0;j<inpsize;j++,++data)
@@ -673,7 +666,7 @@ bool NContinuesSimpleLTZone::ACalculate(void)
   size_t inpsize;
   for(int i=0;i<NumInputs;i++)
   {
-   if((inpsize=GetInputDataSize(i)) >0)
+   if((inpsize=GetInputDataSize(i)[1]) >0)
    {
 	double *data=&(GetInputData(i)->Double[0]);
 	for(size_t j=0;j<inpsize;j++,++data)
