@@ -33,11 +33,9 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseChannel::NPulseChannel(void)
-//: NADItem(name),
 : Capacity("Capacity",this,&NPulseChannel::SetCapacity),
 Resistance("Resistance",this,&NPulseChannel::SetResistance),
 FBResistance("FBResistance",this,&NPulseChannel::SetFBResistance),
-Type("Type",this, &NPulseChannel::SetType),
 PotentialSummaryMode("PotentialSummaryMode",this, &NPulseChannel::SetPotentialSummaryMode),
 NumConnectedSynapsis("NumConnectedSynapsis",this)
 {
@@ -94,21 +92,6 @@ bool NPulseChannel::SetFBResistance(const double &value)
 
  return true;
 
-}
-
-//
-bool NPulseChannel::SetType(const double &value)
-{
-
- Type.v=value;
-
- UEPtr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(Owner);
- if(membr)
- {
-  membr->UpdateChannelData(this);
- }
-
- return true;
 }
 
 bool NPulseChannel::SetPotentialSummaryMode(const int &value)
@@ -240,6 +223,8 @@ bool NPulseChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // успешно добавлен в список компонент
 bool NPulseChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
+ if(!NPulseChannelCommon::AAddComponent(comp, pointer))
+  return false;
  InstallHebbSynapses(comp);
  return true;
 }
@@ -250,6 +235,9 @@ bool NPulseChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> point
 // существует в списке компонент
 bool NPulseChannel::ADelComponent(UEPtr<UContainer> comp)
 {
+ if(!NPulseChannelCommon::ADelComponent(comp))
+  return false;
+
  return true;
 }
 // --------------------------
@@ -268,6 +256,9 @@ bool NPulseChannel::ResetOut(void)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseChannel::ADefault(void)
 {
+ if(!NPulseChannelCommon::AReset())
+  return false;
+
  // Емкость мембраны
  Capacity=1.0e-9;
 
@@ -292,19 +283,23 @@ bool NPulseChannel::ADefault(void)
 // в случае успешной сборки
 bool NPulseChannel::ABuild(void)
 {
+ if(!NPulseChannelCommon::ABuild())
+  return false;
+
  return true;
 }
 
 // Сброс процесса счета.
 bool NPulseChannel::AReset(void)
 {
+ if(!NPulseChannelCommon::AReset())
+  return false;
+
  if(Type>0)
   POutputData[0].Double[0]=1;
  else
  if(Type<0)
   POutputData[0].Double[0]=-1;
- else
-  FillOutputData();
 
  return true;
 }
@@ -312,7 +307,10 @@ bool NPulseChannel::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseChannel::ACalculate(void)
 {
- /*double*/ channel_input=0;
+ if(!NPulseChannelCommon::ACalculate())
+  return false;
+
+ channel_input=0;
  double G=0;
 
  // Получение доступа к данным синапса

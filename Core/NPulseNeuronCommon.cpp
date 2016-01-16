@@ -2,7 +2,7 @@
 // Version:        3.0.2
 // ===========================================================
 /* ***********************************************************
-@Copyright Alexander V. Bakhshiev, 2002.
+@Copyright Alexander V. Bakhshiev, 2016.
 E-mail:		alexab@ailab.ru
 url:            http://ailab.ru
 
@@ -13,10 +13,10 @@ Project License:     BSD License
 See file license.txt for more information
 *********************************************************** */
 
-#ifndef NPULSE_NEURON_CPP
-#define NPULSE_NEURON_CPP
+#ifndef NPULSE_NEURON_COMMON_CPP
+#define NPULSE_NEURON_COMMON_CPP
 
-#include "NPulseNeuron.h"
+#include "NPulseNeuronCommon.h"
 #include "NPulseMembrane.h"
 #include "NPulseLTZone.h"
 #include "NPulseSynapse.h"
@@ -29,14 +29,18 @@ namespace NMSDK {
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
-NPulseNeuron::NPulseNeuron(void)
+NPulseNeuronCommon::NPulseNeuronCommon(void)
+//: NNeuron(name),
+ : NumActiveOutputs("NumActiveOutputs",this),
+  NumActivePosInputs("NumActivePosInputs",this),
+  NumActiveNegInputs("NumActiveNegInputs",this),
+
+  LTZone("LTZone",this)
 {
- PosGenerator=0;
- NegGenerator=0;
  MainOwner=this;
 }
 
-NPulseNeuron::~NPulseNeuron(void)
+NPulseNeuronCommon::~NPulseNeuronCommon(void)
 {
 }
 // --------------------------
@@ -44,37 +48,22 @@ NPulseNeuron::~NPulseNeuron(void)
 // --------------------------
 // Методы доступа к временным переменным
 // --------------------------
-// Возвращает указатель на модель источника возбуждаюшего потенциала
-NConstGenerator* NPulseNeuron::GetPosGenerator(void)
+// Возвращает указатель на модель низкопороговой зоны
+NLTZone* NPulseNeuronCommon::GetLTZone(void)
 {
- return PosGenerator;
+ return dynamic_pointer_cast<NLTZone>(LTZone.Get());// &(*LTZone);
 }
 
-// Возвращает указатель на модель источника тормозного потенциала
-NConstGenerator* NPulseNeuron::GetNegGenerator(void)
-{
- return NegGenerator;
-}
-
-/// Доступ к участкам мембраны
-size_t NPulseNeuron::GetNumMembranes(void) const
-{
- return Membranes.size();
-}
-
-NPulseMembrane* NPulseNeuron::GetMembrane(size_t i)
-{
- return dynamic_cast<NPulseMembrane*>(Membranes[i]);
-}
 // --------------------------
 
 // --------------------------
 // Методы управления структурой объекта
 // --------------------------
+/*
 // Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
 // и переключая входы заданного участка на входы нового
 // Возвращает указатель на созданный участок
-NPulseMembrane* NPulseNeuron::ElongateDendrite(const UId &id, bool feedback)
+NPulseMembrane* NPulseNeuronCommon::ElongateDendrite(const UId &id, bool feedback)
 {
  if(!Storage)
   return 0;
@@ -95,7 +84,7 @@ NPulseMembrane* NPulseNeuron::ElongateDendrite(const UId &id, bool feedback)
 // Разветвляет заданный участок мембраны, добавляя к точке его подключения
 // дополнительно новый участок мембраны
 // Возвращает указатель на созданный участок
-NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
+NPulseMembrane* NPulseNeuronCommon::BranchDendrite(const UId &id, bool feedback)
 {
  if(!Storage)
   return 0;
@@ -146,31 +135,30 @@ NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
  }
 
  // Подключаем источники мембранных потенциалов
- UEPtr<NPulseMembrane> membrane=dynamic_pointer_cast<NPulseMembrane>(cont);
- if(membrane)
+ UEPtr<NPulseMembrane> membrane=static_pointer_cast<NPulseMembrane>(cont);
+ for(size_t k=0;k<membrane->GetNumNegChannels();k++)
  {
-  for(size_t k=0;k<membrane->GetNumNegChannels();k++)
-  {
-   item.Id=PosGenerator->GetLongId(this);
-   item.Index=0;
-   conn.Id=membrane->GetNegChannel(k)->GetLongId(this);
-   conn.Index=-1;
-   res&=CreateLink(item,conn);
-  }
-
-  for(size_t k=0;k<membrane->GetNumPosChannels();k++)
-  {
-   item.Id=NegGenerator->GetLongId(this);
-   item.Index=0;
-   conn.Id=membrane->GetPosChannel(k)->GetLongId(this);
-   conn.Index=-1;
-   res&=CreateLink(item,conn);
-  }
+  item.Id=PosGenerator->GetLongId(this);
+  item.Index=0;
+  conn.Id=membrane->GetNegChannel(k)->GetLongId(this);
+  conn.Index=-1;
+  res&=CreateLink(item,conn);
  }
+
+ for(size_t k=0;k<membrane->GetNumPosChannels();k++)
+ {
+  item.Id=NegGenerator->GetLongId(this);
+  item.Index=0;
+  conn.Id=membrane->GetPosChannel(k)->GetLongId(this);
+  conn.Index=-1;
+  res&=CreateLink(item,conn);
+ }
+
 
  if(!res)
  {
   cont->Free();
+//  Storage->ReturnObject(cont);
   return 0;
  }
  return membrane;
@@ -179,19 +167,19 @@ NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
 // Удаляет заданный участок мембраны
 // Если full == true, то удаляет и все другие участки, подключенные к нему
 // Иначе перенаправляет связи со входов на свои выходы
-bool NPulseNeuron::EraseDendrite(const UId &id)
+bool NPulseNeuronCommon::EraseDendrite(const UId &id)
 {
  return true;
-}
+}                                     */
 // --------------------------
 
 // --------------------------
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
-NPulseNeuron* NPulseNeuron::New(void)
+NPulseNeuronCommon* NPulseNeuronCommon::New(void)
 {
- return new NPulseNeuron;
+ return new NPulseNeuronCommon;
 }
 // --------------------------
 
@@ -202,9 +190,9 @@ NPulseNeuron* NPulseNeuron::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseNeuron::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseNeuronCommon::CheckComponentType(UEPtr<UContainer> comp) const
 {
- if(dynamic_pointer_cast<NPulseMembrane>(comp) ||
+ if(dynamic_pointer_cast<NPulseMembraneCommon>(comp) ||
 	dynamic_pointer_cast<NLTZone>(comp) ||
 //	dynamic_cast<const NPulseSynapse*>(comp) ||
 	dynamic_pointer_cast<NConstGenerator>(comp))
@@ -221,30 +209,38 @@ bool NPulseNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NPulseNeuron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NPulseNeuronCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
- if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
+ if(!NNeuron::AAddComponent(comp,pointer))
   return false;
 
  comp->SetMainOwner(this,-1);
 
-  UEPtr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
-
-  if(temp && temp->Amplitude()>0)
+ {
+  UEPtr<NPulseMembraneCommon> membrane=dynamic_pointer_cast<NPulseMembraneCommon>(comp);
+  if(membrane)
   {
-   if(PosGenerator)
-	return false;
-   PosGenerator=temp;
-   return true;
-  }
-  else
-  if(temp && temp->Amplitude()<0)
+  vector<NPulseMembraneCommon*>::iterator I;
+  bool exists = false;
+  for(I=Membranes.begin();I!=Membranes.end();I++)
   {
-   if(NegGenerator)
-	return false;
-   NegGenerator=temp;
-   return true;
+   if(comp==*I)
+   {
+	exists=true;
+	break;
+   }
   }
+  if(!exists)
+   Membranes.push_back(membrane);
+   // Подключаем синапсы хебба если они есть
+   for(int i=0;i<membrane->GetNumComponents();i++)
+   {
+	UEPtr<NPulseChannel> channel(dynamic_pointer_cast<NPulseChannel>(membrane->GetComponentByIndex(i)));
+	if(channel)
+	 channel->InstallHebbSynapses();
+   }
+  }
+ }
 
  return true;
 }
@@ -253,14 +249,17 @@ bool NPulseNeuron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointe
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NPulseNeuron::ADelComponent(UEPtr<UContainer> comp)
+bool NPulseNeuronCommon::ADelComponent(UEPtr<UContainer> comp)
 {
- if(comp == PosGenerator)
-  PosGenerator=0;
- else
- if(comp == NegGenerator)
-  NegGenerator=0;
-
+  vector<NPulseMembraneCommon*>::iterator I;
+  for(I=Membranes.begin();I!=Membranes.end();I++)
+  {
+   if(comp==*I)
+   {
+	Membranes.erase(I);
+	break;
+   }
+  }
  return NNeuron::ADelComponent(comp);
 }
 // --------------------------
@@ -269,10 +268,11 @@ bool NPulseNeuron::ADelComponent(UEPtr<UContainer> comp)
 // Скрытые методы управления счетом
 // --------------------------
 // Восстановление настроек по умолчанию и сброс процесса счета
-bool NPulseNeuron::ADefault(void)
+bool NPulseNeuronCommon::ADefault(void)
 {
- if(!NPulseNeuronCommon::ADefault())
-  return false;
+ SetNumOutputs(3);
+ for(int i=0;i<NumOutputs;i++)
+  SetOutputDataSize(i,MMatrixSize(1,1));
 
  return true;
 }
@@ -281,51 +281,40 @@ bool NPulseNeuron::ADefault(void)
 // после настройки параметров
 // Автоматически вызывает метод Reset() и выставляет Ready в true
 // в случае успешной сборки
-bool NPulseNeuron::ABuild(void)
+bool NPulseNeuronCommon::ABuild(void)
 {
- if(!NPulseNeuronCommon::ABuild())
-  return false;
-
  return true;
 }
 
 // Сброс процесса счета.
-bool NPulseNeuron::AReset(void)
+bool NPulseNeuronCommon::AReset(void)
 {
- if(!NPulseNeuronCommon::AReset())
-  return false;
+ // Число связей организованных этим нейроном на других (и себе)
+ NumActiveOutputs=0;
+
+ // Число связей организованных другими нейронами на этом
+ NumActivePosInputs=0;
+ NumActiveNegInputs=0;
 
  return true;
 }
 
 // Выполняет расчет этого объекта
-bool NPulseNeuron::ACalculate(void)
+bool NPulseNeuronCommon::ACalculate(void)
 {
- if(!NPulseNeuronCommon::ACalculate())
-  return false;
+ // Число связей организованных этим нейроном на других (и себе)
+ POutputData[0].Double[0]=NumActiveOutputs.v;
+ NumActiveOutputs.v=0;
+
+ // Число связей организованных другими нейронами на этом
+ POutputData[1].Double[0]=NumActivePosInputs.v;
+ NumActivePosInputs.v=0;
+ POutputData[2].Double[0]=NumActiveNegInputs.v;
+ NumActiveNegInputs.v=0;
 
  return true;
 }
 // --------------------------
-int NPulseNeuron::GetNumOfConnectedSynToPosCh(NPulseMembrane* membr)
-{
-  int temp=0;
-  for(size_t i=0;i<membr->GetNumPosChannels();i++)
-  {
-   temp+=membr->GetPosChannel(i)->NumConnectedSynapsis;
-  }
-  return temp;
-}
-
-int NPulseNeuron::GetNumOfConnectedSynToNegCh(NPulseMembrane* membr)
-{
-  int temp=0;
-  for(size_t i=0;i<membr->GetNumNegChannels();i++)
-  {
-   temp+=membr->GetNegChannel(i)->NumConnectedSynapsis;
-  }
-  return temp;
-}
 
 }
 #endif

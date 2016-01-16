@@ -13,72 +13,58 @@ Project License:     BSD License
 See file license.txt for more information
 *********************************************************** */
 
-#ifndef NPULSE_MEMBRANE_H
-#define NPULSE_MEMBRANE_H
+#ifndef NPULSE_MEMBRANE_COMMON_CPP
+#define NPULSE_MEMBRANE_COMMON_CPP
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
+#include <algorithm>
 #include "NPulseMembraneCommon.h"
 #include "NPulseChannel.h"
 
 
+
 namespace NMSDK {
 
-class NPulseNeuron;
-
-class RDK_LIB_TYPE NPulseMembrane: public NPulseMembraneCommon
-{
-public: // Основные свойства
-// Коэффициент обратной связи
-RDK::ULProperty<double,NPulseMembrane> FeedbackGain;
-
-//Наличие механизма сброса
-RDK::ULProperty<bool,NPulseMembrane> ResetAvailable;
-
-public: // Данные
-// Значение обратной связи
-RDK::ULProperty<double,NPulseMembrane,ptPubState> Feedback;
-
-protected: // Временные переменные
-// Ионные механизмы деполяризации
-vector<NPulseChannel*> PosChannels;
-
-// Ионные механизмы гиперполяризации
-vector<NPulseChannel*> NegChannels;
-
-public: // Методы
+// Методы
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
-NPulseMembrane(void);
-virtual ~NPulseMembrane(void);
+NPulseMembraneCommon::NPulseMembraneCommon(void)
+{
+}
+
+NPulseMembraneCommon::~NPulseMembraneCommon(void)
+{
+}
 // --------------------------
 
 // --------------------------
 // Методы управления временными перменными
 // --------------------------
-// Ионные механизмы деполяризации
-size_t GetNumPosChannels(void) const;
-NPulseChannel* GetPosChannel(size_t i);
+// Ионные механизмы
+size_t NPulseMembraneCommon::GetNumChannels(void) const
+{
+ return Channels.size();
+}
 
-// Ионные механизмы гиперполяризации
-size_t GetNumNegChannels(void) const;
-NPulseChannel* GetNegChannel(size_t i);
-
-virtual bool UpdateChannelData(UEPtr<NPulseChannel> comp, UEPtr<UIPointer> pointer=0);
+NPulseChannelCommon* NPulseMembraneCommon::GetChannel(size_t i)
+{
+ return Channels[i];
+}
 // --------------------------
 
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
-// Коэффициент обратной связи
-bool SetFeedbackGain(const double &value);
 // --------------------------
 
 // --------------------------
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
-virtual NPulseMembrane* New(void);
+NPulseMembraneCommon* NPulseMembraneCommon::New(void)
+{
+ return new NPulseMembraneCommon;
+}
 // --------------------------
 
 // --------------------------
@@ -88,47 +74,83 @@ virtual NPulseMembrane* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+bool NPulseMembraneCommon::CheckComponentType(UEPtr<UContainer> comp) const
+{
+ if(dynamic_pointer_cast<NPulseChannelCommon>(comp))
+  return true;
+
+ return false;
+}
 // --------------------------
 
 // --------------------------
 // Скрытые методы управления компонентами
 // --------------------------
-protected:
 // Выполняет завершающие пользовательские действия
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+bool NPulseMembraneCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+{
+ UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(comp);
+ vector<NPulseChannelCommon* >::iterator I;
+
+ if(channel)
+ {
+   if(find(Channels.begin(),Channels.end(),channel) == Channels.end())
+	Channels.push_back(channel);
+ }
+
+ return true;
+}
 
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+bool NPulseMembraneCommon::ADelComponent(UEPtr<UContainer> comp)
+{
+ UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(comp);
+ if(channel)
+ {
+  vector<NPulseChannelCommon*>::iterator I;
+  I=find(Channels.begin(),Channels.end(),channel);
+  if(I != Channels.end())
+   Channels.erase(I);
+ }
+ return true;
+}
 // --------------------------
 
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
-protected:
 // Восстановление настроек по умолчанию и сброс процесса счета
-virtual bool ADefault(void);
+bool NPulseMembraneCommon::ADefault(void)
+{
+ return true;
+}
 
 // Обеспечивает сборку внутренней структуры объекта
 // после настройки параметров
 // Автоматически вызывает метод Reset() и выставляет Ready в true
 // в случае успешной сборки
-virtual bool ABuild(void);
+bool NPulseMembraneCommon::ABuild(void)
+{
+ return true;
+}
 
 // Сброс процесса счета.
-virtual bool AReset(void);
+bool NPulseMembraneCommon::AReset(void)
+{
+ return true;
+}
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
+bool NPulseMembraneCommon::ACalculate(void)
+{
+ return true;
+}
 // --------------------------
-};
-
 }
 #endif
-

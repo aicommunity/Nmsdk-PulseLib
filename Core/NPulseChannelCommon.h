@@ -2,7 +2,7 @@
 // Version:        3.0.2
 // ===========================================================
 /* ***********************************************************
-@Copyright Alexander V. Bakhshiev, 2002.
+@Copyright Alexander V. Bakhshiev, 2016.
 E-mail:		alexab@ailab.ru
 url:            http://ailab.ru
 
@@ -13,71 +13,65 @@ Project License:     BSD License
 See file license.txt for more information
 *********************************************************** */
 
-#ifndef NPULSE_NEURON_H
-#define NPULSE_NEURON_H
+#ifndef NPULSE_CHANNEL_COMMON_H
+#define NPULSE_CHANNEL_COMMON_H
 
-#include "NPulseNeuronCommon.h"
-#include "NPulseMembrane.h"
-#include "../../Nmsdk-SourceLib/Core/NConstGenerator.h"
+#include "../../Nmsdk-BasicLib/Core/NSupport.h"
+#include "NPulseSynapse.h"
 
 namespace NMSDK {
 
-class RDK_LIB_TYPE NPulseNeuron: public NPulseNeuronCommon
+class RDK_LIB_TYPE NPulseChannelCommon: public UNet
 {
-public: // Статистика
+public: // Общедоступные свойства
+// Тип ионного механизма
+// <0 - накапливает отрицательный вклад в потенциал (или гиперполяризует мембрану)
+// >0 - накапливает положительный вклад в потенциал (или деполяризует мембрану)
+RDK::ULProperty<double,NPulseChannelCommon> Type;
+
+public: // Данные
+
+protected: // Основные свойства
 
 protected: // Временные переменные
-//NPulseLTZone *LTZone;
-
-public:
-NConstGenerator *PosGenerator,*NegGenerator;
 
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
-NPulseNeuron(void);
-virtual ~NPulseNeuron(void);
+NPulseChannelCommon(void);
+virtual ~NPulseChannelCommon(void);
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// Методы управления специфическими компонентами
 // --------------------------
-// Возвращает указатель на модель источника возбуждаюшего потенциала
-NConstGenerator* GetPosGenerator(void);
-
-// Возвращает указатель на модель источника тормозного потенциала
-NConstGenerator* GetNegGenerator(void);
-
-/// Доступ к участкам мембраны
-size_t GetNumMembranes(void) const;
-NPulseMembrane* GetMembrane(size_t i);
+// Возвращает число синапсов
+virtual size_t GetNumSynapses(void) const;
 // --------------------------
 
 // --------------------------
-// Методы управления структурой объекта
+// Методы управления общедоступными свойствами
 // --------------------------
-// Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
-// и переключая входы заданного участка на входы нового
-// Возвращает указатель на созданный участок
-NPulseMembrane* ElongateDendrite(const UId &id, bool feedback=false);
-
-// Разветвляет заданный участок мембраны, добавляя к точке его подключения
-// дополнительно новый участок мембраны
-// Возвращает указатель на созданный участок
-NPulseMembrane* BranchDendrite(const UId &id, bool feedback=false);
-
-// Удаляет заданный участок мембраны
-// Если full == true, то удаляет и все другие участки, подключенные к нему
-// Иначе перенаправляет связи со входов на свои выходы
-bool EraseDendrite(const UId &id);
+// Тип ионного механизма
+bool SetType(const double &value);
 // --------------------------
 
 // --------------------------
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
-virtual NPulseNeuron* New(void);
+virtual NPulseChannelCommon* New(void);
+// --------------------------
+
+// --------------------------
+// Методы доступа к компонентам
+// --------------------------
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
+virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
@@ -95,16 +89,6 @@ virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
 // Метод будет вызван только если comp
 // существует в списке компонент
 virtual bool ADelComponent(UEPtr<UContainer> comp);
-// --------------------------
-
-// --------------------------
-// Методы доступа к компонентам
-// --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
@@ -126,9 +110,6 @@ virtual bool AReset(void);
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
-public:
-int GetNumOfConnectedSynToPosCh(NPulseMembrane* membr);
-int GetNumOfConnectedSynToNegCh(NPulseMembrane* membr);
 };
 
 }

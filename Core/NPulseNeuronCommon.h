@@ -2,7 +2,7 @@
 // Version:        3.0.2
 // ===========================================================
 /* ***********************************************************
-@Copyright Alexander V. Bakhshiev, 2002.
+@Copyright Alexander V. Bakhshiev, 2016.
 E-mail:		alexab@ailab.ru
 url:            http://ailab.ru
 
@@ -13,71 +13,76 @@ Project License:     BSD License
 See file license.txt for more information
 *********************************************************** */
 
-#ifndef NPULSE_NEURON_H
-#define NPULSE_NEURON_H
+#ifndef NPULSE_NEURON_COMMON_H
+#define NPULSE_NEURON_COMMON_H
 
-#include "NPulseNeuronCommon.h"
-#include "NPulseMembrane.h"
+#include "../../Nmsdk-BasicLib/Core/NNeuron.h"
+#include "NPulseLTZone.h"
 #include "../../Nmsdk-SourceLib/Core/NConstGenerator.h"
+#include "NPulseMembraneCommon.h"
+//#include "NAfferentNeuron.h"
 
 namespace NMSDK {
 
-class RDK_LIB_TYPE NPulseNeuron: public NPulseNeuronCommon
+class RDK_LIB_TYPE NPulseNeuronCommon: public NNeuron
 {
 public: // Статистика
+// Число связей организованных этим нейроном на других (и себе)
+RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;
+
+// Число возбуждающих связей организованных другими нейронами на этом
+RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
+
+// Число тормозных связей организованных другими нейронами на этом
+RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
 
 protected: // Временные переменные
 //NPulseLTZone *LTZone;
 
 public:
-NConstGenerator *PosGenerator,*NegGenerator;
+RDK::UEPointer<NPulseLTZone,NPulseNeuronCommon> LTZone;
+
+vector<NPulseMembraneCommon*> Membranes;
 
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
-NPulseNeuron(void);
-virtual ~NPulseNeuron(void);
+NPulseNeuronCommon(void);
+virtual ~NPulseNeuronCommon(void);
 // --------------------------
 
 // --------------------------
 // Методы доступа к временным переменным
 // --------------------------
-// Возвращает указатель на модель источника возбуждаюшего потенциала
-NConstGenerator* GetPosGenerator(void);
-
-// Возвращает указатель на модель источника тормозного потенциала
-NConstGenerator* GetNegGenerator(void);
-
-/// Доступ к участкам мембраны
-size_t GetNumMembranes(void) const;
-NPulseMembrane* GetMembrane(size_t i);
+// Возвращает указатель на модель низкопороговой зоны
+NLTZone* GetLTZone(void);
 // --------------------------
 
 // --------------------------
 // Методы управления структурой объекта
 // --------------------------
-// Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
-// и переключая входы заданного участка на входы нового
-// Возвращает указатель на созданный участок
-NPulseMembrane* ElongateDendrite(const UId &id, bool feedback=false);
-
-// Разветвляет заданный участок мембраны, добавляя к точке его подключения
-// дополнительно новый участок мембраны
-// Возвращает указатель на созданный участок
-NPulseMembrane* BranchDendrite(const UId &id, bool feedback=false);
-
-// Удаляет заданный участок мембраны
-// Если full == true, то удаляет и все другие участки, подключенные к нему
-// Иначе перенаправляет связи со входов на свои выходы
-bool EraseDendrite(const UId &id);
+//// Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
+//// и переключая входы заданного участка на входы нового
+//// Возвращает указатель на созданный участок
+//NPulseMembrane* ElongateDendrite(const UId &id, bool feedback=false);
+//
+//// Разветвляет заданный участок мембраны, добавляя к точке его подключения
+//// дополнительно новый участок мембраны
+//// Возвращает указатель на созданный участок
+//NPulseMembrane* BranchDendrite(const UId &id, bool feedback=false);
+//
+//// Удаляет заданный участок мембраны
+//// Если full == true, то удаляет и все другие участки, подключенные к нему
+//// Иначе перенаправляет связи со входов на свои выходы
+//bool EraseDendrite(const UId &id);
 // --------------------------
 
 // --------------------------
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
-virtual NPulseNeuron* New(void);
+virtual NPulseNeuronCommon* New(void);
 // --------------------------
 
 // --------------------------
@@ -126,9 +131,6 @@ virtual bool AReset(void);
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
-public:
-int GetNumOfConnectedSynToPosCh(NPulseMembrane* membr);
-int GetNumOfConnectedSynToNegCh(NPulseMembrane* membr);
 };
 
 }

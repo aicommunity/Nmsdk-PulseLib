@@ -17,11 +17,12 @@ See file license.txt for more information
 #define NPULSE_CHANNEL_H
 
 #include "../../Nmsdk-BasicLib/Core/NSupport.h"
+#include "NPulseChannelCommon.h"
 #include "NPulseSynapse.h"
 
 namespace NMSDK {
 
-class RDK_LIB_TYPE NPulseChannel: public UNet
+class RDK_LIB_TYPE NPulseChannel: public NPulseChannelCommon
 {
 public: // Общедоступные свойства
 // Емкость мембраны
@@ -32,11 +33,6 @@ RDK::ULProperty<double,NPulseChannel> Resistance;
 
 // Сопротивление перезаряда мембраны
 RDK::ULProperty<double,NPulseChannel> FBResistance;
-
-// Тип ионного механизма
-// <0 - накапливает отрицательный вклад в потенциал
-// >0 - накапливает положительный вклад в потенциал
-RDK::ULProperty<double,NPulseChannel> Type;
 
 // Тип суммации потенциалов в узлах ветвления
 // С усреднением
@@ -65,7 +61,7 @@ virtual ~NPulseChannel(void);
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t GetNumSynapses(void) const;
+virtual size_t GetNumSynapses(void) const;
 
 // Возвращает синапс по индексу
 UEPtr<NPulseSynapse> GetSynapse(size_t i);
@@ -83,9 +79,6 @@ bool SetResistance(const double &value);
 
 // Сопротивление перезаряда мембраны
 bool SetFBResistance(const double &value);
-
-//
-bool SetType(const double &value);
 
 bool SetPotentialSummaryMode(const int &value);
 // --------------------------

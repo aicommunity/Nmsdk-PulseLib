@@ -13,71 +13,63 @@ Project License:     BSD License
 See file license.txt for more information
 *********************************************************** */
 
-#ifndef NPULSE_NEURON_H
-#define NPULSE_NEURON_H
+#ifndef NPULSE_MEMBRANE_COMMON_H
+#define NPULSE_MEMBRANE_COMMON_H
 
-#include "NPulseNeuronCommon.h"
-#include "NPulseMembrane.h"
-#include "../../Nmsdk-SourceLib/Core/NConstGenerator.h"
+#include "../../Nmsdk-BasicLib/Core/NSupport.h"
+#include "NPulseChannel.h"
+
 
 namespace NMSDK {
 
-class RDK_LIB_TYPE NPulseNeuron: public NPulseNeuronCommon
+class NPulseNeuron;
+
+class RDK_LIB_TYPE NPulseMembraneCommon: public UNet
 {
-public: // Статистика
+public: // Основные свойства
+
+public: // Данные
 
 protected: // Временные переменные
-//NPulseLTZone *LTZone;
-
-public:
-NConstGenerator *PosGenerator,*NegGenerator;
+// Ионные механизмы
+vector<NPulseChannelCommon*> Channels;
 
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
-NPulseNeuron(void);
-virtual ~NPulseNeuron(void);
+NPulseMembraneCommon(void);
+virtual ~NPulseMembraneCommon(void);
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// Методы управления временными перменными
 // --------------------------
-// Возвращает указатель на модель источника возбуждаюшего потенциала
-NConstGenerator* GetPosGenerator(void);
-
-// Возвращает указатель на модель источника тормозного потенциала
-NConstGenerator* GetNegGenerator(void);
-
-/// Доступ к участкам мембраны
-size_t GetNumMembranes(void) const;
-NPulseMembrane* GetMembrane(size_t i);
+// Ионные механизмы
+size_t GetNumChannels(void) const;
+NPulseChannelCommon* GetChannel(size_t i);
 // --------------------------
 
 // --------------------------
-// Методы управления структурой объекта
+// Методы управления общедоступными свойствами
 // --------------------------
-// Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
-// и переключая входы заданного участка на входы нового
-// Возвращает указатель на созданный участок
-NPulseMembrane* ElongateDendrite(const UId &id, bool feedback=false);
-
-// Разветвляет заданный участок мембраны, добавляя к точке его подключения
-// дополнительно новый участок мембраны
-// Возвращает указатель на созданный участок
-NPulseMembrane* BranchDendrite(const UId &id, bool feedback=false);
-
-// Удаляет заданный участок мембраны
-// Если full == true, то удаляет и все другие участки, подключенные к нему
-// Иначе перенаправляет связи со входов на свои выходы
-bool EraseDendrite(const UId &id);
 // --------------------------
 
 // --------------------------
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
-virtual NPulseNeuron* New(void);
+virtual NPulseMembraneCommon* New(void);
+// --------------------------
+
+// --------------------------
+// Методы доступа к компонентам
+// --------------------------
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
+virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
@@ -95,16 +87,6 @@ virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
 // Метод будет вызван только если comp
 // существует в списке компонент
 virtual bool ADelComponent(UEPtr<UContainer> comp);
-// --------------------------
-
-// --------------------------
-// Методы доступа к компонентам
-// --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
@@ -126,10 +108,8 @@ virtual bool AReset(void);
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
-public:
-int GetNumOfConnectedSynToPosCh(NPulseMembrane* membr);
-int GetNumOfConnectedSynToNegCh(NPulseMembrane* membr);
 };
 
 }
 #endif
+

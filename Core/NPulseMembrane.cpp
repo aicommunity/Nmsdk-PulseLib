@@ -29,7 +29,6 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseMembrane::NPulseMembrane(void)
-//: NADItem(name),
  : Feedback("Feedback",this),
   FeedbackGain("FeedbackGain",this,&NPulseMembrane::SetFeedbackGain),
   ResetAvailable("ResetAvailable",this)
@@ -64,6 +63,31 @@ size_t NPulseMembrane::GetNumNegChannels(void) const
 NPulseChannel* NPulseMembrane::GetNegChannel(size_t i)
 {
  return NegChannels[i];
+}
+
+bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPointer> pointer)
+{
+  vector<NPulseChannel* >::iterator I;
+  if(channel->Type() < 0)
+  {
+   if(find(PosChannels.begin(),PosChannels.end(),channel) == PosChannels.end())
+	PosChannels.push_back(channel);
+   if((I=find(NegChannels.begin(),NegChannels.end(),channel)) != NegChannels.end())
+	NegChannels.erase(I);
+  }
+  else
+  if(channel->Type() > 0)
+  {
+   if(find(NegChannels.begin(),NegChannels.end(),channel) == NegChannels.end())
+	NegChannels.push_back(channel);
+   if((I=find(PosChannels.begin(),PosChannels.end(),channel)) != PosChannels.end())
+	PosChannels.erase(I);
+  }
+
+ else
+  return false;
+
+ return true;
 }
 // --------------------------
 
@@ -115,6 +139,9 @@ bool NPulseMembrane::CheckComponentType(UEPtr<UContainer> comp) const
 // успешно добавлен в список компонент
 bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
+ if(!NPulseMembraneCommon::AAddComponent(comp, pointer))
+  return false;
+
  UEPtr<NPulseChannel> channel=dynamic_pointer_cast<NPulseChannel>(comp);
  vector<NPulseChannel* >::iterator I;
 
@@ -144,36 +171,15 @@ bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poin
  return true;
 }
 
-bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPointer> pointer)
-{
-  vector<NPulseChannel* >::iterator I;
-  if(channel->Type() < 0)
-  {
-   if(find(PosChannels.begin(),PosChannels.end(),channel) == PosChannels.end())
-	PosChannels.push_back(channel);
-   if((I=find(NegChannels.begin(),NegChannels.end(),channel)) != NegChannels.end())
-	NegChannels.erase(I);
-  }
-  else
-  if(channel->Type() > 0)
-  {
-   if(find(NegChannels.begin(),NegChannels.end(),channel) == NegChannels.end())
-	NegChannels.push_back(channel);
-   if((I=find(PosChannels.begin(),PosChannels.end(),channel)) != PosChannels.end())
-	PosChannels.erase(I);
-  }
-
- else
-  return false;
-
- return true;
-}
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
 bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
 {
+ if(!NPulseMembraneCommon::ADelComponent(comp))
+  return false;
+
  UEPtr<NPulseChannel> channel=dynamic_pointer_cast<NPulseChannel>(comp);
  if(channel)
  {
@@ -195,6 +201,8 @@ bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseMembrane::ADefault(void)
 {
+ if(!NPulseMembraneCommon::ADefault())
+  return false;
  FeedbackGain=2;
  ResetAvailable=true;
 
@@ -207,12 +215,16 @@ bool NPulseMembrane::ADefault(void)
 // в случае успешной сборки
 bool NPulseMembrane::ABuild(void)
 {
+ if(!NPulseMembraneCommon::ABuild())
+  return false;
  return true;
 }
 
 // Сброс процесса счета.
 bool NPulseMembrane::AReset(void)
 {
+ if(!NPulseMembraneCommon::AReset())
+  return false;
  Feedback=0;
  return true;
 }
@@ -220,8 +232,10 @@ bool NPulseMembrane::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseMembrane::ACalculate(void)
 {
-if(!PosChannels.empty() && !NegChannels.empty() && ResetAvailable)
-{
+ if(!NPulseMembraneCommon::ACalculate())
+  return false;
+ if(!PosChannels.empty() && !NegChannels.empty() && ResetAvailable)
+ {
 	if(PosChannels[0]->GetSynOutput() > 1.0e-10)
 	{
 		NegChannels[0]->ResetOut();
@@ -231,7 +245,7 @@ if(!PosChannels.empty() && !NegChannels.empty() && ResetAvailable)
 	{
 		PosChannels[0]->ResetOut();
 	}
-}
+ }
  // Получение данных канала
 // Feedback=GetFullSumInput();
  Feedback=0;
