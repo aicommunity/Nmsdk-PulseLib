@@ -18,70 +18,17 @@ See file license.txt for more information
 
 #include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "../../Nmsdk-SourceLib/Core/NPulseGenerator.h"
-
+#include "NPulseLTZoneCommon.h"
 
 namespace NMSDK {
 
 class NPulseNeuron;
 
-class RDK_LIB_TYPE NLTZone: public UNet
-{
-public: // Общедоступные свойства
-// Порог нейрона
-RDK::ULProperty<double,NLTZone> Threshold;
-
-public: // Данные
-// Нейрон владелец мембраны канала
-NPulseNeuron* Neuron;
-
-protected: // Основные свойства
-
-protected: // Временные переменные
-/// Число подключенных синапсов к этой низкопороговой зоне
-int CachedNumAConnectors;
-
-public: // Методы
-// --------------------------
-// Конструкторы и деструкторы
-// --------------------------
-NLTZone(void);
-virtual ~NLTZone(void);
-// --------------------------
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
-// Устанавливает порог нейрона
-bool SetThreshold(const double &value);
-// --------------------------
-
-// --------------------------
-// Скрытые методы управления счетом
-// --------------------------
-protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
-virtual bool ADefault(void);
-
-// Сброс процесса счета.
-virtual bool AReset(void);
-// --------------------------
-};
-
-
-class RDK_LIB_TYPE NPulseLTZone: public NLTZone
+class RDK_LIB_TYPE NPulseLTZone: public NPulseLTZoneCommon
 {
 public: // Общедоступные свойства
 // Постоянная времени
 RDK::ULProperty<double,NPulseLTZone> TimeConstant;
-
-// Амплитуда импульсов
-RDK::ULProperty<double,NPulseLTZone> PulseAmplitude;
-
-// Длительность импульса
-RDK::ULProperty<double,NPulseLTZone> PulseLength;
-
-// Интервал времени оценки частоты генерации
-RDK::ULProperty<double,NPulseLTZone> AvgInterval;
 
 public: // Данные
 
@@ -90,18 +37,6 @@ protected: // Основные свойства
 protected: // Временные переменные
 // Суммарный потенциал
 RDK::ULProperty<double,NPulseLTZone,ptPubState> NeuralPotential;
-
-// Промежуточное значение потенциала
-RDK::ULProperty<double,NPulseLTZone,ptPubState> PrePotential;
-
-// Флаг наличия генерации
-RDK::ULProperty<int,NPulseLTZone,ptPubState> PulseCounter;
-
-// Средняя частота за заданный интервал времени
-RDK::UCLProperty<list<double>,NPulseLTZone,ptPubState> AvgFrequencyCounter;
-
-// Признак текущей генерации импульса
-RDK::ULProperty<bool,NPulseLTZone,ptPubState> PulseFlag;
 
 public: // Методы
 // --------------------------
@@ -157,6 +92,12 @@ virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
+
+/// Возвращает true если условие для генерации импульса выполнено
+virtual bool CheckPulseOn(void);
+
+/// Возвращает true если условие для генерации имульса не выполнено
+virtual bool CheckPulseOff(void);
 // --------------------------
 };
 

@@ -147,6 +147,9 @@
         <CppCompile Include="..\..\Core\NPulseLTZone.cpp">
             <BuildOrder>7</BuildOrder>
         </CppCompile>
+        <CppCompile Include="..\..\Core\NPulseLTZoneCommon.cpp">
+            <BuildOrder>16</BuildOrder>
+        </CppCompile>
         <CppCompile Include="..\..\Core\NPulseMembrane.cpp">
             <BuildOrder>8</BuildOrder>
         </CppCompile>
@@ -161,6 +164,9 @@
         </CppCompile>
         <CppCompile Include="..\..\Core\NPulseSynapse.cpp">
             <BuildOrder>10</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="..\..\Core\NPulseSynapseCommon.cpp">
+            <BuildOrder>17</BuildOrder>
         </CppCompile>
         <CppCompile Include="..\..\Core\NPulseSynChannel.cpp">
             <BuildOrder>11</BuildOrder>

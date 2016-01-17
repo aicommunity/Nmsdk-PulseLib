@@ -28,13 +28,9 @@ namespace NMSDK {
 // --------------------------
 NPulseSynapse::NPulseSynapse(void)
  //: NConnector(name),
-: PulseAmplitude("PulseAmplitude",this,&NPulseSynapse::SetPulseAmplitude),
-SecretionTC("SecretionTC",this,&NPulseSynapse::SetSecretionTC),
+: SecretionTC("SecretionTC",this,&NPulseSynapse::SetSecretionTC),
 DissociationTC("DissociationTC",this,&NPulseSynapse::SetDissociationTC),
-InhibitionCoeff("InhibitionCoeff",this,&NPulseSynapse::SetInhibitionCoeff),
-Resistance("Resistance",this,&NPulseSynapse::SetResistance),
-
-PreOutput("PreOutput",this)
+InhibitionCoeff("InhibitionCoeff",this,&NPulseSynapse::SetInhibitionCoeff)
 {
 }
 
@@ -123,6 +119,8 @@ NPulseSynapse* NPulseSynapse::New(void)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseSynapse::ADefault(void)
 {
+ if(!NPulseSynapseCommon::ADefault())
+  return false;
  // Начальные значения всем параметрам
  // Амплитуда входных импульсов
  PulseAmplitude=1;
@@ -148,6 +146,9 @@ bool NPulseSynapse::ADefault(void)
 // в случае успешной сборки
 bool NPulseSynapse::ABuild(void)
 {
+ if(!NPulseSynapseCommon::ABuild())
+  return false;
+
  VSecretionTC=SecretionTC*TimeStep;
  VDissociationTC=DissociationTC*TimeStep;
 
@@ -157,8 +158,8 @@ bool NPulseSynapse::ABuild(void)
 // Сброс процесса счета.
 bool NPulseSynapse::AReset(void)
 {
- // Сброс временных переменных
- PreOutput=0;
+ if(!NPulseSynapseCommon::ABuild())
+  return false;
 
  return true;
 }

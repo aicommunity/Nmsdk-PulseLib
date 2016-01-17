@@ -2,7 +2,7 @@
 // Version:        3.0.2
 // ===========================================================
 /* ***********************************************************
-@Copyright Alexander V. Bakhshiev, 2002.
+@Copyright Alexander V. Bakhshiev, 2016.
 E-mail:		alexab@ailab.ru
 url:            http://ailab.ru
 
@@ -13,43 +13,40 @@ Project License:     BSD License
 See file license.txt for more information
 *********************************************************** */
 
-#ifndef NPULSE_SYNAPSE_H
-#define NPULSE_SYNAPSE_H
+#ifndef NPULSE_SYNAPSE_COMMON_H
+#define NPULSE_SYNAPSE_COMMON_H
 
-#include "NPulseSynapseCommon.h"
+#include "../../Nmsdk-BasicLib/Core/NSupport.h"
+#include "../../Nmsdk-BasicLib/Core/NNet.h"
 
 
 namespace NMSDK {
 
-class RDK_LIB_TYPE NPulseSynapse: public NPulseSynapseCommon
+class NPulseNeuron;
+
+class RDK_LIB_TYPE NPulseSynapseCommon: public UNet
 {
 public: // Общедоступные свойства
-// Постоянная времени выделения медиатора
-RDK::ULProperty<double,NPulseSynapse> SecretionTC;
+// Амплитуда входных импульсов
+RDK::ULProperty<double,NPulseSynapseCommon> PulseAmplitude;
 
-// Постоянная времени распада медиатора
-RDK::ULProperty<double,NPulseSynapse> DissociationTC;
-
-// Коэффициент пресинаптического торможения
-RDK::ULProperty<double,NPulseSynapse> InhibitionCoeff;
+// Вес (эффективность синапса) синапса
+RDK::ULProperty<double,NPulseSynapseCommon> Resistance;
 
 public: // Данные
 
 protected: // Основные свойства
 
 protected: // Временные переменные
-// Постоянные времени выделения и распада медиатора в единицах шага интегрирования
-double VSecretionTC,VDissociationTC;
-
-// Постоянная составляющая результатов вычислений
-double OutputConstData;
+// Промежуточное значение эффективности синапса
+RDK::ULProperty<double,NPulseSynapseCommon,ptPubState> PreOutput;
 
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
-NPulseSynapse(void);
-virtual ~NPulseSynapse(void);
+NPulseSynapseCommon(void);
+virtual ~NPulseSynapseCommon(void);
 // --------------------------
 
 protected:
@@ -57,19 +54,10 @@ protected:
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const double &value);
-
-// Постоянная времени выделения медиатора
-bool SetSecretionTC(const double &value);
-
-// Постоянная времени распада медиатора
-bool SetDissociationTC(const double &value);
-
-// Коэффициент пресинаптического торможения
-bool SetInhibitionCoeff(const double &value);
+virtual bool SetPulseAmplitude(const double &value);
 
 // Вес (эффективность синапса) синапса
-bool SetResistance(const double &value);
+virtual bool SetResistance(const double &value);
 // --------------------------
 
 public:
@@ -77,7 +65,7 @@ public:
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
-virtual NPulseSynapse* New(void);
+virtual NPulseSynapseCommon* New(void);
 // --------------------------
 
 // --------------------------
