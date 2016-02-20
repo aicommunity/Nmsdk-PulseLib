@@ -214,8 +214,8 @@ bool NPulseHebbSynapse::ACalculate(void)
  // Применяем мотивацию если есть
  if(NumInputs > 2 && GetInputDataSize(2)[1]>0)
  {
-  size_t motmin=(Kmot->size()<GetInputDataSize(2)[1])?Kmot->size():GetInputDataSize(2)[1];
-  for(size_t i=0;i<motmin;i++)
+  int motmin=(int(Kmot->size())<GetInputDataSize(2)[1])?int(Kmot->size()):GetInputDataSize(2)[1];
+  for(int i=0;i<motmin;i++)
    motivation[i]=GetInputData(2)->Double[i]*Kmot[i];
  }
 

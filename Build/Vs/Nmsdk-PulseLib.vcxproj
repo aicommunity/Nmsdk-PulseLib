@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{149112E9-B343-4E81-A5F5-B4853AE7E8FB}</ProjectGuid>
+    <ProjectGuid>{656621B0-E71B-4657-90FD-08DBAE8527AD}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>RdkBasicLib</RootNamespace>
   </PropertyGroup>
@@ -38,11 +38,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\..\..\Bin\Vs\</OutDir>
+    <OutDir>.\..\..\..\..\Bin\Platform\Win\Lib.Vs\</OutDir>
     <IncludePath>..\..\Core\;..\..\..\..\Rdk\Deploy\Include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\..\..\Bin\Vs\</OutDir>
+    <OutDir>.\..\..\..\..\Bin\Platform\Win\Lib.Vs\</OutDir>
     <IncludePath>..\..\Core\;..\..\..\..\Rdk\Deploy\Include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -51,7 +51,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);RDK_UNICODE_RUN</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);RDK_UNICODE_RUN;LIBRDK_LIBRARY_EXPORT</PreprocessorDefinitions>
       <ExceptionHandling>Async</ExceptionHandling>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
@@ -75,7 +75,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions);LIBRDK_LIBRARY_EXPORT;RDK_UNICODE_RUN;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions);LIBRDK_LIBRARY_EXPORT;RDK_UNICODE_RUN;;LIBRDK_LIBRARY_EXPORT</PreprocessorDefinitions>
       <ExceptionHandling>Async</ExceptionHandling>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
@@ -97,8 +97,44 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Core\UBCLLibrary.cpp" />
-    <ClCompile Include="..\..\Core\UModel.cpp" />
+    <ClCompile Include="..\..\Core\NAfferentNeuron.cpp" />
+    <ClCompile Include="..\..\Core\NEyeMuscle.cpp" />
+    <ClCompile Include="..\..\Core\NMuscle.cpp" />
+    <ClCompile Include="..\..\Core\NPac.cpp" />
+    <ClCompile Include="..\..\Core\NPulseChannel.cpp" />
+    <ClCompile Include="..\..\Core\NPulseChannelCommon.cpp" />
+    <ClCompile Include="..\..\Core\NPulseHebbSynapse.cpp" />
+    <ClCompile Include="..\..\Core\NPulseLibrary.cpp" />
+    <ClCompile Include="..\..\Core\NPulseLTZone.cpp" />
+    <ClCompile Include="..\..\Core\NPulseLTZoneCommon.cpp" />
+    <ClCompile Include="..\..\Core\NPulseMembrane.cpp" />
+    <ClCompile Include="..\..\Core\NPulseMembraneCommon.cpp" />
+    <ClCompile Include="..\..\Core\NPulseNeuron.cpp" />
+    <ClCompile Include="..\..\Core\NPulseNeuronCommon.cpp" />
+    <ClCompile Include="..\..\Core\NPulseSynapse.cpp" />
+    <ClCompile Include="..\..\Core\NPulseSynapseCommon.cpp" />
+    <ClCompile Include="..\..\Core\NPulseSynChannel.cpp" />
+    <ClCompile Include="..\..\Core\NReceptor.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Core\NAfferentNeuron.h" />
+    <ClInclude Include="..\..\Core\NEyeMuscle.h" />
+    <ClInclude Include="..\..\Core\NMuscle.h" />
+    <ClInclude Include="..\..\Core\NPac.h" />
+    <ClInclude Include="..\..\Core\NPulseChannel.h" />
+    <ClInclude Include="..\..\Core\NPulseChannelCommon.h" />
+    <ClInclude Include="..\..\Core\NPulseHebbSynapse.h" />
+    <ClInclude Include="..\..\Core\NPulseLibrary.h" />
+    <ClInclude Include="..\..\Core\NPulseLTZone.h" />
+    <ClInclude Include="..\..\Core\NPulseLTZoneCommon.h" />
+    <ClInclude Include="..\..\Core\NPulseMembrane.h" />
+    <ClInclude Include="..\..\Core\NPulseMembraneCommon.h" />
+    <ClInclude Include="..\..\Core\NPulseNeuron.h" />
+    <ClInclude Include="..\..\Core\NPulseNeuronCommon.h" />
+    <ClInclude Include="..\..\Core\NPulseSynapse.h" />
+    <ClInclude Include="..\..\Core\NPulseSynapseCommon.h" />
+    <ClInclude Include="..\..\Core\NPulseSynChannel.h" />
+    <ClInclude Include="..\..\Core\NReceptor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

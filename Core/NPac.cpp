@@ -150,7 +150,7 @@ bool NPac::AReset(void)
 // Выполняет расчет этого объекта
 bool NPac::ACalculate(void)
 {
- size_t size=(MinInputDataSize<GetOutputDataSize(0)[1])?MinInputDataSize:GetOutputDataSize(0)[1];
+ int size=(int(MinInputDataSize)<GetOutputDataSize(0)[1])?int(MinInputDataSize):GetOutputDataSize(0)[1];
  double Ts;
  double input;
 
@@ -162,7 +162,7 @@ bool NPac::ACalculate(void)
  {
   for(int i=0;i<NumInputs;i++)
   {
-   for(size_t j=0;j<size;j++)
+   for(int j=0;j<size;j++)
    {
 	if(!GetInputData(i))
 	 continue;
@@ -177,7 +177,7 @@ bool NPac::ACalculate(void)
  {
   for(int i=0;i<NumInputs;i++)
   {
-   for(size_t j=0;j<size;j++)
+   for(int j=0;j<size;j++)
    {
 	if(!GetInputData(i))
 	 continue;
@@ -188,14 +188,14 @@ bool NPac::ACalculate(void)
    }
   }
  }
-  for(size_t j=0;j<size;j++)
+  for(int j=0;j<size;j++)
    POutputData[0].Double[j]=0;
 
  if(Mode == 0)
  {
   for(int i=0;i<NumInputs;i++)
   {
-   for(size_t j=0;j<size;j++)
+   for(int j=0;j<size;j++)
    {
 	POutputData[0].Double[j]+=PreOutput[i][j]*Gain[i][j];
    }
@@ -204,7 +204,7 @@ bool NPac::ACalculate(void)
  else
  if(Mode == 1)
  {
-  for(size_t j=0;j<size;j++)
+  for(int j=0;j<size;j++)
   {
    double pos_values=0;
    double neg_values=0;

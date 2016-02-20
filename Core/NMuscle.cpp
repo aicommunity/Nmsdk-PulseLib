@@ -281,7 +281,7 @@ bool NMuscle::ACalculate(void)
   yOld[i] = y[i];
 
  for(int i=0;i<NumInputs;i++)
-  for(size_t j=0;j<GetInputDataSize(i)[1];j++)
+  for(int j=0;j<GetInputDataSize(i)[1];j++)
   {
    //if(k >= OutputSize)
    //	break;
@@ -295,7 +295,7 @@ bool NMuscle::ACalculate(void)
  if(LengthInput)
  {
   for(int i=0;i<LengthInput->GetNumInputs();i++)
-   for(size_t j=0;j<LengthInput->GetInputDataSize(i)[1];j++)
+   for(int j=0;j<LengthInput->GetInputDataSize(i)[1];j++)
    {
    //if(k >= OutputSize)
    //	break;
