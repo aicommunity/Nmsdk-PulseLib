@@ -33,7 +33,8 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseChannelCommon::NPulseChannelCommon(void)
- : Type("Type", this, &NPulseChannelCommon::SetType)
+ : Type("Type", this, &NPulseChannelCommon::SetType),
+   UseAveragePotential("UseAveragePotential",this)
 {
 }
 
@@ -123,6 +124,7 @@ bool NPulseChannelCommon::ADelComponent(UEPtr<UContainer> comp)
 bool NPulseChannelCommon::ADefault(void)
 {
  Type=0;
+ UseAveragePotential=true;
 
  return true;
 }

@@ -27,11 +27,14 @@ class NPulseNeuron;
 class RDK_LIB_TYPE NLTZone: public UNet
 {
 public: // Общедоступные свойства
-// Порог нейрона
+/// Порог нейрона
 RDK::ULProperty<double,NLTZone> Threshold;
 
+/// Признак наличия усреднения в выходных данных нейрона
+ULProperty<bool,NLTZone> UseAveragePotential;
+
 public: // Данные
-// Нейрон владелец мембраны канала
+/// Нейрон владелец мембраны канала
 NPulseNeuron* Neuron;
 
 protected: // Основные свойства

@@ -31,7 +31,9 @@ namespace NMSDK {
 // --------------------------
 NPulseNeuronCommon::NPulseNeuronCommon(void)
 //: NNeuron(name),
- : NumActiveOutputs("NumActiveOutputs",this),
+ : UseAverageDendritesPotential("UseAverageDendritesPotential",this,&NPulseNeuronCommon::SetUseAverageDendritesPotential),
+   UseAverageLTZonePotential("UseAverageLTZonePotential",this,&NPulseNeuronCommon::SetUseAverageLTZonePotential),
+  NumActiveOutputs("NumActiveOutputs",this),
   NumActivePosInputs("NumActivePosInputs",this),
   NumActiveNegInputs("NumActiveNegInputs",this),
 
@@ -42,6 +44,27 @@ NPulseNeuronCommon::NPulseNeuronCommon(void)
 
 NPulseNeuronCommon::~NPulseNeuronCommon(void)
 {
+}
+// --------------------------
+
+// --------------------------
+// Методы управления параметрами
+// --------------------------
+/// Признак наличия усреднения в выходных данных нейрона
+bool NPulseNeuronCommon::SetUseAverageDendritesPotential(const bool &value)
+{
+ for(size_t i=0;i<Membranes.size();i++)
+  if(Membranes[i])
+   Membranes[i]->UseAveragePotential=value;
+ return true;
+}
+
+/// Признак наличия усреднения в выходных данных нейрона
+bool NPulseNeuronCommon::SetUseAverageLTZonePotential(const bool &value)
+{
+ if(LTZone)
+  LTZone->UseAveragePotential=value;
+ return true;
 }
 // --------------------------
 
@@ -220,18 +243,19 @@ bool NPulseNeuronCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> 
   UEPtr<NPulseMembraneCommon> membrane=dynamic_pointer_cast<NPulseMembraneCommon>(comp);
   if(membrane)
   {
-  vector<NPulseMembraneCommon*>::iterator I;
-  bool exists = false;
-  for(I=Membranes.begin();I!=Membranes.end();I++)
-  {
-   if(comp==*I)
+   membrane->UseAveragePotential=UseAverageDendritesPotential;
+   vector<NPulseMembraneCommon*>::iterator I;
+   bool exists = false;
+   for(I=Membranes.begin();I!=Membranes.end();I++)
    {
-	exists=true;
-	break;
+	if(comp==*I)
+	{
+	 exists=true;
+	 break;
+	}
    }
-  }
-  if(!exists)
-   Membranes.push_back(membrane);
+   if(!exists)
+	Membranes.push_back(membrane);
    // Подключаем синапсы хебба если они есть
    for(int i=0;i<membrane->GetNumComponents();i++)
    {
@@ -270,6 +294,8 @@ bool NPulseNeuronCommon::ADelComponent(UEPtr<UContainer> comp)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseNeuronCommon::ADefault(void)
 {
+ UseAverageLTZonePotential=true;
+ UseAverageDendritesPotential=true;
  SetNumOutputs(3);
  for(int i=0;i<NumOutputs;i++)
   SetOutputDataSize(i,MMatrixSize(1,1));
@@ -283,6 +309,12 @@ bool NPulseNeuronCommon::ADefault(void)
 // в случае успешной сборки
 bool NPulseNeuronCommon::ABuild(void)
 {
+ if(LTZone)
+  LTZone->UseAveragePotential=UseAverageLTZonePotential;
+
+ for(size_t i=0;i<Membranes.size();i++)
+  if(Membranes[i])
+   Membranes[i]->UseAveragePotential=UseAverageDendritesPotential;
  return true;
 }
 

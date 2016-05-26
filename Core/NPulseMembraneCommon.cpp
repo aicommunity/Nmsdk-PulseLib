@@ -29,11 +29,25 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseMembraneCommon::NPulseMembraneCommon(void)
+ : UseAveragePotential("UseAveragePotential",this,&NPulseMembraneCommon::SetUseAveragePotential)
 {
 }
 
 NPulseMembraneCommon::~NPulseMembraneCommon(void)
 {
+}
+// --------------------------
+
+// --------------------------
+// Методы управления параметрами
+// --------------------------
+/// Признак наличия усреднения в выходных данных нейрона
+bool NPulseMembraneCommon::SetUseAveragePotential(const bool &value)
+{
+ for(size_t i=0;i<Channels.size();i++)
+  if(Channels[i])
+   Channels[i]->UseAveragePotential=value;
+ return true;
 }
 // --------------------------
 
@@ -113,6 +127,7 @@ bool NPulseMembraneCommon::ADelComponent(UEPtr<UContainer> comp)
  UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(comp);
  if(channel)
  {
+  channel->UseAveragePotential=UseAveragePotential;
   vector<NPulseChannelCommon*>::iterator I;
   I=find(Channels.begin(),Channels.end(),channel);
   if(I != Channels.end())
@@ -128,6 +143,7 @@ bool NPulseMembraneCommon::ADelComponent(UEPtr<UContainer> comp)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseMembraneCommon::ADefault(void)
 {
+ UseAveragePotential=true;
  return true;
 }
 
@@ -137,6 +153,9 @@ bool NPulseMembraneCommon::ADefault(void)
 // в случае успешной сборки
 bool NPulseMembraneCommon::ABuild(void)
 {
+ for(size_t i=0;i<Channels.size();i++)
+  if(Channels[i])
+   Channels[i]->UseAveragePotential=UseAveragePotential;
  return true;
 }
 

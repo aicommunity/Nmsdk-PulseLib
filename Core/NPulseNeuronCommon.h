@@ -26,6 +26,13 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseNeuronCommon: public NNeuron
 {
+public: // Параметры
+/// Признак наличия усреднения в ветвлении дендритов
+ULProperty<bool, NPulseNeuronCommon> UseAverageDendritesPotential;
+
+/// Признак наличия усреднения в ветвлении дендритов
+ULProperty<bool, NPulseNeuronCommon> UseAverageLTZonePotential;
+
 public: // Статистика
 // Число связей организованных этим нейроном на других (и себе)
 RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;
@@ -50,6 +57,16 @@ public: // Методы
 // --------------------------
 NPulseNeuronCommon(void);
 virtual ~NPulseNeuronCommon(void);
+// --------------------------
+
+// --------------------------
+// Методы управления параметрами
+// --------------------------
+/// Признак наличия усреднения в выходных данных нейрона
+bool SetUseAverageDendritesPotential(const bool &value);
+
+/// Признак наличия усреднения в выходных данных нейрона
+bool SetUseAverageLTZonePotential(const bool &value);
 // --------------------------
 
 // --------------------------

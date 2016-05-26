@@ -30,7 +30,8 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NLTZone::NLTZone(void)
- : Threshold("Threshold",this,&NLTZone::SetThreshold)
+ : Threshold("Threshold",this,&NLTZone::SetThreshold),
+   UseAveragePotential("UseAveragePotential",this)
 {
  Neuron=0;
 }
@@ -58,6 +59,7 @@ bool NLTZone::SetThreshold(const double &value)
 bool NLTZone::ADefault(void)
 {
  Threshold=0.0;
+ UseAveragePotential=true;
 
  return true;
 }

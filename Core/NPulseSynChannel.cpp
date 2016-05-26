@@ -329,20 +329,9 @@ bool NPulseSynChannel::ACalculate(void)
   }
  }
  NumConnectedSynapsis=num_connected_synapsis;
- // Получение данных канала
-  switch(PotentialSummaryMode)
-  {
-  case 0:
-   if(num_connected_channels)
-    channel_input/=num_connected_channels;
-  break;
 
-  case 1:
-  break;
-
-  default:
-   ;
-  }
+ if(UseAveragePotential)
+  channel_input/=num_connected_channels;
 
  double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
  // Получение информации об обратной связи
@@ -651,20 +640,8 @@ bool NContinuesSynChannel::ACalculate(void)
  }
  NumConnectedSynapsis=num_connected_synapsis;
 
- // Получение данных канала
-  switch(PotentialSummaryMode)
-  {
-  case 0:
-   if(num_connected_channels)
-    channel_input/=num_connected_channels;
-  break;
-
-  case 1:
-  break;
-
-  default:
-   ;
-  }
+ if(UseAveragePotential)
+  channel_input/=num_connected_channels;
 
  // Расчет
  double *out=&POutputData[0].Double[0];

@@ -149,7 +149,8 @@ bool NPulseLTZone::ACalculate(void)
 	 NeuralPotential.v+=*data;
    }
   }
-  NeuralPotential.v/=NumInputs/2.0;
+  if(UseAveragePotential)
+   NeuralPotential.v/=NumInputs/2.0;
  }
 
  PrePotential.v+=(NeuralPotential.v-PrePotential.v)/(TimeConstant.v*TimeStep);
@@ -369,7 +370,8 @@ bool NContinuesLTZone::ACalculate(void)
 	 NeuralPotential.v+=*data;
    }
   }
-  NeuralPotential.v/=NumInputs/2.0;
+  if(UseAveragePotential)
+   NeuralPotential.v/=NumInputs/2.0;
  }
 
  PrePotential.v=tanh(NeuralPotential.v);
@@ -495,7 +497,8 @@ bool NPulseSimpleLTZone::ACalculate(void)
 	 NeuralPotential.v+=*data;
    }
   }
-  NeuralPotential.v/=NumInputs;
+  if(UseAveragePotential)
+   NeuralPotential.v/=NumInputs;
  }
 
  generator.Amplitude=PulseAmplitude;
@@ -617,7 +620,9 @@ bool NContinuesSimpleLTZone::ACalculate(void)
 	 NeuralPotential.v+=*data;
    }
   }
-  NeuralPotential.v/=NumInputs;
+
+  if(UseAveragePotential)
+   NeuralPotential.v/=NumInputs;
  }
 
  POutputData[0].Double[0]=NeuralPotential.v;

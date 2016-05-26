@@ -34,10 +34,6 @@ RDK::ULProperty<double,NPulseChannel> Resistance;
 // Сопротивление перезаряда мембраны
 RDK::ULProperty<double,NPulseChannel> FBResistance;
 
-// Тип суммации потенциалов в узлах ветвления
-// С усреднением
-// Алгебраическая сумма
-RDK::ULProperty<int,NPulseChannel> PotentialSummaryMode;
 RDK::ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
 
 public: // Данные
@@ -79,8 +75,6 @@ bool SetResistance(const double &value);
 
 // Сопротивление перезаряда мембраны
 bool SetFBResistance(const double &value);
-
-bool SetPotentialSummaryMode(const int &value);
 // --------------------------
 
 // --------------------------
