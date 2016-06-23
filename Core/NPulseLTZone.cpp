@@ -106,7 +106,7 @@ bool NPulseLTZone::ADefault(void)
 
  // Начальные значения всем параметрам
  TimeConstant=0.005;
- Threshold=0;//0.00001;
+ Threshold=0.00001;
 
  return true;
 }

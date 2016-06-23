@@ -310,21 +310,20 @@ bool NPulseChannel::ACalculate(void)
   G+=static_pointer_cast<UADItem>(PComponents[i])->GetOutputData(0).Double[0];
 
  // Получение данных канала
- if(FullInputDataSize>0)
+ size_t inp_size;
+ size_t full_inp_data_size(0);
+ for(int i=0;i<NumInputs;i++)
  {
-  size_t inpsize;
-  for(int i=0;i<NumInputs;i++)
+  if((inp_size=GetInputDataSize(i)[1]) >0)
   {
-   if((inpsize=GetInputDataSize(i)[1]) >0)
-   {
-	double *data=&(GetInputData(i)->Double[0]);
-	for(size_t j=0;j<inpsize;j++,++data)
-	 channel_input+=*data;
-   }
+   full_inp_data_size+=inp_size;
+   double *data=&(GetInputData(i)->Double[0]);
+   for(size_t j=0;j<inp_size;j++,++data)
+	channel_input+=*data;
   }
 
   if(UseAveragePotential)
-   channel_input/=FullInputDataSize;
+   channel_input/=full_inp_data_size;//FullInputDataSize;
  }
 
  double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
