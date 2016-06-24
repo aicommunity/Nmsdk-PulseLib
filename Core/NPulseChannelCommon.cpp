@@ -35,6 +35,8 @@ namespace NMSDK {
 NPulseChannelCommon::NPulseChannelCommon(void)
  : Type("Type", this, &NPulseChannelCommon::SetType),
    UseAveragePotential("UseAveragePotential",this)
+//   RestingFlag("RestingFlag",this),
+//   RestingThreshold("RestingThreshold",this)
 {
 }
 
@@ -125,6 +127,8 @@ bool NPulseChannelCommon::ADefault(void)
 {
  Type=0;
  UseAveragePotential=true;
+// RestingThreshold=100;
+// RestingFlag=false;
 
  return true;
 }

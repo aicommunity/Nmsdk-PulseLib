@@ -36,7 +36,8 @@ NPulseChannel::NPulseChannel(void)
 : Capacity("Capacity",this,&NPulseChannel::SetCapacity),
 Resistance("Resistance",this,&NPulseChannel::SetResistance),
 FBResistance("FBResistance",this,&NPulseChannel::SetFBResistance),
-NumConnectedSynapsis("NumConnectedSynapsis",this)
+NumConnectedSynapsis("NumConnectedSynapsis",this),
+RestingResistance("RestingResistance",this)
 {
 }
 
@@ -262,6 +263,8 @@ bool NPulseChannel::ADefault(void)
  // Сопротивление перезаряда мембраны
  FBResistance=1.0e8;
 
+ RestingResistance=1.0e7;
+
  Type=0;
 
  NumConnectedSynapsis = 0;
@@ -326,19 +329,34 @@ bool NPulseChannel::ACalculate(void)
    channel_input/=full_inp_data_size;//FullInputDataSize;
  }
 
- double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
  // Получение информации об обратной связи
+ double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
  if(Owner)
   channel_input-=feedback;
 
  // Расчет
  double *out=&POutputData[0].Double[0];
- double Ti,sum_u;
+ double Ti(0.0),sum_u(0.0);
+
+ // Проверяем необходимость сброса
+// if(RestingFlag)
+// {
+//  if(G<RestingThreshold)
+//  {
+//   *out=channel_input;
+//  }
+// }
 
  if(!feedback)
  {
-  Ti=Capacity.v/(G+1.0/Resistance.v);
-  sum_u=(1.0+G*Resistance.v);
+  double resistance(0.0);
+  if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))
+   resistance=RestingResistance.v;
+  else
+   resistance=Resistance.v;
+
+  Ti=Capacity.v/(G+1.0/resistance);
+  sum_u=(1.0+G*resistance);
  }
  else
  {

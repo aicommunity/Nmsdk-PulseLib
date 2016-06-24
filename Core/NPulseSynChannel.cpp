@@ -340,12 +340,27 @@ bool NPulseSynChannel::ACalculate(void)
 
  // Расчет
  double *out=&POutputData[0].Double[0];
- double Ti,sum_u;
+ double Ti(0.0),sum_u(0.0);
+
+ // Проверяем необходимость сброса
+// if(RestingFlag)
+// {
+//  if(G<RestingThreshold)
+//  {
+//   *out=channel_input;
+//  }
+// }
 
  if(!feedback)
  {
-  Ti=Capacity/(G+1.0/Resistance);
-  sum_u=(1.0+G*Resistance);
+  double resistance(0.0);
+  if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))
+   resistance=RestingResistance.v;
+  else
+   resistance=Resistance.v;
+
+  Ti=Capacity/(G+1.0/resistance);
+  sum_u=(1.0+G*resistance);
  }
  else
  {
@@ -645,10 +660,26 @@ bool NContinuesSynChannel::ACalculate(void)
 
  // Расчет
  double *out=&POutputData[0].Double[0];
- double Ti,sum_u;
+ double Ti(0.0),sum_u(0.0);
 
- Ti=Capacity/(G+1.0/Resistance);
- sum_u=(1.0+G*Resistance);
+
+ // Проверяем необходимость сброса
+// if(RestingFlag)
+// {
+//  if(G<RestingThreshold)
+//  {
+//   *out=channel_input;
+//  }
+// }
+
+ double resistance(0.0);
+ if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))
+  resistance=RestingResistance.v;
+ else
+  resistance=Resistance.v;
+
+ Ti=Capacity/(G+1.0/resistance);
+ sum_u=(1.0+G*resistance);
 
  *out+=(channel_input-(*out)*sum_u)/(Ti*TimeStep);
 

@@ -32,8 +32,12 @@ RDK::ULProperty<double,NPulseChannelCommon> Type;
 /// Признак наличия усреднения в выходных данных нейрона
 ULProperty<bool, NPulseChannelCommon> UseAveragePotential;
 
-public: // Данные
+/*/// Сбрасывать накопленный потенциал, если активность по синапсам меньше чем порог
+ULProperty<bool, NPulseChannelCommon> RestingFlag;
 
+/// Порог активности синапсов для сброса накопленного потенциала
+ULProperty<double, NPulseChannelCommon> RestingThreshold;
+  */
 protected: // Основные свойства
 
 protected: // Временные переменные

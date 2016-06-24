@@ -34,6 +34,9 @@ RDK::ULProperty<double,NPulseChannel> Resistance;
 // Сопротивление перезаряда мембраны
 RDK::ULProperty<double,NPulseChannel> FBResistance;
 
+// Сопротивление мембраны на переход в состояние покоя
+RDK::ULProperty<double,NPulseChannel> RestingResistance;
+
 RDK::ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
 
 public: // Данные
