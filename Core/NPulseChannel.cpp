@@ -39,6 +39,7 @@ FBResistance("FBResistance",this,&NPulseChannel::SetFBResistance),
 NumConnectedSynapsis("NumConnectedSynapsis",this),
 RestingResistance("RestingResistance",this)
 {
+ channel_input=0;
 }
 
 NPulseChannel::~NPulseChannel(void)

@@ -39,6 +39,8 @@ NReceptor::NReceptor(void)
   SumCoeff("SumCoeff",this),
   InputAdaptationArrestingTC("InputAdaptationArrestingTC",this)
 {
+ InputRange=0;
+ OutputRange=0;
 }
 
 NReceptor::~NReceptor(void)

@@ -39,6 +39,10 @@ SynapseResistance("SynapseResistance",this,&NPulseSynChannel::SetSynapseResistan
 
 PreOutput("PreOutput",this)
 {
+ VSecretionTC=1;
+ VDissociationTC=1;
+ OutputConstData=0;
+ syn_output=0;
 }
 
 NPulseSynChannel::~NPulseSynChannel(void)
@@ -389,6 +393,9 @@ SynapseResistance("SynapseResistance",this,&NContinuesSynChannel::SetSynapseResi
 
 PreOutput("PreOutput",this)
 {
+ VSecretionTC=1;
+ VDissociationTC=1;
+ OutputConstData=0;
 }
 
 NContinuesSynChannel::~NContinuesSynChannel(void)

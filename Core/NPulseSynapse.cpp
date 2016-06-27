@@ -32,6 +32,9 @@ NPulseSynapse::NPulseSynapse(void)
 DissociationTC("DissociationTC",this,&NPulseSynapse::SetDissociationTC),
 InhibitionCoeff("InhibitionCoeff",this,&NPulseSynapse::SetInhibitionCoeff)
 {
+ VSecretionTC=1;
+ VDissociationTC=1;
+ OutputConstData=0;
 }
 
 NPulseSynapse::~NPulseSynapse(void)

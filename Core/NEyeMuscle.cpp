@@ -182,7 +182,7 @@ bool NEyeMuscle::ACalculate(void)
 // мускульное сокращение
 double NEyeMuscle::MuscularReduction(size_t k,double in)
 {
- double p[3];
+ double p[3]={0,0,0};
  p[0]=P1[k]+(in-P3[k]*MulCoeffs[2]-P1[k]*MulCoeffs[0])/(TC[0]*TimeStep);
  p[1]=P2[k]+(p[0]-P2[k]*MulCoeffs[1])/(TC[1]*TimeStep);
  p[2]=P3[k]+(p[1])/(TC[2]*TimeStep);

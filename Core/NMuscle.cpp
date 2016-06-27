@@ -35,32 +35,24 @@ NMuscle::NMuscle(void)
   Mass("Mass",this),
   G("G",this)
 {
- // Устанавливаем новые параметры
-/* AddLookupParameter("MulCoeffs",MulCoeffs);
- AddLookupParameter("Param",Param);
- AddLookupParameter("TC",TC);
 
- AddLookupParameter("Threshold",Threshold);
- AddLookupParameter("Mass",Mass);
- AddLookupParameter("G",G);
-  */
 // Указатель на вход по длине
  LengthInput=0;
-/*
- ExternalForce=0;
-
- // Указатели на дополнительные выходы
- // Активная сила
- ActivePower=0;
-
- // Длина
- Length=0;
-
- // Веретена
- Spindle1=Spindle2=0;
-
- // Сухожильный орган Гольджи
- Tendon=0;  */
+ for(size_t i=0;i<15;i++)
+ {
+  y[i]=0;
+  yOld[i]=0;
+ }
+ for(size_t i=0;i<7;i++)
+ {
+  mr[i]=0;
+  mrOld[7]=0;
+ }
+ vereteno1=0;
+ vereteno2=0;
+ goldgi=0;
+ MaxActionPower=0;
+ FirstStep=true;
 }
 
 NMuscle::~NMuscle(void)

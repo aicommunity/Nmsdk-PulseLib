@@ -34,6 +34,7 @@ NLTZone::NLTZone(void)
    UseAveragePotential("UseAveragePotential",this)
 {
  Neuron=0;
+ CachedNumAConnectors=0;
 }
 
 NLTZone::~NLTZone(void)
