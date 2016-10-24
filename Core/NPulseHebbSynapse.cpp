@@ -28,22 +28,24 @@ namespace NMSDK {
 // --------------------------
 NPulseHebbSynapse::NPulseHebbSynapse(void)
 //: NPulseSynapse(name),
-: G("G",this),
-Gd("Gd",this),
-Gs("Gs",this),
+:
 Min("Min",this),
 Mout("Mout",this),
-Win("Win",this),
-Wout("Wout",this),
 Md("Md",this),
 ActiveMs("ActiveMs",this),
 PassiveMs("PassiveMs",this),
+Kmot("Kmot",this),
 Kin("Kin",this),
 Kout("Kout",this),
-Kmot("Kmot",this),
-
 GdGain("GdGain",this),
-GsGain("GsGain",this)
+GsGain("GsGain",this),
+
+G("G",this),
+Gd("Gd",this),
+Gs("Gs",this),
+Win("Win",this),
+Wout("Wout",this)
+
 {
 }
 

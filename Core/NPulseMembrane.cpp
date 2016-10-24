@@ -29,9 +29,10 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseMembrane::NPulseMembrane(void)
- : Feedback("Feedback",this),
-  FeedbackGain("FeedbackGain",this,&NPulseMembrane::SetFeedbackGain),
-  ResetAvailable("ResetAvailable",this)
+ : FeedbackGain("FeedbackGain",this,&NPulseMembrane::SetFeedbackGain),
+  ResetAvailable("ResetAvailable",this),
+  Feedback("Feedback",this)
+
 {
 }
 

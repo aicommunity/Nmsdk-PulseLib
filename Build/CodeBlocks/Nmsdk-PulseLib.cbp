@@ -2,12 +2,12 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="Rdk-BasicLib" />
+		<Option title="Nmsdk-PulseLib" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="./../../Bin/CodeBlocks/Rdk-BasicLib" prefix_auto="1" extension_auto="1" />
+				<Option output="./../../../../Bin/Platform/Linux/Lib/Nmsdk-PulseLib" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option object_output="obj/Debug/" />
 				<Option type="2" />
@@ -17,7 +17,7 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="./../../Bin/CodeBlocks/Rdk-BasicLib" prefix_auto="1" extension_auto="1" />
+				<Option output="./../../../../Bin/Platform/Linux/Lib/Nmsdk-PulseLib" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option object_output="obj/Release/" />
 				<Option type="2" />
@@ -33,10 +33,42 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="../../Core/UBCLLibrary.cpp" />
-		<Unit filename="../../Core/UBCLLibrary.h" />
-		<Unit filename="../../Core/UModel.cpp" />
-		<Unit filename="../../Core/UModel.h" />
+		<Unit filename="../../Core/NAfferentNeuron.cpp" />
+		<Unit filename="../../Core/NAfferentNeuron.h" />
+		<Unit filename="../../Core/NEyeMuscle.cpp" />
+		<Unit filename="../../Core/NEyeMuscle.h" />
+		<Unit filename="../../Core/NMuscle.cpp" />
+		<Unit filename="../../Core/NMuscle.h" />
+		<Unit filename="../../Core/NPac.cpp" />
+		<Unit filename="../../Core/NPac.h" />
+		<Unit filename="../../Core/NPulseChannel.cpp" />
+		<Unit filename="../../Core/NPulseChannel.h" />
+		<Unit filename="../../Core/NPulseChannelCommon.cpp" />
+		<Unit filename="../../Core/NPulseChannelCommon.h" />
+		<Unit filename="../../Core/NPulseHebbSynapse.cpp" />
+		<Unit filename="../../Core/NPulseHebbSynapse.h" />
+		<Unit filename="../../Core/NPulseLTZone.cpp" />
+		<Unit filename="../../Core/NPulseLTZone.h" />
+		<Unit filename="../../Core/NPulseLTZoneCommon.cpp" />
+		<Unit filename="../../Core/NPulseLTZoneCommon.h" />
+		<Unit filename="../../Core/NPulseLibrary.cpp" />
+		<Unit filename="../../Core/NPulseLibrary.h" />
+		<Unit filename="../../Core/NPulseMembrane.cpp" />
+		<Unit filename="../../Core/NPulseMembrane.h" />
+		<Unit filename="../../Core/NPulseMembraneCommon.cpp" />
+		<Unit filename="../../Core/NPulseMembraneCommon.h" />
+		<Unit filename="../../Core/NPulseNeuron.cpp" />
+		<Unit filename="../../Core/NPulseNeuron.h" />
+		<Unit filename="../../Core/NPulseNeuronCommon.cpp" />
+		<Unit filename="../../Core/NPulseNeuronCommon.h" />
+		<Unit filename="../../Core/NPulseSynChannel.cpp" />
+		<Unit filename="../../Core/NPulseSynChannel.h" />
+		<Unit filename="../../Core/NPulseSynapse.cpp" />
+		<Unit filename="../../Core/NPulseSynapse.h" />
+		<Unit filename="../../Core/NPulseSynapseCommon.cpp" />
+		<Unit filename="../../Core/NPulseSynapseCommon.h" />
+		<Unit filename="../../Core/NReceptor.cpp" />
+		<Unit filename="../../Core/NReceptor.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

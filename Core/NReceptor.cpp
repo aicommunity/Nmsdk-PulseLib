@@ -33,11 +33,11 @@ NReceptor::NReceptor(void)
   MaxInputRange("MaxInputRange",this),
   MinOutputRange("MinOutputRange",this),
   MaxOutputRange("MaxOutputRange",this),
-  InputAdaptationMode("InputAdaptationMode",this),
   ExpCoeff("ExpCoeff",this),
-  OutputAdaptationMode("OutputAdaptationMode",this),
   SumCoeff("SumCoeff",this),
-  InputAdaptationArrestingTC("InputAdaptationArrestingTC",this)
+  InputAdaptationArrestingTC("InputAdaptationArrestingTC",this),
+  InputAdaptationMode("InputAdaptationMode",this),
+  OutputAdaptationMode("OutputAdaptationMode",this)
 {
  InputRange=0;
  OutputRange=0;

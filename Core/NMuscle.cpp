@@ -31,8 +31,8 @@ NMuscle::NMuscle(void)
  : MulCoeffs("MulCoeffs",this),
   Param("Param",this),
   TC("TC",this),
-  Threshold("Threshold",this),
   Mass("Mass",this),
+  Threshold("Threshold",this),
   G("G",this)
 {
 
