@@ -485,9 +485,28 @@ bool NPulseSimpleLTZone::ACalculate(void)
  // расчет на шаге
  NeuralPotential=0;
 
+ if(InputChannels.IsConnected())
+ {
+  size_t inpsize(0);
+  for(size_t i=0;i<InputChannels->size();i++)
+  {
+   if(InputChannels[i])
+   {
+	if((inpsize=InputChannels[i]->GetSize(1)) >0)
+	{
+	 double *data=&(InputChannels[i]->Double[0]);
+	 for(size_t j=0;j<inpsize;j++,++data)
+	  NeuralPotential.v+=*data;
+	}
+   }
+  }
+  if(UseAveragePotential)
+   NeuralPotential.v/=InputChannels->size();
+ }
+ else
  if(NumInputs>0)
  {
-  size_t inpsize;
+  size_t inpsize(0);
   for(int i=0;i<NumInputs;i++)
   {
    if((inpsize=GetInputDataSize(i)[1]) >0)

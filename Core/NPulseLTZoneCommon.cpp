@@ -31,10 +31,30 @@ namespace NMSDK {
 // --------------------------
 NLTZone::NLTZone(void)
  : Threshold("Threshold",this,&NLTZone::SetThreshold),
-   UseAveragePotential("UseAveragePotential",this)
+   UseAveragePotential("UseAveragePotential",this),
+   InputChannels("InputChannels",this)
 {
  Neuron=0;
  CachedNumAConnectors=0;
+// AddAlias("DataInput0","InputChannels");
+// AddAlias("DataInput1","InputChannels");
+// AddAlias("DataInput2","InputChannels");
+// AddAlias("DataInput3","InputChannels");
+// AddAlias("DataInput4","InputChannels");
+// AddAlias("DataInput5","InputChannels");
+// AddAlias("DataInput6","InputChannels");
+// AddAlias("DataInput7","InputChannels");
+// AddAlias("DataInput8","InputChannels");
+// AddAlias("DataInput9","InputChannels");
+// AddAlias("DataInput10","InputChannels");
+// AddAlias("DataInput11","InputChannels");
+// AddAlias("DataInput12","InputChannels");
+// AddAlias("DataInput13","InputChannels");
+// AddAlias("DataInput14","InputChannels");
+// AddAlias("DataInput15","InputChannels");
+// AddAlias("DataInput16","InputChannels");
+// AddAlias("DataInput17","InputChannels");
+// AddAlias("DataInput18","InputChannels");
 }
 
 NLTZone::~NLTZone(void)

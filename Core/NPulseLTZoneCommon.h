@@ -33,6 +33,9 @@ RDK::ULProperty<double,NLTZone> Threshold;
 /// Признак наличия усреднения в выходных данных нейрона
 ULProperty<bool,NLTZone> UseAveragePotential;
 
+/// Данные с ионных механизмов участков мембраны
+UPropertyInputCData<MDMatrix<double>,NLTZone> InputChannels;
+
 public: // Данные
 /// Нейрон владелец мембраны канала
 NPulseNeuron* Neuron;
