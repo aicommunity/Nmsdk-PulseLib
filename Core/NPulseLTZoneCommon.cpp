@@ -88,7 +88,7 @@ bool NLTZone::ADefault(void)
 // —брос процесса счета.
 bool NLTZone::AReset(void)
 {
- CachedNumAConnectors=static_cast<int>(GetNumAConnectors(0));
+ CachedNumAConnectors=static_cast<int>(GetNumAConnectors("DataOutput0"));
  return true;
 }
 // --------------------------

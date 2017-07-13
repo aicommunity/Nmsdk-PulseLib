@@ -116,9 +116,9 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
    {
 	RDK::ULinkSide item,conn;
 	item.Id=mowner->GetLTZone()->GetLongId(mowner);
-	item.Index=0;
+	item.Name="DataOutput0";
 	conn.Id=hsynapse->GetLongId(mowner);
-	conn.Index=1;
+	conn.Name="DataInput1";
 	res&=mowner->CreateLink(item,conn);
    }
   }
@@ -131,9 +131,9 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
 	if(hsynapse)
 	{
 	 item.Id=mowner->GetLTZone()->GetLongId(mowner);
-     item.Index=0;
+	 item.Name="DataOutput0";
 	 conn.Id=hsynapse->GetLongId(mowner);
-	 conn.Index=1;
+	 conn.Name="DataInput1";
 	 res&=mowner->CreateLink(item,conn);
 	}
    }
@@ -152,11 +152,11 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
 	RDK::ULinkSide item,conn;
 	item.Id=mlowner->GetNeuronLife()->GetLongId(mlowner);
 	if(Type.v>0)
-	 item.Index=6;
+	 item.Name="DataOutput6";
 	else
-	 item.Index=5;
+	 item.Name="DataOutput5";
 	conn.Id=hsynapse->GetLongId(mlowner);
-	conn.Index=2;
+	conn.Name="DataInput2";
 	res&=mlowner->CreateLink(item,conn);
    }
   }
@@ -170,11 +170,11 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
 	{
 	 item.Id=mlowner->GetNeuronLife()->GetLongId(mlowner);
 	 if(Type.v>0)
-	  item.Index=6;
+	  item.Name="DataOutput6";
 	 else
-	  item.Index=5;
+	  item.Name="DataOutput5";
 	 conn.Id=hsynapse->GetLongId(mlowner);
-	 conn.Index=2;
+	 conn.Name="DataInput2";
 	 res&=mlowner->CreateLink(item,conn);
 	}
    }

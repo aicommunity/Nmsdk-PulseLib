@@ -167,6 +167,12 @@ bool NPac::ACalculate(void)
  for(int i=0;i<NumInputs;i++)
   PreOutput[i].resize(size);
 
+ if(int(SecretionTC->size())<NumInputs || int((*SecretionTC)[0].size())<size)
+ {
+  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Input dimensions have incorrect size.");
+  return true;
+ }
+
  if(TCMode == 0)
  {
   for(int i=0;i<NumInputs;i++)

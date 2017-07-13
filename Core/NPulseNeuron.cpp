@@ -120,9 +120,9 @@ NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
  if(feedback)
  {
   item.Id=GetLTZone()->GetLongId(this);
-  item.Index=0;
+  item.Name="DataOutput0";
   conn.Id=cont->GetLongId(this);
-  conn.Index=-1;
+  conn.Name="";
   res&=CreateLink(item,conn);
  }
 
@@ -134,15 +134,20 @@ NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
  {
   UEPtr<UADItem> channel=static_pointer_cast<UADItem>(dendrite->GetComponentByIndex(k));
   for(int i=0;i<channel->GetNumOutputs();i++)
-   for(int j=0;j<channel->GetNumAConnectors(i);j++)
+  {
+   std::string output_name("DataOutput");
+   output_name+=RDK::sntoa(i);
+//   for(int j=0;j<channel->GetNumAConnectors(i);j++)
+   for(int j=0;j<channel->GetNumAConnectors(output_name);j++)
    {
-//	item.Id=cont->GetComponentByIndex(k)->GetLongId(this);
 	item.Id=cont->GetComponent(channel->GetName())->GetLongId(this);
-	item.Index=0;
-	conn.Id=channel->GetAConnectorByIndex(int(i),j)->GetLongId(this);
-	conn.Index=-1;
+	item.Name="DataOutput0";
+	conn.Id=channel->GetAConnectorByIndex(output_name,j)->GetLongId(this);
+//	conn.Id=channel->GetAConnectorByIndex(int(i),j)->GetLongId(this);
+	conn.Name="";
 	res&=CreateLink(item,conn);
    }
+  }
  }
 
  // Подключаем источники мембранных потенциалов
@@ -152,18 +157,18 @@ NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
   for(size_t k=0;k<membrane->GetNumNegChannels();k++)
   {
    item.Id=PosGenerator->GetLongId(this);
-   item.Index=0;
+   item.Name="DataOutput0";
    conn.Id=membrane->GetNegChannel(k)->GetLongId(this);
-   conn.Index=-1;
+   conn.Name="";
    res&=CreateLink(item,conn);
   }
 
   for(size_t k=0;k<membrane->GetNumPosChannels();k++)
   {
    item.Id=NegGenerator->GetLongId(this);
-   item.Index=0;
+   item.Name="DataOutput0";
    conn.Id=membrane->GetPosChannel(k)->GetLongId(this);
-   conn.Index=-1;
+   conn.Name="";
    res&=CreateLink(item,conn);
   }
  }
