@@ -28,13 +28,13 @@ class RDK_LIB_TYPE NLTZone: public UNet
 {
 public: // Общедоступные свойства
 /// Порог нейрона
-RDK::ULProperty<double,NLTZone> Threshold;
+UProperty<double,NLTZone, ptPubParameter> Threshold;
 
 /// Признак наличия усреднения в выходных данных нейрона
-ULProperty<bool,NLTZone> UseAveragePotential;
+UProperty<bool,NLTZone,ptPubParameter> UseAveragePotential;
 
 /// Данные с ионных механизмов участков мембраны
-UPropertyInputCData<MDMatrix<double>,NLTZone> InputChannels;
+UPropertyInputData<MDMatrix<double>,NLTZone> InputChannels;
 
 public: // Данные
 /// Нейрон владелец мембраны канала
@@ -78,30 +78,30 @@ class RDK_LIB_TYPE NPulseLTZoneCommon: public NLTZone
 {
 public: // Общедоступные свойства
 // Амплитуда импульсов
-RDK::ULProperty<double,NPulseLTZoneCommon> PulseAmplitude;
+RDK::UProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseAmplitude;
 
 // Длительность импульса
-RDK::ULProperty<double,NPulseLTZoneCommon> PulseLength;
+RDK::UProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseLength;
 
 // Интервал времени оценки частоты генерации
-RDK::ULProperty<double,NPulseLTZoneCommon> AvgInterval;
+RDK::UProperty<double,NPulseLTZoneCommon, ptPubParameter> AvgInterval;
 
 public: // Данные
 // Промежуточное значение потенциала
 // Следует использовать эту переменную для сохранения состояния мембранного потенциала
-RDK::ULProperty<double,NPulseLTZoneCommon,ptPubState> PrePotential;
+RDK::UProperty<double,NPulseLTZoneCommon,ptPubState> PrePotential;
 
 protected: // Основные свойства
 
 protected: // Временные переменные
 // Флаг наличия генерации
-RDK::ULProperty<int,NPulseLTZoneCommon,ptPubState> PulseCounter;
+RDK::UProperty<int,NPulseLTZoneCommon,ptPubState> PulseCounter;
 
 // Средняя частота за заданный интервал времени
-RDK::UCLProperty<list<double>,NPulseLTZoneCommon,ptPubState> AvgFrequencyCounter;
+RDK::UPropertyRange<double,list<double>,NPulseLTZoneCommon,ptPubState> AvgFrequencyCounter;
 
 // Признак текущей генерации импульса
-RDK::ULProperty<bool,NPulseLTZoneCommon,ptPubState> PulseFlag;
+RDK::UProperty<bool,NPulseLTZoneCommon,ptPubState> PulseFlag;
 
 public: // Методы
 // --------------------------

@@ -28,7 +28,7 @@ class RDK_LIB_TYPE NPulseLTZone: public NPulseLTZoneCommon
 {
 public: // Общедоступные свойства
 // Постоянная времени
-RDK::ULProperty<double,NPulseLTZone> TimeConstant;
+RDK::UProperty<double,NPulseLTZone,ptPubParameter> TimeConstant;
 
 public: // Данные
 
@@ -36,7 +36,7 @@ protected: // Основные свойства
 
 protected: // Временные переменные
 // Суммарный потенциал
-RDK::ULProperty<double,NPulseLTZone,ptPubState> NeuralPotential;
+RDK::UProperty<double,NPulseLTZone,ptPubState> NeuralPotential;
 
 public: // Методы
 // --------------------------
@@ -105,16 +105,16 @@ class RDK_LIB_TYPE NContinuesLTZone: public NLTZone
 {
 public: // Общедоступные свойства
 // Постоянная времени
-RDK::ULProperty<double,NContinuesLTZone> TimeConstant;
+RDK::UProperty<double,NContinuesLTZone,ptPubParameter> TimeConstant;
 
 // Амплитуда импульсов
-RDK::ULProperty<double,NContinuesLTZone> PulseAmplitude;
+RDK::UProperty<double,NContinuesLTZone,ptPubParameter> PulseAmplitude;
 
 // Длительность импульса
-RDK::ULProperty<double,NContinuesLTZone> PulseLength;
+RDK::UProperty<double,NContinuesLTZone,ptPubParameter> PulseLength;
 
 // Интервал времени оценки частоты генерации
-RDK::ULProperty<double,NContinuesLTZone> AvgInterval;
+RDK::UProperty<double,NContinuesLTZone,ptPubParameter> AvgInterval;
 
 public: // Данные
 
@@ -122,19 +122,19 @@ protected: // Основные свойства
 
 protected: // Временные переменные
 // Суммарный потенциал
-RDK::ULProperty<double,NContinuesLTZone,ptPubState> NeuralPotential;
+RDK::UProperty<double,NContinuesLTZone,ptPubState> NeuralPotential;
 
 // Промежуточное значение потенциала
-RDK::ULProperty<double,NContinuesLTZone,ptPubState> PrePotential;
+RDK::UProperty<double,NContinuesLTZone,ptPubState> PrePotential;
 
 // Флаг наличия генерации
-RDK::ULProperty<int,NContinuesLTZone,ptPubState> PulseCounter;
+RDK::UProperty<int,NContinuesLTZone,ptPubState> PulseCounter;
 
 // Средняя частота за заданный интервал времени
-RDK::UCLProperty<list<double>,NContinuesLTZone,ptPubState> AvgFrequencyCounter;
+RDK::UPropertyRange<double,list<double>,NContinuesLTZone,ptPubState> AvgFrequencyCounter;
 
 // Признак текущей генерации импульса
-RDK::ULProperty<bool,NContinuesLTZone,ptPubState> PulseFlag;
+RDK::UProperty<bool,NContinuesLTZone,ptPubState> PulseFlag;
 
 public: // Методы
 // --------------------------

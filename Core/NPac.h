@@ -20,36 +20,36 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-class RDK_LIB_TYPE NPac: public UNet
+class RDK_LIB_TYPE NPac: public UDynamicMatNet
 {
 public: // Общедоступные свойства
 // Амплитуда входных импульсов
-RDK::UCLProperty<vector<Real>,NPac> PulseAmplitude;
+RDK::UPropertyRange<Real, vector<Real>,NPac, ptPubParameter> PulseAmplitude;
 
 // Постоянная времени выделения медиатора
-RDK::UCLProperty<vector<Real>,NPac> SecretionTC;
+RDK::UPropertyRange<Real, vector<Real>,NPac, ptPubParameter> SecretionTC;
 
 // Постоянная времени распада медиатора
-RDK::UCLProperty<vector<Real>,NPac> DissociationTC;
+RDK::UPropertyRange<Real, vector<Real>,NPac, ptPubParameter> DissociationTC;
 
 // Коэффициент усиления
-RDK::UCLProperty<vector<Real>,NPac> Gain;
+RDK::UPropertyRange<Real, vector<Real>,NPac, ptPubParameter> Gain;
 
 /// Режим работы
 /// 0 - Обычный режим
 /// 1 - Со сбросом при одновременной активации обоих каналов
-RDK::ULProperty<int,NPac> Mode;
+RDK::UProperty<int,NPac, ptPubParameter> Mode;
 
 /// Режим накопления
 /// 0 - Выключен
 /// 1 - Включен
-RDK::ULProperty<int,NPac> TCMode;
+RDK::UProperty<int,NPac, ptPubParameter> TCMode;
 
 protected: // Основные свойства
 
 protected: // Временные переменные
 // Промежуточное значение эффективности синапса
-RDK::UCLProperty<vector<Real>,NPac, ptPubState> PreOutput;
+RDK::UPropertyRange<Real, vector<Real>,NPac, ptPubState> PreOutput;
 
 public: // Методы
 // --------------------------
