@@ -28,18 +28,14 @@ class RDK_LIB_TYPE NPulseSynapseCommon: public UNet
 {
 public: // Общедоступные свойства
 // Амплитуда входных импульсов
-RDK::ULProperty<double,NPulseSynapseCommon> PulseAmplitude;
+RDK::UProperty<double,NPulseSynapseCommon, ptPubParameter> PulseAmplitude;
 
 // Вес (эффективность синапса) синапса
-RDK::ULProperty<double,NPulseSynapseCommon> Resistance;
-
-public: // Данные
-
-protected: // Основные свойства
+RDK::UProperty<double,NPulseSynapseCommon, ptPubParameter> Resistance;
 
 protected: // Временные переменные
 // Промежуточное значение эффективности синапса
-RDK::ULProperty<double,NPulseSynapseCommon,ptPubState> PreOutput;
+RDK::UProperty<double,NPulseSynapseCommon,ptPubState> PreOutput;
 
 public: // Методы
 // --------------------------

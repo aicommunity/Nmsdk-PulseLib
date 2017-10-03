@@ -25,17 +25,13 @@ class RDK_LIB_TYPE NPulseSynapse: public NPulseSynapseCommon
 {
 public: // Общедоступные свойства
 // Постоянная времени выделения медиатора
-RDK::ULProperty<double,NPulseSynapse> SecretionTC;
+RDK::UProperty<double,NPulseSynapse, ptPubParameter> SecretionTC;
 
 // Постоянная времени распада медиатора
-RDK::ULProperty<double,NPulseSynapse> DissociationTC;
+RDK::UProperty<double,NPulseSynapse, ptPubParameter> DissociationTC;
 
 // Коэффициент пресинаптического торможения
-RDK::ULProperty<double,NPulseSynapse> InhibitionCoeff;
-
-public: // Данные
-
-protected: // Основные свойства
+RDK::UProperty<double,NPulseSynapse, ptPubParameter> InhibitionCoeff;
 
 protected: // Временные переменные
 // Постоянные времени выделения и распада медиатора в единицах шага интегрирования

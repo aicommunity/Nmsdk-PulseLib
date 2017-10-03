@@ -26,27 +26,22 @@ class RDK_LIB_TYPE NPulseChannel: public NPulseChannelCommon
 {
 public: // Общедоступные свойства
 // Емкость мембраны
-RDK::ULProperty<double,NPulseChannel> Capacity;
+RDK::UProperty<double,NPulseChannel, ptPubParameter> Capacity;
 
 // Сопротивление мембраны
-RDK::ULProperty<double,NPulseChannel> Resistance;
+RDK::UProperty<double,NPulseChannel, ptPubParameter> Resistance;
 
 // Сопротивление перезаряда мембраны
-RDK::ULProperty<double,NPulseChannel> FBResistance;
+RDK::UProperty<double,NPulseChannel, ptPubParameter> FBResistance;
 
 // Сопротивление мембраны на переход в состояние покоя
-RDK::ULProperty<double,NPulseChannel> RestingResistance;
+RDK::UProperty<double,NPulseChannel, ptPubParameter> RestingResistance;
 
-RDK::ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
+RDK::UProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
 
 public: // Данные
 
 double channel_input;
-//double out;
-
-protected: // Основные свойства
-
-protected: // Временные переменные
 
 public: // Методы
 // --------------------------

@@ -28,7 +28,7 @@ class RDK_LIB_TYPE NPulseMembraneCommon: public UNet
 {
 public: // Параметры
 /// Признак наличия усреднения в выходных данных нейрона
-ULProperty<bool, NPulseMembraneCommon> UseAveragePotential;
+UProperty<bool, NPulseMembraneCommon, ptPubParameter> UseAveragePotential;
 
 public: // Данные
 

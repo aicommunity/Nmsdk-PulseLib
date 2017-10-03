@@ -29,14 +29,14 @@ class RDK_LIB_TYPE NPulseMembrane: public NPulseMembraneCommon
 {
 public: // Основные свойства
 // Коэффициент обратной связи
-RDK::ULProperty<double,NPulseMembrane> FeedbackGain;
+RDK::UProperty<double,NPulseMembrane, ptPubParameter> FeedbackGain;
 
 //Наличие механизма сброса
-RDK::ULProperty<bool,NPulseMembrane> ResetAvailable;
+RDK::UProperty<bool,NPulseMembrane, ptPubParameter> ResetAvailable;
 
 public: // Данные
 // Значение обратной связи
-RDK::ULProperty<double,NPulseMembrane,ptPubState> Feedback;
+RDK::UProperty<double,NPulseMembrane,ptPubState> Feedback;
 
 protected: // Временные переменные
 // Ионные механизмы деполяризации

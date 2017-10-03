@@ -25,29 +25,29 @@ class RDK_LIB_TYPE NReceptor: public NSource
 {
 public: // Общедоступные свойства
 // Коэффициент усиления входного сигнала
-RDK::ULProperty<double,NReceptor> Gain;
+RDK::UProperty<double, NReceptor, ptPubParameter> Gain;
 
 // Рабочий диапазон входного сигнала
-RDK::ULProperty<double,NReceptor> MinInputRange, MaxInputRange;
+RDK::UProperty<double, NReceptor, ptPubParameter> MinInputRange, MaxInputRange;
 
 // Рабочий диапазон выходного сигнала
-RDK::ULProperty<double,NReceptor> MinOutputRange, MaxOutputRange;
+RDK::UProperty<double, NReceptor, ptPubParameter> MinOutputRange, MaxOutputRange;
 
 // Коэффициент масштабирования для режима 2
-RDK::ULProperty<double,NReceptor> ExpCoeff;
+RDK::UProperty<double, NReceptor, ptPubParameter> ExpCoeff;
 
 // Слагаемое для режима 1
-RDK::ULProperty<double,NReceptor> SumCoeff;
+RDK::UProperty<double, NReceptor, ptPubParameter> SumCoeff;
 
 // Постоянная времени забывания границ входного диапазона
-RDK::ULProperty<double,NReceptor> InputAdaptationArrestingTC;
+RDK::UProperty<double, NReceptor, ptPubParameter> InputAdaptationArrestingTC;
 
 
 // Режим адаптации диапазона входного сигнала
 // 0 - без адаптации
 // 1 - постоянное расширение диапазона
 // 2 - расширение с забыванием, с постояной времени InputAdaptationArrestingTC
-RDK::ULProperty<int,NReceptor> InputAdaptationMode;
+RDK::UProperty<int, NReceptor, ptPubParameter> InputAdaptationMode;
 
 // Режим адаптации диапазона входного сигнала
 // 0 - без адаптации
@@ -56,7 +56,7 @@ RDK::ULProperty<int,NReceptor> InputAdaptationMode;
 // 2 - аналогично 1, но формула y=exp(-Kx)*Gain
 // 3 - аналогично 1, ExpCoeff вычисляется автоматически
 // 4 - адаптация по формуле y=Gain*(1.0+input);
-RDK::ULProperty<int,NReceptor> OutputAdaptationMode;
+RDK::UProperty<int, NReceptor, ptPubParameter> OutputAdaptationMode;
 
 
 

@@ -27,10 +27,10 @@ public: // Общедоступные свойства
 // Тип ионного механизма
 // <0 - накапливает отрицательный вклад в потенциал (или гиперполяризует мембрану)
 // >0 - накапливает положительный вклад в потенциал (или деполяризует мембрану)
-RDK::ULProperty<double,NPulseChannelCommon> Type;
+RDK::UProperty<double,NPulseChannelCommon, ptPubParameter> Type;
 
 /// Признак наличия усреднения в выходных данных нейрона
-ULProperty<bool, NPulseChannelCommon> UseAveragePotential;
+UProperty<bool, NPulseChannelCommon, ptPubParameter> UseAveragePotential;
 
 /*/// Сбрасывать накопленный потенциал, если активность по синапсам меньше чем порог
 ULProperty<bool, NPulseChannelCommon> RestingFlag;
@@ -38,9 +38,6 @@ ULProperty<bool, NPulseChannelCommon> RestingFlag;
 /// Порог активности синапсов для сброса накопленного потенциала
 ULProperty<double, NPulseChannelCommon> RestingThreshold;
   */
-protected: // Основные свойства
-
-protected: // Временные переменные
 
 public: // Методы
 // --------------------------

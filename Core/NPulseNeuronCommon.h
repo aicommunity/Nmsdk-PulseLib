@@ -28,23 +28,20 @@ class RDK_LIB_TYPE NPulseNeuronCommon: public NNeuron
 {
 public: // Параметры
 /// Признак наличия усреднения в ветвлении дендритов
-ULProperty<bool, NPulseNeuronCommon> UseAverageDendritesPotential;
+UProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageDendritesPotential;
 
 /// Признак наличия усреднения в ветвлении дендритов
-ULProperty<bool, NPulseNeuronCommon> UseAverageLTZonePotential;
+UProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageLTZonePotential;
 
 public: // Статистика
 // Число связей организованных этим нейроном на других (и себе)
-RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;
+RDK::UProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;
 
 // Число возбуждающих связей организованных другими нейронами на этом
-RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
+RDK::UProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
 
 // Число тормозных связей организованных другими нейронами на этом
-RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
-
-protected: // Временные переменные
-//NPulseLTZone *LTZone;
+RDK::UProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
 
 public:
 RDK::UEPointer<NPulseLTZone,NPulseNeuronCommon> LTZone;

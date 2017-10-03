@@ -34,7 +34,7 @@ UProperty<double,NLTZone, ptPubParameter> Threshold;
 UProperty<bool,NLTZone,ptPubParameter> UseAveragePotential;
 
 /// Данные с ионных механизмов участков мембраны
-UPropertyInputData<MDMatrix<double>,NLTZone> InputChannels;
+UProperty<MDMatrix<double>,NLTZone, ptPubInput> InputChannels;
 
 public: // Данные
 /// Нейрон владелец мембраны канала
