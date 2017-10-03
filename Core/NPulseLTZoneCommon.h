@@ -24,7 +24,7 @@ namespace NMSDK {
 
 class NPulseNeuron;
 
-class RDK_LIB_TYPE NLTZone: public UNet
+class RDK_LIB_TYPE NLTZone: public UDynamicMatNet
 {
 public: // Общедоступные свойства
 /// Порог нейрона

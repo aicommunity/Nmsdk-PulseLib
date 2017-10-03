@@ -25,30 +25,30 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseHebbSynapse: public NPulseSynapse
 {
 public: // Общедоступные свойства
-RDK::ULProperty<double,NPulseHebbSynapse> Min;
-RDK::ULProperty<double,NPulseHebbSynapse> Mout;
-RDK::ULProperty<double,NPulseHebbSynapse> Md;
-RDK::UCLProperty<vector<double>,NPulseHebbSynapse> ActiveMs;
-RDK::UCLProperty<vector<double>,NPulseHebbSynapse> PassiveMs;
-RDK::UCLProperty<vector<double>,NPulseHebbSynapse> Kmot;
-RDK::ULProperty<double,NPulseHebbSynapse> Kin;
-RDK::ULProperty<double,NPulseHebbSynapse> Kout;
+RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> Min;
+RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> Mout;
+RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> Md;
+RDK::UPropertyRange<double, vector<double>,NPulseHebbSynapse, ptPubParameter> ActiveMs;
+RDK::UPropertyRange<double, vector<double>,NPulseHebbSynapse, ptPubParameter> PassiveMs;
+RDK::UPropertyRange<double, vector<double>,NPulseHebbSynapse, ptPubParameter> Kmot;
+RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> Kin;
+RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> Kout;
 
 // К-т усиления динамической связи
-RDK::ULProperty<double,NPulseHebbSynapse> GdGain;
+RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> GdGain;
 
 // К-т усиления статической связи
-RDK::ULProperty<double,NPulseHebbSynapse> GsGain;
+RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> GsGain;
 
 
 protected: // Основные свойства
 
 protected: // Временные переменные
-RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> G;
-RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> Gd;
-RDK::UCLProperty<vector<double>,NPulseHebbSynapse,ptPubState> Gs;
-RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> Win;
-RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> Wout;
+RDK::UProperty<double,NPulseHebbSynapse,ptPubState> G;
+RDK::UProperty<double,NPulseHebbSynapse,ptPubState> Gd;
+RDK::UPropertyRange<double, vector<double>,NPulseHebbSynapse,ptPubState> Gs;
+RDK::UProperty<double,NPulseHebbSynapse,ptPubState> Win;
+RDK::UProperty<double,NPulseHebbSynapse,ptPubState> Wout;
 
 public: // Методы
 // --------------------------
