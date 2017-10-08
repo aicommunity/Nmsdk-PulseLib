@@ -24,25 +24,25 @@ namespace NMSDK {
 
 //using namespace MySDK;
 
-class RDK_LIB_TYPE NMuscle: public UNet
+class RDK_LIB_TYPE NMuscle: public UDynamicMatNet
 {
 public: // Общедоступные свойства
 // Коэффициенты
-RDK::UCLProperty<Real,NMuscle> MulCoeffs;
+RDK::UPropertyRange<double,Real,NMuscle,ptPubParameter> MulCoeffs;
 
-RDK::UCLProperty<Real,NMuscle> Param;
+RDK::UPropertyRange<double,Real,NMuscle,ptPubParameter> Param;
 
 // Постоянные времени
-RDK::UCLProperty<Real,NMuscle> TC;
+RDK::UPropertyRange<double,Real,NMuscle,ptPubParameter> TC;
 
 // Масса
-RDK::ULProperty<double,NMuscle> Mass;
+RDK::UProperty<double,NMuscle,ptPubParameter> Mass;
 
 // Порог
-RDK::ULProperty<double,NMuscle> Threshold;
+RDK::UProperty<double,NMuscle,ptPubParameter> Threshold;
 
 // Величина ускорения свободного падения
-RDK::ULProperty<double,NMuscle> G;
+RDK::UProperty<double,NMuscle,ptPubParameter> G;
 
 public: // Временные переменные
 double y[15], yOld[15], mr[7], mrOld[7],vereteno1, vereteno2, goldgi;

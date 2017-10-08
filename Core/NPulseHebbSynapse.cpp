@@ -136,30 +136,30 @@ bool NPulseHebbSynapse::ADefault(void)
 	Min=10;
 	Mout=10;
 	Md=10;
-	Kmot->resize(1);
+	Kmot.resize(1);
 	Kin=100;
 	Kout=100;
 
 	GdGain=10;
 	GsGain=1;//10;
 
- Kmot->resize(5);
+ Kmot.resize(5);
  Kmot[0]=1;
  Kmot[1]=1;
  Kmot[2]=10000;
  Kmot[3]=100000;
  Kmot[4]=100;
 
- Gs->resize(Kmot->size());
+ Gs.resize(Kmot.size());
 
- ActiveMs->resize(Kmot->size());
+ ActiveMs.resize(Kmot.size());
  ActiveMs[0]=0.001;
  ActiveMs[1]=0.001;
  ActiveMs[2]=0.001;
  ActiveMs[3]=0.001;
  ActiveMs[4]=0.001;
 
- PassiveMs->resize(Kmot->size());
+ PassiveMs.resize(Kmot.size());
  PassiveMs[0]=0.1;
  PassiveMs[1]=0.1;
  PassiveMs[2]=0.1;
@@ -189,7 +189,7 @@ bool NPulseHebbSynapse::AReset(void)
  Win=0;
  Wout=0;
  Gd=0;
- Gs->assign(Kmot->size(),0);
+ Gs.assign(Kmot.size(),0);
  G=0;
 
  return NPulseSynapse::AReset();
@@ -209,62 +209,62 @@ bool NPulseHebbSynapse::ACalculate(void)
  if(NumInputs <2 || GetInputDataSize(0)[1]<=0 || GetInputDataSize(1)[1]<=0)
   return true;
 
- motivation.assign(Kmot->size(),0);
- input=GetInputData(0)->Double[0];
- ltzoneoutput=GetInputData(1)->Double[0];
+ motivation.assign(Kmot.size(),0);
+ input=GetInputData(0).Double[0];
+ ltzoneoutput=GetInputData(1).Double[0];
 
  // Применяем мотивацию если есть
  if(NumInputs > 2 && GetInputDataSize(2)[1]>0)
  {
-  int motmin=(int(Kmot->size())<GetInputDataSize(2)[1])?int(Kmot->size()):GetInputDataSize(2)[1];
+  int motmin=(int(Kmot.size())<GetInputDataSize(2)[1])?int(Kmot.size()):GetInputDataSize(2)[1];
   for(int i=0;i<motmin;i++)
-   motivation[i]=GetInputData(2)->Double[i]*Kmot[i];
+   motivation[i]=GetInputData(2).Double[i]*Kmot[i];
  }
 
- Win.v += (Kin.v*input - Min.v*Win.v)/TimeStep;
- Wout.v += (Kout.v*ltzoneoutput - Mout.v*Wout.v)/TimeStep;
+ Win.v() += (Kin.v()*input - Min.v()*Win.v())/TimeStep;
+ Wout.v() += (Kout.v()*ltzoneoutput - Mout.v()*Wout.v())/TimeStep;
 // Wout.v=1;
 
- Gd.v += (Win.v*Wout.v - Md.v*Gd.v)/TimeStep;
+ Gd.v() += (Win.v()*Wout.v() - Md.v()*Gd.v())/TimeStep;
 
 // for(size_t i=0;i<Gs->size();i++)
 //  Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
 
- for(size_t i=0;i<Gs->size();i++)
+ for(size_t i=0;i<Gs.size();i++)
   if(motivation[i]>0)
 //  if(motivation[i]*Gd.v > PassiveMs[i]*Gs[i])
-   Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
+   Gs[i] += (motivation[i]*Gd.v() - ActiveMs[i]*Gs[i])/TimeStep;
   else
-   Gs[i] += (motivation[i]*Gd.v - PassiveMs[i]*Gs[i])/TimeStep;
+   Gs[i] += (motivation[i]*Gd.v() - PassiveMs[i]*Gs[i])/TimeStep;
 
  double gs_res=0;
- for(size_t i=0;i<Gs->size();i++)
+ for(size_t i=0;i<Gs.size();i++)
   gs_res+=Gs[i];
- G.v = (Gd.v*GdGain + gs_res*GsGain);
+ G = (Gd*GdGain + gs_res*GsGain);
 
- POutputData[0].Double[0]*=(1.0+G.v);
- POutputData[1].Double[0]=G.v;
- POutputData[2].Double[0]=Gd.v*GdGain;
- POutputData[3].Double[0]=gs_res*GsGain;
- POutputData[4].Double[0]=Win.v;
- POutputData[5].Double[0]=Wout.v;
+ GetOutputData(0).Double[0]*=(1.0+G);
+ GetOutputData(1).Double[0]=G;
+ GetOutputData(2).Double[0]=Gd*GdGain;
+ GetOutputData(3).Double[0]=gs_res*GsGain;
+ GetOutputData(4).Double[0]=Win;
+ GetOutputData(5).Double[0]=Wout;
 
  if(MainOwner && Owner)
  {
   UEPtr<NPulseLifeNeuron> neuron=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
   if(neuron)
   {
-   if(static_pointer_cast<NPulseChannel>(Owner)->Type()>0)
+   if(static_pointer_cast<NPulseChannel>(Owner)->Type>0)
    {
-	neuron->SummaryNegGs.v+=gs_res*GsGain.v;
-	neuron->SummaryNegGd.v+=Gd.v*GdGain.v;
-	neuron->SummaryNegG.v+=G;
+	neuron->SummaryNegGs.v()+=gs_res*GsGain.v();
+	neuron->SummaryNegGd.v()+=Gd.v()*GdGain.v();
+	neuron->SummaryNegG.v()+=G;
    }
    else
    {
-	neuron->SummaryPosGs.v+=gs_res*GsGain.v;
-	neuron->SummaryPosGd.v+=Gd.v*GdGain.v;
-	neuron->SummaryPosG.v+=G;
+	neuron->SummaryPosGs.v()+=gs_res*GsGain.v();
+	neuron->SummaryPosGd.v()+=Gd.v()*GdGain.v();
+	neuron->SummaryPosG.v()+=G;
    }
   }
  }

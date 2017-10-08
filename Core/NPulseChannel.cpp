@@ -115,10 +115,10 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
    if(hsynapse)
    {
 	RDK::ULinkSide item,conn;
-	item.Id=mowner->GetLTZone()->GetLongId(mowner);
-	item.Name="DataOutput0";
-	conn.Id=hsynapse->GetLongId(mowner);
-	conn.Name="DataInput1";
+	item.ComponentName=mowner->GetLTZone()->GetLongName(mowner);
+	item.PropertyName="DataOutput0";
+	conn.ComponentName=hsynapse->GetLongName(mowner);
+	conn.PropertyName="DataInput1";
 	res&=mowner->CreateLink(item,conn);
    }
   }
@@ -130,10 +130,10 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
 	UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(GetSynapse(i));
 	if(hsynapse)
 	{
-	 item.Id=mowner->GetLTZone()->GetLongId(mowner);
-	 item.Name="DataOutput0";
-	 conn.Id=hsynapse->GetLongId(mowner);
-	 conn.Name="DataInput1";
+	 item.ComponentName=mowner->GetLTZone()->GetLongName(mowner);
+	 item.PropertyName="DataOutput0";
+	 conn.ComponentName=hsynapse->GetLongName(mowner);
+	 conn.PropertyName="DataInput1";
 	 res&=mowner->CreateLink(item,conn);
 	}
    }
@@ -150,13 +150,13 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
    if(hsynapse)
    {
 	RDK::ULinkSide item,conn;
-	item.Id=mlowner->GetNeuronLife()->GetLongId(mlowner);
-	if(Type.v>0)
-	 item.Name="DataOutput6";
+	item.ComponentName=mlowner->GetNeuronLife()->GetLongName(mlowner);
+	if(Type.v()>0)
+	 item.PropertyName="DataOutput6";
 	else
-	 item.Name="DataOutput5";
-	conn.Id=hsynapse->GetLongId(mlowner);
-	conn.Name="DataInput2";
+	 item.PropertyName="DataOutput5";
+	conn.ComponentName=hsynapse->GetLongName(mlowner);
+	conn.PropertyName="DataInput2";
 	res&=mlowner->CreateLink(item,conn);
    }
   }
@@ -168,13 +168,13 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
 	UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(GetSynapse(i));
 	if(hsynapse)
 	{
-	 item.Id=mlowner->GetNeuronLife()->GetLongId(mlowner);
-	 if(Type.v>0)
-	  item.Name="DataOutput6";
+	 item.ComponentName=mlowner->GetNeuronLife()->GetLongName(mlowner);
+	 if(Type.v()>0)
+	  item.PropertyName="DataOutput6";
 	 else
-	  item.Name="DataOutput5";
-	 conn.Id=hsynapse->GetLongId(mlowner);
-	 conn.Name="DataInput2";
+	  item.PropertyName="DataOutput5";
+	 conn.ComponentName=hsynapse->GetLongName(mlowner);
+	 conn.PropertyName="DataInput2";
 	 res&=mlowner->CreateLink(item,conn);
 	}
    }
@@ -292,10 +292,10 @@ bool NPulseChannel::AReset(void)
   return false;
 
  if(Type>0)
-  POutputData[0].Double[0]=1;
+  GetOutputData(0).Double[0]=1;
  else
  if(Type<0)
-  POutputData[0].Double[0]=-1;
+  GetOutputData(0).Double[0]=-1;
 
  return true;
 }
@@ -311,7 +311,7 @@ bool NPulseChannel::ACalculate(void)
 
  // Получение доступа к данным синапса
  for(int i=0;i<NumComponents;i++)
-  G+=static_pointer_cast<UADItem>(PComponents[i])->GetOutputData(0).Double[0];
+  G+=static_pointer_cast<UDynamicMatNet>(PComponents[i])->GetOutputData(0).Double[0];
 
  // Получение данных канала
  size_t inp_size;
@@ -321,7 +321,7 @@ bool NPulseChannel::ACalculate(void)
   if((inp_size=GetInputDataSize(i)[1]) >0)
   {
    full_inp_data_size+=inp_size;
-   double *data=&(GetInputData(i)->Double[0]);
+   double *data=&(GetInputData(i).Double[0]);
    for(size_t j=0;j<inp_size;j++,++data)
 	channel_input+=*data;
   }
@@ -336,7 +336,7 @@ bool NPulseChannel::ACalculate(void)
   channel_input-=feedback;
 
  // Расчет
- double *out=&POutputData[0].Double[0];
+ double *out=&GetOutputData(0).Double[0];
  double Ti(0.0),sum_u(0.0);
 
  // Проверяем необходимость сброса
@@ -352,17 +352,17 @@ bool NPulseChannel::ACalculate(void)
  {
   double resistance(0.0);
   if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))
-   resistance=RestingResistance.v;
+   resistance=RestingResistance.v();
   else
-   resistance=Resistance.v;
+   resistance=Resistance.v();
 
-  Ti=Capacity.v/(G+1.0/resistance);
+  Ti=Capacity.v()/(G+1.0/resistance);
   sum_u=(1.0+G*resistance);
  }
  else
  {
-  Ti=Capacity.v/(G+1.0/FBResistance.v);
-  sum_u=(1.0+G*FBResistance.v);
+  Ti=Capacity.v()/(G+1.0/FBResistance.v());
+  sum_u=(1.0+G*FBResistance.v());
  }
 
  *out+=(channel_input-(*out)*sum_u)/(Ti*TimeStep);

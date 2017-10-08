@@ -155,7 +155,7 @@ bool NEyeMuscle::ACalculate(void)
    if(k >= size)
 	break;
 
-   double in=GetInputData(i)->Double[j];
+   double in=GetInputData(i).Double[j];
    ThresholdCount(k);
    in*=Threshold[k];
 
@@ -164,9 +164,9 @@ bool NEyeMuscle::ACalculate(void)
    Acceleration[k]=(speed-Speed[k])*TimeStep;
    Speed[k]=speed;
    L[k]=leng;
-   POutputData[0].Double[k]=Acceleration[k];
-   POutputData[1].Double[k]=L[k];
-   POutputData[2].Double[k]=Speed[k];
+   GetOutputData(0).Double[k]=Acceleration[k];
+   GetOutputData(1).Double[k]=L[k];
+   GetOutputData(2).Double[k]=Speed[k];
    ++k;
   }
  }

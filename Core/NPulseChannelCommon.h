@@ -21,7 +21,7 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-class RDK_LIB_TYPE NPulseChannelCommon: public UNet
+class RDK_LIB_TYPE NPulseChannelCommon: public UDynamicMatNet
 {
 public: // Общедоступные свойства
 // Тип ионного механизма

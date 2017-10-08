@@ -24,7 +24,7 @@ namespace NMSDK {
 
 class NPulseNeuron;
 
-class RDK_LIB_TYPE NPulseSynapseCommon: public UNet
+class RDK_LIB_TYPE NPulseSynapseCommon: public UDynamicMatNet
 {
 public: // Общедоступные свойства
 // Амплитуда входных импульсов

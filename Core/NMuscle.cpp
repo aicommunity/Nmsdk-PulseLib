@@ -278,7 +278,7 @@ bool NMuscle::ACalculate(void)
    //if(k >= OutputSize)
    //	break;
 
-   y[0]=GetInputData(i)->Double[j];
+   y[0]=GetInputData(i).Double[j];
 
    ++k;
    break;
@@ -292,7 +292,7 @@ bool NMuscle::ACalculate(void)
    //if(k >= OutputSize)
    //	break;
 
-	y[8]=LengthInput->GetInputData(i)->Double[j];
+	y[8]=LengthInput->GetInputData(i).Double[j];
 
 	++k;
 	break;
@@ -393,7 +393,7 @@ bool NMuscle::ACalculate(void)
           */
  double res;
  res=y[11];
- POutputData[0].Double[0]=res;
+ GetOutputData(0).Double[0]=res;
 
  FirstStep = false;
 

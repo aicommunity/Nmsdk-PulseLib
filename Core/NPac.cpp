@@ -45,26 +45,26 @@ NPac::~NPac(void)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool NPac::SetPulseAmplitude(const vector<Real> &value)
+bool NPac::SetPulseAmplitude(const Real &value)
 {
  return true;
 }
 
 // Постоянная времени выделения медиатора
-bool NPac::SetSecretionTC(const vector<Real> &value)
+bool NPac::SetSecretionTC(const Real &value)
 {
  return true;
 }
 
 // Постоянная времени распада медиатора
-bool NPac::SetDissociationTC(const vector<Real> &value)
+bool NPac::SetDissociationTC(const Real &value)
 {
  return true;
 }
 
 // Усиление
 
-bool NPac::SetGain(const vector<Real> &value)
+bool NPac::SetGain(const Real &value)
 {
  return true;
 }
@@ -142,7 +142,7 @@ bool NPac::ABuild(void)
 bool NPac::AReset(void)
 {
  // Сброс временных переменных
- PreOutput->resize(0);
+ PreOutput.resize(0);
 
  return true;
 }
@@ -163,11 +163,11 @@ bool NPac::ACalculate(void)
  double Ts;
  double input;
 
- PreOutput->resize(NumInputs);
+ PreOutput.resize(NumInputs);
  for(int i=0;i<NumInputs;i++)
   PreOutput[i].resize(size);
 
- if(int(SecretionTC->size())<NumInputs || int((*SecretionTC)[0].size())<size)
+ if(int(SecretionTC->size())<NumInputs || int(SecretionTC[0].size())<size)
  {
   LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Input dimensions have incorrect size.");
   return true;
@@ -181,7 +181,7 @@ bool NPac::ACalculate(void)
    {
 	if(!GetInputData(i))
 	 continue;
-	input=GetInputData(i)->Double[j];
+	input=GetInputData(i).Double[j];
 
 	PreOutput[i][j]=input/PulseAmplitude[i][j];
    }
@@ -196,7 +196,7 @@ bool NPac::ACalculate(void)
    {
 	if(!GetInputData(i))
 	 continue;
-	input=GetInputData(i)->Double[j];
+	input=GetInputData(i).Double[j];
 
 	Ts=(fabs(input)>0)?SecretionTC[i][j]:DissociationTC[i][j];
 	PreOutput[i][j]+=(input/PulseAmplitude[i][j]-PreOutput[i][j])/(Ts*TimeStep);
@@ -204,7 +204,7 @@ bool NPac::ACalculate(void)
   }
  }
   for(int j=0;j<size;j++)
-   POutputData[0].Double[j]=0;
+   GetOutputData(0).Double[j]=0;
 
  if(Mode == 0)
  {
@@ -212,7 +212,7 @@ bool NPac::ACalculate(void)
   {
    for(int j=0;j<size;j++)
    {
-	POutputData[0].Double[j]+=PreOutput[i][j]*Gain[i][j];
+	GetOutputData(0).Double[j]+=PreOutput[i][j]*Gain[i][j];
    }
   }
  }
@@ -235,10 +235,10 @@ bool NPac::ACalculate(void)
 	for(int i=0;i<NumInputs;i++)
 	 PreOutput[i][j]=0;
 
-	POutputData[0].Double[j]=0.0;
+	GetOutputData(0).Double[j]=0.0;
    }
    else
-    POutputData[0].Double[j]=pos_values+neg_values;
+    GetOutputData(0).Double[j]=pos_values+neg_values;
   }
  }
 

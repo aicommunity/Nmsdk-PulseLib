@@ -22,16 +22,16 @@ namespace NMSDK {
 
 //using namespace MySDK;
 
-class RDK_LIB_TYPE NEyeMuscle: public UNet
+class RDK_LIB_TYPE NEyeMuscle: public UDynamicMatNet
 {
 public: // Общедоступные свойства
 // Коэффициенты
-RDK::UCLProperty<Real,NEyeMuscle> MulCoeffs;
+RDK::UPropertyRange<double,Real,NEyeMuscle,ptPubParameter> MulCoeffs;
 
-RDK::ULProperty<double,NEyeMuscle> K;
+RDK::UProperty<double,NEyeMuscle,ptPubParameter> K;
 
 // Постоянные времени
-RDK::UCLProperty<Real,NEyeMuscle> TC;
+RDK::UPropertyRange<double,Real,NEyeMuscle,ptPubParameter> TC;
 
 public: // Временные переменные
 Real P1,P2,P3,L;
