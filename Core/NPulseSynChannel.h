@@ -25,23 +25,23 @@ class RDK_LIB_TYPE NPulseSynChannel: public NPulseChannel
 public: // Общедоступные свойства
 // Параметры синапсов
 // Амплитуда входных импульсов
-RDK::ULProperty<double,NPulseSynChannel> PulseAmplitude;
+RDK::UProperty<double,NPulseSynChannel,ptPubParameter> PulseAmplitude;
 
 // Постоянная времени выделения медиатора
-RDK::ULProperty<double,NPulseSynChannel> SecretionTC;
+RDK::UProperty<double,NPulseSynChannel,ptPubParameter> SecretionTC;
 
 // Постоянная времени распада медиатора
-RDK::ULProperty<double,NPulseSynChannel> DissociationTC;
+RDK::UProperty<double,NPulseSynChannel,ptPubParameter> DissociationTC;
 
 // Коэффициент пресинаптического торможения
-RDK::ULProperty<double,NPulseSynChannel> InhibitionCoeff;
+RDK::UProperty<double,NPulseSynChannel,ptPubParameter> InhibitionCoeff;
 
 // Вес (эффективность синапса) синапса
-RDK::ULProperty<double,NPulseSynChannel> SynapseResistance;
+RDK::UProperty<double,NPulseSynChannel,ptPubParameter> SynapseResistance;
 
 public: // Данные
 // Промежуточное значение эффективности синапса
-RDK::ULProperty<vector<double>,NPulseSynChannel,ptPubState> PreOutput;
+RDK::UProperty<vector<double>,NPulseSynChannel,ptPubState> PreOutput;
 
 // Постоянные времени выделения и распада медиатора в единицах шага интегрирования
 double VSecretionTC,VDissociationTC;
@@ -161,23 +161,23 @@ class RDK_LIB_TYPE NContinuesSynChannel: public NPulseChannel
 public: // Общедоступные свойства
 // Параметры синапсов
 // Амплитуда входных импульсов
-RDK::ULProperty<double,NContinuesSynChannel> PulseAmplitude;
+RDK::UProperty<double,NContinuesSynChannel,ptPubParameter> PulseAmplitude;
 
 // Постоянная времени выделения медиатора
-RDK::ULProperty<double,NContinuesSynChannel> SecretionTC;
+RDK::UProperty<double,NContinuesSynChannel,ptPubParameter> SecretionTC;
 
 // Постоянная времени распада медиатора
-RDK::ULProperty<double,NContinuesSynChannel> DissociationTC;
+RDK::UProperty<double,NContinuesSynChannel,ptPubParameter> DissociationTC;
 
 // Коэффициент пресинаптического торможения
-RDK::ULProperty<double,NContinuesSynChannel> InhibitionCoeff;
+RDK::UProperty<double,NContinuesSynChannel,ptPubParameter> InhibitionCoeff;
 
 // Вес (эффективность синапса) синапса
-RDK::ULProperty<double,NContinuesSynChannel> SynapseResistance;
+RDK::UProperty<double,NContinuesSynChannel,ptPubParameter> SynapseResistance;
 
 public: // Данные
 // Промежуточное значение эффективности синапса
-RDK::ULProperty<vector<double>,NContinuesSynChannel,ptPubState> PreOutput;
+RDK::UProperty<vector<double>,NContinuesSynChannel,ptPubState> PreOutput;
 
 // Постоянные времени выделения и распада медиатора в единицах шага интегрирования
 double VSecretionTC,VDissociationTC;

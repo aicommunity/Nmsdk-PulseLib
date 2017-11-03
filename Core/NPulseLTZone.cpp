@@ -144,41 +144,41 @@ bool NPulseLTZone::ACalculate(void)
   {
    if((inpsize=GetInputDataSize(i)[1]) >0)
    {
-	double *data=&(GetInputData(i)->Double[0]);
+	double *data=&(GetInputData(i).Double[0]);
 	for(size_t j=0;j<inpsize;j++,++data)
-	 NeuralPotential.v+=*data;
+	 NeuralPotential.v()+=*data;
    }
   }
   if(UseAveragePotential)
-   NeuralPotential.v/=NumInputs/2.0;
+   NeuralPotential.v()/=NumInputs/2.0;
  }
 
- PrePotential.v+=(NeuralPotential.v-PrePotential.v)/(TimeConstant.v*TimeStep);
+ PrePotential.v()+=(NeuralPotential.v()-PrePotential.v())/(TimeConstant.v()*TimeStep);
 
  double current_time=GetTime().GetDoubleTime();
  if(CheckPulseOn())
  {
-  POutputData[0].Double[0]=PulseAmplitude.v;
-  POutputData[1].Double[0]=PulseAmplitude.v;
+  GetOutputData(0).Double[0]=PulseAmplitude.v();
+  GetOutputData(1).Double[0]=PulseAmplitude.v();
   if(!PulseFlag)
-   AvgFrequencyCounter->push_back(current_time);
+   AvgFrequencyCounter.push_back(current_time);
   PulseFlag=true;
  }
  else
  if(CheckPulseOff())
  {
   PulseFlag=false;
-  POutputData[0].Double[0]=0;
-  POutputData[1].Double[0]=PrePotential.v;
+  GetOutputData(0).Double[0]=0;
+  GetOutputData(1).Double[0]=PrePotential.v();
  }
  else
-  POutputData[1].Double[0]=PrePotential.v;
+  GetOutputData(1).Double[0]=PrePotential.v();
 
  list<double>::iterator I,J,K;
- I=AvgFrequencyCounter->begin();
- J=AvgFrequencyCounter->end();
+ I=AvgFrequencyCounter.begin();
+ J=AvgFrequencyCounter.end();
 
- if(AvgFrequencyCounter->size()>1)
+ if(AvgFrequencyCounter.size()>1)
  {
   while(I != J)
   {
@@ -186,33 +186,33 @@ bool NPulseLTZone::ACalculate(void)
    {
 	K=I;
 	++I;
-	AvgFrequencyCounter->erase(K);
+	AvgFrequencyCounter.erase(K);
    }
    else
 	++I;
   }
 
   double frequency=0;
-  frequency=static_cast<double>(AvgFrequencyCounter->size());//accumulate(AvgFrequencyCounter->begin(),AvgFrequencyCounter->end(),frequency);
-  double interval=AvgFrequencyCounter->back()-AvgFrequencyCounter->front();
+  frequency=static_cast<double>(AvgFrequencyCounter.size());//accumulate(AvgFrequencyCounter->begin(),AvgFrequencyCounter->end(),frequency);
+  double interval=AvgFrequencyCounter.back()-AvgFrequencyCounter.front();
   if(interval>0 && frequency>2)
-   POutputData[2].Double[0]=frequency/interval;
+   GetOutputData(2).Double[0]=frequency/interval;
   else
   if(interval==0 && frequency>2);
   else
-   POutputData[2].Double[0]=0;
+   GetOutputData(2).Double[0]=0;
  }
  else
-  POutputData[2].Double[0]=0;
+  GetOutputData(2).Double[0]=0;
 
- I=AvgFrequencyCounter->begin();
- J=AvgFrequencyCounter->end();
- SetOutputDataSize(3,MMatrixSize(1,AvgFrequencyCounter->size()),true);
- for(int i=0;i<POutputData[3].GetSize();i++,++I)
-  POutputData[3].Double[i]=*I;
+ I=AvgFrequencyCounter.begin();
+ J=AvgFrequencyCounter.end();
+ SetOutputDataSize(3,MMatrixSize(1,AvgFrequencyCounter.size()));
+ for(int i=0;i<GetOutputData(3).GetSize();i++,++I)
+  GetOutputData(3).Double[i]=*I;
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v()+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
@@ -220,13 +220,13 @@ bool NPulseLTZone::ACalculate(void)
 /// ¬озвращает true если условие дл€ генерации импульса выполнено
 bool NPulseLTZone::CheckPulseOn(void)
 {
- return PrePotential.v>=Threshold.v;
+ return PrePotential.v()>=Threshold.v();
 }
 
 /// ¬озвращает true если условие дл€ генерации имульса не выполнено
 bool NPulseLTZone::CheckPulseOff(void)
 {
- return PrePotential.v<=0;
+ return PrePotential.v()<=0;
 }
 // --------------------------
 
@@ -243,7 +243,7 @@ NContinuesLTZone::NContinuesLTZone(void)
   NeuralPotential("NeuralPotential",this),
   PrePotential("PrePotential",this),
   PulseCounter("PulseCounter",this),
-  AvgFrequencyCounter("AvgFrequencyCounter",this),
+//  AvgFrequencyCounter("AvgFrequencyCounter",this),
   PulseFlag("PulseFlag",this)
 {
 }
@@ -344,7 +344,7 @@ bool NContinuesLTZone::AReset(void)
  NeuralPotential=0;
  PrePotential=0;
  PulseCounter=0;
- AvgFrequencyCounter->clear();
+ AvgFrequencyCounter.clear();
  PulseFlag=false;
  FillOutputData(0);
 
@@ -365,37 +365,37 @@ bool NContinuesLTZone::ACalculate(void)
   {
    if((inpsize=GetInputDataSize(i)[1]) >0)
    {
-	double *data=&(GetInputData(i)->Double[0]);
+	double *data=&(GetInputData(i).Double[0]);
 	for(size_t j=0;j<inpsize;j++,++data)
-	 NeuralPotential.v+=*data;
+	 NeuralPotential.v()+=*data;
    }
   }
   if(UseAveragePotential)
-   NeuralPotential.v/=NumInputs/2.0;
+   NeuralPotential.v()/=NumInputs/2.0;
  }
 
- PrePotential.v=tanh(NeuralPotential.v);
+ PrePotential.v()=tanh(NeuralPotential.v());
 
- if(PrePotential.v>=Threshold.v)
+ if(PrePotential.v()>=Threshold.v())
  {
-  POutputData[0].Double[0]=PrePotential.v;
-  POutputData[1].Double[0]=PrePotential.v;
+  GetOutputData(0).Double[0]=PrePotential.v();
+  GetOutputData(1).Double[0]=PrePotential.v();
   PulseFlag=true;
  }
  else
- if(PrePotential.v<=0)
+ if(PrePotential.v()<=0)
  {
   PulseFlag=false;
-  POutputData[0].Double[0]=0;
-  POutputData[1].Double[0]=PrePotential.v;
+  GetOutputData(0).Double[0]=0;
+  GetOutputData(1).Double[0]=PrePotential.v();
  }
  else
-  POutputData[1].Double[0]=PrePotential.v;
+  GetOutputData(1).Double[0]=PrePotential.v();
 
-  POutputData[2].Double[0]=POutputData[0].Double[0];
+  GetOutputData(2).Double[0]=GetOutputData(0).Double[0];
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v()+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
@@ -488,20 +488,17 @@ bool NPulseSimpleLTZone::ACalculate(void)
  if(InputChannels.IsConnected())
  {
   size_t inpsize(0);
-  for(size_t i=0;i<InputChannels->size();i++)
+  for(size_t i=0;i<InputChannels.size();i++)
   {
-   if(InputChannels[i])
-   {
-	if((inpsize=InputChannels[i]->GetSize(1)) >0)
+	if((inpsize=InputChannels[i].GetSize(1)) >0)
 	{
-	 double *data=&(InputChannels[i]->Double[0]);
+	 double *data=&(InputChannels[i].Double[0]);
 	 for(size_t j=0;j<inpsize;j++,++data)
-	  NeuralPotential.v+=*data;
+	  NeuralPotential.v()+=*data;
 	}
-   }
   }
   if(UseAveragePotential)
-   NeuralPotential.v/=InputChannels->size();
+   NeuralPotential.v()/=InputChannels.size();
  }
  else
  if(NumInputs>0)
@@ -511,23 +508,23 @@ bool NPulseSimpleLTZone::ACalculate(void)
   {
    if((inpsize=GetInputDataSize(i)[1]) >0)
    {
-	double *data=&(GetInputData(i)->Double[0]);
+	double *data=&(GetInputData(i).Double[0]);
 	for(size_t j=0;j<inpsize;j++,++data)
-	 NeuralPotential.v+=*data;
+	 NeuralPotential.v()+=*data;
    }
   }
   if(UseAveragePotential)
-   NeuralPotential.v/=NumInputs;
+   NeuralPotential.v()/=NumInputs;
  }
 
  generator.Amplitude=PulseAmplitude;
- if(NeuralPotential.v>200)
-  NeuralPotential.v=200;
- if(NeuralPotential.v>0)
+ if(NeuralPotential.v()>200)
+  NeuralPotential.v()=200;
+ if(NeuralPotential.v()>0)
  {
-  if(fabs(generator.Frequency.v-NeuralPotential.v)>0.001)
+  if(fabs(generator.Frequency.v()-NeuralPotential.v())>0.001)
   {
-   generator.Frequency=NeuralPotential.v;
+   generator.Frequency=NeuralPotential.v();
 //   generator.Reset();
   }
  }
@@ -537,14 +534,14 @@ bool NPulseSimpleLTZone::ACalculate(void)
  generator.AvgInterval=AvgInterval;
  generator.Calculate();
 
- POutputData[0].Double[0]=generator.GetOutputData(0).Double[0];
- POutputData[1].Double[0]=generator.GetOutputData(0).Double[0];
- POutputData[2].Double[0]=NeuralPotential.v;
+ GetOutputData(0).Double[0]=generator.GetOutputData(0).Double[0];
+ GetOutputData(1).Double[0]=generator.GetOutputData(0).Double[0];
+ GetOutputData(2).Double[0]=NeuralPotential.v();
 
- POutputData[3]=generator.GetOutputData(3);
+ generator.GetOutputData(3).CopyTo(GetOutputData(3));
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v()+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
@@ -634,22 +631,22 @@ bool NContinuesSimpleLTZone::ACalculate(void)
   {
    if((inpsize=GetInputDataSize(i)[1]) >0)
    {
-	double *data=&(GetInputData(i)->Double[0]);
+	double *data=&(GetInputData(i).Double[0]);
 	for(size_t j=0;j<inpsize;j++,++data)
-	 NeuralPotential.v+=*data;
+	 NeuralPotential.v()+=*data;
    }
   }
 
   if(UseAveragePotential)
-   NeuralPotential.v/=NumInputs;
+   NeuralPotential.v()/=NumInputs;
  }
 
- POutputData[0].Double[0]=NeuralPotential.v;
- POutputData[1].Double[0]=NeuralPotential.v;
- POutputData[2].Double[0]=NeuralPotential.v;
+ GetOutputData(0).Double[0]=NeuralPotential.v();
+ GetOutputData(1).Double[0]=NeuralPotential.v();
+ GetOutputData(2).Double[0]=NeuralPotential.v();
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v()+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
