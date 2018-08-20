@@ -78,6 +78,7 @@ bool EraseDendrite(const UId &id);
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
 virtual NPulseNeuron* New(void);
+static UComponent* NewStatic(void);
 // --------------------------
 
 // --------------------------

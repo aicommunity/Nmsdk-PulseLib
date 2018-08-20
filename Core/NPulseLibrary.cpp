@@ -56,6 +56,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->SetName("PNeuron");
  cont->Default();
  UploadClass("NPNeuron",cont);
+// UploadClass("NPNeuron","PNeuron",&NPulseNeuron::NewStatic);
 
 /* cont=new NPulseLifeNeuron("PLifeNeuron");
  cont->Default();

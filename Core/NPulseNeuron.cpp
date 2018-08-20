@@ -193,6 +193,11 @@ NPulseNeuron* NPulseNeuron::New(void)
 {
  return new NPulseNeuron;
 }
+
+UComponent* NPulseNeuron::NewStatic(void)
+{
+ return new NPulseNeuron;
+}
 // --------------------------
 
 // --------------------------
