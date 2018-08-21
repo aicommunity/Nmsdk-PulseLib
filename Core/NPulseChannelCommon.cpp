@@ -50,7 +50,7 @@ NPulseChannelCommon::~NPulseChannelCommon(void)
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t NPulseChannelCommon::GetNumSynapses(void) const
+int NPulseChannelCommon::GetNumSynapses(void) const
 {
  return 0;
 }

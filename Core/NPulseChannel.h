@@ -60,10 +60,10 @@ virtual ~NPulseChannel(void);
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-virtual size_t GetNumSynapses(void) const;
+virtual int GetNumSynapses(void) const;
 
 // Возвращает синапс по индексу
-UEPtr<NPulseSynapse> GetSynapse(size_t i);
+UEPtr<NPulseSynapse> GetSynapse(int i);
 // --------------------------
 virtual double GetSynOutput(void);// метод-заглушка
 virtual bool ResetOut(void);

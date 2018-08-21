@@ -70,7 +70,7 @@ virtual ~NPulseSynChannel(void);
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t GetNumSynapses(void) const;
+int GetNumSynapses(void) const;
 
 // Возвращает синапс по индексу
 NPulseSynapse* GetSynapse(size_t i);
@@ -204,7 +204,7 @@ virtual ~NContinuesSynChannel(void);
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t GetNumSynapses(void) const;
+int GetNumSynapses(void) const;
 
 // Возвращает синапс по индексу
 NPulseSynapse* GetSynapse(size_t i);

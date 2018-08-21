@@ -52,13 +52,13 @@ NPulseChannel::~NPulseChannel(void)
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t NPulseChannel::GetNumSynapses(void) const
+int NPulseChannel::GetNumSynapses(void) const
 {
  return GetNumComponents();
 }
 
 // Возвращает синапс по индексу
-UEPtr<NPulseSynapse> NPulseChannel::GetSynapse(size_t i)
+UEPtr<NPulseSynapse> NPulseChannel::GetSynapse(int i)
 {
  return static_pointer_cast<NPulseSynapse>(GetComponentByIndex(i));
 }
@@ -125,7 +125,7 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
   else
   {
    RDK::ULinkSide item,conn;
-   for(size_t i=0;i<GetNumSynapses();i++)
+   for(int i=0;i<GetNumSynapses();i++)
    {
 	UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(GetSynapse(i));
 	if(hsynapse)
@@ -163,7 +163,7 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
   else
   {
    RDK::ULinkSide item,conn;
-   for(size_t i=0;i<GetNumSynapses();i++)
+   for(int i=0;i<GetNumSynapses();i++)
    {
 	UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(GetSynapse(i));
 	if(hsynapse)

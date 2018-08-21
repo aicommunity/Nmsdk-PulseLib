@@ -151,6 +151,8 @@ NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
  {
   for(size_t k=0;k<membrane->GetNumNegChannels();k++)
   {
+   if(!PosGenerator) // TODO: кинуть предупреждение
+    continue;
    item.Id=PosGenerator->GetLongId(this);
    item.Index=0;
    conn.Id=membrane->GetNegChannel(k)->GetLongId(this);
@@ -160,6 +162,8 @@ NPulseMembrane* NPulseNeuron::BranchDendrite(const UId &id, bool feedback)
 
   for(size_t k=0;k<membrane->GetNumPosChannels();k++)
   {
+   if(!NegGenerator) // TODO: кинуть предупреждение
+    continue;
    item.Id=NegGenerator->GetLongId(this);
    item.Index=0;
    conn.Id=membrane->GetPosChannel(k)->GetLongId(this);

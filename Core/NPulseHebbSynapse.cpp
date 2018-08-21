@@ -230,7 +230,7 @@ bool NPulseHebbSynapse::ACalculate(void)
 // for(size_t i=0;i<Gs->size();i++)
 //  Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
 
- for(size_t i=0;i<Gs->size();i++)
+ for(int i=0;i<int(Gs->size());i++)
   if(motivation[i]>0)
 //  if(motivation[i]*Gd.v > PassiveMs[i]*Gs[i])
    Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
@@ -238,7 +238,7 @@ bool NPulseHebbSynapse::ACalculate(void)
    Gs[i] += (motivation[i]*Gd.v - PassiveMs[i]*Gs[i])/TimeStep;
 
  double gs_res=0;
- for(size_t i=0;i<Gs->size();i++)
+ for(int i=0;i<int(Gs->size());i++)
   gs_res+=Gs[i];
  G.v = (Gd.v*GdGain + gs_res*GsGain);
 

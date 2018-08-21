@@ -487,8 +487,8 @@ bool NPulseSimpleLTZone::ACalculate(void)
 
  if(InputChannels.IsConnected())
  {
-  size_t inpsize(0);
-  for(size_t i=0;i<InputChannels->size();i++)
+  int inpsize(0);
+  for(int i=0;i<int(InputChannels->size());i++)
   {
    if(InputChannels[i])
    {
@@ -506,7 +506,7 @@ bool NPulseSimpleLTZone::ACalculate(void)
  else
  if(NumInputs>0)
  {
-  size_t inpsize(0);
+  int inpsize(0);
   for(int i=0;i<NumInputs;i++)
   {
    if((inpsize=GetInputDataSize(i)[1]) >0)

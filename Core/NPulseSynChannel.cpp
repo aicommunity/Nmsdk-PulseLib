@@ -55,7 +55,7 @@ NPulseSynChannel::~NPulseSynChannel(void)
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t NPulseSynChannel::GetNumSynapses(void) const
+int NPulseSynChannel::GetNumSynapses(void) const
 {
  return 0;
 // return GetNumComponents();
@@ -282,7 +282,7 @@ bool NPulseSynChannel::ACalculate(void)
 
  // Расчет синапсов
  double input=0;
- size_t num_connected_synapsis=0;
+ int num_connected_synapsis=0;
  /*double*/ syn_output=0;
 
 
@@ -408,7 +408,7 @@ NContinuesSynChannel::~NContinuesSynChannel(void)
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t NContinuesSynChannel::GetNumSynapses(void) const
+int NContinuesSynChannel::GetNumSynapses(void) const
 {
  return 0;
 // return GetNumComponents();
@@ -608,7 +608,7 @@ bool NContinuesSynChannel::ACalculate(void)
 
  // Расчет синапсов
  double input=0;
- size_t num_connected_synapsis=0;
+ int num_connected_synapsis=0;
  double syn_output=0;
 
 

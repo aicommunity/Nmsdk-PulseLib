@@ -54,7 +54,7 @@ virtual ~NPulseChannelCommon(void);
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-virtual size_t GetNumSynapses(void) const;
+virtual int GetNumSynapses(void) const;
 // --------------------------
 
 // --------------------------
