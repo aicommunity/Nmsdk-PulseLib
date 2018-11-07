@@ -104,6 +104,7 @@ bool NEyeMuscle::ADefault(void)
 // в случае успешной сборки
 bool NEyeMuscle::ABuild(void)
 {
+// int size=(GetNumOutputs()>0)?GetOutputDataSize(0)[1]:0;
  int size=GetOutputDataSize(0)[1];
  P1.resize(size);
  P2.resize(size);
@@ -118,6 +119,7 @@ bool NEyeMuscle::ABuild(void)
 // —брос процесса счета.
 bool NEyeMuscle::AReset(void)
 {
+// int size=(GetNumOutputs()>0)?GetOutputDataSize(0)[1]:0;
  int size=GetOutputDataSize(0)[1];
  P1.assign(size,0);
  P2.assign(size,0);
