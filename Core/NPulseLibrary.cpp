@@ -114,7 +114,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NCSynChannel",cont);
 
  cont=new NPulseHebbSynapse;
- cont->SetName("PHebbSynapse");
+ cont->SetName("Synapse");
  cont->Default();
  UploadClass("NPHebbSynapse",cont);
 
