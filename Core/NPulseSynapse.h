@@ -24,16 +24,18 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseSynapse: public NPulseSynapseCommon
 {
 public: // Общедоступные свойства
-// Постоянная времени выделения медиатора
-RDK::ULProperty<double,NPulseSynapse> SecretionTC;
+/// Постоянная времени выделения медиатора
+ULProperty<double,NPulseSynapse, ptPubParameter> SecretionTC;
 
-// Постоянная времени распада медиатора
-RDK::ULProperty<double,NPulseSynapse> DissociationTC;
+/// Постоянная времени распада медиатора
+ULProperty<double,NPulseSynapse, ptPubParameter> DissociationTC;
 
-// Коэффициент пресинаптического торможения
-RDK::ULProperty<double,NPulseSynapse> InhibitionCoeff;
+/// Коэффициент пресинаптического торможения
+ULProperty<double,NPulseSynapse, ptPubParameter> InhibitionCoeff;
 
-public: // Данные
+public: // Входы и выходы
+/// Входной сигнал с нейрона
+UPropertyInputData<MDMatrix<double>, NPulseSynapse, ptInput | ptPubState> Input;
 
 protected: // Основные свойства
 

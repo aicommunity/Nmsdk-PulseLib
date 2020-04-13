@@ -27,11 +27,10 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseSynapseCommon::NPulseSynapseCommon(void)
- //: NConnector(name),
 : PulseAmplitude("PulseAmplitude",this,&NPulseSynapseCommon::SetPulseAmplitude),
-Resistance("Resistance",this,&NPulseSynapseCommon::SetResistance),
-
-PreOutput("PreOutput",this)
+  Resistance("Resistance",this,&NPulseSynapseCommon::SetResistance),
+  Output("Output",this),
+  PreOutput("PreOutput",this)
 {
 }
 
@@ -81,6 +80,8 @@ bool NPulseSynapseCommon::ADefault(void)
  // Вес (эффективность синапса) синапса
  Resistance=1.0;
 
+ Output.Assign(1,1,0.0);
+
  return true;
 }
 
@@ -105,7 +106,7 @@ bool NPulseSynapseCommon::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseSynapseCommon::ACalculate(void)
 {
- POutputData[0].Double[0]=PreOutput;
+ Output(0,0)=PreOutput;
 
  return true;
 }

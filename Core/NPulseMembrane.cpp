@@ -18,9 +18,6 @@ See file license.txt for more information
 
 #include <algorithm>
 #include "NPulseMembrane.h"
-#include "NPulseChannel.h"
-
-
 
 namespace NMSDK {
 
@@ -31,6 +28,7 @@ namespace NMSDK {
 NPulseMembrane::NPulseMembrane(void)
  : FeedbackGain("FeedbackGain",this,&NPulseMembrane::SetFeedbackGain),
   ResetAvailable("ResetAvailable",this),
+  InputFeedbackSignal("InputFeedbackSignal",this),
   Feedback("Feedback",this)
 
 {
@@ -247,13 +245,12 @@ bool NPulseMembrane::ACalculate(void)
 		PosChannels[0]->ResetOut();
 	}
  }
- // Получение данных канала
-// Feedback=GetFullSumInput();
+
  Feedback=0;
 
- for(int i=0;i<NumInputs;i++)
-  for(int j=0;j<GetInputDataSize(i)[1];j++)
-   Feedback.v+=GetInputData(i)->Double[j];
+  for(int j=0;j<InputFeedbackSignal->GetRows();j++)
+   for(int i=0;i<InputFeedbackSignal->GetCols();i++)
+    Feedback.v+=(*InputFeedbackSignal)(j,i);
 
  Feedback.v*=FeedbackGain.v;
 

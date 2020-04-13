@@ -16,9 +16,7 @@ See file license.txt for more information
 #ifndef NPULSE_LTZONE_COMMON_H
 #define NPULSE_LTZONE_COMMON_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "../../Nmsdk-SourceLib/Core/NPulseGenerator.h"
-
 
 namespace NMSDK {
 
@@ -28,13 +26,17 @@ class RDK_LIB_TYPE NLTZone: public UNet
 {
 public: // Общедоступные свойства
 /// Порог нейрона
-RDK::ULProperty<double,NLTZone> Threshold;
+ULProperty<double,NLTZone, ptPubParameter> Threshold;
 
 /// Признак наличия усреднения в выходных данных нейрона
-ULProperty<bool,NLTZone> UseAveragePotential;
+ULProperty<bool,NLTZone, ptPubParameter> UseAveragePotential;
 
+public: // Входы и выходы
 /// Данные с ионных механизмов участков мембраны
-UPropertyInputCData<MDMatrix<double>,NLTZone> InputChannels;
+UPropertyInputCData<MDMatrix<double>,NLTZone, ptInput | ptPubState> InputChannels;
+
+/// Выход источника сигнала
+UPropertyOutputData<MDMatrix<double>, NLTZone, ptOutput | ptPubState> Output;
 
 public: // Данные
 /// Нейрон владелец мембраны канала
@@ -77,31 +79,41 @@ virtual bool AReset(void);
 class RDK_LIB_TYPE NPulseLTZoneCommon: public NLTZone
 {
 public: // Общедоступные свойства
-// Амплитуда импульсов
-RDK::ULProperty<double,NPulseLTZoneCommon> PulseAmplitude;
+/// Амплитуда импульсов
+ULProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseAmplitude;
 
-// Длительность импульса
-RDK::ULProperty<double,NPulseLTZoneCommon> PulseLength;
+/// Длительность импульса
+ULProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseLength;
 
-// Интервал времени оценки частоты генерации
-RDK::ULProperty<double,NPulseLTZoneCommon> AvgInterval;
+/// Интервал времени оценки частоты генерации
+ULProperty<double,NPulseLTZoneCommon, ptPubParameter> AvgInterval;
+
+public: // Входы и выходы
+/// Потенциал (для этого компонента копирует PulseOutput) (1)
+UPropertyOutputData<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputPotential;
+
+/// Частота (2)
+UPropertyOutputData<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputFrequency;
+
+/// Массив моментов времени начала импульсов (3)
+UPropertyOutputData<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputPulseTimes;
 
 public: // Данные
-// Промежуточное значение потенциала
-// Следует использовать эту переменную для сохранения состояния мембранного потенциала
-RDK::ULProperty<double,NPulseLTZoneCommon,ptPubState> PrePotential;
+/// Промежуточное значение потенциала
+/// Следует использовать эту переменную для сохранения состояния мембранного потенциала
+ULProperty<double,NPulseLTZoneCommon,ptPubState> PrePotential;
 
 protected: // Основные свойства
 
 protected: // Временные переменные
-// Флаг наличия генерации
-RDK::ULProperty<int,NPulseLTZoneCommon,ptPubState> PulseCounter;
+/// Флаг наличия генерации
+ULProperty<int,NPulseLTZoneCommon,ptPubState> PulseCounter;
 
-// Средняя частота за заданный интервал времени
-RDK::UCLProperty<list<double>,NPulseLTZoneCommon,ptPubState> AvgFrequencyCounter;
+/// Средняя частота за заданный интервал времени
+UCLProperty<list<double>,NPulseLTZoneCommon,ptPubState> AvgFrequencyCounter;
 
-// Признак текущей генерации импульса
-RDK::ULProperty<bool,NPulseLTZoneCommon,ptPubState> PulseFlag;
+/// Признак текущей генерации импульса
+ULProperty<bool,NPulseLTZoneCommon,ptPubState> PulseFlag;
 
 public: // Методы
 // --------------------------

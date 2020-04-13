@@ -15,9 +15,7 @@ See file license.txt for more information
 
 #ifndef NMUSCLE_CPP
 #define NMUSCLE_CPP
-//#pragma hdrstop
 
-//#include "../BCL/NItem.h"
 #include "NMuscle.h"
 
 namespace NMSDK {
@@ -27,17 +25,16 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NMuscle::NMuscle(void)
-//: NADItem(name),
  : MulCoeffs("MulCoeffs",this),
   Param("Param",this),
   TC("TC",this),
   Mass("Mass",this),
   Threshold("Threshold",this),
-  G("G",this)
+  G("G",this),
+  Input("Input",this),
+  LengthInput("LengthInput",this),
+  Output("Output",this)
 {
-
-// Указатель на вход по длине
- LengthInput=0;
  for(size_t i=0;i<15;i++)
  {
   y[i]=0;
@@ -58,12 +55,6 @@ NMuscle::NMuscle(void)
 NMuscle::~NMuscle(void)
 {
 }
-// --------------------------
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
-
 // --------------------------
 
 // --------------------------
@@ -102,44 +93,6 @@ bool NMuscle::CheckComponentType(UEPtr<UContainer> comp) const
 // успешно добавлен в список компонент
 bool NMuscle::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
-/* NItem* item=dynamic_cast<NItem*>(comp);
- if(item)
- {
-  // Указатели на дополнительные выходы
-  if(!ActivePower)
-   ActivePower=item;
-  else
-  if(!Length)
-   Length=item;
-  else
-  if(!Spindle1)
-   Spindle1=item;
-  else
-  if(!Spindle2)
-   Spindle2=item;
-  else
-  if(!Tendon)
-   Tendon=item;
-  else
-   return false;
-
-  item->OutputSize=OutputSize;
-  return true;
- }             */
-
- UEPtr<NReceptor> input=dynamic_pointer_cast<NReceptor>(comp);
- if(input)
- {
-/*  if(!ExternalForce)
-   ExternalForce=input;
-  else*/
-  if(!LengthInput)
-   LengthInput=input;
-  else
-   return false;
- }
-
-
  return true;
 }
 
@@ -150,28 +103,6 @@ bool NMuscle::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 // существует в списке компонент
 bool NMuscle::ADelComponent(UEPtr<UContainer> comp)
 {
-  // Указатели на дополнительные выходы
-/*  if(comp == ActivePower)
-   ActivePower=0;
-  else
-  if(comp == Length)
-   Length=0;
-  else
-  if(comp == Spindle1)
-   Spindle1=0;
-  else
-  if(comp == Spindle2)
-   Spindle2=0;
-  else
-  if(comp == Tendon)
-   Tendon=0;
-  else*/
-  if(comp == LengthInput)
-   LengthInput=0;
-/*  else
-  if(comp == ExternalForce)
-   ExternalForce=0;
-				*/
  return true;
 }
 // --------------------------
@@ -182,7 +113,7 @@ bool NMuscle::ADelComponent(UEPtr<UContainer> comp)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NMuscle::ADefault(void)
 {
- Real value;
+ vector<double> value;
  value.resize(18);
  value[0]=0.74;//0.09;//0.3;//0.45;
  value[1]=0.75;//0.25;//0.5;
@@ -234,6 +165,10 @@ bool NMuscle::ADefault(void)
 
 // TimeStep=0.000001;
 
+ Output.Assign(1,1,0.0);
+ Input->Assign(1,1,0.0);
+ LengthInput->Assign(1,1,0.0);
+
  return true;
 }
 
@@ -272,34 +207,9 @@ bool NMuscle::ACalculate(void)
  for (int i=0; i<15; i++)
   yOld[i] = y[i];
 
- for(int i=0;i<NumInputs;i++)
-  for(int j=0;j<GetInputDataSize(i)[1];j++)
-  {
-   //if(k >= OutputSize)
-   //	break;
+ y[0]=(*Input)(0,0);
+ y[8]=(*LengthInput)(0,0);
 
-   y[0]=GetInputData(i)->Double[j];
-
-   ++k;
-   break;
-  }
-
- if(LengthInput)
- {
-  for(int i=0;i<LengthInput->GetNumInputs();i++)
-   for(int j=0;j<LengthInput->GetInputDataSize(i)[1];j++)
-   {
-   //if(k >= OutputSize)
-   //	break;
-
-	y[8]=LengthInput->GetInputData(i)->Double[j];
-
-	++k;
-	break;
-   }
- }
- else
-  y[8]=0;
 
 /* if(ExternalForce)
  {
@@ -393,7 +303,7 @@ bool NMuscle::ACalculate(void)
           */
  double res;
  res=y[11];
- POutputData[0].Double[0]=res;
+ Output(0,0)=res;
 
  FirstStep = false;
 

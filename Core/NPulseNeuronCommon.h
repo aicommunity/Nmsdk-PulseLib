@@ -28,20 +28,30 @@ class RDK_LIB_TYPE NPulseNeuronCommon: public NNeuron
 {
 public: // Параметры
 /// Признак наличия усреднения в ветвлении дендритов
-ULProperty<bool, NPulseNeuronCommon> UseAverageDendritesPotential;
+ULProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageDendritesPotential;
 
 /// Признак наличия усреднения в ветвлении дендритов
-ULProperty<bool, NPulseNeuronCommon> UseAverageLTZonePotential;
+ULProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageLTZonePotential;
+
+public: // Входы и выходы
+/// Число связей организованных этим нейроном на других (и себе)
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveOutputs;
+
+/// Число возбуждающих связей организованных другими нейронами на этом
+ULProperty<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActivePosInputs;
+
+/// Число тормозных связей организованных другими нейронами на этом
+ULProperty<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveNegInputs;
 
 public: // Статистика
-// Число связей организованных этим нейроном на других (и себе)
-RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;
+/// Число связей организованных этим нейроном на других (и себе)
+ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;
 
-// Число возбуждающих связей организованных другими нейронами на этом
-RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
+/// Число возбуждающих связей организованных другими нейронами на этом
+ULProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
 
-// Число тормозных связей организованных другими нейронами на этом
-RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
+/// Число тормозных связей организованных другими нейронами на этом
+ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
 
 protected: // Временные переменные
 //NPulseLTZone *LTZone;

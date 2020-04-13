@@ -132,11 +132,6 @@ bool NPulseSynChannel::SetSynapseResistance(const double &value)
 // --------------------------
 
 // --------------------------
-// Методы управления объектом
-// --------------------------
-// --------------------------
-
-// --------------------------
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
@@ -248,20 +243,20 @@ bool NPulseSynChannel::AReset(void)
  // Сброс временных переменных
  if(Type>0)
  {
-  POutputData[0].Double[0]=1;
+  Output(0,0)=1;
  }
  else
  if(Type<1)
  {
-  POutputData[0].Double[0]=-1;
+  Output(0,0)=-1;
  }
  else
  {
-  FillOutputData();
+  Output.ToZero();
  }
 
- SynapseInputFlagsList.resize(NumInputs,true);
- for(int n=0;n<NumInputs;n++)
+ SynapseInputFlagsList.resize(Inputs->size(),true);
+ for(size_t n=0;n<Inputs->size();n++)
  {
   const UCItem& item=GetCItem(n);
   if(dynamic_cast<NPulseChannel*>(item.Item) ||
@@ -286,18 +281,15 @@ bool NPulseSynChannel::ACalculate(void)
  /*double*/ syn_output=0;
 
 
- for(int n=0;n<NumInputs;n++)
+ for(size_t n=0;n<Inputs->size();n++)
  {
-  size_t inpsize=GetInputDataSize(n)[1];
+  size_t inpsize=Inputs[n]->GetCols();
   if(inpsize == 0)
    continue;
-//  const UCItem& item=GetCItem(n);
-//  if(dynamic_cast<NPulseChannel*>(item.Item) ||
-//	 dynamic_cast<NReceptor*>(item.Item) ||
-//	 dynamic_cast<NConstGenerator*>(item.Item))
+
   if(!SynapseInputFlagsList[n])
   {
-	double *data=&(GetInputData(n)->Double[0]);
+	double *data=Inputs[n]->Data;
 	for(size_t j=0;j<inpsize;j++,++data)
 	 channel_input+=*data;
 	++num_connected_channels;
@@ -305,13 +297,13 @@ bool NPulseSynChannel::ACalculate(void)
   else // Остальные подключенные компоненты считаем входами синапсов
   {
    ++num_connected_synapsis;
-   if(PreOutput->size()<num_connected_synapsis)
+   if(int(PreOutput->size())<num_connected_synapsis)
    {
 	PreOutput->resize(num_connected_synapsis);
 	PreOutput.v[num_connected_synapsis-1]=0;
    }
 
-   input=GetInputData(n)->Double[0];
+   input=(*Inputs[n])(0,0);
 
    if(MainOwner && Owner)
    {
@@ -343,7 +335,7 @@ bool NPulseSynChannel::ACalculate(void)
   channel_input-=feedback;
 
  // Расчет
- double *out=&POutputData[0].Double[0];
+ double *out=&Output(0,0);
  double Ti(0.0),sum_u(0.0);
 
  // Проверяем необходимость сброса
@@ -477,11 +469,6 @@ bool NContinuesSynChannel::SetSynapseResistance(const double &value)
 // --------------------------
 
 // --------------------------
-// Методы управления объектом
-// --------------------------
-// --------------------------
-
-// --------------------------
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
@@ -586,8 +573,8 @@ bool NContinuesSynChannel::AReset(void)
 
  FillOutputData();
 
- SynapseInputFlagsList.resize(NumInputs,true);
- for(int n=0;n<NumInputs;n++)
+ SynapseInputFlagsList.resize(Inputs->size(),true);
+ for(size_t n=0;n<Inputs->size();n++)
  {
   const UCItem& item=GetCItem(n);
   if(dynamic_cast<NPulseChannel*>(item.Item) ||
@@ -612,9 +599,9 @@ bool NContinuesSynChannel::ACalculate(void)
  double syn_output=0;
 
 
- for(int n=0;n<NumInputs;n++)
+ for(size_t n=0;n<Inputs->size();n++)
  {
-  if(GetInputDataSize(n)[1] == 0)
+  if(Inputs[n]->GetCols() == 0)
    continue;
 //  if(dynamic_cast<NPulseChannel*>(GetCItem(n).Item) ||
 //     dynamic_cast<NReceptor*>(GetCItem(n).Item) ||
@@ -622,24 +609,24 @@ bool NContinuesSynChannel::ACalculate(void)
   if(!SynapseInputFlagsList[n])
   {
    size_t inpsize=0;
-   if((inpsize=GetInputDataSize(n)[1]) >0)
+   if((inpsize=Inputs[n]->GetCols()) >0)
    {
-    double *data=&(GetInputData(n)->Double[0]);
-    for(size_t j=0;j<inpsize;j++,++data)
-     channel_input+=*data;
-    ++num_connected_channels;
+	double *data=Inputs[n]->Data;
+	for(size_t j=0;j<inpsize;j++,++data)
+	 channel_input+=*data;
+	++num_connected_channels;
    }
   }
   else // Остальные подключенные компоненты считаем входами синапсов
   {
    ++num_connected_synapsis;
-   if(PreOutput->size()<num_connected_synapsis)
+   if(int(PreOutput->size())<num_connected_synapsis)
    {
 	PreOutput->resize(num_connected_synapsis);
     PreOutput.v[num_connected_synapsis-1]=0;
    }
 
-   input=GetInputData(n)->Double[0];
+   input=(*Inputs[n])(0,0);
 
    if(MainOwner && Owner)
    {
@@ -666,7 +653,7 @@ bool NContinuesSynChannel::ACalculate(void)
   channel_input/=num_connected_channels;
 
  // Расчет
- double *out=&POutputData[0].Double[0];
+ double *out=&Output(0,0);
  double Ti(0.0),sum_u(0.0);
 
 

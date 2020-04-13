@@ -16,34 +16,41 @@ See file license.txt for more information
 #ifndef NEYEMUSCLE_H
 #define NEYEMUSCLE_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
+#include "../../../Rdk/Deploy/Include/rdk.h"
 
 namespace NMSDK {
 
-//using namespace MySDK;
+using namespace RDK;
 
 class RDK_LIB_TYPE NEyeMuscle: public UNet
 {
 public: // Общедоступные свойства
-// Коэффициенты
-RDK::UCLProperty<Real,NEyeMuscle> MulCoeffs;
+/// Коэффициенты
+UCLProperty<vector<double>,NEyeMuscle, ptPubParameter> MulCoeffs;
 
-RDK::ULProperty<double,NEyeMuscle> K;
+ULProperty<double,NEyeMuscle, ptPubParameter> K;
 
-// Постоянные времени
-RDK::UCLProperty<Real,NEyeMuscle> TC;
+/// Постоянные времени
+UCLProperty<vector<double>,NEyeMuscle, ptPubParameter> TC;
+
+public: // Входы и выходы
+UPropertyInputCData<MDMatrix<double>, NEyeMuscle> Inputs;
+
+UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> Output1;
+UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> Output2;
+UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> Output3;
 
 public: // Временные переменные
-Real P1,P2,P3,L;
+vector<double> P1,P2,P3,L;
 
 // Порог
-Real Threshold;
+vector<double> Threshold;
 
 // Скорость
-Real Speed;
+vector<double> Speed;
 
 // Ускорение
-Real Acceleration;
+vector<double> Acceleration;
 
 public: // Методы
 // --------------------------

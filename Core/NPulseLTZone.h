@@ -16,8 +16,6 @@ See file license.txt for more information
 #ifndef NPULSE_LTZONE_H
 #define NPULSE_LTZONE_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
-#include "../../Nmsdk-SourceLib/Core/NPulseGenerator.h"
 #include "NPulseLTZoneCommon.h"
 
 namespace NMSDK {
@@ -27,12 +25,8 @@ class NPulseNeuron;
 class RDK_LIB_TYPE NPulseLTZone: public NPulseLTZoneCommon
 {
 public: // Общедоступные свойства
-// Постоянная времени
-RDK::ULProperty<double,NPulseLTZone> TimeConstant;
-
-public: // Данные
-
-protected: // Основные свойства
+/// Постоянная времени
+ULProperty<double,NPulseLTZone, ptPubParameter> TimeConstant;
 
 protected: // Временные переменные
 // Суммарный потенциал
@@ -104,37 +98,37 @@ virtual bool CheckPulseOff(void);
 class RDK_LIB_TYPE NContinuesLTZone: public NLTZone
 {
 public: // Общедоступные свойства
-// Постоянная времени
-RDK::ULProperty<double,NContinuesLTZone> TimeConstant;
+/// Постоянная времени
+ULProperty<double,NContinuesLTZone, ptPubParameter> TimeConstant;
 
-// Амплитуда импульсов
-RDK::ULProperty<double,NContinuesLTZone> PulseAmplitude;
+/// Амплитуда импульсов
+ULProperty<double,NContinuesLTZone, ptPubParameter> PulseAmplitude;
 
-// Длительность импульса
-RDK::ULProperty<double,NContinuesLTZone> PulseLength;
+/// Длительность импульса
+ULProperty<double,NContinuesLTZone, ptPubParameter> PulseLength;
 
-// Интервал времени оценки частоты генерации
-RDK::ULProperty<double,NContinuesLTZone> AvgInterval;
+/// Интервал времени оценки частоты генерации
+ULProperty<double,NContinuesLTZone, ptPubParameter> AvgInterval;
 
-public: // Данные
-
-protected: // Основные свойства
+public: // Входы и выходы
+/// Потенциал (для этого компонента копирует Output) (1)
+UPropertyOutputData<MDMatrix<double>,NContinuesLTZone, ptOutput | ptPubState> OutputPotential;
 
 protected: // Временные переменные
-// Суммарный потенциал
-RDK::ULProperty<double,NContinuesLTZone,ptPubState> NeuralPotential;
+/// Суммарный потенциал
+ULProperty<double,NContinuesLTZone,ptPubState> NeuralPotential;
 
-// Промежуточное значение потенциала
-RDK::ULProperty<double,NContinuesLTZone,ptPubState> PrePotential;
+/// Промежуточное значение потенциала
+ULProperty<double,NContinuesLTZone,ptPubState> PrePotential;
 
-// Флаг наличия генерации
-RDK::ULProperty<int,NContinuesLTZone,ptPubState> PulseCounter;
+/// Флаг наличия генерации
+ULProperty<int,NContinuesLTZone,ptPubState> PulseCounter;
 
-// Средняя частота за заданный интервал времени
-RDK::UCLProperty<list<double>,NContinuesLTZone,ptPubState> AvgFrequencyCounter;
+/// Средняя частота за заданный интервал времени
+UCLProperty<list<double>,NContinuesLTZone,ptPubState> AvgFrequencyCounter;
 
-// Признак текущей генерации импульса
-RDK::ULProperty<bool,NContinuesLTZone,ptPubState> PulseFlag;
+/// Признак текущей генерации импульса
+ULProperty<bool,NContinuesLTZone,ptPubState> PulseFlag;
 
 public: // Методы
 // --------------------------
@@ -195,12 +189,6 @@ virtual bool ACalculate(void);
 
 class RDK_LIB_TYPE NPulseSimpleLTZone: public NPulseLTZone
 {
-public: // Общедоступные свойства
-
-public: // Данные
-
-protected: // Основные свойства
-
 protected: // Временные переменные
 NPulseGenerator generator;
 
@@ -210,11 +198,6 @@ public: // Методы
 // --------------------------
 NPulseSimpleLTZone(void);
 virtual ~NPulseSimpleLTZone(void);
-// --------------------------
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
 // --------------------------
 
 // --------------------------
@@ -258,14 +241,6 @@ virtual bool ACalculate(void);
 
 class RDK_LIB_TYPE NContinuesSimpleLTZone: public NContinuesLTZone
 {
-public: // Общедоступные свойства
-
-public: // Данные
-
-protected: // Основные свойства
-
-protected: // Временные переменные
-
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы

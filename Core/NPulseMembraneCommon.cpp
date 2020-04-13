@@ -18,9 +18,6 @@ See file license.txt for more information
 
 #include <algorithm>
 #include "NPulseMembraneCommon.h"
-#include "NPulseChannel.h"
-
-
 
 namespace NMSDK {
 
@@ -64,11 +61,6 @@ NPulseChannelCommon* NPulseMembraneCommon::GetChannel(size_t i)
 {
  return Channels[i];
 }
-// --------------------------
-
-// --------------------------
-// ћетоды управлени€ общедоступными свойствами
-// --------------------------
 // --------------------------
 
 // --------------------------

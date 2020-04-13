@@ -33,6 +33,9 @@ NPulseNeuronCommon::NPulseNeuronCommon(void)
 //: NNeuron(name),
  : UseAverageDendritesPotential("UseAverageDendritesPotential",this,&NPulseNeuronCommon::SetUseAverageDendritesPotential),
    UseAverageLTZonePotential("UseAverageLTZonePotential",this,&NPulseNeuronCommon::SetUseAverageLTZonePotential),
+   ActiveOutputs("ActiveOutputs",this),
+   ActivePosInputs("ActivePosInputs",this),
+   ActiveNegInputs("ActiveNegInputs",this),
   NumActiveOutputs("NumActiveOutputs",this),
   NumActivePosInputs("NumActivePosInputs",this),
   NumActiveNegInputs("NumActiveNegInputs",this),
@@ -296,10 +299,10 @@ bool NPulseNeuronCommon::ADefault(void)
 {
  UseAverageLTZonePotential=true;
  UseAverageDendritesPotential=true;
- SetNumOutputs(3);
- for(int i=0;i<NumOutputs;i++)
-  SetOutputDataSize(i,MMatrixSize(1,1));
 
+ ActiveOutputs.Assign(1,1,0.0);
+ ActivePosInputs.Assign(1,1,0.0);
+ ActiveNegInputs.Assign(1,1,0.0);
  return true;
 }
 
@@ -335,13 +338,13 @@ bool NPulseNeuronCommon::AReset(void)
 bool NPulseNeuronCommon::ACalculate(void)
 {
  // Число связей организованных этим нейроном на других (и себе)
- POutputData[0].Double[0]=NumActiveOutputs.v;
+ ActiveOutputs(0,0)=NumActiveOutputs.v;
  NumActiveOutputs.v=0;
 
  // Число связей организованных другими нейронами на этом
- POutputData[1].Double[0]=NumActivePosInputs.v;
+ ActivePosInputs(0,0)=NumActivePosInputs.v;
  NumActivePosInputs.v=0;
- POutputData[2].Double[0]=NumActiveNegInputs.v;
+ ActiveNegInputs(0,0)=NumActiveNegInputs.v;
  NumActiveNegInputs.v=0;
 
  return true;

@@ -16,7 +16,6 @@ See file license.txt for more information
 #ifndef NPULSE_CHANNEL_H
 #define NPULSE_CHANNEL_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "NPulseChannelCommon.h"
 #include "NPulseSynapse.h"
 
@@ -25,28 +24,27 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseChannel: public NPulseChannelCommon
 {
 public: // Общедоступные свойства
-// Емкость мембраны
-RDK::ULProperty<double,NPulseChannel> Capacity;
+/// Емкость мембраны
+ULProperty<double,NPulseChannel> Capacity;
 
-// Сопротивление мембраны
-RDK::ULProperty<double,NPulseChannel> Resistance;
+/// Сопротивление мембраны
+ULProperty<double,NPulseChannel> Resistance;
 
-// Сопротивление перезаряда мембраны
-RDK::ULProperty<double,NPulseChannel> FBResistance;
+/// Сопротивление перезаряда мембраны
+ULProperty<double,NPulseChannel> FBResistance;
 
-// Сопротивление мембраны на переход в состояние покоя
-RDK::ULProperty<double,NPulseChannel> RestingResistance;
+/// Сопротивление мембраны на переход в состояние покоя
+ULProperty<double,NPulseChannel> RestingResistance;
 
-RDK::ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
+/// Число подключенных к каналу синапсов
+ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
 
-public: // Данные
+public: // Входы и выходы
+/// Входной сигнал от канала предыдущего участка мембраны
+UPropertyInputCData<MDMatrix<double>, NPulseChannel, ptInput | ptPubState> Inputs;
 
 double channel_input;
 //double out;
-
-protected: // Основные свойства
-
-protected: // Временные переменные
 
 public: // Методы
 // --------------------------

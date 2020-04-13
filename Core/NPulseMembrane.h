@@ -16,7 +16,6 @@ See file license.txt for more information
 #ifndef NPULSE_MEMBRANE_H
 #define NPULSE_MEMBRANE_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "NPulseMembraneCommon.h"
 #include "NPulseChannel.h"
 
@@ -28,15 +27,19 @@ class NPulseNeuron;
 class RDK_LIB_TYPE NPulseMembrane: public NPulseMembraneCommon
 {
 public: // Основные свойства
-// Коэффициент обратной связи
-RDK::ULProperty<double,NPulseMembrane> FeedbackGain;
+/// Коэффициент обратной связи
+ULProperty<double,NPulseMembrane, ptPubParameter> FeedbackGain;
 
-//Наличие механизма сброса
-RDK::ULProperty<bool,NPulseMembrane> ResetAvailable;
+/// Наличие механизма сброса
+ULProperty<bool,NPulseMembrane, ptPubParameter> ResetAvailable;
+
+public: // Входы и выходы
+/// Сигнал обратной связи от низкопороговой зоны
+UPropertyInputData<MDMatrix<double>, NPulseMembrane, ptInput | ptPubState> InputFeedbackSignal;
 
 public: // Данные
-// Значение обратной связи
-RDK::ULProperty<double,NPulseMembrane,ptPubState> Feedback;
+/// Значение обратной связи
+ULProperty<double,NPulseMembrane,ptPubState> Feedback;
 
 protected: // Временные переменные
 // Ионные механизмы деполяризации

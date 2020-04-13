@@ -14,8 +14,6 @@ See file license.txt for more information
 #ifndef NPulseLibraryH
 #define NPulseLibraryH
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
-
 #include "NAfferentNeuron.h"
 #include "NEyeMuscle.h"
 #include "NMuscle.h"
@@ -26,9 +24,6 @@ See file license.txt for more information
 #include "NPulseSynapse.h"
 #include "NPulseHebbSynapse.h"
 #include "NPulseSynChannel.h"
-//#include "../NeuronLifeLib/NPulseLifeNeuron.h"
-//#include "../NeuronLifeLib/NNeuronLife.h"
-//#include "../NeuronLifeLib/NLifeNet.h"   
 #include "NPac.h"
 #include "NReceptor.h"
 

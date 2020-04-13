@@ -16,9 +16,7 @@ See file license.txt for more information
 #ifndef NPULSE_MEMBRANE_COMMON_H
 #define NPULSE_MEMBRANE_COMMON_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
-#include "NPulseChannel.h"
-
+#include "NPulseChannelCommon.h"
 
 namespace NMSDK {
 
@@ -28,7 +26,7 @@ class RDK_LIB_TYPE NPulseMembraneCommon: public UNet
 {
 public: // Параметры
 /// Признак наличия усреднения в выходных данных нейрона
-ULProperty<bool, NPulseMembraneCommon> UseAveragePotential;
+ULProperty<bool, NPulseMembraneCommon, ptPubParameter> UseAveragePotential;
 
 public: // Данные
 

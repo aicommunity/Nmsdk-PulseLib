@@ -14,20 +14,6 @@ See file license.txt for more information
 #define NPULSE_LIBRARY_CPP
 
 #include "NPulseLibrary.h"
-/*
-#include "NAfferentNeuron.cpp"
-#include "NEyeMuscle.cpp"
-#include "NMuscle.cpp"
-#include "NPulseChannel.cpp"
-#include "NPulseSynChannel.cpp"
-#include "NPulseHebbSynapse.cpp"
-#include "NPulseLTZone.cpp"
-#include "NPulseMembrane.cpp"
-#include "NPulseNeuron.cpp"
-#include "NPulseSynapse.cpp"
-#include "NPac.cpp"
-#include "NReceptor.cpp"
-*/
 
 namespace NMSDK {   
 

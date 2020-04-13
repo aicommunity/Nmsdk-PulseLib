@@ -29,8 +29,9 @@ namespace NMSDK {
 NPulseSynapse::NPulseSynapse(void)
  //: NConnector(name),
 : SecretionTC("SecretionTC",this,&NPulseSynapse::SetSecretionTC),
-DissociationTC("DissociationTC",this,&NPulseSynapse::SetDissociationTC),
-InhibitionCoeff("InhibitionCoeff",this,&NPulseSynapse::SetInhibitionCoeff)
+  DissociationTC("DissociationTC",this,&NPulseSynapse::SetDissociationTC),
+  InhibitionCoeff("InhibitionCoeff",this,&NPulseSynapse::SetInhibitionCoeff),
+  Input("Input",this)
 {
  VSecretionTC=1;
  VDissociationTC=1;
@@ -172,9 +173,9 @@ bool NPulseSynapse::ACalculate(void)
 {
  double input=0;
 
- if(NumInputs >0 && GetInputDataSize(0)[1]>0)
+ if(Input.IsConnected() && Input->GetCols()>0)
  {
-  input=GetInputData(0)->Double[0];
+  input=(*Input)(0,0);
   if(MainOwner && Owner)
   {
    if(static_pointer_cast<NPulseChannel>(Owner)->Type() < 0)
@@ -189,11 +190,11 @@ bool NPulseSynapse::ACalculate(void)
  else
   PreOutput.v-=PreOutput.v/VDissociationTC;
 
- POutputData[0].Double[0]=OutputConstData*
+ Output(0,0)=OutputConstData*
 						(1.0-InhibitionCoeff.v*PreOutput.v)*PreOutput.v;
 
- if(POutputData[0].Double[0]<0)
-  POutputData[0].Double[0]=0;
+ if(Output(0,0)<0)
+  Output(0,0)=0;
 
  return true;
 }

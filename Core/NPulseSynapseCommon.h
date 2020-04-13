@@ -16,7 +16,6 @@ See file license.txt for more information
 #ifndef NPULSE_SYNAPSE_COMMON_H
 #define NPULSE_SYNAPSE_COMMON_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "../../Nmsdk-BasicLib/Core/NNet.h"
 
 
@@ -27,19 +26,19 @@ class NPulseNeuron;
 class RDK_LIB_TYPE NPulseSynapseCommon: public UNet
 {
 public: // Общедоступные свойства
-// Амплитуда входных импульсов
-RDK::ULProperty<double,NPulseSynapseCommon> PulseAmplitude;
+/// Амплитуда входных импульсов
+ULProperty<double,NPulseSynapseCommon, ptPubParameter> PulseAmplitude;
 
-// Вес (эффективность синапса) синапса
-RDK::ULProperty<double,NPulseSynapseCommon> Resistance;
+/// Вес (эффективность синапса) синапса
+ULProperty<double,NPulseSynapseCommon, ptPubParameter> Resistance;
 
-public: // Данные
-
-protected: // Основные свойства
+public: // Входы и выходы
+/// Выходное влияние синапса на мембрану
+UPropertyOutputData<MDMatrix<double>,NPulseSynapseCommon, ptOutput | ptPubState> Output;
 
 protected: // Временные переменные
-// Промежуточное значение эффективности синапса
-RDK::ULProperty<double,NPulseSynapseCommon,ptPubState> PreOutput;
+/// Промежуточное значение эффективности синапса
+ULProperty<double,NPulseSynapseCommon,ptPubState> PreOutput;
 
 public: // Методы
 // --------------------------

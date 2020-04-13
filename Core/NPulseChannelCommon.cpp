@@ -17,14 +17,7 @@ See file license.txt for more information
 #define NPULSE_CHANNEL_COMMON_CPP
 
 #include "NPulseChannelCommon.h"
-#include "NPulseSynapse.h"
 #include "NPulseMembrane.h"
-#include "NPulseNeuron.h"
-#include "NPulseHebbSynapse.h"
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
-#include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
-//#include "../BCL/NConnector.h"
-
 
 namespace NMSDK {
 
@@ -34,9 +27,8 @@ namespace NMSDK {
 // --------------------------
 NPulseChannelCommon::NPulseChannelCommon(void)
  : Type("Type", this, &NPulseChannelCommon::SetType),
-   UseAveragePotential("UseAveragePotential",this)
-//   RestingFlag("RestingFlag",this),
-//   RestingThreshold("RestingThreshold",this)
+   UseAveragePotential("UseAveragePotential",this),
+   Output("Output",this)
 {
 }
 
@@ -127,6 +119,7 @@ bool NPulseChannelCommon::ADefault(void)
 {
  Type=0;
  UseAveragePotential=true;
+ Output.Assign(1,1,0.0);
 // RestingThreshold=100;
 // RestingFlag=false;
 
@@ -145,7 +138,7 @@ bool NPulseChannelCommon::ABuild(void)
 // —брос процесса счета.
 bool NPulseChannelCommon::AReset(void)
 {
- FillOutputData();
+ Output.ToZero();
 
  return true;
 }

@@ -24,13 +24,14 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPac::NPac(void)
-//: NADItem(name),
 : PulseAmplitude("PulseAmplitude",this,&NPac::SetPulseAmplitude),
 SecretionTC("SecretionTC",this,&NPac::SetSecretionTC),
 DissociationTC("DissociationTC",this,&NPac::SetDissociationTC),
 Gain("Gain",this,&NPac::SetGain),
 Mode("Mode",this),
 TCMode("TCMode",this),
+Inputs("Inputs",this),
+Output("Output",this),
 PreOutput("PreOutput",this)
 {
 }
@@ -45,26 +46,26 @@ NPac::~NPac(void)
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool NPac::SetPulseAmplitude(const vector<Real> &value)
+bool NPac::SetPulseAmplitude(const vector<vector<double> > &value)
 {
  return true;
 }
 
 // Постоянная времени выделения медиатора
-bool NPac::SetSecretionTC(const vector<Real> &value)
+bool NPac::SetSecretionTC(const vector<vector<double> > &value)
 {
  return true;
 }
 
 // Постоянная времени распада медиатора
-bool NPac::SetDissociationTC(const vector<Real> &value)
+bool NPac::SetDissociationTC(const vector<vector<double> > &value)
 {
  return true;
 }
 
 // Усиление
 
-bool NPac::SetGain(const vector<Real> &value)
+bool NPac::SetGain(const vector<vector<double> > &value)
 {
  return true;
 }
@@ -89,7 +90,7 @@ bool NPac::ADefault(void)
 {
  // Начальные значения всем параметрам
  // Амплитуда входных импульсов
- vector<Real> values;
+ vector<vector<double> > values;
 
  values.resize(4);
  for(size_t i=0;i<values.size();i++)
@@ -126,6 +127,8 @@ bool NPac::ADefault(void)
 
  Mode=0;
  TCMode=1;
+
+ Output->Assign(1,1,0.0);
  return true;
 }
 
@@ -151,31 +154,33 @@ bool NPac::AReset(void)
 bool NPac::ACalculate(void)
 {
  int min_input_data_size(0);
- if(NumInputs>0)
+ if(Inputs->size()>0)
  {
-  min_input_data_size=GetInputDataSize(0)[1];
+  min_input_data_size=Inputs[0]->GetCols();
   for(int i=1;i<NumInputs;i++)
-   if(min_input_data_size>GetInputDataSize(i)[1])
-	min_input_data_size=GetInputDataSize(i)[1];
+   if(min_input_data_size>Inputs[i]->GetCols())
+	min_input_data_size=Inputs[i]->GetCols();
  }
 
- int size=(int(min_input_data_size)<GetOutputDataSize(0)[1])?int(min_input_data_size):GetOutputDataSize(0)[1];
+ int size=(int(min_input_data_size)<Output.GetCols())?int(min_input_data_size):Output.GetCols();
  double Ts;
  double input;
 
- PreOutput->resize(NumInputs);
- for(int i=0;i<NumInputs;i++)
+ Output.Resize(1,size);
+
+ PreOutput->resize(Inputs->size());
+ for(size_t i=0;i<Inputs->size();i++)
   PreOutput[i].resize(size);
 
  if(TCMode == 0)
  {
-  for(int i=0;i<NumInputs;i++)
+  for(size_t i=0;i<Inputs->size();i++)
   {
    for(int j=0;j<size;j++)
    {
-	if(!GetInputData(i))
+	if(!Inputs[i])
 	 continue;
-	input=GetInputData(i)->Double[j];
+	input=(*Inputs[i])(0,j);
 
 	PreOutput[i][j]=input/PulseAmplitude[i][j];
    }
@@ -184,13 +189,13 @@ bool NPac::ACalculate(void)
  else
  if(TCMode == 1)
  {
-  for(int i=0;i<NumInputs;i++)
+  for(size_t i=0;i<Inputs->size();i++)
   {
    for(int j=0;j<size;j++)
    {
-	if(!GetInputData(i))
+	if(!Inputs[i])
 	 continue;
-	input=GetInputData(i)->Double[j];
+	input=(*Inputs[i])(0,j);
 
 	Ts=(fabs(input)>0)?SecretionTC[i][j]:DissociationTC[i][j];
 	PreOutput[i][j]+=(input/PulseAmplitude[i][j]-PreOutput[i][j])/(Ts*TimeStep);
@@ -198,15 +203,15 @@ bool NPac::ACalculate(void)
   }
  }
   for(int j=0;j<size;j++)
-   POutputData[0].Double[j]=0;
+   Output(0,j)=0;
 
  if(Mode == 0)
  {
-  for(int i=0;i<NumInputs;i++)
+  for(int i=0;i<Inputs->size();i++)
   {
    for(int j=0;j<size;j++)
    {
-	POutputData[0].Double[j]+=PreOutput[i][j]*Gain[i][j];
+	Output(0,j)+=PreOutput[i][j]*Gain[i][j];
    }
   }
  }
@@ -217,7 +222,7 @@ bool NPac::ACalculate(void)
   {
    double pos_values=0;
    double neg_values=0;
-   for(int i=0;i<NumInputs;i++)
+   for(size_t i=0;i<Inputs->size();i++)
    {
 	if(PreOutput[i][j]*Gain[i][j]>0)
 	 pos_values+=PreOutput[i][j]*Gain[i][j];
@@ -226,13 +231,13 @@ bool NPac::ACalculate(void)
    }
    if(pos_values>1e-5 && neg_values<-1e-5)
    {
-	for(int i=0;i<NumInputs;i++)
+	for(size_t i=0;i<Inputs->size();i++)
 	 PreOutput[i][j]=0;
 
-	POutputData[0].Double[j]=0.0;
+	Output(0,j)=0.0;
    }
    else
-    POutputData[0].Double[j]=pos_values+neg_values;
+    Output(0,j)=pos_values+neg_values;
   }
  }
 

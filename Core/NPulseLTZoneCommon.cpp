@@ -20,8 +20,6 @@ See file license.txt for more information
 #include "NPulseLTZoneCommon.h"
 #include "NPulseChannel.h"
 #include "NPulseNeuron.h"
-//#include "../BCL/NConnector.h"
-
 
 namespace NMSDK {
 
@@ -32,6 +30,7 @@ namespace NMSDK {
 NLTZone::NLTZone(void)
  : Threshold("Threshold",this,&NLTZone::SetThreshold),
    UseAveragePotential("UseAveragePotential",this),
+   Output("Output",this),
    InputChannels("InputChannels",this)
 {
  Neuron=0;
@@ -81,6 +80,7 @@ bool NLTZone::ADefault(void)
 {
  Threshold=0.0;
  UseAveragePotential=true;
+ Output.Assign(1,1,0.0);
 
  return true;
 }
@@ -89,6 +89,7 @@ bool NLTZone::ADefault(void)
 bool NLTZone::AReset(void)
 {
  CachedNumAConnectors=static_cast<int>(GetNumAConnectors(0));
+ Output.ToZero();
  return true;
 }
 // --------------------------
@@ -103,6 +104,9 @@ NPulseLTZoneCommon::NPulseLTZoneCommon(void)
   PulseAmplitude("PulseAmplitude",this,&NPulseLTZoneCommon::SetPulseAmplitude),
   PulseLength("PulseLength",this),
   AvgInterval("AvgInterval",this),
+  OutputPotential("OutputPotential",this),
+  OutputFrequency("OutputFrequency",this),
+  OutputPulseTimes("OutputPulseTimes",this),
   PrePotential("PrePotential",this),
   PulseCounter("PulseCounter",this),
   AvgFrequencyCounter("AvgFrequencyCounter",this),
@@ -162,14 +166,14 @@ bool NPulseLTZoneCommon::ADefault(void)
  NLTZone::ADefault();
  vector<size_t> size;
 
- SetNumOutputs(4);
- for(int i=0;i<NumOutputs;i++)
-  SetOutputDataSize(i,MMatrixSize(1,1));
-
  // Начальные значения всем параметрам
  AvgInterval=1;
  PulseAmplitude=1;
  PulseLength=0.001;
+
+ OutputPotential.Assign(1,1,0.0);
+ OutputFrequency.Assign(1,1,0.0);
+ OutputPulseTimes.Assign(1,1,0.0);
 
  return true;
 }
@@ -192,7 +196,9 @@ bool NPulseLTZoneCommon::AReset(void)
  PrePotential=0;
  AvgFrequencyCounter->clear();
  PulseFlag=false;
- FillOutputData(0);
+ OutputPotential.ToZero();
+ OutputFrequency.ToZero();
+ OutputPulseTimes.ToZero();
 
  return true;
 }

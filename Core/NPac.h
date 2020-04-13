@@ -23,33 +23,36 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPac: public UNet
 {
 public: // Общедоступные свойства
-// Амплитуда входных импульсов
-RDK::UCLProperty<vector<Real>,NPac> PulseAmplitude;
+/// Амплитуда входных импульсов
+UCLProperty<vector<vector<double> >,NPac, ptPubParameter> PulseAmplitude;
 
-// Постоянная времени выделения медиатора
-RDK::UCLProperty<vector<Real>,NPac> SecretionTC;
+/// Постоянная времени выделения медиатора
+UCLProperty<vector<vector<double> >,NPac, ptPubParameter> SecretionTC;
 
-// Постоянная времени распада медиатора
-RDK::UCLProperty<vector<Real>,NPac> DissociationTC;
+/// Постоянная времени распада медиатора
+UCLProperty<vector<vector<double> >,NPac, ptPubParameter> DissociationTC;
 
-// Коэффициент усиления
-RDK::UCLProperty<vector<Real>,NPac> Gain;
+/// Коэффициент усиления
+UCLProperty<vector<vector<double> >,NPac, ptPubParameter> Gain;
 
 /// Режим работы
 /// 0 - Обычный режим
 /// 1 - Со сбросом при одновременной активации обоих каналов
-RDK::ULProperty<int,NPac> Mode;
+ULProperty<int,NPac, ptPubParameter> Mode;
 
 /// Режим накопления
 /// 0 - Выключен
 /// 1 - Включен
-RDK::ULProperty<int,NPac> TCMode;
+ULProperty<int,NPac, ptPubParameter> TCMode;
 
-protected: // Основные свойства
+public: // Входы и выходы
+UPropertyInputCData<MDMatrix<double>, NPac> Inputs;
+
+UPropertyOutputData<MDMatrix<double>, NPac, ptOutput | ptPubState> Output;
 
 protected: // Временные переменные
-// Промежуточное значение эффективности синапса
-RDK::UCLProperty<vector<Real>,NPac, ptPubState> PreOutput;
+/// Промежуточное значение эффективности синапса
+UCLProperty<vector<vector<double> >,NPac, ptPubState> PreOutput;
 
 public: // Методы
 // --------------------------
@@ -64,16 +67,16 @@ protected:
 // Методы управления общедоступными свойствами
 // --------------------------
 // Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const vector<Real> &value);
+bool SetPulseAmplitude(const vector<vector<double> > &value);
 
 // Постоянная времени выделения медиатора
-bool SetSecretionTC(const vector<Real> &value);
+bool SetSecretionTC(const vector<vector<double> > &value);
 
 // Постоянная времени распада медиатора
-bool SetDissociationTC(const vector<Real> &value);
+bool SetDissociationTC(const vector<vector<double> > &value);
 
 // Усиление
-bool SetGain(const vector<Real> &value);
+bool SetGain(const vector<vector<double> > &value);
 // --------------------------
 
 public:

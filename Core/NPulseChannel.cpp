@@ -21,10 +21,7 @@ See file license.txt for more information
 #include "NPulseMembrane.h"
 #include "NPulseNeuron.h"
 #include "NPulseHebbSynapse.h"
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
-//#include "../BCL/NConnector.h"
-
 
 namespace NMSDK {
 
@@ -37,7 +34,8 @@ NPulseChannel::NPulseChannel(void)
 Resistance("Resistance",this,&NPulseChannel::SetResistance),
 FBResistance("FBResistance",this,&NPulseChannel::SetFBResistance),
 RestingResistance("RestingResistance",this),
-NumConnectedSynapsis("NumConnectedSynapsis",this)
+NumConnectedSynapsis("NumConnectedSynapsis",this),
+Inputs("Inputs",this)
 {
  channel_input=0;
 }
@@ -114,26 +112,26 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
    UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(synapse);
    if(hsynapse)
    {
-	RDK::ULinkSide item,conn;
-	item.Id=mowner->GetLTZone()->GetLongId(mowner);
-	item.Index=0;
-	conn.Id=hsynapse->GetLongId(mowner);
-	conn.Index=1;
+	RDK::UStringLinkSide item,conn;
+	item.Id=mowner->GetLTZone()->GetLongName(mowner);
+	item.Name="Output";
+	conn.Id=hsynapse->GetLongName(mowner);
+	conn.Name="InputLTZoneFeedbackSignal";
 	res&=mowner->CreateLink(item,conn);
    }
   }
   else
   {
-   RDK::ULinkSide item,conn;
+   RDK::UStringLinkSide item,conn;
    for(int i=0;i<GetNumSynapses();i++)
    {
 	UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(GetSynapse(i));
 	if(hsynapse)
 	{
-	 item.Id=mowner->GetLTZone()->GetLongId(mowner);
-     item.Index=0;
-	 conn.Id=hsynapse->GetLongId(mowner);
-	 conn.Index=1;
+	 item.Id=mowner->GetLTZone()->GetLongName(mowner);
+     item.Name="Output";
+	 conn.Id=hsynapse->GetLongName(mowner);
+	 conn.Name="InputLTZoneFeedbackSignal";
 	 res&=mowner->CreateLink(item,conn);
 	}
    }
@@ -149,32 +147,34 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
    UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(synapse);
    if(hsynapse)
    {
-	RDK::ULinkSide item,conn;
-	item.Id=mlowner->GetNeuronLife()->GetLongId(mlowner);
+	RDK::UStringLinkSide item,conn;
+	item.Id=mlowner->GetNeuronLife()->GetLongName(mlowner);
+#pragma warning
 	if(Type.v>0)
 	 item.Index=6;
 	else
 	 item.Index=5;
-	conn.Id=hsynapse->GetLongId(mlowner);
-	conn.Index=2;
+	conn.Id=hsynapse->GetLongName(mlowner);
+	conn.Name="InputNeuronLifeSignal";
 	res&=mlowner->CreateLink(item,conn);
    }
   }
   else
   {
-   RDK::ULinkSide item,conn;
+   RDK::UStringLinkSide item,conn;
    for(int i=0;i<GetNumSynapses();i++)
    {
 	UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(GetSynapse(i));
 	if(hsynapse)
 	{
-	 item.Id=mlowner->GetNeuronLife()->GetLongId(mlowner);
+	 item.Id=mlowner->GetNeuronLife()->GetLongName(mlowner);
+#pragma warning
 	 if(Type.v>0)
 	  item.Index=6;
 	 else
 	  item.Index=5;
-	 conn.Id=hsynapse->GetLongId(mlowner);
-	 conn.Index=2;
+	 conn.Id=hsynapse->GetLongName(mlowner);
+	 conn.Name="InputNeuronLifeSignal";
 	 res&=mlowner->CreateLink(item,conn);
 	}
    }
@@ -292,10 +292,10 @@ bool NPulseChannel::AReset(void)
   return false;
 
  if(Type>0)
-  POutputData[0].Double[0]=1;
+  Output(0,0)=1;
  else
  if(Type<0)
-  POutputData[0].Double[0]=-1;
+  Output(0,0)=-1;
 
  return true;
 }
@@ -311,17 +311,17 @@ bool NPulseChannel::ACalculate(void)
 
  // Получение доступа к данным синапса
  for(int i=0;i<NumComponents;i++)
-  G+=static_pointer_cast<UADItem>(PComponents[i])->GetOutputData(0).Double[0];
+  G+=static_pointer_cast<NPulseSynapseCommon>(PComponents[i])->Output(0,0);
 
  // Получение данных канала
  size_t inp_size;
  size_t full_inp_data_size(0);
- for(int i=0;i<NumInputs;i++)
+ for(size_t i=0;i<Inputs->size();i++)
  {
-  if((inp_size=GetInputDataSize(i)[1]) >0)
+  if((inp_size=Inputs[i]->GetCols()) >0)
   {
    full_inp_data_size+=inp_size;
-   double *data=&(GetInputData(i)->Double[0]);
+   double *data=Inputs[i]->Data;
    for(size_t j=0;j<inp_size;j++,++data)
 	channel_input+=*data;
   }
@@ -336,7 +336,7 @@ bool NPulseChannel::ACalculate(void)
   channel_input-=feedback;
 
  // Расчет
- double *out=&POutputData[0].Double[0];
+ double *out=&Output(0,0);
  double Ti(0.0),sum_u(0.0);
 
  // Проверяем необходимость сброса
