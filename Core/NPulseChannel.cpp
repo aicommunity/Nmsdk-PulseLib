@@ -34,8 +34,7 @@ NPulseChannel::NPulseChannel(void)
 Resistance("Resistance",this,&NPulseChannel::SetResistance),
 FBResistance("FBResistance",this,&NPulseChannel::SetFBResistance),
 RestingResistance("RestingResistance",this),
-NumConnectedSynapsis("NumConnectedSynapsis",this),
-Inputs("Inputs",this)
+NumConnectedSynapsis("NumConnectedSynapsis",this)
 {
  channel_input=0;
 }

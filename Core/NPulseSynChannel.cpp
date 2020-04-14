@@ -573,14 +573,12 @@ bool NContinuesSynChannel::AReset(void)
 
  FillOutputData();
 
- SynapseInputFlagsList.resize(Inputs->size(),true);
+ SynapseInputFlagsList.resize(Inputs->size(),false);
  for(size_t n=0;n<Inputs->size();n++)
  {
   const UCItem& item=GetCItem(n);
-  if(dynamic_cast<NPulseChannel*>(item.Item) ||
-	 dynamic_cast<NReceptor*>(item.Item) ||
-	 dynamic_cast<NConstGenerator*>(item.Item))
-   SynapseInputFlagsList[n]=false;
+  if(dynamic_cast<NPulseSynapseCommon*>(item.Item))
+   SynapseInputFlagsList[n]=true;
  }
 
  return true;

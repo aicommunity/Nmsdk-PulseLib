@@ -92,17 +92,17 @@ NLTZone* GetLTZone(void);
 //// Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
 //// и переключая входы заданного участка на входы нового
 //// Возвращает указатель на созданный участок
-//NPulseMembrane* ElongateDendrite(const UId &id, bool feedback=false);
-//
+//virtual NPulseMembraneCommon* ElongateDendrite(const std::string &name, bool feedback=false);
+
 //// Разветвляет заданный участок мембраны, добавляя к точке его подключения
 //// дополнительно новый участок мембраны
 //// Возвращает указатель на созданный участок
-//NPulseMembrane* BranchDendrite(const UId &id, bool feedback=false);
-//
+//virtual NPulseMembraneCommon* BranchDendrite(const std::string &name, bool feedback=false);
+
 //// Удаляет заданный участок мембраны
 //// Если full == true, то удаляет и все другие участки, подключенные к нему
 //// Иначе перенаправляет связи со входов на свои выходы
-//bool EraseDendrite(const UId &id);
+//virtual bool EraseDendrite(const std::string &name);
 // --------------------------
 
 // --------------------------

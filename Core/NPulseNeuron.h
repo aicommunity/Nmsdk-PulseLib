@@ -60,17 +60,17 @@ NPulseMembrane* GetMembrane(size_t i);
 // Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
 // и переключая входы заданного участка на входы нового
 // Возвращает указатель на созданный участок
-NPulseMembrane* ElongateDendrite(const UId &id, bool feedback=false);
+NPulseMembraneCommon* ElongateDendrite(const string &name, bool feedback=false);
 
 // Разветвляет заданный участок мембраны, добавляя к точке его подключения
 // дополнительно новый участок мембраны
 // Возвращает указатель на созданный участок
-NPulseMembrane* BranchDendrite(const UId &id, bool feedback=false);
+NPulseMembraneCommon* BranchDendrite(const string &name, bool feedback=false);
 
 // Удаляет заданный участок мембраны
 // Если full == true, то удаляет и все другие участки, подключенные к нему
 // Иначе перенаправляет связи со входов на свои выходы
-bool EraseDendrite(const UId &id);
+bool EraseDendrite(const string &name);
 // --------------------------
 
 // --------------------------

@@ -28,6 +28,7 @@ namespace NMSDK {
 NPulseChannelCommon::NPulseChannelCommon(void)
  : Type("Type", this, &NPulseChannelCommon::SetType),
    UseAveragePotential("UseAveragePotential",this),
+   Inputs("Inputs",this),
    Output("Output",this)
 {
 }

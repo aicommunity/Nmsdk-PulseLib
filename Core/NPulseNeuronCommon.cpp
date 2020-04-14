@@ -85,16 +85,16 @@ NLTZone* NPulseNeuronCommon::GetLTZone(void)
 // --------------------------
 // Методы управления структурой объекта
 // --------------------------
-/*
+  /*
 // Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
 // и переключая входы заданного участка на входы нового
 // Возвращает указатель на созданный участок
-NPulseMembrane* NPulseNeuronCommon::ElongateDendrite(const UId &id, bool feedback)
+NPulseMembraneCommon* NPulseNeuronCommon::ElongateDendrite(const std::string &name, bool feedback)
 {
  if(!Storage)
   return 0;
 
- UEPtr<UContainer> cont=GetComponent(id);
+ UEPtr<UContainer> cont=GetComponent(name);
  if(!cont)
   return 0;
 
@@ -110,21 +110,19 @@ NPulseMembrane* NPulseNeuronCommon::ElongateDendrite(const UId &id, bool feedbac
 // Разветвляет заданный участок мембраны, добавляя к точке его подключения
 // дополнительно новый участок мембраны
 // Возвращает указатель на созданный участок
-NPulseMembrane* NPulseNeuronCommon::BranchDendrite(const UId &id, bool feedback)
+NPulseMembraneCommon* NPulseNeuronCommon::BranchDendrite(const std::string &name, bool feedback)
 {
  if(!Storage)
   return 0;
 
- UEPtr<NPulseMembrane> dendrite=dynamic_pointer_cast<NPulseMembrane>(GetComponent(id));
+ UEPtr<NPulseMembrane> dendrite=dynamic_pointer_cast<NPulseMembrane>(GetComponent(name));
  if(!dendrite)
   return 0;
 
-
- UEPtr<UContainer> cont=static_pointer_cast<UContainer>(Storage->TakeObject(dendrite->GetClass()));
- if(!AddComponent(cont))
+ UEPtr<NPulseMembrane> new_dendrite=dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(dendrite->GetClass()));
+ if(!AddComponent(new_dendrite))
  {
-//  Storage->ReturnObject(cont);
-  cont->Free();
+  new_dendrite->Free();
   return 0;
  }
 
@@ -134,50 +132,44 @@ NPulseMembrane* NPulseNeuronCommon::BranchDendrite(const UId &id, bool feedback)
  // Устанавливаем обратную связь
  if(feedback)
  {
-  item.Id=GetLTZone()->GetLongId(this);
-  item.Index=0;
-  conn.Id=cont->GetLongId(this);
-  conn.Index=-1;
-  res&=CreateLink(item,conn);
+  res&=CreateLink(GetLTZone()->GetLongName(this),"Output", new_dendrite->GetLongName(this),"InputFeedbackSignal");
  }
 
- // Подключаемся каналами к приемниками
+ // Подключаемся каналами к приемникам
  int size=dendrite->GetNumComponents();
- if(size>cont->GetNumComponents())
-  size=cont->GetNumComponents();
+ if(size>new_dendrite->GetNumComponents())
+  size=new_dendrite->GetNumComponents();
  for(int k=0;k<size;k++)
  {
-  UEPtr<UADItem> channel=static_pointer_cast<UADItem>(dendrite->GetComponentByIndex(k));
-  for(int i=0;i<channel->GetNumOutputs();i++)
-   for(int j=0;j<channel->GetNumAConnectors(i);j++)
-   {
-//	item.Id=cont->GetComponentByIndex(k)->GetLongId(this);
-	item.Id=cont->GetComponent(channel->GetName())->GetLongId(this);
-	item.Index=0;
-	conn.Id=channel->GetAConnectorByIndex(int(i),j)->GetLongId(this);
-	conn.Index=-1;
-	res&=CreateLink(item,conn);
-   }
+  UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(dendrite->GetComponentByIndex(k));
+  UEPtr<NPulseChannelCommon> new_channel=dynamic_pointer_cast<NPulseChannelCommon>(new_dendrite->GetComponentL(channel->GetName()));
+  if(!channel || !new_channel)
+   continue;
+
+  size_t num_connectors=channel->Output.GetNumConnectors();
+  for(size_t i=0;i<num_connectors;i++)
+  {
+   UConnector* conn=channel->Output.GetConnector(i);
+   if(!conn)
+	continue;
+   std::string conn_input_prop_name=channel->Output.GetConnectorInputName(i);
+
+   res &=CreateLink(new_channel->GetLongName(this),"Output",conn->GetLongName(this),conn_input_prop_name);
+  }
+
  }
 
  // Подключаем источники мембранных потенциалов
- UEPtr<NPulseMembrane> membrane=static_pointer_cast<NPulseMembrane>(cont);
- for(size_t k=0;k<membrane->GetNumNegChannels();k++)
+ //UEPtr<NPulseMembrane> membrane=static_pointer_cast<NPulseMembrane>(cont);
+ for(size_t k=0;k<new_dendrite->GetNumNegChannels();k++)
  {
-  item.Id=PosGenerator->GetLongId(this);
-  item.Index=0;
-  conn.Id=membrane->GetNegChannel(k)->GetLongId(this);
-  conn.Index=-1;
-  res&=CreateLink(item,conn);
+  res&=CreateLink(PosGenerator->GetLongName(this),"Output",membrane->GetNegChannel(k)->GetLongName(this),"Inputs");
  }
 
- for(size_t k=0;k<membrane->GetNumPosChannels();k++)
+ for(size_t k=0;k<new_dendrite->GetNumPosChannels();k++)
  {
-  item.Id=NegGenerator->GetLongId(this);
-  item.Index=0;
-  conn.Id=membrane->GetPosChannel(k)->GetLongId(this);
-  conn.Index=-1;
-  res&=CreateLink(item,conn);
+  res&=CreateLink(NegGenerator->GetLongName(this),"Output",membrane->GetPosChannel(k)->GetLongName(this),"Inputs");
+
  }
 
 
@@ -193,10 +185,11 @@ NPulseMembrane* NPulseNeuronCommon::BranchDendrite(const UId &id, bool feedback)
 // Удаляет заданный участок мембраны
 // Если full == true, то удаляет и все другие участки, подключенные к нему
 // Иначе перенаправляет связи со входов на свои выходы
-bool NPulseNeuronCommon::EraseDendrite(const UId &id)
+bool NPulseNeuronCommon::EraseDendrite(const std::string &name)
 {
  return true;
-}                                     */
+}
+*/
 // --------------------------
 
 // --------------------------

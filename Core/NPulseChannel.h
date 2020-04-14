@@ -40,9 +40,6 @@ ULProperty<double,NPulseChannel> RestingResistance;
 ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
 
 public: // ¬ходы и выходы
-/// ¬ходной сигнал от канала предыдущего участка мембраны
-UPropertyInputCData<MDMatrix<double>, NPulseChannel, ptInput | ptPubState> Inputs;
-
 double channel_input;
 //double out;
 

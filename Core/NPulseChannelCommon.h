@@ -32,6 +32,9 @@ ULProperty<double,NPulseChannelCommon, ptPubParameter> Type;
 ULProperty<bool, NPulseChannelCommon, ptPubParameter> UseAveragePotential;
 
 public: // Входы и выходы
+/// Входной сигнал от канала предыдущего участка мембраны
+UPropertyInputCData<MDMatrix<double>, NPulseChannelCommon, ptInput | ptPubState> Inputs;
+
 /// Выходное влияние синапса на мембрану
 UPropertyOutputData<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> Output;
 
