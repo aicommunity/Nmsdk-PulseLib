@@ -28,7 +28,8 @@ namespace NMSDK {
 NPulseChannelCommon::NPulseChannelCommon(void)
  : Type("Type", this, &NPulseChannelCommon::SetType),
    UseAveragePotential("UseAveragePotential",this),
-   Inputs("Inputs",this),
+   ChannelInputs("Inputs",this),
+   SynapticInputs("SynapticInputs",this),
    Output("Output",this)
 {
 }
@@ -45,7 +46,7 @@ NPulseChannelCommon::~NPulseChannelCommon(void)
 // Возвращает число синапсов
 int NPulseChannelCommon::GetNumSynapses(void) const
 {
- return 0;
+ return int(SynapticInputs->size());
 }
 // --------------------------
 

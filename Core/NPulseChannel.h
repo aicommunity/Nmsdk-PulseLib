@@ -25,16 +25,16 @@ class RDK_LIB_TYPE NPulseChannel: public NPulseChannelCommon
 {
 public: // Общедоступные свойства
 /// Емкость мембраны
-ULProperty<double,NPulseChannel> Capacity;
+ULProperty<double,NPulseChannel, ptPubParameter> Capacity;
 
 /// Сопротивление мембраны
-ULProperty<double,NPulseChannel> Resistance;
+ULProperty<double,NPulseChannel, ptPubParameter> Resistance;
 
 /// Сопротивление перезаряда мембраны
-ULProperty<double,NPulseChannel> FBResistance;
+ULProperty<double,NPulseChannel, ptPubParameter> FBResistance;
 
 /// Сопротивление мембраны на переход в состояние покоя
-ULProperty<double,NPulseChannel> RestingResistance;
+ULProperty<double,NPulseChannel, ptPubParameter> RestingResistance;
 
 /// Число подключенных к каналу синапсов
 ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
@@ -73,6 +73,12 @@ bool SetResistance(const double &value);
 
 // Сопротивление перезаряда мембраны
 bool SetFBResistance(const double &value);
+
+/// Имя класса синапса
+bool SetSynapseClassName(const std::string &value);
+
+/// Число синапсов
+bool SetNumSynapses(const int &value);
 // --------------------------
 
 // --------------------------
@@ -81,7 +87,7 @@ bool SetFBResistance(const double &value);
 // Подключает синапс хебба synapse к низкопороговой зоне нейрона-владельца
 // Возвращает false только если произошла ошибка установки связи
 // Если synapse == 0, то подключает все синапсы хебба
-bool InstallHebbSynapses(UEPtr<UContainer> synapse=0);
+//bool InstallHebbSynapses(UEPtr<UContainer> synapse=0);
 // --------------------------
 
 // --------------------------

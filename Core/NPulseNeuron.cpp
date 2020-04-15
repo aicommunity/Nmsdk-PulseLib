@@ -30,6 +30,14 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseNeuron::NPulseNeuron(void)
+: StructureBuildMode("StructureBuildMode",this,&NPulseNeuron::SetStructureBuildMode),
+  MembraneClassName("MembraneClassName",this,&NPulseNeuron::SetMembraneClassName),
+  LTMembraneClassName("LTMembraneClassName",this,&NPulseNeuron::SetLTMembraneClassName),
+  LTZoneClassName("LTZoneClassName",this,&NPulseNeuron::SetLTZoneClassName),
+  ExcGeneratorClassName("ExcGeneratorClassName",this,&NPulseNeuron::SetExcGeneratorClassName),
+  InhGeneratorClassName("InhGeneratorClassName",this,&NPulseNeuron::SetInhGeneratorClassName),
+  NumSomaMembraneParts("NumSomaMembraneParts",this,&NPulseNeuron::SetNumDendriteMembraneParts),
+  NumDendriteMembraneParts("NumDendriteMembraneParts",this,&NPulseNeuron::SetNumDendriteMembraneParts)
 {
  PosGenerator=0;
  NegGenerator=0;
@@ -65,6 +73,68 @@ size_t NPulseNeuron::GetNumMembranes(void) const
 NPulseMembrane* NPulseNeuron::GetMembrane(size_t i)
 {
  return dynamic_cast<NPulseMembrane*>(Membranes[i]);
+}
+// --------------------------
+
+// --------------------------
+// Методы упраления параметрами
+// --------------------------
+/// Режим сборки структуры нейрона
+bool NPulseNeuron::SetStructureBuildMode(const int &value)
+{
+ if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+  Ready=false;
+ return true;
+}
+
+/// Имя класса участка мембраны
+bool NPulseNeuron::SetMembraneClassName(const std::string &value)
+{
+ Ready=false;
+ return true;
+}
+
+/// Имя класса выделенного участка мембраны для генераторной зоны
+bool NPulseNeuron::SetLTMembraneClassName(const std::string &value)
+{
+ Ready=false;
+ return true;
+}
+
+/// Имя класса генераторной зоны
+bool NPulseNeuron::SetLTZoneClassName(const std::string &value)
+{
+ Ready=false;
+ return true;
+}
+
+
+/// Имя класса источника задающего сигнала для возбуждающего ионного механизма
+bool NPulseNeuron::SetExcGeneratorClassName(const std::string &value)
+{
+ Ready=false;
+ return true;
+}
+
+/// Имя класса источника задающего сигнала для тормозного ионного механизма
+bool NPulseNeuron::SetInhGeneratorClassName(const std::string &value)
+{
+ Ready=false;
+ return true;
+}
+
+/// Число участков мембраны тела нейрона
+bool NPulseNeuron::SetNumSomaMembraneParts(const int &value)
+{
+ Ready=false;
+ return true;
+}
+
+/// Число участков мембраны дендритов (исключая участок тела)
+bool NPulseNeuron::SetNumDendriteMembraneParts(const int &value)
+{
+ Ready=false;
+ return true;
 }
 // --------------------------
 
@@ -227,8 +297,8 @@ UComponent* NPulseNeuron::NewStatic(void)
 // и 'false' в случае некорректного типа
 bool NPulseNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 {
- if(dynamic_pointer_cast<NPulseMembrane>(comp) ||
-	dynamic_pointer_cast<NLTZone>(comp) ||
+ if(dynamic_pointer_cast<NPulseMembraneCommon>(comp) ||
+	dynamic_pointer_cast<NPulseLTZoneCommon>(comp) ||
 //	dynamic_cast<const NPulseSynapse*>(comp) ||
 	dynamic_pointer_cast<NConstGenerator>(comp))
   return true;
@@ -291,11 +361,116 @@ bool NPulseNeuron::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
+// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltzonemembraneclass,
+								  const string &ltzone_class, const string &pos_gen_class,
+								  const string &neg_gen_class, int num_soma_membranes,
+								  int dendrite_length, int num_stimulates, int num_arresting)
+{
+ UEPtr<UContainer> membr=0,ltmembr=0;
+ UEPtr<NPulseChannel> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
+ UEPtr<NNet> ltzone;
+ bool res(true);
+ RDK::ULinkSide item,conn;
+
+ ltzone=dynamic_pointer_cast<NNet>(Storage->TakeObject(ltzone_class));
+ res&=AddComponent(ltzone,&LTZone);
+ ltzone->SetName("LTZone");
+
+ UEPtr<UNet> gen_pos,gen_neg;
+ gen_pos=dynamic_pointer_cast<UNet>(Storage->TakeObject(pos_gen_class));
+ res&=AddComponent(gen_pos);
+ gen_neg=dynamic_pointer_cast<UNet>(Storage->TakeObject(neg_gen_class));
+ res&=AddComponent(gen_neg);
+
+ // Случай, если задана выделенная часть мембраны генераторной зоны
+ if(!ltzonemembraneclass.empty())
+ {
+  ltmembr=dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(ltzonemembraneclass));
+  ltmembr->SetName("LTMembrane");
+  res&=AddComponent(ltmembr);
+
+  ltchannel1=dynamic_pointer_cast<NPulseChannel>(ltmembr->GetComponent("ExcChannel"));
+  ltchannel2=dynamic_pointer_cast<NPulseChannel>(ltmembr->GetComponent("InhChannel"));
+
+  // Устанавливаем обратную связь
+  res&=CreateLink(ltzone->GetLongName(this),"Output",ltmembr->GetLongName(this),"InputFeedbackSignal");
+
+  // Устанавливаем связь мембраны с низкопороговой зоной
+  res&=CreateLink(ltchannel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+  res&=CreateLink(ltchannel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+ }
+
+ for(int i=0;i<num_soma_membranes;i++)
+ {
+  membr=dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
+  res&=AddComponent(membr);
+
+  channel1=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
+  channel2=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
+
+  // Случай, если задана выделенная часть мембраны генераторной зоны
+  // тогда подключаем сому к ней
+  if(!ltzonemembraneclass.empty())
+  {
+   res&=CreateLink(channel1->GetLongName(this),"Output",ltchannel1->GetLongName(this),"ChannelInputs");
+   res&=CreateLink(channel2->GetLongName(this),"Output",ltchannel2->GetLongName(this),"ChannelInputs");
+  }
+  else // иначе подключаем сому напрямую к низкопороговой зоне
+  {
+   res&=CreateLink(channel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+   res&=CreateLink(channel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+  }
+
+  for(int j=0;j<dendrite_length;j++)
+  {
+   membr=dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
+   res&=AddComponent(membr);
+
+   channel1temp=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
+   channel2temp=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
+
+   res&=CreateLink(channel1temp->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
+   res&=CreateLink(channel2temp->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
+
+   channel1 = channel1temp;
+   channel2 = channel2temp;
+  }
+
+  // Связь между начальными значениями мощностей ионных каналов и каналами
+  res&=CreateLink(gen_neg->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
+  res&=CreateLink(gen_pos->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
+ }
+
+  /*
+ UEPtr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(this);
+ if(lifeneuron)
+ {
+  UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(Storage->TakeObject("NNeuronLife"));
+  res&=lifeneuron->AddComponent(nlife);
+  res&=n->CreateLink(ltzone->GetLongName(this),"Output",nlife->GetLongId(this),"Input1");
+ }  */
+
+ if(!res)
+  return false;
+
+ return true;
+}
+
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseNeuron::ADefault(void)
 {
  if(!NPulseNeuronCommon::ADefault())
   return false;
+
+ StructureBuildMode=0;
+ MembraneClassName="NPMembrane";
+ LTMembraneClassName="NPLTMembrane";
+ LTZoneClassName="NPulseTLZone";
+ ExcGeneratorClassName="NegGenerator";
+ InhGeneratorClassName="PosGenerator";
+ NumSomaMembraneParts=1;
+ NumDendriteMembraneParts=1;
 
  return true;
 }
@@ -309,6 +484,16 @@ bool NPulseNeuron::ABuild(void)
  if(!NPulseNeuronCommon::ABuild())
   return false;
 
+ if(StructureBuildMode>0)
+ {
+  bool res=BuildStructure(MembraneClassName, LTMembraneClassName, LTZoneClassName,
+							ExcGeneratorClassName, InhGeneratorClassName,
+							NumSomaMembraneParts,
+							NumDendriteMembraneParts,
+							1, 1);
+  if(!res)
+   return false;
+ }
  return true;
 }
 

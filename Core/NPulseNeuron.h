@@ -24,12 +24,49 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseNeuron: public NPulseNeuronCommon
 {
-public: // Статистика
+public: // Параметры
+/// Режим сборки структуры нейрона
+/// (В режимах >1) осуществляется автомтический выбор классов участков мембраны и низкопороговой зоны
+/// 0 - автоматическая сборка не производится
+/// 1 - автоматическая сборка производится с заданными вручную параметрами
+/// 2 - сборка классической модели без выделенного участка мембраны для генераторной зоны
+/// 3 - сборка классической модели без выделенного участка мембраны для генераторной зоны
+/// и встроенными синапсами
+/// 4 - сборка модели с выделенным участком мембраны для генераторной зоны
+/// 5 - сборка модели с выделенным участком мембраны для генераторной зоны
+/// и встроенными синапсами
+/// 6 - сборка классической модели без выделенного участка мембраны для генераторной зоны
+/// и дендритами заданной длины
+/// 7 - сборка классической модели без выделенного участка мембраны для генераторной зоны,
+/// дендритами заданной длины и встроенными синапсами
+/// 8 - сборка модели с выделенным участком мембраны для генераторной зоны,
+/// и дендритами заданной длины
+/// 9 - сборка модели с выделенным участком мембраны для генераторной зоны,
+/// встроенными синапсами и дендритами заданной длины
+ULProperty<int,NPulseNeuron, ptPubParameter> StructureBuildMode;
 
-protected: // Временные переменные
-//NPulseLTZone *LTZone;
+/// Имя класса участка мембраны
+ULProperty<std::string, NPulseNeuron, ptPubParameter> MembraneClassName;
 
-public:
+/// Имя класса выделенного участка мембраны для генераторной зоны
+ULProperty<std::string, NPulseNeuron, ptPubParameter> LTMembraneClassName;
+
+/// Имя класса генераторной зоны
+ULProperty<std::string, NPulseNeuron, ptPubParameter> LTZoneClassName;
+
+/// Имя класса источника задающего сигнала для возбуждающего ионного механизма
+ULProperty<std::string, NPulseNeuron, ptPubParameter> ExcGeneratorClassName;
+
+/// Имя класса источника задающего сигнала для тормозного ионного механизма
+ULProperty<std::string, NPulseNeuron, ptPubParameter> InhGeneratorClassName;
+
+/// Число участков мембраны тела нейрона
+ULProperty<int, NPulseNeuron, ptPubParameter> NumSomaMembraneParts;
+
+/// Число участков мембраны дендритов (исключая участок тела)
+ULProperty<int, NPulseNeuron, ptPubParameter> NumDendriteMembraneParts;
+
+protected:
 NConstGenerator *PosGenerator,*NegGenerator;
 
 public: // Методы
@@ -38,6 +75,34 @@ public: // Методы
 // --------------------------
 NPulseNeuron(void);
 virtual ~NPulseNeuron(void);
+// --------------------------
+
+// --------------------------
+// Методы упраления параметрами
+// --------------------------
+/// Режим сборки структуры нейрона
+bool SetStructureBuildMode(const int &value);
+
+/// Имя класса участка мембраны
+bool SetMembraneClassName(const std::string &value);
+
+/// Имя класса выделенного участка мембраны для генераторной зоны
+bool SetLTMembraneClassName(const std::string &value);
+
+/// Имя класса генераторной зоны
+bool SetLTZoneClassName(const std::string &value);
+
+/// Имя класса источника задающего сигнала для возбуждающего ионного механизма
+bool SetExcGeneratorClassName(const std::string &value);
+
+/// Имя класса источника задающего сигнала для тормозного ионного механизма
+bool SetInhGeneratorClassName(const std::string &value);
+
+/// Число участков мембраны тела нейрона
+bool SetNumSomaMembraneParts(const int &value);
+
+/// Число участков мембраны дендритов (исключая участок тела)
+bool SetNumDendriteMembraneParts(const int &value);
 // --------------------------
 
 // --------------------------
@@ -112,6 +177,12 @@ virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // Скрытые методы управления счетом
 // --------------------------
 protected:
+/// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+bool BuildStructure(const string &membraneclass, const string &ltzonemembraneclass,
+					const string &ltzone_class, const string &pos_gen_class,
+					const string &neg_gen_class, int num_soma_membranes,
+					int dendrite_length, int num_stimulates, int num_arresting);
+
 // Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 

@@ -57,7 +57,7 @@ int NPulseChannel::GetNumSynapses(void) const
 // Возвращает синапс по индексу
 UEPtr<NPulseSynapse> NPulseChannel::GetSynapse(int i)
 {
- return static_pointer_cast<NPulseSynapse>(GetComponentByIndex(i));
+ return dynamic_pointer_cast<NPulseSynapse>(SynapticInputs.GetItem(i)->GetOwner());
 }
 // --------------------------
 
@@ -89,13 +89,13 @@ bool NPulseChannel::SetFBResistance(const double &value)
   return false;
 
  return true;
-
 }
 // --------------------------
 
 // --------------------------
 // Методы управления объектом
 // --------------------------
+/*
 // Подключает синапс хебба synapse к низкопороговой зоне нейрона-владельца
 // Возвращает false только если произошла ошибка установки связи
 // Если synapse == 0, то подключает все синапсы хебба
@@ -180,7 +180,7 @@ bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
   }
  }
  return res;
-}
+}         */
 // --------------------------
 
 // --------------------------
@@ -220,7 +220,7 @@ bool NPulseChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> point
 {
  if(!NPulseChannelCommon::AAddComponent(comp, pointer))
   return false;
- InstallHebbSynapses(comp);
+ //InstallHebbSynapses(comp);
  return true;
 }
 
@@ -309,24 +309,27 @@ bool NPulseChannel::ACalculate(void)
  double G=0;
 
  // Получение доступа к данным синапса
- for(int i=0;i<NumComponents;i++)
-  G+=static_pointer_cast<NPulseSynapseCommon>(PComponents[i])->Output(0,0);
+ for(size_t i=0;i<SynapticInputs->size();i++)
+ {
+  if(SynapticInputs[i]->GetSize() >0)
+  G+=(*SynapticInputs[i])(0,0);
+ }
 
  // Получение данных канала
  size_t inp_size;
  size_t full_inp_data_size(0);
- for(size_t i=0;i<Inputs->size();i++)
+ for(size_t i=0;i<ChannelInputs->size();i++)
  {
-  if((inp_size=Inputs[i]->GetCols()) >0)
+  if((inp_size=ChannelInputs[i]->GetSize()) >0)
   {
    full_inp_data_size+=inp_size;
-   double *data=Inputs[i]->Data;
+   double *data=ChannelInputs[i]->Data;
    for(size_t j=0;j<inp_size;j++,++data)
 	channel_input+=*data;
   }
 
   if(UseAveragePotential)
-   channel_input/=full_inp_data_size;//FullInputDataSize;
+   channel_input/=full_inp_data_size;
  }
 
  // Получение информации об обратной связи
@@ -337,15 +340,6 @@ bool NPulseChannel::ACalculate(void)
  // Расчет
  double *out=&Output(0,0);
  double Ti(0.0),sum_u(0.0);
-
- // Проверяем необходимость сброса
-// if(RestingFlag)
-// {
-//  if(G<RestingThreshold)
-//  {
-//   *out=channel_input;
-//  }
-// }
 
  if(!feedback)
  {

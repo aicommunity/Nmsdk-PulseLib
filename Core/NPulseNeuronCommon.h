@@ -38,10 +38,10 @@ public: // Входы и выходы
 UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveOutputs;
 
 /// Число возбуждающих связей организованных другими нейронами на этом
-ULProperty<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActivePosInputs;
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActivePosInputs;
 
 /// Число тормозных связей организованных другими нейронами на этом
-ULProperty<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveNegInputs;
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveNegInputs;
 
 public: // Статистика
 /// Число связей организованных этим нейроном на других (и себе)

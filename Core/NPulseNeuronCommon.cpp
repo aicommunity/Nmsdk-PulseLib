@@ -253,12 +253,12 @@ bool NPulseNeuronCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> 
    if(!exists)
 	Membranes.push_back(membrane);
    // Подключаем синапсы хебба если они есть
-   for(int i=0;i<membrane->GetNumComponents();i++)
+ /*  for(int i=0;i<membrane->GetNumComponents();i++)
    {
 	UEPtr<NPulseChannel> channel(dynamic_pointer_cast<NPulseChannel>(membrane->GetComponentByIndex(i)));
 	if(channel)
 	 channel->InstallHebbSynapses();
-   }
+   } */
   }
  }
 

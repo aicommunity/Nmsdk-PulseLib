@@ -34,6 +34,9 @@ protected: // Временные переменные
 // Ионные механизмы
 vector<NPulseChannelCommon*> Channels;
 
+// Синапсы
+vector<NPulseSynapseCommon*> Synapses;
+
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы

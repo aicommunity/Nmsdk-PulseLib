@@ -33,6 +33,18 @@ ULProperty<double,NPulseMembrane, ptPubParameter> FeedbackGain;
 /// Наличие механизма сброса
 ULProperty<bool,NPulseMembrane, ptPubParameter> ResetAvailable;
 
+/// Имя класса синапса
+ULProperty<std::string, NPulseMembraneCommon, ptPubParameter> SynapseClassName;
+
+/// Имя класса ионного канала
+ULProperty<std::string, NPulseMembraneCommon, ptPubParameter> ChannelClassName;
+
+/// Число возбуждающих синапсов
+ULProperty<int, NPulseMembraneCommon, ptPubParameter> NumExcitatorySynapses;
+
+/// Число тормозных синапсов
+ULProperty<int, NPulseMembraneCommon, ptPubParameter> NumInhibitorySynapses;
+
 public: // Входы и выходы
 /// Сигнал обратной связи от низкопороговой зоны
 UPropertyInputData<MDMatrix<double>, NPulseMembrane, ptInput | ptPubState> InputFeedbackSignal;
@@ -43,10 +55,17 @@ ULProperty<double,NPulseMembrane,ptPubState> Feedback;
 
 protected: // Временные переменные
 // Ионные механизмы деполяризации
-vector<NPulseChannel*> PosChannels;
+vector<NPulseChannel*> ExcitatoryChannels;
 
 // Ионные механизмы гиперполяризации
-vector<NPulseChannel*> NegChannels;
+vector<NPulseChannel*> InhibitoryChannels;
+
+// Возбуждающие синапсы
+vector<NPulseSynapseCommon*> ExcitatorySynapses;
+
+// Тормозные синапсы
+vector<NPulseSynapseCommon*> InhibitorySynapses;
+
 
 public: // Методы
 // --------------------------
@@ -75,6 +94,11 @@ virtual bool UpdateChannelData(UEPtr<NPulseChannel> comp, UEPtr<UIPointer> point
 // --------------------------
 // Коэффициент обратной связи
 bool SetFeedbackGain(const double &value);
+
+bool SetSynapseClassName(const std::string &value);
+bool SetChannelClassName(const std::string &value);
+bool SetNumExcitatorySynapses(const int &value);
+bool SetNumInhibitorySynapses(const int &value);
 // --------------------------
 
 // --------------------------
@@ -102,13 +126,13 @@ protected:
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+//virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
 
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+//virtual bool ADelComponent(UEPtr<UContainer> comp);
 // --------------------------
 
 // --------------------------

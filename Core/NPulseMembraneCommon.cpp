@@ -82,7 +82,8 @@ NPulseMembraneCommon* NPulseMembraneCommon::New(void)
 // и 'false' в случае некорректного типа
 bool NPulseMembraneCommon::CheckComponentType(UEPtr<UContainer> comp) const
 {
- if(dynamic_pointer_cast<NPulseChannelCommon>(comp))
+ if(dynamic_pointer_cast<NPulseChannelCommon>(comp) ||
+	dynamic_pointer_cast<NPulseSynapseCommon>(comp))
   return true;
 
  return false;
@@ -107,6 +108,13 @@ bool NPulseMembraneCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer
 	Channels.push_back(channel);
  }
 
+ UEPtr<NPulseSynapseCommon> synapse=dynamic_pointer_cast<NPulseSynapseCommon>(comp);
+ if(synapse)
+ {
+   if(find(Synapses.begin(),Synapses.end(),synapse) == Synapses.end())
+	Synapses.push_back(synapse);
+ }
+
  return true;
 }
 
@@ -125,6 +133,16 @@ bool NPulseMembraneCommon::ADelComponent(UEPtr<UContainer> comp)
   if(I != Channels.end())
    Channels.erase(I);
  }
+
+ UEPtr<NPulseSynapseCommon> synapse=dynamic_pointer_cast<NPulseSynapseCommon>(comp);
+ if(synapse)
+ {
+  vector<NPulseSynapseCommon*>::iterator I;
+  I=find(Synapses.begin(),Synapses.end(),synapse);
+  if(I != Synapses.end())
+   Synapses.erase(I);
+ }
+
  return true;
 }
 // --------------------------

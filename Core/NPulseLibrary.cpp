@@ -38,21 +38,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 {
  UContainer *cont;
 
- cont=new NPulseNeuron;
- cont->SetName("PNeuron");
- cont->Default();
- UploadClass("NPNeuron",cont);
-// UploadClass("NPNeuron","PNeuron",&NPulseNeuron::NewStatic);
-
-/* cont=new NPulseLifeNeuron("PLifeNeuron");
- cont->Default();
- UploadClass("NPLifeNeuron",cont);
-  */
- cont=new NAfferentNeuron;
- cont->SetName("AfferentNeuron");
- cont->Default();
- UploadClass("NAfferentNeuron",cont);
-
  cont=new NPulseLTZone;
  cont->SetName("PLTZone");
  cont->Default();
@@ -73,11 +58,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->Default();
  UploadClass("NCSimpleLTZone",cont);
 
-
- cont=new NPulseMembrane;
- cont->SetName("PMembrane");
- cont->Default();
- UploadClass("NPMembrane",cont);
 
  cont=new NPulseChannel;
  cont->SetName("PChannel");
@@ -104,6 +84,11 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->Default();
  UploadClass("NPHebbSynapse",cont);
 
+ cont=new NPulseMembrane;
+ cont->SetName("PMembrane");
+ cont->Default();
+ UploadClass("NPMembrane",cont);
+
  cont=new NEyeMuscle;
  cont->SetName("EyeMuscle");
  cont->Default();
@@ -112,12 +97,12 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont=new NMuscle;
  cont->SetName("Muscle");
  cont->Default();
- UploadClass("NMuscle",cont);    
- 
+ UploadClass("NMuscle",cont);
+
  cont=new NPac;
  cont->SetName("Pac");
  cont->Default();
- UploadClass("NPac",cont);  
+ UploadClass("NPac",cont);
 
  cont=new NReceptor;
  cont->SetName("Receptor");
@@ -129,6 +114,22 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->Default();
  dynamic_pointer_cast<NCPac>(UEPtr<UContainer>(cont))->TCMode=0;
  UploadClass("NCPac",cont);
+
+
+ cont=new NPulseNeuron;
+ cont->SetName("PNeuron");
+ cont->Default();
+ UploadClass("NPNeuron",cont);
+// UploadClass("NPNeuron","PNeuron",&NPulseNeuron::NewStatic);
+
+/* cont=new NPulseLifeNeuron("PLifeNeuron");
+ cont->Default();
+ UploadClass("NPLifeNeuron",cont);
+  */
+ cont=new NAfferentNeuron;
+ cont->SetName("AfferentNeuron");
+ cont->Default();
+ UploadClass("NAfferentNeuron",cont);
 
 /*
  cont=new NNeuronLife("NeuronLife");

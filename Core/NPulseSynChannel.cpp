@@ -255,13 +255,13 @@ bool NPulseSynChannel::AReset(void)
   Output.ToZero();
  }
 
- SynapseInputFlagsList.resize(Inputs->size(),true);
- for(size_t n=0;n<Inputs->size();n++)
+ SynapseInputFlagsList.resize(ChannelInputs->size(),true);
+ for(size_t n=0;n<ChannelInputs->size();n++)
  {
-  const UCItem& item=GetCItem(n);
-  if(dynamic_cast<NPulseChannel*>(item.Item) ||
-	 dynamic_cast<NReceptor*>(item.Item) ||
-	 dynamic_cast<NConstGenerator*>(item.Item))
+  UEPtr<UContainer> item=ChannelInputs.GetItem(n)->GetOwner();
+  if(dynamic_pointer_cast<NPulseChannel>(item) ||
+	 dynamic_pointer_cast<NReceptor>(item) ||
+	 dynamic_pointer_cast<NConstGenerator>(item))
    SynapseInputFlagsList[n]=false;
  }
 
@@ -281,15 +281,15 @@ bool NPulseSynChannel::ACalculate(void)
  /*double*/ syn_output=0;
 
 
- for(size_t n=0;n<Inputs->size();n++)
+ for(size_t n=0;n<ChannelInputs->size();n++)
  {
-  size_t inpsize=Inputs[n]->GetCols();
+  size_t inpsize=ChannelInputs[n]->GetCols();
   if(inpsize == 0)
    continue;
 
   if(!SynapseInputFlagsList[n])
   {
-	double *data=Inputs[n]->Data;
+	double *data=ChannelInputs[n]->Data;
 	for(size_t j=0;j<inpsize;j++,++data)
 	 channel_input+=*data;
 	++num_connected_channels;
@@ -303,7 +303,7 @@ bool NPulseSynChannel::ACalculate(void)
 	PreOutput.v[num_connected_synapsis-1]=0;
    }
 
-   input=(*Inputs[n])(0,0);
+   input=(*ChannelInputs[n])(0,0);
 
    if(MainOwner && Owner)
    {
@@ -573,11 +573,11 @@ bool NContinuesSynChannel::AReset(void)
 
  FillOutputData();
 
- SynapseInputFlagsList.resize(Inputs->size(),false);
- for(size_t n=0;n<Inputs->size();n++)
+ SynapseInputFlagsList.resize(ChannelInputs->size(),false);
+ for(size_t n=0;n<ChannelInputs->size();n++)
  {
-  const UCItem& item=GetCItem(n);
-  if(dynamic_cast<NPulseSynapseCommon*>(item.Item))
+  UEPtr<UContainer> item=ChannelInputs.GetItem(n)->GetOwner();
+  if(dynamic_pointer_cast<NPulseSynapseCommon>(item))
    SynapseInputFlagsList[n]=true;
  }
 
@@ -597,9 +597,9 @@ bool NContinuesSynChannel::ACalculate(void)
  double syn_output=0;
 
 
- for(size_t n=0;n<Inputs->size();n++)
+ for(size_t n=0;n<ChannelInputs->size();n++)
  {
-  if(Inputs[n]->GetCols() == 0)
+  if(ChannelInputs[n]->GetCols() == 0)
    continue;
 //  if(dynamic_cast<NPulseChannel*>(GetCItem(n).Item) ||
 //     dynamic_cast<NReceptor*>(GetCItem(n).Item) ||
@@ -607,9 +607,9 @@ bool NContinuesSynChannel::ACalculate(void)
   if(!SynapseInputFlagsList[n])
   {
    size_t inpsize=0;
-   if((inpsize=Inputs[n]->GetCols()) >0)
+   if((inpsize=ChannelInputs[n]->GetCols()) >0)
    {
-	double *data=Inputs[n]->Data;
+	double *data=ChannelInputs[n]->Data;
 	for(size_t j=0;j<inpsize;j++,++data)
 	 channel_input+=*data;
 	++num_connected_channels;
@@ -624,7 +624,7 @@ bool NContinuesSynChannel::ACalculate(void)
     PreOutput.v[num_connected_synapsis-1]=0;
    }
 
-   input=(*Inputs[n])(0,0);
+   input=(*ChannelInputs[n])(0,0);
 
    if(MainOwner && Owner)
    {
