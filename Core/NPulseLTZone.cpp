@@ -129,20 +129,20 @@ bool NPulseLTZone::ACalculate(void)
  NeuralPotential=0;
 
 // NeuralPotential=GetFullSumInput();
- if(InputChannels->size()>0)
+ if(Inputs->size()>0)
  {
   size_t inpsize;
-  for(size_t i=0;i<InputChannels->size();i++)
+  for(size_t i=0;i<Inputs->size();i++)
   {
-   if((inpsize=InputChannels[i]->GetCols()) >0)
+   if((inpsize=Inputs[i]->GetCols()) >0)
    {
-	double *data=InputChannels[i]->Data;
+	double *data=Inputs[i]->Data;
 	for(size_t j=0;j<inpsize;j++,++data)
 	 NeuralPotential.v+=*data;
    }
   }
   if(UseAveragePotential)
-   NeuralPotential.v/=InputChannels->size()/2.0;
+   NeuralPotential.v/=Inputs->size()/2.0;
  }
 
  PrePotential.v+=(NeuralPotential.v-PrePotential.v)/(TimeConstant.v*TimeStep);
@@ -350,20 +350,20 @@ bool NContinuesLTZone::ACalculate(void)
  NeuralPotential=0;
 
 // NeuralPotential=GetFullSumInput();
- if(InputChannels->size()>0)
+ if(Inputs->size()>0)
  {
   size_t inpsize;
-  for(size_t i=0;i<InputChannels->size();i++)
+  for(size_t i=0;i<Inputs->size();i++)
   {
-   if((inpsize=InputChannels[i]->GetCols()) >0)
+   if((inpsize=Inputs[i]->GetCols()) >0)
    {
-	double *data=InputChannels[i]->Data;
+	double *data=Inputs[i]->Data;
 	for(size_t j=0;j<inpsize;j++,++data)
 	 NeuralPotential.v+=*data;
    }
   }
   if(UseAveragePotential)
-   NeuralPotential.v/=InputChannels->size()/2.0;
+   NeuralPotential.v/=Inputs->size()/2.0;
  }
 
  PrePotential.v=tanh(NeuralPotential.v);
@@ -397,18 +397,13 @@ bool NContinuesLTZone::ACalculate(void)
 // --------------------------
 NPulseSimpleLTZone::NPulseSimpleLTZone(void)
 {
+ AddStaticComponent("NPGenerator","PGenerator",&generator);
 }
 
 NPulseSimpleLTZone::~NPulseSimpleLTZone(void)
 {
 }
 // --------------------------
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
-// --------------------------
-
 
 // --------------------------
 // Системные методы управления объектом
@@ -429,8 +424,8 @@ NPulseSimpleLTZone* NPulseSimpleLTZone::New(void)
 // и 'false' в случае некорректного типа
 bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 {
-// if(dynamic_cast<const NConnector*>(comp))
-//  return true;
+ if(dynamic_pointer_cast<NPulseGenerator>(comp))
+  return true;
 
  return false;
 }
@@ -444,7 +439,7 @@ bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 bool NPulseSimpleLTZone::ADefault(void)
 {
  NPulseLTZone::ADefault();
- generator.Default();
+ //generator.Default();
 
  return true;
 }
@@ -455,43 +450,43 @@ bool NPulseSimpleLTZone::ADefault(void)
 // в случае успешной сборки
 bool NPulseSimpleLTZone::ABuild(void)
 {
- generator.Build();
+ //generator.Build();
  return NPulseLTZone::ABuild();
 }
 
 // Сброс процесса счета.
 bool NPulseSimpleLTZone::AReset(void)
 {
- generator.SetEnvironment(GetEnvironment());
- generator.SetActivity(true);
- generator.Reset();
+ //generator.SetEnvironment(GetEnvironment());
+ //generator.SetActivity(true);
+ //generator.Reset();
  return NPulseLTZone::AReset();
 }
 
 // Выполняет расчет этого объекта
 bool NPulseSimpleLTZone::ACalculate(void)
 {
- generator.SetEnvironment(GetEnvironment());
+ //generator.SetEnvironment(GetEnvironment());
  // расчет на шаге
  NeuralPotential=0;
 
- if(InputChannels.IsConnected())
+ if(Inputs.IsConnected())
  {
   int inpsize(0);
-  for(int i=0;i<int(InputChannels->size());i++)
+  for(int i=0;i<int(Inputs->size());i++)
   {
-   if(InputChannels[i])
+   if(Inputs[i])
    {
-	if((inpsize=InputChannels[i]->GetSize(1)) >0)
+	if((inpsize=Inputs[i]->GetSize(1)) >0)
 	{
-	 double *data=&(InputChannels[i]->Double[0]);
+	 double *data=&(Inputs[i]->Double[0]);
 	 for(int j=0;j<inpsize;j++,++data)
 	  NeuralPotential.v+=*data;
 	}
    }
   }
   if(UseAveragePotential)
-   NeuralPotential.v/=InputChannels->size();
+   NeuralPotential.v/=Inputs->size();
  }
  /*else
  if(NumInputs>0)
@@ -616,23 +611,23 @@ bool NContinuesSimpleLTZone::ACalculate(void)
  // расчет на шаге
  NeuralPotential=0;
 
- if(InputChannels.IsConnected())
+ if(Inputs.IsConnected())
  {
   int inpsize(0);
-  for(size_t i=0;i<InputChannels->size();i++)
+  for(size_t i=0;i<Inputs->size();i++)
   {
-   if(InputChannels[i])
+   if(Inputs[i])
    {
-	if((inpsize=InputChannels[i]->GetSize(1)) >0)
+	if((inpsize=Inputs[i]->GetSize(1)) >0)
 	{
-	 double *data=&(InputChannels[i]->Double[0]);
+	 double *data=&(Inputs[i]->Double[0]);
 	 for(int j=0;j<inpsize;j++,++data)
 	  NeuralPotential.v+=*data;
 	}
    }
   }
   if(UseAveragePotential)
-   NeuralPotential.v/=InputChannels->size();
+   NeuralPotential.v/=Inputs->size();
  }
 
  Output(0,0)=NeuralPotential.v;

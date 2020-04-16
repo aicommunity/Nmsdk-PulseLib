@@ -37,7 +37,8 @@ NReceptor::NReceptor(void)
   SumCoeff("SumCoeff",this),
   InputAdaptationArrestingTC("InputAdaptationArrestingTC",this),
   InputAdaptationMode("InputAdaptationMode",this),
-  OutputAdaptationMode("OutputAdaptationMode",this)
+  OutputAdaptationMode("OutputAdaptationMode",this),
+  Input("Input",this)
 {
  InputRange=0;
  OutputRange=0;
@@ -110,15 +111,14 @@ bool NReceptor::ACalculate(void)
 {
  OutputRange=MaxOutputRange.v-MinOutputRange.v;
 
+ Output.Resize(Input->GetRows(),Input->GetCols());
+
  size_t k=0;
- for(int i=0;i<NumInputs;i++)
-  for(int j=0;j<GetOutputDataSize(i)[1];j++)
+ for(int i=0;i<Input->GetRows();i++)
+  for(int j=0;j<Input->GetCols();j++)
   {
    double input=0;
-   if(GetInputDataSize(i)[1]>j)
-    input=GetInputData(i)->Double[j];
-//   if(k >= GetOutputDataSize(0))
-//	break;
+   input=(*Input)(i,j);// GetInputData(i)->Double[j];
 
    switch(InputAdaptationMode.v)
    {
@@ -157,33 +157,29 @@ bool NReceptor::ACalculate(void)
    switch(OutputAdaptationMode.v)
    {
    case 0:
-	POutputData[i].Double[k]=Gain*input;
+	Output(i,j)=Gain*input;
    break;
 
    case 1:
 	// ѕреобразовываем сигнал к заданному диапазону
-	POutputData[i].Double[k]=Gain*(SumCoeff.v-exp(-ExpCoeff.v*input));
+	Output(i,j)=Gain*(SumCoeff.v-exp(-ExpCoeff.v*input));
    break;
 
    case 2:
 	// ѕреобразовываем сигнал к заданному диапазону
-	POutputData[i].Double[k]=Gain*exp(-ExpCoeff.v*input);
+	Output(i,j)=Gain*exp(-ExpCoeff.v*input);
    break;
 
    case 3:
 	// ѕреобразовываем сигнал к автодиапазону
 	exp_coeff=-log(0.9)/InputRange;
-	POutputData[i].Double[k]=Gain*(SumCoeff.v-exp(-exp_coeff*input));
+	Output(i,j)=Gain*(SumCoeff.v-exp(-exp_coeff*input));
    break;
 
    case 4:
-	POutputData[i].Double[k]=Gain*(1.0+input);
+	Output(i,j)=Gain*(1.0+input);
    break;
    }
-
-//   if(static_pointer_cast<UContainer>(Owner)->GetName() == "Afferent_II1")
-//    POutputData[i].Double[k]=1.5;
-   ++k;
   }
  return NSource::ACalculate();
 }

@@ -33,7 +33,7 @@ ULProperty<bool,NLTZone, ptPubParameter> UseAveragePotential;
 
 public: // Входы и выходы
 /// Данные с ионных механизмов участков мембраны
-UPropertyInputCData<MDMatrix<double>,NLTZone, ptInput | ptPubState> InputChannels;
+UPropertyInputCData<MDMatrix<double>,NLTZone, ptInput | ptPubState> Inputs;
 
 /// Выход источника сигнала
 UPropertyOutputData<MDMatrix<double>, NLTZone, ptOutput | ptPubState> Output;

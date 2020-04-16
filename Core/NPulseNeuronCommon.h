@@ -53,10 +53,7 @@ ULProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
 /// Число тормозных связей организованных другими нейронами на этом
 ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
 
-protected: // Временные переменные
-//NPulseLTZone *LTZone;
-
-public:
+public: // Временные переменные
 RDK::UEPointer<NPulseLTZone,NPulseNeuronCommon> LTZone;
 
 vector<NPulseMembraneCommon*> Membranes;

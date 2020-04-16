@@ -251,7 +251,7 @@ bool NPulseChannel::ResetOut(void)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseChannel::ADefault(void)
 {
- if(!NPulseChannelCommon::AReset())
+ if(!NPulseChannelCommon::ADefault())
   return false;
 
  // Емкость мембраны

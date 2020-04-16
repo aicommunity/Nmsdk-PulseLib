@@ -34,16 +34,19 @@ ULProperty<double,NPulseMembrane, ptPubParameter> FeedbackGain;
 ULProperty<bool,NPulseMembrane, ptPubParameter> ResetAvailable;
 
 /// Имя класса синапса
-ULProperty<std::string, NPulseMembraneCommon, ptPubParameter> SynapseClassName;
+ULProperty<std::string, NPulseMembrane, ptPubParameter> SynapseClassName;
 
 /// Имя класса ионного канала
-ULProperty<std::string, NPulseMembraneCommon, ptPubParameter> ChannelClassName;
+ULProperty<std::string, NPulseMembrane, ptPubParameter> ExcChannelClassName;
+
+/// Имя класса ионного канала
+ULProperty<std::string, NPulseMembrane, ptPubParameter> InhChannelClassName;
 
 /// Число возбуждающих синапсов
-ULProperty<int, NPulseMembraneCommon, ptPubParameter> NumExcitatorySynapses;
+ULProperty<int, NPulseMembrane, ptPubParameter> NumExcitatorySynapses;
 
 /// Число тормозных синапсов
-ULProperty<int, NPulseMembraneCommon, ptPubParameter> NumInhibitorySynapses;
+ULProperty<int, NPulseMembrane, ptPubParameter> NumInhibitorySynapses;
 
 public: // Входы и выходы
 /// Сигнал обратной связи от низкопороговой зоны
@@ -92,11 +95,15 @@ virtual bool UpdateChannelData(UEPtr<NPulseChannel> comp, UEPtr<UIPointer> point
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
+/// Наличие механизма сброса
+bool SetResetAvailable(const bool &value);
+
 // Коэффициент обратной связи
 bool SetFeedbackGain(const double &value);
 
 bool SetSynapseClassName(const std::string &value);
-bool SetChannelClassName(const std::string &value);
+bool SetExcChannelClassName(const std::string &value);
+bool SetInhChannelClassName(const std::string &value);
 bool SetNumExcitatorySynapses(const int &value);
 bool SetNumInhibitorySynapses(const int &value);
 // --------------------------

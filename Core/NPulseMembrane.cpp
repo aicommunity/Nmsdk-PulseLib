@@ -27,11 +27,12 @@ namespace NMSDK {
 // --------------------------
 NPulseMembrane::NPulseMembrane(void)
  : FeedbackGain("FeedbackGain",this,&NPulseMembrane::SetFeedbackGain),
-  ResetAvailable("ResetAvailable",this),
-  SynapseClassName("SynapseClassName",this),
-  ChannelClassName("ChannelClassName",this),
-  NumExcitatorySynapses("NumExcitatorySynapses",this),
-  NumInhibitorySynapses("NumInhibitorySynapses",this),
+  ResetAvailable("ResetAvailable",this,&NPulseMembrane::SetResetAvailable),
+  SynapseClassName("SynapseClassName",this,&NPulseMembrane::SetSynapseClassName),
+  ExcChannelClassName("ExcChannelClassName",this,&NPulseMembrane::SetExcChannelClassName),
+  InhChannelClassName("InhChannelClassName",this,&NPulseMembrane::SetInhChannelClassName),
+  NumExcitatorySynapses("NumExcitatorySynapses",this,&NPulseMembrane::SetNumExcitatorySynapses),
+  NumInhibitorySynapses("NumInhibitorySynapses",this,&NPulseMembrane::SetNumInhibitorySynapses),
   InputFeedbackSignal("InputFeedbackSignal",this),
   Feedback("Feedback",this)
 
@@ -97,6 +98,12 @@ bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPoi
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
+/// Наличие механизма сброса
+bool NPulseMembrane::SetResetAvailable(const bool &value)
+{
+ return true;
+}
+
 // Коэффициент обратной связи
 bool NPulseMembrane::SetFeedbackGain(const double &value)
 {
@@ -112,7 +119,13 @@ bool NPulseMembrane::SetSynapseClassName(const std::string &value)
  return true;
 }
 
-bool NPulseMembrane::SetChannelClassName(const std::string &value)
+bool NPulseMembrane::SetExcChannelClassName(const std::string &value)
+{
+ Ready=false;
+ return true;
+}
+
+bool NPulseMembrane::SetInhChannelClassName(const std::string &value)
 {
  Ready=false;
  return true;
@@ -150,7 +163,8 @@ NPulseMembrane* NPulseMembrane::New(void)
 // и 'false' в случае некорректного типа
 bool NPulseMembrane::CheckComponentType(UEPtr<UContainer> comp) const
 {
- if(dynamic_pointer_cast<NPulseChannel>(comp))
+ if(dynamic_pointer_cast<NPulseChannelCommon>(comp) ||
+    dynamic_pointer_cast<NPulseSynapseCommon>(comp))
   return true;
 
  return false;
@@ -234,7 +248,8 @@ bool NPulseMembrane::ADefault(void)
  FeedbackGain=2;
  ResetAvailable=true;
  SynapseClassName="NPSynapse";
- ChannelClassName="NPChannel";
+ ExcChannelClassName="NPExcChannel";
+ InhChannelClassName="NPInhChannel";
  NumExcitatorySynapses=1;
  NumInhibitorySynapses=1;
 
@@ -249,43 +264,43 @@ bool NPulseMembrane::ABuild(void)
 {
  if(!Storage)
   return true;
- UEPtr<NPulseChannel> exc_channel=AddMissingComponent<NPulseChannel>("ExcChannel", ChannelClassName);
- UEPtr<NPulseChannel> inh_channel=AddMissingComponent<NPulseChannel>("InhChannel", ChannelClassName);
+ UEPtr<NPulseChannel> exc_channel=AddMissingComponent<NPulseChannel>("ExcChannel", ExcChannelClassName);
+ UEPtr<NPulseChannel> inh_channel=AddMissingComponent<NPulseChannel>("InhChannel", InhChannelClassName);
 
  ExcitatoryChannels.resize(1);
  ExcitatoryChannels[0]=exc_channel;
- exc_channel->SetCoord(MVector<double,3>(30,100,0));
+ exc_channel->SetCoord(MVector<double,3>(5,4,0));
  InhibitoryChannels.resize(1);
  InhibitoryChannels[0]=inh_channel;
- inh_channel->SetCoord(MVector<double,3>(30,200,0));
+ inh_channel->SetCoord(MVector<double,3>(5,8,0));
 
  bool res=true;
 
- size_t old_ex_synapses=ExcitatorySynapses.size();
+ int old_ex_synapses=int(ExcitatorySynapses.size());
 
- for(size_t i=old_ex_synapses;i<NumExcitatorySynapses;i++)
+ for(int i=NumExcitatorySynapses;i<old_ex_synapses;i++)
   ExcitatorySynapses[i]->Free();
  ExcitatorySynapses.resize(NumExcitatorySynapses);
 
- for(size_t i=old_ex_synapses;i<NumExcitatorySynapses;i++)
+ for(int i=old_ex_synapses;i<NumExcitatorySynapses;i++)
  {
   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>("ExcSynapse", SynapseClassName);
   ExcitatorySynapses.push_back(synapse);
-  res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInput");
-  synapse->SetCoord(MVector<double,3>(30+i*100,50,0));
+  res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
+  synapse->SetCoord(MVector<double,3>(5+i*11,1.7,0));
  }
 
- size_t old_in_synapses=InhibitorySynapses.size();
- for(size_t i=old_in_synapses;i<NumInhibitorySynapses;i++)
+ int old_in_synapses=int(InhibitorySynapses.size());
+ for(int i=NumInhibitorySynapses;i<old_in_synapses;i++)
   InhibitorySynapses[i]->Free();
  InhibitorySynapses.resize(NumInhibitorySynapses);
 
- for(size_t i=old_in_synapses;i<NumInhibitorySynapses;i++)
+ for(int i=old_in_synapses;i<NumInhibitorySynapses;i++)
  {
   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>("InhSynapse", SynapseClassName);
   InhibitorySynapses.push_back(synapse);
-  res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInput");
-  synapse->SetCoord(MVector<double,3>(30+i*100,250,0));
+  res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInputs");
+  synapse->SetCoord(MVector<double,3>(5+i*11,10.6,0));
  }
 
  if(!NPulseMembraneCommon::ABuild())

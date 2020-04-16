@@ -36,7 +36,7 @@ NPulseNeuron::NPulseNeuron(void)
   LTZoneClassName("LTZoneClassName",this,&NPulseNeuron::SetLTZoneClassName),
   ExcGeneratorClassName("ExcGeneratorClassName",this,&NPulseNeuron::SetExcGeneratorClassName),
   InhGeneratorClassName("InhGeneratorClassName",this,&NPulseNeuron::SetInhGeneratorClassName),
-  NumSomaMembraneParts("NumSomaMembraneParts",this,&NPulseNeuron::SetNumDendriteMembraneParts),
+  NumSomaMembraneParts("NumSomaMembraneParts",this,&NPulseNeuron::SetNumSomaMembraneParts),
   NumDendriteMembraneParts("NumDendriteMembraneParts",this,&NPulseNeuron::SetNumDendriteMembraneParts)
 {
  PosGenerator=0;
@@ -466,9 +466,9 @@ bool NPulseNeuron::ADefault(void)
  StructureBuildMode=0;
  MembraneClassName="NPMembrane";
  LTMembraneClassName="NPLTMembrane";
- LTZoneClassName="NPulseTLZone";
- ExcGeneratorClassName="NegGenerator";
- InhGeneratorClassName="PosGenerator";
+ LTZoneClassName="NPLTZone";
+ ExcGeneratorClassName="NPNeuronPosCGenerator";
+ InhGeneratorClassName="NPNeuronNegCGenerator";
  NumSomaMembraneParts=1;
  NumDendriteMembraneParts=1;
 
