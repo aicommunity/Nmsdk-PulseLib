@@ -31,9 +31,9 @@ NEyeMuscle::NEyeMuscle(void)
   K("K",this),
   TC("TC",this),
   Inputs("Inputs",this),
-  Output1("Output1",this),
-  Output2("Output2",this),
-  Output3("Output3",this)
+  OutputAcceleration("OutputAcceleration",this),
+  OutputLength("OutputLength",this),
+  OutputSpeed("OutputSpeed",this)
 {
 }
 
@@ -93,9 +93,9 @@ bool NEyeMuscle::ADefault(void)
  TC=value;
  SetTimeStep(1000);
 
- Output1.Assign(1,1,0.0);
- Output2.Assign(1,1,0.0);
- Output3.Assign(1,1,0.0);
+ OutputAcceleration.Assign(1,1,0.0);
+ OutputLength.Assign(1,1,0.0);
+ OutputSpeed.Assign(1,1,0.0);
  return true;
 }
 
@@ -106,7 +106,7 @@ bool NEyeMuscle::ADefault(void)
 bool NEyeMuscle::ABuild(void)
 {
 // int size=(GetNumOutputs()>0)?GetOutputDataSize(0)[1]:0;
- int size=Output1.GetCols();
+ int size=OutputAcceleration.GetCols();
  P1.resize(size);
  P2.resize(size);
  P3.resize(size);
@@ -121,7 +121,7 @@ bool NEyeMuscle::ABuild(void)
 bool NEyeMuscle::AReset(void)
 {
 // int size=(GetNumOutputs()>0)?GetOutputDataSize(0)[1]:0;
- int size=Output1.GetCols();
+ int size=OutputAcceleration.GetCols();
  P1.assign(size,0);
  P2.assign(size,0);
  P3.assign(size,0);
@@ -139,11 +139,14 @@ bool NEyeMuscle::AReset(void)
 bool NEyeMuscle::ACalculate(void)
 {
  int k=0;
- SetOutputDataSize(0,MMatrixSize(1,Inputs->size()));
- SetOutputDataSize(1,MMatrixSize(1,Inputs->size()));
- SetOutputDataSize(2,MMatrixSize(1,Inputs->size()));
+// SetOutputDataSize(0,MMatrixSize(1,Inputs->size()));
+// SetOutputDataSize(1,MMatrixSize(1,Inputs->size()));
+// SetOutputDataSize(2,MMatrixSize(1,Inputs->size()));
+ OutputAcceleration.Resize(1,int(Inputs->size()));
+ OutputLength.Resize(1,int(Inputs->size()));
+ OutputSpeed.Resize(1,int(Inputs->size()));
 
- int size=Output1.GetCols();
+ int size=OutputAcceleration.GetCols();
  for(size_t i=0;i<Inputs->size();i++)
  {
   P1.resize(size,0);
@@ -168,9 +171,9 @@ bool NEyeMuscle::ACalculate(void)
    Acceleration[k]=(speed-Speed[k])*TimeStep;
    Speed[k]=speed;
    L[k]=leng;
-   Output1(0,k)=Acceleration[k];
-   Output2(0,k)=L[k];
-   Output3(0,k)=Speed[k];
+   OutputAcceleration(0,k)=Acceleration[k];
+   OutputLength(0,k)=L[k];
+   OutputSpeed(0,k)=Speed[k];
    ++k;
   }
  }

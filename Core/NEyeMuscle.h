@@ -36,9 +36,9 @@ UCLProperty<vector<double>,NEyeMuscle, ptPubParameter> TC;
 public: // ¬ходы и выходы
 UPropertyInputCData<MDMatrix<double>, NEyeMuscle> Inputs;
 
-UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> Output1;
-UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> Output2;
-UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> Output3;
+UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> OutputAcceleration;
+UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> OutputLength;
+UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> OutputSpeed;
 
 public: // ¬ременные переменные
 vector<double> P1,P2,P3,L;
