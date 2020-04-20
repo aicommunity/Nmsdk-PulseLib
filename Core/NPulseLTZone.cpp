@@ -396,6 +396,7 @@ bool NContinuesLTZone::ACalculate(void)
 // Конструкторы и деструкторы
 // --------------------------
 NPulseSimpleLTZone::NPulseSimpleLTZone(void)
+: MaxFrequency("MaxFrequency",this)
 {
  AddStaticComponent("NPGenerator","PGenerator",&generator);
 }
@@ -439,6 +440,8 @@ bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 bool NPulseSimpleLTZone::ADefault(void)
 {
  NPulseLTZone::ADefault();
+
+ MaxFrequency=100;
  //generator.Default();
 
  return true;
@@ -506,8 +509,8 @@ bool NPulseSimpleLTZone::ACalculate(void)
  }        */
 
  generator.Amplitude=PulseAmplitude;
- if(NeuralPotential.v>200)
-  NeuralPotential.v=200;
+ if(NeuralPotential.v>MaxFrequency)
+  NeuralPotential.v=MaxFrequency;
  if(NeuralPotential.v>0)
  {
   if(fabs(generator.Frequency.v-NeuralPotential.v)>0.001)

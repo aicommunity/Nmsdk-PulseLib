@@ -189,6 +189,10 @@ virtual bool ACalculate(void);
 
 class RDK_LIB_TYPE NPulseSimpleLTZone: public NPulseLTZone
 {
+public: // Параметры
+/// Максимальная частота генерации, Гц (должна лежать в интервале [0;500]
+ULProperty<double, NPulseSimpleLTZone, ptPubParameter> MaxFrequency;
+
 protected: // Временные переменные
 NPulseGenerator generator;
 

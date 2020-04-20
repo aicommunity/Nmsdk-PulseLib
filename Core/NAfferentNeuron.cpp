@@ -33,8 +33,8 @@ NAfferentNeuron::NAfferentNeuron(void)
   MembraneClassName("MembraneClassName",this,&NAfferentNeuron::SetMembraneClassName),
   LTZoneClassName("LTZoneClassName",this,&NAfferentNeuron::SetLTZoneClassName),
   ReceptorClassName("ReceptorClassName",this,&NAfferentNeuron::SetReceptorClassName),
-//  ExcGeneratorClassName("ExcGeneratorClassName",this,&NAfferentNeuron::SetExcGeneratorClassName),
-  InhGeneratorClassName("InhGeneratorClassName",this,&NAfferentNeuron::SetInhGeneratorClassName),
+  ExcGeneratorClassName("ExcGeneratorClassName",this,&NAfferentNeuron::SetExcGeneratorClassName),
+//  InhGeneratorClassName("InhGeneratorClassName",this,&NAfferentNeuron::SetInhGeneratorClassName),
   NumSomaMembraneParts("NumSomaMembraneParts",this,&NAfferentNeuron::SetNumSomaMembraneParts),
   MaxReceptorOutput("MaxReceptorOutput",this,&NAfferentNeuron::SetMaxReceptorOutput)
 {
@@ -76,20 +76,20 @@ bool NAfferentNeuron::SetReceptorClassName(const std::string &value)
  Ready=false;
  return true;
 }
-         /*
+
 /// Имя класса источника задающего сигнала для возбуждающего ионного механизма
 bool NAfferentNeuron::SetExcGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
-}       */
-
+}
+		/*
 /// Имя класса источника задающего сигнала для тормозного ионного механизма
 bool NAfferentNeuron::SetInhGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
-}
+}        */
 
 /// Число участков мембраны тела нейрона
 bool NAfferentNeuron::SetNumSomaMembraneParts(const int &value)
@@ -141,7 +141,7 @@ bool NAfferentNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 /// Осуществляет сборку классической структуры
 bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const string &ltzone_class,
-					const string &receptorclass, const string &pos_gen_class,
+					const string &receptorclass, const string &neg_gen_class,
 					/*const string &neg_gen_class,*/ int num_membranes)
 {
  UEPtr<UContainer> membr;
@@ -157,25 +157,29 @@ bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const
  ltzone->Threshold=0;
  ltzone->SetCoord(MVector<double,3>(20,3,0));
 
- UEPtr<NConstGenerator> gen_pos/*,gen_neg*/;
- gen_pos=AddMissingComponent<NConstGenerator>("PosGenerator", pos_gen_class);
- gen_pos->SetCoord(MVector<double,3>(12,6.33,1));
+ UEPtr<NConstGenerator> gen_neg;
+ gen_neg=AddMissingComponent<NConstGenerator>("NegGenerator", neg_gen_class);
+ gen_neg->SetCoord(MVector<double,3>(12,6.33,0));
  //gen_neg=dynamic_pointer_cast<NConstGenerator>(Storage->TakeObject(neg_gen_class));
  //res&=AddComponent(gen_neg);
 
  for(int i=0;i<num_membranes;i++)
  {
   membr=AddMissingComponent<NPulseMembrane>("PMembrane", membraneclass);
-  membr->SetCoord(MVector<double,3>(12,3,2));
+  membr->SetCoord(MVector<double,3>(12,3,0));
 
   receptor=AddMissingComponent<NReceptor>("Receptor", receptorclass);
-  receptor->ExpCoeff=0.01;
+  receptor->ExpCoeff=0.1;
   receptor->Gain=1;
-  receptor->MinOutputRange=-1;
-  receptor->MaxOutputRange=0;
+  receptor->MinOutputRange=0;
+  receptor->MaxOutputRange=1;
+  receptor->MaxInputRange=1;
+  receptor->OutputAdaptationMode=5;
+  receptor->InputAdaptationMode=0;
+  receptor->SumCoeff=1;
   res&=AddComponent(receptor);
-  membr->SetCoord(MVector<double,3>(4,3,3));
 
+  receptor->SetCoord(MVector<double,3>(4,3,0));
   receptor->DisconnectAll("Output");
 
   channel1=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
@@ -189,8 +193,8 @@ bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const
   res&=CreateLink(channel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
 
   // Связь между начальными значениями мощностей ионных каналов и каналами
-  res&=CreateLink(receptor->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
-  res&=CreateLink(gen_pos->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
+  res&=CreateLink(receptor->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
+  res&=CreateLink(gen_neg->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
  }
 
  return res;
@@ -212,17 +216,18 @@ bool NAfferentNeuron::BuildSimpleStructure(const string &ltzone_class,
  DelComponent("PMembrane");
  DelComponent("PosGenerator");
 
- ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);
- ltzone->Threshold=0;
- ltzone->SetCoord(MVector<double,3>(13,3,0));
-
  receptor=AddMissingComponent<NReceptor>("Receptor", receptorclass);
  receptor->Gain=1;
  receptor->OutputAdaptationMode=0;
  receptor->InputAdaptationMode=0;
+ receptor->MaxInputRange=1;
  receptor->MinOutputRange=0;
  receptor->MaxOutputRange=max_output;
  receptor->SetCoord(MVector<double,3>(5,3,0));
+
+ ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);
+ ltzone->Threshold=0;
+ ltzone->SetCoord(MVector<double,3>(13,3,0));
 
  res&=CreateLink(receptor->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
 
@@ -240,8 +245,8 @@ bool NAfferentNeuron::ADefault(void)
  MembraneClassName="NPMembrane";
  ReceptorClassName="NReceptor";
  LTZoneClassName="NPLTZone";
- //ExcGeneratorClassName="NPNeuronNegCGenerator";
- InhGeneratorClassName="NPNeuronPosCGenerator";
+ ExcGeneratorClassName="NPNeuronNegCGenerator";
+ //InhGeneratorClassName="NPNeuronPosCGenerator";
  NumSomaMembraneParts=1;
  MaxReceptorOutput=100;
 
@@ -260,7 +265,7 @@ bool NAfferentNeuron::ABuild(void)
  if(StructureBuildMode == 1)
  {
   bool res=BuildClassicalStructure(MembraneClassName, LTZoneClassName,
-							ReceptorClassName, /*ExcGeneratorClassName,*/ InhGeneratorClassName,
+							ReceptorClassName, ExcGeneratorClassName,
 							NumSomaMembraneParts);
   if(!res)
    return false;

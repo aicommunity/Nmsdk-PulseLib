@@ -41,10 +41,10 @@ ULProperty<std::string, NAfferentNeuron, ptPubParameter> LTZoneClassName;
 ULProperty<std::string, NAfferentNeuron, ptPubParameter> ReceptorClassName;
 
 /// Имя класса источника задающего сигнала для возбуждающего ионного механизма
-//ULProperty<std::string, NAfferentNeuron, ptPubParameter> ExcGeneratorClassName;
+ULProperty<std::string, NAfferentNeuron, ptPubParameter> ExcGeneratorClassName;
 
 /// Имя класса источника задающего сигнала для тормозного ионного механизма
-ULProperty<std::string, NAfferentNeuron, ptPubParameter> InhGeneratorClassName;
+//ULProperty<std::string, NAfferentNeuron, ptPubParameter> InhGeneratorClassName;
 
 /// Число участков мембраны тела нейрона
 ULProperty<int, NAfferentNeuron, ptPubParameter> NumSomaMembraneParts;
@@ -79,10 +79,10 @@ bool SetLTZoneClassName(const std::string &value);
 bool SetReceptorClassName(const std::string &value);
 
 /// Имя класса источника задающего сигнала для возбуждающего ионного механизма
-//bool SetExcGeneratorClassName(const std::string &value);
+bool SetExcGeneratorClassName(const std::string &value);
 
 /// Имя класса источника задающего сигнала для тормозного ионного механизма
-bool SetInhGeneratorClassName(const std::string &value);
+//bool SetInhGeneratorClassName(const std::string &value);
 
 /// Число участков мембраны тела нейрона
 bool SetNumSomaMembraneParts(const int &value);

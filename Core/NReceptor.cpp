@@ -80,13 +80,13 @@ bool NReceptor::ADefault(void)
 {
  Gain=1;
  MinOutputRange=0.0;
- MaxOutputRange=0.01;//0.1;
+ MaxOutputRange=1;//0.01;//0.1;
  MinInputRange=0;
- MaxInputRange=10;
- InputAdaptationMode=1;
- OutputAdaptationMode=1;
- ExpCoeff=1;
- SumCoeff=2;
+ MaxInputRange=1;
+ InputAdaptationMode=0;
+ OutputAdaptationMode=5;
+ ExpCoeff=0.1;
+ SumCoeff=1;
  InputAdaptationArrestingTC=1;
  return NSource::ADefault();
 }
@@ -177,7 +177,11 @@ bool NReceptor::ACalculate(void)
    break;
 
    case 4:
-	Output(i,j)=Gain*(1.0+input);
+	Output(i,j)=Gain*(SumCoeff.v+input);
+   break;
+
+   case 5:
+	Output(i,j)=Gain*(SumCoeff.v+(1.0-exp(-ExpCoeff.v*input)));
    break;
    }
   }
