@@ -242,7 +242,17 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->Default();
  dynamic_cast<NPulseNeuron*>(cont)->MembraneClassName="NPNeuronHebbMembrane";
  UploadClass("NPHebbNeuron",cont);
- // UploadClass("NPNeuron","PNeuron",&NPulseNeuron::NewStatic);
+
+ cont=new NPulseNeuron;
+ cont->Default();
+ dynamic_cast<NPulseNeuron*>(cont)->MembraneClassName="NCSynNeuronMembrane";
+ dynamic_cast<NPulseNeuron*>(cont)->LTMembraneClassName="";
+ dynamic_cast<NPulseNeuron*>(cont)->LTZoneClassName="NCLTZone";
+ dynamic_cast<NPulseNeuron*>(cont)->ExcGeneratorClassName="NCNeuronNegCGenerator";
+ dynamic_cast<NPulseNeuron*>(cont)->InhGeneratorClassName="NCNeuronPosCGenerator";
+ cont->SetName("CNeuron");
+ UploadClass("NCNeuron",cont);
+
 
 /* cont=new NPulseLifeNeuron("PLifeNeuron");
  cont->Default();
