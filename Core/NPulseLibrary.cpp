@@ -191,20 +191,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NCPac",cont);
 
 
- cont=new NPulseNeuron;
- cont->SetName("PNeuron");
- cont->Default();
- UploadClass("NPNeuron",cont);
-// UploadClass("NPNeuron","PNeuron",&NPulseNeuron::NewStatic);
-
-/* cont=new NPulseLifeNeuron("PLifeNeuron");
- cont->Default();
- UploadClass("NPLifeNeuron",cont);
-  */
- cont=new NAfferentNeuron;
- cont->SetName("AfferentNeuron");
- cont->Default();
- UploadClass("NAfferentNeuron",cont);
 
 /*
  cont=new NNeuronLife("NeuronLife");
@@ -237,6 +223,21 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->SetName("PNeuronPosCGenerator");
  dynamic_cast<NConstGenerator*>(cont)->Amplitude=2;
  UploadClass("NCNeuronPosCGenerator",cont);
+
+ cont=new NPulseNeuron;
+ cont->SetName("PNeuron");
+ cont->Default();
+ UploadClass("NPNeuron",cont);
+// UploadClass("NPNeuron","PNeuron",&NPulseNeuron::NewStatic);
+
+/* cont=new NPulseLifeNeuron("PLifeNeuron");
+ cont->Default();
+ UploadClass("NPLifeNeuron",cont);
+  */
+ cont=new NAfferentNeuron;
+ cont->SetName("AfferentNeuron");
+ cont->Default();
+ UploadClass("NAfferentNeuron",cont);
 }
 // --------------------------
 
