@@ -164,6 +164,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->InhChannelClassName="NCSynChannel";
  UploadClass("NCSynNeuronMembrane",membr);
 
+ // Формируем синапсы хебба и участки мембраны с ними
+ membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ membr->SetName("PMembrane");
+ membr->Default();
+ membr->SynapseClassName="NPHebbSynapse";
+ membr->Build();
+ UploadClass("NPNeuronHebbMembrane",membr);
+
  cont=new NEyeMuscle;
  cont->SetName("EyeMuscle");
  cont->Default();
@@ -228,7 +236,13 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->SetName("PNeuron");
  cont->Default();
  UploadClass("NPNeuron",cont);
-// UploadClass("NPNeuron","PNeuron",&NPulseNeuron::NewStatic);
+
+ cont=new NPulseNeuron;
+ cont->SetName("PHebbNeuron");
+ cont->Default();
+ dynamic_cast<NPulseNeuron*>(cont)->MembraneClassName="NPNeuronHebbMembrane";
+ UploadClass("NPHebbNeuron",cont);
+ // UploadClass("NPNeuron","PNeuron",&NPulseNeuron::NewStatic);
 
 /* cont=new NPulseLifeNeuron("PLifeNeuron");
  cont->Default();

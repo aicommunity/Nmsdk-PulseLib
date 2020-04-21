@@ -280,9 +280,9 @@ bool NPulseMembrane::ABuild(void)
 
  for(int i=NumExcitatorySynapses;i<old_ex_synapses;i++)
   ExcitatorySynapses[i]->Free();
- ExcitatorySynapses.resize(NumExcitatorySynapses);
+ ExcitatorySynapses.clear();
 
- for(int i=old_ex_synapses;i<NumExcitatorySynapses;i++)
+ for(int i=0;i<NumExcitatorySynapses;i++)
  {
   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>("ExcSynapse", SynapseClassName);
   ExcitatorySynapses.push_back(synapse);
@@ -293,9 +293,9 @@ bool NPulseMembrane::ABuild(void)
  int old_in_synapses=int(InhibitorySynapses.size());
  for(int i=NumInhibitorySynapses;i<old_in_synapses;i++)
   InhibitorySynapses[i]->Free();
- InhibitorySynapses.resize(NumInhibitorySynapses);
+ InhibitorySynapses.clear();
 
- for(int i=old_in_synapses;i<NumInhibitorySynapses;i++)
+ for(int i=0;i<NumInhibitorySynapses;i++)
  {
   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>("InhSynapse", SynapseClassName);
   InhibitorySynapses.push_back(synapse);

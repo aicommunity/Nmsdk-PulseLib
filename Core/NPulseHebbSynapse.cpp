@@ -17,8 +17,9 @@ See file license.txt for more information
 #define NPULSE_HEBB_SYNAPSE_CPP
 
 #include "NPulseHebbSynapse.h"
-#include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
+//#include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
 #include "NPulseChannel.h"
+#include "NPulseNeuron.h"
 
 namespace NMSDK {
 
@@ -76,6 +77,45 @@ NPulseHebbSynapse* NPulseHebbSynapse::New(void)
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
+// Подключает синапс хебба synapse к низкопороговой зоне нейрона-владельца
+// Возвращает false только если произошла ошибка установки связи
+// Если synapse == 0, то подключает все синапсы хебба
+bool NPulseHebbSynapse::InstallHebbianConnection(void)
+{
+ bool res=true;
+ UEPtr<NPulseNeuron> mowner=dynamic_pointer_cast<NPulseNeuron>(MainOwner);
+
+ if(mowner && mowner->GetLTZone())
+ {
+//	RDK::UStringLinkSide item,conn;
+//	item.Id=mowner->GetLTZone()->GetLongName(mowner);
+//	item.Name="Output";
+//	conn.Id=GetLongName(mowner);
+//	conn.Name="InputLTZoneFeedbackSignal";
+//	res&=mowner->CreateLink(item,conn);
+	res&=mowner->CreateLink(mowner->GetLTZone()->GetLongName(mowner),"Output",GetLongName(mowner),"InputLTZoneFeedbackSignal");
+ }
+ else
+  return false;
+	   /*
+ UEPtr<NPulseLifeNeuron> mlowner=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
+
+ if(mlowner && mlowner->GetNeuronLife())
+ {
+	RDK::UStringLinkSide item,conn;
+//	item.Id=mlowner->GetNeuronLife()->GetLongName(mlowner);
+#pragma warning
+	if(Type.v>0)
+	 item.Name="Output7";
+	else
+	 item.Name="Output6";
+ //	conn.Id=GetLongName(mlowner);
+ //	conn.Name="InputNeuronLifeSignal";
+	res&=mlowner->CreateLink(mlowner->GetNeuronLife()->GetLongName(mlowner),"",GetLongName(mlowner), "InputNeuronLifeSignal");
+ }                 */
+ return res;
+}
+
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseHebbSynapse::ADefault(void)
 {
@@ -152,6 +192,9 @@ bool NPulseHebbSynapse::AReset(void)
  Gs->assign(Kmot->size(),0);
  G=0;
 
+ if(!InputLTZoneFeedbackSignal.IsConnected())
+  InstallHebbianConnection();
+
  return NPulseSynapse::AReset();
 }
 
@@ -208,7 +251,7 @@ bool NPulseHebbSynapse::ACalculate(void)
  Output4(0,0)=gs_res*GsGain;
  Output5(0,0)=Win.v;
  Output6(0,0)=Wout.v;
-
+   /*
  if(MainOwner && Owner)
  {
   UEPtr<NPulseLifeNeuron> neuron=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
@@ -227,7 +270,7 @@ bool NPulseHebbSynapse::ACalculate(void)
 	neuron->SummaryPosG.v+=G;
    }
   }
- }
+ } */
 
  return true;
 }
