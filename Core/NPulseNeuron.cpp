@@ -301,7 +301,7 @@ UComponent* NPulseNeuron::NewStatic(void)
 bool NPulseNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseMembraneCommon>(comp) ||
-	dynamic_pointer_cast<NPulseLTZoneCommon>(comp) ||
+	dynamic_pointer_cast<NLTZone>(comp) ||
 //	dynamic_cast<const NPulseSynapse*>(comp) ||
 	dynamic_pointer_cast<NConstGenerator>(comp))
   return true;

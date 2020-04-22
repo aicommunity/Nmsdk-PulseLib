@@ -105,6 +105,16 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  ch_neg->Type=1;
  UploadClass("NPSynInhChannel",ch_neg);
 
+ ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NCSynChannel"));
+ ch_pos->SetName("ExcChannel");
+ ch_pos->Type=-1;
+ UploadClass("NCSynExcChannel",ch_pos);
+
+ ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NCSynChannel"));
+ ch_neg->SetName("InhChannel");
+ ch_neg->Type=1;
+ UploadClass("NCSynInhChannel",ch_neg);
+
  // Модели ионного механизма низкопороговой зоны
  ch=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
  ch->Capacity=1e-8;
@@ -157,11 +167,17 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->InhChannelClassName="NPLTSynInhChannel";
  UploadClass("NPLTZoneSynNeuronMembrane",membr);
 
+ membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ membr->SetName("PMembrane");
+ membr->ExcChannelClassName="NPSynExcChannel";
+ membr->InhChannelClassName="NPSynInhChannel";
+ UploadClass("NPSynNeuronMembrane",membr);
+
  // Участок мембраны непрерывного нейрона
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
  membr->SetName("PMembrane");
- membr->ExcChannelClassName="NCSynChannel";
- membr->InhChannelClassName="NCSynChannel";
+ membr->ExcChannelClassName="NCSynExcChannel";
+ membr->InhChannelClassName="NCSynInhChannel";
  UploadClass("NCSynNeuronMembrane",membr);
 
  // Формируем синапсы хебба и участки мембраны с ними
