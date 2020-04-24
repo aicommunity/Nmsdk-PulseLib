@@ -57,6 +57,7 @@ protected: // Временные переменные
 ULProperty<double,NPulseHebbSynapse,ptPubState> G;
 ULProperty<double,NPulseHebbSynapse,ptPubState> Gd;
 UCLProperty<vector<double>,NPulseHebbSynapse,ptPubState> Gs;
+ULProperty<double,NPulseHebbSynapse,ptPubState> GsSum;
 ULProperty<double,NPulseHebbSynapse,ptPubState> Win;
 ULProperty<double,NPulseHebbSynapse,ptPubState> Wout;
 

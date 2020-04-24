@@ -214,19 +214,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  dynamic_pointer_cast<NCPac>(UEPtr<UContainer>(cont))->TCMode=0;
  UploadClass("NCPac",cont);
 
-
-
-/*
- cont=new NNeuronLife("NeuronLife");
- cont->Default();
- UploadClass("NNeuronLife",cont);
-
- cont=new NLifeNet("LifeNet");
- cont->Default();
- UploadClass("NLifeNet",cont);
- */
-
-
  // Содержимое старой библиотеки PulseItemsLibrary
  cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronNegCGenerator");

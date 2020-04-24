@@ -53,6 +53,7 @@ Output6("Output6",this),
 G("G",this),
 Gd("Gd",this),
 Gs("Gs",this),
+GsSum("GsSum",this),
 Win("Win",this),
 Wout("Wout",this)
 
@@ -191,6 +192,7 @@ bool NPulseHebbSynapse::AReset(void)
  Gd=0;
  Gs->assign(Kmot->size(),0);
  G=0;
+ GsSum=0;
 
  if(!InputLTZoneFeedbackSignal.IsConnected())
   InstallHebbianConnection();
@@ -243,12 +245,14 @@ bool NPulseHebbSynapse::ACalculate(void)
  double gs_res=0;
  for(int i=0;i<int(Gs->size());i++)
   gs_res+=Gs[i];
- G.v = (Gd.v*GdGain + gs_res*GsGain);
+ GsSum=gs_res;
+
+ G.v = (Gd.v*GdGain + GsSum.v*GsGain);
 
  Output1(0,0)*=(1.0+G.v);
  Output2(0,0)=G.v;
  Output3(0,0)=Gd.v*GdGain;
- Output4(0,0)=gs_res*GsGain;
+ Output4(0,0)=GsSum.v*GsGain;
  Output5(0,0)=Win.v;
  Output6(0,0)=Wout.v;
    /*
