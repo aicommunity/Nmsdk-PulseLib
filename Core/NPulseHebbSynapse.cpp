@@ -129,13 +129,13 @@ bool NPulseHebbSynapse::ADefault(void)
 
 	Min=10;
 	Mout=10;
-	Md=10;
+	Md=0.001;
 	Kmot->resize(1);
 	Kin=100;
 	Kout=100;
 
-	GdGain=10;
-	GsGain=1;//10;
+	GdGain=1;
+	GsGain=10;//10;
 
  Kmot->resize(5);
  Kmot[0]=1;
@@ -248,8 +248,8 @@ bool NPulseHebbSynapse::ACalculate(void)
  GsSum=gs_res;
 
  G.v = (Gd.v*GdGain + GsSum.v*GsGain);
-
- Output1(0,0)*=(1.0+G.v);
+ Output(0,0)*=(1.0+G.v);
+ Output1(0,0)=Output(0,0);
  Output2(0,0)=G.v;
  Output3(0,0)=Gd.v*GdGain;
  Output4(0,0)=GsSum.v*GsGain;
