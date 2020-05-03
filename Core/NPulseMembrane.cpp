@@ -284,10 +284,11 @@ bool NPulseMembrane::ABuild(void)
 
  for(int i=0;i<NumExcitatorySynapses;i++)
  {
-  UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>("ExcSynapse", SynapseClassName);
+  UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("ExcSynapse")+sntoa(i+1), SynapseClassName);
+
   ExcitatorySynapses.push_back(synapse);
   res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
-  synapse->SetCoord(MVector<double,3>(5+i*11,1.7,0));
+  synapse->SetCoord(MVector<double,3>(5+i*6,1.7,0));
  }
 
  int old_in_synapses=int(InhibitorySynapses.size());
@@ -297,10 +298,11 @@ bool NPulseMembrane::ABuild(void)
 
  for(int i=0;i<NumInhibitorySynapses;i++)
  {
-  UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>("InhSynapse", SynapseClassName);
+  UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("InhSynapse")+sntoa(i+1), SynapseClassName);
+
   InhibitorySynapses.push_back(synapse);
   res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInputs");
-  synapse->SetCoord(MVector<double,3>(5+i*11,10.6,0));
+  synapse->SetCoord(MVector<double,3>(5+i*6,10.6,0));
  }
 
  if(!NPulseMembraneCommon::ABuild())

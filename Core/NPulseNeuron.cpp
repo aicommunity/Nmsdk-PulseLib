@@ -392,7 +392,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  for(int i=NumSomaMembraneParts;i<OldNumSoma;i++)
  {
   DelComponent(std::string("Soma")+sntoa(i+1));
-  for(int j=NumDendriteMembraneParts;j<OldNumDendrited;j++)
+  for(int j=0;j<((OldNumDendrited == 0)?NumDendriteMembraneParts:OldNumDendrited);j++)
   {
    DelComponent(std::string("Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1));
   }
