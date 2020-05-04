@@ -224,6 +224,9 @@ bool NPulseChannel::ACalculate(void)
   G+=(*SynapticInputs[i])(0,0);
  }
 
+ if(UseAverageSynapsis && !SynapticInputs->empty())
+  G/=SynapticInputs->size();
+
  // Получение данных канала
  size_t inp_size;
  size_t full_inp_data_size(0);

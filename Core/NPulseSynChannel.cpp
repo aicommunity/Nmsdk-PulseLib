@@ -329,6 +329,9 @@ bool NPulseSynChannel::ACalculate(void)
  if(UseAveragePotential)
   channel_input/=num_connected_channels;
 
+ if(UseAverageSynapsis && num_connected_synapsis>0)
+  G/=num_connected_synapsis;
+
  double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
  // Получение информации об обратной связи
  if(Owner)
@@ -649,6 +652,9 @@ bool NContinuesSynChannel::ACalculate(void)
 
  if(UseAveragePotential)
   channel_input/=num_connected_channels;
+
+ if(UseAverageSynapsis && num_connected_synapsis>0)
+  G/=num_connected_synapsis;
 
  // Расчет
  double *out=&Output(0,0);

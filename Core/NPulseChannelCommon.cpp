@@ -28,6 +28,7 @@ namespace NMSDK {
 NPulseChannelCommon::NPulseChannelCommon(void)
  : Type("Type", this, &NPulseChannelCommon::SetType),
    UseAveragePotential("UseAveragePotential",this),
+   UseAverageSynapsis("UseAverageSynapsis",this),
    ChannelInputs("ChannelInputs",this),
    SynapticInputs("SynapticInputs",this),
    Output("Output",this)
@@ -121,6 +122,7 @@ bool NPulseChannelCommon::ADefault(void)
 {
  Type=0;
  UseAveragePotential=true;
+ UseAverageSynapsis=true;
  Output.Assign(1,1,0.0);
 // RestingThreshold=100;
 // RestingFlag=false;

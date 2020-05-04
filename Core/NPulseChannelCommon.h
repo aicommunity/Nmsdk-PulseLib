@@ -28,8 +28,11 @@ public: // Общедоступные свойства
 /// >0 - накапливает положительный вклад в потенциал (или деполяризует мембрану)
 ULProperty<double,NPulseChannelCommon, ptPubParameter> Type;
 
-/// Признак наличия усреднения в выходных данных нейрона
+/// Флаг включения усреднения в выходных данных нейрона
 ULProperty<bool, NPulseChannelCommon, ptPubParameter> UseAveragePotential;
+
+/// Флаг включения усреднения выходов всех синапсов
+ULProperty<bool, NPulseChannelCommon, ptPubParameter> UseAverageSynapsis;
 
 public: // Входы и выходы
 /// Входной сигнал от канала предыдущего участка мембраны
