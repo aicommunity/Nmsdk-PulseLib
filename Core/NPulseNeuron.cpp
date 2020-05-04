@@ -423,6 +423,8 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   res&=CreateLink(ltchannel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
   res&=CreateLink(ltchannel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
  }
+ else
+  DelComponent("LTMembrane");
 
  for(int i=0;i<num_soma_membranes;i++)
  {
@@ -443,6 +445,9 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   {
    res&=CreateLink(channel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
    res&=CreateLink(channel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+
+   // Устанавливаем обратную связь
+   res&=CreateLink(ltzone->GetLongName(this),"Output",membr->GetLongName(this),"InputFeedbackSignal");
   }
 
   for(int j=0;j<dendrite_length;j++)
