@@ -162,7 +162,7 @@ bool NPulseSynapse::ABuild(void)
 // —брос процесса счета.
 bool NPulseSynapse::AReset(void)
 {
- if(!NPulseSynapseCommon::ABuild())
+ if(!NPulseSynapseCommon::AReset())
   return false;
 
  return true;

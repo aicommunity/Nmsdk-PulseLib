@@ -265,6 +265,11 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->SetName("AfferentNeuron");
  cont->Default();
  UploadClass("NAfferentNeuron",cont);
+
+ cont=new NPulseSynapseStdp;
+ cont->SetName("SynapseStdp");
+ cont->Default();
+ UploadClass("NPulseSynapseStdp",cont);
 }
 // --------------------------
 

@@ -26,8 +26,7 @@ See file license.txt for more information
 #include "NPulseSynChannel.h"
 #include "NPac.h"
 #include "NReceptor.h"
-
-
+#include "NPulseSynapseStdp.h"
 
 namespace NMSDK {
 
