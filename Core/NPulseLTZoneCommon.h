@@ -79,6 +79,12 @@ virtual bool AReset(void);
 class RDK_LIB_TYPE NPulseLTZoneCommon: public NLTZone
 {
 public: // Общедоступные свойства
+/// Число ионных механизмов в группе
+/// (используется при нормировке суммарного входного потенциала)
+/// Например если участок мембраны всегда состоит из 2 ионых механизмов
+/// дающих вклад разных знаков, то параметр равен 2. Иначе 1.
+ULProperty<int,NPulseLTZoneCommon, ptPubParameter> NumChannelsInGroup;
+
 /// Амплитуда импульсов
 ULProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseAmplitude;
 
@@ -106,6 +112,9 @@ ULProperty<double,NPulseLTZoneCommon,ptPubState> PrePotential;
 protected: // Основные свойства
 
 protected: // Временные переменные
+// Суммарный потенциал
+RDK::ULProperty<double,NPulseLTZoneCommon,ptPubState> NeuralPotential;
+
 /// Флаг наличия генерации
 ULProperty<int,NPulseLTZoneCommon,ptPubState> PulseCounter;
 
@@ -166,6 +175,7 @@ virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 
 /// Возвращает true если условие для генерации импульса выполнено
 virtual bool CheckPulseOn(void);

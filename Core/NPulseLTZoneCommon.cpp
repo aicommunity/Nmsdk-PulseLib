@@ -101,12 +101,14 @@ bool NLTZone::AReset(void)
 // --------------------------
 NPulseLTZoneCommon::NPulseLTZoneCommon(void)
  :
+  NumChannelsInGroup("NumChannelsInGroup",this),
   PulseAmplitude("PulseAmplitude",this,&NPulseLTZoneCommon::SetPulseAmplitude),
   PulseLength("PulseLength",this),
   AvgInterval("AvgInterval",this),
   OutputPotential("OutputPotential",this),
   OutputFrequency("OutputFrequency",this),
   OutputPulseTimes("OutputPulseTimes",this),
+  NeuralPotential("NeuralPotential",this),
   PrePotential("PrePotential",this),
   PulseCounter("PulseCounter",this),
   AvgFrequencyCounter("AvgFrequencyCounter",this),
@@ -167,6 +169,7 @@ bool NPulseLTZoneCommon::ADefault(void)
  vector<size_t> size;
 
  // Начальные значения всем параметрам
+ NumChannelsInGroup=1;
  AvgInterval=1;
  PulseAmplitude=1;
  PulseLength=0.001;
@@ -193,6 +196,8 @@ bool NPulseLTZoneCommon::AReset(void)
  NLTZone::AReset();
  // Сброс временных переменных
  PulseCounter=0;
+ NeuralPotential=0;
+
  PrePotential=0;
  AvgFrequencyCounter->clear();
  PulseFlag=false;
@@ -206,7 +211,33 @@ bool NPulseLTZoneCommon::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseLTZoneCommon::ACalculate(void)
 {
+ // расчет на шаге
+ NeuralPotential=0;
 
+ if(Inputs->size()>0)
+ {
+  size_t inpsize;
+  for(size_t i=0;i<Inputs->size();i++)
+  {
+   if((inpsize=Inputs[i]->GetCols()) >0)
+   {
+	double *data=Inputs[i]->Data;
+	for(size_t j=0;j<inpsize;j++,++data)
+	 NeuralPotential.v+=*data;
+   }
+  }
+  if(UseAveragePotential)
+   NeuralPotential.v/=Inputs->size();
+ }
+
+ if(NumChannelsInGroup>0)
+  NeuralPotential.v/=NumChannelsInGroup.v; // Делим пополам, чтобы учесть, что у нас по 2 ионных механизма на участок мембраны
+
+ return ACalculate2();
+}
+
+bool NPulseLTZoneCommon::ACalculate2(void)
+{
  return true;
 }
 
