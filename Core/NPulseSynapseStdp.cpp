@@ -35,6 +35,7 @@ NPulseSynapseStdp::NPulseSynapseStdp(void)
   XAvg("XAvg",this),
   YAvg("YAvg",this),
   XYDiff("XYDiff",this),
+  PsActivityInput("PsActivityInput",this),
   StdpInfluence("StdpInfluence",this)
  // Input("Input",this)
 {
@@ -110,7 +111,7 @@ bool NPulseSynapseStdp::ADefault(void)
  AMinus=1e13;
  XTau=1e-2;
  YTau=1e-3;
- StdpInfluence.Assign(0,0,0.0);
+ StdpInfluence.Assign(1,1,0.0);
 
  return true;
 }
@@ -149,21 +150,29 @@ bool NPulseSynapseStdp::ACalculate(void)
  if(!Input.IsConnected() || Input->GetCols()<=0)
   return true;
 
- if(!MainOwner)
-  return true;
-
- NPulseLTZone* zone=static_pointer_cast<NPulseNeuronCommon>(MainOwner)->LTZone;
- if(!zone)
-  return true;
-
- if(zone->Output->GetCols()<=0)
-  return true;
-
  if((*Input)(0,0)>0)
   is_input_pulse_active=true;
 
- if(zone->Output(0,0)>0)
-  is_output_pulse_active=true;
+ if(PsActivityInput.IsConnected() && PsActivityInput->GetCols()>0)
+ {
+  if((*PsActivityInput)(0,0)>0)
+   is_output_pulse_active=true;
+ }
+ else
+ {
+  if(!MainOwner)
+   return true;
+
+  NPulseLTZone* zone=static_pointer_cast<NPulseNeuronCommon>(MainOwner)->LTZone;
+  if(!zone)
+   return true;
+
+  if(zone->Output->GetCols()<=0)
+   return true;
+
+  if(zone->Output(0,0)>0)
+   is_output_pulse_active=true;
+ }
 
  if(is_output_pulse_active)
   XAvg.v+=(Resistance.v-XAvg.v)/(XTau.v*TimeStep);
@@ -181,31 +190,12 @@ bool NPulseSynapseStdp::ACalculate(void)
  XYDiff.v+=(x_avg_res-y_avg_res)/TimeStep;
 
  StdpInfluence(0,0)=(1-XYDiff.v);
- Output(0,0)*=StdpInfluence(0,0);
-  	  /*
- if(Input.IsConnected() && Input->GetCols()>0)
- {
-  input=(*Input)(0,0);
-  if(MainOwner && Owner)
-  {
-   if(static_pointer_cast<NPulseChannel>(Owner)->Type() < 0)
-	++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
-   else
-	++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
-  }
- }
 
- if(input>0)
-  PreOutput.v+=(input/PulseAmplitude.v-PreOutput.v)/VSecretionTC;
- else
-  PreOutput.v-=PreOutput.v/VDissociationTC;
-
- Output(0,0)=OutputConstData*
-						(1.0-InhibitionCoeff.v*PreOutput.v)*PreOutput.v;
-
- if(Output(0,0)<0)
+ if(StdpInfluence(0,0)<0)
   Output(0,0)=0;
-				   */
+ else
+  Output(0,0)*=StdpInfluence(0,0);
+
  return true;
 }
 // --------------------------

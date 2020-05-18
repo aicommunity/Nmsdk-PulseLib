@@ -43,6 +43,10 @@ ULProperty<double,NPulseSynapseStdp, ptPubState> XYDiff;
 
 
 public: // Входы и выходы
+/// Входной сигнал внешней постсинаптической активности
+/// (например модулирующего нейрона)
+UPropertyInputData<MDMatrix<double>, NPulseSynapseStdp, ptInput | ptPubState> PsActivityInput;
+
 /// Выходной сигнал влияния STDP
 UPropertyOutputData<MDMatrix<double>, NPulseSynapseStdp, ptOutput | ptPubState> StdpInfluence;
 
