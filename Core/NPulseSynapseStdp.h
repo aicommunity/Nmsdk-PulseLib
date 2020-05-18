@@ -24,6 +24,10 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseSynapseStdp: public NPulseSynapse
 {
 public: // Общедоступные свойства
+ULProperty<double,NPulseSynapseStdp, ptPubParameter> XModCoeff;
+
+ULProperty<double,NPulseSynapseStdp, ptPubParameter> YModCoeff;
+
 ULProperty<double,NPulseSynapseStdp, ptPubParameter> APlus;
 
 ULProperty<double,NPulseSynapseStdp, ptPubParameter> AMinus;
@@ -66,16 +70,16 @@ protected:
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
-// Устанавливает амплитуду импульсов
+bool SetXModCoeff(const double &value);
+
+bool SetYModCoeff(const double &value);
+
 bool SetAPlus(const double &value);
 
-// Постоянная времени выделения медиатора
 bool SetAMinus(const double &value);
 
-// Постоянная времени распада медиатора
 bool SetXTau(const double &value);
 
-// Постоянная времени распада медиатора
 bool SetYTau(const double &value);
 // --------------------------
 

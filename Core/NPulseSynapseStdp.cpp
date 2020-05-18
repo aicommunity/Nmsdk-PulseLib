@@ -28,7 +28,9 @@ namespace NMSDK {
 // --------------------------
 NPulseSynapseStdp::NPulseSynapseStdp(void)
  //: NConnector(name),
-: APlus("APlus",this,&NPulseSynapseStdp::SetAPlus),
+: XModCoeff("XModCoeff",this, &NPulseSynapseStdp::SetXModCoeff),
+  YModCoeff("YModCoeff",this, &NPulseSynapseStdp::SetYModCoeff),
+  APlus("APlus",this,&NPulseSynapseStdp::SetAPlus),
   AMinus("AMinus",this,&NPulseSynapseStdp::SetAMinus),
   XTau("XTau",this,&NPulseSynapseStdp::SetXTau),
   YTau("YTau",this,&NPulseSynapseStdp::SetYTau),
@@ -50,7 +52,16 @@ NPulseSynapseStdp::~NPulseSynapseStdp(void)
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
-// Постоянная времени выделения медиатора
+bool NPulseSynapseStdp::SetXModCoeff(const double &value)
+{
+ return true;
+}
+
+bool NPulseSynapseStdp::SetYModCoeff(const double &value)
+{
+ return true;
+}
+
 bool NPulseSynapseStdp::SetAPlus(const double &value)
 {
  if(value <= 0)
@@ -59,7 +70,6 @@ bool NPulseSynapseStdp::SetAPlus(const double &value)
  return true;
 }
 
-// Постоянная времени распада медиатора
 bool NPulseSynapseStdp::SetAMinus(const double &value)
 {
  if(value <= 0)
@@ -68,7 +78,6 @@ bool NPulseSynapseStdp::SetAMinus(const double &value)
  return true;
 }
 
-// Коэффициент пресинаптического торможения
 bool NPulseSynapseStdp::SetXTau(const double &value)
 {
  if(value <= 0)
@@ -77,7 +86,6 @@ bool NPulseSynapseStdp::SetXTau(const double &value)
  return true;
 }
 
-// Коэффициент пресинаптического торможения
 bool NPulseSynapseStdp::SetYTau(const double &value)
 {
  if(value <= 0)
@@ -107,8 +115,10 @@ bool NPulseSynapseStdp::ADefault(void)
  if(!NPulseSynapse::ADefault())
   return false;
 
- APlus=1e13;
- AMinus=1e13;
+ XModCoeff=1;
+ YModCoeff=1;
+ APlus=1;
+ AMinus=1;
  XTau=1e-2;
  YTau=1e-3;
  StdpInfluence.Assign(1,1,0.0);
@@ -175,17 +185,17 @@ bool NPulseSynapseStdp::ACalculate(void)
  }
 
  if(is_output_pulse_active)
-  XAvg.v+=(Resistance.v-XAvg.v)/(XTau.v*TimeStep);
+  XAvg.v+=(XModCoeff-XAvg.v)/(XTau.v*TimeStep);
  else
   XAvg.v-=XAvg.v/(XTau.v*TimeStep);
 
  if(is_input_pulse_active)
-  YAvg.v+=(Resistance.v-YAvg.v)/(YTau.v*TimeStep);
+  YAvg.v+=(YModCoeff-YAvg.v)/(YTau.v*TimeStep);
  else
   YAvg.v-=YAvg.v/(YTau.v*TimeStep);
 
- double x_avg_res=(is_output_pulse_active)?XAvg.v:0;
- double y_avg_res=(is_input_pulse_active)?YAvg.v:0;;
+ double x_avg_res=(is_output_pulse_active)?XAvg.v*APlus.v:0;
+ double y_avg_res=(is_input_pulse_active)?YAvg.v*AMinus.v:0;;
 
  XYDiff.v+=(x_avg_res-y_avg_res)/TimeStep;
 
