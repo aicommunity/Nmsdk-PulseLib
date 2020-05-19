@@ -38,6 +38,12 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 {
  UContainer *cont;
 
+
+ cont=new NPulseLTZoneThreshold;
+ cont->SetName("PLTZone");
+ cont->Default();
+ UploadClass("NPulseLTZoneThreshold",cont);
+
  cont=new NPulseLTZone;
  cont->SetName("PLTZone");
  cont->Default();

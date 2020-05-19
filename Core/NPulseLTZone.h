@@ -22,7 +22,63 @@ namespace NMSDK {
 
 class NPulseNeuron;
 
-class RDK_LIB_TYPE NPulseLTZone: public NPulseLTZoneCommon
+class RDK_LIB_TYPE NPulseLTZoneThreshold: public NPulseLTZoneCommon
+{
+public: // Методы
+// --------------------------
+// Конструкторы и деструкторы
+// --------------------------
+NPulseLTZoneThreshold(void);
+virtual ~NPulseLTZoneThreshold(void);
+// --------------------------
+
+// --------------------------
+// Системные методы управления объектом
+// --------------------------
+// Выделяет память для новой чистой копии объекта этого класса
+virtual NPulseLTZoneThreshold* New(void);
+// --------------------------
+
+// --------------------------
+// Методы доступа к компонентам
+// --------------------------
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
+virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+// --------------------------
+
+
+// --------------------------
+// Скрытые методы управления счетом
+// --------------------------
+protected:
+// Восстановление настроек по умолчанию и сброс процесса счета
+virtual bool ADefault(void);
+
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
+virtual bool ABuild(void);
+
+// Сброс процесса счета.
+virtual bool AReset(void);
+
+// Выполняет расчет этого объекта
+virtual bool ACalculate2(void);
+
+/// Возвращает true если условие для генерации импульса выполнено
+virtual bool CheckPulseOn(void);
+
+/// Возвращает true если условие для генерации имульса не выполнено
+virtual bool CheckPulseOff(void);
+// --------------------------
+};
+
+
+class RDK_LIB_TYPE NPulseLTZone: public NPulseLTZoneThreshold
 {
 public: // Общедоступные свойства
 /// Постоянная времени
@@ -41,9 +97,6 @@ virtual ~NPulseLTZone(void);
 // --------------------------
 // Устанавливает значение постоянной времени
 bool SetTimeConstant(const double &value);
-
-// Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const double &value);
 // --------------------------
 
 // --------------------------
@@ -82,12 +135,6 @@ virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
 virtual bool ACalculate2(void);
-
-/// Возвращает true если условие для генерации импульса выполнено
-virtual bool CheckPulseOn(void);
-
-/// Возвращает true если условие для генерации имульса не выполнено
-virtual bool CheckPulseOff(void);
 // --------------------------
 };
 

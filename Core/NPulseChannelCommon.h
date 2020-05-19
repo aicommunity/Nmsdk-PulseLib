@@ -44,6 +44,11 @@ UPropertyInputCData<MDMatrix<double>, NPulseChannelCommon, ptInput | ptPubState>
 /// Выходное влияние синапса на мембрану
 UPropertyOutputData<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> Output;
 
+public: // Временные переменные
+/// Признак активации нейрона-владельца (сбрасывается автоматически немедленно
+/// по завершении текущей итерации счета).
+ULProperty<bool,NPulseChannelCommon, ptPubState> IsNeuronActivated;
+
 
 public: // Методы
 // --------------------------
@@ -104,6 +109,11 @@ virtual bool ADelComponent(UEPtr<UContainer> comp);
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
+public:
+/// Принимает сигнал о генерации сигнала низкопороговой зоной
+/// (однократно по началу импульса)
+virtual void NeuronActivated(void);
+
 protected:
 // Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
@@ -119,6 +129,7 @@ virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

@@ -33,8 +33,7 @@ NPulseMembrane::NPulseMembrane(void)
   InhChannelClassName("InhChannelClassName",this,&NPulseMembrane::SetInhChannelClassName),
   NumExcitatorySynapses("NumExcitatorySynapses",this,&NPulseMembrane::SetNumExcitatorySynapses),
   NumInhibitorySynapses("NumInhibitorySynapses",this,&NPulseMembrane::SetNumInhibitorySynapses),
-  InputFeedbackSignal("InputFeedbackSignal",this),
-  Feedback("Feedback",this)
+  InputFeedbackSignal("InputFeedbackSignal",this)
 
 {
 }
@@ -53,7 +52,7 @@ size_t NPulseMembrane::GetNumPosChannels(void) const
  return ExcitatoryChannels.size();
 }
 
-NPulseChannel* NPulseMembrane::GetPosChannel(size_t i)
+NPulseChannelCommon* NPulseMembrane::GetPosChannel(size_t i)
 {
  return ExcitatoryChannels[i];
 }
@@ -64,14 +63,14 @@ size_t NPulseMembrane::GetNumNegChannels(void) const
  return InhibitoryChannels.size();
 }
 
-NPulseChannel* NPulseMembrane::GetNegChannel(size_t i)
+NPulseChannelCommon* NPulseMembrane::GetNegChannel(size_t i)
 {
  return InhibitoryChannels[i];
 }
 
 bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPointer> pointer)
 {
-  vector<NPulseChannel* >::iterator I;
+  vector<NPulseChannelCommon* >::iterator I;
   if(channel->Type() < 0)
   {
    if(find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel) == ExcitatoryChannels.end())
@@ -198,13 +197,13 @@ bool NPulseMembrane::ABuild(void)
 {
  if(!Storage)
   return true;
- UEPtr<NPulseChannel> exc_channel;
- UEPtr<NPulseChannel> inh_channel;
+ UEPtr<NPulseChannelCommon> exc_channel;
+ UEPtr<NPulseChannelCommon> inh_channel;
  bool res=true;
 
  if(!ExcChannelClassName->empty())
  {
-  exc_channel=AddMissingComponent<NPulseChannel>("ExcChannel", ExcChannelClassName);
+  exc_channel=AddMissingComponent<NPulseChannelCommon>("ExcChannel", ExcChannelClassName);
   ExcitatoryChannels.resize(1);
   ExcitatoryChannels[0]=exc_channel;
   exc_channel->SetCoord(MVector<double,3>(5,4,0));
@@ -227,7 +226,7 @@ bool NPulseMembrane::ABuild(void)
 
  if(!InhChannelClassName->empty())
  {
-  inh_channel=AddMissingComponent<NPulseChannel>("InhChannel", InhChannelClassName);
+  inh_channel=AddMissingComponent<NPulseChannelCommon>("InhChannel", InhChannelClassName);
 
   InhibitoryChannels.resize(1);
   InhibitoryChannels[0]=inh_channel;
@@ -258,26 +257,31 @@ bool NPulseMembrane::AReset(void)
 {
  if(!NPulseMembraneCommon::AReset())
   return false;
- Feedback=0;
  return true;
 }
 
 // Выполняет расчет этого объекта
-bool NPulseMembrane::ACalculate(void)
+bool NPulseMembrane::ACalculate2(void)
 {
  if(!NPulseMembraneCommon::ACalculate())
   return false;
  if(!ExcitatoryChannels.empty() && !InhibitoryChannels.empty() && ResetAvailable)
  {
-	if(ExcitatoryChannels[0]->GetSynOutput() > 1.0e-10)
+  NPulseChannel *exc_ch=dynamic_cast<NPulseChannel*>(ExcitatoryChannels[0]);
+  NPulseChannel *inh_ch=dynamic_cast<NPulseChannel*>(InhibitoryChannels[0]);
+
+  if(exc_ch && inh_ch)
+  {
+	if(exc_ch->GetSynOutput() > 1.0e-10)
 	{
-		InhibitoryChannels[0]->ResetOut();
+	 inh_ch->ResetOut();
 	}
 	else
-	if(InhibitoryChannels[0]->GetSynOutput() > 1.0e-10)
+	if(inh_ch->GetSynOutput() > 1.0e-10)
 	{
-		ExcitatoryChannels[0]->ResetOut();
+	 exc_ch->ResetOut();
 	}
+  }
  }
 
  Feedback=0;

@@ -29,6 +29,8 @@ public: // Параметры
 ULProperty<bool, NPulseMembraneCommon, ptPubParameter> UseAveragePotential;
 
 public: // Данные
+/// Значение обратной связи
+ULProperty<double,NPulseMembraneCommon,ptPubState> Feedback;
 
 protected: // Временные переменные
 // Ионные механизмы
@@ -36,6 +38,9 @@ vector<NPulseChannelCommon*> Channels;
 
 // Синапсы
 vector<NPulseSynapseCommon*> Synapses;
+
+/// Флаг, который взводится на время наличия обратной связи
+bool IsNeuronActive;
 
 public: // Методы
 // --------------------------
@@ -112,6 +117,7 @@ virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

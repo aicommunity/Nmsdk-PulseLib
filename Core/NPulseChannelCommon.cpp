@@ -31,7 +31,8 @@ NPulseChannelCommon::NPulseChannelCommon(void)
    UseAverageSynapsis("UseAverageSynapsis",this),
    ChannelInputs("ChannelInputs",this),
    SynapticInputs("SynapticInputs",this),
-   Output("Output",this)
+   Output("Output",this),
+   IsNeuronActivated("IsNeuronActivated",this)
 {
 }
 
@@ -117,6 +118,13 @@ bool NPulseChannelCommon::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
+/// Принимает сигнал о генерации сигнала низкопороговой зоной
+/// (однократно по началу импульса)
+void NPulseChannelCommon::NeuronActivated(void)
+{
+ IsNeuronActivated=true;
+}
+
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseChannelCommon::ADefault(void)
 {
@@ -124,8 +132,6 @@ bool NPulseChannelCommon::ADefault(void)
  UseAveragePotential=true;
  UseAverageSynapsis=true;
  Output.Assign(1,1,0.0);
-// RestingThreshold=100;
-// RestingFlag=false;
 
  return true;
 }
@@ -143,6 +149,7 @@ bool NPulseChannelCommon::ABuild(void)
 bool NPulseChannelCommon::AReset(void)
 {
  Output.ToZero();
+ IsNeuronActivated=false;
 
  return true;
 }
@@ -150,8 +157,16 @@ bool NPulseChannelCommon::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseChannelCommon::ACalculate(void)
 {
+ ACalculate2();
+ IsNeuronActivated=false;
  return true;
 }
+
+bool NPulseChannelCommon::ACalculate2(void)
+{
+ return true;
+}
+
 // --------------------------
 }
 

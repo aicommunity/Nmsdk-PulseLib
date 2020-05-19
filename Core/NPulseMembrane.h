@@ -52,16 +52,13 @@ public: // ¬ходы и выходы
 /// —игнал обратной св€зи от низкопороговой зоны
 UPropertyInputData<MDMatrix<double>, NPulseMembrane, ptInput | ptPubState> InputFeedbackSignal;
 
-public: // ƒанные
-/// «начение обратной св€зи
-ULProperty<double,NPulseMembrane,ptPubState> Feedback;
 
 protected: // ¬ременные переменные
 // »онные механизмы депол€ризации
-vector<NPulseChannel*> ExcitatoryChannels;
+vector<NPulseChannelCommon*> ExcitatoryChannels;
 
 // »онные механизмы гиперпол€ризации
-vector<NPulseChannel*> InhibitoryChannels;
+vector<NPulseChannelCommon*> InhibitoryChannels;
 
 // ¬озбуждающие синапсы
 vector<NPulseSynapseCommon*> ExcitatorySynapses;
@@ -83,11 +80,11 @@ virtual ~NPulseMembrane(void);
 // --------------------------
 // »онные механизмы депол€ризации
 size_t GetNumPosChannels(void) const;
-NPulseChannel* GetPosChannel(size_t i);
+NPulseChannelCommon* GetPosChannel(size_t i);
 
 // »онные механизмы гиперпол€ризации
 size_t GetNumNegChannels(void) const;
-NPulseChannel* GetNegChannel(size_t i);
+NPulseChannelCommon* GetNegChannel(size_t i);
 
 virtual bool UpdateChannelData(UEPtr<NPulseChannel> comp, UEPtr<UIPointer> pointer=0);
 // --------------------------
@@ -142,7 +139,7 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // ¬ыполн€ет расчет этого объекта
-virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

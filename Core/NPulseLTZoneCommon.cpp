@@ -31,7 +31,8 @@ NLTZone::NLTZone(void)
  : Threshold("Threshold",this,&NLTZone::SetThreshold),
    UseAveragePotential("UseAveragePotential",this),
    Output("Output",this),
-   Inputs("Inputs",this)
+   Inputs("Inputs",this),
+   Potential("Potential",this)
 {
  Neuron=0;
  CachedNumAConnectors=0;
@@ -90,6 +91,7 @@ bool NLTZone::AReset(void)
 {
  CachedNumAConnectors=static_cast<int>(GetNumAConnectors(0));
  Output.ToZero();
+ Potential=0;
  return true;
 }
 // --------------------------
@@ -232,6 +234,8 @@ bool NPulseLTZoneCommon::ACalculate(void)
 
  if(NumChannelsInGroup>0)
   NeuralPotential.v/=NumChannelsInGroup.v; // Делим пополам, чтобы учесть, что у нас по 2 ионных механизма на участок мембраны
+
+ Potential.v=NeuralPotential.v; // TODO: это может быть изменено в дочерних классах
 
  return ACalculate2();
 }

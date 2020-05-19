@@ -26,7 +26,8 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseMembraneCommon::NPulseMembraneCommon(void)
- : UseAveragePotential("UseAveragePotential",this,&NPulseMembraneCommon::SetUseAveragePotential)
+ : UseAveragePotential("UseAveragePotential",this,&NPulseMembraneCommon::SetUseAveragePotential),
+  Feedback("Feedback",this)
 {
 }
 
@@ -172,11 +173,32 @@ bool NPulseMembraneCommon::ABuild(void)
 // Сброс процесса счета.
 bool NPulseMembraneCommon::AReset(void)
 {
+ Feedback=0;
+ IsNeuronActive=false;
  return true;
 }
 
 // Выполняет расчет этого объекта
 bool NPulseMembraneCommon::ACalculate(void)
+{
+ if(!ACalculate2())
+  return false;
+
+ if(Feedback>0 && !IsNeuronActive)
+ {
+  IsNeuronActive=true;
+  for(size_t i=0;i<Channels.size();i++)
+   if(Channels[i])
+	Channels[i]->NeuronActivated();
+ }
+
+ if(IsNeuronActive && Feedback<=0)
+  IsNeuronActive=false;
+
+ return true;
+}
+
+bool NPulseMembraneCommon::ACalculate2(void)
 {
  return true;
 }

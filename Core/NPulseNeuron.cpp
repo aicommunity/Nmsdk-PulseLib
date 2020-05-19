@@ -200,7 +200,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
  for(int k=0;k<size;k++)
  {
   UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(dendrite->GetComponentByIndex(k));
-  UEPtr<NPulseChannelCommon> new_channel=dynamic_pointer_cast<NPulseChannelCommon>(new_dendrite->GetComponentL(channel->GetName()));
+  UEPtr<NPulseChannelCommon> new_channel=dynamic_pointer_cast<NPulseChannelCommon>(new_dendrite->GetComponentL(channel->GetName(),true));
   if(!channel || !new_channel)
    continue;
  /* for(int i=0;i<channel->Output. ;i++)
@@ -371,7 +371,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
 								  int dendrite_length, int num_stimulates, int num_arresting)
 {
  UEPtr<UContainer> membr=0,ltmembr=0;
- UEPtr<NPulseChannel> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
+ UEPtr<NPulseChannelCommon> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
  UEPtr<NLTZone> ltzone;
  bool res(true);
  RDK::ULinkSide item,conn;
@@ -380,14 +380,23 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*8,4.67,0));
 
  UEPtr<UNet> gen_pos,gen_neg;
- gen_pos=AddMissingComponent<UNet>("PosGenerator", pos_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(pos_gen_class));
- gen_neg=AddMissingComponent<UNet>("NegGenerator", neg_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(neg_gen_class));
+ if(!ExcGeneratorClassName->empty())
+ {
+  gen_pos=AddMissingComponent<UNet>("PosGenerator", pos_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(pos_gen_class));
+  gen_pos->SetCoord(MVector<double,3>(4,2,0));
+  gen_pos->DisconnectAll("Output");
+ }
+ else
+  DelComponent("PosGenerator");
 
- gen_pos->SetCoord(MVector<double,3>(4,2,0));
- gen_neg->SetCoord(MVector<double,3>(4,7.3+(num_soma_membranes-1)*2,0));
-
- gen_pos->DisconnectAll("Output");
- gen_neg->DisconnectAll("Output");
+ if(!InhGeneratorClassName->empty())
+ {
+  gen_neg=AddMissingComponent<UNet>("NegGenerator", neg_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(neg_gen_class));
+  gen_neg->SetCoord(MVector<double,3>(4,7.3+(num_soma_membranes-1)*2,0));
+  gen_neg->DisconnectAll("Output");
+ }
+ else
+  DelComponent("NegGenerator");
 
  for(int i=NumSomaMembraneParts;i<OldNumSoma;i++)
  {
@@ -413,15 +422,17 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   ltmembr=AddMissingComponent<NPulseMembrane>("LTMembrane", ltzonemembraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(ltzonemembraneclass));
   ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*8,4.67,0));
 
-  ltchannel1=dynamic_pointer_cast<NPulseChannel>(ltmembr->GetComponent("ExcChannel"));
-  ltchannel2=dynamic_pointer_cast<NPulseChannel>(ltmembr->GetComponent("InhChannel"));
+  ltchannel1=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("ExcChannel",true));
+  ltchannel2=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("InhChannel",true));
 
   // Устанавливаем обратную связь
   res&=CreateLink(ltzone->GetLongName(this),"Output",ltmembr->GetLongName(this),"InputFeedbackSignal");
 
   // Устанавливаем связь мембраны с низкопороговой зоной
-  res&=CreateLink(ltchannel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
-  res&=CreateLink(ltchannel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+  if(ltchannel1)
+   res&=CreateLink(ltchannel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+  if(ltchannel2)
+   res&=CreateLink(ltchannel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
  }
  else
   DelComponent("LTMembrane");
@@ -431,20 +442,24 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   membr=AddMissingComponent<NPulseMembrane>(std::string("Soma")+sntoa(i+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
   membr->SetCoord(MVector<double,3>(12.7+dendrite_length*8,4.67+i*2,0));
 
-  channel1=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
-  channel2=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
+  channel1=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));
+  channel2=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("InhChannel",true));
 
   // Случай, если задана выделенная часть мембраны генераторной зоны
   // тогда подключаем сому к ней
   if(!ltzonemembraneclass.empty())
   {
-   res&=CreateLink(channel1->GetLongName(this),"Output",ltchannel1->GetLongName(this),"ChannelInputs");
-   res&=CreateLink(channel2->GetLongName(this),"Output",ltchannel2->GetLongName(this),"ChannelInputs");
+   if(channel1)
+	res&=CreateLink(channel1->GetLongName(this),"Output",ltchannel1->GetLongName(this),"ChannelInputs");
+   if(channel2)
+	res&=CreateLink(channel2->GetLongName(this),"Output",ltchannel2->GetLongName(this),"ChannelInputs");
   }
   else // иначе подключаем сому напрямую к низкопороговой зоне
   {
-   res&=CreateLink(channel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
-   res&=CreateLink(channel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+   if(channel1)
+	res&=CreateLink(channel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+   if(channel2)
+	res&=CreateLink(channel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
 
    // Устанавливаем обратную связь
    res&=CreateLink(ltzone->GetLongName(this),"Output",membr->GetLongName(this),"InputFeedbackSignal");
@@ -455,18 +470,22 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
    membr=AddMissingComponent<NPulseMembrane>(std::string("Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
    membr->SetCoord(MVector<double,3>(12.7+(dendrite_length-j-1)*8,4.67+i*2,0));
 
-   channel1temp=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
-   channel2temp=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
+   channel1temp=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));
+   channel2temp=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("InhChannel",true));
 
-   res&=CreateLink(channel1temp->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
-   res&=CreateLink(channel2temp->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
+   if(channel1temp)
+	res&=CreateLink(channel1temp->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
+   if(channel2temp)
+    res&=CreateLink(channel2temp->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
 
    channel1 = channel1temp;
    channel2 = channel2temp;
   }
 
   // Связь между начальными значениями мощностей ионных каналов и каналами
-  res&=CreateLink(gen_neg->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
+  if(channel1 && gen_neg)
+   res&=CreateLink(gen_neg->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
+  if(channel2 && gen_pos)
   res&=CreateLink(gen_pos->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
  }
 
@@ -551,7 +570,8 @@ int NPulseNeuron::GetNumOfConnectedSynToPosCh(NPulseMembrane* membr)
   int temp=0;
   for(size_t i=0;i<membr->GetNumPosChannels();i++)
   {
-   temp+=membr->GetPosChannel(i)->NumConnectedSynapsis;
+   NPulseChannel *ch=dynamic_cast<NPulseChannel*>(membr->GetPosChannel(i));
+   temp+=ch->NumConnectedSynapsis;
   }
   return temp;
 }
@@ -561,7 +581,8 @@ int NPulseNeuron::GetNumOfConnectedSynToNegCh(NPulseMembrane* membr)
   int temp=0;
   for(size_t i=0;i<membr->GetNumNegChannels();i++)
   {
-   temp+=membr->GetNegChannel(i)->NumConnectedSynapsis;
+   NPulseChannel *ch=dynamic_cast<NPulseChannel*>(membr->GetNegChannel(i));
+   temp+=ch->NumConnectedSynapsis;
   }
   return temp;
 }

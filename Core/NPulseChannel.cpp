@@ -209,11 +209,8 @@ bool NPulseChannel::AReset(void)
 }
 
 // Выполняет расчет этого объекта
-bool NPulseChannel::ACalculate(void)
+bool NPulseChannel::ACalculate2(void)
 {
- if(!NPulseChannelCommon::ACalculate())
-  return false;
-
  channel_input=0;
  double G=0;
 
@@ -245,15 +242,15 @@ bool NPulseChannel::ACalculate(void)
  }
 
  // Получение информации об обратной связи
- double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
- if(Owner)
-  channel_input-=feedback;
+ UEPtr<NPulseMembrane> membrane=dynamic_pointer_cast<NPulseMembrane>(Owner);
+ if(membrane)
+  channel_input-=membrane->Feedback;
 
  // Расчет
  double *out=&Output(0,0);
  double Ti(0.0),sum_u(0.0);
 
- if(!feedback)
+ if(fabs(membrane->Feedback)<1e-3)
  {
   double resistance(0.0);
   if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))

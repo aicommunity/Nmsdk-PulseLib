@@ -23,50 +23,26 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы NPulseLTZone
+// Методы NPulseLTZoneThreshold
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
-NPulseLTZone::NPulseLTZone(void)
- : TimeConstant("TimeConstant",this,&NPulseLTZone::SetTimeConstant)
+NPulseLTZoneThreshold::NPulseLTZoneThreshold(void)
 {
 }
 
-NPulseLTZone::~NPulseLTZone(void)
+NPulseLTZoneThreshold::~NPulseLTZoneThreshold(void)
 {
 }
 // --------------------------
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
-// Устанавливает значение постоянной времени
-bool NPulseLTZone::SetTimeConstant(const double &value)
-{
- if(value <= 0)
-  return false;
-
- return true;
-}
-
-// Устанавливает амплитуду импульсов
-bool NPulseLTZone::SetPulseAmplitude(const double &value)
-{
- if(value <= 0)
-  return false;
-
- return true;
-}
-// --------------------------
-
 
 // --------------------------
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
-NPulseLTZone* NPulseLTZone::New(void)
+NPulseLTZoneThreshold* NPulseLTZoneThreshold::New(void)
 {
- return new NPulseLTZone;
+ return new NPulseLTZoneThreshold;
 }
 // --------------------------
 
@@ -77,11 +53,8 @@ NPulseLTZone* NPulseLTZone::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseLTZone::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseLTZoneThreshold::CheckComponentType(UEPtr<UContainer> comp) const
 {
-// if(dynamic_cast<const NConnector*>(comp))
-//  return true;
-
  return false;
 }
 // --------------------------
@@ -91,13 +64,11 @@ bool NPulseLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 // Скрытые методы управления счетом
 // --------------------------
 // Восстановление настроек по умолчанию и сброс процесса счета
-bool NPulseLTZone::ADefault(void)
+bool NPulseLTZoneThreshold::ADefault(void)
 {
  NPulseLTZoneCommon::ADefault();
 
  // Начальные значения всем параметрам
- NumChannelsInGroup=2;
- TimeConstant=0.005;
  Threshold=0.00001;
 
  return true;
@@ -107,24 +78,22 @@ bool NPulseLTZone::ADefault(void)
 // после настройки параметров
 // Автоматически вызывает метод Reset() и выставляет Ready в true
 // в случае успешной сборки
-bool NPulseLTZone::ABuild(void)
+bool NPulseLTZoneThreshold::ABuild(void)
 {
+ NPulseLTZoneCommon::ABuild();
  return true;
 }
 
 // Сброс процесса счета.
-bool NPulseLTZone::AReset(void)
+bool NPulseLTZoneThreshold::AReset(void)
 {
  NPulseLTZoneCommon::AReset();
-
  return true;
 }
 
 // Выполняет расчет этого объекта
-bool NPulseLTZone::ACalculate2(void)
+bool NPulseLTZoneThreshold::ACalculate2(void)
 {
- PrePotential.v+=(NeuralPotential.v-PrePotential.v)/(TimeConstant.v*TimeStep);
-
  double current_time=GetTime().GetDoubleTime();
  if(CheckPulseOn())
  {
@@ -139,10 +108,10 @@ bool NPulseLTZone::ACalculate2(void)
  {
   PulseFlag=false;
   Output(0,0)=0;
-  OutputPotential(0,0)=PrePotential.v;
+  OutputPotential(0,0)=Potential.v;
  }
  else
-  OutputPotential(0,0)=PrePotential.v;
+  OutputPotential(0,0)=Potential.v;
 
  list<double>::iterator I,J,K;
  I=AvgFrequencyCounter->begin();
@@ -188,15 +157,113 @@ bool NPulseLTZone::ACalculate2(void)
 }
 
 /// Возвращает true если условие для генерации импульса выполнено
-bool NPulseLTZone::CheckPulseOn(void)
+bool NPulseLTZoneThreshold::CheckPulseOn(void)
 {
- return PrePotential.v>=Threshold.v;
+ return Potential.v>=Threshold.v;
 }
 
 /// Возвращает true если условие для генерации имульса не выполнено
-bool NPulseLTZone::CheckPulseOff(void)
+bool NPulseLTZoneThreshold::CheckPulseOff(void)
 {
- return PrePotential.v<=0;
+ return Potential.v<=0;
+}
+// --------------------------
+
+
+// Методы NPulseLTZone
+// --------------------------
+// Конструкторы и деструкторы
+// --------------------------
+NPulseLTZone::NPulseLTZone(void)
+ : TimeConstant("TimeConstant",this,&NPulseLTZone::SetTimeConstant)
+{
+}
+
+NPulseLTZone::~NPulseLTZone(void)
+{
+}
+// --------------------------
+
+// --------------------------
+// Методы управления общедоступными свойствами
+// --------------------------
+// Устанавливает значение постоянной времени
+bool NPulseLTZone::SetTimeConstant(const double &value)
+{
+ if(value <= 0)
+  return false;
+
+ return true;
+}
+// --------------------------
+
+
+// --------------------------
+// Системные методы управления объектом
+// --------------------------
+// Выделяет память для новой чистой копии объекта этого класса
+NPulseLTZone* NPulseLTZone::New(void)
+{
+ return new NPulseLTZone;
+}
+// --------------------------
+
+// --------------------------
+// Методы доступа к компонентам
+// --------------------------
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
+bool NPulseLTZone::CheckComponentType(UEPtr<UContainer> comp) const
+{
+// if(dynamic_cast<const NConnector*>(comp))
+//  return true;
+
+ return false;
+}
+// --------------------------
+
+
+// --------------------------
+// Скрытые методы управления счетом
+// --------------------------
+// Восстановление настроек по умолчанию и сброс процесса счета
+bool NPulseLTZone::ADefault(void)
+{
+ NPulseLTZoneThreshold::ADefault();
+
+ // Начальные значения всем параметрам
+ NumChannelsInGroup=2;
+ TimeConstant=0.005;
+ Threshold=0.00001;
+
+ return true;
+}
+
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
+bool NPulseLTZone::ABuild(void)
+{
+ NPulseLTZoneThreshold::ABuild();
+ return true;
+}
+
+// Сброс процесса счета.
+bool NPulseLTZone::AReset(void)
+{
+ NPulseLTZoneThreshold::AReset();
+ return true;
+}
+
+// Выполняет расчет этого объекта
+bool NPulseLTZone::ACalculate2(void)
+{
+ PrePotential.v+=(NeuralPotential.v-PrePotential.v)/(TimeConstant.v*TimeStep);
+ Potential.v=PrePotential.v;
+ return NPulseLTZoneThreshold::ACalculate2();
 }
 // --------------------------
 
@@ -285,23 +352,23 @@ bool NContinuesLTZone::AReset(void)
 // Выполняет расчет этого объекта
 bool NContinuesLTZone::ACalculate2(void)
 {
- PrePotential.v=tanh(NeuralPotential.v);
+ Potential.v=tanh(NeuralPotential.v);
 
- if(PrePotential.v>=Threshold.v)
+ if(Potential.v>=Threshold.v)
  {
-  Output(0,0)=PrePotential.v;
-  OutputPotential(0,0)=PrePotential.v;
+  Output(0,0)=Potential.v;
+  OutputPotential(0,0)=Potential.v;
   PulseFlag=true;
  }
  else
- if(PrePotential.v<=0)
+ if(Potential.v<=0)
  {
   PulseFlag=false;
   Output(0,0)=0;
-  OutputPotential(0,0)=PrePotential.v;
+  OutputPotential(0,0)=Potential.v;
  }
  else
-  OutputPotential(0,0)=PrePotential.v;
+  OutputPotential(0,0)=Potential.v;
 
  if(MainOwner)
   dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
@@ -390,13 +457,13 @@ bool NPulseSimpleLTZone::AReset(void)
 bool NPulseSimpleLTZone::ACalculate2(void)
 {
  generator.Amplitude=PulseAmplitude;
- if(NeuralPotential.v>MaxFrequency)
-  NeuralPotential.v=MaxFrequency;
- if(NeuralPotential.v>0)
+ if(Potential.v>MaxFrequency)
+  Potential.v=MaxFrequency;
+ if(Potential.v>0)
  {
-  if(fabs(generator.Frequency.v-NeuralPotential.v)>0.001)
+  if(fabs(generator.Frequency.v-Potential.v)>0.001)
   {
-   generator.Frequency=NeuralPotential.v;
+   generator.Frequency=Potential.v;
 //   generator.Reset();
   }
  }
@@ -408,7 +475,7 @@ bool NPulseSimpleLTZone::ACalculate2(void)
 
  Output(0,0)=generator.Output(0,0);
  OutputPotential(0,0)=generator.OutputPotential(0,0);
- OutputFrequency(0,0)=NeuralPotential.v;
+ OutputFrequency(0,0)=Potential.v;
 
  OutputPulseTimes(0,0)=generator.OutputPulseTimes(0,0);
 
@@ -486,8 +553,8 @@ bool NContinuesSimpleLTZone::AReset(void)
 // Выполняет расчет этого объекта
 bool NContinuesSimpleLTZone::ACalculate2(void)
 {
- Output(0,0)=NeuralPotential.v;
- OutputPotential(0,0)=NeuralPotential.v;
+ Output(0,0)=Potential.v;
+ OutputPotential(0,0)=Potential.v;
 
  if(MainOwner)
   dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));

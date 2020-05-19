@@ -269,7 +269,7 @@ bool NPulseSynChannel::AReset(void)
 }
 
 // Выполняет расчет этого объекта
-bool NPulseSynChannel::ACalculate(void)
+bool NPulseSynChannel::ACalculate2(void)
 {
  /*double*/ channel_input=0;
  size_t num_connected_channels=0;
@@ -588,7 +588,7 @@ bool NContinuesSynChannel::AReset(void)
 }
 
 // Выполняет расчет этого объекта
-bool NContinuesSynChannel::ACalculate(void)
+bool NContinuesSynChannel::ACalculate2(void)
 {
  double channel_input=0;
  size_t num_connected_channels=0;

@@ -39,6 +39,10 @@ UPropertyInputCData<MDMatrix<double>,NLTZone, ptInput | ptPubState> Inputs;
 UPropertyOutputData<MDMatrix<double>, NLTZone, ptOutput | ptPubState> Output;
 
 public: // Данные
+/// Потенциал нейрона, сравниваемый с порогом
+ULProperty<double,NLTZone, ptPubState> Potential;
+
+
 /// Нейрон владелец мембраны канала
 NPulseNeuron* Neuron;
 
