@@ -17,7 +17,7 @@ See file license.txt for more information
 #define NPULSE_NEURON_COMMON_H
 
 #include "../../Nmsdk-BasicLib/Core/NNeuron.h"
-#include "NPulseLTZone.h"
+#include "NPulseLTZoneCommon.h"
 #include "../../Nmsdk-SourceLib/Core/NConstGenerator.h"
 #include "NPulseMembraneCommon.h"
 //#include "NAfferentNeuron.h"
@@ -54,7 +54,7 @@ ULProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
 ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
 
 public: // Временные переменные
-RDK::UEPointer<NPulseLTZone,NPulseNeuronCommon> LTZone;
+UEPtr<NLTZone> LTZone;
 
 vector<NPulseMembraneCommon*> Membranes;
 

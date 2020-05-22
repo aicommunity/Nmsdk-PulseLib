@@ -44,7 +44,7 @@ ULProperty<double,NLTZone, ptPubState> Potential;
 
 
 /// Нейрон владелец мембраны канала
-NPulseNeuron* Neuron;
+//NPulseNeuron* Neuron;
 
 protected: // Основные свойства
 

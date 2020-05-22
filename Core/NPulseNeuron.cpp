@@ -376,7 +376,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  bool res(true);
  RDK::ULinkSide item,conn;
 
- ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class, &LTZone);//dynamic_pointer_cast<NLTZone>(Storage->TakeObject(ltzone_class));
+ ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);//dynamic_pointer_cast<NLTZone>(Storage->TakeObject(ltzone_class));
  ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*8,4.67,0));
 
  UEPtr<UNet> gen_pos,gen_neg;

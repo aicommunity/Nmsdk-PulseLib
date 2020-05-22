@@ -263,8 +263,6 @@ bool NPulseMembrane::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseMembrane::ACalculate2(void)
 {
- if(!NPulseMembraneCommon::ACalculate())
-  return false;
  if(!ExcitatoryChannels.empty() && !InhibitoryChannels.empty() && ResetAvailable)
  {
   NPulseChannel *exc_ch=dynamic_cast<NPulseChannel*>(ExcitatoryChannels[0]);

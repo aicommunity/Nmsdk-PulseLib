@@ -17,7 +17,8 @@ See file license.txt for more information
 #define NPULSE_SYNAPSE_STDP_CPP
 
 #include "NPulseSynapseStdp.h"
-#include "NPulseNeuron.h"
+#include "NPulseNeuronCommon.h"
+#include "NPulseLTZoneCommon.h"
 #include "NPulseChannel.h"
 
 namespace NMSDK {
@@ -154,6 +155,9 @@ bool NPulseSynapseStdp::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseSynapseStdp::ACalculate(void)
 {
+ if(!NPulseSynapse::ACalculate())
+  return false;
+
  bool is_input_pulse_active(false);
  bool is_output_pulse_active(false);
 
@@ -173,7 +177,8 @@ bool NPulseSynapseStdp::ACalculate(void)
   if(!MainOwner)
    return true;
 
-  NPulseLTZone* zone=static_pointer_cast<NPulseNeuronCommon>(MainOwner)->LTZone;
+  UEPtr<NPulseNeuronCommon> neuron=dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner);
+  NLTZone* zone=neuron->LTZone;
   if(!zone)
    return true;
 

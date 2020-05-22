@@ -38,9 +38,9 @@ NPulseNeuronCommon::NPulseNeuronCommon(void)
    ActiveNegInputs("ActiveNegInputs",this),
   NumActiveOutputs("NumActiveOutputs",this),
   NumActivePosInputs("NumActivePosInputs",this),
-  NumActiveNegInputs("NumActiveNegInputs",this),
+  NumActiveNegInputs("NumActiveNegInputs",this)//,
 
-  LTZone("LTZone",this)
+ // LTZone("LTZone",this)
 {
  MainOwner=this;
 }
@@ -77,7 +77,7 @@ bool NPulseNeuronCommon::SetUseAverageLTZonePotential(const bool &value)
 // ¬озвращает указатель на модель низкопороговой зоны
 NLTZone* NPulseNeuronCommon::GetLTZone(void)
 {
- return dynamic_pointer_cast<NLTZone>(LTZone.Get());// &(*LTZone);
+ return dynamic_pointer_cast<NLTZone>(LTZone);// &(*LTZone);
 }
 
 // --------------------------
@@ -305,6 +305,15 @@ bool NPulseNeuronCommon::ADefault(void)
 // в случае успешной сборки
 bool NPulseNeuronCommon::ABuild(void)
 {
+ vector<NameT> buffer;
+ GetComponentsNameByClassType<NLTZone>(buffer, this);
+ if(buffer.empty())
+  LTZone=0;
+ else
+ {
+  LTZone=GetComponentL<NLTZone>(buffer[0],true);
+ }
+
  if(LTZone)
   LTZone->UseAveragePotential=UseAverageLTZonePotential;
 

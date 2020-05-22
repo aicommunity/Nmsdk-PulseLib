@@ -34,7 +34,7 @@ NLTZone::NLTZone(void)
    Inputs("Inputs",this),
    Potential("Potential",this)
 {
- Neuron=0;
+ //Neuron=0;
  CachedNumAConnectors=0;
 // AddAlias("DataInput0","Inputs");
 // AddAlias("DataInput1","Inputs");
