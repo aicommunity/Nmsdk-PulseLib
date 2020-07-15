@@ -43,6 +43,7 @@ HEADERS += \
     ../../Core/NPulseSynapse.h \
     ../../Core/NPulseSynapseCommon.h \
     ../../Core/NPulseSynChannel.h \
+    ../../Core/NPulseSynapseStdp.h \
     ../../Core/NReceptor.h
 
 SOURCES += \
@@ -63,4 +64,5 @@ SOURCES += \
     ../../Core/NPulseSynapse.cpp \
     ../../Core/NPulseSynapseCommon.cpp \
     ../../Core/NPulseSynChannel.cpp \
+    ../../Core/NPulseSynapseStdp.cpp \
     ../../Core/NReceptor.cpp
