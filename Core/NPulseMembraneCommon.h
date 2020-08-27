@@ -32,6 +32,10 @@ public: // Данные
 /// Значение обратной связи
 ULProperty<double,NPulseMembraneCommon,ptPubState> Feedback;
 
+/// Суммарное значение потенциала на участке мембраны
+UPropertyOutputData<MDMatrix<double>, NPulseMembraneCommon, ptPubState> SumPotential;
+
+
 protected: // Временные переменные
 // Ионные механизмы
 vector<NPulseChannelCommon*> Channels;

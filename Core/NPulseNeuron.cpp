@@ -47,6 +47,7 @@ NPulseNeuron::NPulseNeuron(void)
 
 NPulseNeuron::~NPulseNeuron(void)
 {
+ Soma.clear();
 }
 // --------------------------
 
@@ -370,7 +371,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
 								  const string &neg_gen_class, int num_soma_membranes,
 								  int dendrite_length, int num_stimulates, int num_arresting)
 {
- UEPtr<UContainer> membr=0,ltmembr=0;
+ UEPtr<NPulseMembraneCommon> membr=0,ltmembr=0;
  UEPtr<NPulseChannelCommon> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
  UEPtr<NLTZone> ltzone;
  bool res(true);
@@ -437,10 +438,12 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  else
   DelComponent("LTMembrane");
 
+ Soma.resize(num_soma_membranes);
  for(int i=0;i<num_soma_membranes;i++)
  {
   membr=AddMissingComponent<NPulseMembrane>(std::string("Soma")+sntoa(i+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
   membr->SetCoord(MVector<double,3>(12.7+dendrite_length*8,4.67+i*2,0));
+  Soma[i]=membr;
 
   channel1=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));
   channel2=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("InhChannel",true));
@@ -561,6 +564,23 @@ bool NPulseNeuron::ACalculate(void)
 {
  if(!NPulseNeuronCommon::ACalculate())
   return false;
+
+ // —читаем суммарный выходной потеницал всех дендритов и участков сомы
+ DendriticSumPotential(0,0)=0;
+ SomaSumPotential(0,0)=0;
+ for(size_t i=0;i<Soma.size();i++)
+ {
+  if(Soma[i])
+  {
+   for(size_t j=0;j<Soma[i]->GetNumChannels();j++)
+   {
+	DendriticSumPotential(0,0)+=Soma[i]->GetChannel(j)->SumChannelInputs(0,0);
+    SomaSumPotential(0,0)+=Soma[i]->GetChannel(j)->Output(0,0);
+   }
+  }
+ }
+
+
 
  return true;
 }

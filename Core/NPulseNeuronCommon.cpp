@@ -36,6 +36,8 @@ NPulseNeuronCommon::NPulseNeuronCommon(void)
    ActiveOutputs("ActiveOutputs",this),
    ActivePosInputs("ActivePosInputs",this),
    ActiveNegInputs("ActiveNegInputs",this),
+   DendriticSumPotential("DendriticSumPotential",this),
+   SomaSumPotential("SomaSumPotential",this),
   NumActiveOutputs("NumActiveOutputs",this),
   NumActivePosInputs("NumActivePosInputs",this),
   NumActiveNegInputs("NumActiveNegInputs",this)//,
@@ -296,6 +298,9 @@ bool NPulseNeuronCommon::ADefault(void)
  ActiveOutputs.Assign(1,1,0.0);
  ActivePosInputs.Assign(1,1,0.0);
  ActiveNegInputs.Assign(1,1,0.0);
+
+ DendriticSumPotential.Assign(1,1,0.0);
+ SomaSumPotential.Assign(1,1,0.0);
  return true;
 }
 
@@ -332,6 +337,9 @@ bool NPulseNeuronCommon::AReset(void)
  // Число связей организованных другими нейронами на этом
  NumActivePosInputs=0;
  NumActiveNegInputs=0;
+
+ DendriticSumPotential.ToZero();
+ SomaSumPotential.ToZero();
 
  return true;
 }

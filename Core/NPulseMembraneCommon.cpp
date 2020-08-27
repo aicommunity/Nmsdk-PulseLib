@@ -27,7 +27,8 @@ namespace NMSDK {
 // --------------------------
 NPulseMembraneCommon::NPulseMembraneCommon(void)
  : UseAveragePotential("UseAveragePotential",this,&NPulseMembraneCommon::SetUseAveragePotential),
-  Feedback("Feedback",this)
+  Feedback("Feedback",this),
+  SumPotential("SumPotential",this)
 {
 }
 
@@ -155,6 +156,7 @@ bool NPulseMembraneCommon::ADelComponent(UEPtr<UContainer> comp)
 bool NPulseMembraneCommon::ADefault(void)
 {
  UseAveragePotential=true;
+ SumPotential->Assign(1,1,0.0);
  return true;
 }
 
@@ -175,6 +177,7 @@ bool NPulseMembraneCommon::AReset(void)
 {
  Feedback=0;
  IsNeuronActive=false;
+ SumPotential->ToZero();
  return true;
 }
 
@@ -195,6 +198,9 @@ bool NPulseMembraneCommon::ACalculate(void)
  if(IsNeuronActive && Feedback<=0)
   IsNeuronActive=false;
 
+  for(size_t i=0;i<Channels.size();i++)
+   if(Channels[i])
+    SumPotential(0,0)+=Channels[i]->Output(0,0);
  return true;
 }
 

@@ -69,6 +69,8 @@ ULProperty<int, NPulseNeuron, ptPubParameter> NumDendriteMembraneParts;
 protected:
 NConstGenerator *PosGenerator,*NegGenerator;
 
+vector<UEPtr<NPulseMembraneCommon> > Soma;
+
 // Старые значения количества участков сомы и дендритов
 int OldNumDendrited, OldNumSoma;
 

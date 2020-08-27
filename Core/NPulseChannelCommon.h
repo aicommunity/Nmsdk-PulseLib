@@ -44,6 +44,10 @@ UPropertyInputCData<MDMatrix<double>, NPulseChannelCommon, ptInput | ptPubState>
 /// Выходное влияние синапса на мембрану
 UPropertyOutputData<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> Output;
 
+/// Суммарное входное влияние от каналов всех предыдущих участков мембраны
+/// (всех, т.к. возможно ветвление)
+UPropertyOutputData<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> SumChannelInputs;
+
 public: // Временные переменные
 /// Признак активации нейрона-владельца (сбрасывается автоматически немедленно
 /// по завершении текущей итерации счета).

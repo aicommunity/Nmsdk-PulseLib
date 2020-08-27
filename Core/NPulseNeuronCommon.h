@@ -43,6 +43,12 @@ UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> A
 /// Число тормозных связей организованных другими нейронами на этом
 UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveNegInputs;
 
+/// Суммарный мембранный потенциал на дендритах
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> DendriticSumPotential;
+
+/// Суммарный мембранный потенциал на соме
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> SomaSumPotential;
+
 public: // Статистика
 /// Число связей организованных этим нейроном на других (и себе)
 ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;

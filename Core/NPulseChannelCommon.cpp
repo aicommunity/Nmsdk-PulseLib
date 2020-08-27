@@ -32,6 +32,7 @@ NPulseChannelCommon::NPulseChannelCommon(void)
    ChannelInputs("ChannelInputs",this),
    SynapticInputs("SynapticInputs",this),
    Output("Output",this),
+   SumChannelInputs("SumChannelInputs",this),
    IsNeuronActivated("IsNeuronActivated",this)
 {
 }
@@ -132,6 +133,7 @@ bool NPulseChannelCommon::ADefault(void)
  UseAveragePotential=true;
  UseAverageSynapsis=true;
  Output.Assign(1,1,0.0);
+ SumChannelInputs.Assign(1,1,0.0);
 
  return true;
 }
@@ -149,6 +151,7 @@ bool NPulseChannelCommon::ABuild(void)
 bool NPulseChannelCommon::AReset(void)
 {
  Output.ToZero();
+ SumChannelInputs.ToZero();
  IsNeuronActivated=false;
 
  return true;
