@@ -157,7 +157,7 @@ bool NPac::ACalculate(void)
  if(Inputs->size()>0)
  {
   min_input_data_size=Inputs[0]->GetCols();
-  for(int i=1;i<NumInputs;i++)
+  for(int i=1;i<Inputs->size();i++)
    if(min_input_data_size>Inputs[i]->GetCols())
 	min_input_data_size=Inputs[i]->GetCols();
  }
