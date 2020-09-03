@@ -201,9 +201,11 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
  for(int k=0;k<size;k++)
  {
   UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(dendrite->GetComponentByIndex(k));
+  if(!channel)
+	continue;
   UEPtr<NPulseChannelCommon> new_channel=dynamic_pointer_cast<NPulseChannelCommon>(new_dendrite->GetComponentL(channel->GetName(),true));
-  if(!channel || !new_channel)
-   continue;
+  if(!new_channel)
+  	continue;
  /* for(int i=0;i<channel->Output. ;i++)
   {
    NPulseSynapseCommon* synapse=dynamic_cast<NPulseSynapseCommon*>(channel->Inputs.GetItem(i));
@@ -239,7 +241,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
  //UEPtr<NPulseMembrane> membrane=static_pointer_cast<NPulseMembrane>(cont);
  for(size_t k=0;k<new_dendrite->GetNumNegChannels();k++)
  {
-  res&=CreateLink(PosGenerator->GetLongName(this),"Output",new_dendrite->GetNegChannel(k)->GetLongName(this),"Inputs");
+  res&=CreateLink(PosGenerator->GetLongName(this),"Output",new_dendrite->GetNegChannel(k)->GetLongName(this),"SynapticInputs");
  /* item.Id=PosGenerator->GetLongName(this);
   item.Index=0;
   conn.Id=membrane->GetNegChannel(k)->GetLongId(this);
@@ -249,7 +251,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
 
  for(size_t k=0;k<new_dendrite->GetNumPosChannels();k++)
  {
-  res&=CreateLink(NegGenerator->GetLongName(this),"Output",new_dendrite->GetPosChannel(k)->GetLongName(this),"Inputs");
+  res&=CreateLink(NegGenerator->GetLongName(this),"Output",new_dendrite->GetPosChannel(k)->GetLongName(this),"SynapticInputs");
  /*
   item.Id=NegGenerator->GetLongId(this);
   item.Index=0;
@@ -531,9 +533,6 @@ bool NPulseNeuron::ADefault(void)
 // в случае успешной сборки
 bool NPulseNeuron::ABuild(void)
 {
- if(!NPulseNeuronCommon::ABuild())
-  return false;
-
  if(StructureBuildMode>0)
  {
   bool res=BuildStructure(MembraneClassName, LTMembraneClassName, LTZoneClassName,
@@ -547,6 +546,10 @@ bool NPulseNeuron::ABuild(void)
 
  OldNumDendrited=0;
  OldNumSoma=0;
+
+ if(!NPulseNeuronCommon::ABuild())
+  return false;
+
  return true;
 }
 

@@ -326,7 +326,7 @@ bool NPulseSynChannel::ACalculate2(void)
  }
  NumConnectedSynapsis=num_connected_synapsis;
 
- if(UseAveragePotential)
+ if(UseAveragePotential && num_connected_channels>0)
   channel_input/=num_connected_channels;
  SumChannelInputs(0,0)=channel_input;
 
@@ -651,7 +651,7 @@ bool NContinuesSynChannel::ACalculate2(void)
  }
  NumConnectedSynapsis=num_connected_synapsis;
 
- if(UseAveragePotential)
+ if(UseAveragePotential && num_connected_channels>0)
   channel_input/=num_connected_channels;
  SumChannelInputs(0,0)=channel_input;
 

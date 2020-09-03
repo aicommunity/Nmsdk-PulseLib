@@ -237,7 +237,7 @@ bool NPulseChannel::ACalculate2(void)
 	channel_input+=*data;
   }
 
-  if(UseAveragePotential)
+  if(UseAveragePotential && full_inp_data_size>0)
    channel_input/=full_inp_data_size;
  }
  SumChannelInputs(0,0)=channel_input;
