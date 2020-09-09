@@ -131,7 +131,7 @@ bool NPulseChannelCommon::ADefault(void)
 {
  Type=0;
  UseAveragePotential=true;
- UseAverageSynapsis=true;
+ UseAverageSynapsis=false;
  Output.Assign(1,1,0.0);
  SumChannelInputs.Assign(1,1,0.0);
 
