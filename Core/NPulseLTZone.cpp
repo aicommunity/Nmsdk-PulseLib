@@ -97,6 +97,10 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
  double current_time=GetTime().GetDoubleTime();
  if(CheckPulseOn())
  {
+  // ----> ÎÒËÀÄÊÀ
+  double eee = PulseAmplitude.v;
+  // < ----
+
   Output(0,0)=PulseAmplitude.v;
   OutputPotential(0,0)=PulseAmplitude.v;
   if(!PulseFlag)

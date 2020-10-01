@@ -211,7 +211,7 @@ bool NPulseLTZoneCommon::AReset(void)
 }
 
 // Выполняет расчет этого объекта
-bool NPulseLTZoneCommon::ACalculate(void)
+	bool NPulseLTZoneCommon::ACalculate(void)
 {
  // расчет на шаге
  NeuralPotential=0;
