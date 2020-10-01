@@ -98,7 +98,7 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
  if(CheckPulseOn())
  {
   // ----> ÎÒËÀÄÊÀ
-  double eee = PulseAmplitude.v;
+  //double eee = Potential.v;
   // < ----
 
   Output(0,0)=PulseAmplitude.v;

@@ -211,7 +211,7 @@ bool NPulseLTZoneCommon::AReset(void)
 }
 
 // Выполняет расчет этого объекта
-	bool NPulseLTZoneCommon::ACalculate(void)
+bool NPulseLTZoneCommon::ACalculate(void)
 {
  // расчет на шаге
  NeuralPotential=0;
@@ -225,7 +225,16 @@ bool NPulseLTZoneCommon::AReset(void)
    {
 	double *data=Inputs[i]->Data;
 	for(size_t j=0;j<inpsize;j++,++data)
+	{
+	 // -----> ОТЛАДКА
+	 //double eee = *data;
+	 // <-----
 	 NeuralPotential.v+=*data;
+	 // -----> ОТЛАДКА
+	 //double eеee = NeuralPotential.v;
+     //int ttt = 0;
+	 // <-----
+	}
    }
   }
   if(UseAveragePotential)
