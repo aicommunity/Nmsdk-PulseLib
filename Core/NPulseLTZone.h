@@ -47,9 +47,13 @@ virtual NPulseLTZoneThreshold* New(void);
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+
+/// Возвращает true если условие для генерации импульса выполнено
+virtual bool CheckPulseOn(void);
+
+/// Возвращает true если условие для генерации имульса не выполнено
+virtual bool CheckPulseOff(void);
 // --------------------------
-
-
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
@@ -69,11 +73,7 @@ virtual bool AReset(void);
 // Выполняет расчет этого объекта
 virtual bool ACalculate2(void);
 
-/// Возвращает true если условие для генерации импульса выполнено
-virtual bool CheckPulseOn(void);
 
-/// Возвращает true если условие для генерации имульса не выполнено
-virtual bool CheckPulseOff(void);
 // --------------------------
 };
 
