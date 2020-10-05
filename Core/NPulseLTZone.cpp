@@ -179,7 +179,8 @@ bool NPulseLTZoneThreshold::CheckPulseOff(void)
 // Конструкторы и деструкторы
 // --------------------------
 NPulseLTZone::NPulseLTZone(void)
- : TimeConstant("TimeConstant",this,&NPulseLTZone::SetTimeConstant)
+ : TimeConstant("TimeConstant",this,&NPulseLTZone::SetTimeConstant),
+  UseLTZIntegtation("UseLTZIntegtation",this,&NPulseLTZone::SetLTZIntegtation)
 {
 }
 
@@ -197,6 +198,11 @@ bool NPulseLTZone::SetTimeConstant(const double &value)
  if(value <= 0)
   return false;
 
+ return true;
+}
+// Устанавливает признак необходимости интеграции в LTZ
+bool NPulseLTZone::SetLTZIntegtation(const bool &value)
+{
  return true;
 }
 // --------------------------
@@ -241,6 +247,7 @@ bool NPulseLTZone::ADefault(void)
  NumChannelsInGroup=2;
  TimeConstant=0.005;
  Threshold=0.00001;
+ UseLTZIntegtation = false;
 
  return true;
 }
@@ -265,7 +272,10 @@ bool NPulseLTZone::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseLTZone::ACalculate2(void)
 {
- PrePotential.v+=(NeuralPotential.v-PrePotential.v)/(TimeConstant.v*TimeStep);
+ if(UseLTZIntegtation)
+	PrePotential.v+=(NeuralPotential.v-PrePotential.v)/(TimeConstant.v*TimeStep);
+ else
+    PrePotential.v = NeuralPotential.v;
  Potential.v=PrePotential.v;
  return NPulseLTZoneThreshold::ACalculate2();
 }

@@ -83,6 +83,8 @@ class RDK_LIB_TYPE NPulseLTZone: public NPulseLTZoneThreshold
 public: // Общедоступные свойства
 /// Постоянная времени
 ULProperty<double,NPulseLTZone, ptPubParameter> TimeConstant;
+/// Признак необходимости интеграции в LTZ
+ULProperty<bool, NPulseLTZone, ptPubParameter> UseLTZIntegtation;
 
 public: // Методы
 // --------------------------
@@ -97,6 +99,8 @@ virtual ~NPulseLTZone(void);
 // --------------------------
 // Устанавливает значение постоянной времени
 bool SetTimeConstant(const double &value);
+// Устанавливает признак необходимости интеграции в LTZ
+bool SetLTZIntegtation(const bool &value);
 // --------------------------
 
 // --------------------------
