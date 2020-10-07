@@ -247,7 +247,7 @@ bool NPulseLTZone::ADefault(void)
  NumChannelsInGroup=2;
  TimeConstant=0.005;
  Threshold=0.00001;
- UseLTZIntegtation = false;
+ UseLTZIntegtation = true;
 
  return true;
 }
