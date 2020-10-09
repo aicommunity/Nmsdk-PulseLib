@@ -66,6 +66,17 @@ ULProperty<int, NPulseNeuron, ptPubParameter> NumSomaMembraneParts;
 /// Число участков мембраны дендритов (исключая участок тела)
 ULProperty<int, NPulseNeuron, ptPubParameter> NumDendriteMembraneParts;
 
+/// Паттерн, которому обучен нейрон
+/// (если нейрон не обучен Size = 0)
+/// НАЗНАЯАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+ULProperty<MDMatrix<double>, NPulseNeuron, ptPubParameter> TrainingPattern;
+
+/// Индексы входных участков на дендритах
+/// (если нейрон не обучен Size = 0)
+/// НАЗНАЯАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+ULProperty<MDMatrix<int>, NPulseNeuron, ptPubParameter> TrainingDendIndexes;
+
+
 protected:
 NConstGenerator *PosGenerator,*NegGenerator;
 
@@ -108,6 +119,12 @@ bool SetNumSomaMembraneParts(const int &value);
 
 /// Число участков мембраны дендритов (исключая участок тела)
 bool SetNumDendriteMembraneParts(const int &value);
+
+/// Паттерн, которому обучен нейрон
+bool SetTrainingPattern(const MDMatrix<double> &value);
+
+/// Индексы входных участков на дендритах
+bool SetTrainingDendIndexes(const MDMatrix<int> &value);
 // --------------------------
 
 // --------------------------

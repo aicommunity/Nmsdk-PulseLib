@@ -37,7 +37,9 @@ NPulseNeuron::NPulseNeuron(void)
   ExcGeneratorClassName("ExcGeneratorClassName",this,&NPulseNeuron::SetExcGeneratorClassName),
   InhGeneratorClassName("InhGeneratorClassName",this,&NPulseNeuron::SetInhGeneratorClassName),
   NumSomaMembraneParts("NumSomaMembraneParts",this,&NPulseNeuron::SetNumSomaMembraneParts),
-  NumDendriteMembraneParts("NumDendriteMembraneParts",this,&NPulseNeuron::SetNumDendriteMembraneParts)
+  NumDendriteMembraneParts("NumDendriteMembraneParts",this,&NPulseNeuron::SetNumDendriteMembraneParts),
+  TrainingPattern("TrainingPattern",this,&NPulseNeuron::SetTrainingPattern),
+  TrainingDendIndexes("TrainingDendIndexes",this,&NPulseNeuron::SetTrainingDendIndexes)
 {
  PosGenerator=0;
  NegGenerator=0;
@@ -138,6 +140,22 @@ bool NPulseNeuron::SetNumDendriteMembraneParts(const int &value)
 {
  OldNumDendrited=NumDendriteMembraneParts;
  Ready=false;
+ return true;
+}
+
+/// Паттерн, которому обучен нейрон
+/// (если нейрон не обучен Size = 0)
+/// НАЗНАЯАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+bool NPulseNeuron::SetTrainingPattern(const MDMatrix<double> &value)
+{
+ return true;
+}
+
+/// Индексы входных участков на дендритах
+/// (если нейрон не обучен Size = 0)
+/// НАЗНАЯАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+bool NPulseNeuron::SetTrainingDendIndexes(const MDMatrix<int> &value)
+{
  return true;
 }
 // --------------------------
@@ -523,6 +541,8 @@ bool NPulseNeuron::ADefault(void)
  InhGeneratorClassName="NPNeuronNegCGenerator";
  NumSomaMembraneParts=1;
  NumDendriteMembraneParts=0;
+ TrainingPattern.Resize(0,0);
+ TrainingDendIndexes.Resize(0,0);
 
  return true;
 }
