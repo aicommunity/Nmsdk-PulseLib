@@ -29,19 +29,21 @@ public: // Параметры
 /// (В режимах >1) осуществляется автомтический выбор классов участков мембраны и низкопороговой зоны
 /// 0 - автоматическая сборка не производится
 /// 1 - автоматическая сборка производится с заданными вручную параметрами
-/// 2 - сборка классической модели без выделенного участка мембраны для генераторной зоны
+/// 2 - автоматическая сборка с заданными вручную параметрами и дендритами заданной длины
+
 /// 3 - сборка классической модели без выделенного участка мембраны для генераторной зоны
+/// 4 - сборка классической модели без выделенного участка мембраны для генераторной зоны
 /// и встроенными синапсами
-/// 4 - сборка модели с выделенным участком мембраны для генераторной зоны
 /// 5 - сборка модели с выделенным участком мембраны для генераторной зоны
+/// 6 - сборка модели с выделенным участком мембраны для генераторной зоны
 /// и встроенными синапсами
-/// 6 - сборка классической модели без выделенного участка мембраны для генераторной зоны
+/// 7 - сборка классической модели без выделенного участка мембраны для генераторной зоны
 /// и дендритами заданной длины
-/// 7 - сборка классической модели без выделенного участка мембраны для генераторной зоны,
+/// 8 - сборка классической модели без выделенного участка мембраны для генераторной зоны,
 /// дендритами заданной длины и встроенными синапсами
-/// 8 - сборка модели с выделенным участком мембраны для генераторной зоны,
-/// и дендритами заданной длины
 /// 9 - сборка модели с выделенным участком мембраны для генераторной зоны,
+/// и дендритами заданной длины
+/// 10 - сборка модели с выделенным участком мембраны для генераторной зоны,
 /// встроенными синапсами и дендритами заданной длины
 ULProperty<int,NPulseNeuron, ptPubParameter> StructureBuildMode;
 
@@ -66,6 +68,9 @@ ULProperty<int, NPulseNeuron, ptPubParameter> NumSomaMembraneParts;
 /// Число участков мембраны дендритов (исключая участок тела)
 ULProperty<int, NPulseNeuron, ptPubParameter> NumDendriteMembraneParts;
 
+/// Число участков мембраны дендритов (исключая участок тела)
+ULProperty<std::vector<int>, NPulseNeuron, ptPubParameter> NumDendriteMembranePartsVec;
+
 /// Паттерн, которому обучен нейрон
 /// (если нейрон не обучен Size = 0)
 /// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
@@ -88,7 +93,9 @@ NConstGenerator *PosGenerator,*NegGenerator;
 vector<UEPtr<NPulseMembraneCommon> > Soma;
 
 // Старые значения количества участков сомы и дендритов
-int OldNumDendrited, OldNumSoma;
+int OldNumDendrites, OldNumSoma;
+
+vector<int> OldNumDendritesVec;
 
 public: // Методы
 // --------------------------
@@ -124,6 +131,9 @@ bool SetNumSomaMembraneParts(const int &value);
 
 /// Число участков мембраны дендритов (исключая участок тела)
 bool SetNumDendriteMembraneParts(const int &value);
+
+/// Число участков мембраны дендритов (исключая участок тела)
+bool SetNumDendriteMembranePartsVec(const std::vector<int> &value);
 
 /// Паттерн, которому обучен нейрон
 bool SetTrainingPattern(const MDMatrix<double> &value);
@@ -208,10 +218,14 @@ virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 protected:
 /// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+/// dendrite_mode принимает 2 значения:
+/// 1 - все дендриты имеют одинаковую длину (используется dendrite_length)
+/// 2 - все дендриты имеют свою длину (используется dendrite_length_vec, dendrite_length
+/// меняется внутри и хранит максимальную длину)
 bool BuildStructure(const string &membraneclass, const string &ltzonemembraneclass,
 					const string &ltzone_class, const string &pos_gen_class,
-					const string &neg_gen_class, int num_soma_membranes,
-					int dendrite_length, int num_stimulates, int num_arresting);
+					const string &neg_gen_class, int num_soma_membranes, int dendrite_mode,
+					int dendrite_length, const vector<int> &dendrite_length_vec, int num_stimulates, int num_arresting);
 
 // Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
