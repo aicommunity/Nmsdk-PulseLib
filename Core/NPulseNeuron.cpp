@@ -39,7 +39,8 @@ NPulseNeuron::NPulseNeuron(void)
   NumSomaMembraneParts("NumSomaMembraneParts",this,&NPulseNeuron::SetNumSomaMembraneParts),
   NumDendriteMembraneParts("NumDendriteMembraneParts",this,&NPulseNeuron::SetNumDendriteMembraneParts),
   TrainingPattern("TrainingPattern",this,&NPulseNeuron::SetTrainingPattern),
-  TrainingDendIndexes("TrainingDendIndexes",this,&NPulseNeuron::SetTrainingDendIndexes)
+  TrainingDendIndexes("TrainingDendIndexes",this,&NPulseNeuron::SetTrainingDendIndexes),
+  TrainingSynapsisNum("TrainingSynapsisNum",this,&NPulseNeuron::SetTrainingSynapsisNum)
 {
  PosGenerator=0;
  NegGenerator=0;
@@ -145,7 +146,7 @@ bool NPulseNeuron::SetNumDendriteMembraneParts(const int &value)
 
 /// Паттерн, которому обучен нейрон
 /// (если нейрон не обучен Size = 0)
-/// НАЗНАЯАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+/// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
 bool NPulseNeuron::SetTrainingPattern(const MDMatrix<double> &value)
 {
  return true;
@@ -153,8 +154,16 @@ bool NPulseNeuron::SetTrainingPattern(const MDMatrix<double> &value)
 
 /// Индексы входных участков на дендритах
 /// (если нейрон не обучен Size = 0)
-/// НАЗНАЯАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+/// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
 bool NPulseNeuron::SetTrainingDendIndexes(const MDMatrix<int> &value)
+{
+ return true;
+}
+
+/// Количество синапсов на входных участков на дендритах
+/// (если нейрон не обучен Size = 0)
+/// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+bool NPulseNeuron::SetTrainingSynapsisNum(const MDMatrix<int> &value)
 {
  return true;
 }
@@ -543,6 +552,7 @@ bool NPulseNeuron::ADefault(void)
  NumDendriteMembraneParts=0;
  TrainingPattern.Resize(0,0);
  TrainingDendIndexes.Resize(0,0);
+ TrainingSynapsisNum.Resize(0,0);
 
  return true;
 }

@@ -68,13 +68,18 @@ ULProperty<int, NPulseNeuron, ptPubParameter> NumDendriteMembraneParts;
 
 /// Паттерн, которому обучен нейрон
 /// (если нейрон не обучен Size = 0)
-/// НАЗНАЯАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+/// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
 ULProperty<MDMatrix<double>, NPulseNeuron, ptPubParameter> TrainingPattern;
 
 /// Индексы входных участков на дендритах
 /// (если нейрон не обучен Size = 0)
-/// НАЗНАЯАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+/// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
 ULProperty<MDMatrix<int>, NPulseNeuron, ptPubParameter> TrainingDendIndexes;
+
+/// Количество синапсов на входных участков на дендритах
+/// (если нейрон не обучен Size = 0)
+/// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+ULProperty<MDMatrix<int>, NPulseNeuron, ptPubParameter> TrainingSynapsisNum;
 
 
 protected:
@@ -125,6 +130,9 @@ bool SetTrainingPattern(const MDMatrix<double> &value);
 
 /// Индексы входных участков на дендритах
 bool SetTrainingDendIndexes(const MDMatrix<int> &value);
+
+/// Количество синапсов на входных участков на дендритах
+bool SetTrainingSynapsisNum(const MDMatrix<int> &value);
 // --------------------------
 
 // --------------------------
