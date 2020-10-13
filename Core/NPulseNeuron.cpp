@@ -608,7 +608,7 @@ bool NPulseNeuron::ADefault(void)
  if(!NPulseNeuronCommon::ADefault())
   return false;
 
- StructureBuildMode=1;
+ StructureBuildMode=2;
  MembraneClassName="NPMembrane";
  LTMembraneClassName="NPLTZoneNeuronMembrane";
  LTZoneClassName="NPLTZone";
