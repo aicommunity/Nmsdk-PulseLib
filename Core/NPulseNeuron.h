@@ -97,6 +97,8 @@ int OldNumDendrites, OldNumSoma;
 
 vector<int> OldNumDendritesVec;
 
+int OldStructureBuildMode;
+
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы

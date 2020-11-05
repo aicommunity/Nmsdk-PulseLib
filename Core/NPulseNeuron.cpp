@@ -47,6 +47,7 @@ NPulseNeuron::NPulseNeuron(void)
  NegGenerator=0;
  MainOwner=this;
  OldNumDendrites=OldNumSoma=0;
+ OldStructureBuildMode=0;
 }
 
 NPulseNeuron::~NPulseNeuron(void)
@@ -90,6 +91,7 @@ bool NPulseNeuron::SetStructureBuildMode(const int &value)
 {
  if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
  {
+  OldStructureBuildMode=StructureBuildMode;
   Ready=false;
 
   if(value == 2)
@@ -438,9 +440,9 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
    if(dendrite_length<dendrite_length_vec[i])
 	dendrite_length=dendrite_length_vec[i];
 
-  if(int(OldNumDendritesVec.size()) != NumSomaMembraneParts)
+  if(int(OldNumDendritesVec.size()) != std::max(OldNumSoma, num_soma_membranes))
   {
-   OldNumDendritesVec.resize(NumSomaMembraneParts,0);
+   OldNumDendritesVec.resize(std::max(OldNumSoma, num_soma_membranes),0);
   }
  }
 
@@ -653,6 +655,7 @@ bool NPulseNeuron::ABuild(void)
 
  OldNumDendrites=0;
  OldNumSoma=0;
+ OldStructureBuildMode=0;
 
  if(!NPulseNeuronCommon::ABuild())
   return false;
