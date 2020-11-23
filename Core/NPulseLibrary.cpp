@@ -136,7 +136,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPLTChannel"));
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
- UploadClass("NPLTInhChannel",ch_pos);
+ UploadClass("NPLTInhChannel",ch_neg);
 
  ch=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynChannel"));
  ch->Capacity=1e-8;
