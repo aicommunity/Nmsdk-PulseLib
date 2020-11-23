@@ -16,6 +16,9 @@ See file license.txt for more information
 #ifndef NPULSE_NEURON_CPP
 #define NPULSE_NEURON_CPP
 
+#define NOMINMAX
+
+#include <algorithm>
 #include "NPulseNeuron.h"
 #include "NPulseMembrane.h"
 #include "NPulseLTZone.h"
@@ -482,14 +485,17 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   int current_num_dendrite_parts(0), old_num_dendrite_parts(0);
   if(OldStructureBuildMode == 1)
   {
-   current_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+   if(int(NumDendriteMembranePartsVec.size())>i)
+    current_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+
    old_num_dendrite_parts=NumDendriteMembraneParts;
   }
   else
   if(OldStructureBuildMode == 2)
   {
    current_num_dendrite_parts=NumDendriteMembraneParts;
-   old_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+   if(int(NumDendriteMembranePartsVec.size())>i)
+    old_num_dendrite_parts=NumDendriteMembranePartsVec[i];
   }
   else
   if(dendrite_mode == 1)
@@ -499,7 +505,8 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   }
   else
   {
-   current_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+   if(int(NumDendriteMembranePartsVec.size())>i)
+    current_num_dendrite_parts=NumDendriteMembranePartsVec[i];
    old_num_dendrite_parts=OldNumDendritesVec[i];
   }
 
@@ -513,14 +520,17 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   int current_num_dendrite_parts(0), old_num_dendrite_parts(0);
   if(OldStructureBuildMode == 1)
   {
-   current_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+   if(int(NumDendriteMembranePartsVec.size())>i)
+    current_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+
    old_num_dendrite_parts=NumDendriteMembraneParts;
   }
   else
   if(OldStructureBuildMode == 2)
   {
    current_num_dendrite_parts=NumDendriteMembraneParts;
-   old_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+   if(int(NumDendriteMembranePartsVec.size())>i)
+    old_num_dendrite_parts=NumDendriteMembranePartsVec[i];
   }
   else
   if(dendrite_mode == 1)
@@ -530,7 +540,8 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   }
   else
   {
-   current_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+   if(int(NumDendriteMembranePartsVec.size())>i)
+    current_num_dendrite_parts=NumDendriteMembranePartsVec[i];
    old_num_dendrite_parts=OldNumDendritesVec[i];
   }
 
