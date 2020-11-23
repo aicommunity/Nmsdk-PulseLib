@@ -98,12 +98,19 @@ bool NPulseNeuron::SetStructureBuildMode(const int &value)
   {
    ChangeLookupPropertyType("NumDendriteMembraneParts",ptState);
    ChangeLookupPropertyType("NumDendriteMembranePartsVec",ptPubParameter);
-   NumDendriteMembranePartsVec->assign(NumSomaMembraneParts,0);
+   std::vector<int> vecs;
+   vecs.assign(NumSomaMembraneParts.v,NumDendriteMembraneParts.v);
+   NumDendriteMembranePartsVec=vecs;
   }
   else
   {
    ChangeLookupPropertyType("NumDendriteMembraneParts",ptPubParameter);
    ChangeLookupPropertyType("NumDendriteMembranePartsVec",ptState);
+
+   if(!NumDendriteMembranePartsVec.empty())
+	NumDendriteMembraneParts=NumDendriteMembranePartsVec[0];
+   else
+    NumDendriteMembraneParts=0;
   }
  }
  return true;
@@ -473,6 +480,18 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   DelComponent(std::string("Soma")+sntoa(i+1));
 
   int current_num_dendrite_parts(0), old_num_dendrite_parts(0);
+  if(OldStructureBuildMode == 1)
+  {
+   current_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+   old_num_dendrite_parts=NumDendriteMembraneParts;
+  }
+  else
+  if(OldStructureBuildMode == 2)
+  {
+   current_num_dendrite_parts=NumDendriteMembraneParts;
+   old_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+  }
+  else
   if(dendrite_mode == 1)
   {
    current_num_dendrite_parts=NumDendriteMembraneParts;
@@ -492,6 +511,18 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  for(int i=0;i<num_soma;i++)
  {
   int current_num_dendrite_parts(0), old_num_dendrite_parts(0);
+  if(OldStructureBuildMode == 1)
+  {
+   current_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+   old_num_dendrite_parts=NumDendriteMembraneParts;
+  }
+  else
+  if(OldStructureBuildMode == 2)
+  {
+   current_num_dendrite_parts=NumDendriteMembraneParts;
+   old_num_dendrite_parts=NumDendriteMembranePartsVec[i];
+  }
+  else
   if(dendrite_mode == 1)
   {
    current_num_dendrite_parts=NumDendriteMembraneParts;
