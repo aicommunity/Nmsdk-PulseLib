@@ -31,6 +31,7 @@ NPulseSynapse::NPulseSynapse(void)
 : SecretionTC("SecretionTC",this,&NPulseSynapse::SetSecretionTC),
   DissociationTC("DissociationTC",this,&NPulseSynapse::SetDissociationTC),
   InhibitionCoeff("InhibitionCoeff",this,&NPulseSynapse::SetInhibitionCoeff),
+  UsePresynapticInhibition("UsePresynapticInhibition",this,&NPulseSynapse::SetUsePresynapticInhibition),
   Input("Input",this)
 {
  VSecretionTC=1;
@@ -97,10 +98,22 @@ bool NPulseSynapse::SetResistance(const double &value)
  if(value<=0)
   return false;
 
- if(InhibitionCoeff.v>0)
+ if(InhibitionCoeff.v>0 && UsePresynapticInhibition)
   OutputConstData=4.0*InhibitionCoeff.v/value;
  else
   OutputConstData=1.0/value;
+
+ return true;
+}
+
+
+// Задание флага включения пресинаптического торомжения
+bool NPulseSynapse::SetUsePresynapticInhibition(const bool &value)
+{
+ if(InhibitionCoeff.v>0 && value)
+  OutputConstData=4.0*InhibitionCoeff.v/Resistance;
+ else
+  OutputConstData=1.0/Resistance;
 
  return true;
 }
@@ -140,6 +153,8 @@ bool NPulseSynapse::ADefault(void)
 
  // Вес (эффективность синапса) синапса
  Resistance=1.0e8;
+
+ UsePresynapticInhibition=false;
 
  return true;
 }
@@ -190,8 +205,10 @@ bool NPulseSynapse::ACalculate(void)
  else
   PreOutput.v-=PreOutput.v/VDissociationTC;
 
- Output(0,0)=OutputConstData*
-						(1.0-InhibitionCoeff.v*PreOutput.v)*PreOutput.v;
+ if(UsePresynapticInhibition)
+  Output(0,0)=OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v)*PreOutput.v;
+ else
+  Output(0,0)=OutputConstData*PreOutput.v;
 
  if(Output(0,0)<0)
   Output(0,0)=0;

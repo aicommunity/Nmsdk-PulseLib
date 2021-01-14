@@ -33,6 +33,9 @@ ULProperty<double,NPulseSynapse, ptPubParameter> DissociationTC;
 /// Коэффициент пресинаптического торможения
 ULProperty<double,NPulseSynapse, ptPubParameter> InhibitionCoeff;
 
+/// Флаг включения пресинаптического торможения
+ULProperty<bool,NPulseSynapse, ptPubParameter> UsePresynapticInhibition;
+
 public: // Входы и выходы
 /// Входной сигнал с нейрона
 UPropertyInputData<MDMatrix<double>, NPulseSynapse, ptInput | ptPubState> Input;
@@ -69,6 +72,9 @@ bool SetDissociationTC(const double &value);
 
 // Коэффициент пресинаптического торможения
 bool SetInhibitionCoeff(const double &value);
+
+// Задание флага включения пресинаптического торомжения
+bool SetUsePresynapticInhibition(const bool &value);
 
 // Вес (эффективность синапса) синапса
 bool SetResistance(const double &value);
