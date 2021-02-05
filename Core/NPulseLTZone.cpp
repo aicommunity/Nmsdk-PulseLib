@@ -180,7 +180,8 @@ bool NPulseLTZoneThreshold::CheckPulseOff(void)
 // --------------------------
 NPulseLTZone::NPulseLTZone(void)
  : TimeConstant("TimeConstant",this,&NPulseLTZone::SetTimeConstant),
-  UseLTZIntegtation("UseLTZIntegtation",this,&NPulseLTZone::SetLTZIntegtation)
+  UseLTZIntegtation("UseLTZIntegtation",this,&NPulseLTZone::SetLTZIntegtation),
+  UseSpikeStabilizer("UseSpikeStabilizer",this, &NPulseLTZone::SetUseSpikeStabilizer)
 {
 }
 
@@ -203,6 +204,13 @@ bool NPulseLTZone::SetTimeConstant(const double &value)
 // Устанавливает признак необходимости интеграции в LTZ
 bool NPulseLTZone::SetLTZIntegtation(const bool &value)
 {
+ return true;
+}
+
+// Флаг включения стабилизации длительности импульса
+bool NPulseLTZone::SetUseSpikeStabilizer(const bool &value)
+{
+ TimeConstant=0.00144; // Force change time constant
  return true;
 }
 // --------------------------
@@ -245,9 +253,10 @@ bool NPulseLTZone::ADefault(void)
 
  // Начальные значения всем параметрам
  NumChannelsInGroup=2;
- TimeConstant=0.005;
+ TimeConstant=0.00144;//0.005;
  Threshold=0.00001;
  UseLTZIntegtation = true;
+ UseSpikeStabilizer=true;
 
  return true;
 }
@@ -273,9 +282,17 @@ bool NPulseLTZone::AReset(void)
 bool NPulseLTZone::ACalculate2(void)
 {
  if(UseLTZIntegtation)
-	PrePotential.v+=(NeuralPotential.v-PrePotential.v)/(TimeConstant.v*TimeStep);
+ {
+  double input(0.0);
+  if(UseSpikeStabilizer.v)
+  {
+   input=(Output(0,0)>0)?-Threshold.v:NeuralPotential.v;
+  }
+  PrePotential.v+=(input-PrePotential.v)/(TimeConstant.v*TimeStep);
+ }
  else
-    PrePotential.v = NeuralPotential.v;
+  PrePotential.v = NeuralPotential.v;
+
  Potential.v=PrePotential.v;
  return NPulseLTZoneThreshold::ACalculate2();
 }
