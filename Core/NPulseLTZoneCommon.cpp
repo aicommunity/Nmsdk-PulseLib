@@ -29,6 +29,7 @@ namespace NMSDK {
 // --------------------------
 NLTZone::NLTZone(void)
  : Threshold("Threshold",this,&NLTZone::SetThreshold),
+   ThresholdOff("ThresholdOff",this,&NLTZone::SetThresholdOff),
    UseAveragePotential("UseAveragePotential",this),
    Output("Output",this),
    Inputs("Inputs",this),
@@ -71,6 +72,12 @@ bool NLTZone::SetThreshold(const double &value)
  return true;
 }
 
+// Устанавливает порог порог завершения генерации импульса нейроном
+bool NLTZone::SetThresholdOff(const double &value)
+{
+ return true;
+}
+
 // --------------------------
 
 // --------------------------
@@ -80,6 +87,7 @@ bool NLTZone::SetThreshold(const double &value)
 bool NLTZone::ADefault(void)
 {
  Threshold=0.0;
+ ThresholdOff=0.0;
  UseAveragePotential=true;
  Output.Assign(1,1,0.0);
 

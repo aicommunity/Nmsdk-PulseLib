@@ -169,7 +169,7 @@ bool NPulseLTZoneThreshold::CheckPulseOn(void)
 /// Возвращает true если условие для генерации имульса не выполнено
 bool NPulseLTZoneThreshold::CheckPulseOff(void)
 {
- return Potential.v<=0;
+ return Potential.v<ThresholdOff;
 }
 // --------------------------
 

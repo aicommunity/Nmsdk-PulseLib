@@ -25,8 +25,11 @@ class NPulseNeuron;
 class RDK_LIB_TYPE NLTZone: public UNet
 {
 public: // Общедоступные свойства
-/// Порог нейрона
+/// Порог возбуждения нейрона
 ULProperty<double,NLTZone, ptPubParameter> Threshold;
+
+/// Порог завершения генерации импульса нейроном
+ULProperty<double,NLTZone, ptPubParameter> ThresholdOff;
 
 /// Признак наличия усреднения в выходных данных нейрона
 ULProperty<bool,NLTZone, ptPubParameter> UseAveragePotential;
@@ -65,6 +68,9 @@ virtual ~NLTZone(void);
 // --------------------------
 // Устанавливает порог нейрона
 bool SetThreshold(const double &value);
+
+// Устанавливает порог завершения генерации импульса нейроном
+bool SetThresholdOff(const double &value);
 // --------------------------
 
 // --------------------------
