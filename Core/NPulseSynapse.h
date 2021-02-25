@@ -37,8 +37,6 @@ ULProperty<double,NPulseSynapse, ptPubParameter> InhibitionCoeff;
 ULProperty<bool,NPulseSynapse, ptPubParameter> UsePresynapticInhibition;
 
 public: // ¬ходы и выходы
-/// ¬ходной сигнал с нейрона
-UPropertyInputData<MDMatrix<double>, NPulseSynapse, ptInput | ptPubState> Input;
 
 protected: // ќсновные свойства
 

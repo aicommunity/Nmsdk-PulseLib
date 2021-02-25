@@ -33,6 +33,9 @@ ULProperty<double,NPulseSynapseCommon, ptPubParameter> PulseAmplitude;
 ULProperty<double,NPulseSynapseCommon, ptPubParameter> Resistance;
 
 public: // Входы и выходы
+/// Входной сигнал с нейрона
+UPropertyInputData<MDMatrix<double>, NPulseSynapseCommon, ptInput | ptPubState> Input;
+
 /// Выходное влияние синапса на мембрану
 UPropertyOutputData<MDMatrix<double>,NPulseSynapseCommon, ptOutput | ptPubState> Output;
 

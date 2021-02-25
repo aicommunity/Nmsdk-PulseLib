@@ -29,6 +29,7 @@ namespace NMSDK {
 NPulseSynapseCommon::NPulseSynapseCommon(void)
 : PulseAmplitude("PulseAmplitude",this,&NPulseSynapseCommon::SetPulseAmplitude),
   Resistance("Resistance",this,&NPulseSynapseCommon::SetResistance),
+  Input("Input",this),
   Output("Output",this),
   PreOutput("PreOutput",this)
 {

@@ -31,8 +31,7 @@ NPulseSynapse::NPulseSynapse(void)
 : SecretionTC("SecretionTC",this,&NPulseSynapse::SetSecretionTC),
   DissociationTC("DissociationTC",this,&NPulseSynapse::SetDissociationTC),
   InhibitionCoeff("InhibitionCoeff",this,&NPulseSynapse::SetInhibitionCoeff),
-  UsePresynapticInhibition("UsePresynapticInhibition",this,&NPulseSynapse::SetUsePresynapticInhibition),
-  Input("Input",this)
+  UsePresynapticInhibition("UsePresynapticInhibition",this,&NPulseSynapse::SetUsePresynapticInhibition)
 {
  VSecretionTC=1;
  VDissociationTC=1;
