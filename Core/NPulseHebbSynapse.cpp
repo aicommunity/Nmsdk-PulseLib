@@ -201,14 +201,14 @@ bool NPulseHebbSynapse::AReset(void)
 }
 
 // Выполняет расчет этого объекта
-bool NPulseHebbSynapse::ACalculate(void)
+bool NPulseHebbSynapse::ACalculate2(void)
 {
  double input=0;
  double ltzoneoutput=0;
  vector<double> motivation;
 
 
- if(!NPulseSynapse::ACalculate())
+ if(!NPulseSynapse::ACalculate2())
   return false;
 
  if(!Input.IsConnected() || !InputLTZoneFeedbackSignal.IsConnected() || Input->GetCols()<=0 || InputLTZoneFeedbackSignal->GetCols()<=0)

@@ -153,9 +153,9 @@ bool NPulseSynapseStdp::AReset(void)
 }
 
 // Выполняет расчет этого объекта
-bool NPulseSynapseStdp::ACalculate(void)
+bool NPulseSynapseStdp::ACalculate2(void)
 {
- if(!NPulseSynapse::ACalculate())
+ if(!NPulseSynapse::ACalculate2())
   return false;
 
  bool is_input_pulse_active(false);

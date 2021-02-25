@@ -43,6 +43,12 @@ protected: // Временные переменные
 /// Промежуточное значение эффективности синапса
 ULProperty<double,NPulseSynapseCommon,ptPubState> PreOutput;
 
+/// Сигнал наличия входного импульса
+/// (сбрасывается автоматически в конце итерации)
+ULProperty<bool, NPulseSynapseCommon, ptPubState> InputPulseSignal;
+
+bool PulseSignalTemp;
+
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
@@ -88,6 +94,7 @@ virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

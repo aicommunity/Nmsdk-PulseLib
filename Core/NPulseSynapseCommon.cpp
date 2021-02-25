@@ -31,7 +31,8 @@ NPulseSynapseCommon::NPulseSynapseCommon(void)
   Resistance("Resistance",this,&NPulseSynapseCommon::SetResistance),
   Input("Input",this),
   Output("Output",this),
-  PreOutput("PreOutput",this)
+  PreOutput("PreOutput",this),
+  InputPulseSignal("InputPulseSignal",this)
 {
 }
 
@@ -82,6 +83,8 @@ bool NPulseSynapseCommon::ADefault(void)
  Resistance=1.0;
 
  Output.Assign(1,1,0.0);
+ Input->Assign(1,1,0.0);
+ InputPulseSignal=false;
 
  return true;
 }
@@ -100,6 +103,8 @@ bool NPulseSynapseCommon::AReset(void)
 {
  // Сброс временных переменных
  PreOutput=0;
+ InputPulseSignal=false;
+ PulseSignalTemp=false;
 
  return true;
 }
@@ -107,8 +112,23 @@ bool NPulseSynapseCommon::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseSynapseCommon::ACalculate(void)
 {
- Output(0,0)=PreOutput;
+ if((*Input)(0,0)>0 && !PulseSignalTemp)
+ {
+  InputPulseSignal=true;
+  PulseSignalTemp=true;
+ }
 
+ if((*Input)(0,0)<=0 && PulseSignalTemp)
+  PulseSignalTemp=false;
+
+ bool res=ACalculate2();
+ InputPulseSignal=false;
+ return res;
+}
+
+bool NPulseSynapseCommon::ACalculate2(void)
+{
+ Output(0,0)=PreOutput;
  return true;
 }
 // --------------------------

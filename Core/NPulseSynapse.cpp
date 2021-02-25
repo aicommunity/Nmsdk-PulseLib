@@ -183,7 +183,7 @@ bool NPulseSynapse::AReset(void)
 }
 
 // Выполняет расчет этого объекта
-bool NPulseSynapse::ACalculate(void)
+bool NPulseSynapse::ACalculate2(void)
 {
  double input=0;
 
