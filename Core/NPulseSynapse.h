@@ -33,6 +33,12 @@ ULProperty<double,NPulseSynapse, ptPubParameter> DissociationTC;
 /// Коэффициент пресинаптического торможения
 ULProperty<double,NPulseSynapse, ptPubParameter> InhibitionCoeff;
 
+/// Типовая длительность импульса, с
+ULProperty<double,NPulseSynapse, ptPubParameter> TypicalPulseDuration;
+
+/// Флаг работы в режиме симуляции пришедшего импульса по сигналу
+ULProperty<bool,NPulseSynapse, ptPubParameter> UsePulseSignal;
+
 /// Флаг включения пресинаптического торможения
 ULProperty<bool,NPulseSynapse, ptPubParameter> UsePresynapticInhibition;
 
@@ -46,6 +52,9 @@ double VSecretionTC,VDissociationTC;
 
 // Постоянная составляющая результатов вычислений
 double OutputConstData;
+
+/// Счетчик числа итераций в течении которых на входет присутствует импульс
+int PulseCounter;
 
 public: // Методы
 // --------------------------
@@ -68,8 +77,14 @@ bool SetSecretionTC(const double &value);
 // Постоянная времени распада медиатора
 bool SetDissociationTC(const double &value);
 
+/// Типовая длительность импульса, с
+bool SetTypicalPulseDuration(const double &value);
+
 // Коэффициент пресинаптического торможения
 bool SetInhibitionCoeff(const double &value);
+
+/// Флаг работы в режиме симуляции пришедшего импульса по сигналу
+bool SetUsePulseSignal(const bool &value);
 
 // Задание флага включения пресинаптического торомжения
 bool SetUsePresynapticInhibition(const bool &value);
