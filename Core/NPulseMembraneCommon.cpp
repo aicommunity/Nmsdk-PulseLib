@@ -197,10 +197,10 @@ bool NPulseMembraneCommon::ACalculate(void)
 
  if(IsNeuronActive && Feedback<=0)
   IsNeuronActive=false;
-  SumPotential(0,0)=0;
-  for(size_t i=0;i<Channels.size();i++)
-   if(Channels[i])
-    SumPotential(0,0)+=Channels[i]->Output(0,0);
+ SumPotential(0,0)=0;
+ for(size_t i=0;i<Channels.size();i++)
+  if(Channels[i])
+   SumPotential(0,0)+=Channels[i]->Output(0,0);
  return true;
 }
 

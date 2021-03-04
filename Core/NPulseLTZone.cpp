@@ -71,6 +71,8 @@ bool NPulseLTZoneThreshold::ADefault(void)
  // Начальные значения всем параметрам
  Threshold=0.00001;
 
+ NumChannelsInGroup=2;
+
  return true;
 }
 

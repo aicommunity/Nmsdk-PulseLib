@@ -245,12 +245,13 @@ bool NPulseLTZoneCommon::ACalculate(void)
 	}
    }
   }
-  if(UseAveragePotential)
-   NeuralPotential.v/=Inputs->size();
+  int div_coeff=int(Inputs->size())/((NumChannelsInGroup.v>0)?NumChannelsInGroup.v:1);
+  if(UseAveragePotential && div_coeff>0)
+   NeuralPotential.v/=div_coeff;
  }
 
- if(NumChannelsInGroup>0)
-  NeuralPotential.v/=NumChannelsInGroup.v; // ƒелим пополам, чтобы учесть, что у нас по 2 ионных механизма на участок мембраны
+// if(NumChannelsInGroup>0)
+//  NeuralPotential.v/=NumChannelsInGroup.v; // ƒелим пополам, чтобы учесть, что у нас по 2 ионных механизма на участок мембраны
 
  Potential.v=NeuralPotential.v; // TODO: это может быть изменено в дочерних классах
 
