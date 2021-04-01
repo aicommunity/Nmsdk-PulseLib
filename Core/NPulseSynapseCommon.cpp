@@ -80,7 +80,7 @@ bool NPulseSynapseCommon::ADefault(void)
  PulseAmplitude=1;
 
  // Вес (эффективность синапса) синапса
- Resistance=1.0;
+ Resistance=10.0;
 
  Output.Assign(1,1,0.0);
  Input->Assign(1,1,0.0);

@@ -171,7 +171,7 @@ bool NPulseSynapse::ADefault(void)
  InhibitionCoeff=0;
 
  // Вес (эффективность синапса) синапса
- Resistance=1.0e8;
+ Resistance=1.0e9;
 
  UsePresynapticInhibition=false;
  UsePulseSignal=true;
