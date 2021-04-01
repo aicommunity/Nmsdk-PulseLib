@@ -29,7 +29,7 @@ public: // Общедоступные свойства
 /// Амплитуда входных импульсов
 ULProperty<double,NPulseSynapseCommon, ptPubParameter> PulseAmplitude;
 
-/// Вес (эффективность синапса) синапса
+/// Сопротивление синапса
 ULProperty<double,NPulseSynapseCommon, ptPubParameter> Resistance;
 
 public: // Входы и выходы
