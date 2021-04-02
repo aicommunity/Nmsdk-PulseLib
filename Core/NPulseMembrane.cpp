@@ -68,6 +68,28 @@ NPulseChannelCommon* NPulseMembrane::GetNegChannel(size_t i)
  return InhibitoryChannels[i];
 }
 
+// Возбуждающие синапсы
+size_t NPulseMembrane::GetNumExcitatorySynapses(void) const
+{
+ return ExcitatorySynapses.size();
+}
+
+NPulseSynapseCommon* NPulseMembrane::GetExcitatorySynapses(size_t i)
+{
+ return ExcitatorySynapses[i];
+}
+
+// Тормозные синапсы
+size_t NPulseMembrane::GetNumInhibitorySynapses(void) const
+{
+ return InhibitorySynapses.size();
+}
+
+NPulseSynapseCommon* NPulseMembrane::GetInhibitorySynapses(size_t i)
+{
+ return InhibitorySynapses[i];
+}
+
 bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPointer> pointer)
 {
   vector<NPulseChannelCommon* >::iterator I;

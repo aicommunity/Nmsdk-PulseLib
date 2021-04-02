@@ -86,6 +86,14 @@ NPulseChannelCommon* GetPosChannel(size_t i);
 size_t GetNumNegChannels(void) const;
 NPulseChannelCommon* GetNegChannel(size_t i);
 
+// Возбуждающие синапсы
+size_t GetNumExcitatorySynapses(void) const;
+NPulseSynapseCommon* GetExcitatorySynapses(size_t i);
+
+// Тормозные синапсы
+size_t GetNumInhibitorySynapses(void) const;
+NPulseSynapseCommon* GetInhibitorySynapses(size_t i);
+
 virtual bool UpdateChannelData(UEPtr<NPulseChannel> comp, UEPtr<UIPointer> pointer=0);
 // --------------------------
 
