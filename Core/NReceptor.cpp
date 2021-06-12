@@ -113,7 +113,6 @@ bool NReceptor::ACalculate(void)
 
  Output.Resize(Input->GetRows(),Input->GetCols());
 
- size_t k=0;
  for(int i=0;i<Input->GetRows();i++)
   for(int j=0;j<Input->GetCols();j++)
   {

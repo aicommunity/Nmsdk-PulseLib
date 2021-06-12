@@ -202,8 +202,6 @@ bool NMuscle::AReset(void)
 // Выполняет расчет этого объекта
 bool NMuscle::ACalculate(void)
 {
- size_t k=0;
-
  for (int i=0; i<15; i++)
   yOld[i] = y[i];
 

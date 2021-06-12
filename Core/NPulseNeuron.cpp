@@ -277,8 +277,8 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
 	res&=CreateLink(Inputs.GetItem(i)->GetLongName(this),Inputs.GetItemOutputName(i),);
   }                */
 
-  size_t num_connectors=channel->Output.GetNumConnectors();
-  for(size_t i=0;i<num_connectors;i++)
+  int num_connectors=int(channel->Output.GetNumConnectors());
+  for(int i=0;i<num_connectors;i++)
   {
    UConnector* conn=channel->Output.GetConnector(i);
    if(!conn)

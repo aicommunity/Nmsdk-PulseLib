@@ -215,7 +215,7 @@ bool NPulseChannel::ACalculate2(void)
  double G=0;
 
  // Получение доступа к данным синапса
- for(size_t i=0;i<SynapticInputs->size();i++)
+ for(int i=0;i<int(SynapticInputs->size());i++)
  {
   if(SynapticInputs[i]->GetSize() >0)
   G+=(*SynapticInputs[i])(0,0);
@@ -225,8 +225,8 @@ bool NPulseChannel::ACalculate2(void)
   G/=SynapticInputs->size();
 
  // Получение данных канала
- size_t inp_size;
- size_t full_inp_data_size(0);
+ int inp_size;
+ int full_inp_data_size(0);
  for(size_t i=0;i<ChannelInputs->size();i++)
  {
   if((inp_size=ChannelInputs[i]->GetSize()) >0)

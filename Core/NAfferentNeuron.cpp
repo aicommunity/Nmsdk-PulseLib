@@ -177,7 +177,7 @@ bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const
   receptor->OutputAdaptationMode=5;
   receptor->InputAdaptationMode=0;
   receptor->SumCoeff=1;
-  res&=AddComponent(receptor);
+  AddComponent(receptor);
 
   receptor->SetCoord(MVector<double,3>(4,3,0));
   receptor->DisconnectAll("Output");

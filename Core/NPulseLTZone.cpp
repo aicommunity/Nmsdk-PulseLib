@@ -152,8 +152,8 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
 
  I=AvgFrequencyCounter->begin();
  J=AvgFrequencyCounter->end();
- OutputPulseTimes->Resize(1,AvgFrequencyCounter->size());
- for(size_t i=0;i<AvgFrequencyCounter->size();i++,++I)
+ OutputPulseTimes->Resize(1,int(AvgFrequencyCounter->size()));
+ for(int i=0;i<int(AvgFrequencyCounter->size());i++,++I)
   OutputPulseTimes(0,i)=*I;
 
  if(MainOwner)

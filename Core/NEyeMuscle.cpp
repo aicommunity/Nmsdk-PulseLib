@@ -147,7 +147,7 @@ bool NEyeMuscle::ACalculate(void)
  OutputSpeed.Resize(1,int(Inputs->size()));
 
  int size=OutputAcceleration.GetCols();
- for(size_t i=0;i<Inputs->size();i++)
+ for(int i=0;i<int(Inputs->size());i++)
  {
   P1.resize(size,0);
   P2.resize(size,0);

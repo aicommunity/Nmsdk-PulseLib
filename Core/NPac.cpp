@@ -169,12 +169,12 @@ bool NPac::ACalculate(void)
  Output.Resize(1,size);
 
  PreOutput->resize(Inputs->size());
- for(size_t i=0;i<Inputs->size();i++)
+ for(int i=0;i<int(Inputs->size());i++)
   PreOutput[i].resize(size);
 
  if(TCMode == 0)
  {
-  for(size_t i=0;i<Inputs->size();i++)
+  for(int i=0;i<int(Inputs->size());i++)
   {
    for(int j=0;j<size;j++)
    {
@@ -189,7 +189,7 @@ bool NPac::ACalculate(void)
  else
  if(TCMode == 1)
  {
-  for(size_t i=0;i<Inputs->size();i++)
+  for(int i=0;i<int(Inputs->size());i++)
   {
    for(int j=0;j<size;j++)
    {
@@ -222,7 +222,7 @@ bool NPac::ACalculate(void)
   {
    double pos_values=0;
    double neg_values=0;
-   for(size_t i=0;i<Inputs->size();i++)
+   for(int i=0;i<int(Inputs->size());i++)
    {
 	if(PreOutput[i][j]*Gain[i][j]>0)
 	 pos_values+=PreOutput[i][j]*Gain[i][j];
@@ -231,7 +231,7 @@ bool NPac::ACalculate(void)
    }
    if(pos_values>1e-5 && neg_values<-1e-5)
    {
-	for(size_t i=0;i<Inputs->size();i++)
+    for(int i=0;i<int(Inputs->size());i++)
 	 PreOutput[i][j]=0;
 
 	Output(0,j)=0.0;

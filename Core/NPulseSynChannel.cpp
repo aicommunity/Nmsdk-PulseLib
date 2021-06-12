@@ -256,7 +256,7 @@ bool NPulseSynChannel::AReset(void)
  }
 
  SynapseInputFlagsList.resize(ChannelInputs->size(),true);
- for(size_t n=0;n<ChannelInputs->size();n++)
+ for(int n=0;n<int(ChannelInputs->size());n++)
  {
   UEPtr<UContainer> item=ChannelInputs.GetItem(n)->GetOwner();
   if(dynamic_pointer_cast<NPulseChannel>(item) ||
@@ -281,9 +281,9 @@ bool NPulseSynChannel::ACalculate2(void)
  /*double*/ syn_output=0;
 
 
- for(size_t n=0;n<ChannelInputs->size();n++)
+ for(int n=0;n<int(ChannelInputs->size());n++)
  {
-  size_t inpsize=ChannelInputs[n]->GetCols();
+  int inpsize=ChannelInputs[n]->GetCols();
   if(inpsize == 0)
    continue;
 
@@ -578,7 +578,7 @@ bool NContinuesSynChannel::AReset(void)
  FillOutputData();
 
  SynapseInputFlagsList.resize(ChannelInputs->size(),false);
- for(size_t n=0;n<ChannelInputs->size();n++)
+ for(int n=0;n<int(ChannelInputs->size());n++)
  {
   UEPtr<UContainer> item=ChannelInputs.GetItem(n)->GetOwner();
   if(dynamic_pointer_cast<NPulseSynapseCommon>(item))
@@ -592,7 +592,7 @@ bool NContinuesSynChannel::AReset(void)
 bool NContinuesSynChannel::ACalculate2(void)
 {
  double channel_input=0;
- size_t num_connected_channels=0;
+ int num_connected_channels=0;
  double G=0;
 
  // Расчет синапсов
@@ -601,7 +601,7 @@ bool NContinuesSynChannel::ACalculate2(void)
  double syn_output=0;
 
 
- for(size_t n=0;n<ChannelInputs->size();n++)
+ for(int n=0;n<int(ChannelInputs->size());n++)
  {
   if(ChannelInputs[n]->GetCols() == 0)
    continue;
@@ -610,11 +610,11 @@ bool NContinuesSynChannel::ACalculate2(void)
 //	 dynamic_cast<NConstGenerator*>(GetCItem(n).Item))
   if(!SynapseInputFlagsList[n])
   {
-   size_t inpsize=0;
+   int inpsize=0;
    if((inpsize=ChannelInputs[n]->GetCols()) >0)
    {
 	double *data=ChannelInputs[n]->Data;
-	for(size_t j=0;j<inpsize;j++,++data)
+    for(int j=0;j<inpsize;j++,++data)
 	 channel_input+=*data;
 	++num_connected_channels;
    }

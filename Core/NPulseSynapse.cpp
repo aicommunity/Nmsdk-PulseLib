@@ -217,7 +217,7 @@ bool NPulseSynapse::ACalculate2(void)
  {
   if(InputPulseSignal)
   {
-   PulseCounter=TypicalPulseDuration*TimeStep;
+   PulseCounter=int(TypicalPulseDuration*TimeStep);
   }
 
   if(PulseCounter>0)

@@ -226,13 +226,13 @@ bool NPulseLTZoneCommon::ACalculate(void)
 
  if(Inputs->size()>0)
  {
-  size_t inpsize;
-  for(size_t i=0;i<Inputs->size();i++)
+  int inpsize;
+  for(int i=0;i<int(Inputs->size());i++)
   {
    if((inpsize=Inputs[i]->GetCols()) >0)
    {
 	double *data=Inputs[i]->Data;
-	for(size_t j=0;j<inpsize;j++,++data)
+    for(int j=0;j<inpsize;j++,++data)
 	{
 	 // -----> Œ“À¿ƒ ¿
 	 //double eee = *data;
