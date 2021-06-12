@@ -24,7 +24,7 @@ NPulseLibrary PulseLibrary;
 // Конструкторы и деструкторы
 // --------------------------
 NPulseLibrary::NPulseLibrary(void)
- : ULibrary("PulseLibrary","1.0")
+ : ULibrary("PulseLibrary","1.0", GetGlobalVersion())
 {
 }
 // --------------------------
