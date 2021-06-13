@@ -31,8 +31,8 @@ NLTZone::NLTZone(void)
  : Threshold("Threshold",this,&NLTZone::SetThreshold),
    ThresholdOff("ThresholdOff",this,&NLTZone::SetThresholdOff),
    UseAveragePotential("UseAveragePotential",this),
-   Output("Output",this),
    Inputs("Inputs",this),
+   Output("Output",this),
    Potential("Potential",this)
 {
  //Neuron=0;
@@ -118,8 +118,8 @@ NPulseLTZoneCommon::NPulseLTZoneCommon(void)
   OutputPotential("OutputPotential",this),
   OutputFrequency("OutputFrequency",this),
   OutputPulseTimes("OutputPulseTimes",this),
-  NeuralPotential("NeuralPotential",this),
   PrePotential("PrePotential",this),
+  NeuralPotential("NeuralPotential",this),
   PulseCounter("PulseCounter",this),
   AvgFrequencyCounter("AvgFrequencyCounter",this),
   PulseFlag("PulseFlag",this)

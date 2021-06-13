@@ -290,7 +290,7 @@ bool NPulseSynChannel::ACalculate2(void)
   if(!SynapseInputFlagsList[n])
   {
 	double *data=ChannelInputs[n]->Data;
-	for(size_t j=0;j<inpsize;j++,++data)
+    for(int j=0;j<inpsize;j++,++data)
 	 channel_input+=*data;
 	++num_connected_channels;
   }

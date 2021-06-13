@@ -157,7 +157,7 @@ bool NPac::ACalculate(void)
  if(Inputs->size()>0)
  {
   min_input_data_size=Inputs[0]->GetCols();
-  for(int i=1;i<Inputs->size();i++)
+  for(int i=1;i<int(Inputs->size());i++)
    if(min_input_data_size>Inputs[i]->GetCols())
 	min_input_data_size=Inputs[i]->GetCols();
  }
@@ -207,7 +207,7 @@ bool NPac::ACalculate(void)
 
  if(Mode == 0)
  {
-  for(int i=0;i<Inputs->size();i++)
+  for(int i=0;i<int(Inputs->size());i++)
   {
    for(int j=0;j<size;j++)
    {

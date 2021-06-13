@@ -233,7 +233,7 @@ bool NPulseChannel::ACalculate2(void)
   {
    full_inp_data_size+=inp_size;
    double *data=ChannelInputs[i]->Data;
-   for(size_t j=0;j<inp_size;j++,++data)
+   for(int j=0;j<inp_size;j++,++data)
 	channel_input+=*data;
   }
 
