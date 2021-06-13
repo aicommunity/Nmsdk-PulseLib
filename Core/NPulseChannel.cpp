@@ -227,7 +227,7 @@ bool NPulseChannel::ACalculate2(void)
  // Получение данных канала
  int inp_size;
  int full_inp_data_size(0);
- for(size_t i=0;i<ChannelInputs->size();i++)
+ for(int i=0;i<int(ChannelInputs->size());i++)
  {
   if((inp_size=ChannelInputs[i]->GetSize()) >0)
   {
