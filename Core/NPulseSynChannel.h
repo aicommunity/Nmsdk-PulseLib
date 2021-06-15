@@ -23,36 +23,34 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseSynChannel: public NPulseChannel
 {
 public: // Общедоступные свойства
-// Параметры синапсов
-// Амплитуда входных импульсов
-RDK::ULProperty<double,NPulseSynChannel> PulseAmplitude;
+/// Параметры синапсов
+/// Амплитуда входных импульсов
+ULProperty<double,NPulseSynChannel, ptPubParameter> PulseAmplitude;
 
-// Постоянная времени выделения медиатора
-RDK::ULProperty<double,NPulseSynChannel> SecretionTC;
+/// Постоянная времени выделения медиатора
+ULProperty<double,NPulseSynChannel, ptPubParameter> SecretionTC;
 
-// Постоянная времени распада медиатора
-RDK::ULProperty<double,NPulseSynChannel> DissociationTC;
+/// Постоянная времени распада медиатора
+ULProperty<double,NPulseSynChannel, ptPubParameter> DissociationTC;
 
-// Коэффициент пресинаптического торможения
-RDK::ULProperty<double,NPulseSynChannel> InhibitionCoeff;
+/// Коэффициент пресинаптического торможения
+ULProperty<double,NPulseSynChannel, ptPubParameter> InhibitionCoeff;
 
-// Вес (эффективность синапса) синапса
-RDK::ULProperty<double,NPulseSynChannel> SynapseResistance;
+/// Вес (эффективность синапса) синапса
+ULProperty<double,NPulseSynChannel, ptPubParameter> SynapseResistance;
 
 public: // Данные
-// Промежуточное значение эффективности синапса
-RDK::ULProperty<vector<double>,NPulseSynChannel,ptPubState> PreOutput;
+/// Промежуточное значение эффективности синапса
+ULProperty<vector<double>,NPulseSynChannel,ptPubState> PreOutput;
 
-// Постоянные времени выделения и распада медиатора в единицах шага интегрирования
+/// Постоянные времени выделения и распада медиатора в единицах шага интегрирования
 double VSecretionTC,VDissociationTC;
 
-// Постоянная составляющая результатов вычислений
+/// Постоянная составляющая результатов вычислений
 double OutputConstData;
 
-//Значение выхода синапса
+/// Значение выхода синапса
 double syn_output;
-
-protected: // Основные свойства
 
 protected: // Временные переменные
 /// Массив признаков является ли вход синапсом или нет
@@ -70,13 +68,14 @@ virtual ~NPulseSynChannel(void);
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t GetNumSynapses(void) const;
+int GetNumSynapses(void) const;
 
 // Возвращает синапс по индексу
 NPulseSynapse* GetSynapse(size_t i);
-// --------------------------
 double GetSynOutput(void);
 bool ResetOut(void);
+// --------------------------
+
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
@@ -94,11 +93,6 @@ bool SetInhibitionCoeff(const double &value);
 
 // Вес (эффективность синапса) синапса
 bool SetSynapseResistance(const double &value);
-// --------------------------
-
-// --------------------------
-// Методы управления объектом
-// --------------------------
 // --------------------------
 
 // --------------------------
@@ -152,39 +146,38 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 
 class RDK_LIB_TYPE NContinuesSynChannel: public NPulseChannel
 {
 public: // Общедоступные свойства
-// Параметры синапсов
-// Амплитуда входных импульсов
-RDK::ULProperty<double,NContinuesSynChannel> PulseAmplitude;
+/// Параметры синапсов
+/// Амплитуда входных импульсов
+ULProperty<double,NContinuesSynChannel, ptPubParameter> PulseAmplitude;
 
-// Постоянная времени выделения медиатора
-RDK::ULProperty<double,NContinuesSynChannel> SecretionTC;
+/// Постоянная времени выделения медиатора
+ULProperty<double,NContinuesSynChannel, ptPubParameter> SecretionTC;
 
-// Постоянная времени распада медиатора
-RDK::ULProperty<double,NContinuesSynChannel> DissociationTC;
+/// Постоянная времени распада медиатора
+ULProperty<double,NContinuesSynChannel, ptPubParameter> DissociationTC;
 
-// Коэффициент пресинаптического торможения
-RDK::ULProperty<double,NContinuesSynChannel> InhibitionCoeff;
+/// Коэффициент пресинаптического торможения
+ULProperty<double,NContinuesSynChannel, ptPubParameter> InhibitionCoeff;
 
-// Вес (эффективность синапса) синапса
-RDK::ULProperty<double,NContinuesSynChannel> SynapseResistance;
+/// Вес (эффективность синапса) синапса
+ULProperty<double,NContinuesSynChannel, ptPubParameter> SynapseResistance;
 
 public: // Данные
 // Промежуточное значение эффективности синапса
-RDK::ULProperty<vector<double>,NContinuesSynChannel,ptPubState> PreOutput;
+ULProperty<vector<double>,NContinuesSynChannel,ptPubState> PreOutput;
 
 // Постоянные времени выделения и распада медиатора в единицах шага интегрирования
 double VSecretionTC,VDissociationTC;
 
 // Постоянная составляющая результатов вычислений
 double OutputConstData;
-
 
 protected: // Основные свойства
 
@@ -204,7 +197,7 @@ virtual ~NContinuesSynChannel(void);
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t GetNumSynapses(void) const;
+int GetNumSynapses(void) const;
 
 // Возвращает синапс по индексу
 NPulseSynapse* GetSynapse(size_t i);
@@ -227,11 +220,6 @@ bool SetInhibitionCoeff(const double &value);
 
 // Вес (эффективность синапса) синапса
 bool SetSynapseResistance(const double &value);
-// --------------------------
-
-// --------------------------
-// Методы управления объектом
-// --------------------------
 // --------------------------
 
 // --------------------------
@@ -285,7 +273,7 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

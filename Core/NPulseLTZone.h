@@ -16,27 +16,81 @@ See file license.txt for more information
 #ifndef NPULSE_LTZONE_H
 #define NPULSE_LTZONE_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
-#include "../../Nmsdk-SourceLib/Core/NPulseGenerator.h"
 #include "NPulseLTZoneCommon.h"
 
 namespace NMSDK {
 
 class NPulseNeuron;
 
-class RDK_LIB_TYPE NPulseLTZone: public NPulseLTZoneCommon
+class RDK_LIB_TYPE NPulseLTZoneThreshold: public NPulseLTZoneCommon
+{
+public: // Методы
+// --------------------------
+// Конструкторы и деструкторы
+// --------------------------
+NPulseLTZoneThreshold(void);
+virtual ~NPulseLTZoneThreshold(void);
+// --------------------------
+
+// --------------------------
+// Системные методы управления объектом
+// --------------------------
+// Выделяет память для новой чистой копии объекта этого класса
+virtual NPulseLTZoneThreshold* New(void);
+// --------------------------
+
+// --------------------------
+// Методы доступа к компонентам
+// --------------------------
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
+virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+
+/// Возвращает true если условие для генерации импульса выполнено
+virtual bool CheckPulseOn(void);
+
+/// Возвращает true если условие для генерации имульса не выполнено
+virtual bool CheckPulseOff(void);
+// --------------------------
+// --------------------------
+// Скрытые методы управления счетом
+// --------------------------
+protected:
+// Восстановление настроек по умолчанию и сброс процесса счета
+virtual bool ADefault(void);
+
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
+virtual bool ABuild(void);
+
+// Сброс процесса счета.
+virtual bool AReset(void);
+
+// Выполняет расчет этого объекта
+virtual bool ACalculate2(void);
+
+
+// --------------------------
+};
+
+
+class RDK_LIB_TYPE NPulseLTZone: public NPulseLTZoneThreshold
 {
 public: // Общедоступные свойства
-// Постоянная времени
-RDK::ULProperty<double,NPulseLTZone> TimeConstant;
+/// Постоянная времени
+ULProperty<double,NPulseLTZone, ptPubParameter> TimeConstant;
 
-public: // Данные
+/// Признак необходимости интеграции в LTZ
+ULProperty<bool, NPulseLTZone, ptPubParameter> UseLTZIntegtation;
 
-protected: // Основные свойства
-
-protected: // Временные переменные
-// Суммарный потенциал
-RDK::ULProperty<double,NPulseLTZone,ptPubState> NeuralPotential;
+/// Флаг включения стабилизации длительности импульса
+/// Если включено, то генератор изолируется от мембраны на время
+/// генерации импульса для стабилизации длительности импульса
+ULProperty<bool, NPulseLTZone, ptPubParameter> UseSpikeStabilizer;
 
 public: // Методы
 // --------------------------
@@ -51,9 +105,10 @@ virtual ~NPulseLTZone(void);
 // --------------------------
 // Устанавливает значение постоянной времени
 bool SetTimeConstant(const double &value);
-
-// Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const double &value);
+// Устанавливает признак необходимости интеграции в LTZ
+bool SetLTZIntegtation(const bool &value);
+// Флаг включения стабилизации длительности импульса
+bool SetUseSpikeStabilizer(const bool &value);
 // --------------------------
 
 // --------------------------
@@ -91,67 +146,18 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
-
-/// Возвращает true если условие для генерации импульса выполнено
-virtual bool CheckPulseOn(void);
-
-/// Возвращает true если условие для генерации имульса не выполнено
-virtual bool CheckPulseOff(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 
-class RDK_LIB_TYPE NContinuesLTZone: public NLTZone
+class RDK_LIB_TYPE NContinuesLTZone: public NPulseLTZoneCommon
 {
-public: // Общедоступные свойства
-// Постоянная времени
-RDK::ULProperty<double,NContinuesLTZone> TimeConstant;
-
-// Амплитуда импульсов
-RDK::ULProperty<double,NContinuesLTZone> PulseAmplitude;
-
-// Длительность импульса
-RDK::ULProperty<double,NContinuesLTZone> PulseLength;
-
-// Интервал времени оценки частоты генерации
-RDK::ULProperty<double,NContinuesLTZone> AvgInterval;
-
-public: // Данные
-
-protected: // Основные свойства
-
-protected: // Временные переменные
-// Суммарный потенциал
-RDK::ULProperty<double,NContinuesLTZone,ptPubState> NeuralPotential;
-
-// Промежуточное значение потенциала
-RDK::ULProperty<double,NContinuesLTZone,ptPubState> PrePotential;
-
-// Флаг наличия генерации
-RDK::ULProperty<int,NContinuesLTZone,ptPubState> PulseCounter;
-
-// Средняя частота за заданный интервал времени
-RDK::UCLProperty<list<double>,NContinuesLTZone,ptPubState> AvgFrequencyCounter;
-
-// Признак текущей генерации импульса
-RDK::ULProperty<bool,NContinuesLTZone,ptPubState> PulseFlag;
-
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
 NContinuesLTZone(void);
 virtual ~NContinuesLTZone(void);
-// --------------------------
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
-// Устанавливает значение постоянной времени
-bool SetTimeConstant(const double &value);
-
-// Устанавливает амплитуду импульсов
-bool SetPulseAmplitude(const double &value);
 // --------------------------
 
 // --------------------------
@@ -189,17 +195,15 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 
 class RDK_LIB_TYPE NPulseSimpleLTZone: public NPulseLTZone
 {
-public: // Общедоступные свойства
-
-public: // Данные
-
-protected: // Основные свойства
+public: // Параметры
+/// Максимальная частота генерации, Гц (должна лежать в интервале [0;500]
+ULProperty<double, NPulseSimpleLTZone, ptPubParameter> MaxFrequency;
 
 protected: // Временные переменные
 NPulseGenerator generator;
@@ -210,11 +214,6 @@ public: // Методы
 // --------------------------
 NPulseSimpleLTZone(void);
 virtual ~NPulseSimpleLTZone(void);
-// --------------------------
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
 // --------------------------
 
 // --------------------------
@@ -252,20 +251,12 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 
 class RDK_LIB_TYPE NContinuesSimpleLTZone: public NContinuesLTZone
 {
-public: // Общедоступные свойства
-
-public: // Данные
-
-protected: // Основные свойства
-
-protected: // Временные переменные
-
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
@@ -319,7 +310,7 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

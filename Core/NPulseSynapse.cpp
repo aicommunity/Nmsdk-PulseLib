@@ -29,8 +29,11 @@ namespace NMSDK {
 NPulseSynapse::NPulseSynapse(void)
  //: NConnector(name),
 : SecretionTC("SecretionTC",this,&NPulseSynapse::SetSecretionTC),
-DissociationTC("DissociationTC",this,&NPulseSynapse::SetDissociationTC),
-InhibitionCoeff("InhibitionCoeff",this,&NPulseSynapse::SetInhibitionCoeff)
+  DissociationTC("DissociationTC",this,&NPulseSynapse::SetDissociationTC),
+  InhibitionCoeff("InhibitionCoeff",this,&NPulseSynapse::SetInhibitionCoeff),
+  TypicalPulseDuration("TypicalPulseDuration",this,&NPulseSynapse::SetTypicalPulseDuration),
+  UsePulseSignal("UsePulseSignal",this,&NPulseSynapse::SetUsePulseSignal),
+  UsePresynapticInhibition("UsePresynapticInhibition",this,&NPulseSynapse::SetUsePresynapticInhibition)
 {
  VSecretionTC=1;
  VDissociationTC=1;
@@ -74,6 +77,17 @@ bool NPulseSynapse::SetDissociationTC(const double &value)
  return true;
 }
 
+/// Типовая длительность импульса, с
+bool NPulseSynapse::SetTypicalPulseDuration(const double &value)
+{
+ if(value <= 0)
+  return false;
+
+ Ready=false;
+
+ return true;
+}
+
 // Коэффициент пресинаптического торможения
 bool NPulseSynapse::SetInhibitionCoeff(const double &value)
 {
@@ -96,10 +110,26 @@ bool NPulseSynapse::SetResistance(const double &value)
  if(value<=0)
   return false;
 
- if(InhibitionCoeff.v>0)
+ if(InhibitionCoeff.v>0 && UsePresynapticInhibition)
   OutputConstData=4.0*InhibitionCoeff.v/value;
  else
   OutputConstData=1.0/value;
+
+ return true;
+}
+
+bool NPulseSynapse::SetUsePulseSignal(const bool &value)
+{
+ Ready=false;
+ return true;
+}
+// Задание флага включения пресинаптического торомжения
+bool NPulseSynapse::SetUsePresynapticInhibition(const bool &value)
+{
+ if(InhibitionCoeff.v>0 && value)
+  OutputConstData=4.0*InhibitionCoeff.v/Resistance;
+ else
+  OutputConstData=1.0/Resistance;
 
  return true;
 }
@@ -134,11 +164,19 @@ bool NPulseSynapse::ADefault(void)
  // Постоянная времени распада медиатора
  DissociationTC=0.01;
 
+ /// Типовая длительность импульса, с
+ TypicalPulseDuration=0.001;
+
  // Коэффициент пресинаптического торможения
  InhibitionCoeff=0;
 
  // Вес (эффективность синапса) синапса
- Resistance=1.0e8;
+ Resistance=1.0e9;
+
+ UsePresynapticInhibition=false;
+ UsePulseSignal=true;
+
+ PulseCounter=0;
 
  return true;
 }
@@ -161,27 +199,47 @@ bool NPulseSynapse::ABuild(void)
 // Сброс процесса счета.
 bool NPulseSynapse::AReset(void)
 {
- if(!NPulseSynapseCommon::ABuild())
+ if(!NPulseSynapseCommon::AReset())
   return false;
+
+ PulseCounter=0;
 
  return true;
 }
 
 // Выполняет расчет этого объекта
-bool NPulseSynapse::ACalculate(void)
+bool NPulseSynapse::ACalculate2(void)
 {
  double input=0;
+ bool is_spike(false);
 
- if(NumInputs >0 && GetInputDataSize(0)[1]>0)
+ if(UsePulseSignal)
  {
-  input=GetInputData(0)->Double[0];
-  if(MainOwner && Owner)
+  if(InputPulseSignal)
   {
-   if(static_pointer_cast<NPulseChannel>(Owner)->Type() < 0)
-	++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
-   else
-	++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
+   PulseCounter=int(TypicalPulseDuration*TimeStep);
   }
+
+  if(PulseCounter>0)
+  {
+   input=PulseAmplitude;
+   --PulseCounter;
+   is_spike=true;
+  }
+ }
+ else
+ if(Input.IsConnected() && Input->GetCols()>0)
+ {
+  input=(*Input)(0,0);
+  is_spike=true;
+ }
+
+ if(is_spike && MainOwner && Owner)
+ {
+  if(static_pointer_cast<NPulseChannel>(Owner)->Type() < 0)
+   ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
+  else
+   ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
  }
 
  if(input>0)
@@ -189,11 +247,13 @@ bool NPulseSynapse::ACalculate(void)
  else
   PreOutput.v-=PreOutput.v/VDissociationTC;
 
- POutputData[0].Double[0]=OutputConstData*
-						(1.0-InhibitionCoeff.v*PreOutput.v)*PreOutput.v;
+ if(UsePresynapticInhibition)
+  Output(0,0)=OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v)*PreOutput.v;
+ else
+  Output(0,0)=OutputConstData*PreOutput.v;
 
- if(POutputData[0].Double[0]<0)
-  POutputData[0].Double[0]=0;
+ if(Output(0,0)<0)
+  Output(0,0)=0;
 
  return true;
 }

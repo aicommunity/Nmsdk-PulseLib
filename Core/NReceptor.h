@@ -25,29 +25,29 @@ class RDK_LIB_TYPE NReceptor: public NSource
 {
 public: // Общедоступные свойства
 // Коэффициент усиления входного сигнала
-RDK::ULProperty<double,NReceptor> Gain;
+RDK::ULProperty<double,NReceptor, ptPubParameter> Gain;
 
 // Рабочий диапазон входного сигнала
-RDK::ULProperty<double,NReceptor> MinInputRange, MaxInputRange;
+RDK::ULProperty<double,NReceptor, ptPubParameter> MinInputRange, MaxInputRange;
 
 // Рабочий диапазон выходного сигнала
-RDK::ULProperty<double,NReceptor> MinOutputRange, MaxOutputRange;
+RDK::ULProperty<double,NReceptor, ptPubParameter> MinOutputRange, MaxOutputRange;
 
 // Коэффициент масштабирования для режима 2
-RDK::ULProperty<double,NReceptor> ExpCoeff;
+RDK::ULProperty<double,NReceptor, ptPubParameter> ExpCoeff;
 
 // Слагаемое для режима 1
-RDK::ULProperty<double,NReceptor> SumCoeff;
+RDK::ULProperty<double,NReceptor, ptPubParameter> SumCoeff;
 
 // Постоянная времени забывания границ входного диапазона
-RDK::ULProperty<double,NReceptor> InputAdaptationArrestingTC;
+RDK::ULProperty<double,NReceptor, ptPubParameter> InputAdaptationArrestingTC;
 
 
 // Режим адаптации диапазона входного сигнала
 // 0 - без адаптации
 // 1 - постоянное расширение диапазона
 // 2 - расширение с забыванием, с постояной времени InputAdaptationArrestingTC
-RDK::ULProperty<int,NReceptor> InputAdaptationMode;
+RDK::ULProperty<int,NReceptor, ptPubParameter> InputAdaptationMode;
 
 // Режим адаптации диапазона входного сигнала
 // 0 - без адаптации
@@ -56,11 +56,11 @@ RDK::ULProperty<int,NReceptor> InputAdaptationMode;
 // 2 - аналогично 1, но формула y=exp(-Kx)*Gain
 // 3 - аналогично 1, ExpCoeff вычисляется автоматически
 // 4 - адаптация по формуле y=Gain*(1.0+input);
-RDK::ULProperty<int,NReceptor> OutputAdaptationMode;
+RDK::ULProperty<int,NReceptor, ptPubParameter> OutputAdaptationMode;
 
-
-
-protected: // Основные свойства
+protected: // Входы и выходы
+/// Входной сигнал с нейрона
+UPropertyInputData<MDMatrix<double>, NReceptor, ptInput | ptPubState> Input;
 
 protected: // Временные переменные
 double InputRange;

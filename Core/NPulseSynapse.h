@@ -24,16 +24,25 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseSynapse: public NPulseSynapseCommon
 {
 public: // Общедоступные свойства
-// Постоянная времени выделения медиатора
-RDK::ULProperty<double,NPulseSynapse> SecretionTC;
+/// Постоянная времени выделения медиатора
+ULProperty<double,NPulseSynapse, ptPubParameter> SecretionTC;
 
-// Постоянная времени распада медиатора
-RDK::ULProperty<double,NPulseSynapse> DissociationTC;
+/// Постоянная времени распада медиатора
+ULProperty<double,NPulseSynapse, ptPubParameter> DissociationTC;
 
-// Коэффициент пресинаптического торможения
-RDK::ULProperty<double,NPulseSynapse> InhibitionCoeff;
+/// Коэффициент пресинаптического торможения
+ULProperty<double,NPulseSynapse, ptPubParameter> InhibitionCoeff;
 
-public: // Данные
+/// Типовая длительность импульса, с
+ULProperty<double,NPulseSynapse, ptPubParameter> TypicalPulseDuration;
+
+/// Флаг работы в режиме симуляции пришедшего импульса по сигналу
+ULProperty<bool,NPulseSynapse, ptPubParameter> UsePulseSignal;
+
+/// Флаг включения пресинаптического торможения
+ULProperty<bool,NPulseSynapse, ptPubParameter> UsePresynapticInhibition;
+
+public: // Входы и выходы
 
 protected: // Основные свойства
 
@@ -43,6 +52,9 @@ double VSecretionTC,VDissociationTC;
 
 // Постоянная составляющая результатов вычислений
 double OutputConstData;
+
+/// Счетчик числа итераций в течении которых на входет присутствует импульс
+int PulseCounter;
 
 public: // Методы
 // --------------------------
@@ -65,8 +77,17 @@ bool SetSecretionTC(const double &value);
 // Постоянная времени распада медиатора
 bool SetDissociationTC(const double &value);
 
+/// Типовая длительность импульса, с
+bool SetTypicalPulseDuration(const double &value);
+
 // Коэффициент пресинаптического торможения
 bool SetInhibitionCoeff(const double &value);
+
+/// Флаг работы в режиме симуляции пришедшего импульса по сигналу
+bool SetUsePulseSignal(const bool &value);
+
+// Задание флага включения пресинаптического торомжения
+bool SetUsePresynapticInhibition(const bool &value);
 
 // Вес (эффективность синапса) синапса
 bool SetResistance(const double &value);
@@ -97,7 +118,7 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

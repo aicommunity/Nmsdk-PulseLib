@@ -16,7 +16,6 @@ See file license.txt for more information
 #ifndef NPULSE_CHANNEL_COMMON_H
 #define NPULSE_CHANNEL_COMMON_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "NPulseSynapse.h"
 
 namespace NMSDK {
@@ -24,23 +23,36 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseChannelCommon: public UNet
 {
 public: // Общедоступные свойства
-// Тип ионного механизма
-// <0 - накапливает отрицательный вклад в потенциал (или гиперполяризует мембрану)
-// >0 - накапливает положительный вклад в потенциал (или деполяризует мембрану)
-RDK::ULProperty<double,NPulseChannelCommon> Type;
+/// Тип ионного механизма
+/// <0 - накапливает отрицательный вклад в потенциал (или гиперполяризует мембрану)
+/// >0 - накапливает положительный вклад в потенциал (или деполяризует мембрану)
+ULProperty<double,NPulseChannelCommon, ptPubParameter> Type;
 
-/// Признак наличия усреднения в выходных данных нейрона
-ULProperty<bool, NPulseChannelCommon> UseAveragePotential;
+/// Флаг включения усреднения в выходных данных нейрона
+ULProperty<bool, NPulseChannelCommon, ptPubParameter> UseAveragePotential;
 
-/*/// Сбрасывать накопленный потенциал, если активность по синапсам меньше чем порог
-ULProperty<bool, NPulseChannelCommon> RestingFlag;
+/// Флаг включения усреднения выходов всех синапсов
+ULProperty<bool, NPulseChannelCommon, ptPubParameter> UseAverageSynapsis;
 
-/// Порог активности синапсов для сброса накопленного потенциала
-ULProperty<double, NPulseChannelCommon> RestingThreshold;
-  */
-protected: // Основные свойства
+public: // Входы и выходы
+/// Входной сигнал от канала предыдущего участка мембраны
+UPropertyInputCData<MDMatrix<double>, NPulseChannelCommon, ptInput | ptPubState> ChannelInputs;
 
-protected: // Временные переменные
+/// Входной сигнал от синапсов
+UPropertyInputCData<MDMatrix<double>, NPulseChannelCommon, ptInput | ptPubState> SynapticInputs;
+
+/// Выходное влияние синапса на мембрану
+UPropertyOutputData<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> Output;
+
+/// Суммарное входное влияние от каналов всех предыдущих участков мембраны
+/// (всех, т.к. возможно ветвление)
+UPropertyOutputData<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> SumChannelInputs;
+
+public: // Временные переменные
+/// Признак активации нейрона-владельца (сбрасывается автоматически немедленно
+/// по завершении текущей итерации счета).
+ULProperty<bool,NPulseChannelCommon, ptPubState> IsNeuronActivated;
+
 
 public: // Методы
 // --------------------------
@@ -54,7 +66,7 @@ virtual ~NPulseChannelCommon(void);
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-virtual size_t GetNumSynapses(void) const;
+virtual int GetNumSynapses(void) const;
 // --------------------------
 
 // --------------------------
@@ -101,6 +113,11 @@ virtual bool ADelComponent(UEPtr<UContainer> comp);
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
+public:
+/// Принимает сигнал о генерации сигнала низкопороговой зоной
+/// (однократно по началу импульса)
+virtual void NeuronActivated(void);
+
 protected:
 // Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
@@ -116,6 +133,7 @@ virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

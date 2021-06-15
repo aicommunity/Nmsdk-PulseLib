@@ -21,10 +21,7 @@ See file license.txt for more information
 #include "NPulseMembrane.h"
 #include "NPulseNeuron.h"
 #include "NPulseHebbSynapse.h"
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
-//#include "../BCL/NConnector.h"
-
 
 namespace NMSDK {
 
@@ -52,15 +49,15 @@ NPulseChannel::~NPulseChannel(void)
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t NPulseChannel::GetNumSynapses(void) const
+int NPulseChannel::GetNumSynapses(void) const
 {
  return GetNumComponents();
 }
 
 // Возвращает синапс по индексу
-UEPtr<NPulseSynapse> NPulseChannel::GetSynapse(size_t i)
+UEPtr<NPulseSynapse> NPulseChannel::GetSynapse(int i)
 {
- return static_pointer_cast<NPulseSynapse>(GetComponentByIndex(i));
+ return dynamic_pointer_cast<NPulseSynapse>(SynapticInputs.GetItem(i)->GetOwner());
 }
 // --------------------------
 
@@ -92,95 +89,6 @@ bool NPulseChannel::SetFBResistance(const double &value)
   return false;
 
  return true;
-
-}
-// --------------------------
-
-// --------------------------
-// Методы управления объектом
-// --------------------------
-// Подключает синапс хебба synapse к низкопороговой зоне нейрона-владельца
-// Возвращает false только если произошла ошибка установки связи
-// Если synapse == 0, то подключает все синапсы хебба
-bool NPulseChannel::InstallHebbSynapses(UEPtr<UContainer> synapse)
-{
- bool res=true;
- UEPtr<NPulseNeuron> mowner=dynamic_pointer_cast<NPulseNeuron>(MainOwner);
-
- if(mowner && mowner->GetLTZone())
- {
-  if(synapse)
-  {
-   UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(synapse);
-   if(hsynapse)
-   {
-	RDK::ULinkSide item,conn;
-	item.Id=mowner->GetLTZone()->GetLongId(mowner);
-	item.Index=0;
-	conn.Id=hsynapse->GetLongId(mowner);
-	conn.Index=1;
-	res&=mowner->CreateLink(item,conn);
-   }
-  }
-  else
-  {
-   RDK::ULinkSide item,conn;
-   for(size_t i=0;i<GetNumSynapses();i++)
-   {
-	UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(GetSynapse(i));
-	if(hsynapse)
-	{
-	 item.Id=mowner->GetLTZone()->GetLongId(mowner);
-     item.Index=0;
-	 conn.Id=hsynapse->GetLongId(mowner);
-	 conn.Index=1;
-	 res&=mowner->CreateLink(item,conn);
-	}
-   }
-  }
- }
-
- UEPtr<NPulseLifeNeuron> mlowner=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
-
- if(mlowner && mlowner->GetNeuronLife())
- {
-  if(synapse)
-  {
-   UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(synapse);
-   if(hsynapse)
-   {
-	RDK::ULinkSide item,conn;
-	item.Id=mlowner->GetNeuronLife()->GetLongId(mlowner);
-	if(Type.v>0)
-	 item.Index=6;
-	else
-	 item.Index=5;
-	conn.Id=hsynapse->GetLongId(mlowner);
-	conn.Index=2;
-	res&=mlowner->CreateLink(item,conn);
-   }
-  }
-  else
-  {
-   RDK::ULinkSide item,conn;
-   for(size_t i=0;i<GetNumSynapses();i++)
-   {
-	UEPtr<NPulseHebbSynapse> hsynapse=dynamic_pointer_cast<NPulseHebbSynapse>(GetSynapse(i));
-	if(hsynapse)
-	{
-	 item.Id=mlowner->GetNeuronLife()->GetLongId(mlowner);
-	 if(Type.v>0)
-	  item.Index=6;
-	 else
-	  item.Index=5;
-	 conn.Id=hsynapse->GetLongId(mlowner);
-	 conn.Index=2;
-	 res&=mlowner->CreateLink(item,conn);
-	}
-   }
-  }
- }
- return res;
 }
 // --------------------------
 
@@ -221,7 +129,7 @@ bool NPulseChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> point
 {
  if(!NPulseChannelCommon::AAddComponent(comp, pointer))
   return false;
- InstallHebbSynapses(comp);
+ //InstallHebbSynapses(comp);
  return true;
 }
 
@@ -252,7 +160,7 @@ bool NPulseChannel::ResetOut(void)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseChannel::ADefault(void)
 {
- if(!NPulseChannelCommon::AReset())
+ if(!NPulseChannelCommon::ADefault())
   return false;
 
  // Емкость мембраны
@@ -292,63 +200,58 @@ bool NPulseChannel::AReset(void)
   return false;
 
  if(Type>0)
-  POutputData[0].Double[0]=1;
+  Output(0,0)=1;
  else
  if(Type<0)
-  POutputData[0].Double[0]=-1;
+  Output(0,0)=-1;
 
  return true;
 }
 
 // Выполняет расчет этого объекта
-bool NPulseChannel::ACalculate(void)
+bool NPulseChannel::ACalculate2(void)
 {
- if(!NPulseChannelCommon::ACalculate())
-  return false;
-
  channel_input=0;
  double G=0;
 
  // Получение доступа к данным синапса
- for(int i=0;i<NumComponents;i++)
-  G+=static_pointer_cast<UADItem>(PComponents[i])->GetOutputData(0).Double[0];
+ for(int i=0;i<int(SynapticInputs->size());i++)
+ {
+  if(SynapticInputs[i]->GetSize() >0)
+  G+=(*SynapticInputs[i])(0,0);
+ }
+
+ if(UseAverageSynapsis && !SynapticInputs->empty())
+  G/=SynapticInputs->size();
 
  // Получение данных канала
- size_t inp_size;
- size_t full_inp_data_size(0);
- for(int i=0;i<NumInputs;i++)
+ int inp_size;
+ int full_inp_data_size(0);
+ for(int i=0;i<int(ChannelInputs->size());i++)
  {
-  if((inp_size=GetInputDataSize(i)[1]) >0)
+  if((inp_size=ChannelInputs[i]->GetSize()) >0)
   {
    full_inp_data_size+=inp_size;
-   double *data=&(GetInputData(i)->Double[0]);
-   for(size_t j=0;j<inp_size;j++,++data)
+   double *data=ChannelInputs[i]->Data;
+   for(int j=0;j<inp_size;j++,++data)
 	channel_input+=*data;
   }
 
-  if(UseAveragePotential)
-   channel_input/=full_inp_data_size;//FullInputDataSize;
+  if(UseAveragePotential && full_inp_data_size>0)
+   channel_input/=full_inp_data_size;
  }
+ SumChannelInputs(0,0)=channel_input;
 
  // Получение информации об обратной связи
- double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
- if(Owner)
-  channel_input-=feedback;
+ UEPtr<NPulseMembrane> membrane=dynamic_pointer_cast<NPulseMembrane>(Owner);
+ if(membrane)
+  channel_input-=membrane->Feedback;
 
  // Расчет
- double *out=&POutputData[0].Double[0];
+ double *out=&Output(0,0);
  double Ti(0.0),sum_u(0.0);
 
- // Проверяем необходимость сброса
-// if(RestingFlag)
-// {
-//  if(G<RestingThreshold)
-//  {
-//   *out=channel_input;
-//  }
-// }
-
- if(!feedback)
+ if(fabs(membrane->Feedback)<1e-3)
  {
   double resistance(0.0);
   if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))

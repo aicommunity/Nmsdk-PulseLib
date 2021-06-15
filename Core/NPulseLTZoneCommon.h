@@ -16,9 +16,7 @@ See file license.txt for more information
 #ifndef NPULSE_LTZONE_COMMON_H
 #define NPULSE_LTZONE_COMMON_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "../../Nmsdk-SourceLib/Core/NPulseGenerator.h"
-
 
 namespace NMSDK {
 
@@ -27,18 +25,29 @@ class NPulseNeuron;
 class RDK_LIB_TYPE NLTZone: public UNet
 {
 public: // Общедоступные свойства
-/// Порог нейрона
-RDK::ULProperty<double,NLTZone> Threshold;
+/// Порог возбуждения нейрона
+ULProperty<double,NLTZone, ptPubParameter> Threshold;
+
+/// Порог завершения генерации импульса нейроном
+ULProperty<double,NLTZone, ptPubParameter> ThresholdOff;
 
 /// Признак наличия усреднения в выходных данных нейрона
-ULProperty<bool,NLTZone> UseAveragePotential;
+ULProperty<bool,NLTZone, ptPubParameter> UseAveragePotential;
 
+public: // Входы и выходы
 /// Данные с ионных механизмов участков мембраны
-UPropertyInputCData<MDMatrix<double>,NLTZone> InputChannels;
+UPropertyInputCData<MDMatrix<double>,NLTZone, ptInput | ptPubState> Inputs;
+
+/// Выход источника сигнала
+UPropertyOutputData<MDMatrix<double>, NLTZone, ptOutput | ptPubState> Output;
 
 public: // Данные
+/// Потенциал нейрона, сравниваемый с порогом
+ULProperty<double,NLTZone, ptPubState> Potential;
+
+
 /// Нейрон владелец мембраны канала
-NPulseNeuron* Neuron;
+//NPulseNeuron* Neuron;
 
 protected: // Основные свойства
 
@@ -59,6 +68,9 @@ virtual ~NLTZone(void);
 // --------------------------
 // Устанавливает порог нейрона
 bool SetThreshold(const double &value);
+
+// Устанавливает порог завершения генерации импульса нейроном
+bool SetThresholdOff(const double &value);
 // --------------------------
 
 // --------------------------
@@ -77,31 +89,50 @@ virtual bool AReset(void);
 class RDK_LIB_TYPE NPulseLTZoneCommon: public NLTZone
 {
 public: // Общедоступные свойства
-// Амплитуда импульсов
-RDK::ULProperty<double,NPulseLTZoneCommon> PulseAmplitude;
+/// Число ионных механизмов в группе
+/// (используется при нормировке суммарного входного потенциала)
+/// Например если участок мембраны всегда состоит из 2 ионых механизмов
+/// дающих вклад разных знаков, то параметр равен 2. Иначе 1.
+ULProperty<int,NPulseLTZoneCommon, ptPubParameter> NumChannelsInGroup;
 
-// Длительность импульса
-RDK::ULProperty<double,NPulseLTZoneCommon> PulseLength;
+/// Амплитуда импульсов
+ULProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseAmplitude;
 
-// Интервал времени оценки частоты генерации
-RDK::ULProperty<double,NPulseLTZoneCommon> AvgInterval;
+/// Длительность импульса
+ULProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseLength;
+
+/// Интервал времени оценки частоты генерации
+ULProperty<double,NPulseLTZoneCommon, ptPubParameter> AvgInterval;
+
+public: // Входы и выходы
+/// Потенциал (для этого компонента копирует PulseOutput) (1)
+UPropertyOutputData<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputPotential;
+
+/// Частота (2)
+UPropertyOutputData<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputFrequency;
+
+/// Массив моментов времени начала импульсов (3)
+UPropertyOutputData<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputPulseTimes;
 
 public: // Данные
-// Промежуточное значение потенциала
-// Следует использовать эту переменную для сохранения состояния мембранного потенциала
-RDK::ULProperty<double,NPulseLTZoneCommon,ptPubState> PrePotential;
+/// Промежуточное значение потенциала
+/// Следует использовать эту переменную для сохранения состояния мембранного потенциала
+ULProperty<double,NPulseLTZoneCommon,ptPubState> PrePotential;
 
 protected: // Основные свойства
 
 protected: // Временные переменные
-// Флаг наличия генерации
-RDK::ULProperty<int,NPulseLTZoneCommon,ptPubState> PulseCounter;
+// Суммарный потенциал
+RDK::ULProperty<double,NPulseLTZoneCommon,ptPubState> NeuralPotential;
 
-// Средняя частота за заданный интервал времени
-RDK::UCLProperty<list<double>,NPulseLTZoneCommon,ptPubState> AvgFrequencyCounter;
+/// Флаг наличия генерации
+ULProperty<int,NPulseLTZoneCommon,ptPubState> PulseCounter;
 
-// Признак текущей генерации импульса
-RDK::ULProperty<bool,NPulseLTZoneCommon,ptPubState> PulseFlag;
+/// Средняя частота за заданный интервал времени
+UCLProperty<list<double>,NPulseLTZoneCommon,ptPubState> AvgFrequencyCounter;
+
+/// Признак текущей генерации импульса
+ULProperty<bool,NPulseLTZoneCommon,ptPubState> PulseFlag;
 
 public: // Методы
 // --------------------------
@@ -154,6 +185,7 @@ virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 
 /// Возвращает true если условие для генерации импульса выполнено
 virtual bool CheckPulseOn(void);

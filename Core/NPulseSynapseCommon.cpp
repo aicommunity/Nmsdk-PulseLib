@@ -27,11 +27,12 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseSynapseCommon::NPulseSynapseCommon(void)
- //: NConnector(name),
 : PulseAmplitude("PulseAmplitude",this,&NPulseSynapseCommon::SetPulseAmplitude),
-Resistance("Resistance",this,&NPulseSynapseCommon::SetResistance),
-
-PreOutput("PreOutput",this)
+  Resistance("Resistance",this,&NPulseSynapseCommon::SetResistance),
+  Input("Input",this),
+  Output("Output",this),
+  PreOutput("PreOutput",this),
+  InputPulseSignal("InputPulseSignal",this)
 {
 }
 
@@ -79,7 +80,11 @@ bool NPulseSynapseCommon::ADefault(void)
  PulseAmplitude=1;
 
  // Вес (эффективность синапса) синапса
- Resistance=1.0;
+ Resistance=10.0;
+
+ Output.Assign(1,1,0.0);
+ Input->Assign(1,1,0.0);
+ InputPulseSignal=false;
 
  return true;
 }
@@ -98,6 +103,8 @@ bool NPulseSynapseCommon::AReset(void)
 {
  // Сброс временных переменных
  PreOutput=0;
+ InputPulseSignal=false;
+ PulseSignalTemp=false;
 
  return true;
 }
@@ -105,8 +112,23 @@ bool NPulseSynapseCommon::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseSynapseCommon::ACalculate(void)
 {
- POutputData[0].Double[0]=PreOutput;
+ if((*Input)(0,0)>0 && !PulseSignalTemp)
+ {
+  InputPulseSignal=true;
+  PulseSignalTemp=true;
+ }
 
+ if((*Input)(0,0)<=0 && PulseSignalTemp)
+  PulseSignalTemp=false;
+
+ bool res=ACalculate2();
+ InputPulseSignal=false;
+ return res;
+}
+
+bool NPulseSynapseCommon::ACalculate2(void)
+{
+ Output(0,0)=PreOutput;
  return true;
 }
 // --------------------------

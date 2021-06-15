@@ -17,14 +17,7 @@ See file license.txt for more information
 #define NPULSE_CHANNEL_COMMON_CPP
 
 #include "NPulseChannelCommon.h"
-#include "NPulseSynapse.h"
 #include "NPulseMembrane.h"
-#include "NPulseNeuron.h"
-#include "NPulseHebbSynapse.h"
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
-#include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
-//#include "../BCL/NConnector.h"
-
 
 namespace NMSDK {
 
@@ -34,9 +27,13 @@ namespace NMSDK {
 // --------------------------
 NPulseChannelCommon::NPulseChannelCommon(void)
  : Type("Type", this, &NPulseChannelCommon::SetType),
-   UseAveragePotential("UseAveragePotential",this)
-//   RestingFlag("RestingFlag",this),
-//   RestingThreshold("RestingThreshold",this)
+   UseAveragePotential("UseAveragePotential",this),
+   UseAverageSynapsis("UseAverageSynapsis",this),
+   ChannelInputs("ChannelInputs",this),
+   SynapticInputs("SynapticInputs",this),
+   Output("Output",this),
+   SumChannelInputs("SumChannelInputs",this),
+   IsNeuronActivated("IsNeuronActivated",this)
 {
 }
 
@@ -50,9 +47,9 @@ NPulseChannelCommon::~NPulseChannelCommon(void)
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-size_t NPulseChannelCommon::GetNumSynapses(void) const
+int NPulseChannelCommon::GetNumSynapses(void) const
 {
- return 0;
+ return int(SynapticInputs->size());
 }
 // --------------------------
 
@@ -122,13 +119,21 @@ bool NPulseChannelCommon::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
+/// Принимает сигнал о генерации сигнала низкопороговой зоной
+/// (однократно по началу импульса)
+void NPulseChannelCommon::NeuronActivated(void)
+{
+ IsNeuronActivated=true;
+}
+
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseChannelCommon::ADefault(void)
 {
  Type=0;
  UseAveragePotential=true;
-// RestingThreshold=100;
-// RestingFlag=false;
+ UseAverageSynapsis=false;
+ Output.Assign(1,1,0.0);
+ SumChannelInputs.Assign(1,1,0.0);
 
  return true;
 }
@@ -145,7 +150,9 @@ bool NPulseChannelCommon::ABuild(void)
 // Сброс процесса счета.
 bool NPulseChannelCommon::AReset(void)
 {
- FillOutputData();
+ Output.ToZero();
+ SumChannelInputs.ToZero();
+ IsNeuronActivated=false;
 
  return true;
 }
@@ -153,8 +160,16 @@ bool NPulseChannelCommon::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseChannelCommon::ACalculate(void)
 {
+ ACalculate2();
+ IsNeuronActivated=false;
  return true;
 }
+
+bool NPulseChannelCommon::ACalculate2(void)
+{
+ return true;
+}
+
 // --------------------------
 }
 

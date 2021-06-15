@@ -16,41 +16,48 @@ See file license.txt for more information
 #ifndef NMUSCLE_H
 #define NMUSCLE_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
-//#include "../BCL/NItem.h"
+#include "../../../Rdk/Deploy/Include/rdk.h"
 #include "NReceptor.h"
 
 namespace NMSDK {
 
-//using namespace MySDK;
+using namespace RDK;
 
 class RDK_LIB_TYPE NMuscle: public UNet
 {
 public: // Общедоступные свойства
-// Коэффициенты
-RDK::UCLProperty<Real,NMuscle> MulCoeffs;
+/// Коэффициенты
+UCLProperty<vector<double>,NMuscle, ptPubParameter> MulCoeffs;
 
-RDK::UCLProperty<Real,NMuscle> Param;
+UCLProperty<vector<double>,NMuscle, ptPubParameter> Param;
 
-// Постоянные времени
-RDK::UCLProperty<Real,NMuscle> TC;
+/// Постоянные времени
+UCLProperty<vector<double>,NMuscle, ptPubParameter> TC;
 
-// Масса
-RDK::ULProperty<double,NMuscle> Mass;
+/// Масса
+ULProperty<double,NMuscle, ptPubParameter> Mass;
 
-// Порог
-RDK::ULProperty<double,NMuscle> Threshold;
+/// Порог
+ULProperty<double,NMuscle, ptPubParameter> Threshold;
 
-// Величина ускорения свободного падения
-RDK::ULProperty<double,NMuscle> G;
+/// Величина ускорения свободного падения
+ULProperty<double,NMuscle, ptPubParameter> G;
+
+public: // Входы и выходы
+/// Сигнальный вход (активация мышцы)
+UPropertyInputData<MDMatrix<double>, NMuscle> Input;
+
+/// Указатель на вход по длине
+UPropertyInputData<MDMatrix<double>, NMuscle> LengthInput;
+
+UPropertyOutputData<MDMatrix<double>, NMuscle, ptOutput | ptPubState> Output;
 
 public: // Временные переменные
 double y[15], yOld[15], mr[7], mrOld[7],vereteno1, vereteno2, goldgi;
 double MaxActionPower;
 bool FirstStep;
 
-// Указатель на вход по длине
-NReceptor *LengthInput;
+
 /*
 // Указатель на вход по внешней силе
 NReceptor *ExternalForce;

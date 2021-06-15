@@ -16,9 +16,7 @@ See file license.txt for more information
 #ifndef NPULSE_MEMBRANE_COMMON_H
 #define NPULSE_MEMBRANE_COMMON_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
-#include "NPulseChannel.h"
-
+#include "NPulseChannelCommon.h"
 
 namespace NMSDK {
 
@@ -28,13 +26,25 @@ class RDK_LIB_TYPE NPulseMembraneCommon: public UNet
 {
 public: // Параметры
 /// Признак наличия усреднения в выходных данных нейрона
-ULProperty<bool, NPulseMembraneCommon> UseAveragePotential;
+ULProperty<bool, NPulseMembraneCommon, ptPubParameter> UseAveragePotential;
 
 public: // Данные
+/// Значение обратной связи
+ULProperty<double,NPulseMembraneCommon,ptPubState> Feedback;
+
+/// Суммарное значение потенциала на участке мембраны
+UPropertyOutputData<MDMatrix<double>, NPulseMembraneCommon, ptPubState> SumPotential;
+
 
 protected: // Временные переменные
 // Ионные механизмы
 vector<NPulseChannelCommon*> Channels;
+
+// Синапсы
+vector<NPulseSynapseCommon*> Synapses;
+
+/// Флаг, который взводится на время наличия обратной связи
+bool IsNeuronActive;
 
 public: // Методы
 // --------------------------
@@ -111,6 +121,7 @@ virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

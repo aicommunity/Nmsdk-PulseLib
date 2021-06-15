@@ -2,7 +2,7 @@
 // Version:        3.0.2
 // ===========================================================
 /* ***********************************************************
-@Copyright Alexander V. Bakhshiev, 2016.
+@Copyright Alexander V. Bakhshiev, 2020.
 E-mail:		alexab@ailab.ru
 url:            http://ailab.ru
 
@@ -13,59 +13,74 @@ Project License:     BSD License
 See file license.txt for more information
 *********************************************************** */
 
-#ifndef NPULSE_SYNAPSE_COMMON_H
-#define NPULSE_SYNAPSE_COMMON_H
+#ifndef NPULSE_SYNAPSE_STDP_H
+#define NPULSE_SYNAPSE_STDP_H
 
-#include "../../Nmsdk-BasicLib/Core/NNet.h"
+#include "NPulseSynapse.h"
 
 
 namespace NMSDK {
 
-class NPulseNeuron;
-
-class RDK_LIB_TYPE NPulseSynapseCommon: public UNet
+class RDK_LIB_TYPE NPulseSynapseStdp: public NPulseSynapse
 {
 public: // Общедоступные свойства
-/// Амплитуда входных импульсов
-ULProperty<double,NPulseSynapseCommon, ptPubParameter> PulseAmplitude;
+ULProperty<double,NPulseSynapseStdp, ptPubParameter> XModCoeff;
 
-/// Сопротивление синапса
-ULProperty<double,NPulseSynapseCommon, ptPubParameter> Resistance;
+ULProperty<double,NPulseSynapseStdp, ptPubParameter> YModCoeff;
+
+ULProperty<double,NPulseSynapseStdp, ptPubParameter> APlus;
+
+ULProperty<double,NPulseSynapseStdp, ptPubParameter> AMinus;
+
+ULProperty<double,NPulseSynapseStdp, ptPubParameter> XTau;
+ULProperty<double,NPulseSynapseStdp, ptPubParameter> YTau;
+
+public: // Переменные состояния
+/// Усреденение входного импульса
+ULProperty<double,NPulseSynapseStdp, ptPubState> XAvg;
+
+/// Усреденение выходного импульса
+ULProperty<double,NPulseSynapseStdp, ptPubState> YAvg;
+
+/// Промежуточная разность влияния X и Y компонент
+ULProperty<double,NPulseSynapseStdp, ptPubState> XYDiff;
+
 
 public: // Входы и выходы
-/// Входной сигнал с нейрона
-UPropertyInputData<MDMatrix<double>, NPulseSynapseCommon, ptInput | ptPubState> Input;
+/// Входной сигнал внешней постсинаптической активности
+/// (например модулирующего нейрона)
+UPropertyInputData<MDMatrix<double>, NPulseSynapseStdp, ptInput | ptPubState> PsActivityInput;
 
-/// Выходное влияние синапса на мембрану
-UPropertyOutputData<MDMatrix<double>,NPulseSynapseCommon, ptOutput | ptPubState> Output;
+/// Выходной сигнал влияния STDP
+UPropertyOutputData<MDMatrix<double>, NPulseSynapseStdp, ptOutput | ptPubState> StdpInfluence;
+
+protected: // Основные свойства
 
 protected: // Временные переменные
-/// Промежуточное значение эффективности синапса
-ULProperty<double,NPulseSynapseCommon,ptPubState> PreOutput;
-
-/// Сигнал наличия входного импульса
-/// (сбрасывается автоматически в конце итерации)
-ULProperty<bool, NPulseSynapseCommon, ptPubState> InputPulseSignal;
-
-bool PulseSignalTemp;
 
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
-NPulseSynapseCommon(void);
-virtual ~NPulseSynapseCommon(void);
+NPulseSynapseStdp(void);
+virtual ~NPulseSynapseStdp(void);
 // --------------------------
 
 protected:
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
-// Устанавливает амплитуду импульсов
-virtual bool SetPulseAmplitude(const double &value);
+bool SetXModCoeff(const double &value);
 
-// Вес (эффективность синапса) синапса
-virtual bool SetResistance(const double &value);
+bool SetYModCoeff(const double &value);
+
+bool SetAPlus(const double &value);
+
+bool SetAMinus(const double &value);
+
+bool SetXTau(const double &value);
+
+bool SetYTau(const double &value);
 // --------------------------
 
 public:
@@ -73,7 +88,7 @@ public:
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
-virtual NPulseSynapseCommon* New(void);
+virtual NPulseSynapseStdp* New(void);
 // --------------------------
 
 // --------------------------
@@ -93,7 +108,6 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
 virtual bool ACalculate2(void);
 // --------------------------
 };

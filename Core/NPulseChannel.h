@@ -16,7 +16,6 @@ See file license.txt for more information
 #ifndef NPULSE_CHANNEL_H
 #define NPULSE_CHANNEL_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "NPulseChannelCommon.h"
 #include "NPulseSynapse.h"
 
@@ -25,28 +24,24 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseChannel: public NPulseChannelCommon
 {
 public: // Общедоступные свойства
-// Емкость мембраны
-RDK::ULProperty<double,NPulseChannel> Capacity;
+/// Емкость мембраны
+ULProperty<double,NPulseChannel, ptPubParameter> Capacity;
 
-// Сопротивление мембраны
-RDK::ULProperty<double,NPulseChannel> Resistance;
+/// Сопротивление мембраны
+ULProperty<double,NPulseChannel, ptPubParameter> Resistance;
 
-// Сопротивление перезаряда мембраны
-RDK::ULProperty<double,NPulseChannel> FBResistance;
+/// Сопротивление перезаряда мембраны
+ULProperty<double,NPulseChannel, ptPubParameter> FBResistance;
 
-// Сопротивление мембраны на переход в состояние покоя
-RDK::ULProperty<double,NPulseChannel> RestingResistance;
+/// Сопротивление мембраны на переход в состояние покоя
+ULProperty<double,NPulseChannel, ptPubParameter> RestingResistance;
 
-RDK::ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
+/// Число подключенных к каналу синапсов
+ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
 
-public: // Данные
-
+public: // Входы и выходы
 double channel_input;
 //double out;
-
-protected: // Основные свойства
-
-protected: // Временные переменные
 
 public: // Методы
 // --------------------------
@@ -60,10 +55,10 @@ virtual ~NPulseChannel(void);
 // Методы управления специфическими компонентами
 // --------------------------
 // Возвращает число синапсов
-virtual size_t GetNumSynapses(void) const;
+virtual int GetNumSynapses(void) const;
 
 // Возвращает синапс по индексу
-UEPtr<NPulseSynapse> GetSynapse(size_t i);
+UEPtr<NPulseSynapse> GetSynapse(int i);
 // --------------------------
 virtual double GetSynOutput(void);// метод-заглушка
 virtual bool ResetOut(void);
@@ -78,15 +73,12 @@ bool SetResistance(const double &value);
 
 // Сопротивление перезаряда мембраны
 bool SetFBResistance(const double &value);
-// --------------------------
 
-// --------------------------
-// Методы управления объектом
-// --------------------------
-// Подключает синапс хебба synapse к низкопороговой зоне нейрона-владельца
-// Возвращает false только если произошла ошибка установки связи
-// Если synapse == 0, то подключает все синапсы хебба
-bool InstallHebbSynapses(UEPtr<UContainer> synapse=0);
+/// Имя класса синапса
+bool SetSynapseClassName(const std::string &value);
+
+/// Число синапсов
+bool SetNumSynapses(const int &value);
 // --------------------------
 
 // --------------------------
@@ -140,7 +132,7 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

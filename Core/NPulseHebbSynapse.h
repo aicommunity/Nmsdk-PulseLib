@@ -16,7 +16,6 @@ See file license.txt for more information
 #ifndef NPULSE_HEBB_SYNAPSE_H
 #define NPULSE_HEBB_SYNAPSE_H
 
-#include "../../Nmsdk-BasicLib/Core/NSupport.h"
 #include "NPulseSynapse.h"
 
 
@@ -25,30 +24,42 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseHebbSynapse: public NPulseSynapse
 {
 public: // Общедоступные свойства
-RDK::ULProperty<double,NPulseHebbSynapse> Min;
-RDK::ULProperty<double,NPulseHebbSynapse> Mout;
-RDK::ULProperty<double,NPulseHebbSynapse> Md;
-RDK::UCLProperty<vector<double>,NPulseHebbSynapse> ActiveMs;
-RDK::UCLProperty<vector<double>,NPulseHebbSynapse> PassiveMs;
-RDK::UCLProperty<vector<double>,NPulseHebbSynapse> Kmot;
-RDK::ULProperty<double,NPulseHebbSynapse> Kin;
-RDK::ULProperty<double,NPulseHebbSynapse> Kout;
+ULProperty<double,NPulseHebbSynapse, ptPubParameter> Min;
+ULProperty<double,NPulseHebbSynapse, ptPubParameter> Mout;
+ULProperty<double,NPulseHebbSynapse, ptPubParameter> Md;
+UCLProperty<vector<double>,NPulseHebbSynapse, ptPubParameter> ActiveMs;
+UCLProperty<vector<double>,NPulseHebbSynapse, ptPubParameter> PassiveMs;
+UCLProperty<vector<double>,NPulseHebbSynapse, ptPubParameter> Kmot;
+ULProperty<double,NPulseHebbSynapse, ptPubParameter> Kin;
+ULProperty<double,NPulseHebbSynapse, ptPubParameter> Kout;
 
 // К-т усиления динамической связи
-RDK::ULProperty<double,NPulseHebbSynapse> GdGain;
+RDK::ULProperty<double,NPulseHebbSynapse, ptPubParameter> GdGain;
 
 // К-т усиления статической связи
-RDK::ULProperty<double,NPulseHebbSynapse> GsGain;
+RDK::ULProperty<double,NPulseHebbSynapse, ptPubParameter> GsGain;
 
+public: // Входы и выходы
+/// Входной сигнал от низкопороговой зоны
+UPropertyInputData<MDMatrix<double>, NPulseHebbSynapse, ptInput | ptPubState> InputLTZoneFeedbackSignal;
 
-protected: // Основные свойства
+/// Сигнал "мотивации"
+UPropertyInputData<MDMatrix<double>, NPulseHebbSynapse, ptInput | ptPubState> InputMotivation;
+
+UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output1;
+UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output2;
+UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output3;
+UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output4;
+UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output5;
+UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output6;
 
 protected: // Временные переменные
-RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> G;
-RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> Gd;
-RDK::UCLProperty<vector<double>,NPulseHebbSynapse,ptPubState> Gs;
-RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> Win;
-RDK::ULProperty<double,NPulseHebbSynapse,ptPubState> Wout;
+ULProperty<double,NPulseHebbSynapse,ptPubState> G;
+ULProperty<double,NPulseHebbSynapse,ptPubState> Gd;
+UCLProperty<vector<double>,NPulseHebbSynapse,ptPubState> Gs;
+ULProperty<double,NPulseHebbSynapse,ptPubState> GsSum;
+ULProperty<double,NPulseHebbSynapse,ptPubState> Win;
+ULProperty<double,NPulseHebbSynapse,ptPubState> Wout;
 
 public: // Методы
 // --------------------------
@@ -56,26 +67,6 @@ public: // Методы
 // --------------------------
 NPulseHebbSynapse(void);
 virtual ~NPulseHebbSynapse(void);
-// --------------------------
-
-protected:
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
-// Устанавливает амплитуду импульсов
-//bool SetPulseAmplitude(double value);
-
-// Постоянная времени выделения медиатора
-//bool SetSecretionTC(double value);
-
-// Постоянная времени распада медиатора
-//bool SetDissociationTC(double value);
-
-// Коэффициент пресинаптического торможения
-//bool SetInhibitionCoeff(double value);
-
-// Вес (эффективность синапса) синапса
-//bool SetResistance(double value);
 // --------------------------
 
 public:
@@ -90,6 +81,11 @@ virtual NPulseHebbSynapse* New(void);
 // Скрытые методы управления счетом
 // --------------------------
 protected:
+// Подключает синапс хебба к низкопороговой зоне нейрона-владельца
+// Возвращает false только если произошла ошибка установки связи
+// Если synapse == 0, то подключает все синапсы хебба
+bool InstallHebbianConnection(void);
+
 // Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
@@ -103,7 +99,7 @@ virtual bool ABuild(void);
 virtual bool AReset(void);
 
 // Выполняет расчет этого объекта
-virtual bool ACalculate(void);
+virtual bool ACalculate2(void);
 // --------------------------
 };
 

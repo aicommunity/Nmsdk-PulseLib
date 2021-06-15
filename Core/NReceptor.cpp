@@ -37,7 +37,8 @@ NReceptor::NReceptor(void)
   SumCoeff("SumCoeff",this),
   InputAdaptationArrestingTC("InputAdaptationArrestingTC",this),
   InputAdaptationMode("InputAdaptationMode",this),
-  OutputAdaptationMode("OutputAdaptationMode",this)
+  OutputAdaptationMode("OutputAdaptationMode",this),
+  Input("Input",this)
 {
  InputRange=0;
  OutputRange=0;
@@ -79,13 +80,13 @@ bool NReceptor::ADefault(void)
 {
  Gain=1;
  MinOutputRange=0.0;
- MaxOutputRange=0.01;//0.1;
+ MaxOutputRange=1;//0.01;//0.1;
  MinInputRange=0;
- MaxInputRange=10;
- InputAdaptationMode=1;
- OutputAdaptationMode=1;
- ExpCoeff=1;
- SumCoeff=2;
+ MaxInputRange=1;
+ InputAdaptationMode=0;
+ OutputAdaptationMode=5;
+ ExpCoeff=0.1;
+ SumCoeff=1;
  InputAdaptationArrestingTC=1;
  return NSource::ADefault();
 }
@@ -110,15 +111,13 @@ bool NReceptor::ACalculate(void)
 {
  OutputRange=MaxOutputRange.v-MinOutputRange.v;
 
- size_t k=0;
- for(int i=0;i<NumInputs;i++)
-  for(int j=0;j<GetOutputDataSize(i)[1];j++)
+ Output.Resize(Input->GetRows(),Input->GetCols());
+
+ for(int i=0;i<Input->GetRows();i++)
+  for(int j=0;j<Input->GetCols();j++)
   {
    double input=0;
-   if(GetInputDataSize(i)[1]>j)
-    input=GetInputData(i)->Double[j];
-//   if(k >= GetOutputDataSize(0))
-//	break;
+   input=(*Input)(i,j);// GetInputData(i)->Double[j];
 
    switch(InputAdaptationMode.v)
    {
@@ -157,33 +156,33 @@ bool NReceptor::ACalculate(void)
    switch(OutputAdaptationMode.v)
    {
    case 0:
-	POutputData[i].Double[k]=Gain*input;
+	Output(i,j)=Gain*input;
    break;
 
    case 1:
 	// ѕреобразовываем сигнал к заданному диапазону
-	POutputData[i].Double[k]=Gain*(SumCoeff.v-exp(-ExpCoeff.v*input));
+	Output(i,j)=Gain*(SumCoeff.v-exp(-ExpCoeff.v*input));
    break;
 
    case 2:
 	// ѕреобразовываем сигнал к заданному диапазону
-	POutputData[i].Double[k]=Gain*exp(-ExpCoeff.v*input);
+	Output(i,j)=Gain*exp(-ExpCoeff.v*input);
    break;
 
    case 3:
 	// ѕреобразовываем сигнал к автодиапазону
 	exp_coeff=-log(0.9)/InputRange;
-	POutputData[i].Double[k]=Gain*(SumCoeff.v-exp(-exp_coeff*input));
+	Output(i,j)=Gain*(SumCoeff.v-exp(-exp_coeff*input));
    break;
 
    case 4:
-	POutputData[i].Double[k]=Gain*(1.0+input);
+	Output(i,j)=Gain*(SumCoeff.v+input);
+   break;
+
+   case 5:
+	Output(i,j)=Gain*(SumCoeff.v+(1.0-exp(-ExpCoeff.v*input)));
    break;
    }
-
-//   if(static_pointer_cast<UContainer>(Owner)->GetName() == "Afferent_II1")
-//    POutputData[i].Double[k]=1.5;
-   ++k;
   }
  return NSource::ACalculate();
 }

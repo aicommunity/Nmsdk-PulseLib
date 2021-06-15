@@ -27,15 +27,14 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NEyeMuscle::NEyeMuscle(void)
-//: NADItem(name),
  : MulCoeffs("MulCoeffs",this),
   K("K",this),
-  TC("TC",this)
+  TC("TC",this),
+  Inputs("Inputs",this),
+  OutputAcceleration("OutputAcceleration",this),
+  OutputLength("OutputLength",this),
+  OutputSpeed("OutputSpeed",this)
 {
- // Устанавливаем новые параметры
-// AddLookupParameter("MulCoeffs",MulCoeffs);
-// AddLookupParameter("K",K);
-// AddLookupParameter("TC",TC);
 }
 
 NEyeMuscle::~NEyeMuscle(void)
@@ -78,7 +77,7 @@ NEyeMuscle* NEyeMuscle::New(void)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NEyeMuscle::ADefault(void)
 {
- Real value;
+ vector<double> value;
  value.resize(3);
  value[0]=0.74;//0.4;
  value[1]=0.75;//0.12;
@@ -93,8 +92,10 @@ bool NEyeMuscle::ADefault(void)
  value[2]=0.0327;//1;
  TC=value;
  SetTimeStep(1000);
- SetNumInputs(1);
- SetNumOutputs(3);
+
+ OutputAcceleration.Assign(1,1,0.0);
+ OutputLength.Assign(1,1,0.0);
+ OutputSpeed.Assign(1,1,0.0);
  return true;
 }
 
@@ -104,7 +105,8 @@ bool NEyeMuscle::ADefault(void)
 // в случае успешной сборки
 bool NEyeMuscle::ABuild(void)
 {
- int size=GetOutputDataSize(0)[1];
+// int size=(GetNumOutputs()>0)?GetOutputDataSize(0)[1]:0;
+ int size=OutputAcceleration.GetCols();
  P1.resize(size);
  P2.resize(size);
  P3.resize(size);
@@ -118,7 +120,8 @@ bool NEyeMuscle::ABuild(void)
 // Сброс процесса счета.
 bool NEyeMuscle::AReset(void)
 {
- int size=GetOutputDataSize(0)[1];
+// int size=(GetNumOutputs()>0)?GetOutputDataSize(0)[1]:0;
+ int size=OutputAcceleration.GetCols();
  P1.assign(size,0);
  P2.assign(size,0);
  P3.assign(size,0);
@@ -136,11 +139,15 @@ bool NEyeMuscle::AReset(void)
 bool NEyeMuscle::ACalculate(void)
 {
  int k=0;
- SetOutputDataSize(0,MMatrixSize(1,NumInputs));
- SetOutputDataSize(1,MMatrixSize(1,NumInputs));
- SetOutputDataSize(2,MMatrixSize(1,NumInputs));
- int size=GetOutputDataSize(0)[1];
- for(int i=0;i<NumInputs;i++)
+// SetOutputDataSize(0,MMatrixSize(1,Inputs->size()));
+// SetOutputDataSize(1,MMatrixSize(1,Inputs->size()));
+// SetOutputDataSize(2,MMatrixSize(1,Inputs->size()));
+ OutputAcceleration.Resize(1,int(Inputs->size()));
+ OutputLength.Resize(1,int(Inputs->size()));
+ OutputSpeed.Resize(1,int(Inputs->size()));
+
+ int size=OutputAcceleration.GetCols();
+ for(int i=0;i<int(Inputs->size());i++)
  {
   P1.resize(size,0);
   P2.resize(size,0);
@@ -150,12 +157,12 @@ bool NEyeMuscle::ACalculate(void)
   Acceleration.resize(size,0);
   Threshold.resize(size,0.5);
 
-  for(int j=0;j<GetInputDataSize(i)[1];j++)
+  for(int j=0;j<Inputs[i]->GetCols();j++)
   {
    if(k >= size)
 	break;
 
-   double in=GetInputData(i)->Double[j];
+   double in=(*Inputs[i])(0,j);
    ThresholdCount(k);
    in*=Threshold[k];
 
@@ -164,9 +171,9 @@ bool NEyeMuscle::ACalculate(void)
    Acceleration[k]=(speed-Speed[k])*TimeStep;
    Speed[k]=speed;
    L[k]=leng;
-   POutputData[0].Double[k]=Acceleration[k];
-   POutputData[1].Double[k]=L[k];
-   POutputData[2].Double[k]=Speed[k];
+   OutputAcceleration(0,k)=Acceleration[k];
+   OutputLength(0,k)=L[k];
+   OutputSpeed(0,k)=Speed[k];
    ++k;
   }
  }

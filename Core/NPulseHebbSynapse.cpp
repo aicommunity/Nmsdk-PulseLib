@@ -17,8 +17,9 @@ See file license.txt for more information
 #define NPULSE_HEBB_SYNAPSE_CPP
 
 #include "NPulseHebbSynapse.h"
-#include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
+//#include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
 #include "NPulseChannel.h"
+#include "NPulseNeuron.h"
 
 namespace NMSDK {
 
@@ -40,9 +41,19 @@ Kout("Kout",this),
 GdGain("GdGain",this),
 GsGain("GsGain",this),
 
+InputLTZoneFeedbackSignal("InputLTZoneFeedbackSignal",this),
+InputMotivation("InputMotivation",this),
+Output1("Output1",this),
+Output2("Output2",this),
+Output3("Output3",this),
+Output4("Output4",this),
+Output5("Output5",this),
+Output6("Output6",this),
+
 G("G",this),
 Gd("Gd",this),
 Gs("Gs",this),
+GsSum("GsSum",this),
 Win("Win",this),
 Wout("Wout",this)
 
@@ -53,62 +64,6 @@ NPulseHebbSynapse::~NPulseHebbSynapse(void)
 {
 }
 // --------------------------
-
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
-// Устанавливает амплитуду импульсов
-/*bool NPulseHebbSynapse::SetPulseAmplitude(double value)
-{
- return true;
-}
-
-// Постоянная времени выделения медиатора
-bool NPulseHebbSynapse::SetSecretionTC(double value)
-{
- if(value <= 0)
-  return false;
-
- Ready=false;
-
- return true;
-}
-
-// Постоянная времени распада медиатора
-bool NPulseHebbSynapse::SetDissociationTC(double value)
-{
- if(value <= 0)
-  return false;
-
- Ready=false;
-
- return true;
-}
-
-// Коэффициент пресинаптического торможения
-bool NPulseHebbSynapse::SetInhibitionCoeff(double value)
-{
- if(Resistance.v > 0)
-  OutputConstData=4.0*(value+1)/Resistance.v;
- else
-  OutputConstData=0;
-
- return true;
-}
-
-// Вес (эффективность синапса) синапса
-bool NPulseHebbSynapse::SetResistance(double value)
-{
- if(value<=0)
-  return false;
-
- OutputConstData=4.0*InhibitionCoeff.v/value;
-
- return true;
-}                */
-// --------------------------
-
 
 // --------------------------
 // Системные методы управления объектом
@@ -123,6 +78,45 @@ NPulseHebbSynapse* NPulseHebbSynapse::New(void)
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
+// Подключает синапс хебба synapse к низкопороговой зоне нейрона-владельца
+// Возвращает false только если произошла ошибка установки связи
+// Если synapse == 0, то подключает все синапсы хебба
+bool NPulseHebbSynapse::InstallHebbianConnection(void)
+{
+ bool res=true;
+ UEPtr<NPulseNeuron> mowner=dynamic_pointer_cast<NPulseNeuron>(MainOwner);
+
+ if(mowner && mowner->GetLTZone())
+ {
+//	RDK::UStringLinkSide item,conn;
+//	item.Id=mowner->GetLTZone()->GetLongName(mowner);
+//	item.Name="Output";
+//	conn.Id=GetLongName(mowner);
+//	conn.Name="InputLTZoneFeedbackSignal";
+//	res&=mowner->CreateLink(item,conn);
+	res&=mowner->CreateLink(mowner->GetLTZone()->GetLongName(mowner),"Output",GetLongName(mowner),"InputLTZoneFeedbackSignal");
+ }
+ else
+  return false;
+	   /*
+ UEPtr<NPulseLifeNeuron> mlowner=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
+
+ if(mlowner && mlowner->GetNeuronLife())
+ {
+	RDK::UStringLinkSide item,conn;
+//	item.Id=mlowner->GetNeuronLife()->GetLongName(mlowner);
+#pragma warning
+	if(Type.v>0)
+	 item.Name="Output7";
+	else
+	 item.Name="Output6";
+ //	conn.Id=GetLongName(mlowner);
+ //	conn.Name="InputNeuronLifeSignal";
+	res&=mlowner->CreateLink(mlowner->GetNeuronLife()->GetLongName(mlowner),"",GetLongName(mlowner), "InputNeuronLifeSignal");
+ }                 */
+ return res;
+}
+
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseHebbSynapse::ADefault(void)
 {
@@ -135,13 +129,13 @@ bool NPulseHebbSynapse::ADefault(void)
 
 	Min=10;
 	Mout=10;
-	Md=10;
+	Md=0.001;
 	Kmot->resize(1);
 	Kin=100;
 	Kout=100;
 
-	GdGain=10;
-	GsGain=1;//10;
+	GdGain=1;
+	GsGain=10;//10;
 
  Kmot->resize(5);
  Kmot[0]=1;
@@ -170,6 +164,13 @@ bool NPulseHebbSynapse::ADefault(void)
  Resistance=1.0e10;
 // Resistance=1.0e8;
 
+Output1.Assign(1,1,0.0);
+Output2.Assign(1,1,0.0);
+Output3.Assign(1,1,0.0);
+Output4.Assign(1,1,0.0);
+Output5.Assign(1,1,0.0);
+Output6.Assign(1,1,0.0);
+
  return true;
 }
 
@@ -191,34 +192,38 @@ bool NPulseHebbSynapse::AReset(void)
  Gd=0;
  Gs->assign(Kmot->size(),0);
  G=0;
+ GsSum=0;
+
+ if(!InputLTZoneFeedbackSignal.IsConnected())
+  InstallHebbianConnection();
 
  return NPulseSynapse::AReset();
 }
 
 // Выполняет расчет этого объекта
-bool NPulseHebbSynapse::ACalculate(void)
+bool NPulseHebbSynapse::ACalculate2(void)
 {
  double input=0;
  double ltzoneoutput=0;
  vector<double> motivation;
 
 
- if(!NPulseSynapse::ACalculate())
+ if(!NPulseSynapse::ACalculate2())
   return false;
 
- if(NumInputs <2 || GetInputDataSize(0)[1]<=0 || GetInputDataSize(1)[1]<=0)
+ if(!Input.IsConnected() || !InputLTZoneFeedbackSignal.IsConnected() || Input->GetCols()<=0 || InputLTZoneFeedbackSignal->GetCols()<=0)
   return true;
 
  motivation.assign(Kmot->size(),0);
- input=GetInputData(0)->Double[0];
- ltzoneoutput=GetInputData(1)->Double[0];
+ input=(*Input)(0,0);
+ ltzoneoutput=(*InputLTZoneFeedbackSignal)(0,0);
 
  // Применяем мотивацию если есть
- if(NumInputs > 2 && GetInputDataSize(2)[1]>0)
+ if(InputMotivation.IsConnected() && InputMotivation->GetCols()>0)
  {
-  int motmin=(int(Kmot->size())<GetInputDataSize(2)[1])?int(Kmot->size()):GetInputDataSize(2)[1];
+  int motmin=(int(Kmot->size())<InputMotivation->GetCols())?int(Kmot->size()):InputMotivation->GetCols();
   for(int i=0;i<motmin;i++)
-   motivation[i]=GetInputData(2)->Double[i]*Kmot[i];
+   motivation[i]=(*InputMotivation)(0,i)*Kmot[i];
  }
 
  Win.v += (Kin.v*input - Min.v*Win.v)/TimeStep;
@@ -230,7 +235,7 @@ bool NPulseHebbSynapse::ACalculate(void)
 // for(size_t i=0;i<Gs->size();i++)
 //  Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
 
- for(size_t i=0;i<Gs->size();i++)
+ for(int i=0;i<int(Gs->size());i++)
   if(motivation[i]>0)
 //  if(motivation[i]*Gd.v > PassiveMs[i]*Gs[i])
    Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
@@ -238,17 +243,19 @@ bool NPulseHebbSynapse::ACalculate(void)
    Gs[i] += (motivation[i]*Gd.v - PassiveMs[i]*Gs[i])/TimeStep;
 
  double gs_res=0;
- for(size_t i=0;i<Gs->size();i++)
+ for(int i=0;i<int(Gs->size());i++)
   gs_res+=Gs[i];
- G.v = (Gd.v*GdGain + gs_res*GsGain);
+ GsSum=gs_res;
 
- POutputData[0].Double[0]*=(1.0+G.v);
- POutputData[1].Double[0]=G.v;
- POutputData[2].Double[0]=Gd.v*GdGain;
- POutputData[3].Double[0]=gs_res*GsGain;
- POutputData[4].Double[0]=Win.v;
- POutputData[5].Double[0]=Wout.v;
-
+ G.v = (Gd.v*GdGain + GsSum.v*GsGain);
+ Output(0,0)*=(1.0+G.v);
+ Output1(0,0)=Output(0,0);
+ Output2(0,0)=G.v;
+ Output3(0,0)=Gd.v*GdGain;
+ Output4(0,0)=GsSum.v*GsGain;
+ Output5(0,0)=Win.v;
+ Output6(0,0)=Wout.v;
+   /*
  if(MainOwner && Owner)
  {
   UEPtr<NPulseLifeNeuron> neuron=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
@@ -267,7 +274,7 @@ bool NPulseHebbSynapse::ACalculate(void)
 	neuron->SummaryPosG.v+=G;
    }
   }
- }
+ } */
 
  return true;
 }

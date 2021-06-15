@@ -17,7 +17,7 @@ See file license.txt for more information
 #define NPULSE_NEURON_COMMON_H
 
 #include "../../Nmsdk-BasicLib/Core/NNeuron.h"
-#include "NPulseLTZone.h"
+#include "NPulseLTZoneCommon.h"
 #include "../../Nmsdk-SourceLib/Core/NConstGenerator.h"
 #include "NPulseMembraneCommon.h"
 //#include "NAfferentNeuron.h"
@@ -28,26 +28,39 @@ class RDK_LIB_TYPE NPulseNeuronCommon: public NNeuron
 {
 public: // Параметры
 /// Признак наличия усреднения в ветвлении дендритов
-ULProperty<bool, NPulseNeuronCommon> UseAverageDendritesPotential;
+ULProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageDendritesPotential;
 
 /// Признак наличия усреднения в ветвлении дендритов
-ULProperty<bool, NPulseNeuronCommon> UseAverageLTZonePotential;
+ULProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageLTZonePotential;
+
+public: // Входы и выходы
+/// Число связей организованных этим нейроном на других (и себе)
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveOutputs;
+
+/// Число возбуждающих связей организованных другими нейронами на этом
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActivePosInputs;
+
+/// Число тормозных связей организованных другими нейронами на этом
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveNegInputs;
+
+/// Суммарный мембранный потенциал на дендритах
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> DendriticSumPotential;
+
+/// Суммарный мембранный потенциал на соме
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> SomaSumPotential;
 
 public: // Статистика
-// Число связей организованных этим нейроном на других (и себе)
-RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;
+/// Число связей организованных этим нейроном на других (и себе)
+ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;
 
-// Число возбуждающих связей организованных другими нейронами на этом
-RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
+/// Число возбуждающих связей организованных другими нейронами на этом
+ULProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
 
-// Число тормозных связей организованных другими нейронами на этом
-RDK::ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
+/// Число тормозных связей организованных другими нейронами на этом
+ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
 
-protected: // Временные переменные
-//NPulseLTZone *LTZone;
-
-public:
-RDK::UEPointer<NPulseLTZone,NPulseNeuronCommon> LTZone;
+public: // Временные переменные
+UEPtr<NLTZone> LTZone;
 
 vector<NPulseMembraneCommon*> Membranes;
 
@@ -82,17 +95,17 @@ NLTZone* GetLTZone(void);
 //// Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
 //// и переключая входы заданного участка на входы нового
 //// Возвращает указатель на созданный участок
-//NPulseMembrane* ElongateDendrite(const UId &id, bool feedback=false);
-//
+//virtual NPulseMembraneCommon* ElongateDendrite(const std::string &name, bool feedback=false);
+
 //// Разветвляет заданный участок мембраны, добавляя к точке его подключения
 //// дополнительно новый участок мембраны
 //// Возвращает указатель на созданный участок
-//NPulseMembrane* BranchDendrite(const UId &id, bool feedback=false);
-//
+//virtual NPulseMembraneCommon* BranchDendrite(const std::string &name, bool feedback=false);
+
 //// Удаляет заданный участок мембраны
 //// Если full == true, то удаляет и все другие участки, подключенные к нему
 //// Иначе перенаправляет связи со входов на свои выходы
-//bool EraseDendrite(const UId &id);
+//virtual bool EraseDendrite(const std::string &name);
 // --------------------------
 
 // --------------------------

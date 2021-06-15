@@ -18,9 +18,6 @@ See file license.txt for more information
 
 #include <algorithm>
 #include "NPulseMembrane.h"
-#include "NPulseChannel.h"
-
-
 
 namespace NMSDK {
 
@@ -30,8 +27,13 @@ namespace NMSDK {
 // --------------------------
 NPulseMembrane::NPulseMembrane(void)
  : FeedbackGain("FeedbackGain",this,&NPulseMembrane::SetFeedbackGain),
-  ResetAvailable("ResetAvailable",this),
-  Feedback("Feedback",this)
+  ResetAvailable("ResetAvailable",this,&NPulseMembrane::SetResetAvailable),
+  SynapseClassName("SynapseClassName",this,&NPulseMembrane::SetSynapseClassName),
+  ExcChannelClassName("ExcChannelClassName",this,&NPulseMembrane::SetExcChannelClassName),
+  InhChannelClassName("InhChannelClassName",this,&NPulseMembrane::SetInhChannelClassName),
+  NumExcitatorySynapses("NumExcitatorySynapses",this,&NPulseMembrane::SetNumExcitatorySynapses),
+  NumInhibitorySynapses("NumInhibitorySynapses",this,&NPulseMembrane::SetNumInhibitorySynapses),
+  InputFeedbackSignal("InputFeedbackSignal",this)
 
 {
 }
@@ -47,42 +49,64 @@ NPulseMembrane::~NPulseMembrane(void)
 // Ионные механизмы деполяризации
 size_t NPulseMembrane::GetNumPosChannels(void) const
 {
- return PosChannels.size();
+ return ExcitatoryChannels.size();
 }
 
-NPulseChannel* NPulseMembrane::GetPosChannel(size_t i)
+NPulseChannelCommon* NPulseMembrane::GetPosChannel(size_t i)
 {
- return PosChannels[i];
+ return ExcitatoryChannels[i];
 }
 
 // Ионные механизмы гиперполяризации
 size_t NPulseMembrane::GetNumNegChannels(void) const
 {
- return NegChannels.size();
+ return InhibitoryChannels.size();
 }
 
-NPulseChannel* NPulseMembrane::GetNegChannel(size_t i)
+NPulseChannelCommon* NPulseMembrane::GetNegChannel(size_t i)
 {
- return NegChannels[i];
+ return InhibitoryChannels[i];
+}
+
+// Возбуждающие синапсы
+size_t NPulseMembrane::GetNumExcitatorySynapses(void) const
+{
+ return ExcitatorySynapses.size();
+}
+
+NPulseSynapseCommon* NPulseMembrane::GetExcitatorySynapses(size_t i)
+{
+ return ExcitatorySynapses[i];
+}
+
+// Тормозные синапсы
+size_t NPulseMembrane::GetNumInhibitorySynapses(void) const
+{
+ return InhibitorySynapses.size();
+}
+
+NPulseSynapseCommon* NPulseMembrane::GetInhibitorySynapses(size_t i)
+{
+ return InhibitorySynapses[i];
 }
 
 bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPointer> pointer)
 {
-  vector<NPulseChannel* >::iterator I;
+  vector<NPulseChannelCommon* >::iterator I;
   if(channel->Type() < 0)
   {
-   if(find(PosChannels.begin(),PosChannels.end(),channel) == PosChannels.end())
-	PosChannels.push_back(channel);
-   if((I=find(NegChannels.begin(),NegChannels.end(),channel)) != NegChannels.end())
-	NegChannels.erase(I);
+   if(find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel) == ExcitatoryChannels.end())
+	ExcitatoryChannels.push_back(channel);
+   if((I=find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel)) != InhibitoryChannels.end())
+	InhibitoryChannels.erase(I);
   }
   else
   if(channel->Type() > 0)
   {
-   if(find(NegChannels.begin(),NegChannels.end(),channel) == NegChannels.end())
-	NegChannels.push_back(channel);
-   if((I=find(PosChannels.begin(),PosChannels.end(),channel)) != PosChannels.end())
-	PosChannels.erase(I);
+   if(find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel) == InhibitoryChannels.end())
+	InhibitoryChannels.push_back(channel);
+   if((I=find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel)) != ExcitatoryChannels.end())
+	ExcitatoryChannels.erase(I);
   }
 
  else
@@ -95,12 +119,48 @@ bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPoi
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
+/// Наличие механизма сброса
+bool NPulseMembrane::SetResetAvailable(const bool &value)
+{
+ return true;
+}
+
 // Коэффициент обратной связи
 bool NPulseMembrane::SetFeedbackGain(const double &value)
 {
  if(value < 0)
   return false;
 
+ return true;
+}
+
+bool NPulseMembrane::SetSynapseClassName(const std::string &value)
+{
+ Ready=false;
+ return true;
+}
+
+bool NPulseMembrane::SetExcChannelClassName(const std::string &value)
+{
+ Ready=false;
+ return true;
+}
+
+bool NPulseMembrane::SetInhChannelClassName(const std::string &value)
+{
+ Ready=false;
+ return true;
+}
+
+bool NPulseMembrane::SetNumExcitatorySynapses(const int &value)
+{
+ Ready=false;
+ return true;
+}
+
+bool NPulseMembrane::SetNumInhibitorySynapses(const int &value)
+{
+ Ready=false;
  return true;
 }
 // --------------------------
@@ -124,75 +184,11 @@ NPulseMembrane* NPulseMembrane::New(void)
 // и 'false' в случае некорректного типа
 bool NPulseMembrane::CheckComponentType(UEPtr<UContainer> comp) const
 {
- if(dynamic_pointer_cast<NPulseChannel>(comp))
+ if(dynamic_pointer_cast<NPulseChannelCommon>(comp) ||
+    dynamic_pointer_cast<NPulseSynapseCommon>(comp))
   return true;
 
  return false;
-}
-// --------------------------
-
-// --------------------------
-// Скрытые методы управления компонентами
-// --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
-bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
-{
- if(!NPulseMembraneCommon::AAddComponent(comp, pointer))
-  return false;
-
- UEPtr<NPulseChannel> channel=dynamic_pointer_cast<NPulseChannel>(comp);
- vector<NPulseChannel* >::iterator I;
-
- if(channel)
- {
-  if(channel->Type() < 0)
-  {
-   if(find(PosChannels.begin(),PosChannels.end(),channel) == PosChannels.end())
-	PosChannels.push_back(channel);
-   if((I=find(NegChannels.begin(),NegChannels.end(),channel)) != NegChannels.end())
-	NegChannels.erase(I);
-  }
-  else
-  if(channel->Type() > 0)
-  {
-   if(find(NegChannels.begin(),NegChannels.end(),channel) == NegChannels.end())
-	NegChannels.push_back(channel);
-   if((I=find(PosChannels.begin(),PosChannels.end(),channel)) != PosChannels.end())
-	PosChannels.erase(I);
-  }
-  else
-   return false;
- }
- else
-  return false;
-
- return true;
-}
-
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
-bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
-{
- if(!NPulseMembraneCommon::ADelComponent(comp))
-  return false;
-
- UEPtr<NPulseChannel> channel=dynamic_pointer_cast<NPulseChannel>(comp);
- if(channel)
- {
-  vector<NPulseChannel*>::iterator I;
-  I=find(PosChannels.begin(),PosChannels.end(),channel);
-  if(I != PosChannels.end())
-   PosChannels.erase(I);
-  I=find(NegChannels.begin(),NegChannels.end(),channel);
-  if(I != NegChannels.end())
-   NegChannels.erase(I);
- }
- return true;
 }
 // --------------------------
 
@@ -206,6 +202,11 @@ bool NPulseMembrane::ADefault(void)
   return false;
  FeedbackGain=2;
  ResetAvailable=true;
+ SynapseClassName="NPSynapse";
+ ExcChannelClassName="NPExcChannel";
+ InhChannelClassName="NPInhChannel";
+ NumExcitatorySynapses=1;
+ NumInhibitorySynapses=1;
 
  return true;
 }
@@ -216,6 +217,58 @@ bool NPulseMembrane::ADefault(void)
 // в случае успешной сборки
 bool NPulseMembrane::ABuild(void)
 {
+ if(!Storage)
+  return true;
+ UEPtr<NPulseChannelCommon> exc_channel;
+ UEPtr<NPulseChannelCommon> inh_channel;
+ bool res=true;
+
+ if(!ExcChannelClassName->empty())
+ {
+  exc_channel=AddMissingComponent<NPulseChannelCommon>("ExcChannel", ExcChannelClassName);
+  ExcitatoryChannels.resize(1);
+  ExcitatoryChannels[0]=exc_channel;
+  exc_channel->SetCoord(MVector<double,3>(5,4,0));
+
+  int old_ex_synapses=int(ExcitatorySynapses.size());
+
+  for(int i=NumExcitatorySynapses;i<old_ex_synapses;i++)
+   ExcitatorySynapses[i]->Free();
+  ExcitatorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
+							  // по всем синапсам используя AddMissingComponent
+  for(int i=0;i<NumExcitatorySynapses;i++)
+  {
+   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("ExcSynapse")+sntoa(i+1), SynapseClassName);
+
+   ExcitatorySynapses.push_back(synapse);
+   res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
+   synapse->SetCoord(MVector<double,3>(5+i*6,1.7,0));
+  }
+ }
+
+ if(!InhChannelClassName->empty())
+ {
+  inh_channel=AddMissingComponent<NPulseChannelCommon>("InhChannel", InhChannelClassName);
+
+  InhibitoryChannels.resize(1);
+  InhibitoryChannels[0]=inh_channel;
+  inh_channel->SetCoord(MVector<double,3>(5,8,0));
+
+  int old_in_synapses=int(InhibitorySynapses.size());
+  for(int i=NumInhibitorySynapses;i<old_in_synapses;i++)
+   InhibitorySynapses[i]->Free();
+  InhibitorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
+							  // по всем синапсам используя AddMissingComponent
+  for(int i=0;i<NumInhibitorySynapses;i++)
+  {
+   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("InhSynapse")+sntoa(i+1), SynapseClassName);
+
+   InhibitorySynapses.push_back(synapse);
+   res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInputs");
+   synapse->SetCoord(MVector<double,3>(5+i*6,10.6,0));
+  }
+ }
+
  if(!NPulseMembraneCommon::ABuild())
   return false;
  return true;
@@ -226,34 +279,36 @@ bool NPulseMembrane::AReset(void)
 {
  if(!NPulseMembraneCommon::AReset())
   return false;
- Feedback=0;
  return true;
 }
 
 // Выполняет расчет этого объекта
-bool NPulseMembrane::ACalculate(void)
+bool NPulseMembrane::ACalculate2(void)
 {
- if(!NPulseMembraneCommon::ACalculate())
-  return false;
- if(!PosChannels.empty() && !NegChannels.empty() && ResetAvailable)
+ if(!ExcitatoryChannels.empty() && !InhibitoryChannels.empty() && ResetAvailable)
  {
-	if(PosChannels[0]->GetSynOutput() > 1.0e-10)
+  NPulseChannel *exc_ch=dynamic_cast<NPulseChannel*>(ExcitatoryChannels[0]);
+  NPulseChannel *inh_ch=dynamic_cast<NPulseChannel*>(InhibitoryChannels[0]);
+
+  if(exc_ch && inh_ch)
+  {
+	if(exc_ch->GetSynOutput() > 1.0e-10)
 	{
-		NegChannels[0]->ResetOut();
+	 inh_ch->ResetOut();
 	}
 	else
-	if(NegChannels[0]->GetSynOutput() > 1.0e-10)
+	if(inh_ch->GetSynOutput() > 1.0e-10)
 	{
-		PosChannels[0]->ResetOut();
+	 exc_ch->ResetOut();
 	}
+  }
  }
- // Получение данных канала
-// Feedback=GetFullSumInput();
+
  Feedback=0;
 
- for(int i=0;i<NumInputs;i++)
-  for(int j=0;j<GetInputDataSize(i)[1];j++)
-   Feedback.v+=GetInputData(i)->Double[j];
+  for(int j=0;j<InputFeedbackSignal->GetRows();j++)
+   for(int i=0;i<InputFeedbackSignal->GetCols();i++)
+    Feedback.v+=(*InputFeedbackSignal)(j,i);
 
  Feedback.v*=FeedbackGain.v;
 

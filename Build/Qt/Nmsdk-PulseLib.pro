@@ -10,10 +10,15 @@ TARGET = Nmsdk-PulseLib.qt
 TEMPLATE = lib
 CONFIG += staticlib
 
+include($$PWD/../../../../Rdk/Build/Lib/Qt/RdkDefines.pri)
+
 DEFINES += LIBRDK_LIBRARY_EXPORT
 DEFINES += RDK_UNICODE_RUN
 DEFINES += RDK_QT
 INCLUDEPATH += $$PWD/../../../../Rdk/Deploy/Include
+
+VERSION = $$system(hg parents --template '{rev}')
+DEFINES += RDK_LIB_CVS_REVISION=$$VERSION
 
 unix {
     target.path = /usr/lib
@@ -43,6 +48,7 @@ HEADERS += \
     ../../Core/NPulseSynapse.h \
     ../../Core/NPulseSynapseCommon.h \
     ../../Core/NPulseSynChannel.h \
+    ../../Core/NPulseSynapseStdp.h \
     ../../Core/NReceptor.h
 
 SOURCES += \
@@ -63,4 +69,5 @@ SOURCES += \
     ../../Core/NPulseSynapse.cpp \
     ../../Core/NPulseSynapseCommon.cpp \
     ../../Core/NPulseSynChannel.cpp \
+    ../../Core/NPulseSynapseStdp.cpp \
     ../../Core/NReceptor.cpp

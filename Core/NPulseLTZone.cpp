@@ -20,19 +20,170 @@ See file license.txt for more information
 #include "NPulseLTZone.h"
 #include "NPulseChannel.h"
 #include "NPulseNeuron.h"
-//#include "../BCL/NConnector.h"
-
 
 namespace NMSDK {
+
+// Методы NPulseLTZoneThreshold
+// --------------------------
+// Конструкторы и деструкторы
+// --------------------------
+NPulseLTZoneThreshold::NPulseLTZoneThreshold(void)
+{
+}
+
+NPulseLTZoneThreshold::~NPulseLTZoneThreshold(void)
+{
+}
+// --------------------------
+
+// --------------------------
+// Системные методы управления объектом
+// --------------------------
+// Выделяет память для новой чистой копии объекта этого класса
+NPulseLTZoneThreshold* NPulseLTZoneThreshold::New(void)
+{
+ return new NPulseLTZoneThreshold;
+}
+// --------------------------
+
+// --------------------------
+// Методы доступа к компонентам
+// --------------------------
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
+bool NPulseLTZoneThreshold::CheckComponentType(UEPtr<UContainer> comp) const
+{
+ return false;
+}
+// --------------------------
+
+
+// --------------------------
+// Скрытые методы управления счетом
+// --------------------------
+// Восстановление настроек по умолчанию и сброс процесса счета
+bool NPulseLTZoneThreshold::ADefault(void)
+{
+ NPulseLTZoneCommon::ADefault();
+
+ // Начальные значения всем параметрам
+ Threshold=0.00001;
+
+ NumChannelsInGroup=2;
+
+ return true;
+}
+
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
+bool NPulseLTZoneThreshold::ABuild(void)
+{
+ NPulseLTZoneCommon::ABuild();
+ return true;
+}
+
+// Сброс процесса счета.
+bool NPulseLTZoneThreshold::AReset(void)
+{
+ NPulseLTZoneCommon::AReset();
+ return true;
+}
+
+// Выполняет расчет этого объекта
+bool NPulseLTZoneThreshold::ACalculate2(void)
+{
+ double current_time=GetTime().GetDoubleTime();
+ if(CheckPulseOn())
+ {
+  // ----> ОТЛАДКА
+  //double eee = Potential.v;
+  // < ----
+
+  Output(0,0)=PulseAmplitude.v;
+  OutputPotential(0,0)=PulseAmplitude.v;
+  if(!PulseFlag)
+   AvgFrequencyCounter->push_back(current_time);
+  PulseFlag=true;
+ }
+ else
+ if(CheckPulseOff())
+ {
+  PulseFlag=false;
+  Output(0,0)=0;
+  OutputPotential(0,0)=Potential.v;
+ }
+ else
+  OutputPotential(0,0)=Potential.v;
+
+ list<double>::iterator I,J,K;
+ I=AvgFrequencyCounter->begin();
+ J=AvgFrequencyCounter->end();
+
+ if(AvgFrequencyCounter->size()>1)
+ {
+  while(I != J)
+  {
+   if(current_time-*I>AvgInterval)// && AvgFrequencyCounter->size()>3)
+   {
+	K=I;
+	++I;
+	AvgFrequencyCounter->erase(K);
+   }
+   else
+	++I;
+  }
+
+  double frequency=0;
+  frequency=static_cast<double>(AvgFrequencyCounter->size());//accumulate(AvgFrequencyCounter->begin(),AvgFrequencyCounter->end(),frequency);
+  double interval=AvgFrequencyCounter->back()-AvgFrequencyCounter->front();
+  if(interval>0 && frequency>2)
+   OutputFrequency(0,0)=frequency/interval;
+  else
+  if(interval==0 && frequency>2);
+  else
+   OutputFrequency(0,0)=0;
+ }
+ else
+  OutputFrequency(0,0)=0;
+
+ I=AvgFrequencyCounter->begin();
+ J=AvgFrequencyCounter->end();
+ OutputPulseTimes->Resize(1,int(AvgFrequencyCounter->size()));
+ for(int i=0;i<int(AvgFrequencyCounter->size());i++,++I)
+  OutputPulseTimes(0,i)=*I;
+
+ if(MainOwner)
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+
+ return true;
+}
+
+/// Возвращает true если условие для генерации импульса выполнено
+bool NPulseLTZoneThreshold::CheckPulseOn(void)
+{
+ return Potential.v>=Threshold.v;
+}
+
+/// Возвращает true если условие для генерации имульса не выполнено
+bool NPulseLTZoneThreshold::CheckPulseOff(void)
+{
+ return Potential.v<ThresholdOff;
+}
+// --------------------------
+
 
 // Методы NPulseLTZone
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
 NPulseLTZone::NPulseLTZone(void)
-//: NADItem(name),
  : TimeConstant("TimeConstant",this,&NPulseLTZone::SetTimeConstant),
-  NeuralPotential("NeuralPotential",this)
+  UseLTZIntegtation("UseLTZIntegtation",this,&NPulseLTZone::SetLTZIntegtation),
+  UseSpikeStabilizer("UseSpikeStabilizer",this, &NPulseLTZone::SetUseSpikeStabilizer)
 {
 }
 
@@ -52,13 +203,16 @@ bool NPulseLTZone::SetTimeConstant(const double &value)
 
  return true;
 }
-
-// Устанавливает амплитуду импульсов
-bool NPulseLTZone::SetPulseAmplitude(const double &value)
+// Устанавливает признак необходимости интеграции в LTZ
+bool NPulseLTZone::SetLTZIntegtation(const bool &value)
 {
- if(value <= 0)
-  return false;
+ return true;
+}
 
+// Флаг включения стабилизации длительности импульса
+bool NPulseLTZone::SetUseSpikeStabilizer(const bool &value)
+{
+ TimeConstant=0.00144; // Force change time constant
  return true;
 }
 // --------------------------
@@ -97,16 +251,14 @@ bool NPulseLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseLTZone::ADefault(void)
 {
- NPulseLTZoneCommon::ADefault();
- vector<size_t> size;
-
- SetNumOutputs(4);
- for(int i=0;i<NumOutputs;i++)
-  SetOutputDataSize(i,MMatrixSize(1,1));
+ NPulseLTZoneThreshold::ADefault();
 
  // Начальные значения всем параметрам
- TimeConstant=0.005;
+ NumChannelsInGroup=2;
+ TimeConstant=0.00144;//0.005;
  Threshold=0.00001;
+ UseLTZIntegtation = true;
+ UseSpikeStabilizer=true;
 
  return true;
 }
@@ -117,116 +269,34 @@ bool NPulseLTZone::ADefault(void)
 // в случае успешной сборки
 bool NPulseLTZone::ABuild(void)
 {
+ NPulseLTZoneThreshold::ABuild();
  return true;
 }
 
 // Сброс процесса счета.
 bool NPulseLTZone::AReset(void)
 {
- NPulseLTZoneCommon::AReset();
- // Сброс временных переменных
- NeuralPotential=0;
-
+ NPulseLTZoneThreshold::AReset();
  return true;
 }
 
 // Выполняет расчет этого объекта
-bool NPulseLTZone::ACalculate(void)
+bool NPulseLTZone::ACalculate2(void)
 {
- // расчет на шаге
- NeuralPotential=0;
-
-// NeuralPotential=GetFullSumInput();
- if(NumInputs>0)
+ if(UseLTZIntegtation)
  {
-  size_t inpsize;
-  for(int i=0;i<NumInputs;i++)
+  double input(0.0);
+  if(UseSpikeStabilizer.v)
   {
-   if((inpsize=GetInputDataSize(i)[1]) >0)
-   {
-	double *data=&(GetInputData(i)->Double[0]);
-	for(size_t j=0;j<inpsize;j++,++data)
-	 NeuralPotential.v+=*data;
-   }
+   input=(Output(0,0)>0)?-Threshold.v:NeuralPotential.v;
   }
-  if(UseAveragePotential)
-   NeuralPotential.v/=NumInputs/2.0;
- }
-
- PrePotential.v+=(NeuralPotential.v-PrePotential.v)/(TimeConstant.v*TimeStep);
-
- double current_time=GetTime().GetDoubleTime();
- if(CheckPulseOn())
- {
-  POutputData[0].Double[0]=PulseAmplitude.v;
-  POutputData[1].Double[0]=PulseAmplitude.v;
-  if(!PulseFlag)
-   AvgFrequencyCounter->push_back(current_time);
-  PulseFlag=true;
+  PrePotential.v+=(input-PrePotential.v)/(TimeConstant.v*TimeStep);
  }
  else
- if(CheckPulseOff())
- {
-  PulseFlag=false;
-  POutputData[0].Double[0]=0;
-  POutputData[1].Double[0]=PrePotential.v;
- }
- else
-  POutputData[1].Double[0]=PrePotential.v;
+  PrePotential.v = NeuralPotential.v;
 
- list<double>::iterator I,J,K;
- I=AvgFrequencyCounter->begin();
- J=AvgFrequencyCounter->end();
-
- if(AvgFrequencyCounter->size()>1)
- {
-  while(I != J)
-  {
-   if(current_time-*I>AvgInterval)// && AvgFrequencyCounter->size()>3)
-   {
-	K=I;
-	++I;
-	AvgFrequencyCounter->erase(K);
-   }
-   else
-	++I;
-  }
-
-  double frequency=0;
-  frequency=static_cast<double>(AvgFrequencyCounter->size());//accumulate(AvgFrequencyCounter->begin(),AvgFrequencyCounter->end(),frequency);
-  double interval=AvgFrequencyCounter->back()-AvgFrequencyCounter->front();
-  if(interval>0 && frequency>2)
-   POutputData[2].Double[0]=frequency/interval;
-  else
-  if(interval==0 && frequency>2);
-  else
-   POutputData[2].Double[0]=0;
- }
- else
-  POutputData[2].Double[0]=0;
-
- I=AvgFrequencyCounter->begin();
- J=AvgFrequencyCounter->end();
- SetOutputDataSize(3,MMatrixSize(1,AvgFrequencyCounter->size()),true);
- for(int i=0;i<POutputData[3].GetSize();i++,++I)
-  POutputData[3].Double[i]=*I;
-
- if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
-
- return true;
-}
-
-/// Возвращает true если условие для генерации импульса выполнено
-bool NPulseLTZone::CheckPulseOn(void)
-{
- return PrePotential.v>=Threshold.v;
-}
-
-/// Возвращает true если условие для генерации имульса не выполнено
-bool NPulseLTZone::CheckPulseOff(void)
-{
- return PrePotential.v<=0;
+ Potential.v=PrePotential.v;
+ return NPulseLTZoneThreshold::ACalculate2();
 }
 // --------------------------
 
@@ -235,16 +305,6 @@ bool NPulseLTZone::CheckPulseOff(void)
 // Конструкторы и деструкторы
 // --------------------------
 NContinuesLTZone::NContinuesLTZone(void)
-//: NADItem(name),
- : TimeConstant("TimeConstant",this,&NContinuesLTZone::SetTimeConstant),
-  PulseAmplitude("PulseAmplitude",this,&NContinuesLTZone::SetPulseAmplitude),
-  PulseLength("PulseLength",this),
-  AvgInterval("AvgInterval",this),
-  NeuralPotential("NeuralPotential",this),
-  PrePotential("PrePotential",this),
-  PulseCounter("PulseCounter",this),
-  AvgFrequencyCounter("AvgFrequencyCounter",this),
-  PulseFlag("PulseFlag",this)
 {
 }
 
@@ -252,29 +312,6 @@ NContinuesLTZone::~NContinuesLTZone(void)
 {
 }
 // --------------------------
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
-// Устанавливает значение постоянной времени
-bool NContinuesLTZone::SetTimeConstant(const double &value)
-{
- if(value <= 0)
-  return false;
-
- return true;
-}
-
-// Устанавливает амплитуду импульсов
-bool NContinuesLTZone::SetPulseAmplitude(const double &value)
-{
- if(value <= 0)
-  return false;
-
- return true;
-}
-// --------------------------
-
 
 // --------------------------
 // Системные методы управления объектом
@@ -311,18 +348,11 @@ bool NContinuesLTZone::ADefault(void)
 {
  NLTZone::ADefault();
 
- SetNumOutputs(4);
- for(int i=0;i<NumOutputs;i++)
-  SetOutputDataSize(i,MMatrixSize(1,1));
-
  // Начальные значения всем параметрам
- TimeConstant=0.005;
  PulseAmplitude=1;
  PulseLength=0.001;
  Threshold=0.0;
  AvgInterval=1;
-
-// NumInputs=2;
 
  return true;
 }
@@ -346,53 +376,32 @@ bool NContinuesLTZone::AReset(void)
  PulseCounter=0;
  AvgFrequencyCounter->clear();
  PulseFlag=false;
- FillOutputData(0);
+
+ OutputPotential.ToZero();
 
  return true;
 }
 
 // Выполняет расчет этого объекта
-bool NContinuesLTZone::ACalculate(void)
+bool NContinuesLTZone::ACalculate2(void)
 {
- // расчет на шаге
- NeuralPotential=0;
+ Potential.v=tanh(NeuralPotential.v);
 
-// NeuralPotential=GetFullSumInput();
- if(NumInputs>0)
+ if(Potential.v>=Threshold.v)
  {
-  size_t inpsize;
-  for(int i=0;i<NumInputs;i++)
-  {
-   if((inpsize=GetInputDataSize(i)[1]) >0)
-   {
-	double *data=&(GetInputData(i)->Double[0]);
-	for(size_t j=0;j<inpsize;j++,++data)
-	 NeuralPotential.v+=*data;
-   }
-  }
-  if(UseAveragePotential)
-   NeuralPotential.v/=NumInputs/2.0;
- }
-
- PrePotential.v=tanh(NeuralPotential.v);
-
- if(PrePotential.v>=Threshold.v)
- {
-  POutputData[0].Double[0]=PrePotential.v;
-  POutputData[1].Double[0]=PrePotential.v;
+  Output(0,0)=Potential.v;
+  OutputPotential(0,0)=Potential.v;
   PulseFlag=true;
  }
  else
- if(PrePotential.v<=0)
+ if(Potential.v<=0)
  {
   PulseFlag=false;
-  POutputData[0].Double[0]=0;
-  POutputData[1].Double[0]=PrePotential.v;
+  Output(0,0)=0;
+  OutputPotential(0,0)=Potential.v;
  }
  else
-  POutputData[1].Double[0]=PrePotential.v;
-
-  POutputData[2].Double[0]=POutputData[0].Double[0];
+  OutputPotential(0,0)=Potential.v;
 
  if(MainOwner)
   dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
@@ -406,19 +415,15 @@ bool NContinuesLTZone::ACalculate(void)
 // Конструкторы и деструкторы
 // --------------------------
 NPulseSimpleLTZone::NPulseSimpleLTZone(void)
+: MaxFrequency("MaxFrequency",this)
 {
+ AddStaticComponent("NPGenerator","PGenerator",&generator);
 }
 
 NPulseSimpleLTZone::~NPulseSimpleLTZone(void)
 {
 }
 // --------------------------
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
-// --------------------------
-
 
 // --------------------------
 // Системные методы управления объектом
@@ -439,8 +444,8 @@ NPulseSimpleLTZone* NPulseSimpleLTZone::New(void)
 // и 'false' в случае некорректного типа
 bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 {
-// if(dynamic_cast<const NConnector*>(comp))
-//  return true;
+ if(dynamic_pointer_cast<NPulseGenerator>(comp))
+  return true;
 
  return false;
 }
@@ -454,7 +459,10 @@ bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 bool NPulseSimpleLTZone::ADefault(void)
 {
  NPulseLTZone::ADefault();
- generator.Default();
+
+ NumChannelsInGroup=1;
+ MaxFrequency=100;
+ //generator.Default();
 
  return true;
 }
@@ -465,69 +473,30 @@ bool NPulseSimpleLTZone::ADefault(void)
 // в случае успешной сборки
 bool NPulseSimpleLTZone::ABuild(void)
 {
- generator.Build();
+ //generator.Build();
  return NPulseLTZone::ABuild();
 }
 
 // Сброс процесса счета.
 bool NPulseSimpleLTZone::AReset(void)
 {
- generator.SetEnvironment(GetEnvironment());
- generator.SetActivity(true);
- generator.Reset();
+ //generator.SetEnvironment(GetEnvironment());
+ //generator.SetActivity(true);
+ //generator.Reset();
  return NPulseLTZone::AReset();
 }
 
 // Выполняет расчет этого объекта
-bool NPulseSimpleLTZone::ACalculate(void)
+bool NPulseSimpleLTZone::ACalculate2(void)
 {
- generator.SetEnvironment(GetEnvironment());
- // расчет на шаге
- NeuralPotential=0;
-
- if(InputChannels.IsConnected())
- {
-  size_t inpsize(0);
-  for(size_t i=0;i<InputChannels->size();i++)
-  {
-   if(InputChannels[i])
-   {
-	if((inpsize=InputChannels[i]->GetSize(1)) >0)
-	{
-	 double *data=&(InputChannels[i]->Double[0]);
-	 for(size_t j=0;j<inpsize;j++,++data)
-	  NeuralPotential.v+=*data;
-	}
-   }
-  }
-  if(UseAveragePotential)
-   NeuralPotential.v/=InputChannels->size();
- }
- else
- if(NumInputs>0)
- {
-  size_t inpsize(0);
-  for(int i=0;i<NumInputs;i++)
-  {
-   if((inpsize=GetInputDataSize(i)[1]) >0)
-   {
-	double *data=&(GetInputData(i)->Double[0]);
-	for(size_t j=0;j<inpsize;j++,++data)
-	 NeuralPotential.v+=*data;
-   }
-  }
-  if(UseAveragePotential)
-   NeuralPotential.v/=NumInputs;
- }
-
  generator.Amplitude=PulseAmplitude;
- if(NeuralPotential.v>200)
-  NeuralPotential.v=200;
- if(NeuralPotential.v>0)
+ if(Potential.v>MaxFrequency)
+  Potential.v=MaxFrequency;
+ if(Potential.v>0)
  {
-  if(fabs(generator.Frequency.v-NeuralPotential.v)>0.001)
+  if(fabs(generator.Frequency.v-Potential.v)>0.001)
   {
-   generator.Frequency=NeuralPotential.v;
+   generator.Frequency=Potential.v;
 //   generator.Reset();
   }
  }
@@ -537,11 +506,11 @@ bool NPulseSimpleLTZone::ACalculate(void)
  generator.AvgInterval=AvgInterval;
  generator.Calculate();
 
- POutputData[0].Double[0]=generator.GetOutputData(0).Double[0];
- POutputData[1].Double[0]=generator.GetOutputData(0).Double[0];
- POutputData[2].Double[0]=NeuralPotential.v;
+ Output(0,0)=generator.Output(0,0);
+ OutputPotential(0,0)=generator.OutputPotential(0,0);
+ OutputFrequency(0,0)=Potential.v;
 
- POutputData[3]=generator.GetOutputData(3);
+ OutputPulseTimes(0,0)=generator.OutputPulseTimes(0,0);
 
  if(MainOwner)
   dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
@@ -562,12 +531,6 @@ NContinuesSimpleLTZone::~NContinuesSimpleLTZone(void)
 {
 }
 // --------------------------
-
-// --------------------------
-// Методы управления общедоступными свойствами
-// --------------------------
-// --------------------------
-
 
 // --------------------------
 // Системные методы управления объектом
@@ -621,32 +584,10 @@ bool NContinuesSimpleLTZone::AReset(void)
 }
 
 // Выполняет расчет этого объекта
-bool NContinuesSimpleLTZone::ACalculate(void)
+bool NContinuesSimpleLTZone::ACalculate2(void)
 {
- // расчет на шаге
- NeuralPotential=0;
-
-// NeuralPotential=GetFullSumInput();
- if(NumInputs>0)
- {
-  size_t inpsize;
-  for(int i=0;i<NumInputs;i++)
-  {
-   if((inpsize=GetInputDataSize(i)[1]) >0)
-   {
-	double *data=&(GetInputData(i)->Double[0]);
-	for(size_t j=0;j<inpsize;j++,++data)
-	 NeuralPotential.v+=*data;
-   }
-  }
-
-  if(UseAveragePotential)
-   NeuralPotential.v/=NumInputs;
- }
-
- POutputData[0].Double[0]=NeuralPotential.v;
- POutputData[1].Double[0]=NeuralPotential.v;
- POutputData[2].Double[0]=NeuralPotential.v;
+ Output(0,0)=Potential.v;
+ OutputPotential(0,0)=Potential.v;
 
  if(MainOwner)
   dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
