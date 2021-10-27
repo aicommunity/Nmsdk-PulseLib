@@ -29,11 +29,16 @@ namespace NMSDK {
 NPulseSynapseCommon::NPulseSynapseCommon(void)
 : PulseAmplitude("PulseAmplitude",this,&NPulseSynapseCommon::SetPulseAmplitude),
   Resistance("Resistance",this,&NPulseSynapseCommon::SetResistance),
+  Weight("Weight",this),
+  TrainerClassName("TrainerClassName",this, &NPulseSynapseCommon::SetTrainerClassName),
   Input("Input",this),
+  WeightInput("WeightInput",this),
   Output("Output",this),
+  OutInCopy("OutInCopy",this),
   PreOutput("PreOutput",this),
   InputPulseSignal("InputPulseSignal",this)
 {
+ Trainer=0;
 }
 
 NPulseSynapseCommon::~NPulseSynapseCommon(void)
@@ -56,6 +61,13 @@ bool NPulseSynapseCommon::SetResistance(const double &value)
 {
  return true;
 }
+
+/// Имя класса-учителя, настраивающего вес синапса
+bool NPulseSynapseCommon::SetTrainerClassName(const std::string &value)
+{
+ Ready=false;
+ return true;
+}
 // --------------------------
 
 
@@ -66,6 +78,19 @@ bool NPulseSynapseCommon::SetResistance(const double &value)
 NPulseSynapseCommon* NPulseSynapseCommon::New(void)
 {
  return new NPulseSynapseCommon;
+}
+
+// Возвращает указатель на учителя
+NSynapseTrainer* NPulseSynapseCommon::GetTrainer(void)
+{
+ return Trainer;
+}
+
+// Устанавливает связи тренера если он есть
+void NPulseSynapseCommon::RebuildInternalLinks(void)
+{
+ if(Trainer)
+  Trainer->RebuildInternalLinks();
 }
 // --------------------------
 
@@ -84,7 +109,11 @@ bool NPulseSynapseCommon::ADefault(void)
 
  Output.Assign(1,1,0.0);
  Input->Assign(1,1,0.0);
+ OutInCopy.Assign(1,1,0.0);
+ WeightInput->Assign(1,1,0.0);
  InputPulseSignal=false;
+
+ Weight=1;
 
  return true;
 }
@@ -95,6 +124,20 @@ bool NPulseSynapseCommon::ADefault(void)
 // в случае успешной сборки
 bool NPulseSynapseCommon::ABuild(void)
 {
+ if(!TrainerClassName->empty())
+ {
+  Trainer=AddMissingComponent<NSynapseTrainer>("Trainer", TrainerClassName);
+  if(Trainer)
+   Trainer->RebuildInternalLinks();
+ }
+ else
+ {
+  if(Trainer)
+  {
+   Storage->ReturnObject(Trainer);
+   Trainer=0;
+  }
+ }
  return true;
 }
 
@@ -121,8 +164,13 @@ bool NPulseSynapseCommon::ACalculate(void)
  if((*Input)(0,0)<=0 && PulseSignalTemp)
   PulseSignalTemp=false;
 
+ *OutInCopy=*Input;
+ if(WeightInput.IsConnected())
+  Weight=(*WeightInput)(0,0);
+
  bool res=ACalculate2();
  InputPulseSignal=false;
+ Output(0,0)=Output(0,0)*Weight;
  return res;
 }
 

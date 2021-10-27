@@ -243,6 +243,7 @@ bool NPulseMembrane::ABuild(void)
    ExcitatorySynapses.push_back(synapse);
    res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
    synapse->SetCoord(MVector<double,3>(5+i*6,1.7,0));
+   synapse->RebuildInternalLinks();
   }
  }
 
@@ -266,6 +267,7 @@ bool NPulseMembrane::ABuild(void)
    InhibitorySynapses.push_back(synapse);
    res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInputs");
    synapse->SetCoord(MVector<double,3>(5+i*6,10.6,0));
+   synapse->RebuildInternalLinks();
   }
  }
 

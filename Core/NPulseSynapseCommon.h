@@ -17,6 +17,7 @@ See file license.txt for more information
 #define NPULSE_SYNAPSE_COMMON_H
 
 #include "../../Nmsdk-BasicLib/Core/NNet.h"
+#include "NSynapseTrainer.h"
 
 
 namespace NMSDK {
@@ -32,12 +33,24 @@ ULProperty<double,NPulseSynapseCommon, ptPubParameter> PulseAmplitude;
 /// Сопротивление синапса
 ULProperty<double,NPulseSynapseCommon, ptPubParameter> Resistance;
 
+/// Вес синапса
+ULProperty<double, NPulseSynapseCommon, ptPubParameter> Weight;
+
+/// Имя класса-учителя, настраивающего вес синапса
+ULProperty<std::string, NPulseSynapseCommon, ptPubParameter> TrainerClassName;
+
 public: // Входы и выходы
 /// Входной сигнал с нейрона
 UPropertyInputData<MDMatrix<double>, NPulseSynapseCommon, ptInput | ptPubState> Input;
 
+/// Внешний источник информации о весе. Перезаписывает параметр Weight если есть подключение
+UPropertyInputData<MDMatrix<double>, NPulseSynapseCommon, ptInput | ptPubState> WeightInput;
+
 /// Выходное влияние синапса на мембрану
 UPropertyOutputData<MDMatrix<double>,NPulseSynapseCommon, ptOutput | ptPubState> Output;
+
+/// Технологический выход, дублирующий входной сигнал на синапс
+UPropertyOutputData<MDMatrix<double>,NPulseSynapseCommon, ptOutput | ptPubState> OutInCopy;
 
 protected: // Временные переменные
 /// Промежуточное значение эффективности синапса
@@ -48,6 +61,8 @@ ULProperty<double,NPulseSynapseCommon,ptPubState> PreOutput;
 ULProperty<bool, NPulseSynapseCommon, ptPubState> InputPulseSignal;
 
 bool PulseSignalTemp;
+
+NSynapseTrainer* Trainer;
 
 public: // Методы
 // --------------------------
@@ -66,6 +81,9 @@ virtual bool SetPulseAmplitude(const double &value);
 
 // Вес (эффективность синапса) синапса
 virtual bool SetResistance(const double &value);
+
+/// Имя класса-учителя, настраивающего вес синапса
+virtual bool SetTrainerClassName(const std::string &value);
 // --------------------------
 
 public:
@@ -74,6 +92,12 @@ public:
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
 virtual NPulseSynapseCommon* New(void);
+
+// Возвращает указатель на учителя
+NSynapseTrainer* GetTrainer(void);
+
+// Устанавливает связи тренера если он есть
+virtual void RebuildInternalLinks(void);
 // --------------------------
 
 // --------------------------
