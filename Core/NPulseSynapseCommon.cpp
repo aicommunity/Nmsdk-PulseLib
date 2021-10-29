@@ -124,20 +124,25 @@ bool NPulseSynapseCommon::ADefault(void)
 // в случае успешной сборки
 bool NPulseSynapseCommon::ABuild(void)
 {
- if(!TrainerClassName->empty())
- {
-  Trainer=AddMissingComponent<NSynapseTrainer>("Trainer", TrainerClassName);
-  if(Trainer)
-   Trainer->RebuildInternalLinks();
- }
- else
- {
-  if(Trainer)
-  {
-   Storage->ReturnObject(Trainer);
-   Trainer=0;
-  }
- }
+ return true;
+}
+
+bool NPulseSynapseCommon::AAfterBuild(void)
+{
+    if(!TrainerClassName->empty())
+    {
+     Trainer=AddMissingComponent<NSynapseTrainer>("Trainer", TrainerClassName);
+     if(Trainer)
+      Trainer->RebuildInternalLinks();
+    }
+    else
+    {
+     if(Trainer)
+     {
+      Storage->ReturnObject(Trainer);
+      Trainer=0;
+     }
+    }
  return true;
 }
 

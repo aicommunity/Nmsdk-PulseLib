@@ -112,6 +112,7 @@ virtual bool ADefault(void);
 // Автоматически вызывает метод Reset() и выставляет Ready в true
 // в случае успешной сборки
 virtual bool ABuild(void);
+virtual bool AAfterBuild(void);
 
 // Сброс процесса счета.
 virtual bool AReset(void);
