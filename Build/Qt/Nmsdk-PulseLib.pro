@@ -12,9 +12,6 @@ CONFIG += staticlib
 
 include($$PWD/../../../../Rdk/Build/Lib/Qt/RdkDefines.pri)
 
-DEFINES += LIBRDK_LIBRARY_EXPORT
-DEFINES += RDK_UNICODE_RUN
-DEFINES += RDK_QT
 INCLUDEPATH += $$PWD/../../../../Rdk/Deploy/Include
 
 VERSION = $$system(hg parents --template '{rev}')
