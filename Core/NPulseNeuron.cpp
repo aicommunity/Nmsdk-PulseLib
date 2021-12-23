@@ -424,7 +424,7 @@ bool NPulseNeuron::ADelComponent(UEPtr<UContainer> comp)
  if(comp == NegGenerator)
   NegGenerator=0;
 
- return NNeuron::ADelComponent(comp);
+ return NPulseNeuronCommon::ADelComponent(comp);
 }
 // --------------------------
 
