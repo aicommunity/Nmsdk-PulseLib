@@ -94,7 +94,9 @@ NPulseSynapseCommon* GetExcitatorySynapses(size_t i);
 size_t GetNumInhibitorySynapses(void) const;
 NPulseSynapseCommon* GetInhibitorySynapses(size_t i);
 
-virtual bool UpdateChannelData(UEPtr<NPulseChannel> comp, UEPtr<UIPointer> pointer=0);
+virtual bool UpdateChannelData(UEPtr<NPulseChannelCommon> channel, UEPtr<UIPointer> pointer=0);
+
+virtual bool UpdateSynapseData(UEPtr<NPulseSynapseCommon> synapse, UEPtr<UIPointer> pointer=0);
 // --------------------------
 
 // --------------------------

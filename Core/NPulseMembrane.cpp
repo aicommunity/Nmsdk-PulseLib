@@ -90,7 +90,7 @@ NPulseSynapseCommon* NPulseMembrane::GetInhibitorySynapses(size_t i)
  return InhibitorySynapses[i];
 }
 
-bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPointer> pointer)
+bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannelCommon> channel, UEPtr<UIPointer> pointer)
 {
   vector<NPulseChannelCommon* >::iterator I;
   if(channel->Type() < 0)
@@ -113,6 +113,31 @@ bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPoi
   return false;
 
  return true;
+}
+
+bool NPulseMembrane::UpdateSynapseData(UEPtr<NPulseSynapseCommon> synapse, UEPtr<UIPointer> pointer)
+{
+    vector<NPulseSynapseCommon* >::iterator I;
+    if(synapse->Type() < 0)
+    {
+     if(find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse) == ExcitatorySynapses.end())
+      ExcitatorySynapses.push_back(synapse);
+     if((I=find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse)) != InhibitorySynapses.end())
+      InhibitorySynapses.erase(I);
+    }
+    else
+    if(synapse->Type() > 0)
+    {
+     if(find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse) == InhibitorySynapses.end())
+      InhibitorySynapses.push_back(synapse);
+     if((I=find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse)) != ExcitatorySynapses.end())
+      ExcitatorySynapses.erase(I);
+    }
+
+   else
+    return false;
+
+   return true;
 }
 // --------------------------
 
@@ -184,25 +209,37 @@ bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poin
   return false;
 
  UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(comp);
- if(channel->Type <0)
+ if(channel)
  {
+  if(channel->Type <0)
+  {
    if(find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel) == ExcitatoryChannels.end())
     ExcitatoryChannels.push_back(channel);
- }
- else
- if(channel->Type >0)
- {
+  }
+  else
+  if(channel->Type >0)
+  {
    if(find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel) == InhibitoryChannels.end())
     InhibitoryChannels.push_back(channel);
+  }
  }
-/*
+
  UEPtr<NPulseSynapseCommon> synapse=dynamic_pointer_cast<NPulseSynapseCommon>(comp);
  if(synapse)
  {
-   if(find(Synapses.begin(),Synapses.end(),synapse) == Synapses.end())
-    Synapses.push_back(synapse);
+  if(synapse->Type < 0)
+  {
+   if(find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse) == ExcitatorySynapses.end())
+    ExcitatorySynapses.push_back(synapse);
+  }
+  else
+  if(synapse->Type > 0)
+  {
+   if(find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse) == InhibitorySynapses.end())
+    InhibitorySynapses.push_back(synapse);
+  }
  }
-*/
+
  return true;
 }
 
@@ -306,13 +343,13 @@ bool NPulseMembrane::ABuild(void)
    if(syn)
     GetStorage()->ReturnObject(syn);
   }
-  ExcitatorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
+//  ExcitatorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
 							  // по всем синапсам используя AddMissingComponent
   for(int i=0;i<NumExcitatorySynapses;i++)
   {
    UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("ExcSynapse")+sntoa(i+1), SynapseClassName);
-
-   ExcitatorySynapses.push_back(synapse);
+   synapse->Type = -1;
+//   ExcitatorySynapses.push_back(synapse);
    res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
    synapse->SetCoord(MVector<double,3>(5+i*6,1.7,0));
    synapse->RebuildInternalLinks();
@@ -335,13 +372,14 @@ bool NPulseMembrane::ABuild(void)
     GetStorage()->ReturnObject(syn);
   }
 
-  InhibitorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
+//  InhibitorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
 							  // по всем синапсам используя AddMissingComponent
   for(int i=0;i<NumInhibitorySynapses;i++)
   {
    UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("InhSynapse")+sntoa(i+1), SynapseClassName);
+   synapse->Type = 1;
 
-   InhibitorySynapses.push_back(synapse);
+ //  InhibitorySynapses.push_back(synapse);
    res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInputs");
    synapse->SetCoord(MVector<double,3>(5+i*6,10.6,0));
    synapse->RebuildInternalLinks();
