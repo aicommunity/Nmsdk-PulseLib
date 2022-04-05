@@ -23,6 +23,10 @@ See file license.txt for more information
 #include "NPulseHebbSynapse.h"
 #include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
 
+#include <fstream>
+#include <sstream>
+#include <limits>
+
 namespace NMSDK {
 
 // Методы
@@ -269,6 +273,21 @@ bool NPulseChannel::ACalculate2(void)
  }
 
  *out+=(channel_input-(*out)*sum_u)/(Ti*TimeStep);
+
+ //DEBUG
+ // Получение информации об обратной связи
+ if(membrane)
+ {
+     std::stringstream ss;
+     ss<<"/home/ivan/rtv/log/"<<membrane->GetName().c_str()<<"_"<<GetName().c_str()<<".txt";
+     std::ofstream ofs;
+     ofs.open(ss.str(), std::ios_base::app);
+     typedef std::numeric_limits< double > dbl;
+     std::cout.precision(dbl::max_digits10 - 1);
+     ofs<<GetTime().GetDoubleTime()<<" "<<std::scientific<<G<<" "<<std::scientific<<SumChannelInputs(0,0)<<" "<<std::scientific<<channel_input<<" "<<std::scientific<<*out<<"\n";
+     ofs.close();
+ }
+ //DEBUG
 
  return true;
 }

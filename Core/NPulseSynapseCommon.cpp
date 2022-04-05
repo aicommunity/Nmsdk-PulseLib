@@ -20,6 +20,10 @@ See file license.txt for more information
 #include "NPulseNeuron.h"
 #include "NPulseChannel.h"
 
+#include <fstream>
+#include <sstream>
+#include <limits>
+
 namespace NMSDK {
 
 // Методы
@@ -176,6 +180,21 @@ bool NPulseSynapseCommon::ACalculate(void)
  bool res=ACalculate2();
  InputPulseSignal=false;
  Output(0,0)=Output(0,0)*Weight;
+
+ //DEBUG
+ // Получение информации об обратной связи
+ UEPtr<NPulseMembrane> membrane=dynamic_pointer_cast<NPulseMembrane>(Owner);
+ if(membrane)
+ {
+     std::stringstream ss;
+     ss<<"/home/ivan/rtv/log/"<<membrane->GetName().c_str()<<"_"<<GetName().c_str()<<".txt";
+     std::ofstream ofs;
+     ofs.open(ss.str(), std::ios_base::app);
+     ofs<<GetTime().GetDoubleTime()<<" "<<std::scientific<<(*OutInCopy)(0,0)<<" "<<std::scientific<<Output(0,0)<<"\n";
+     ofs.close();
+ }
+ //DEBUG
+
  return res;
 }
 

@@ -19,6 +19,10 @@ See file license.txt for more information
 #include <algorithm>
 #include "NPulseMembraneCommon.h"
 
+#include <fstream>
+#include <sstream>
+#include <limits>
+
 namespace NMSDK {
 
 // Ìועמהû
@@ -201,6 +205,17 @@ bool NPulseMembraneCommon::ACalculate(void)
  for(size_t i=0;i<Channels.size();i++)
   if(Channels[i])
    SumPotential(0,0)+=Channels[i]->Output(0,0);
+
+ //
+ std::stringstream ss;
+ ss<<"/home/ivan/rtv/log/"<<GetName().c_str()<<".txt";
+
+ std::ofstream ofs;
+ ofs.open(ss.str(), std::ios_base::app);
+ typedef std::numeric_limits< double > dbl;
+ std::cout.precision(dbl::max_digits10 - 1);
+ ofs<<GetTime().GetDoubleTime()<<" "<<std::scientific<<SumPotential(0,0)<<" "<<Feedback.v<<" "<<(int)(IsNeuronActive)<<"\n";
+ ofs.close();
  return true;
 }
 

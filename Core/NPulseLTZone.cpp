@@ -21,6 +21,10 @@ See file license.txt for more information
 #include "NPulseChannel.h"
 #include "NPulseNeuron.h"
 
+#include <fstream>
+#include <sstream>
+#include <limits>
+
 namespace NMSDK {
 
 // Ìועמהû NPulseLTZoneThreshold
@@ -158,6 +162,20 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
 
  if(MainOwner)
   dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+
+ //DEBUG
+
+ std::stringstream ss;
+ ss<<"/home/ivan/rtv/log/"<<GetName().c_str()<<".txt";
+
+ std::ofstream ofs;
+ ofs.open(ss.str(), std::ios_base::app);
+ typedef std::numeric_limits< double > dbl;
+ std::cout.precision(dbl::max_digits10 - 1);
+ ofs<<GetTime().GetDoubleTime()<<" "<<std::scientific<<Potential.v<<" "<<std::scientific<<Output(0,0)<<" "<<std::scientific<<OutputPotential(0,0)<<" "<<(int)(PulseFlag)<<"\n";
+ ofs.close();
+
+ //DEBUG
 
  return true;
 }
