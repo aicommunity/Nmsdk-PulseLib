@@ -305,7 +305,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
  //UEPtr<NPulseMembrane> membrane=static_pointer_cast<NPulseMembrane>(cont);
  for(size_t k=0;k<new_dendrite->GetNumNegChannels();k++)
  {
-  res&=CreateLink(PosGenerator->GetLongName(this),"Output",new_dendrite->GetNegChannel(k)->GetLongName(this),"SynapticInputs");
+  res&=CreateLink(PosGenerator->GetLongName(this),"Output",new_dendrite->GetNegChannel(k)->GetLongName(this),"Inputs");
  /* item.Id=PosGenerator->GetLongName(this);
   item.Index=0;
   conn.Id=membrane->GetNegChannel(k)->GetLongId(this);
@@ -315,7 +315,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
 
  for(size_t k=0;k<new_dendrite->GetNumPosChannels();k++)
  {
-  res&=CreateLink(NegGenerator->GetLongName(this),"Output",new_dendrite->GetPosChannel(k)->GetLongName(this),"SynapticInputs");
+  res&=CreateLink(NegGenerator->GetLongName(this),"Output",new_dendrite->GetPosChannel(k)->GetLongName(this),"Inputs");
  /*
   item.Id=NegGenerator->GetLongId(this);
   item.Index=0;
