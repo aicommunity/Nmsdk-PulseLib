@@ -159,10 +159,10 @@ bool NPulseSynapse::ADefault(void)
  PulseAmplitude=1;
 
  // Постоянная времени выделения медиатора
- SecretionTC=0.001;
+ SecretionTC=0.002;
 
  // Постоянная времени распада медиатора
- DissociationTC=0.01;
+ DissociationTC=0.002;
 
  /// Типовая длительность импульса, с
  TypicalPulseDuration=0.001;
@@ -171,7 +171,7 @@ bool NPulseSynapse::ADefault(void)
  InhibitionCoeff=0;
 
  // Вес (эффективность синапса) синапса
- Resistance=1.0e9;
+ Resistance=100000000;
 
  UsePresynapticInhibition=false;
  UsePulseSignal=true;
