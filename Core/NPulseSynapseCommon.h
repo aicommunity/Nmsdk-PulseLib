@@ -27,6 +27,11 @@ class NPulseNeuron;
 class RDK_LIB_TYPE NPulseSynapseCommon: public UNet
 {
 public: // Общедоступные свойства
+/// Тип синапса механизма
+/// <0 - тормозит накопление отрицательного вклада в потенциал (или деполяризует мембрану) - возбуждающий синапс
+/// >0 - тормозит накопление положительного вклада в потенциал (или гиперпорялизует мембрану) - тормозный синапс
+ULProperty<double,NPulseSynapseCommon, ptPubParameter> Type;
+
 /// Амплитуда входных импульсов
 ULProperty<double,NPulseSynapseCommon, ptPubParameter> PulseAmplitude;
 
@@ -76,6 +81,8 @@ protected:
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
+virtual bool SetType(const double &value);
+
 // Устанавливает амплитуду импульсов
 virtual bool SetPulseAmplitude(const double &value);
 

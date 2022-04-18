@@ -64,7 +64,14 @@ bool NPulseChannelCommon::SetType(const double &value)
  UEPtr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(Owner);
  if(membr)
  {
-  membr->UpdateChannelData(dynamic_cast<NPulseChannel*>(this));
+  membr->UpdateChannelData(dynamic_cast<NPulseChannelCommon*>(this));
+ }
+
+ for(size_t i=0;i<SynapticInputs->size();i++)
+ {
+  UEPtr<NPulseSynapseCommon> synapse = dynamic_cast<NPulseSynapseCommon*>(SynapticInputs.GetItem(i));
+  if(synapse)
+   synapse->Type = value;
  }
 
  return true;

@@ -90,7 +90,7 @@ NPulseSynapseCommon* NPulseMembrane::GetInhibitorySynapses(size_t i)
  return InhibitorySynapses[i];
 }
 
-bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPointer> pointer)
+bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannelCommon> channel, UEPtr<UIPointer> pointer)
 {
   vector<NPulseChannelCommon* >::iterator I;
   if(channel->Type() < 0)
@@ -113,6 +113,31 @@ bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannel> channel, UEPtr<UIPoi
   return false;
 
  return true;
+}
+
+bool NPulseMembrane::UpdateSynapseData(UEPtr<NPulseSynapseCommon> synapse, UEPtr<UIPointer> pointer)
+{
+    vector<NPulseSynapseCommon* >::iterator I;
+    if(synapse->Type() < 0)
+    {
+     if(find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse) == ExcitatorySynapses.end())
+      ExcitatorySynapses.push_back(synapse);
+     if((I=find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse)) != InhibitorySynapses.end())
+      InhibitorySynapses.erase(I);
+    }
+    else
+    if(synapse->Type() > 0)
+    {
+     if(find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse) == InhibitorySynapses.end())
+      InhibitorySynapses.push_back(synapse);
+     if((I=find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse)) != ExcitatorySynapses.end())
+      ExcitatorySynapses.erase(I);
+    }
+
+   else
+    return false;
+
+   return true;
 }
 // --------------------------
 
@@ -173,6 +198,86 @@ NPulseMembrane* NPulseMembrane::New(void)
 {
  return new NPulseMembrane;
 }
+
+// Выполняет завершающие пользовательские действия
+// при добавлении дочернего компонента в этот объект
+// Метод будет вызван только если comp был
+// успешно добавлен в список компонент
+bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+{
+ if(!NPulseMembraneCommon::AAddComponent(comp,pointer))
+  return false;
+
+ UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(comp);
+ if(channel)
+ {
+  if(channel->Type <0)
+  {
+   if(find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel) == ExcitatoryChannels.end())
+    ExcitatoryChannels.push_back(channel);
+  }
+  else
+  if(channel->Type >0)
+  {
+   if(find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel) == InhibitoryChannels.end())
+    InhibitoryChannels.push_back(channel);
+  }
+ }
+
+ UEPtr<NPulseSynapseCommon> synapse=dynamic_pointer_cast<NPulseSynapseCommon>(comp);
+ if(synapse)
+ {
+  if(synapse->Type < 0)
+  {
+   if(find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse) == ExcitatorySynapses.end())
+    ExcitatorySynapses.push_back(synapse);
+  }
+  else
+  if(synapse->Type > 0)
+  {
+   if(find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse) == InhibitorySynapses.end())
+    InhibitorySynapses.push_back(synapse);
+  }
+ }
+
+ return true;
+}
+
+// Выполняет предварительные пользовательские действия
+// при удалении дочернего компонента из этого объекта
+// Метод будет вызван только если comp
+// существует в списке компонент
+bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
+{
+
+ UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(comp);
+ if(channel)
+ {
+  vector<NPulseChannelCommon*>::iterator I;
+  I=find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel);
+  if(I != ExcitatoryChannels.end())
+   ExcitatoryChannels.erase(I);
+
+  I=find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel);
+  if(I != InhibitoryChannels.end())
+   InhibitoryChannels.erase(I);
+ }
+
+ UEPtr<NPulseSynapseCommon> synapse=dynamic_pointer_cast<NPulseSynapseCommon>(comp);
+ if(synapse)
+ {
+  vector<NPulseSynapseCommon*>::iterator I;
+  I=find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse);
+  if(I != ExcitatorySynapses.end())
+   ExcitatorySynapses.erase(I);
+
+  I=find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse);
+  if(I != InhibitorySynapses.end())
+   InhibitorySynapses.erase(I);
+ }
+
+ return NPulseMembraneCommon::ADelComponent(comp);
+}
 // --------------------------
 
 // --------------------------
@@ -226,21 +331,25 @@ bool NPulseMembrane::ABuild(void)
  if(!ExcChannelClassName->empty())
  {
   exc_channel=AddMissingComponent<NPulseChannelCommon>("ExcChannel", ExcChannelClassName);
-  ExcitatoryChannels.resize(1);
-  ExcitatoryChannels[0]=exc_channel;
+//  ExcitatoryChannels.resize(1);
+//  ExcitatoryChannels[0]=exc_channel;
   exc_channel->SetCoord(MVector<double,3>(5,4,0));
 
   int old_ex_synapses=int(ExcitatorySynapses.size());
 
   for(int i=NumExcitatorySynapses;i<old_ex_synapses;i++)
-   ExcitatorySynapses[i]->Free();
-  ExcitatorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
+  {
+   UEPtr<UContainer> syn = GetComponentL(std::string("ExcSynapse")+sntoa(i+1), true);
+   if(syn)
+    GetStorage()->ReturnObject(syn);
+  }
+//  ExcitatorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
 							  // по всем синапсам используя AddMissingComponent
   for(int i=0;i<NumExcitatorySynapses;i++)
   {
    UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("ExcSynapse")+sntoa(i+1), SynapseClassName);
-
-   ExcitatorySynapses.push_back(synapse);
+   synapse->Type = -1;
+//   ExcitatorySynapses.push_back(synapse);
    res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
    synapse->SetCoord(MVector<double,3>(5+i*6,1.7,0));
    synapse->RebuildInternalLinks();
@@ -251,20 +360,26 @@ bool NPulseMembrane::ABuild(void)
  {
   inh_channel=AddMissingComponent<NPulseChannelCommon>("InhChannel", InhChannelClassName);
 
-  InhibitoryChannels.resize(1);
-  InhibitoryChannels[0]=inh_channel;
+//  InhibitoryChannels.resize(1);
+//  InhibitoryChannels[0]=inh_channel;
   inh_channel->SetCoord(MVector<double,3>(5,8,0));
 
   int old_in_synapses=int(InhibitorySynapses.size());
   for(int i=NumInhibitorySynapses;i<old_in_synapses;i++)
-   InhibitorySynapses[i]->Free();
-  InhibitorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
+  {
+   UEPtr<UContainer> syn = GetComponentL(std::string("InhSynapse")+sntoa(i+1), true);
+   if(syn)
+    GetStorage()->ReturnObject(syn);
+  }
+
+//  InhibitorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
 							  // по всем синапсам используя AddMissingComponent
   for(int i=0;i<NumInhibitorySynapses;i++)
   {
    UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("InhSynapse")+sntoa(i+1), SynapseClassName);
+   synapse->Type = 1;
 
-   InhibitorySynapses.push_back(synapse);
+ //  InhibitorySynapses.push_back(synapse);
    res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInputs");
    synapse->SetCoord(MVector<double,3>(5+i*6,10.6,0));
    synapse->RebuildInternalLinks();

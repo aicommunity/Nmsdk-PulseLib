@@ -27,7 +27,8 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseSynapseCommon::NPulseSynapseCommon(void)
-: PulseAmplitude("PulseAmplitude",this,&NPulseSynapseCommon::SetPulseAmplitude),
+: Type("Type", this, &NPulseSynapseCommon::SetType),
+  PulseAmplitude("PulseAmplitude",this,&NPulseSynapseCommon::SetPulseAmplitude),
   Resistance("Resistance",this,&NPulseSynapseCommon::SetResistance),
   Weight("Weight",this),
   TrainerClassName("TrainerClassName",this, &NPulseSynapseCommon::SetTrainerClassName),
@@ -50,6 +51,19 @@ NPulseSynapseCommon::~NPulseSynapseCommon(void)
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
+bool NPulseSynapseCommon::SetType(const double &value)
+{
+ Type.v=value;
+
+ UEPtr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(Owner);
+ if(membr)
+ {
+  membr->UpdateSynapseData(dynamic_cast<NPulseSynapseCommon*>(this));
+ }
+
+ return true;
+}
+
 // Устанавливает амплитуду импульсов
 bool NPulseSynapseCommon::SetPulseAmplitude(const double &value)
 {
@@ -100,6 +114,8 @@ void NPulseSynapseCommon::RebuildInternalLinks(void)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NPulseSynapseCommon::ADefault(void)
 {
+ Type = -1;
+
  // Начальные значения всем параметрам
  // Амплитуда входных импульсов
  PulseAmplitude=1;

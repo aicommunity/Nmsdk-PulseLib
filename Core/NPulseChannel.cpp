@@ -236,10 +236,10 @@ bool NPulseChannel::ACalculate2(void)
    for(int j=0;j<inp_size;j++,++data)
 	channel_input+=*data;
   }
-
-  if(UseAveragePotential && full_inp_data_size>0)
-   channel_input/=full_inp_data_size;
  }
+ if(UseAveragePotential && full_inp_data_size>0)
+  channel_input/=full_inp_data_size;
+
  SumChannelInputs(0,0)=channel_input;
 
  // Получение информации об обратной связи
