@@ -254,6 +254,7 @@ bool NPulseNeuronCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> 
    }
    if(!exists)
 	Membranes.push_back(membrane);
+   membrane->RebuildSynapticInternalLinks();
    // Подключаем синапсы хебба если они есть
  /*  for(int i=0;i<membrane->GetNumComponents();i++)
    {

@@ -209,5 +209,13 @@ bool NPulseMembraneCommon::ACalculate2(void)
  return true;
 }
 // --------------------------
+
+void NPulseMembraneCommon::RebuildSynapticInternalLinks(void)
+{
+    for(int i=0; i<Synapses.size(); i++)
+    {
+        Synapses[i]->RebuildInternalLinks();
+    }
+}
 }
 #endif

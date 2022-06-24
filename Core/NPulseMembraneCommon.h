@@ -123,6 +123,8 @@ virtual bool AReset(void);
 virtual bool ACalculate(void);
 virtual bool ACalculate2(void);
 // --------------------------
+public:
+virtual void RebuildSynapticInternalLinks(void);
 };
 
 }

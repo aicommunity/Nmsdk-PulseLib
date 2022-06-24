@@ -89,7 +89,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  syn->DissociationTC=0.005;
  UploadClass("NPSynapseBio",syn);
 
-
  cont=new NPulseSynChannel;
  cont->SetName("PChannel");
  cont->Default();
