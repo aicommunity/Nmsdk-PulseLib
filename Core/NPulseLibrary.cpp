@@ -286,6 +286,11 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  dynamic_cast<NConstGenerator*>(cont)->Amplitude=0.93;
  UploadClass("NPNeuronPosCGeneratorBio",cont);
 
+ cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
+ cont->SetName("PNeuronPosCGenerator");
+ dynamic_cast<NConstGenerator*>(cont)->Amplitude=-70e-3;
+ UploadClass("NPNeuronPosCGeneratorCable",cont);
+
  cont=new NPulseNeuron;
  cont->SetName("PNeuron");
  cont->Default();
