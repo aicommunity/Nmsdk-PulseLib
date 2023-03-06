@@ -723,19 +723,34 @@ bool NPulseNeuron::ACalculate(void)
  // —читаем суммарный выходной потеницал всех дендритов и участков сомы
  DendriticSumPotential(0,0)=0;
  SomaSumPotential(0,0)=0;
+
+ int channel_divisor=1;
+ UEPtr<NPulseLTZoneCommon> zone = dynamic_pointer_cast<NPulseLTZoneCommon>(LTZone);
+ if(zone && zone->NumChannelsInGroup.v > 0)
+  channel_divisor = zone->NumChannelsInGroup.v;
+
+ int full_ch_counter(0);
  for(size_t i=0;i<Soma.size();i++)
  {
   if(Soma[i])
   {
+   int soma_ch_counter(0);
    for(size_t j=0;j<Soma[i]->GetNumChannels();j++)
    {
 	DendriticSumPotential(0,0)+=Soma[i]->GetChannel(j)->SumChannelInputs(0,0);
     SomaSumPotential(0,0)+=Soma[i]->GetChannel(j)->Output(0,0);
+    ++soma_ch_counter;
    }
+   full_ch_counter += soma_ch_counter;
   }
  }
 
-
+ int div_coeff = full_ch_counter/channel_divisor;
+ if(div_coeff > 0)
+ {
+  SomaSumPotential(0,0) /= div_coeff;
+  DendriticSumPotential(0,0) /= div_coeff;
+ }
 
  return true;
 }
