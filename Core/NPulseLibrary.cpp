@@ -54,6 +54,16 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  }
  UploadClass("NPulseLTZoneThresholdBio",cont);
 
+ cont=new NPulseLTZoneThreshold;
+ cont->SetName("PLTZone");
+ cont->Default();
+ {
+  NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont);
+  ltzonet->Threshold=-0.055;
+  ltzonet->ThresholdOff=-0.07;
+ }
+ UploadClass("NPulseLTZoneThresholdBio2",cont);
+
  cont=new NPulseLTZone;
  cont->SetName("PLTZone");
  cont->Default();
@@ -89,6 +99,11 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  syn->DissociationTC=0.005;
  UploadClass("NPSynapseBio",syn);
 
+ syn=dynamic_pointer_cast<NPulseSynapse>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynapse"));
+ syn->Resistance=86000000;
+ syn->DissociationTC=0.005;
+ UploadClass("NPSynapseBio2",syn);
+
  cont=new NPulseSynChannel;
  cont->SetName("PChannel");
  cont->Default();
@@ -122,11 +137,30 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  ch_pos->FBResistance=1e7;
  UploadClass("NPExcChannelBio",ch_pos);
 
+ ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
+ ch_pos->SetName("ExcChannel");
+ ch_pos->Type=-1;
+ ch_pos->FBResistance=3000000;
+ ch_pos->Resistance=16000000;
+ ch_pos->RestingResistance=3000000;
+ ch_pos->Capacity = 2.5e-10;
+
+ UploadClass("NPExcChannelBio2",ch_pos);
+
  ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
  ch_neg->FBResistance=1e7;
  UploadClass("NPInhChannelBio",ch_neg);
+
+ ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
+ ch_neg->SetName("InhChannel");
+ ch_neg->Type=1;
+ ch_neg->FBResistance=3000000;
+ ch_neg->Resistance=16000000;
+ ch_neg->RestingResistance=3000000;
+ ch_neg->Capacity = 2.5e-10;
+ UploadClass("NPInhChannelBio2",ch_neg);
 
 
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynChannel"));
@@ -195,6 +229,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->SynapseClassName="NPSynapseBio";
  membr->InhChannelClassName="NPInhChannelBio";
  UploadClass("NPMembraneBio",membr);
+
+ membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ membr->SetName("PMembrane");
+ membr->ExcChannelClassName="NPExcChannelBio2";
+ membr->SynapseClassName="NPSynapseBio2";
+ membr->InhChannelClassName="NPInhChannelBio2";
+ membr->FeedbackGain = 0.02;
+ UploadClass("NPMembraneBio2",membr);
 
  // Участки мембраны низкопороговой зоны
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
