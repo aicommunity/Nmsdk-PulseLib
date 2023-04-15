@@ -190,7 +190,7 @@ double NPulseSynChannel::GetSynOutput()
 
 bool NPulseSynChannel::ResetOut()
 {
-	POutputData[0].Double[0]=channel_input;
+//	POutputData[0].Double[0]=channel_input; // TODO: тут что то другое теперь
     return true;
 }
 // ¬осстановление настроек по умолчанию и сброс процесса счета
@@ -575,7 +575,7 @@ bool NContinuesSynChannel::AReset(void)
 // PreOutput=0;
  PreOutput->assign(PreOutput->size(),0);
 
- FillOutputData();
+ //FillOutputData(); // TODO: тут что то другое теперь
 
  SynapseInputFlagsList.resize(ChannelInputs->size(),false);
  for(int n=0;n<int(ChannelInputs->size());n++)

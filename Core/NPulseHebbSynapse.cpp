@@ -123,9 +123,9 @@ bool NPulseHebbSynapse::ADefault(void)
  if(!NPulseSynapse::ADefault())
   return false;
 
- SetNumOutputs(6);
- for(int i=0;i<NumOutputs;i++)
-  SetOutputDataSize(i,MMatrixSize(1,1));
+// SetNumOutputs(6);
+// for(int i=0;i<NumOutputs;i++)
+//  SetOutputDataSize(i,MMatrixSize(1,1));
 
 	Min=10;
 	Mout=10;
