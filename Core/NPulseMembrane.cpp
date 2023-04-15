@@ -341,7 +341,8 @@ bool NPulseMembrane::ABuild(void)
   {
    UEPtr<UContainer> syn = GetComponentL(std::string("ExcSynapse")+sntoa(i+1), true);
    if(syn)
-    GetStorage()->ReturnObject(syn);
+    DelComponent(syn, true);
+//    GetStorage()->ReturnObject(syn);
   }
 //  ExcitatorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
 							  // по всем синапсам используя AddMissingComponent
@@ -369,7 +370,8 @@ bool NPulseMembrane::ABuild(void)
   {
    UEPtr<UContainer> syn = GetComponentL(std::string("InhSynapse")+sntoa(i+1), true);
    if(syn)
-    GetStorage()->ReturnObject(syn);
+    DelComponent(syn, true);
+    //GetStorage()->ReturnObject(syn);
   }
 
 //  InhibitorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
