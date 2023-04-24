@@ -433,6 +433,20 @@ bool NPulseMembrane::ACalculate2(void)
 
  return true;
 }
+
+// Устанавливает компоненты в требуемый порядок расчета
+void NPulseMembrane::UpdateComputationOrder(void)
+{
+ int position=0;
+ for(size_t i=0;i<ExcitatorySynapses.size();i++)
+  SetComponentPosition(ExcitatorySynapses[i]->GetName(),position++);
+ for(size_t i=0;i<InhibitorySynapses.size();i++)
+  SetComponentPosition(InhibitorySynapses[i]->GetName(),position++);
+ for(size_t i=0;i<ExcitatoryChannels.size();i++)
+  SetComponentPosition(ExcitatoryChannels[i]->GetName(),position++);
+ for(size_t i=0;i<InhibitoryChannels.size();i++)
+  SetComponentPosition(InhibitoryChannels[i]->GetName(),position++);
+}
 // --------------------------
 }
 #endif

@@ -754,7 +754,48 @@ bool NPulseNeuron::ACalculate(void)
 
  return true;
 }
+
+
+// Устанавливает компоненты в требуемый порядок расчета
+void NPulseNeuron::UpdateComputationOrder(void)
+{
+ int position = 0;
+ int num_soma=NumSomaMembraneParts;
+ for(int i=0;i<num_soma;i++)
+ {
+  if(StructureBuildMode == 2)
+  {
+   for(int j=int(NumDendriteMembranePartsVec[i])-1;j>=0;j--)
+   {
+    std::string dendrite_name=std::string("Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1);
+    SetComponentPosition(dendrite_name, position++);
+   }
+  }
+  else
+  if(StructureBuildMode == 1)
+  {
+   for(int j=NumDendriteMembraneParts-1;j>=0;j--)
+   {
+    std::string dendrite_name=std::string("Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1);
+    SetComponentPosition(dendrite_name, position++);
+   }
+  }
+ }
+
+ for(int i=0;i<num_soma;i++)
+ {
+  std::string soma_name=std::string("Soma")+sntoa(i+1);
+  SetComponentPosition(soma_name, position++);
+ }
+
+ if(!LTMembraneClassName->empty())
+  SetComponentPosition("LTMembrane", position++);
+
+ if(GetLTZone())
+  SetComponentPosition(GetLTZone()->GetName(), position++);
+}
 // --------------------------
+
 int NPulseNeuron::GetNumOfConnectedSynToPosCh(NPulseMembrane* membr)
 {
   int temp=0;
