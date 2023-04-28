@@ -341,7 +341,8 @@ bool NPulseMembrane::ABuild(void)
   {
    UEPtr<UContainer> syn = GetComponentL(std::string("ExcSynapse")+sntoa(i+1), true);
    if(syn)
-    GetStorage()->ReturnObject(syn);
+    DelComponent(syn, true);
+//    GetStorage()->ReturnObject(syn);
   }
 //  ExcitatorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
 							  // по всем синапсам используя AddMissingComponent
@@ -369,7 +370,8 @@ bool NPulseMembrane::ABuild(void)
   {
    UEPtr<UContainer> syn = GetComponentL(std::string("InhSynapse")+sntoa(i+1), true);
    if(syn)
-    GetStorage()->ReturnObject(syn);
+    DelComponent(syn, true);
+    //GetStorage()->ReturnObject(syn);
   }
 
 //  InhibitorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
@@ -430,6 +432,20 @@ bool NPulseMembrane::ACalculate2(void)
  Feedback.v*=FeedbackGain.v;
 
  return true;
+}
+
+// Устанавливает компоненты в требуемый порядок расчета
+void NPulseMembrane::UpdateComputationOrder(void)
+{
+ int position=0;
+ for(size_t i=0;i<ExcitatorySynapses.size();i++)
+  SetComponentPosition(ExcitatorySynapses[i]->GetName(),position++);
+ for(size_t i=0;i<InhibitorySynapses.size();i++)
+  SetComponentPosition(InhibitorySynapses[i]->GetName(),position++);
+ for(size_t i=0;i<ExcitatoryChannels.size();i++)
+  SetComponentPosition(ExcitatoryChannels[i]->GetName(),position++);
+ for(size_t i=0;i<InhibitoryChannels.size();i++)
+  SetComponentPosition(InhibitoryChannels[i]->GetName(),position++);
 }
 // --------------------------
 }

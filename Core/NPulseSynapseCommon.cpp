@@ -155,7 +155,8 @@ bool NPulseSynapseCommon::AAfterBuild(void)
     {
      if(Trainer)
      {
-      Storage->ReturnObject(Trainer);
+      DelComponent(Trainer, true);
+      //Storage->ReturnObject(Trainer);
       Trainer=0;
      }
     }
