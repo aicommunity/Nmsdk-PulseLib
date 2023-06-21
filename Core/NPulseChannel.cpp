@@ -251,7 +251,7 @@ bool NPulseChannel::ACalculate2(void)
  double *out=&Output(0,0);
  double Ti(0.0),sum_u(0.0);
 
- if(fabs(membrane->Feedback)<1e-3)
+ if(membrane && fabs(membrane->Feedback)<1e-3)
  {
   double resistance(0.0);
   if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))
