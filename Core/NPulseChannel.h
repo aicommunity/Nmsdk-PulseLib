@@ -39,6 +39,9 @@ ULProperty<double,NPulseChannel, ptPubParameter> RestingResistance;
 /// Число подключенных к каналу синапсов
 ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
 
+/// Текущая постоянная времени
+ULProperty<double,NPulseChannel, ptPubState> TimeConstant;
+
 public: // Входы и выходы
 double channel_input;
 //double out;

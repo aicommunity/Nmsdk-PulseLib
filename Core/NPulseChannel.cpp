@@ -34,7 +34,8 @@ NPulseChannel::NPulseChannel(void)
 Resistance("Resistance",this,&NPulseChannel::SetResistance),
 FBResistance("FBResistance",this,&NPulseChannel::SetFBResistance),
 RestingResistance("RestingResistance",this),
-NumConnectedSynapsis("NumConnectedSynapsis",this)
+NumConnectedSynapsis("NumConnectedSynapsis",this),
+TimeConstant("TimeConstant", this)
 {
  channel_input=0;
 }
@@ -205,6 +206,8 @@ bool NPulseChannel::AReset(void)
  if(Type<0)
   Output(0,0)=-1;
 
+ TimeConstant = Resistance * Capacity;
+
  return true;
 }
 
@@ -267,6 +270,8 @@ bool NPulseChannel::ACalculate2(void)
   Ti=Capacity.v/(G+1.0/FBResistance.v);
   sum_u=(1.0+G*FBResistance.v);
  }
+
+ TimeConstant = Ti;
 
  *out+=(channel_input-(*out)*sum_u)/(Ti*TimeStep);
 
