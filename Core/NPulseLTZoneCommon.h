@@ -16,7 +16,7 @@ See file license.txt for more information
 #ifndef NPULSE_LTZONE_COMMON_H
 #define NPULSE_LTZONE_COMMON_H
 
-#include "../../Nmsdk-SourceLib/Core/NPulseGenerator.h"
+#include "NPulseGenerator.h"
 
 namespace NMSDK {
 

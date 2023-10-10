@@ -18,7 +18,7 @@ See file license.txt for more information
 
 #include "NPulseNeuronCommon.h"
 #include "NPulseMembrane.h"
-#include "../../Nmsdk-SourceLib/Core/NConstGenerator.h"
+#include "NConstGenerator.h"
 
 namespace NMSDK {
 

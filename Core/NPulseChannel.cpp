@@ -21,7 +21,7 @@ See file license.txt for more information
 #include "NPulseMembrane.h"
 #include "NPulseNeuron.h"
 #include "NPulseHebbSynapse.h"
-#include "../../Nmsdk-NeuronLifeLib/Core/NPulseLifeNeuron.h"
+#include "NPulseLifeNeuron.h"
 
 namespace NMSDK {
 

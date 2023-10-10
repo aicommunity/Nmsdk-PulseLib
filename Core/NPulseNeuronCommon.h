@@ -16,9 +16,9 @@ See file license.txt for more information
 #ifndef NPULSE_NEURON_COMMON_H
 #define NPULSE_NEURON_COMMON_H
 
-#include "../../Nmsdk-BasicLib/Core/NNeuron.h"
+#include "NNeuron.h"
 #include "NPulseLTZoneCommon.h"
-#include "../../Nmsdk-SourceLib/Core/NConstGenerator.h"
+#include "NConstGenerator.h"
 #include "NPulseMembraneCommon.h"
 //#include "NAfferentNeuron.h"
 

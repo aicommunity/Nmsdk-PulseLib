@@ -1,7 +1,7 @@
 #ifndef NSYNAPSE_TRAINER_H
 #define NSYNAPSE_TRAINER_H
 
-#include "../../Nmsdk-BasicLib/Core/NNet.h"
+#include "NNet.h"
 
 
 namespace NMSDK {

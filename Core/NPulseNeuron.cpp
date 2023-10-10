@@ -24,7 +24,7 @@ See file license.txt for more information
 #include "NPulseLTZone.h"
 #include "NPulseSynapse.h"
 #include "NPulseChannel.h"
-#include "../../Nmsdk-SourceLib/Core/NConstGenerator.h"
+#include "NConstGenerator.h"
 
 namespace NMSDK {
 

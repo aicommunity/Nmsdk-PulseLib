@@ -16,7 +16,7 @@ See file license.txt for more information
 #ifndef NPULSE_SYNAPSE_COMMON_H
 #define NPULSE_SYNAPSE_COMMON_H
 
-#include "../../Nmsdk-BasicLib/Core/NNet.h"
+#include "NNet.h"
 #include "NSynapseTrainer.h"
 
 
