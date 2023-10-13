@@ -74,7 +74,7 @@ double ResetTime;
 // Добавила Демчева ----->
 //Время начала работы генератора в режиме повышенной частоты (UsePatternOutput)
 double PatternStartTime;
-//Флаг режима повышенной частоты (UsePatternOutput)
+//Флаг генерации сигнала в повышенной частоте (UsePatternOutput)
 bool IsInPatternMode;
 // <-----
 
@@ -156,7 +156,10 @@ ULProperty<bool,NPulseGeneratorTransit, ptPubParameter> UseTransitSignal;
 /// Транзитный сигнал
 UPropertyInputData<MDMatrix<double>,NPulseGeneratorTransit, ptInput | ptPubState> Input;
 
-/// Признак необходимости увеличения частоты сигнала (на определенный период времени) по внешнему импульсу
+/// Признак необходимости генерации сигнала с повышенной частотой PatternFrequency по внешнему импульсу
+/// Два формата:
+/// 1. Генерация с повышенной частотой в течение заданного периода PatternDuration
+/// 2. Генерация с повышенной частотой до получения повторного входного сигнала, прекращающего генерацию
 ULProperty<bool,NPulseGeneratorTransit, ptPubParameter> UsePatternOutput;
 
 /// Продолжительность периода работы в режиме повышенной частоты (UsePatternOutput) (c)
@@ -167,6 +170,11 @@ ULProperty<double,NPulseGeneratorTransit, ptPubParameter> PatternFrequency;
 
 
 protected:
+
+/// Метка, что на входе фиксируется тот же импульс, что и на предыдущем такте
+/// За время импульса происходит несколько тактов, и поэтому входное значение > 0
+/// на очередном такте не должно воприниматься как новый импульс, если TheSamePulse == true
+bool TheSamePulse = false;
 
 
 public: // Методы

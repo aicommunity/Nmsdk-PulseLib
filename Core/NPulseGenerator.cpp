@@ -254,14 +254,14 @@ bool NPulseGenerator::ACalculate(void)
    --PulseCounter;
    if(PulseCounter <= 0) // Выключаем импульс и включаем ожидание
    {
-	RandomFrequency=double(rand()*FrequencyDeviation*2.0)/double(RAND_MAX)+
-							Frequency-FrequencyDeviation;
-	if(RandomFrequency.v>0)
-	 PulseCounter=static_cast<int>(-int(TimeStep/RandomFrequency)+PulseLength*TimeStep);
-	else
-	 PulseCounter=0;
-	Output->ToZero();
-    OutputPotential->ToZero();
+    RandomFrequency=double(rand()*FrequencyDeviation*2.0)/double(RAND_MAX)+
+                           Frequency-FrequencyDeviation;
+    if(RandomFrequency.v>0)
+     PulseCounter=static_cast<int>(-int(TimeStep/RandomFrequency)+PulseLength*TimeStep);
+    else
+     PulseCounter=0;
+     Output->ToZero();
+     OutputPotential->ToZero();
    }
   }
   else
@@ -269,10 +269,10 @@ bool NPulseGenerator::ACalculate(void)
    ++PulseCounter;
    if(PulseCounter >= 0) // Включаем импульс
    {
-	PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
-	Output.Assign(1,1,Amplitude);
-	OutputPotential.Assign(1,1,Amplitude);
-	AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
+    PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
+    Output.Assign(1,1,Amplitude);
+    OutputPotential.Assign(1,1,Amplitude);
+    AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
    }
   }
   OutputFrequency.Assign(1,1,RandomFrequency);
@@ -289,12 +289,12 @@ bool NPulseGenerator::ACalculate(void)
    double diff=Environment->GetTime().GetDoubleTime()-*I;
    if(diff>AvgInterval)// && AvgFrequencyCounter->size()>3)
    {
-	K=I;
-	++I;
-	AvgFrequencyCounter->erase(K);
+    K=I;
+    ++I;
+    AvgFrequencyCounter->erase(K);
    }
    else
-	++I;
+    ++I;
   }
  }
 
@@ -319,8 +319,7 @@ NPulseGeneratorTransit::NPulseGeneratorTransit(void)
    UsePatternOutput("UsePatternOutput",this,&NPulseGeneratorTransit::SetUsePatternOutput),
    PatternDuration("PatternDuration",this,&NPulseGeneratorTransit::SetPatternDuration),
    PatternFrequency("PatternFrequency",this,&NPulseGeneratorTransit::SetPatternFrequency),
-
-  Input("Input",this)
+   Input("Input",this)
 {
 
 }
@@ -383,6 +382,7 @@ bool NPulseGeneratorTransit::ADefault(void)
  UseTransitSignal = false;
  UsePatternOutput = false;
  IsInPatternMode  = false;
+ TheSamePulse = false;
  PatternFrequency = 0; // (Гц)
  PatternDuration = 0; // (Гц)
 
@@ -403,37 +403,66 @@ bool NPulseGeneratorTransit::ABuild(void)
 // Сброс процесса счета.
 bool NPulseGeneratorTransit::AReset(void)
 {
+ // Останавливаем генерацию с повышенной частотой,
+ // но сам режим остаётся включенным (UsePatternOutput)
+ IsInPatternMode  = false;
+ TheSamePulse = false;
+ if (UsePatternOutput)
+  Frequency = 0;
+
  return NPulseGenerator::AReset();
 }
 
 // Выполняет расчет этого объекта
 bool NPulseGeneratorTransit::ACalculate(void)
 {
+ if(UseTransitSignal)
+ {
+  *Output = *Input;
+  return true;
+ }
 
-  if(UseTransitSignal)
+ //режим работы с повышенной частотой в течение заданного периода времени
+ else if(UsePatternOutput)
+ {
+  // Запускающий сигнал ещё не пришёл, повышенной генерации не происходит
+  if (IsInPatternMode == false)
   {
-     *Output = *Input;
-     return true;
+   if ((Input()(0,0) >= 0.01) && (!TheSamePulse))  // Пришёл (первый) запускающий импульс
+   {
+    TheSamePulse = true;  // Ставим метку: импульс начался
+    PatternStartTime = Environment->GetTime().GetDoubleTime();
+    Frequency = PatternFrequency;
+    IsInPatternMode = true;  // Переходим в режим генерации с повышенной частотой
+   }
+   else if ((Input()(0,0) <= 0.01) && (TheSamePulse))  // Сигнал на входе упал
+   {
+    TheSamePulse = false;  // Ставим метку: импульс закончился
+   }
   }
-
-  //режим работы с повышенной частотой в течение заданного периода времени
-  else if(UsePatternOutput)
+  // Происходит генерация с повышенной частотой
+  else
   {
-      //if ((IsInPatternMode == false) && (Input()(0,0) >= 0.01))
-      if (Input()(0,0) >= 0.01)
-      {
-          PatternStartTime = Environment->GetTime().GetDoubleTime();
-          Frequency = PatternFrequency;
-          IsInPatternMode = true;
-      }
-
-
-      if((IsInPatternMode == true) && (Environment->GetTime().GetDoubleTime() - PatternStartTime >= PatternDuration))
-      {
-          Frequency = 0;
-          IsInPatternMode = false;
-      }
+   // 1: Прекращение генерации с повышенной частотой, так как вышло указанное в PatternDuration время
+   if ((PatternDuration) && (Environment->GetTime().GetDoubleTime() - PatternStartTime >= PatternDuration))
+   {
+    Frequency = 0;
+    IsInPatternMode = false;
+   }
+   // или 2: прекращение, так как пришёл (повторный) останавливающий сигнал
+   if ((Input()(0,0) >= 0.01) && (!TheSamePulse))
+   {
+    Frequency = 0;
+    IsInPatternMode = false;
+    TheSamePulse = true;  // Ставим метку: импульс начался
+   }
+   // Сигнал на входе упал
+   if ((Input()(0,0) <= 0.01) && (TheSamePulse))
+   {
+    TheSamePulse = false;  // Ставим метку: импульс закончился
+   }
   }
+ }
 
  return NPulseGenerator::ACalculate();
 }
