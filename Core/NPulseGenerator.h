@@ -62,6 +62,9 @@ ULProperty<double,NPulseGenerator,ptPubState> RandomFrequency;
 /// Средняя частота за заданный интервал времени
 UCLProperty<list<double>,NPulseGenerator,ptPubState> AvgFrequencyCounter;
 
+//Флаг генерации сигнала в повышенной частоте (UsePatternOutput)
+bool IsInPatternMode;
+
 protected:
 
 double OldFrequency;
@@ -74,8 +77,7 @@ double ResetTime;
 // Добавила Демчева ----->
 //Время начала работы генератора в режиме повышенной частоты (UsePatternOutput)
 double PatternStartTime;
-//Флаг генерации сигнала в повышенной частоте (UsePatternOutput)
-bool IsInPatternMode;
+
 // <-----
 
 
