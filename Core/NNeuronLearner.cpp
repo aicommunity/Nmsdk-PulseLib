@@ -1584,13 +1584,7 @@ bool NNeuronLearner::ACalculate(void)
 
  // Подаём информацию с выхода нейрона на выход NNeuronLearner
  if(Neuron)
- {
-  UEPtr<NLTZone> ltzone = Neuron->GetComponentL<NLTZone>("LTZone");  // GetLTZone();
-  if(!ltzone)
-   return true;
-
-  Output = ltzone->Output;
-  }
+  Output = Neuron->Output;
 
  return true;
 }
