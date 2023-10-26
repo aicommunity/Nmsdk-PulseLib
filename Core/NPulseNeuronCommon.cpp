@@ -33,15 +33,15 @@ NPulseNeuronCommon::NPulseNeuronCommon(void)
 //: NNeuron(name),
  : UseAverageDendritesPotential("UseAverageDendritesPotential",this,&NPulseNeuronCommon::SetUseAverageDendritesPotential),
    UseAverageLTZonePotential("UseAverageLTZonePotential",this,&NPulseNeuronCommon::SetUseAverageLTZonePotential),
+   Output("Output", this),
    ActiveOutputs("ActiveOutputs",this),
    ActivePosInputs("ActivePosInputs",this),
    ActiveNegInputs("ActiveNegInputs",this),
    DendriticSumPotential("DendriticSumPotential",this),
    SomaSumPotential("SomaSumPotential",this),
-  NumActiveOutputs("NumActiveOutputs",this),
-  NumActivePosInputs("NumActivePosInputs",this),
-  NumActiveNegInputs("NumActiveNegInputs",this)//,
-
+   NumActiveOutputs("NumActiveOutputs",this),
+   NumActivePosInputs("NumActivePosInputs",this),
+   NumActiveNegInputs("NumActiveNegInputs",this)
  // LTZone("LTZone",this)
 {
  MainOwner=this;
@@ -348,6 +348,10 @@ bool NPulseNeuronCommon::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseNeuronCommon::ACalculate(void)
 {
+ // Передаём сигнал с LTZone на выход компонента нейрона
+ if (LTZone)
+  Output = LTZone->Output;
+
  // Число связей организованных этим нейроном на других (и себе)
  ActiveOutputs(0,0)=NumActiveOutputs.v;
  NumActiveOutputs.v=0;

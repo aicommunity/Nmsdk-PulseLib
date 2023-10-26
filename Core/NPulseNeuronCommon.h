@@ -34,6 +34,9 @@ ULProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageDendritesPotentia
 ULProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageLTZonePotential;
 
 public: // Входы и выходы
+/// Выход компонента
+UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> Output;
+
 /// Число связей организованных этим нейроном на других (и себе)
 UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveOutputs;
 
