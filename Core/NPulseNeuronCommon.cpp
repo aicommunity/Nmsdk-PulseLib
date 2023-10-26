@@ -302,6 +302,9 @@ bool NPulseNeuronCommon::ADefault(void)
 
  DendriticSumPotential.Assign(1,1,0.0);
  SomaSumPotential.Assign(1,1,0.0);
+
+ Output.Assign(1,1,0.0);
+
  return true;
 }
 
@@ -341,6 +344,7 @@ bool NPulseNeuronCommon::AReset(void)
 
  DendriticSumPotential.ToZero();
  SomaSumPotential.ToZero();
+ Output.ToZero();
 
  return true;
 }
