@@ -159,6 +159,7 @@ bool NPulseNeuron::SetInhGeneratorClassName(const std::string &value)
 bool NPulseNeuron::SetNumSomaMembraneParts(const int &value)
 {
  OldNumSoma=NumSomaMembraneParts;
+ OldNumDendritesVec=NumDendriteMembranePartsVec;
  NumDendriteMembranePartsVec->resize(value,0);
  Ready=false;
  return true;
