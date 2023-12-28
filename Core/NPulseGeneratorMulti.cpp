@@ -108,8 +108,8 @@ bool NPulseGeneratorMulti::SetDelays(const MDMatrix<double> &value)
  if(value.GetRows()!=1)
      return false;
 
- int c = value.GetCols();
- int r = value.GetRows();
+ //int c = value.GetCols();
+ //int r = value.GetRows();
  int num_pulses = value.GetCols();
  PulseCounters.resize(num_pulses);
  return true;
@@ -272,7 +272,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
 
  if(FrequencyDeviation == 0)
  {
-     bool output_active = false;
+     //bool output_active = false;
      for(int i=0; i<PulseCounters.size();i++)
      {
       double Delay = Delays(0,i);
