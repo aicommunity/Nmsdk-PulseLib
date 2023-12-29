@@ -70,7 +70,7 @@ bool NPulseLTZoneIzhikevich::ACalculate(void)
 {
  if(Inputs->size()<2)
   return true;
- PrePotential.v=(*Inputs[0])(0,0);
+ PrePotential.v=Inputs[0](0,0);
 
  double current_time=GetTime().GetDoubleTime();
  OutputPotential(0,0)=PrePotential.v;

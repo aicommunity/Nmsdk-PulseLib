@@ -157,12 +157,12 @@ bool NEyeMuscle::ACalculate(void)
   Acceleration.resize(size,0);
   Threshold.resize(size,0.5);
 
-  for(int j=0;j<Inputs[i]->GetCols();j++)
+  for(int j=0;j<Inputs[i].GetCols();j++)
   {
    if(k >= size)
-	break;
+    break;
 
-   double in=(*Inputs[i])(0,j);
+   double in=Inputs[i](0,j);
    ThresholdCount(k);
    in*=Threshold[k];
 
