@@ -203,7 +203,7 @@ bool NPulseGeneratorMulti::AReset(void)
 // else
 
  pulses.resize(PulseCounters.size(), false);
- for(int i=0; i<PulseCounters.size();i++)
+ for(size_t i=0; i<PulseCounters.size();i++)
  {
      PulseCounters[i]=0;
      pulses[i]=false;
@@ -240,7 +240,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
   OldFrequency=Frequency;
 
   pulses.resize(PulseCounters.size(), false);
-  for(int i=0; i<PulseCounters.size();i++)
+  for(size_t i=0; i<PulseCounters.size();i++)
   {
       PulseCounters[i]=0;
       pulses[i]=false;
@@ -257,7 +257,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
 
  if(OldFrequency != Frequency.v)
  {
-    for(int i=0; i<PulseCounters.size();i++)
+    for(int i=0; i<int(PulseCounters.size());i++)
     {
         double Delay = Delays(0,i);
         if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
@@ -273,7 +273,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
  if(FrequencyDeviation == 0)
  {
      //bool output_active = false;
-     for(int i=0; i<PulseCounters.size();i++)
+     for(int i=0; i<int(PulseCounters.size());i++)
      {
       double Delay = Delays(0,i);
       if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
@@ -306,7 +306,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
      }
 
      bool pulse = false;
-     for(int i=0; i<pulses.size(); i++)
+     for(size_t i=0; i<pulses.size(); i++)
      {
          if(pulses[i]==true)
          {
