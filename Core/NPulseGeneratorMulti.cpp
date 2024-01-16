@@ -103,7 +103,7 @@ bool NPulseGeneratorMulti::SetPulseCount(const int &value)
 // Устанавливает задержку запуска генератора
 bool NPulseGeneratorMulti::SetDelays(const MDMatrix<double> &value)
 {
- if(value.GetCols()==0)
+ if(value.GetCols()<=0)
     return false;
  if(value.GetRows()!=1)
      return false;
@@ -187,6 +187,10 @@ bool NPulseGeneratorMulti::ADefault(void)
 bool NPulseGeneratorMulti::ABuild(void)
 {
  AvgFrequencyCounter->clear();
+
+ int num_pulses = Delays.GetCols();
+ pulses.resize(num_pulses, false);
+ PulseCounters.resize(num_pulses, 0);
  return true;
 }
 
