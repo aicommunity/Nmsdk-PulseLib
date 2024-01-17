@@ -103,13 +103,13 @@ bool NPulseGeneratorMulti::SetPulseCount(const int &value)
 // Устанавливает задержку запуска генератора
 bool NPulseGeneratorMulti::SetDelays(const MDMatrix<double> &value)
 {
- if(value.GetCols()==0)
+ if(value.GetCols()<=0)
     return false;
  if(value.GetRows()!=1)
      return false;
 
- int c = value.GetCols();
- int r = value.GetRows();
+ //int c = value.GetCols();
+ //int r = value.GetRows();
  int num_pulses = value.GetCols();
  PulseCounters.resize(num_pulses);
  return true;
@@ -187,6 +187,10 @@ bool NPulseGeneratorMulti::ADefault(void)
 bool NPulseGeneratorMulti::ABuild(void)
 {
  AvgFrequencyCounter->clear();
+
+ int num_pulses = Delays.GetCols();
+ pulses.resize(num_pulses, false);
+ PulseCounters.resize(num_pulses, 0);
  return true;
 }
 
@@ -203,7 +207,7 @@ bool NPulseGeneratorMulti::AReset(void)
 // else
 
  pulses.resize(PulseCounters.size(), false);
- for(int i=0; i<PulseCounters.size();i++)
+ for(size_t i=0; i<PulseCounters.size();i++)
  {
      PulseCounters[i]=0;
      pulses[i]=false;
@@ -240,7 +244,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
   OldFrequency=Frequency;
 
   pulses.resize(PulseCounters.size(), false);
-  for(int i=0; i<PulseCounters.size();i++)
+  for(size_t i=0; i<PulseCounters.size();i++)
   {
       PulseCounters[i]=0;
       pulses[i]=false;
@@ -257,7 +261,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
 
  if(OldFrequency != Frequency.v)
  {
-    for(int i=0; i<PulseCounters.size();i++)
+    for(int i=0; i<int(PulseCounters.size());i++)
     {
         double Delay = Delays(0,i);
         if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
@@ -272,8 +276,8 @@ bool NPulseGeneratorMulti::ACalculate(void)
 
  if(FrequencyDeviation == 0)
  {
-     bool output_active = false;
-     for(int i=0; i<PulseCounters.size();i++)
+     //bool output_active = false;
+     for(int i=0; i<int(PulseCounters.size());i++)
      {
       double Delay = Delays(0,i);
       if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
@@ -306,7 +310,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
      }
 
      bool pulse = false;
-     for(int i=0; i<pulses.size(); i++)
+     for(size_t i=0; i<pulses.size(); i++)
      {
          if(pulses[i]==true)
          {

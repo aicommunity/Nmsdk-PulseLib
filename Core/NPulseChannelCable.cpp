@@ -45,8 +45,8 @@ NPulseChannelCable::NPulseChannelCable(void)
    CalcMode("CalcMode", this, &NPulseChannelCable::SetCalcMode),
 
    TauM("TauM", this),
-   InpV("InpV", this),
-   Vm("Vm", this)
+   Vm("Vm", this),
+   InpV("InpV", this)
 {
 }
 

@@ -229,20 +229,20 @@ bool NPulseLTZoneCommon::ACalculate(void)
   int inpsize;
   for(int i=0;i<int(Inputs->size());i++)
   {
-   if((inpsize=Inputs[i]->GetCols()) >0)
+   if((inpsize=Inputs[i].GetCols()) >0)
    {
-	double *data=Inputs[i]->Data;
+    double *data=Inputs[i].Data;
     for(int j=0;j<inpsize;j++,++data)
-	{
-	 // -----> ÎÒËÀÄÊÀ
-	 //double eee = *data;
-	 // <-----
-	 NeuralPotential.v+=*data;
-	 // -----> ÎÒËÀÄÊÀ
-	 //double eåee = NeuralPotential.v;
-     //int ttt = 0;
-	 // <-----
-	}
+    {
+     // -----> ÎÒËÀÄÊÀ
+     //double eee = *data;
+     // <-----
+     NeuralPotential.v+=*data;
+     // -----> ÎÒËÀÄÊÀ
+     //double eåee = NeuralPotential.v;
+        //int ttt = 0;
+     // <-----
+    }
    }
   }
   int div_coeff=int(Inputs->size())/((NumChannelsInGroup.v>0)?NumChannelsInGroup.v:1);

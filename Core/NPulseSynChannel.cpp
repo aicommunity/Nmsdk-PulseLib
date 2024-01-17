@@ -283,45 +283,45 @@ bool NPulseSynChannel::ACalculate2(void)
 
  for(int n=0;n<int(ChannelInputs->size());n++)
  {
-  int inpsize=ChannelInputs[n]->GetCols();
+  int inpsize=ChannelInputs[n].GetCols();
   if(inpsize == 0)
    continue;
 
   if(!SynapseInputFlagsList[n])
   {
-	double *data=ChannelInputs[n]->Data;
-    for(int j=0;j<inpsize;j++,++data)
-	 channel_input+=*data;
-	++num_connected_channels;
+   double *data=ChannelInputs[n].Data;
+   for(int j=0;j<inpsize;j++,++data)
+    channel_input+=*data;
+   ++num_connected_channels;
   }
   else // Остальные подключенные компоненты считаем входами синапсов
   {
    ++num_connected_synapsis;
    if(int(PreOutput->size())<num_connected_synapsis)
    {
-	PreOutput->resize(num_connected_synapsis);
-	PreOutput.v[num_connected_synapsis-1]=0;
+    PreOutput->resize(num_connected_synapsis);
+    PreOutput.v[num_connected_synapsis-1]=0;
    }
 
-   input=(*ChannelInputs[n])(0,0);
+   input=ChannelInputs[n](0,0);
 
    if(MainOwner && Owner)
    {
-	if(Type() < 0)
-	 ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
-	else
-	 ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
+    if(Type() < 0)
+     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
+    else
+     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
    }
 
    if(input>0)
-	PreOutput.v[num_connected_synapsis-1]+=(input/PulseAmplitude.v-PreOutput.v[num_connected_synapsis-1])/VSecretionTC;
+    PreOutput.v[num_connected_synapsis-1]+=(input/PulseAmplitude.v-PreOutput.v[num_connected_synapsis-1])/VSecretionTC;
    else
-	PreOutput.v[num_connected_synapsis-1]-=PreOutput.v[num_connected_synapsis-1]/VDissociationTC;
+    PreOutput.v[num_connected_synapsis-1]-=PreOutput.v[num_connected_synapsis-1]/VDissociationTC;
 
    syn_output=OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v[num_connected_synapsis-1])*PreOutput.v[num_connected_synapsis-1];
 
    if(syn_output>0)
-	G+=syn_output;
+    G+=syn_output;
   }
  }
  NumConnectedSynapsis=num_connected_synapsis;
@@ -603,7 +603,7 @@ bool NContinuesSynChannel::ACalculate2(void)
 
  for(int n=0;n<int(ChannelInputs->size());n++)
  {
-  if(ChannelInputs[n]->GetCols() == 0)
+  if(ChannelInputs[n].GetCols() == 0)
    continue;
 //  if(dynamic_cast<NPulseChannel*>(GetCItem(n).Item) ||
 //     dynamic_cast<NReceptor*>(GetCItem(n).Item) ||
@@ -611,12 +611,12 @@ bool NContinuesSynChannel::ACalculate2(void)
   if(!SynapseInputFlagsList[n])
   {
    int inpsize=0;
-   if((inpsize=ChannelInputs[n]->GetCols()) >0)
+   if((inpsize=ChannelInputs[n].GetCols()) >0)
    {
-	double *data=ChannelInputs[n]->Data;
+    double *data=ChannelInputs[n].Data;
     for(int j=0;j<inpsize;j++,++data)
-	 channel_input+=*data;
-	++num_connected_channels;
+     channel_input+=*data;
+    ++num_connected_channels;
    }
   }
   else // Остальные подключенные компоненты считаем входами синапсов
@@ -624,29 +624,29 @@ bool NContinuesSynChannel::ACalculate2(void)
    ++num_connected_synapsis;
    if(int(PreOutput->size())<num_connected_synapsis)
    {
-	PreOutput->resize(num_connected_synapsis);
+    PreOutput->resize(num_connected_synapsis);
     PreOutput.v[num_connected_synapsis-1]=0;
    }
 
-   input=(*ChannelInputs[n])(0,0);
+   input=ChannelInputs[n](0,0);
 
    if(MainOwner && Owner)
    {
-	if(Type() < 0)
-	 ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
-	else
-	 ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
+    if(Type() < 0)
+     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
+    else
+     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
    }
 
    if(input>0)
     PreOutput.v[num_connected_synapsis-1]+=(input/PulseAmplitude.v-PreOutput.v[num_connected_synapsis-1])/VSecretionTC;
    else
-	PreOutput.v[num_connected_synapsis-1]-=PreOutput.v[num_connected_synapsis-1]/VDissociationTC;
+    PreOutput.v[num_connected_synapsis-1]-=PreOutput.v[num_connected_synapsis-1]/VDissociationTC;
 
    syn_output=PreOutput.v[num_connected_synapsis-1]/SynapseResistance.v;//OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v[num_connected_synapsis-1])*PreOutput.v[num_connected_synapsis-1];
 
    if(syn_output>0)
-	G+=syn_output;
+    G+=syn_output;
   }
  }
  NumConnectedSynapsis=num_connected_synapsis;

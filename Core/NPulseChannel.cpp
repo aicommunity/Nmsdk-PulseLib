@@ -220,8 +220,8 @@ bool NPulseChannel::ACalculate2(void)
  // Получение доступа к данным синапса
  for(int i=0;i<int(SynapticInputs->size());i++)
  {
-  if(SynapticInputs[i]->GetSize() >0)
-  G+=(*SynapticInputs[i])(0,0);
+  if(SynapticInputs[i].GetSize() >0)
+   G+=SynapticInputs[i](0,0);
  }
 
  if(UseAverageSynapsis && !SynapticInputs->empty())
@@ -232,12 +232,12 @@ bool NPulseChannel::ACalculate2(void)
  int full_inp_data_size(0);
  for(int i=0;i<int(ChannelInputs->size());i++)
  {
-  if((inp_size=ChannelInputs[i]->GetSize()) >0)
+  if((inp_size=ChannelInputs[i].GetSize()) >0)
   {
    full_inp_data_size+=inp_size;
-   double *data=ChannelInputs[i]->Data;
+   double *data=ChannelInputs[i].Data;
    for(int j=0;j<inp_size;j++,++data)
-	channel_input+=*data;
+    channel_input+=*data;
   }
  }
  if(UseAveragePotential && full_inp_data_size>0)

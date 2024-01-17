@@ -48,7 +48,7 @@ void NSynapseTrainer::RebuildInternalLinks(void)
  if(MainOwner)
  {
   UEPtr<NPulseNeuronCommon> neuron=dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner);
-  if(neuron)
+  if(neuron && neuron->GetLTZone() && GetOwner())
   {
    bool res=true;
    res&=neuron->CreateLink(neuron->GetLTZone()->GetLongName(neuron),"Output",GetLongName(neuron),"PostSynInput");

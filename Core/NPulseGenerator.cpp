@@ -239,10 +239,10 @@ bool NPulseGenerator::ACalculate(void)
    ++PulseCounter;
    if(PulseCounter >= 0) // ¬ключаем импульс
    {
-	PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
-	Output.Assign(1,1,Amplitude);
-	OutputPotential.Assign(1,1,Amplitude);
-	AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
+    PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
+    Output.Assign(1,1,Amplitude);
+    OutputPotential.Assign(1,1,Amplitude);
+    AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
    }
   }
   OutputFrequency.Assign(1,1,Frequency);

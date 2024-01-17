@@ -105,7 +105,7 @@ int SetNumClasses(const MDMatrix<int> &matrix_classes)//можно объ€вить в h
     for(int i=0;i<matrix_classes.GetCols();i++)
     {
         bool flagInsert=true;
-        for (int j = 0; j < uniq.size(); j++)
+        for (int j = 0; j < int(uniq.size()); j++)
                     if (matrix_classes(0,i)==uniq[j])
                         flagInsert = false;
                 if (flagInsert)

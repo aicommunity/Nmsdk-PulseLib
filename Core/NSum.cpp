@@ -110,10 +110,10 @@ bool NSum::ACalculate(void)
  int min_input_data_size(0);
  if(Inputs->size()>0)
  {
-  min_input_data_size=Inputs[0]->GetCols();
+  min_input_data_size=Inputs[0].GetCols();
   for(int i=1;i<int(Inputs->size());i++)
-   if(min_input_data_size>Inputs[i]->GetCols())
-	min_input_data_size=Inputs[i]->GetCols();
+   if(min_input_data_size>Inputs[i].GetCols())
+    min_input_data_size=Inputs[i].GetCols();
  }
 
  if(Mode == 0)
@@ -126,9 +126,9 @@ bool NSum::ACalculate(void)
    for(int i=0;i<min_input_data_size;i++)
    {
     double gain=1;
-	if(Gain.GetRows()>int(j) && Gain.GetCols()>i)
-	 gain=Gain(j,i);
-	Output(0,i)+=gain*(*Inputs[j])(0,i);//GetInputData(j)->Double[i];
+    if(Gain.GetRows()>int(j) && Gain.GetCols()>i)
+     gain=Gain(j,i);
+    Output(0,i)+=gain*Inputs[j](0,i);//GetInputData(j)->Double[i];
    }
  }
  else
@@ -138,12 +138,12 @@ bool NSum::ACalculate(void)
   Build();
 
   for(int j=0;j<int(Inputs->size());j++)
-   for(int i=0;i<Inputs[j]->GetCols();i++)
+   for(int i=0;i<Inputs[j].GetCols();i++)
    {
-	double gain=1;
-	if(Gain.GetRows()>int(j) && Gain.GetCols()>i)
-	 gain=Gain(j,i);
-	Output(0,0)+=gain*(*Inputs[j])(0,i);//GetInputData(j)->Double[i];
+    double gain=1;
+    if(Gain.GetRows()>int(j) && Gain.GetCols()>i)
+     gain=Gain(j,i);
+    Output(0,0)+=gain*Inputs[j](0,i);//GetInputData(j)->Double[i];
    }
  }
  return true;

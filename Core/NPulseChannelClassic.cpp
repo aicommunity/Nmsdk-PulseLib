@@ -76,14 +76,14 @@ bool NPulseChannelClassic::ACalculate(void)
 {
  SynapticI=0;
  for(int i=0;i<int(SynapticInputs->size());i++)
-  for(int j=0;j<SynapticInputs[i]->GetCols();j++)
-   SynapticI.v+=(*SynapticInputs[i])(0,j);
+  for(int j=0;j<SynapticInputs[i].GetCols();j++)
+   SynapticI.v+=SynapticInputs[i](0,j);
  SynapticI.v *= SynapticR.v;
 
  CompartmentI=0;
  for(int i=0;i<int(ChannelInputs->size());i++)
-  for(int j=0;j<ChannelInputs[i]->GetCols();j++)
-   CompartmentI.v+=(*ChannelInputs[i])(0,j);
+  for(int j=0;j<ChannelInputs[i].GetCols();j++)
+   CompartmentI.v+=ChannelInputs[i](0,j);
  CompartmentI.v/=CompartmentR.v;
 
  ACalculate2();

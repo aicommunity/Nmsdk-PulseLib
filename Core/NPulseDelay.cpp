@@ -52,7 +52,7 @@ bool NPulseDelay::SetDelayTime(const double &value)
 {
  if(value <= 0)
   return false;
- desired_buffer_length = value*TimeStep;
+ desired_buffer_length = int(value*TimeStep);
  buffer.clear();
  return true;
 }
@@ -120,7 +120,7 @@ bool NPulseDelay::ACalculate(void)
      *Output=*Input;
      return true;
  }
- int s = buffer.size();
+ int s = int(buffer.size());
  if((s-1)<desired_buffer_length)
  {
      buffer.push_front(Input);

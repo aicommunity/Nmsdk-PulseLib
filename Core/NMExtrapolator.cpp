@@ -114,9 +114,9 @@ bool NMExtrapolator::ACalculate(void)
  int k=0;
  for(int i=0;i<int(Inputs->size());i++)
  {
-  for(int j=0;j<Inputs[i]->GetCols();j++)
+  for(int j=0;j<Inputs[i].GetCols();j++)
   {
-   input.push_back((*Inputs[i])(0,j));//GetInputData(i)->Double[j]);
+   input.push_back(Inputs[i](0,j));//GetInputData(i)->Double[j]);
    ++k;
   }
  }
@@ -133,11 +133,11 @@ bool NMExtrapolator::ACalculate(void)
 
  k=0;
  long long currsign=1;
- int out_length=(Inputs->size()>0)?int(Inputs->size())*Inputs[0]->GetCols()*int(NumLevels):0;
+ int out_length=(Inputs->size()>0)?int(Inputs->size())*Inputs[0].GetCols()*int(NumLevels):0;
  Output.Resize(1,out_length);
  for(int i=0;i<int(Inputs->size());i++)
  {
-  for(int j=0;j<Inputs[i]->GetCols();j++)
+  for(int j=0;j<Inputs[i].GetCols();j++)
   {
    double res=0;
    for(size_t m=0;m<NumLevels;m++)
