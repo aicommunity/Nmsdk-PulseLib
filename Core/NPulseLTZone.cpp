@@ -104,7 +104,6 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
   // < ----
 
   Output(0,0)=PulseAmplitude.v;
-  OutputPotential(0,0)=PulseAmplitude.v;
   if(!PulseFlag)
    AvgFrequencyCounter->push_back(current_time);
   PulseFlag=true;
@@ -114,10 +113,9 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
  {
   PulseFlag=false;
   Output(0,0)=0;
-  OutputPotential(0,0)=Potential.v;
  }
- else
-  OutputPotential(0,0)=Potential.v;
+
+ OutputPotential(0,0)=Potential.v;
 
  list<double>::iterator I,J,K;
  I=AvgFrequencyCounter->begin();
