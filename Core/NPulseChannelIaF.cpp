@@ -20,7 +20,8 @@ NPulseChannelIaF::NPulseChannelIaF(void)
    Ie("Ie", this),
    VMin("VMin", this),
    VResetEnable("VResetEnable",this),
-   Vm("Vm", this)
+   Vm("Vm", this),
+   Rm("Rm", this)
 {
 }
 
@@ -49,14 +50,14 @@ bool NPulseChannelIaF::ADefault(void)
  if(!NPulseChannelClassic::ADefault())
   return false;
 
- Cm=250e-12;
+ Cm=100e-12;
  EL=-70*1e-3;
  TauM=1*1e-3;
  TRef=2*1e-3;
  VReset=-0.08;
  Ie=0.0;
- VMin=-10000; // нижний порог не задан
- SynapticR = 3000000;
+ VMin=-0.01;
+ SynapticR = 1;
  VResetEnable=false;
  return true;
 }
@@ -71,6 +72,7 @@ bool NPulseChannelIaF::ABuild(void)
   return false;
 
  Vm->Assign(1,1,0.0);
+ Rm->Assign(1,1,0.0);
  return true;
 }
 
@@ -81,14 +83,19 @@ bool NPulseChannelIaF::AReset(void)
   return false;
 
  Vm(0,0)=EL;
+ if(Cm > 0.0)
+  Rm(0,0)=TauM/Cm;
  return true;
 }
 
 // Выполняет расчет этого объекта
 bool NPulseChannelIaF::ACalculate2(void)
 {
+ if(Cm > 0.0)
+  Rm(0,0)=TauM/Cm;
+
  double step=1./TimeStep;
- Vm(0,0)+=step*(-Vm(0,0)/TauM + EL/TauM + SynapticI/TauM+Ie/Cm);
+ Vm(0,0)+=step*(-Vm(0,0)/TauM + EL/TauM + SynapticI/Cm+Ie/Cm);
 
  if(IsNeuronActivated && VResetEnable)
  {

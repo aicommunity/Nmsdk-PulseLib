@@ -39,6 +39,9 @@ protected: // Переменные состояния
 /// Потенциал клеточной мембраны
 ULProperty<MDMatrix<double>, NPulseChannelIaF, ptPubState> Vm;
 
+/// Сопротивление мембраны
+ULProperty<MDMatrix<double>, NPulseChannelIaF, ptPubState> Rm;
+
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
