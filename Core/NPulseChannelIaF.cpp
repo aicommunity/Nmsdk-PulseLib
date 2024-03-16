@@ -93,7 +93,7 @@ bool NPulseChannelIaF::ACalculate2(void)
   Rm(0,0)=TauM/Cm;
 
  double step=1./TimeStep;
- Vm(0,0)+=step*(-Vm(0,0)/TauM + EL/TauM + SynapticI/Cm+CompartmentI/Cm);
+ Vm(0,0)+=step*(-Vm(0,0)/TauM + EL/TauM + SynapticI/Cm+CompartmentI/TauM);
 
  if(IsNeuronActivated && VResetEnable)
  {
