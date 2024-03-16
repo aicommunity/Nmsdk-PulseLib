@@ -172,20 +172,22 @@ bool NPulseChannelCable::ADefault(void)
  if(!NPulseChannelClassic::ADefault())
      return false;
  //Model parameters
- CalcMode = true;
+ CalcMode = false;
  EL = -0.07; //mV - The Rest potential
  Ri = 100000; // Ohm*m2
  Rm = 1000; // 1 kOm
- Cm = 2.5e-10; // F
- D = 0.00002;
+ Cm = 1.0e-9; // F
+ //D = 0.00002;
  CompartmentR = 1;
- SynapticR = 86000000;
+ SynapticR = 1;
+ CableMembraneResistance = 1e7;
+ D = Rm/(M_PI*CableMembraneResistance);
 
- CableMembraneResistance =  Rm/(M_PI*D);
+// CableMembraneResistance =  Rm/(M_PI*D);
  TauM = CableMembraneResistance*Cm;
 
  //Boundaries and number of grid points
- ModelMaxLength = 0.00003; // meters
+ ModelMaxLength = 0.00027; // meters
  ModelMaxTime = 1.0/TimeStep; // seconds
  dx = 1e-5; //m
  dt = 1.0e-7; //sec
@@ -275,7 +277,7 @@ void NPulseChannelCable::FormingInput()
 
     for (int j = 0; j < (t_points_number+1); j++) //t
     {
-     InpV(0,j) = CompartmentI.v+SynapticI.v;
+     InpV(0,j) = CompartmentI.v+SynapticI.v/Cm.v;
     }
  return;
 }
