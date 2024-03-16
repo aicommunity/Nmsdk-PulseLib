@@ -23,9 +23,6 @@ ULProperty<double, NPulseChannelIaF, ptPubParameter> TRef;
 /// Потенциал обновления
 ULProperty<double, NPulseChannelIaF, ptPubParameter> VReset;
 
-/// Возбуждающий постоянный ток
-ULProperty<double, NPulseChannelIaF, ptPubParameter> Ie;
-
 /// Абсолютный минимум потенциала мембраны
 ULProperty<double, NPulseChannelIaF, ptPubParameter> VMin;
 
