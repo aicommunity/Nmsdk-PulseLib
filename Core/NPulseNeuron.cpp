@@ -738,7 +738,7 @@ bool NPulseNeuron::ACalculate(void)
    int soma_ch_counter(0);
    for(size_t j=0;j<Soma[i]->GetNumChannels();j++)
    {
-	DendriticSumPotential(0,0)+=Soma[i]->GetChannel(j)->SumChannelInputs(0,0);
+    DendriticSumPotential(0,0)+=Soma[i]->GetChannel(j)->SumChannelInput(0,0);
     SomaSumPotential(0,0)+=Soma[i]->GetChannel(j)->Output(0,0);
     ++soma_ch_counter;
    }

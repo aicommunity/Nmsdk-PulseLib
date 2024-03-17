@@ -178,8 +178,6 @@ bool NPulseChannelCable::ADefault(void)
  Rm = 1000; // 1 kOm
  Cm = 1.0e-9; // F
  //D = 0.00002;
- CompartmentR = 1;
- SynapticR = 1;
  CableMembraneResistance = 1e7;
  D = Rm/(M_PI*CableMembraneResistance);
 
@@ -256,10 +254,10 @@ bool NPulseChannelCable::AReset(void)
  if(!NPulseChannelClassic::ABuild())
   return false;
 
- CompartmentI = EL; // TODO: костыль
+ SumChannelInput->Assign(1,1,EL); // TODO: костыль
 
  //Задание начальных значений в матрице
- Vm.Assign(t_points_number+1, x_points_number+1, CompartmentI.v);
+ Vm.Assign(t_points_number+1, x_points_number+1, SumChannelInput(0,0));
 
  return true;
 }
@@ -273,11 +271,11 @@ void NPulseChannelCable::FormingInput()
     // Получение информации об обратной связи
     UEPtr<NPulseMembrane> membrane=dynamic_pointer_cast<NPulseMembrane>(Owner);
     if(membrane)
-     CompartmentI.v-=membrane->Feedback;
+     SumChannelInput(0,0)-=membrane->Feedback;
 
     for (int j = 0; j < (t_points_number+1); j++) //t
     {
-     InpV(0,j) = CompartmentI.v+SynapticI.v/Cm.v;
+     InpV(0,j) = SumChannelInput(0,0)+SumSynapticInput(0,0)/Cm.v;
     }
  return;
 }
@@ -303,7 +301,7 @@ bool NPulseChannelCable::ACalculate2(void)
     double dt_tau_m = dt/tau_m;
     double s = lambdaSq*dt_tau_m/(dx*dx);
     double s1 = (1.0 - (dt/tau_m) - 2*s);
-    double el = CompartmentI.v*dt/tau_m;
+    double el = SumChannelInput(0,0)*dt/tau_m;
 
     for (int j = 0; j < (t_points_number); j++) //t
     {

@@ -11,10 +11,8 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NPulseChannelClassic::NPulseChannelClassic(void)
- : CompartmentR("CompartmentR", this),
-   SynapticR("SynapticR",this),
-   SynapticI("SynapticI",this),
-   CompartmentI("CompartmentI",this)
+ : ChannelInputCoeff("ChannelInputCoeff", this),
+   SynapticInputCoeff("SynapticInputCoeff",this)
 {
 }
 
@@ -43,8 +41,8 @@ bool NPulseChannelClassic::ADefault(void)
  if(!NPulseChannelCommon::ADefault())
   return false;
 
- CompartmentR = 1.0;
- SynapticR = 1.0;
+ ChannelInputCoeff = 1.0;
+ SynapticInputCoeff = 1.0;
  return true;
 }
 
@@ -66,25 +64,23 @@ bool NPulseChannelClassic::AReset(void)
  if(!NPulseChannelCommon::AReset())
   return false;
 
- SynapticI=0;
- CompartmentI=0;
  return true;
 }
 
 // Выполняет расчет этого объекта
 bool NPulseChannelClassic::ACalculate(void)
 {
- SynapticI=0;
+ SumSynapticInput.ToZero();
  for(int i=0;i<int(SynapticInputs->size());i++)
   for(int j=0;j<SynapticInputs[i].GetCols();j++)
-   SynapticI.v+=SynapticInputs[i](0,j);
- SynapticI.v *= SynapticR.v;
+   SumSynapticInput(0,0)+=SynapticInputs[i](0,j);
+ SumSynapticInput.v *= SynapticInputCoeff.v;
 
- CompartmentI=0;
+ SumChannelInput.ToZero();
  for(int i=0;i<int(ChannelInputs->size());i++)
   for(int j=0;j<ChannelInputs[i].GetCols();j++)
-   CompartmentI.v+=ChannelInputs[i](0,j);
- CompartmentI.v/=CompartmentR.v;
+   SumChannelInput(0,0)+=ChannelInputs[i](0,j);
+ SumChannelInput.v *= ChannelInputCoeff.v;
 
  ACalculate2();
  IsNeuronActivated=false;

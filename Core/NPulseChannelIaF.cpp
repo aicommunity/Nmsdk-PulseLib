@@ -55,7 +55,6 @@ bool NPulseChannelIaF::ADefault(void)
  TRef=2*1e-3;
  VReset=-0.08;
  VMin=-0.01;
- SynapticR = 1;
  VResetEnable=false;
  return true;
 }
@@ -93,7 +92,7 @@ bool NPulseChannelIaF::ACalculate2(void)
   Rm(0,0)=TauM/Cm;
 
  double step=1./TimeStep;
- Vm(0,0)+=step*(-Vm(0,0)/TauM + EL/TauM + SynapticI/Cm+CompartmentI/TauM);
+ Vm(0,0)+=step*(-Vm(0,0)/TauM + EL/TauM + SumSynapticInput(0,0)/Cm+SumChannelInput(0,0)/TauM);
 
  if(IsNeuronActivated && VResetEnable)
  {

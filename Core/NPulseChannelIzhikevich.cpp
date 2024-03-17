@@ -96,7 +96,7 @@ bool NPulseChannelIzhikevich::ACalculate2(void)
  }
  else
  {
-  V=V+(0.04*V*V+5*V+140-U+SynapticI)/TimeStep;
+  V=V+(0.04*V*V+5*V+140-U+SumSynapticInput(0,0))/TimeStep;
   U=U+(A*(B*V-U))/TimeStep;
  }
 

@@ -9,15 +9,11 @@ namespace NMSDK {
 class NPulseChannelClassic: public NPulseChannelCommon
 {
 public: // Параметры
-/// Сопротивление сегмента (для вычисления входного тока по входному потенциалу)
-ULProperty<double, NPulseChannelClassic, ptPubParameter> CompartmentR;
+/// Коэффициент пересчета суммарного входного влияния каналов (в ток)
+ULProperty<double, NPulseChannelClassic, ptPubParameter> ChannelInputCoeff;
 
-/// Сопротивление синапса (для вычисления синаптического тока по сопротивлению синапса)
-ULProperty<double, NPulseChannelClassic, ptPubParameter> SynapticR;
-
-protected: // Переменные состояния
-ULProperty<double, NPulseChannelClassic, ptPubState> SynapticI;
-ULProperty<double, NPulseChannelClassic, ptPubState> CompartmentI;
+/// Коэффициент пересчета суммарного входного влияния синапсов (в синаптический ток)
+ULProperty<double, NPulseChannelClassic, ptPubParameter> SynapticInputCoeff;
 
 public: // Методы
 // --------------------------

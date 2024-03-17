@@ -561,17 +561,17 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont=new NPulseChannelCable;
  cont->SetName("Channel");
  cont->Default();
- dynamic_cast<NPulseChannelCable*>(cont)->CalcMode = true;
- dynamic_cast<NPulseChannelCable*>(cont)->Cm = 2.5e-10;
- dynamic_cast<NPulseChannelCable*>(cont)->CompartmentR = 1;
- dynamic_cast<NPulseChannelCable*>(cont)->D = 0.00002;
- dynamic_cast<NPulseChannelCable*>(cont)->EL = -0.07;
- dynamic_cast<NPulseChannelCable*>(cont)->ModelMaxLength = 0.0002;
- dynamic_cast<NPulseChannelCable*>(cont)->Ri = 100000;
- dynamic_cast<NPulseChannelCable*>(cont)->Rm = 1000;
- dynamic_cast<NPulseChannelCable*>(cont)->SynapticR = 86000000;
+ //dynamic_cast<NPulseChannelCable*>(cont)->CalcMode = true;
+ //dynamic_cast<NPulseChannelCable*>(cont)->Cm = 1.0e-9;
+ //dynamic_cast<NPulseChannelCable*>(cont)->CompartmentR = 1;
+ //dynamic_cast<NPulseChannelCable*>(cont)->D = 0.00002;
+ //dynamic_cast<NPulseChannelCable*>(cont)->EL = -0.07;
+ //dynamic_cast<NPulseChannelCable*>(cont)->ModelMaxLength = 0.0002;
+ //dynamic_cast<NPulseChannelCable*>(cont)->Ri = 100000;
+ //dynamic_cast<NPulseChannelCable*>(cont)->Rm = 1000;
+ //dynamic_cast<NPulseChannelCable*>(cont)->SynapticR = 1.0;
 // dynamic_cast<NPulseChannelCable*>(cont)->dt = 1.0e-8;
- dynamic_cast<NPulseChannelCable*>(cont)->dx = 1.0e-5;
+ //dynamic_cast<NPulseChannelCable*>(cont)->dx = 1.0e-5;
  UploadClass("NPulseChannelCable",cont);
 
  cont=new NPulseChannelCable;

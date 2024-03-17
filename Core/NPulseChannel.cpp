@@ -243,7 +243,7 @@ bool NPulseChannel::ACalculate2(void)
  if(UseAveragePotential && full_inp_data_size>0)
   channel_input/=full_inp_data_size;
 
- SumChannelInputs(0,0)=channel_input;
+ SumChannelInput(0,0)=channel_input;
 
  // Получение информации об обратной связи
  UEPtr<NPulseMembrane> membrane=dynamic_pointer_cast<NPulseMembrane>(Owner);
