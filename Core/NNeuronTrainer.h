@@ -59,9 +59,6 @@ ULProperty<std::string, NNeuronTrainer, ptPubParameter> SynapseClassName;
 /// Признак необходимости обучения
 ULProperty<bool, NNeuronTrainer, ptPubParameter> IsNeedToTrain;
 
-/// Флаг режима сборки внутри MazeMemroy
-ULProperty<bool, NNeuronTrainer, ptPubParameter> IsUsedInMemory;
-
 /// Время задержки начала обучения относительно старта системы (сек)
 ULProperty<double, NNeuronTrainer, ptPubParameter> Delay;
 
@@ -102,7 +99,6 @@ UPropertyOutputData<MDMatrix<double>, NNeuronTrainer, ptOutput | ptPubState> Out
 
 /// Сопротивление нарастающих синапсов
 ULProperty<double, NNeuronTrainer, ptPubParameter> SynapseResistanceStep;
-
 
 protected:
 
@@ -210,9 +206,6 @@ bool SetInputPattern(const MDMatrix<double> &value);
 /// Признак необходимости обучения
 bool SetNeedToTrain(const bool &value);
 
-/// Флаг режима сборки внутри MazeMemroy
-bool SetIsUsedInMemory(const bool &value);
-
 /// Порог низкопороговой зоны нейрона
 bool SetLTZThreshold(const double &value);
 
@@ -227,7 +220,6 @@ bool SetUseFixedLTZThreshold(const bool &value);
 
 /// Сопротивление нарастающих синапсов
 bool SetSynapseResistanceStep(const double &value);
-
 
 // --------------------------
 

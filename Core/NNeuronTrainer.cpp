@@ -38,7 +38,6 @@ NNeuronTrainer::NNeuronTrainer(void)
   NeuronClassName("NeuronClassName",this,&NNeuronTrainer::SetNeuronClassName),
   SynapseClassName("SynapseClassName",this,&NNeuronTrainer::SetSynapseClassName),
   IsNeedToTrain("IsNeedToTrain",this,&NNeuronTrainer::SetNeedToTrain),
-  IsUsedInMemory("IsUsedInMemory",this,&NNeuronTrainer::SetIsUsedInMemory),
   Delay("Delay",this,&NNeuronTrainer::SetDelay),
   SpikesFrequency("SpikesFrequency",this,&NNeuronTrainer::SetSpikesFrequency),
   NumInputDendrite("NumInputDendrite",this,&NNeuronTrainer::SetNumInputDendrite),
@@ -128,12 +127,6 @@ bool NNeuronTrainer::SetNeedToTrain(const bool &value)
  }
 
  return true;
-}
-
-///Флаг режима сборки внутри MazeMemroy
-bool NNeuronTrainer::SetIsUsedInMemory(const bool &value)
-{
-    return true;
 }
 
 /// Время задержки начала обучения относительно старта системы (сек)
@@ -387,7 +380,7 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 	}
 
 	// Инициализируем нейрон
-    if(IsNeedToTrain||IsUsedInMemory)
+	if(IsNeedToTrain)
 	{
 		// создаём новый нейрон
 		neuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron"), neuron_class_name);
@@ -457,7 +450,6 @@ bool NNeuronTrainer::ADefault(void)
  NeuronClassName="NSPNeuronGen";
  SynapseClassName="NPSynapseBio"; //NPSynapseBio
  IsNeedToTrain = true;
- IsUsedInMemory = false;
  Delay = 0.1;
  SpikesFrequency = 1.5;
  NumInputDendrite = 1;

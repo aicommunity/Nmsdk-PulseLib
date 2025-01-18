@@ -1194,15 +1194,6 @@ UploadClass("NNeuronLearner",cont);
  cont->Build();
  UploadClass("NNeuronTrainer",cont);
 
-    //Создаем NeuronTrainer для MazeMemory (IsNeedToTrain = false по умолчанию)
- UEPtr<NNeuronTrainer> neuron_trainer= new NNeuronTrainer;
- neuron_trainer->Default();
- neuron_trainer->IsNeedToTrain = false;
- neuron_trainer->IsUsedInMemory = true;
- neuron_trainer->SetName("NNeuronTrainerMemory");
- neuron_trainer->Build();
- UploadClass("NNeuronTrainerMemory",neuron_trainer);
-
 	// Создаем группу обученных нейронов для распознавания заданного паттерна импульсов
  cont=new NSpikeClassifier;
  cont->SetName("SpikeClassifier");
