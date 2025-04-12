@@ -164,3 +164,13 @@ SOURCES += \
     ../../Core/NSynapseStdp.cpp \
     ../../Core/NSynapseTrainer.cpp \
     ../../Core/NSynapseTrainerStdp.cpp
+
+contains(DEFINES,RDK_USE_SDESOLVER) {
+
+HEADERS += \
+    ../../Core/NSdeSolver.h
+
+SOURCES += \
+    ../../Core/NSdeSolver.cpp
+
+}

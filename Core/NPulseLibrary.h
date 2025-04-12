@@ -78,6 +78,10 @@ See file license.txt for more information
 #include "NPCAClassifier.h"
 #include "NPainReflexSimple.h"
 
+#ifdef RDK_USE_SDESOLVER
+#include "NSdeSolver.h"
+#endif
+
 namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseLibrary: public ULibrary

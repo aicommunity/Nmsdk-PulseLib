@@ -1265,6 +1265,15 @@ cont->Default();
 cont->Build();
 UploadClass("NPCAClassifier",cont);
 
+#ifdef RDK_USE_SDESOLVER
+cont=new NSdeSolver;
+cont->SetName("SdeSolver");
+cont->Default();
+cont->Build();
+UploadClass("NSdeSolver",cont);
+
+#endif
+
  return;
 
  // Создаем самый мелкий нейрон
