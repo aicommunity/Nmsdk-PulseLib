@@ -67,7 +67,7 @@ bool NSdeSolver::ADefault(void)
 bool NSdeSolver::ABuild(void)
 {
  OdeCpuImpl.SetNumEquations(NumEquations);
- OdeGpuImpl.SetNumEquations(NumEquations);
+ //OdeGpuImpl.SetNumEquations(NumEquations);
  Outputs->Resize(NumEquations,1);
  Coeffs->Resize(NumEquations,1);
  InitialCondition->Resize(NumEquations,1);
