@@ -29,9 +29,9 @@ UPropertyOutputData<MDMatrix<double>, NSdeSolver, ptOutput | ptPubState> Outputs
 protected:
 
 //OdeGpu OdeGpuImpl;
-OdeCpu OdeCpuImpl;
+ode::OdeCpu OdeCpuImpl;
 
-std::unique_ptr<OdeSolverBase> Solver;
+std::unique_ptr<ode::OdeSolverBase> Solver;
 
 public: // Ìועמהû
 // --------------------------

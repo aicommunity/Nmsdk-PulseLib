@@ -56,7 +56,7 @@ bool NSdeSolver::ADefault(void)
  Outputs->Assign(1,1, 0.0);
  Coeffs->Assign(1,1, 1.0);
  InitialCondition->Assign(1,1, 0.0);
- InputCorrTable->Assign(1,3, 0);
+ InputCorrTable->Assign(1,2, 1);
  return true;
 }
 
@@ -66,15 +66,13 @@ bool NSdeSolver::ADefault(void)
 // в случае успешной сборки
 bool NSdeSolver::ABuild(void)
 {
- Solver = CreateOdeSolver(Backend::kCpu);
+ Solver = ode::CreateOdeSolver(ode::Backend::kCpu);
 
  OdeCpuImpl.SetNumEquations(NumEquations);
- //OdeGpuImpl.SetNumEquations(NumEquations);
- Outputs->Resize(NumEquations,1);
- Coeffs->Resize(NumEquations,1);
- InitialCondition->Resize(NumEquations,1);
- InputCorrTable->Resize(NumEquations,3);
- // Inputs->Resize(NumEquations,1);
+ Outputs->Resize(NumEquations,1, 0.0);
+ Coeffs->Resize(NumEquations,1, 0.0);
+ InitialCondition->Resize(NumEquations,1, 0.0);
+ InputCorrTable->Resize(NumEquations,2,1);
 
  return true;
 }
