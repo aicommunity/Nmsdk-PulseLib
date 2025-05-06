@@ -3,7 +3,8 @@
 
 #include "NNet.h"
 
-#include "../../../Rdk/ThirdParty/sde-solver/include/OdeSolver.hpp"
+#include "../../../Rdk/ThirdParty/sde-solver/include/OdeSolverBase.hpp"
+#include "../../../Rdk/ThirdParty/sde-solver/include/OdeSolverFactory.hpp"
 
 
 namespace NMSDK {
@@ -21,7 +22,7 @@ UProperty<MDMatrix<double>, NSdeSolver, ptPubParameter> InitialCondition;
 UProperty<MDMatrix<int>, NSdeSolver, ptPubParameter> InputCorrTable;
 
 public: // ¬ходы и выходы
-UPropertyInputData<MDMatrix<double>, NSdeSolver> Inputs;
+UPropertyInputData<MDMatrix<double>, NSdeSolver, ptInput | ptPubState> Inputs;
 
 UPropertyOutputData<MDMatrix<double>, NSdeSolver, ptOutput | ptPubState> Outputs;
 
@@ -30,7 +31,7 @@ protected:
 //OdeGpu OdeGpuImpl;
 OdeCpu OdeCpuImpl;
 
-SolveOde Solver;
+std::unique_ptr<OdeSolverBase> Solver;
 
 public: // ћетоды
 // --------------------------

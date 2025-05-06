@@ -66,6 +66,8 @@ bool NSdeSolver::ADefault(void)
 // в случае успешной сборки
 bool NSdeSolver::ABuild(void)
 {
+ Solver = CreateOdeSolver(Backend::kCpu);
+
  OdeCpuImpl.SetNumEquations(NumEquations);
  //OdeGpuImpl.SetNumEquations(NumEquations);
  Outputs->Resize(NumEquations,1);
@@ -80,12 +82,37 @@ bool NSdeSolver::ABuild(void)
 // Сброс процесса счета.
 bool NSdeSolver::AReset(void)
 {
+ for(int i=0; i<NumEquations; i++)
+ {
+    OdeCpuImpl.SetCoeffs(i, Coeffs(i,0));
+    OdeCpuImpl.SetInitialCondition(i, InitialCondition(i,0));
+ }
+ Solver->SetOde(OdeCpuImpl);
+ Solver->ResetToInititalCondition();
+ auto time_step = 1./TimeStep;
+ Solver->SetTimeStep(time_step/10);
  return true;
 }
 
 // Выполняет расчет этого объекта
 bool NSdeSolver::ACalculate(void)
 {
+ auto model_time = GetEnvironment()->GetTime().GetDoubleTime();
+ auto time_step = 1./TimeStep;
+ auto finish_model_time = model_time + time_step;
+ OdeCpuImpl = Solver->GetOde();
+ for(int i=0;i<NumEquations;i++)
+ {
+//  auto & data = (*Inputs).GetData();
+  auto input_data = (*Inputs)(i,0);
+  OdeCpuImpl.SetInputData(i, input_data);
+ }
+ Solver->SetOde(OdeCpuImpl);
+
+ Solver->Solve(finish_model_time);
+ OdeCpuImpl = Solver->GetOde();
+ for(int i=0;i<NumEquations;i++)
+  Outputs(i,0) = OdeCpuImpl.GetVariables()[i];
  return true;
 }
 // --------------------------
