@@ -84,6 +84,7 @@ bool NSdeSolver::AReset(void)
  {
     OdeCpuImpl.SetCoeffs(i, Coeffs(i,0));
     OdeCpuImpl.SetInitialCondition(i, InitialCondition(i,0));
+    OdeCpuImpl.SetInputCorrTable(i,std::pair<int,int>(InputCorrTable(i,0),InputCorrTable(i,1)));
  }
  Solver->SetOde(OdeCpuImpl);
  Solver->ResetToInititalCondition();
