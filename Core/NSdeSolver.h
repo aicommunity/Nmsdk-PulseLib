@@ -12,6 +12,12 @@ namespace NMSDK {
 class RDK_LIB_TYPE NSdeSolver: public UNet
 {
 public: // Общедоступные свойства
+/// Device
+/// 0 - auto (Gpu if possible)
+/// 1 - CPU
+/// 2 - GPU
+UProperty<int, NSdeSolver, ptPubParameter> DeviceMode;
+
 /// Число уравнений
 UProperty<int, NSdeSolver, ptPubParameter> NumEquations;
 
@@ -33,6 +39,8 @@ ode::OdeCpu OdeCpuImpl;
 
 std::unique_ptr<ode::OdeSolverBase> Solver;
 
+MDMatrix<double> InvCoeffs;
+
 public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
@@ -45,7 +53,8 @@ protected:
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
-// Устанавливает амплитуду импульсов
+bool SetDeviceMode(const int &value);
+
 bool SetNumEquations(const int &value);
 // --------------------------
 
@@ -56,6 +65,9 @@ public:
 // Выделяет память для новой чистой копии объекта этого класса
 virtual NSdeSolver* New(void);
 // --------------------------
+
+protected: // Setters
+bool SetCoeffs(const MDMatrix<double> &value);
 
 // --------------------------
 // Скрытые методы управления счетом

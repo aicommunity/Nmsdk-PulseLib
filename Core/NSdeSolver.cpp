@@ -7,8 +7,9 @@ namespace NMSDK {
 // Конструкторы и деструкторы
 // --------------------------
 NSdeSolver::NSdeSolver(void)
- : NumEquations("NumEquations", this, &NSdeSolver::SetNumEquations)
- , Coeffs("Coeffs", this)
+ : DeviceMode("DeviceMode", this, &NSdeSolver::SetDeviceMode)
+ , NumEquations("NumEquations", this, &NSdeSolver::SetNumEquations)
+ , Coeffs("Coeffs", this, &NSdeSolver::SetCoeffs)
  , InitialCondition("InitialCondition", this)
  , InputCorrTable("InputCorrTable", this)
  , Inputs("Inputs", this)
@@ -26,6 +27,12 @@ NSdeSolver::~NSdeSolver(void)
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
+bool NSdeSolver::SetDeviceMode(const int &value)
+{
+ Ready = false;
+ return true;
+}
+
 // Устанавливает амплитуду импульсов
 bool NSdeSolver::SetNumEquations(const int &value)
 {
@@ -45,16 +52,32 @@ NSdeSolver* NSdeSolver::New(void)
 }
 // --------------------------
 
+bool NSdeSolver::SetCoeffs(const MDMatrix<double> &value)
+{
+ InvCoeffs.Resize(value.GetRows(), value.GetCols());
+ for(int i=0;i<value.GetRows()*value.GetCols();i++)
+ {
+  if(fabs(value[i]) > 0)
+    InvCoeffs[i] = 1.0/value[i];
+  else
+    InvCoeffs[i] = 0.0;
+ }
+ Ready = false;
+ return true;
+}
+
 // --------------------------
 // Скрытые методы управления счетом
 // --------------------------
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NSdeSolver::ADefault(void)
 {
+ DeviceMode = 0;
  NumEquations = 1;
  Inputs->Assign(1,1, 0.0);
  Outputs->Assign(1,1, 0.0);
  Coeffs->Assign(1,1, 1.0);
+ InvCoeffs.Assign(1,1, 0.1);
  InitialCondition->Assign(1,1, 0.0);
  InputCorrTable->Assign(1,2, 1);
  return true;
@@ -66,11 +89,30 @@ bool NSdeSolver::ADefault(void)
 // в случае успешной сборки
 bool NSdeSolver::ABuild(void)
 {
- Solver = ode::CreateOdeSolver(ode::Backend::kCpu);
+ if(Solver)
+   Solver.reset();
+
+ ode::Backend backend(ode::Backend::kAuto);
+ switch(DeviceMode)
+ {
+ case 0:
+    backend = ode::Backend::kAuto;
+ break;
+
+ case 1:
+    backend = ode::Backend::kCpu;
+ break;
+
+ case 2:
+    backend = ode::Backend::kGpu;
+ break;
+ }
+
+ Solver = ode::CreateOdeSolver(backend);
 
  OdeCpuImpl.SetNumEquations(NumEquations);
  Outputs->Resize(NumEquations,1, 0.0);
- Coeffs->Resize(NumEquations,1, 0.0);
+ Coeffs->Resize(NumEquations,1, 1.0);
  InitialCondition->Resize(NumEquations,1, 0.0);
  InputCorrTable->Resize(NumEquations,2,1);
 
@@ -82,7 +124,7 @@ bool NSdeSolver::AReset(void)
 {
  for(int i=0; i<NumEquations; i++)
  {
-    OdeCpuImpl.SetCoeffs(i, Coeffs(i,0));
+    OdeCpuImpl.SetCoeffs(i, InvCoeffs(i,0));
     OdeCpuImpl.SetInitialCondition(i, InitialCondition(i,0));
     OdeCpuImpl.SetInputCorrTable(i,std::pair<int,int>(InputCorrTable(i,0),InputCorrTable(i,1)));
  }
@@ -103,7 +145,7 @@ bool NSdeSolver::ACalculate(void)
  for(int i=0;i<NumEquations;i++)
  {
 //  auto & data = (*Inputs).GetData();
-  auto input_data = (*Inputs)(i,0);
+  auto input_data = (*Inputs)(i,0)*InvCoeffs(i,0);
   OdeCpuImpl.SetInputData(i, input_data);
  }
  Solver->SetOde(OdeCpuImpl);
