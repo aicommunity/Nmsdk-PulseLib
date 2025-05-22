@@ -39,7 +39,7 @@ ode::OdeCpu OdeCpuImpl;
 
 std::unique_ptr<ode::OdeSolverBase> Solver;
 
-MDMatrix<double> InvCoeffs;
+//MDMatrix<double> InvCoeffs;
 
 public: // Ìועמהû
 // --------------------------
