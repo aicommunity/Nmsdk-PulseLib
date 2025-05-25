@@ -27,6 +27,8 @@ UProperty<MDMatrix<double>, NSdeSolver, ptPubParameter> InitialCondition;
 
 UProperty<MDMatrix<int>, NSdeSolver, ptPubParameter> InputCorrTable;
 
+UProperty<double, NSdeSolver, ptPubParameter> InternalTimeStep;
+
 public: // Входы и выходы
 UPropertyInputData<MDMatrix<double>, NSdeSolver, ptInput | ptPubState> Inputs;
 
@@ -53,6 +55,8 @@ protected:
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
+bool SetInternalTimeStep(const double &value);
+
 bool SetDeviceMode(const int &value);
 
 bool SetNumEquations(const int &value);

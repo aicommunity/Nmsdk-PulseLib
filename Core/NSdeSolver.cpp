@@ -10,6 +10,7 @@ NSdeSolver::NSdeSolver(void)
  : DeviceMode("DeviceMode", this, &NSdeSolver::SetDeviceMode)
  , NumEquations("NumEquations", this, &NSdeSolver::SetNumEquations)
  , Coeffs("Coeffs", this, &NSdeSolver::SetCoeffs)
+ , InternalTimeStep("InternalTimeStep", this, &NSdeSolver::SetInternalTimeStep)
  , InitialCondition("InitialCondition", this)
  , InputCorrTable("InputCorrTable", this)
  , Inputs("Inputs", this)
@@ -52,6 +53,14 @@ NSdeSolver* NSdeSolver::New(void)
 }
 // --------------------------
 
+bool NSdeSolver::SetInternalTimeStep(const double &value)
+{
+  if(value <= 0)
+    return false;
+  Ready=false;
+  return true;
+}
+
 bool NSdeSolver::SetCoeffs(const MDMatrix<double> &value)
 {
 /* InvCoeffs.Resize(value.GetRows(), value.GetCols());
@@ -73,6 +82,7 @@ bool NSdeSolver::SetCoeffs(const MDMatrix<double> &value)
 bool NSdeSolver::ADefault(void)
 {
  DeviceMode = 0;
+ InternalTimeStep = 0.0005;
  NumEquations = 1;
  Inputs->Assign(1,1, 0.0);
  Outputs->Assign(1,1, 0.0);
@@ -116,6 +126,7 @@ bool NSdeSolver::ABuild(void)
  //InvCoeffs.Resize(NumEquations,3, 0.1);
  InitialCondition->Resize(NumEquations,1, 0.0);
  InputCorrTable->Resize(NumEquations,2,1);
+ Solver->SetTimeStep(InternalTimeStep);
 
  return true;
 }
