@@ -100,6 +100,7 @@ UPropertyOutputData<MDMatrix<double>, NNeuronTrainer, ptOutput | ptPubState> Out
 /// Сопротивление нарастающих синапсов
 ULProperty<double, NNeuronTrainer, ptPubParameter> SynapseResistanceStep;
 
+
 protected:
 
  // Старое значение числа входных дендритов
@@ -220,6 +221,7 @@ bool SetUseFixedLTZThreshold(const bool &value);
 
 /// Сопротивление нарастающих синапсов
 bool SetSynapseResistanceStep(const double &value);
+
 
 // --------------------------
 

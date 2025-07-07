@@ -129,6 +129,7 @@ bool NNeuronTrainer::SetNeedToTrain(const bool &value)
  return true;
 }
 
+
 /// Время задержки начала обучения относительно старта системы (сек)
 bool NNeuronTrainer::SetDelay(const double &value)
 {
@@ -380,7 +381,7 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 	}
 
 	// Инициализируем нейрон
-	if(IsNeedToTrain)
+    if(IsNeedToTrain)
 	{
 		// создаём новый нейрон
 		neuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron"), neuron_class_name);
