@@ -1265,6 +1265,15 @@ cont->Default();
 cont->Build();
 UploadClass("NPCAClassifier",cont);
 
+#ifdef RDK_USE_ODESOLVER
+cont=new NOdeSolver;
+cont->SetName("OdeSolver");
+cont->Default();
+cont->Build();
+UploadClass("NOdeSolver",cont);
+
+#endif
+
  return;
 
  // Создаем самый мелкий нейрон
