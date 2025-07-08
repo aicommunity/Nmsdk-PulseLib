@@ -78,8 +78,8 @@ See file license.txt for more information
 #include "NPCAClassifier.h"
 #include "NPainReflexSimple.h"
 
-#ifdef RDK_USE_SDESOLVER
-#include "NSdeSolver.h"
+#ifdef RDK_USE_ODESOLVER
+#include "NOdeSolver.h"
 #endif
 
 namespace NMSDK {

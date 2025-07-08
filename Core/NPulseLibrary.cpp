@@ -1265,12 +1265,12 @@ cont->Default();
 cont->Build();
 UploadClass("NPCAClassifier",cont);
 
-#ifdef RDK_USE_SDESOLVER
-cont=new NSdeSolver;
-cont->SetName("SdeSolver");
+#ifdef RDK_USE_ODESOLVER
+cont=new NOdeSolver;
+cont->SetName("OdeSolver");
 cont->Default();
 cont->Build();
-UploadClass("NSdeSolver",cont);
+UploadClass("NOdeSolver",cont);
 
 #endif
 

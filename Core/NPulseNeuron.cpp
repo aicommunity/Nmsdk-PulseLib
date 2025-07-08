@@ -16,7 +16,9 @@ See file license.txt for more information
 #ifndef NPULSE_NEURON_CPP
 #define NPULSE_NEURON_CPP
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 
 #include <algorithm>
 #include "NPulseNeuron.h"

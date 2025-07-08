@@ -16,7 +16,9 @@ See file license.txt for more information
 #ifndef NNEURONLEARNER_CPP
 #define NNEURONLEARNER_CPP
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <algorithm>
 #include "NNeuronLearner.h"
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"

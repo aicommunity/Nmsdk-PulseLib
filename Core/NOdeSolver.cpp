@@ -1,4 +1,4 @@
-#include "NSdeSolver.h"
+#include "NOdeSolver.h"
 
 namespace NMSDK {
 
@@ -6,11 +6,11 @@ namespace NMSDK {
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
-NSdeSolver::NSdeSolver(void)
- : DeviceMode("DeviceMode", this, &NSdeSolver::SetDeviceMode)
- , NumEquations("NumEquations", this, &NSdeSolver::SetNumEquations)
- , Coeffs("Coeffs", this, &NSdeSolver::SetCoeffs)
- , InternalTimeStep("InternalTimeStep", this, &NSdeSolver::SetInternalTimeStep)
+NOdeSolver::NOdeSolver(void)
+ : DeviceMode("DeviceMode", this, &NOdeSolver::SetDeviceMode)
+ , NumEquations("NumEquations", this, &NOdeSolver::SetNumEquations)
+ , Coeffs("Coeffs", this, &NOdeSolver::SetCoeffs)
+ , InternalTimeStep("InternalTimeStep", this, &NOdeSolver::SetInternalTimeStep)
  , InitialCondition("InitialCondition", this)
  , InputCorrTable("InputCorrTable", this)
  , Inputs("Inputs", this)
@@ -19,7 +19,7 @@ NSdeSolver::NSdeSolver(void)
  ChangeLookupPropertyType("TimeStep", ptPubParameter);
 }
 
-NSdeSolver::~NSdeSolver(void)
+NOdeSolver::~NOdeSolver(void)
 {
 }
 // --------------------------
@@ -28,14 +28,14 @@ NSdeSolver::~NSdeSolver(void)
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
-bool NSdeSolver::SetDeviceMode(const int &value)
+bool NOdeSolver::SetDeviceMode(const int &value)
 {
  Ready = false;
  return true;
 }
 
 // Устанавливает амплитуду импульсов
-bool NSdeSolver::SetNumEquations(const int &value)
+bool NOdeSolver::SetNumEquations(const int &value)
 {
  Ready = false;
  return true;
@@ -47,13 +47,13 @@ bool NSdeSolver::SetNumEquations(const int &value)
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
-NSdeSolver* NSdeSolver::New(void)
+NOdeSolver* NOdeSolver::New(void)
 {
- return new NSdeSolver;
+ return new NOdeSolver;
 }
 // --------------------------
 
-bool NSdeSolver::SetInternalTimeStep(const double &value)
+bool NOdeSolver::SetInternalTimeStep(const double &value)
 {
   if(value <= 0)
     return false;
@@ -61,7 +61,7 @@ bool NSdeSolver::SetInternalTimeStep(const double &value)
   return true;
 }
 
-bool NSdeSolver::SetCoeffs(const MDMatrix<double> &value)
+bool NOdeSolver::SetCoeffs(const MDMatrix<double> &value)
 {
 /* InvCoeffs.Resize(value.GetRows(), value.GetCols());
  for(int i=0;i<value.GetRows()*value.GetCols();i++)
@@ -79,7 +79,7 @@ bool NSdeSolver::SetCoeffs(const MDMatrix<double> &value)
 // Скрытые методы управления счетом
 // --------------------------
 // Восстановление настроек по умолчанию и сброс процесса счета
-bool NSdeSolver::ADefault(void)
+bool NOdeSolver::ADefault(void)
 {
  DeviceMode = 0;
  InternalTimeStep = 0.0005;
@@ -97,7 +97,7 @@ bool NSdeSolver::ADefault(void)
 // после настройки параметров
 // Автоматически вызывает метод Reset() и выставляет Ready в true
 // в случае успешной сборки
-bool NSdeSolver::ABuild(void)
+bool NOdeSolver::ABuild(void)
 {
  if(Solver)
    Solver.reset();
@@ -132,7 +132,7 @@ bool NSdeSolver::ABuild(void)
 }
 
 // Сброс процесса счета.
-bool NSdeSolver::AReset(void)
+bool NOdeSolver::AReset(void)
 {
  for(int i=0; i<NumEquations; i++)
  {
@@ -148,7 +148,7 @@ bool NSdeSolver::AReset(void)
 }
 
 // Выполняет расчет этого объекта
-bool NSdeSolver::ACalculate(void)
+bool NOdeSolver::ACalculate(void)
 {
  double model_time = GetEnvironment()->GetTime().GetDoubleTime();
  auto time_step = 1./TimeStep;

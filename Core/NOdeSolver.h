@@ -3,36 +3,36 @@
 
 #include "NNet.h"
 
-#include "../../../Rdk/ThirdParty/sde-solver/include/OdeSolverBase.hpp"
-#include "../../../Rdk/ThirdParty/sde-solver/include/OdeSolverFactory.hpp"
+#include "../../../Rdk/ThirdParty/ode-solver/include/OdeSolverBase.hpp"
+#include "../../../Rdk/ThirdParty/ode-solver/include/OdeSolverFactory.hpp"
 
 
 namespace NMSDK {
 
-class RDK_LIB_TYPE NSdeSolver: public UNet
+class RDK_LIB_TYPE NOdeSolver: public UNet
 {
 public: // Общедоступные свойства
 /// Device
 /// 0 - auto (Gpu if possible)
 /// 1 - CPU
 /// 2 - GPU
-UProperty<int, NSdeSolver, ptPubParameter> DeviceMode;
+UProperty<int, NOdeSolver, ptPubParameter> DeviceMode;
 
 /// Число уравнений
-UProperty<int, NSdeSolver, ptPubParameter> NumEquations;
+UProperty<int, NOdeSolver, ptPubParameter> NumEquations;
 
-UProperty<MDMatrix<double>, NSdeSolver, ptPubParameter> Coeffs;
+UProperty<MDMatrix<double>, NOdeSolver, ptPubParameter> Coeffs;
 
-UProperty<MDMatrix<double>, NSdeSolver, ptPubParameter> InitialCondition;
+UProperty<MDMatrix<double>, NOdeSolver, ptPubParameter> InitialCondition;
 
-UProperty<MDMatrix<int>, NSdeSolver, ptPubParameter> InputCorrTable;
+UProperty<MDMatrix<int>, NOdeSolver, ptPubParameter> InputCorrTable;
 
-UProperty<double, NSdeSolver, ptPubParameter> InternalTimeStep;
+UProperty<double, NOdeSolver, ptPubParameter> InternalTimeStep;
 
 public: // Входы и выходы
-UPropertyInputData<MDMatrix<double>, NSdeSolver, ptInput | ptPubState> Inputs;
+UPropertyInputData<MDMatrix<double>, NOdeSolver, ptInput | ptPubState> Inputs;
 
-UPropertyOutputData<MDMatrix<double>, NSdeSolver, ptOutput | ptPubState> Outputs;
+UPropertyOutputData<MDMatrix<double>, NOdeSolver, ptOutput | ptPubState> Outputs;
 
 protected:
 
@@ -47,8 +47,8 @@ public: // Методы
 // --------------------------
 // Конструкторы и деструкторы
 // --------------------------
-NSdeSolver(void);
-virtual ~NSdeSolver(void);
+NOdeSolver(void);
+virtual ~NOdeSolver(void);
 // --------------------------
 
 protected:
@@ -67,7 +67,7 @@ public:
 // Системные методы управления объектом
 // --------------------------
 // Выделяет память для новой чистой копии объекта этого класса
-virtual NSdeSolver* New(void);
+virtual NOdeSolver* New(void);
 // --------------------------
 
 protected: // Setters
