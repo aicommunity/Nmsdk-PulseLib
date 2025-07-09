@@ -53,7 +53,7 @@ NOdeSolver* NOdeSolver::New(void)
 }
 // --------------------------
 
-bool NOdeSolver::SetInternalTimeStep(const double &value)
+bool NOdeSolver::SetInternalTimeStep(const float &value)
 {
   if(value <= 0)
     return false;
@@ -61,7 +61,7 @@ bool NOdeSolver::SetInternalTimeStep(const double &value)
   return true;
 }
 
-bool NOdeSolver::SetCoeffs(const MDMatrix<double> &value)
+bool NOdeSolver::SetCoeffs(const MDMatrix<float> &value)
 {
 /* InvCoeffs.Resize(value.GetRows(), value.GetCols());
  for(int i=0;i<value.GetRows()*value.GetCols();i++)
@@ -82,7 +82,7 @@ bool NOdeSolver::SetCoeffs(const MDMatrix<double> &value)
 bool NOdeSolver::ADefault(void)
 {
  DeviceMode = 0;
- InternalTimeStep = 0.0005;
+ InternalTimeStep = 0.0005f;
  NumEquations = 1;
  Inputs->Assign(1,1, 0.0);
  Outputs->Assign(1,1, 0.0);
@@ -158,7 +158,7 @@ bool NOdeSolver::ACalculate(void)
  {
 //  auto & data = (*Inputs).GetData();
   auto input_data = (*Inputs)(i,0);
-  OdeCpuImpl.SetInputData(i, input_data);
+  OdeCpuImpl.SetInputData(i, float(input_data));
  }
  Solver->SetOde(OdeCpuImpl);
 

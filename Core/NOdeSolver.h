@@ -21,13 +21,13 @@ UProperty<int, NOdeSolver, ptPubParameter> DeviceMode;
 /// Число уравнений
 UProperty<int, NOdeSolver, ptPubParameter> NumEquations;
 
-UProperty<MDMatrix<double>, NOdeSolver, ptPubParameter> Coeffs;
+UProperty<MDMatrix<float>, NOdeSolver, ptPubParameter> Coeffs;
 
-UProperty<MDMatrix<double>, NOdeSolver, ptPubParameter> InitialCondition;
+UProperty<MDMatrix<float>, NOdeSolver, ptPubParameter> InitialCondition;
 
 UProperty<MDMatrix<int>, NOdeSolver, ptPubParameter> InputCorrTable;
 
-UProperty<double, NOdeSolver, ptPubParameter> InternalTimeStep;
+UProperty<float, NOdeSolver, ptPubParameter> InternalTimeStep;
 
 public: // Входы и выходы
 UPropertyInputData<MDMatrix<double>, NOdeSolver, ptInput | ptPubState> Inputs;
@@ -55,7 +55,7 @@ protected:
 // --------------------------
 // Методы управления общедоступными свойствами
 // --------------------------
-bool SetInternalTimeStep(const double &value);
+bool SetInternalTimeStep(const float &value);
 
 bool SetDeviceMode(const int &value);
 
@@ -71,7 +71,7 @@ virtual NOdeSolver* New(void);
 // --------------------------
 
 protected: // Setters
-bool SetCoeffs(const MDMatrix<double> &value);
+bool SetCoeffs(const MDMatrix<float> &value);
 
 // --------------------------
 // Скрытые методы управления счетом
