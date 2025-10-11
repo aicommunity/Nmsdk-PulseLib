@@ -17,6 +17,8 @@ See file license.txt for more information
 #define NMODEL_H
 
 #include "../../../Rdk/Deploy/Include/rdk.h"
+#include "../../../Rdk/Core/Engine/ModernSmartPointers.h"
+#include "../../../Rdk/Core/Engine/ModernContainers.h"
 
 namespace NMSDK {
 
@@ -24,20 +26,25 @@ using namespace RDK;
 
 class RDK_LIB_TYPE NModel: public UNet
 {
-protected: // Основные свойства
+protected: // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
-public: // Методы
+public: // пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Конструкторы и деструкторы
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 NModel(void);
+NModel(const NModel&) = default;
+NModel(NModel&&) noexcept = default;
 virtual ~NModel(void);
+
+NModel& operator=(const NModel&) = default;
+NModel& operator=(NModel&&) noexcept = default;
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 virtual NModel* New(void);
 // --------------------------
 };

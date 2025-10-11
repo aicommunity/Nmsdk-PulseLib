@@ -9,6 +9,8 @@ target_include_directories(${TARGET_NAME}
   PUBLIC
     ${CMAKE_SOURCE_DIR}/Rdk/Deploy/Include
     ${CMAKE_SOURCE_DIR}/Libraries/Nmsdk-PulseLib/Core
+    ${CMAKE_SOURCE_DIR}/Rdk/Core/Engine
+    ${CMAKE_SOURCE_DIR}/Rdk/Core/System
 )
 
 file(GLOB PULSE_SOURCES
