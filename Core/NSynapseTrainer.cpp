@@ -34,9 +34,9 @@ NSynapseTrainer::~NSynapseTrainer(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 NSynapseTrainer* NSynapseTrainer::New(void)
 {
  return new NSynapseTrainer;
@@ -45,9 +45,10 @@ NSynapseTrainer* NSynapseTrainer::New(void)
 
 void NSynapseTrainer::RebuildInternalLinks(void)
 {
- if(MainOwner)
+ auto main_owner = MainOwner.lock();
+ if(main_owner)
  {
-  UEPtr<NPulseNeuronCommon> neuron=dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner);
+  UEPtr<NPulseNeuronCommon> neuron=UEPtr<NPulseNeuronCommon>(dynamic_pointer_cast<NPulseNeuronCommon>(main_owner).get());
   if(neuron && neuron->GetLTZone() && GetOwner())
   {
    bool res=true;

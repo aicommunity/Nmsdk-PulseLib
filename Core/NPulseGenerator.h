@@ -20,6 +20,12 @@ See file license.txt for more information
 #include "../../../Rdk/Core/Engine/ModernSmartPointers.h"
 #include "../../../Rdk/Core/Engine/ModernContainers.h"
 #include "../../../Rdk/Core/System/ModernChrono.h"
+#include "UEPtr.h"
+#include <memory>
+#include <mutex>
+#include <chrono>
+#include <thread>
+#include <random>
 
 namespace NMSDK {
 
@@ -206,6 +212,19 @@ bool SetPatternDuration(const double &value);
 // ������������� ������� ��������� � ������ ���������� ������� (UsePatternOutput)
 bool SetPatternFrequency(const double &value);
 // --------------------------
+
+// Modern C++20 thread-safe pulse generation
+// Thread-safe pulse generation
+void GeneratePulseSafe(double frequency, double amplitude, double duration);
+void SetFrequencySafe(double frequency);
+void SetAmplitudeSafe(double amplitude);
+
+// Modern random number generation
+std::shared_ptr<std::mt19937> GetRandomEngine(void) const;
+void SetRandomSeed(std::chrono::system_clock::time_point seed = std::chrono::system_clock::now());
+
+// Modern smart pointer factory
+static std::shared_ptr<NPulseGenerator> Create(double frequency, double amplitude);
 
 public:
 // --------------------------

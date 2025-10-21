@@ -22,9 +22,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Конструкторы и деструкторы
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 NNeuronLife::NNeuronLife(void)
  : Threshold("Threshold",this,&NNeuronLife::SetThreshold),
@@ -98,14 +98,14 @@ NNeuronLife::~NNeuronLife(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 bool NNeuronLife::SetThreshold(const double &value)
 {
  return true;
 }
 
-// Устанавливает ожидаемое значение максимального градиента выхода нейрона
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NNeuronLife::SetMaxPotentialGradient(const double &value)
 {
  if(value <= 0)
@@ -154,9 +154,9 @@ bool NNeuronLife::SetQsummax(const double &value)
 
 
 // --------------------------
-// Системные методы управления объектом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 NNeuronLife* NNeuronLife::New(void)
 {
  return new NNeuronLife;
@@ -164,12 +164,12 @@ NNeuronLife* NNeuronLife::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+// пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 'true' пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅ 'false' пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 bool NNeuronLife::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NSum>(comp))
@@ -180,20 +180,20 @@ bool NNeuronLife::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ Reset() пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Ready пїЅ true
+// пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 bool NNeuronLife::ABuild(void)
 {
  AddMissingComponent<NSum>("ExternalEnergyBonus","NSum",&ExternalEnergyBonus);
  return true;
 }
- // Восстановление настроек по умолчанию и сброс процесса счета
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 bool NNeuronLife::ADefault(void)
 {
  Output1.Assign(1,4,0.0);
@@ -206,7 +206,7 @@ bool NNeuronLife::ADefault(void)
  Output8.Assign(1,1,0.0);
 
 
- // Начальные значения всем параметрам
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  Threshold=static_cast<double>(0.001);
  WearOutConstPositive = static_cast<double>(100);//0.01;
  WearOutConstNegative = 1;//0.1;
@@ -248,10 +248,10 @@ bool NNeuronLife::ADefault(void)
 
  return true;
 }
-// Сброс процесса счета.
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
 bool NNeuronLife::AReset(void)
 {
- // Сброс временных переменных
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // NeuralPotential=0;
 // PrePotential=0;
 // PulseCounter=0;
@@ -259,7 +259,8 @@ bool NNeuronLife::AReset(void)
  Usum=0;
  EsumProizv=0;
 
- Energy=EsumOld=static_cast<double>(100);
+ Energy.SetData(static_cast<double>(100));
+ EsumOld.SetData(static_cast<double>(100));
  Feel=0;
 
  Qsum=0;
@@ -283,10 +284,10 @@ bool NNeuronLife::AReset(void)
 
 bool NNeuronLife::ACalcWearOut(void)
 {
- // Добавляем фиксированную прибавку к износу в секунду
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  WearOut.v+=WearOutConstPositive/TimeStep;
 
- // Вычитаем обновление нейрона за счет генерации
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // WearOut-=WearOut*(1/(1+exp(-Kw*fabs(Usum)))-0.5)*WearOutConstNegative/TimeStep;
 // WearOut-=fabs(Usum)*WearOutConstNegative/TimeStep;//(1.0/(1.0+exp(-Kw*fabs(Usum)))-0.5)*WearOutConstNegative/TimeStep;
  WearOut.v-=WearOut*fabs(Usum)*WearOutConstNegative/TimeStep;
@@ -296,7 +297,7 @@ bool NNeuronLife::ACalcWearOut(void)
 bool NNeuronLife::ACalcEnergy(void)
 {
  double old_Energy=Energy;
- // Вычисляем бонус энергии
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // EnergyBonus+=fabs(Usum)*EyBonusPos/TimeStep;
 // EnergyBonus-=EnergyBonus*EyBonusNeg/TimeStep;
  EnergyBonus.v+=fabs(Usum)*EyBonusPos;
@@ -323,7 +324,7 @@ bool NNeuronLife::ACalcFeel(void)
 {
  EsumProizv = (Energy.v-EsumOld.v)*TimeStep;
 
- EsumOld = Energy;
+ EsumOld.SetData(Energy.GetData());
 
  Feel=(Energy.v-En.v) + FeelDiff(Kq,EsumProizv,En);
 
@@ -363,7 +364,7 @@ double NNeuronLife::FeelDiff(double kq, double ediff, double en)
  return static_cast<double>((1.0/(1.0+exp(-kq*ediff))-0.5)*en*2.0);
 }
 
-// Выполняет расчет этого объекта
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NNeuronLife::ACalculate(void)
 {
  if(!Input1.IsConnected() || !Input2.IsConnected() || !Input3.IsConnected() || Input1->GetCols()<1 || Input2->GetCols() || Input3->GetCols())
@@ -410,9 +411,9 @@ bool NNeuronLife::ACalculate(void)
  if(!ACalcThresholdLife())
   return false;
 
- if(Energy.v < 0) // Вместо 0 должен быть параметр остаточного минимума
+ if(Energy.v < 0) // пїЅпїЅпїЅпїЅпїЅпїЅ 0 пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  {
-  UEPtr<UItem> item=dynamic_pointer_cast<UItem>(Owner);
+  UEPtr<UItem> item=UEPtr<UItem>(dynamic_pointer_cast<UItem>(std::shared_ptr<UComponent>(Owner)).get());
   if(item)
   {
    item->SetActivity(false);
@@ -445,14 +446,14 @@ bool NNeuronLife::ACalculate(void)
 
  Output5(0,0)=Energy.v;
 
- // Вычисляем мотивацию для возбуждающих синапсов
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  Output6(0,0)=dEa*TimeStep;
  Output6(0,1)=-dEy;
  Output6(0,2)=-dEe*TimeStep;
  Output6(0,3)=dEh*TimeStep;
  Output6(0,4)=0;//dE*TimeStep;
 
- // Вычисляем мотивацию для тормозных синапсов
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 /* POutputData[6].Double[0]=dEa*TimeStep;
  POutputData[6].Double[1]=-dEy;
  POutputData[6].Double[2]=-dEe*TimeStep;
@@ -465,7 +466,7 @@ bool NNeuronLife::ACalculate(void)
  Output7(0,3)=-dEh*TimeStep;
  Output7(0,4)=0;//-dE*TimeStep;
 
- // Вычисляем опосредованные воздействия - энергетический бонус
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  Output8(0,0)=EnergyBonus.v;
 
  return true;

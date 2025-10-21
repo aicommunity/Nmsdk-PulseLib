@@ -3,12 +3,12 @@
 
 #include "NDataset.h"
 
-// Класс, отвечающий за датасет
+// пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 namespace NMSDK {
 
-// Методы
+// пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Конструкторы и деструкторы
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 NDataset::NDataset(void)
 : PulseGeneratorClassName("PulseGeneratorClassName",this,&NDataset::SetPulseGeneratorClassName),
@@ -38,38 +38,38 @@ NDataset::~NDataset(void)
 }
 
 // --------------------------
-// Методы упраления параметрами
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 
-///Число генераторов
+///пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NDataset::SetNumGenerators(const int &value)
 {
     Ready=false;
     return true;
 }
 
-///Число признаков (из файла)
+///пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ)
 bool NDataset::SetNumFeatures(const int &value)
 {
     Ready=false;
     return true;
 }
 
-///Матрица считанных фьюч
+///пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 bool NDataset::SetMatrixData(const MDMatrix<double> &value)
 {
     Ready=false;
     return true;
 }
 
-///Матрица считанных классов
+///пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NDataset::SetMatrixClasses(const MDMatrix<int> &value)
 {
     Ready=false;
     return true;
 }
 
-///Матрица временных сдвигов запусков генераторов
+///пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 MDMatrix<double> SetMatrixDelay(int NumSamples, int NumFeatures, const MDMatrix<double> &MatrixData, double Tay)
 {
     MDMatrix<double> matrix_delay;
@@ -98,8 +98,8 @@ MDMatrix<double> SetMatrixDelay(int NumSamples, int NumFeatures, const MDMatrix<
     return matrix_delay;
 }
 
-/// Число классов
-int SetNumClasses(const MDMatrix<int> &matrix_classes)//можно объявить в h
+/// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+int SetNumClasses(const MDMatrix<int> &matrix_classes)//пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ h
 {
     vector<double> uniq;
     for(int i=0;i<matrix_classes.GetCols();i++)
@@ -114,14 +114,14 @@ int SetNumClasses(const MDMatrix<int> &matrix_classes)//можно объявить в h
     return int(uniq.size());
 }
 
-/// Имя класса, создающего генератор импульсов
+/// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NDataset::SetPulseGeneratorClassName(const std::string &value)
 {
 	Ready=false;
 	return true;
 }
 
-/// Частота генераторов (Гц)
+/// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅ)
 bool NDataset::SetSpikesFrequency(const double &value)
 {
     for(size_t i = 0; i < Generators.size(); i++)
@@ -134,7 +134,7 @@ bool NDataset::SetSpikesFrequency(const double &value)
 }
 
 
-/// Время задержки начала обучения относительно старта системы (сек)
+/// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅ)
 bool NDataset::SetDelay(const double &value)
 {
  for(int i = 0; i < int(Generators.size()); i++)
@@ -148,9 +148,9 @@ bool NDataset::SetDelay(const double &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 NDataset* NDataset::New(void)
 {
     return new NDataset;
@@ -163,12 +163,12 @@ UComponent* NDataset::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ comp пїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NDataset::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
     UEPtr<NPulseGeneratorTransit> generator=dynamic_pointer_cast<NPulseGeneratorTransit>(comp);
@@ -180,10 +180,10 @@ bool NDataset::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
     return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ comp
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NDataset::ADelComponent(UEPtr<UContainer> comp)
 {
     UEPtr<NPulseGeneratorTransit> generator=dynamic_pointer_cast<NPulseGeneratorTransit>(comp);
@@ -200,16 +200,16 @@ bool NDataset::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Сброс процесса счета.
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
 bool NDataset::AReset(void)
 {
     ResetDelay=true;
 	return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 bool NDataset::ADefault(void)
 {
     Tay=float(0.01);
@@ -228,10 +228,10 @@ bool NDataset::ADefault(void)
 	return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ Reset() пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Ready пїЅ true
+// пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 bool NDataset::ABuild(void)
 {
     TreatDataFromFile();
@@ -253,17 +253,17 @@ bool NDataset::ABuild(void)
 }
 
 
-// Функция для работы с файлами.
-// Осуществляет чтение входных данных из файла,
-// Обработку результатов и запись результатов в файл
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ,
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
 bool NDataset::TreatDataFromFile(void)
 {
     Ready=false;
-    // Файл с входными данными
+    // пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     ifstream fileDataset;
     NumFeatures=0;
     NumSamples=0;
-    //fileDataset.open(Environment->GetCurrentDataDir()+FileName.GetData());
+    //fileDataset.open(Environment.lock()->GetCurrentDataDir()+FileName.GetData());
      fileDataset.open("C:\\Users\\kirik\\Desktop\\input_data.txt");
     if (!fileDataset)
     {
@@ -280,7 +280,7 @@ bool NDataset::TreatDataFromFile(void)
     MatrixData.Resize(NumSamples,NumFeatures);
     MatrixClasses.Resize(1,NumSamples);
     fileDataset.close();
-    //fileDataset.open(Environment->GetCurrentDataDir()+"input_data.txt");
+    //fileDataset.open(Environment.lock()->GetCurrentDataDir()+"input_data.txt");
      fileDataset.open("C:\\Users\\kirik\\Desktop\\input_data.txt");
     if (!fileDataset)
     {
@@ -306,12 +306,12 @@ bool NDataset::TreatDataFromFile(void)
     fileDataset.close();
     MatrixDelay = SetMatrixDelay(NumSamples, NumFeatures, MatrixData, Tay);
     NumClasses = SetNumClasses(MatrixClasses);
-    NumGenerators = NumFeatures;
+    NumGenerators.SetData(NumFeatures.GetData());
     return true;
 }
 
 
-// Выполняет расчет этого объекта
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NDataset::ACalculate(void)
 {
     if(StateGeneration==0)
@@ -337,10 +337,10 @@ bool NDataset::ACalculate(void)
         {
             SetDelay(Delay);
             SetSpikesFrequency(SpikesFrequency);
-            OperatingTime = Environment->GetTime().GetDoubleTime();
+            OperatingTime = Environment.lock()->GetTime().GetDoubleTime();
             ResetDelay=false;
         }
-        if(Environment->GetTime().GetDoubleTime()-OperatingTime>TimeGeneration)
+        if(Environment.lock()->GetTime().GetDoubleTime()-OperatingTime>TimeGeneration)
         {
             for(int i = 0; i < int(Generators.size()); i++)
             {
@@ -351,7 +351,7 @@ bool NDataset::ACalculate(void)
         }
     }
     else return false;
-    return true; //В ресет сбросить всё
+    return true; //пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ
 }
 
 // --------------------------

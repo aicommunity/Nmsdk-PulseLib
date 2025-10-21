@@ -25,9 +25,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Конструкторы и деструкторы
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 NPulseGeneratorMulti::NPulseGeneratorMulti(void)
 //: NSource(name),
@@ -57,9 +57,9 @@ NPulseGeneratorMulti::~NPulseGeneratorMulti(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Устанавливает частоту импульсов
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulseGeneratorMulti::SetFrequency(const double &value)
 {
  if(value <0)
@@ -75,7 +75,7 @@ bool NPulseGeneratorMulti::SetFrequency(const double &value)
  return true;
 }
 
-// Устанавливает длительность импульса
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulseGeneratorMulti::SetPulseLength(const double &value)
 {
  if(value <= 0)
@@ -84,13 +84,13 @@ bool NPulseGeneratorMulti::SetPulseLength(const double &value)
  return true;
 }
 
-// Устанавливает амплитуду импульсов
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulseGeneratorMulti::SetAmplitude(const double &value)
 {
  return true;
 }
 
-// Устанавливает число импульсов
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulseGeneratorMulti::SetPulseCount(const int &value)
 {
     if(value<0)
@@ -100,7 +100,7 @@ bool NPulseGeneratorMulti::SetPulseCount(const int &value)
     return true;
 }
 
-// Устанавливает задержку запуска генератора
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulseGeneratorMulti::SetDelays(const MDMatrix<double> &value)
 {
  if(value.GetCols()<=0)
@@ -115,8 +115,8 @@ bool NPulseGeneratorMulti::SetDelays(const MDMatrix<double> &value)
  return true;
 }
 
-// Устанавливает отклонение частоты
-// (Задает диапазон, не является стандартным отклонением!)
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!)
 bool NPulseGeneratorMulti::SetFrequencyDeviation(const double &value)
 {
  if(value<0)
@@ -127,9 +127,9 @@ bool NPulseGeneratorMulti::SetFrequencyDeviation(const double &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 NPulseGeneratorMulti* NPulseGeneratorMulti::New(void)
 {
  return new NPulseGeneratorMulti;
@@ -137,12 +137,12 @@ NPulseGeneratorMulti* NPulseGeneratorMulti::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+// пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 'true' пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅ 'false' пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 bool NPulseGeneratorMulti::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NPulseChannel*>(comp))
@@ -153,9 +153,9 @@ bool NPulseGeneratorMulti::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 bool NPulseGeneratorMulti::ADefault(void)
 {
 // SetNumOutputs(4);
@@ -164,7 +164,7 @@ bool NPulseGeneratorMulti::ADefault(void)
  Frequency=0.0;
  PulseLength=0.001;
  Amplitude=1.0;
- //Проверить, надо ли это
+ //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ
  Delays.Assign(1,1,0.0);
  FrequencyDeviation=0;
  AvgInterval=5;
@@ -180,10 +180,10 @@ bool NPulseGeneratorMulti::ADefault(void)
  return NSource::ADefault();
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ Reset() пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Ready пїЅ true
+// пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulseGeneratorMulti::ABuild(void)
 {
  AvgFrequencyCounter->clear();
@@ -194,7 +194,7 @@ bool NPulseGeneratorMulti::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
 bool NPulseGeneratorMulti::AReset(void)
 {
  time_t tm;
@@ -223,15 +223,15 @@ bool NPulseGeneratorMulti::AReset(void)
  OutputFrequency.ToZero();
  OutputPulseTimes.ToZero();
 
- if(Environment)
-  ResetTime = Environment->GetTime().GetDoubleTime();
+ if(Environment.lock())
+  ResetTime = Environment.lock()->GetTime().GetDoubleTime();
  else
   ResetTime = 0.0;
 
  return NSource::AReset();
 }
 
-// Выполняет расчет этого объекта
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulseGeneratorMulti::ACalculate(void)
 {
  if(Frequency<1e-8 || TimeStep/Frequency<1)
@@ -255,8 +255,8 @@ bool NPulseGeneratorMulti::ACalculate(void)
  }
 
 
- //Это теперь переезжает в обработку соответствующих импульсов, так как Delay по логике у них разный
- //if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
+ //пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅ Delay пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+ //if(Environment.lock()->GetTime().GetDoubleTime() - ResetTime < Delay)
  // return true;
 
  if(OldFrequency != Frequency.v)
@@ -264,7 +264,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
     for(int i=0; i<int(PulseCounters.size());i++)
     {
         double Delay = Delays(0,i);
-        if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
+        if(Environment.lock()->GetTime().GetDoubleTime() - ResetTime < Delay)
             continue;
 
         int &PulseCounter = PulseCounters[i];
@@ -280,14 +280,14 @@ bool NPulseGeneratorMulti::ACalculate(void)
      for(int i=0; i<int(PulseCounters.size());i++)
      {
       double Delay = Delays(0,i);
-      if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
+      if(Environment.lock()->GetTime().GetDoubleTime() - ResetTime < Delay)
        continue;
 
       int &PulseCounter = PulseCounters[i];
-      if(PulseCounter>0) // Если импульс идет
+      if(PulseCounter>0) // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
       {
        --PulseCounter;
-       if(PulseCounter <= 0) // Выключаем импульс и включаем ожидание
+       if(PulseCounter <= 0) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
        {
         PulseCounter=static_cast<int>(-int(TimeStep/Frequency)+PulseLength*TimeStep);
         pulses[i] = false;
@@ -298,13 +298,13 @@ bool NPulseGeneratorMulti::ACalculate(void)
       else
       {
        ++PulseCounter;
-       if(PulseCounter >= 0) // Включаем импульс
+       if(PulseCounter >= 0) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
        {
         PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
         pulses[i] = true;
 //        Output.Assign(1,1,Amplitude);
 //        OutputPotential.Assign(1,1,Amplitude);
-        AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
+        AvgFrequencyCounter->push_back(Environment.lock()->GetTime().GetDoubleTime());
        }
       }
      }
@@ -331,16 +331,16 @@ bool NPulseGeneratorMulti::ACalculate(void)
 
 
 
-     //ХЗ зачем это надо (и как причесывать и надо ли для мультивыходов)
+     //пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ (пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
      OutputFrequency.Assign(1,1,Frequency);
  }
  else
  {
   /*
-  if(PulseCounter>0) // Если импульс идет
+  if(PulseCounter>0) // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
   {
    --PulseCounter;
-   if(PulseCounter <= 0) // Выключаем импульс и включаем ожидание
+   if(PulseCounter <= 0) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
    {
 	RandomFrequency=double(rand()*FrequencyDeviation*2.0)/double(RAND_MAX)+
 							Frequency-FrequencyDeviation;
@@ -355,12 +355,12 @@ bool NPulseGeneratorMulti::ACalculate(void)
   else
   {
    ++PulseCounter;
-   if(PulseCounter >= 0) // Включаем импульс
+   if(PulseCounter >= 0) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
    {
 	PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
 	Output.Assign(1,1,Amplitude);
 	OutputPotential.Assign(1,1,Amplitude);
-	AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
+	AvgFrequencyCounter->push_back(Environment.lock()->GetTime().GetDoubleTime());
    }
   }
   OutputFrequency.Assign(1,1,RandomFrequency);
@@ -376,7 +376,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
  {
   while(I != J)
   {
-   double diff=Environment->GetTime().GetDoubleTime()-*I;
+   double diff=Environment.lock()->GetTime().GetDoubleTime()-*I;
    if(diff>AvgInterval)// && AvgFrequencyCounter->size()>3)
    {
 	K=I;

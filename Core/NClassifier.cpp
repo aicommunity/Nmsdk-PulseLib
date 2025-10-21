@@ -728,9 +728,9 @@ bool NClassifier::TreatDataFromFile(void)
     if(IsFirstFileStep)
     {
         // Открываем файл для чтения данных
-        fin.open(Environment->GetCurrentDataDir()+"input_data.txt");
+        fin.open(Environment.lock()->GetCurrentDataDir()+"input_data.txt");
         // Открываем файл для записи данных
-        fout.open(Environment->GetCurrentDataDir()+"output_data.txt");
+        fout.open(Environment.lock()->GetCurrentDataDir()+"output_data.txt");
         // Флаг начала итерации
         is_first_iter = true;
         // Входные данные
@@ -743,7 +743,7 @@ bool NClassifier::TreatDataFromFile(void)
     if(is_first_iter)
     {
         // Время начала текущей итерации (сек)
-        start_iter_time = Environment->GetTime().GetDoubleTime();
+        start_iter_time = Environment.lock()->GetTime().GetDoubleTime();
         // Ответы нейронов
         outputs.assign(NumClasses,0);
         // Считываем входной вектор
@@ -796,7 +796,7 @@ bool NClassifier::TreatDataFromFile(void)
     }
 
     // Проверяем окончание итерации
-    double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
+    double iter_time = Environment.lock()->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
     double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Длина одной итерации
     if(iter_time >= iter_length)
     {

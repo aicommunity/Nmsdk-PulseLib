@@ -44,7 +44,7 @@ bool CreateNeuronLifeObject(UEPtr<NNeuronLife> &life, UStorage *storage)
 
 
 // --------------------------
-// Конструкторы и деструкторы
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 NPulseLibrary::NPulseLibrary(void)
  : ULibrary("PulseLibrary","1.0", GetGlobalVersion())
@@ -53,10 +53,10 @@ NPulseLibrary::NPulseLibrary(void)
 // --------------------------
 
 // --------------------------
-// Методы заполенения бибилиотеки
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Заполняет массив ClassSamples готовыми экземплярами образцов и их именами.
-// Не требуется предварительная очистка массива и уборка памяти.
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ ClassSamples пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+// пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
 void NPulseLibrary::CreateClassSamples(UStorage *storage)
 {
 
@@ -230,7 +230,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPHebbSynapse",cont);
 
  UEPtr<NPulseChannel> ch, ch_pos, ch_neg;
- // Модели ионного механизма обычных участков мембраны
+ // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
@@ -293,7 +293,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  ch_neg->Type=1;
  UploadClass("NCSynInhChannel",ch_neg);
 
- // Модели ионного механизма низкопороговой зоны
+ // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
  ch=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
  ch->Capacity=1e-8;
  ch->RestingResistance=1e6;
@@ -326,7 +326,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  ch_neg->Type=1;
  UploadClass("NPLTSynInhChannel",ch_neg);
 
- // Классические участки мембраны
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  UEPtr<NPulseMembrane> membr;
  cont=new NPulseMembrane;
  cont->SetName("PMembrane");
@@ -348,7 +348,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->FeedbackGain = 0.02;
  UploadClass("NPMembraneBio2",membr);
 
- // Участки мембраны низкопороговой зоны
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
  membr->SetName("LTMembrane");
  membr->ExcChannelClassName="NPLTExcChannel";
@@ -366,14 +366,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->InhChannelClassName="NPSynInhChannel";
  UploadClass("NPSynNeuronMembrane",membr);
 
- // Участок мембраны непрерывного нейрона
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
  membr->SetName("PMembrane");
  membr->ExcChannelClassName="NCSynExcChannel";
  membr->InhChannelClassName="NCSynInhChannel";
  UploadClass("NCSynNeuronMembrane",membr);
 
- // Формируем синапсы хебба и участки мембраны с ними
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
  membr->SetName("PMembrane");
  membr->Default();
@@ -407,7 +407,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  dynamic_pointer_cast<NCPac>(UEPtr<UContainer>(cont))->TCMode=0;
  UploadClass("NCPac",cont);
 
- // Содержимое старой библиотеки PulseItemsLibrary
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ PulseItemsLibrary
  cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronNegCGenerator");
  dynamic_cast<NConstGenerator*>(cont)->Amplitude=-1;
@@ -749,7 +749,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->Default();
  UploadClass("NLifeNet",cont);
 
- // Формируем синапсы хебба и участки мембраны с ними
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
  UEPtr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
  membr->SetName("PMembrane");
  membr->Default();
@@ -776,13 +776,13 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 {
  UEPtr<UContainer> cont;
 
- // Классический афферентный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  UEPtr<NAfferentNeuron> an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
  an->StructureBuildMode=1;
  an->Build();
  UploadClass("NSAfferentNeuron",an);
 
- // Классический афферентный нейрона с непрерывным выходом
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
  an->MembraneClassName="NCSynNeuronMembrane";
  an->LTZoneClassName="NCLTZone";
@@ -801,7 +801,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  }
  UploadClass("NContinuesSAfferentNeuron",an);
 
- // Простой афферентный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
  an->LTZoneClassName="NPSimpleLTZone";
  an->StructureBuildMode=2;
@@ -818,7 +818,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  }
  UploadClass("NSimpleAfferentNeuron",an);
 
- // Простой афферентный нейрона с непрерывным выходом
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
  an->LTZoneClassName="NCSimpleLTZone";
  an->StructureBuildMode=2;
@@ -835,21 +835,21 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  }
  UploadClass("NContinuesSimpleAfferentNeuron",an);
 
- // Создаем мелкий нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  UEPtr<NPulseNeuron> n;
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->Build();
  UploadClass("NSPNeuron",n);
 
- // Создаем крупный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->NumSomaMembraneParts=3;
  n->Build();
  UploadClass("NLPNeuron",n);
 
- // Создаем мотонейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->NumSomaMembraneParts=3;
@@ -857,7 +857,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NMotoneuron",n);
 
- // Создаем клетку Реншоу
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->NumSomaMembraneParts=1;
@@ -865,8 +865,8 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NRenshowCell",n);
 
- // Нейроны с оптимизированными синапсами
- // Создаем мелкий нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->MembraneClassName="NPSynNeuronMembrane";
@@ -874,7 +874,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NSynSPNeuron",n);
 
- // Создаем крупный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->MembraneClassName="NPSynNeuronMembrane";
@@ -882,7 +882,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NSynLPNeuron",n);
 
- // Создаем мотонейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->MembraneClassName="NPSynNeuronMembrane";
@@ -891,7 +891,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NSynMotoneuron",n);
 
- // Создаем клетку реншоу
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->MembraneClassName="NPSynNeuronMembrane";
@@ -900,14 +900,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NSynRenshowCell",n);
 
- // Создаем мелкий нейрон с синапсами хебба
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPHebbNeuron"));
  n->LTMembraneClassName="";
  n->NumSomaMembraneParts=1;
  n->Build();
  UploadClass("NSPHebbNeuron",n);
 
- // Создаем крупный нейрон с синапсами хебба
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPHebbNeuron"));
  n->LTMembraneClassName="";
  n->NumSomaMembraneParts=3;
@@ -915,50 +915,50 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NLPHebbNeuron",n);
 
  // ============================================================================
- // Новые нейроны
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  // ----------------------------------------------------------------------------
- // Создаем мелкий нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->NumSomaMembraneParts=1;
  n->Build();
  UploadClass("NNewSPNeuron",n);
 
- // Создаем крупный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->NumSomaMembraneParts=3;
  n->Build();
  UploadClass("NNewLPNeuron",n);
 
- // Создаем мотонейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->NumSomaMembraneParts=3;
  n->SetName("Motoneuron");
  n->Build();
  UploadClass("NNewMotoneuron",n);
 
- // Создаем клетку реншоу
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->NumSomaMembraneParts=1;
  n->SetName("RenshowCell");
  n->Build();
  UploadClass("NNewRenshowCell",n);
 
- // Нейроны с оптимизированными синапсами
- // Создаем мелкий нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->MembraneClassName="NPSynNeuronMembrane";
  n->NumSomaMembraneParts=1;
  n->Build();
  UploadClass("NNewSynSPNeuron",n);
 
- // Создаем крупный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->MembraneClassName="NPSynNeuronMembrane";
  n->NumSomaMembraneParts=3;
  n->Build();
  UploadClass("NNewSynLPNeuron",n);
 
- // Создаем мотонейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->MembraneClassName="NPSynNeuronMembrane";
  n->NumSomaMembraneParts=3;
@@ -966,22 +966,22 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NNewSynMotoneuron",n);
 
- // Создаем клетку реншоу
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->MembraneClassName="NPSynNeuronMembrane";
  n->NumSomaMembraneParts=1;
  n->SetName("RenshowCell");
  n->Build();
  UploadClass("NNewSynRenshowCell",n);
- // Конец нейронов с оптимизирванными синапсами
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
-  // Создаем мелкий нейрон с синапсами хебба
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPHebbNeuron"));
  n->NumSomaMembraneParts=1;
  n->Build();
  UploadClass("NNewSPHebbNeuron",n);
 
- // Создаем крупный нейрон с синапсами хебба
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPHebbNeuron"));
  n->NumSomaMembraneParts=3;
  n->Build();
@@ -989,35 +989,35 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  // ============================================================================
 
 
-  // Непрерывные нейроны с оптимизированными синапсами
- // Создаем мелкий нейрон
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NCNeuron"));
  n->NumSomaMembraneParts=1;
  n->Build();
  UploadClass("NContinuesSynSPNeuron",n);
 
- // Создаем крупный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NCNeuron"));
  n->NumSomaMembraneParts=3;
  n->Build();
  UploadClass("NContinuesSynLPNeuron",n);
 
- // Создаем мотонейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NCNeuron"));
  n->NumSomaMembraneParts=3;
  n->SetName("Motoneuron");
  n->Build();
  UploadClass("NContinuesSynMotoneuron",n);
 
- // Создаем клетку реншоу
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NCNeuron"));
  n->NumSomaMembraneParts=1;
  n->SetName("RenshowCell");
  n->Build();
  UploadClass("NContinuesSynRenshowCell",n);
- // Конец непрерывных нейронов с оптимизирванными синапсами
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
- // Создаем нейроны с упрощенным генератором спайков
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->MembraneClassName="NPMembraneBio";
@@ -1028,7 +1028,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->LTZone->Threshold=0.0117;
  UploadClass("NSPNeuronGen",n);
 
- // Создаем мелкий нейрон с биологически правдоподобными параметрами
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->MembraneClassName="NPMembraneBio";
@@ -1038,8 +1038,8 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NSPNeuronBio",n);
 
- // Создаем мелкий нейрон с биологически правдоподобными параметрами
- // Версия 2, совместимая с кабельной моделью
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ // пїЅпїЅпїЅпїЅпїЅпїЅ 2, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->MembraneClassName="NPMembraneBio2";
@@ -1049,7 +1049,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NSPNeuronBio2",n);
 
- // Создаем мелкий нейрон с биологически правдоподобными параметрами
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 /* n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->LTZoneClassName="NPulseLTZoneThreshold";
@@ -1061,10 +1061,10 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NGenBioNeuron",n);
   */
 
- // конец нейронов с упрощенным генератором спайков
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
  // ============================================================================
- // Нейроны как в статьях
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  // ============================================================================
  /*
  {
@@ -1091,9 +1091,9 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPNeuron1x4",n);
  // ============================================================================
 /*
- // Живые нейроны
- // Создаем мелкий живой нейрон
-  // Создаем мелкий нейрон с синапсами хебба
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
  n->NumSomaMembraneParts=1;
  n->SetName("SPLifeNeuron");
@@ -1103,7 +1103,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NSPLifeNeuron",n);
 
 
- // Создаем крупный живой нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
  n->NumSomaMembraneParts=3;
  n->SetName("LPLifeNeuron");
@@ -1112,14 +1112,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NLPLifeNeuron",n);
 
- // Создаем мелкий живой нейрон с синапсами хебба //смотри
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ //пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
  n->SetName("SPLifeHebbNeuron");
  n->LTMembraneClassName="";
  n->Build();
  UploadClass("NSPLifeHebbNeuron",n);
 
- // Создаем мелкий живой нейрон с синапсами хебба и дендритом
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
  n->NumDendriteMembraneParts=3;
  n->LTMembraneClassName="";
@@ -1127,7 +1127,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NSPDendriteLifeHebbNeuron",n);
 
- // Создаем крупный живой нейрон с синапсами хебба
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
  n->NumSomaMembraneParts=3;
  n->LTMembraneClassName="";
@@ -1135,35 +1135,35 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  UploadClass("NLPLifeHebbNeuron",n);
 
-  // Создаем мелкий живой нейрон
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
  n->NumSomaMembraneParts=1;
  n->SetName("SPLifeNeuron");
  n->Build();
  UploadClass("NNewSPLifeNeuron",n);
 */
-   // Создаем группу афферентных нейронов
+   // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NNeuronFreqGroup;
  cont->SetName("NeuronFreqGroup");
  cont->Default();
  cont->Build();
  UploadClass("NNeuronFreqGroup",cont);
 
-	// Создаем слой групп афферентных нейронов
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NNeuronFreqGroupLayer;
  cont->SetName("NeuronFreqGroupLayer");
  cont->Default();
  cont->Build();
  UploadClass("NNeuronFreqGroupLayer",cont);
 
-   // Создаем нейрон, способный оптимизировать сруктуру для распознования паттернов по значениям флагов
+   // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 cont=new NNeuronLearner;
 cont->SetName("NeuronLearner");
 cont->Default();
 cont->Build();
 UploadClass("NNeuronLearner",cont);
 
-	// Создаем слой нейронов
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NNeuronsLayer;
  cont->SetName("NeuronsLayer");
  cont->Default();
@@ -1175,7 +1175,7 @@ UploadClass("NNeuronLearner",cont);
  layer->Build();
  UploadClass("NNeuronsLayerIaF",layer);
 
-	// Создаем импульсный персептрон
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NPulsePerseptron;
  cont->SetName("PulsePerseptron");
  cont->Default();
@@ -1187,35 +1187,35 @@ UploadClass("NNeuronLearner",cont);
  pers->Build();
  UploadClass("NPulsePerseptronIaF",pers);
 
-	// Создаем нейрон со структурой, оптимизованной для распознавания заданного паттерна импульсов
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NNeuronTrainer;
  cont->SetName("NeuronTrainer");
  cont->Default();
  cont->Build();
  UploadClass("NNeuronTrainer",cont);
 
-	// Создаем группу обученных нейронов для распознавания заданного паттерна импульсов
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NSpikeClassifier;
  cont->SetName("SpikeClassifier");
  cont->Default();
  cont->Build();
  UploadClass("NSpikeClassifier",cont);
 
-	// Создаем классификатор
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NClassifier;
  cont->SetName("Classifier");
  cont->Default();
  cont->Build();
  UploadClass("NClassifier",cont);
 
- // Создаем группу нейронов для моделирования условного рефлекса
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NConditionedReflex;
  cont->SetName("ConditionedReflex");
  cont->Default();
  cont->Build();
  UploadClass("NConditionedReflex",cont);
 
- // Создаем группу нейронов для моделирования упрощенного болевого рефлекса
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NPainReflexSimple;
  cont->SetName("PainReflexSimple");
  cont->Default();
@@ -1223,42 +1223,42 @@ UploadClass("NNeuronLearner",cont);
  UploadClass("NPainReflexSimple",cont);
 
 
-	// Создаем группу нейронов для моделирования формирования ассоциативных связей
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NAssociationFormer;
  cont->SetName("AssociationTrainer");
  cont->Default();
  cont->Build();
  UploadClass("NAssociationFormer",cont);
 
- // Создаем группу нейронов для моделирования болевого ощущения (логическое НЕ)
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ)
 cont=new NLogicalNot;
 cont->SetName("LogicalNot");
 cont->Default();
 cont->Build();
 UploadClass("NLogicalNot",cont);
 
-// Создаем простой предиктор
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 cont=new NPredictor;
 cont->SetName("Predictor");
 cont->Default();
 cont->Build();
 UploadClass("NPredictor",cont);
 
-    // Создаем класс чтения датасета
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  cont=new NDataset;
  cont->SetName("Dataset");
  cont->Default();
  cont->Build();
  UploadClass("NDataset",cont);
 
-// Создаем предиктор состояния
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 cont=new NStatePredictor;
 cont->SetName("StatePredictor");
 cont->Default();
 cont->Build();
 UploadClass("NStatePredictor",cont);
 
-// Создаем классификатор с использованием PCA
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ PCA
 cont=new NPCAClassifier;
 cont->SetName("PCAClassifier");
 cont->Default();
@@ -1276,7 +1276,7 @@ UploadClass("NOdeSolver",cont);
 
  return;
 
- // Создаем самый мелкий нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  /*
  UEPtr<NPulseNeuron> n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,1,1);
@@ -1287,39 +1287,39 @@ UploadClass("NOdeSolver",cont);
  n->DelComponent("PNeuronMembrane.NegChannel.Synapse3");
  UploadClass("NSPMinNeuron",n);
           */
- // Создаем мелкий нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  /*
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,5,5);
  n->SetName("SPNeuron");
  UploadClass("NSPNeuron",n);
 
- // Создаем крупный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",3,1,1);
  n->SetName("LPNeuron");
  UploadClass("NLPNeuron",n);
 
- // Создаем мотонейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",3,10,10);
  n->SetName("Motoneuron");
  UploadClass("NMotoneuron",n);
 
- // Создаем клетку реншоу
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,5,5);
  n->SetName("RenshowCell");
  UploadClass("NRenshowCell",n);
 
- // Нейроны с оптимизированными синапсами
- // Создаем мелкий нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPSynNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,5,5);
  n->SetName("SPNeuron");
  UploadClass("NSynSPNeuron",n);
 
- // Создаем крупный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPSynNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",3,1,1);
  n->SetName("LPNeuron");
@@ -1327,86 +1327,86 @@ UploadClass("NOdeSolver",cont);
                          */
 
 			   /*
- // Создаем мотонейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPSynNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",3,10,10);
  n->SetName("Motoneuron");
  UploadClass("NSynMotoneuron",n);
 
- // Создаем клетку реншоу
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPSynNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,5,5);
  n->SetName("RenshowCell");
  UploadClass("NSynRenshowCell",n);
- // Конец нейронов с оптимизирванными синапсами
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                   */
 							/*
- // Непрерывные нейроны с оптимизированными синапсами
- // Создаем мелкий нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NCSynNeuronMembrane","NCLTZone",
  "NCNeuronPosCGenerator","NCNeuronNegCGenerator",1,5,5);
  n->SetName("SPNeuron");
  UploadClass("NContinuesSynSPNeuron",n);
 
- // Создаем крупный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NCSynNeuronMembrane","NCLTZone",
  "NCNeuronPosCGenerator","NCNeuronNegCGenerator",3,1,1);
  n->SetName("LPNeuron");
  UploadClass("NContinuesSynLPNeuron",n);
 
- // Создаем мотонейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NCSynNeuronMembrane","NCLTZone",
  "NCNeuronPosCGenerator","NCNeuronNegCGenerator",3,10,10);
  n->SetName("Motoneuron");
  UploadClass("NContinuesSynMotoneuron",n);
 
- // Создаем клетку реншоу
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NCSynNeuronMembrane","NCLTZone",
  "NCNeuronPosCGenerator","NCNeuronNegCGenerator",1,5,5);
  n->SetName("RenshowCell");
  UploadClass("NContinuesSynRenshowCell",n);
- // Конец непрерывных нейронов с оптимизирванными синапсами
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  */
 			 /*
- // Создаем мелкий нейрон с синапсами хебба
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseHebbNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronPosCGenerator","NPNeuronNegCGenerator",
  1,1,1);
  n->SetName("SPHebbNeuron");
  UploadClass("NSPHebbNeuron",n);
 
- // Создаем крупный нейрон с синапсами хебба
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseHebbNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronPosCGenerator","NPNeuronNegCGenerator",
  3,1,1);
  n->SetName("LPHebbNeuron");
  UploadClass("NLPHebbNeuron",n);
 				  */
 				  /*
- // Создаем мелкий живой нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPLifeNeuron","NPNeuronMembrane","NPLTZone","NPNeuronPosCGenerator","NPNeuronNegCGenerator",
  1,1,1);
  n->SetName("SPLifeNeuron");
  UploadClass("NSPLifeNeuron",n);
 
 
- // Создаем крупный живой нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPLifeNeuron","NPNeuronMembrane","NPLTZone","NPNeuronPosCGenerator","NPNeuronNegCGenerator",
  3,1,1);
  n->SetName("LPLifeNeuron");
  UploadClass("NLPLifeNeuron",n);
 
- // Создаем мелкий живой нейрон с синапсами хебба
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseHebbNeuron(dynamic_cast<UStorage*>(storage),"NPLifeNeuron","NPNeuronPosCGenerator","NPNeuronNegCGenerator",
  1,1,1);
  n->SetName("SPLifeHebbNeuron");
  UploadClass("NSPLifeHebbNeuron",n);
 
- // Создаем мелкий живой нейрон с синапсами хебба и дендритом
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseHebbNeuron(dynamic_cast<UStorage*>(storage),"NPLifeNeuron","NPNeuronPosCGenerator","NPNeuronNegCGenerator",
  1,1,1,4);
  n->SetName("SPDendriteLifeHebbNeuron");
  UploadClass("NSPDendriteLifeHebbNeuron",n);
 
- // Создаем крупный живой нейрон с синапсами хебба
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=CreateSimplePulseHebbNeuron(dynamic_cast<UStorage*>(storage),"NPLifeNeuron","NPNeuronPosCGenerator","NPNeuronNegCGenerator",
  3,1,1);
  n->SetName("LPLifeHebbNeuron");
@@ -1414,53 +1414,53 @@ UploadClass("NOdeSolver",cont);
 			   */
  /*
  // ============================================================================
- // Новые нейроны
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  // ----------------------------------------------------------------------------
- // Создаем мелкий нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNewNeuronMembrane","NPLTZoneNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,5,5);
  n->SetName("SPNeuron");
  UploadClass("NNewSPNeuron",n);
 
- // Создаем крупный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNewNeuronMembrane","NPLTZoneNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",3,1,1);
  n->SetName("LPNeuron");
  UploadClass("NNewLPNeuron",n);
 
- // Создаем мотонейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNewNeuronMembrane","NPLTZoneNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",3,10,10);
  n->SetName("Motoneuron");
  UploadClass("NNewMotoneuron",n);
 
- // Создаем клетку реншоу
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNewNeuronMembrane","NPLTZoneNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,5,5);
  n->SetName("RenshowCell");
  UploadClass("NNewRenshowCell",n);
 				 */
 				 /*
-  // Создаем мелкий живой нейрон
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPLifeNeuron","NPNewNeuronMembrane","NPLTZoneNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator", 1,1,1);
  n->SetName("SPLifeNeuron");
  UploadClass("NNewSPLifeNeuron",n);      */
 					   /*
- // Нейроны с оптимизированными синапсами
- // Создаем мелкий нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNewSynNeuronMembrane","NPLTZoneSynNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,5,5);
  n->SetName("SPNeuron");
  UploadClass("NNewSynSPNeuron",n);
 
- // Создаем крупный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNewSynNeuronMembrane","NPLTZoneSynNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",3,1,1);
  n->SetName("LPNeuron");
  UploadClass("NNewSynLPNeuron",n);
 								 */
-  //Создаём нейрон для уровня TCN
+  //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ TCN
  int dl[] = {4,1,1,1};
  std::vector<int> dendrit_length (dl, dl + sizeof(dl) / sizeof(int) );
  n=CreateCustomSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPSynNeuronMembrane","NPLTZone",
@@ -1468,7 +1468,7 @@ UploadClass("NOdeSolver",cont);
  n->SetName("TCNNeuron");
  UploadClass("NSynTCNNeuron",n);
 
- //Создаём нейрон для уровня TCN
+ //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ TCN
  int new_dl[] = {4,1,1,1};
  std::vector<int> new_dendrit_length (new_dl, new_dl + sizeof(new_dl) / sizeof(int) );
  n=CreateCustomNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNewSynNeuronMembrane","NPLTZoneSynNeuronMembrane","NPLTZone",
@@ -1476,35 +1476,35 @@ UploadClass("NOdeSolver",cont);
  n->SetName("TCNNeuron");
  UploadClass("NNewSynTCNNeuron",n);
   /*
- // Создаем мотонейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNewSynNeuronMembrane","NPLTZoneSynNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",3,10,10);
  n->SetName("Motoneuron");
  UploadClass("NNewSynMotoneuron",n);
 
- // Создаем клетку реншоу
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNewSynNeuronMembrane","NPLTZoneSynNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,5,5);
  n->SetName("RenshowCell");
  UploadClass("NNewSynRenshowCell",n);
 
-  // Создаем мелкий нейрон с синапсами хебба
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
   n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronHebbMembrane","NPLTZoneNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,5,5);
  n->SetName("SPNeuron");
  UploadClass("NNewSPHebbNeuron",n);
 
- // Создаем крупный нейрон с синапсами хебба
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronHebbMembrane","NPLTZoneNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",3,1,1);
  n->SetName("LPNeuron");
  UploadClass("NNewLPHebbNeuron",n);
 
- // Конец нейронов с оптимизирванными синапсами
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  // ============================================================================
 */
  // ============================================================================
- // Нейроны как в статьях
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
  // ============================================================================
 /*
  {
@@ -1535,7 +1535,7 @@ UploadClass("NOdeSolver",cont);
  }                                 */
  // ============================================================================
           /*
- // Создаем афферентный нейрон
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  an=CreateAfferentNeuron(dynamic_cast<UStorage*>(storage),"NPNeuronMembrane","NPLTZone","NPNeuronPosCGenerator","NPNeuronNegCGenerator",
  1);
  an->SetName("AfferentNeuron");
@@ -1589,9 +1589,9 @@ UploadClass("NOdeSolver",cont);
 // --------------------------
 
 // --------------------------
-// Методы создания составных моделей
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Метод формирования модели простого импульсного нейрона
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length)
 {
@@ -1631,16 +1631,16 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
  item.Index=0;
  conn.Index=-1;
 
- // Устанавливаем обратную связь
- item.Id=ltzone->GetLongId(n);
- conn.Id=ltmembr->GetLongId(n);
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+ item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ conn.Id=ltmembr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
  res=n->CreateLink(item,conn);
 
- // Устанавливаем связь генератора с мембраной
- item.Id=ltchannel1->GetLongId(n);
- conn.Id=ltzone->GetLongId(n);
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ item.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
  res=n->CreateLink(item,conn);
- item.Id=ltchannel2->GetLongId(n);
+ item.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
  res=n->CreateLink(item,conn);
 
 
@@ -1668,21 +1668,21 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
   item.Index=0;
   conn.Index=-1;
 
-  // Устанавливаем связь генератора с мембраной
-  item.Id=channel1->GetLongId(n);
-  conn.Id=ltchannel1->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(n);
-  conn.Id=ltchannel2->GetLongId(n);
-  res=n->CreateLink(item,conn);
-
-  // Связь между начальными значениями мощностей ионных каналов и каналами
-  item.Id=gen_neg->GetLongId(n);
-  conn.Id=channel1->GetLongId(n);
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
 
-  item.Id=gen_pos->GetLongId(n);
-  conn.Id=channel2->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  res=n->CreateLink(item,conn);
+
+  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
  }
 
@@ -1712,11 +1712,11 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
  UStringLinkSide sitem, sconn;
  if(!synapse_list.empty())
  {
-   // Устанавливаем связь генератора с синапсами хебба
+   // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
   sitem.Id=ltzone->GetLongName(n);
   sitem.Name="DataOutput0";
   sconn.Name="DataInput1";
-  item.Id=ltzone->GetLongId(n);
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   item.Index=0;
   conn.Index=1;
   for(size_t j=0;j<synapse_list.size();j++)
@@ -1724,7 +1724,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
    if(synapse_list[j])
    {
 	sconn.Id=synapse_list[j]->GetLongName(n);
-	conn.Id=synapse_list[j]->GetLongId(n);
+	conn.Id=synapse_list[j]->GetLongId(std::shared_ptr<UContainer>(n.Get()));
 	res=n->CreateLink(item,conn);
    }
   }
@@ -1736,9 +1736,9 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
   UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
   lifeneuron->AddComponent(nlife);
 
-  item.Id=ltzone->GetLongId(n);
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   item.Index=0;//1;
-  conn.Id=nlife->GetLongId(n);
+  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   conn.Index=0;
   res=n->CreateLink(item,conn);
  }
@@ -1748,7 +1748,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
 
  return dynamic_pointer_cast<NPulseNeuron>(n);
 }
-// Метод формирования модели простого импульсного нейрона с произвольной дендритной структурой
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, vector<int> &dendrite_length)
 {
@@ -1787,16 +1787,16 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
  item.Index=0;
  conn.Index=-1;
 
- // Устанавливаем обратную связь
- item.Id=ltzone->GetLongId(n);
- conn.Id=ltmembr->GetLongId(n);
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+ item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ conn.Id=ltmembr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
  res=n->CreateLink(item,conn);
 
- // Устанавливаем связь генератора с мембраной
- item.Id=ltchannel1->GetLongId(n);
- conn.Id=ltzone->GetLongId(n);
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ item.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
  res=n->CreateLink(item,conn);
- item.Id=ltchannel2->GetLongId(n);
+ item.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
  res=n->CreateLink(item,conn);
 
 
@@ -1813,12 +1813,12 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
   item.Index=0;
   conn.Index=-1;
 
-  // Устанавливаем связь генератора с мембраной
-  item.Id=channel1->GetLongId(n);
-  conn.Id=ltchannel1->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(n);
-  conn.Id=ltchannel2->GetLongId(n);
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
 
   for(int j=1;j<dendrite_length[i];j++)
@@ -1829,11 +1829,11 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
    channel1temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
    channel2temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
 
-   item.Id=channel1temp->GetLongId(n);
-   conn.Id=channel1->GetLongId(n);
+   item.Id=channel1temp->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
    res=n->CreateLink(item,conn);
-   item.Id=channel2temp->GetLongId(n);
-   conn.Id=channel2->GetLongId(n);
+   item.Id=channel2temp->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
    res=n->CreateLink(item,conn);
 
    channel1 = channel1temp;
@@ -1841,13 +1841,13 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
 
   }
 
-  // Связь между начальными значениями мощностей ионных каналов и каналами
-  item.Id=gen_neg->GetLongId(n);
-  conn.Id=channel1->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
 
-  item.Id=gen_pos->GetLongId(n);
-  conn.Id=channel2->GetLongId(n);
+  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
  }
 /*
@@ -1858,9 +1858,9 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
   UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
   lifeneuron->AddComponent(nlife);
 
-  item.Id=ltzone->GetLongId(n);
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   item.Index=0;//1;
-  conn.Id=nlife->GetLongId(n);
+  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   conn.Index=0;
   res=n->CreateLink(item,conn);
  }*/
@@ -1871,7 +1871,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
  return dynamic_pointer_cast<NPulseNeuron>(n);
 }
 
-// Метод формирования модели простого импульсного нейрона
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length)
 {
@@ -1913,25 +1913,25 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, co
   item.Index=0;
   conn.Index=-1;
 
-  // Устанавливаем обратную связь
-  item.Id=ltzone->GetLongId(n);
-  conn.Id=membr->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
 
-  // Устанавливаем связь генератора с мембраной
-  item.Id=channel1->GetLongId(n);
-  conn.Id=ltzone->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(n);
-  res=n->CreateLink(item,conn);
-
-  // Связь между начальными значениями мощностей ионных каналов и каналами
-  item.Id=gen_neg->GetLongId(n);
-  conn.Id=channel1->GetLongId(n);
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
 
-  item.Id=gen_pos->GetLongId(n);
-  conn.Id=channel2->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  res=n->CreateLink(item,conn);
+
+  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
  }
 
@@ -1952,9 +1952,9 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, co
   UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
   lifeneuron->AddComponent(nlife);
 
-  item.Id=ltzone->GetLongId(n);
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   item.Index=0;//1;
-  conn.Id=nlife->GetLongId(n);
+  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   conn.Index=0;
   res=n->CreateLink(item,conn);
  }
@@ -1965,7 +1965,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, co
  return dynamic_pointer_cast<NPulseNeuron>(n);
 }
 
-// Метод формирования модели простого импульсного нейрона с произвольной дендритной структурой
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, std::vector<int> dendrite_length)
 {
@@ -2007,16 +2007,16 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
   item.Index=0;
   conn.Index=-1;
 
-  // Устанавливаем обратную связь
-  item.Id=ltzone->GetLongId(n);
-  conn.Id=membr->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
 
-  // Устанавливаем связь генератора с мембраной
-  item.Id=channel1->GetLongId(n);
-  conn.Id=ltzone->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(n);
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
 
   for(int j=1;j<dendrite_length[i];j++)
@@ -2027,11 +2027,11 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
    channel1temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
    channel2temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
 
-   item.Id=channel1temp->GetLongId(n);
-   conn.Id=channel1->GetLongId(n);
+   item.Id=channel1temp->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
    res=n->CreateLink(item,conn);
-   item.Id=channel2temp->GetLongId(n);
-   conn.Id=channel2->GetLongId(n);
+   item.Id=channel2temp->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
    res=n->CreateLink(item,conn);
 
    channel1 = channel1temp;
@@ -2039,13 +2039,13 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
 
   }
 
-  // Связь между начальными значениями мощностей ионных каналов и каналами
-  item.Id=gen_neg->GetLongId(n);
-  conn.Id=channel1->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
 
-  item.Id=gen_pos->GetLongId(n);
-  conn.Id=channel2->GetLongId(n);
+  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
  }
 
@@ -2056,9 +2056,9 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
   UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
   lifeneuron->AddComponent(nlife);
 
-  item.Id=ltzone->GetLongId(n);
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   item.Index=0;//1;
-  conn.Id=nlife->GetLongId(n);
+  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   conn.Index=0;
   res=n->CreateLink(item,conn);
  }
@@ -2069,7 +2069,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
  return dynamic_pointer_cast<NPulseNeuron>(n);
 }
 
-// Метод формирования модели простого импульсного нейрона с синапсами хебба
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage, const string &neuronclass, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length)
 {
@@ -2121,27 +2121,27 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
   item.Index=0;
   conn.Index=-1;
 
-  // Устанавливаем обратную связь
-  item.Id=ltzone->GetLongId(n);
-  conn.Id=membr->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
 
-  // Устанавливаем связь генератора с мембраной
-  item.Id=channel1->GetLongId(n);
-  conn.Id=ltzone->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(n);
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   res=n->CreateLink(item,conn);
 
   if(dendrite_length == 1 || i != 0)
   {
-   // Связь между начальными значениями мощностей ионных каналов и каналами
-   item.Id=gen_neg->GetLongId(n);
-   conn.Id=channel1->GetLongId(n);
+   // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+   item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
    res=n->CreateLink(item,conn);
 
-   item.Id=gen_pos->GetLongId(n);
-   conn.Id=channel2->GetLongId(n);
+   item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
    res=n->CreateLink(item,conn);
   }
 
@@ -2168,38 +2168,38 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
   for(int j=0;j<channel2->GetNumComponents();j++)
    synapse_list.push_back(dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j)));
 
-   // Связь между каналами в цепочке
-   item.Id=channel1->GetLongId(n);
-   conn.Id=dchannel1->GetLongId(n);
+   // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+   item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   conn.Id=dchannel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
    res=n->CreateLink(item,conn);
 
-   item.Id=channel2->GetLongId(n);
-   conn.Id=dchannel2->GetLongId(n);
+   item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   conn.Id=dchannel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
    res=n->CreateLink(item,conn);
 
    dchannel1=channel1;
    dchannel2=channel2;
  }
 
- // Связь между начальными значениями мощностей ионных каналов и каналами
- item.Id=gen_neg->GetLongId(n);
- conn.Id=channel1->GetLongId(n);
+ // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
  res=n->CreateLink(item,conn);
 
- item.Id=gen_pos->GetLongId(n);
- conn.Id=channel2->GetLongId(n);
+ item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
  res=n->CreateLink(item,conn);
 
 
-  // Устанавливаем связь генератора с синапсами хебба
-  item.Id=ltzone->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   item.Index=0;
   conn.Index=1;
   for(size_t j=0;j<synapse_list.size();j++)
   {
    if(synapse_list[j])
    {
-    conn.Id=synapse_list[j]->GetLongId(n);
+    conn.Id=synapse_list[j]->GetLongId(std::shared_ptr<UContainer>(n.Get()));
     res=n->CreateLink(item,conn);
    }
   }
@@ -2210,9 +2210,9 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
   UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
   lifeneuron->AddComponent(nlife);
 
-  item.Id=ltzone->GetLongId(n);
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   item.Index=0;//1;
-  conn.Id=nlife->GetLongId(n);
+  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   conn.Index=0;
   res=n->CreateLink(item,conn);
  }*/
@@ -2223,7 +2223,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
  return dynamic_pointer_cast<NPulseNeuron>(n);
 }
 
-// Метод формирования модели афферентного нейрона
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 UEPtr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *storage, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes)
 {
  UEPtr<UContainer> membr;
@@ -2270,33 +2270,33 @@ UEPtr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *storage, co
 //  channel1->SetNumInputs(2);
 
   channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));//(storage->TakeObject("NPChannel"));
-  // Устанавливаем обратную связь
-  item.Id=ltzone->GetLongId(n);
-  conn.Id=membr->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   linkres&=n->CreateLink(item,conn);
 
-  // Устанавливаем связь генератора с мембраной
-  item.Id=channel1->GetLongId(n);
-  conn.Id=ltzone->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   linkres&=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(n);
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
 //  conn.Index=1;
   linkres&=res=n->CreateLink(item,conn);
 //  conn.Index=0;
 
-  // Связь между начальными значениями мощностей ионных каналов и каналами
-  item.Id=gen_neg->GetLongId(n);
-  conn.Id=channel1->GetLongId(n);
+  // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   conn.Index=0;
   linkres&=n->CreateLink(item,conn);
 
-  item.Id=receptor->GetLongId(n);
-  conn.Id=channel2->GetLongId(n);
+  item.Id=receptor->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   conn.Index=0;
   linkres&=n->CreateLink(item,conn);
 
-//  item.Id=gen_pos->GetLongId(n);
-//  conn.Id=channel2->GetLongId(n);
+//  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+//  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
 //  linkres=n->CreateLink(item,conn);
  }
 
@@ -2310,7 +2310,7 @@ UEPtr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *storage, co
 }
 
 
-// Метод формирования модели простого афферентного нейрона
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 UEPtr<NAfferentNeuron> NPulseLibrary::CreateSimpleAfferentNeuron(UStorage *storage, const string &ltzone_class, double max_output)
 {
  UEPtr<UContainer> membr;
@@ -2346,8 +2346,8 @@ UEPtr<NAfferentNeuron> NPulseLibrary::CreateSimpleAfferentNeuron(UStorage *stora
   receptor->MaxOutputRange=max_output;
   res=n->AddComponent(receptor);
 
-  item.Id=receptor->GetLongId(n);
-  conn.Id=ltzone->GetLongId(n);
+  item.Id=receptor->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
   conn.Index=-1;
   linkres&=n->CreateLink(item,conn);
 

@@ -499,7 +499,7 @@ bool NConditionedReflex::ACalculate(void)
 			if(value > 0)
 			{
 				is_first_spike = true;
-				first_spike_time = Environment->GetTime().GetDoubleTime();
+				first_spike_time = Environment.lock()->GetTime().GetDoubleTime();
 				if(is_second_spike)
 					ready_time = first_spike_time;
 			}
@@ -515,7 +515,7 @@ bool NConditionedReflex::ACalculate(void)
 			if(value > 0)
 			{
 				is_second_spike = true;
-				second_spike_time = Environment->GetTime().GetDoubleTime();
+				second_spike_time = Environment.lock()->GetTime().GetDoubleTime();
 				if(is_first_spike)
 					ready_time = second_spike_time;
 			}
@@ -524,7 +524,7 @@ bool NConditionedReflex::ACalculate(void)
 		// Если оба пришли:
 		if(is_first_spike && is_second_spike)
 		{
-			double curr_time = Environment->GetTime().GetDoubleTime();
+			double curr_time = Environment.lock()->GetTime().GetDoubleTime();
 			if(curr_time - ready_time < Delay)
                 return true;
 
