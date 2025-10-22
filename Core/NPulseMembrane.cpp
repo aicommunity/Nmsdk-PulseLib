@@ -90,22 +90,22 @@ NPulseSynapseCommon* NPulseMembrane::GetInhibitorySynapses(size_t i)
  return InhibitorySynapses[i];
 }
 
-bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannelCommon> channel, UEPtr<UIPointer> pointer)
+bool NPulseMembrane::UpdateChannelData(std::shared_ptr<NPulseChannelCommon> channel, std::shared_ptr<UIPointer> pointer)
 {
   vector<NPulseChannelCommon* >::iterator I;
   if(channel->Type() < 0)
   {
-   if(find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel) == ExcitatoryChannels.end())
-	ExcitatoryChannels.push_back(channel);
-   if((I=find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel)) != InhibitoryChannels.end())
+   if(find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel.get()) == ExcitatoryChannels.end())
+	ExcitatoryChannels.push_back(channel.get());
+   if((I=find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel.get())) != InhibitoryChannels.end())
 	InhibitoryChannels.erase(I);
   }
   else
   if(channel->Type() > 0)
   {
-   if(find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel) == InhibitoryChannels.end())
-	InhibitoryChannels.push_back(channel);
-   if((I=find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel)) != ExcitatoryChannels.end())
+   if(find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel.get()) == InhibitoryChannels.end())
+	InhibitoryChannels.push_back(channel.get());
+   if((I=find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel.get())) != ExcitatoryChannels.end())
 	ExcitatoryChannels.erase(I);
   }
 
@@ -115,22 +115,22 @@ bool NPulseMembrane::UpdateChannelData(UEPtr<NPulseChannelCommon> channel, UEPtr
  return true;
 }
 
-bool NPulseMembrane::UpdateSynapseData(UEPtr<NPulseSynapseCommon> synapse, UEPtr<UIPointer> pointer)
+bool NPulseMembrane::UpdateSynapseData(std::shared_ptr<NPulseSynapseCommon> synapse, std::shared_ptr<UIPointer> pointer)
 {
     vector<NPulseSynapseCommon* >::iterator I;
     if(synapse->Type() < 0)
     {
-     if(find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse) == ExcitatorySynapses.end())
-      ExcitatorySynapses.push_back(synapse);
-     if((I=find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse)) != InhibitorySynapses.end())
+     if(find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse.get()) == ExcitatorySynapses.end())
+      ExcitatorySynapses.push_back(synapse.get());
+     if((I=find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse.get())) != InhibitorySynapses.end())
       InhibitorySynapses.erase(I);
     }
     else
     if(synapse->Type() > 0)
     {
-     if(find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse) == InhibitorySynapses.end())
-      InhibitorySynapses.push_back(synapse);
-     if((I=find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse)) != ExcitatorySynapses.end())
+     if(find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse.get()) == InhibitorySynapses.end())
+      InhibitorySynapses.push_back(synapse.get());
+     if((I=find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse.get())) != ExcitatorySynapses.end())
       ExcitatorySynapses.erase(I);
     }
 
@@ -203,40 +203,40 @@ NPulseMembrane* NPulseMembrane::New(void)
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NPulseMembrane::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
  if(!NPulseMembraneCommon::AAddComponent(comp,pointer))
   return false;
 
- UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(comp);
+ std::shared_ptr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(comp);
  if(channel)
  {
   if(channel->Type <0)
   {
-   if(find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel) == ExcitatoryChannels.end())
-    ExcitatoryChannels.push_back(channel);
+   if(find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel.get()) == ExcitatoryChannels.end())
+    ExcitatoryChannels.push_back(channel.get());
   }
   else
   if(channel->Type >0)
   {
-   if(find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel) == InhibitoryChannels.end())
-    InhibitoryChannels.push_back(channel);
+   if(find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel.get()) == InhibitoryChannels.end())
+    InhibitoryChannels.push_back(channel.get());
   }
  }
 
- UEPtr<NPulseSynapseCommon> synapse=dynamic_pointer_cast<NPulseSynapseCommon>(comp);
+ std::shared_ptr<NPulseSynapseCommon> synapse=dynamic_pointer_cast<NPulseSynapseCommon>(comp);
  if(synapse)
  {
   if(synapse->Type < 0)
   {
-   if(find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse) == ExcitatorySynapses.end())
-    ExcitatorySynapses.push_back(synapse);
+   if(find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse.get()) == ExcitatorySynapses.end())
+    ExcitatorySynapses.push_back(synapse.get());
   }
   else
   if(synapse->Type > 0)
   {
-   if(find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse) == InhibitorySynapses.end())
-    InhibitorySynapses.push_back(synapse);
+   if(find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse.get()) == InhibitorySynapses.end())
+    InhibitorySynapses.push_back(synapse.get());
   }
  }
 
@@ -247,31 +247,31 @@ bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poin
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
+bool NPulseMembrane::ADelComponent(std::shared_ptr<UContainer> comp)
 {
 
- UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(comp);
+ std::shared_ptr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(comp);
  if(channel)
  {
   vector<NPulseChannelCommon*>::iterator I;
-  I=find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel);
+  I=find(ExcitatoryChannels.begin(),ExcitatoryChannels.end(),channel.get());
   if(I != ExcitatoryChannels.end())
    ExcitatoryChannels.erase(I);
 
-  I=find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel);
+  I=find(InhibitoryChannels.begin(),InhibitoryChannels.end(),channel.get());
   if(I != InhibitoryChannels.end())
    InhibitoryChannels.erase(I);
  }
 
- UEPtr<NPulseSynapseCommon> synapse=dynamic_pointer_cast<NPulseSynapseCommon>(comp);
+ std::shared_ptr<NPulseSynapseCommon> synapse=dynamic_pointer_cast<NPulseSynapseCommon>(comp);
  if(synapse)
  {
   vector<NPulseSynapseCommon*>::iterator I;
-  I=find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse);
+  I=find(ExcitatorySynapses.begin(),ExcitatorySynapses.end(),synapse.get());
   if(I != ExcitatorySynapses.end())
    ExcitatorySynapses.erase(I);
 
-  I=find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse);
+  I=find(InhibitorySynapses.begin(),InhibitorySynapses.end(),synapse.get());
   if(I != InhibitorySynapses.end())
    InhibitorySynapses.erase(I);
  }
@@ -287,7 +287,7 @@ bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseMembrane::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseMembrane::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseChannelCommon>(comp) ||
     dynamic_pointer_cast<NPulseSynapseCommon>(comp))
@@ -324,8 +324,8 @@ bool NPulseMembrane::ABuild(void)
 {
  if(!Storage.lock())
   return true;
- UEPtr<NPulseChannelCommon> exc_channel;
- UEPtr<NPulseChannelCommon> inh_channel;
+ std::shared_ptr<NPulseChannelCommon> exc_channel;
+ std::shared_ptr<NPulseChannelCommon> inh_channel;
  bool res=true;
 
  if(!ExcChannelClassName->empty())
@@ -339,7 +339,7 @@ bool NPulseMembrane::ABuild(void)
 
   for(int i=NumExcitatorySynapses;i<old_ex_synapses;i++)
   {
-   UEPtr<UContainer> syn = GetComponentL(std::string("ExcSynapse")+sntoa(i+1), true);
+   std::shared_ptr<UContainer> syn = GetComponentL(std::string("ExcSynapse")+sntoa(i+1), true);
    if(syn)
     DelComponent(syn, true);
 //    GetStorage()->ReturnObject(syn);
@@ -348,7 +348,7 @@ bool NPulseMembrane::ABuild(void)
 							  // �� ���� �������� ��������� AddMissingComponent
   for(int i=0;i<NumExcitatorySynapses;i++)
   {
-   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("ExcSynapse")+sntoa(i+1), SynapseClassName);
+   std::shared_ptr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("ExcSynapse")+sntoa(i+1), SynapseClassName);
    synapse->Type = -1;
 //   ExcitatorySynapses.push_back(synapse);
    res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
@@ -368,7 +368,7 @@ bool NPulseMembrane::ABuild(void)
   int old_in_synapses=int(InhibitorySynapses.size());
   for(int i=NumInhibitorySynapses;i<old_in_synapses;i++)
   {
-   UEPtr<UContainer> syn = GetComponentL(std::string("InhSynapse")+sntoa(i+1), true);
+   std::shared_ptr<UContainer> syn = GetComponentL(std::string("InhSynapse")+sntoa(i+1), true);
    if(syn)
     DelComponent(syn, true);
     //GetStorage()->ReturnObject(syn);
@@ -378,7 +378,7 @@ bool NPulseMembrane::ABuild(void)
 							  // �� ���� �������� ��������� AddMissingComponent
   for(int i=0;i<NumInhibitorySynapses;i++)
   {
-   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("InhSynapse")+sntoa(i+1), SynapseClassName);
+   std::shared_ptr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("InhSynapse")+sntoa(i+1), SynapseClassName);
    synapse->Type = 1;
 
  //  InhibitorySynapses.push_back(synapse);

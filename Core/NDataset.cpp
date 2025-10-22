@@ -169,13 +169,13 @@ UComponent* NDataset::NewStatic(void)
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-bool NDataset::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NDataset::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
-    UEPtr<NPulseGeneratorTransit> generator=dynamic_pointer_cast<NPulseGeneratorTransit>(comp);
+    std::shared_ptr<NPulseGeneratorTransit> generator=dynamic_pointer_cast<NPulseGeneratorTransit>(comp);
     if(generator)
     {
-      if(find(Generators.begin(),Generators.end(),generator) == Generators.end())
-       Generators.push_back(generator);
+      if(find(Generators.begin(),Generators.end(),generator.get()) == Generators.end())
+       Generators.push_back(generator.get());
     }
     return true;
 }
@@ -184,13 +184,13 @@ bool NDataset::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-bool NDataset::ADelComponent(UEPtr<UContainer> comp)
+bool NDataset::ADelComponent(std::shared_ptr<UContainer> comp)
 {
-    UEPtr<NPulseGeneratorTransit> generator=dynamic_pointer_cast<NPulseGeneratorTransit>(comp);
+    std::shared_ptr<NPulseGeneratorTransit> generator=dynamic_pointer_cast<NPulseGeneratorTransit>(comp);
     if(generator)
     {
      vector<NPulseGeneratorTransit*>::iterator I;
-     I=find(Generators.begin(),Generators.end(),generator.Get());
+     I=find(Generators.begin(),Generators.end(),generator.get());
      if(I != Generators.end())
       Generators.erase(I);
     }
@@ -238,7 +238,7 @@ bool NDataset::ABuild(void)
     int old_ex_generators=int(Generators.size());
     for(int i=NumGenerators;i<old_ex_generators;i++)
     {
-     UEPtr<UContainer> gen = GetComponentL(std::string("Generator")+sntoa(i+1), true);
+     std::shared_ptr<UContainer> gen = GetComponentL(std::string("Generator")+sntoa(i+1), true);
      if(gen)
       DelComponent(gen, true);
       //GetStorage()->ReturnObject(gen);
@@ -246,7 +246,7 @@ bool NDataset::ABuild(void)
 
     for(int i=0;i<NumGenerators;i++)
     {
-     UEPtr<NPulseGeneratorTransit> generator=AddMissingComponent<NPulseGeneratorTransit>(std::string("Generator")+sntoa(i+1), PulseGeneratorClassName);
+     std::shared_ptr<NPulseGeneratorTransit> generator=AddMissingComponent<NPulseGeneratorTransit>(std::string("Generator")+sntoa(i+1), PulseGeneratorClassName);
      generator->SetCoord(MVector<double,3>(5+i*6,1.7,0));
     }
   return true;

@@ -170,7 +170,7 @@ NNeuronLife* NNeuronLife::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NNeuronLife::CheckComponentType(UEPtr<UContainer> comp) const
+bool NNeuronLife::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NSum>(comp))
   return true;
@@ -190,7 +190,11 @@ bool NNeuronLife::CheckComponentType(UEPtr<UContainer> comp) const
 // � ������ �������� ������
 bool NNeuronLife::ABuild(void)
 {
- AddMissingComponent<NSum>("ExternalEnergyBonus","NSum",&ExternalEnergyBonus);
+ AddMissingComponent<NSum>(
+  "ExternalEnergyBonus",
+  "NSum",
+  std::shared_ptr<UIPointer>(&ExternalEnergyBonus, RDK::NonOwningDeleter())
+ );
  return true;
 }
  // �������������� �������� �� ��������� � ����� �������� �����
@@ -413,7 +417,7 @@ bool NNeuronLife::ACalculate(void)
 
  if(Energy.v < 0) // ������ 0 ������ ���� �������� ����������� ��������
  {
-  UEPtr<UItem> item=UEPtr<UItem>(dynamic_pointer_cast<UItem>(std::shared_ptr<UComponent>(Owner)).get());
+  std::shared_ptr<UItem> item=std::shared_ptr<UItem>(dynamic_pointer_cast<UItem>(std::shared_ptr<UComponent>(Owner)).get());
   if(item)
   {
    item->SetActivity(false);

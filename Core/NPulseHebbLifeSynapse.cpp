@@ -51,13 +51,13 @@ NPulseHebbLifeSynapse* NPulseHebbLifeSynapse::New(void)
 bool NPulseHebbLifeSynapse::InstallLifeConnection(void)
 {
  bool res=true;
- UEPtr<NPulseLifeNeuron> mlowner=UEPtr<NPulseLifeNeuron>(dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner.lock()).get());
+ std::shared_ptr<NPulseLifeNeuron> mlowner=std::shared_ptr<NPulseLifeNeuron>(dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner.lock()).get());
 
  if(mlowner && mlowner->GetNeuronLife())
  {
   RDK::UStringLinkSide item,conn;
-  UEPtr<UConnector> connected_component=GetAConnectorByIndex("Output", 0);
-  UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(connected_component);
+  std::shared_ptr<UConnector> connected_component=GetAConnectorByIndex("Output", 0);
+  std::shared_ptr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(connected_component);
   if(!channel)
    return false;
 
@@ -107,7 +107,7 @@ bool NPulseHebbLifeSynapse::ACalculate2(void)
 
  if(MainOwner.lock() && Owner.lock())
  {
-  UEPtr<NPulseLifeNeuron> neuron=UEPtr<NPulseLifeNeuron>(dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner.lock()).get());
+  std::shared_ptr<NPulseLifeNeuron> neuron=std::shared_ptr<NPulseLifeNeuron>(dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner.lock()).get());
   if(neuron)
   {
    if(Type>0)

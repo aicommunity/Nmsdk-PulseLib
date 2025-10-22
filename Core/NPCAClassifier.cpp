@@ -176,7 +176,7 @@ UComponent* NPCAClassifier::NewStatic(void)
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NPCAClassifier::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NPCAClassifier::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
 
  return true;
@@ -186,7 +186,7 @@ bool NPCAClassifier::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poin
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NPCAClassifier::ADelComponent(UEPtr<UContainer> comp)
+bool NPCAClassifier::ADelComponent(std::shared_ptr<UContainer> comp)
 {
 
  return true;

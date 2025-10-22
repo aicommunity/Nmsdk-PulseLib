@@ -137,7 +137,7 @@ UComponent* NPredictor::NewStatic(void)
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-bool NPredictor::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NPredictor::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
 
  return true;
@@ -147,7 +147,7 @@ bool NPredictor::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-bool NPredictor::ADelComponent(UEPtr<UContainer> comp)
+bool NPredictor::ADelComponent(std::shared_ptr<UContainer> comp)
 {
 
  return true;

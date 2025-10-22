@@ -123,7 +123,7 @@ NAfferentNeuron* NAfferentNeuron::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NAfferentNeuron::CheckComponentType(UEPtr<UContainer> comp) const
+bool NAfferentNeuron::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseMembrane>(comp) ||
 	dynamic_pointer_cast<NLTZone>(comp) ||
@@ -144,10 +144,10 @@ bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const
 					const string &receptorclass, const string &neg_gen_class,
 					/*const string &neg_gen_class,*/ int num_membranes)
 {
- UEPtr<UContainer> membr;
- UEPtr<NPulseChannel> channel1, channel2;
- UEPtr<NLTZone> ltzone;
- UEPtr<NReceptor> receptor;
+ std::shared_ptr<UContainer> membr;
+ std::shared_ptr<NPulseChannel> channel1, channel2;
+ std::shared_ptr<NLTZone> ltzone;
+ std::shared_ptr<NReceptor> receptor;
  bool res=true;
 
  auto storage = Storage.lock();
@@ -158,7 +158,7 @@ if(!storage)
  ltzone->Threshold=0;
  ltzone->SetCoord(MVector<double,3>(20,3,0));
 
- UEPtr<NConstGenerator> gen_neg;
+ std::shared_ptr<NConstGenerator> gen_neg;
  gen_neg=AddMissingComponent<NConstGenerator>("NegGenerator", neg_gen_class);
  gen_neg->SetCoord(MVector<double,3>(12,6.33,0));
  //gen_neg=dynamic_pointer_cast<NConstGenerator>(Storage->TakeObject(neg_gen_class));
@@ -187,15 +187,15 @@ if(!storage)
   channel2=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
 
   // ������������� �������� �����
-  res&=CreateLink(ltzone->GetLongName(this),"Output",membr->GetLongName(this),"InputFeedbackSignal");
+  res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",membr->GetLongName(GetThisAsSharedContainer()),"InputFeedbackSignal");
 
   // ������������� ����� �������� � �������������� �����
-  res&=CreateLink(channel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
-  res&=CreateLink(channel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+  res&=CreateLink(channel1->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
+  res&=CreateLink(channel2->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
 
   // ����� ����� ���������� ���������� ��������� ������ ������� � ��������
-  res&=CreateLink(receptor->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
-  res&=CreateLink(gen_neg->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
+  res&=CreateLink(receptor->GetLongName(GetThisAsSharedContainer()),"Output",channel2->GetLongName(GetThisAsSharedContainer()),"ChannelInputs");
+  res&=CreateLink(gen_neg->GetLongName(GetThisAsSharedContainer()),"Output",channel1->GetLongName(GetThisAsSharedContainer()),"ChannelInputs");
  }
 
  return res;
@@ -205,10 +205,10 @@ if(!storage)
 bool NAfferentNeuron::BuildSimpleStructure(const string &ltzone_class,
 					const string &receptorclass, double max_output)
 {
- UEPtr<UContainer> membr;
- UEPtr<NPulseChannel> channel1, channel2;
- UEPtr<NLTZone> ltzone;
- UEPtr<NReceptor> receptor;
+ std::shared_ptr<UContainer> membr;
+ std::shared_ptr<NPulseChannel> channel1, channel2;
+ std::shared_ptr<NLTZone> ltzone;
+ std::shared_ptr<NReceptor> receptor;
  bool res(true);
 
  auto storage = Storage.lock();
@@ -231,7 +231,7 @@ if(!storage)
  ltzone->Threshold=0;
  ltzone->SetCoord(MVector<double,3>(13,3,0));
 
- res&=CreateLink(receptor->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+ res&=CreateLink(receptor->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
 
  return res;
 }

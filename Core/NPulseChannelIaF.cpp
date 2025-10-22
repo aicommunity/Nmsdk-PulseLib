@@ -100,7 +100,7 @@ bool NPulseChannelIaF::ACalculate2(void)
  }
 
  // ��������� ���������� �� �������� �����
- UEPtr<NPulseMembrane> membrane=UEPtr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
+ std::shared_ptr<NPulseMembrane> membrane=std::shared_ptr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
  if(IsNeuronActivated && membrane && fabs(membrane->Feedback)>1e-3)
   Vm(0,0)=VReset;
 

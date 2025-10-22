@@ -53,7 +53,7 @@ NPulseLTZoneThreshold* NPulseLTZoneThreshold::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseLTZoneThreshold::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseLTZoneThreshold::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  return false;
 }
@@ -233,7 +233,7 @@ NPulseLTZone* NPulseLTZone::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseLTZone::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseLTZone::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
 // if(dynamic_cast<const NConnector*>(comp))
 //  return true;
@@ -328,7 +328,7 @@ NContinuesLTZone* NContinuesLTZone::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NContinuesLTZone::CheckComponentType(UEPtr<UContainer> comp) const
+bool NContinuesLTZone::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
 // if(dynamic_cast<const NConnector*>(comp))
 //  return true;
@@ -415,7 +415,11 @@ if(MainOwner.lock())
 NPulseSimpleLTZone::NPulseSimpleLTZone(void)
 : MaxFrequency("MaxFrequency",this)
 {
- AddStaticComponent("NPGenerator","PGenerator",&generator);
+ AddStaticComponent(
+  "NPGenerator",
+  "PGenerator",
+  std::shared_ptr<UContainer>(&generator, RDK::NonOwningDeleter())
+ );
 }
 
 NPulseSimpleLTZone::~NPulseSimpleLTZone(void)
@@ -440,7 +444,7 @@ NPulseSimpleLTZone* NPulseSimpleLTZone::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseSimpleLTZone::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseGenerator>(comp))
   return true;
@@ -547,7 +551,7 @@ NContinuesSimpleLTZone* NContinuesSimpleLTZone::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NContinuesSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
+bool NContinuesSimpleLTZone::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
 // if(dynamic_cast<const NConnector*>(comp))
 //  return true;

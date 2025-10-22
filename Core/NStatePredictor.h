@@ -109,17 +109,17 @@ UPropertyOutputData<MDMatrix<double>, NStatePredictor, ptOutput | ptPubState> Ou
 protected:
 
 //Входные нейроны
-//std::vector<UEPtr<NNeuronTrainer>> InputNeurons;
+//std::vector<std::shared_ptr<NNeuronTrainer>> InputNeurons;
 
 //Блок предиктора
-UEPtr<NPredictor> Predictor;
+std::shared_ptr<NPredictor> Predictor;
 
 //Обучаемый выходной нейрон
-//UEPtr<NNeuronLearner> OutputNeuron;
-//UEPtr<NNeuronTrainer> OutputNeuron;
+//std::shared_ptr<NNeuronLearner> OutputNeuron;
+//std::shared_ptr<NNeuronTrainer> OutputNeuron;
 
 //Блок болевых ощущений
-UEPtr<NLogicalNot> LogicalNot;
+std::shared_ptr<NLogicalNot> LogicalNot;
 
 
 public: // Методы
@@ -201,13 +201,13 @@ protected:
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+virtual bool AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer=0);
 
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+virtual bool ADelComponent(std::shared_ptr<UContainer> comp);
 // --------------------------
 
 

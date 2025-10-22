@@ -112,14 +112,14 @@ UComponent* NNeuronFreqGroupLayer::NewStatic(void)
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NNeuronFreqGroupLayer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NNeuronFreqGroupLayer::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {            /*
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
   return false;
 
  comp->SetMainOwner(this,-1);
 
-  UEPtr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
+  std::shared_ptr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
 
   if(temp && temp->Amplitude()>0)
   {
@@ -144,7 +144,7 @@ bool NNeuronFreqGroupLayer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointe
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NNeuronFreqGroupLayer::ADelComponent(UEPtr<UContainer> comp)
+bool NNeuronFreqGroupLayer::ADelComponent(std::shared_ptr<UContainer> comp)
 {                     /*
  if(comp == PosGenerator)
   PosGenerator=0;
@@ -166,7 +166,7 @@ bool NNeuronFreqGroupLayer::BuildStructure(int structure_build_mode, const strin
 											int num_aff_neurons_group_height, int num_aff_neurons_group_width,
 											int num_aff_neurons_in_group)
 {
- UEPtr <NNeuronFreqGroup> affneurongroup;
+ std::shared_ptr <NNeuronFreqGroup> affneurongroup;
  bool res(true);
  int ind;
 

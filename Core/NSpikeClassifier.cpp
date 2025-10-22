@@ -136,8 +136,8 @@ bool NSpikeClassifier::SetNeedToTrain(const bool &value)
  }
  else
  {
-  UEPtr<NNeuronTrainer> trainer;
-  UEPtr<NPulseGeneratorTransit> generator;
+  std::shared_ptr<NNeuronTrainer> trainer;
+  std::shared_ptr<NPulseGeneratorTransit> generator;
   for(int i = 0; i < NumNeurons; i++)
   {
    trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)),true);
@@ -334,14 +334,14 @@ UComponent* NSpikeClassifier::NewStatic(void)
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-bool NSpikeClassifier::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NSpikeClassifier::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
 
  return true;
 }
 
 // ������� ������������� ������ � ������ ������ �� �����
-bool NSpikeClassifier::ADelComponent(UEPtr<UContainer> comp)
+bool NSpikeClassifier::ADelComponent(std::shared_ptr<UContainer> comp)
 {
 
  return true;
@@ -358,7 +358,7 @@ bool NSpikeClassifier::AReset(void)
  {
 //  trainers[i]->IsNeedToTrain = IsNeedToTrain;
 
-/*  UEPtr<NPulseGeneratorTransit> generator;
+/*  std::shared_ptr<NPulseGeneratorTransit> generator;
   for(int j = 0; j < NumInputDendrite; j++)
   {
    generator = trainers[i]->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(j+1)),true);
@@ -482,8 +482,8 @@ bool NSpikeClassifier::BuildStructure(void)
 	}
 
 	// �������� ����� ����� ������������ � ��������� � ������������ ��������
-	UEPtr<NNeuronTrainer> trainer; // ������ � ������������ ��������
-	UEPtr<NPulseGeneratorTransit> gen_in; // ��������������� ���� ������� � ������������ ��������
+	std::shared_ptr<NNeuronTrainer> trainer; // ������ � ������������ ��������
+	std::shared_ptr<NPulseGeneratorTransit> gen_in; // ��������������� ���� ������� � ������������ ��������
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
 	 for(int j = 0; j < NumNeurons; j++)
@@ -499,7 +499,7 @@ bool NSpikeClassifier::BuildStructure(void)
 
 
 	  bool res(true);
-	  res&=CreateLink("Source"+sntoa(i+1),"Output",gen_in->GetLongName(this),"Input");
+	  res&=CreateLink("Source"+sntoa(i+1),"Output",gen_in->GetLongName(GetThisAsSharedContainer()),"Input");
 	  if(!res)
 	   return true;
 	 }
@@ -582,9 +582,9 @@ bool NSpikeClassifier::TreatDataFromFile(void)
 	}
 
 	// ��������� ������ ��������
-	UEPtr<NNeuronTrainer> trainer; // ������ � ������������ ��������
-	UEPtr<NPulseNeuron> neuron;
-	UEPtr<NLTZone> ltzone;
+	std::shared_ptr<NNeuronTrainer> trainer; // ������ � ������������ ��������
+	std::shared_ptr<NPulseNeuron> neuron;
+	std::shared_ptr<NLTZone> ltzone;
 	for(int i= 0; i < NumNeurons; i++)
 	{
 		trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)),true);
@@ -624,8 +624,8 @@ bool NSpikeClassifier::TreatDataFromFile(void)
 // ��������� ������ ����� �������
 bool NSpikeClassifier::ACalculate(void)
 {
-	UEPtr<NNeuronTrainer> trainer; // ������ � ������������ ��������
-	UEPtr<NPulseGeneratorTransit> generator;  // ���������
+	std::shared_ptr<NNeuronTrainer> trainer; // ������ � ������������ ��������
+	std::shared_ptr<NPulseGeneratorTransit> generator;  // ���������
 
 	// ������� ��������
 	if(IsNeedToTrain)
@@ -669,10 +669,10 @@ bool NSpikeClassifier::ACalculate(void)
 	   }
 
        // �������� ����� ����� ��������� � ������������ ��������
-       UEPtr<NPulseNeuron> neuron;
-       UEPtr<NPulseMembrane> soma;
-       UEPtr<NPulseSynapse> synapse;
-       UEPtr<NLTZone> ltzone;
+       std::shared_ptr<NPulseNeuron> neuron;
+       std::shared_ptr<NPulseMembrane> soma;
+       std::shared_ptr<NPulseSynapse> synapse;
+       std::shared_ptr<NLTZone> ltzone;
        std::vector<int> inh_synapse_counter;
        inh_synapse_counter.assign(NumNeurons,1);
        for(int i = 0; i < NumNeurons; i++)
@@ -711,7 +711,7 @@ bool NSpikeClassifier::ACalculate(void)
            return true;
 
           bool res(true);
-          res&=CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
+          res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
           if(!res)
            return true;
          }

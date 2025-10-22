@@ -84,7 +84,7 @@ virtual NNet* New(void);
 // ћетоды управлени€ структурой сети
 // --------------------------
 // —оздает новый экземпл€р компонента по умолчанию и добавл€ет его в сеть
-RDK::UEPtr<UContainer> InsertComponent(void);
+std::shared_ptr<UContainer> InsertComponent(void);
 // --------------------------
 
 // --------------------------

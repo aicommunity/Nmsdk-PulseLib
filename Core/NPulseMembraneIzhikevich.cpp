@@ -53,7 +53,7 @@ NPulseMembraneIzhikevich* NPulseMembraneIzhikevich::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NPulseMembraneIzhikevich::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseMembraneIzhikevich::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  return true;
 }

@@ -48,7 +48,7 @@ void NSynapseTrainer::RebuildInternalLinks(void)
  auto main_owner = MainOwner.lock();
  if(main_owner)
  {
-  UEPtr<NPulseNeuronCommon> neuron=UEPtr<NPulseNeuronCommon>(dynamic_pointer_cast<NPulseNeuronCommon>(main_owner).get());
+  std::shared_ptr<NPulseNeuronCommon> neuron=std::shared_ptr<NPulseNeuronCommon>(dynamic_pointer_cast<NPulseNeuronCommon>(main_owner).get());
   if(neuron && neuron->GetLTZone() && GetOwner())
   {
    bool res=true;

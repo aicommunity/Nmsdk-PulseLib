@@ -191,16 +191,16 @@ NLifeNet* NLifeNet::New(void)
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NLifeNet::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NLifeNet::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
  if(!NNet::AAddComponent(comp,pointer))
   return false;
 
  bool res=true;
 
- UEPtr<NPulseLifeNeuron> n=dynamic_pointer_cast<NPulseLifeNeuron>(comp);
- UEPtr<NNeuronLife> life;
- UEPtr<NSum> pebonus;
+ std::shared_ptr<NPulseLifeNeuron> n=dynamic_pointer_cast<NPulseLifeNeuron>(comp);
+ std::shared_ptr<NNeuronLife> life;
+ std::shared_ptr<NSum> pebonus;
  if(n)
  {
   life=n->GetNeuronLife();
@@ -216,8 +216,8 @@ bool NLifeNet::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
   // Устанавливает первичные связи нейрона
   for(int i=0;i<GetNumComponents();i++)
   {
-   UEPtr<NPulseLifeNeuron> nn=dynamic_pointer_cast<NPulseLifeNeuron>(GetComponentByIndex(i));
-   UEPtr<NNeuronLife> life2;
+   std::shared_ptr<NPulseLifeNeuron> nn=dynamic_pointer_cast<NPulseLifeNeuron>(GetComponentByIndex(i));
+   std::shared_ptr<NNeuronLife> life2;
    if(nn && nn != n)
    {
 	life2=nn->GetNeuronLife();
@@ -314,7 +314,7 @@ bool NLifeNet::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NLifeNet::ADelComponent(UEPtr<UContainer> comp)
+bool NLifeNet::ADelComponent(std::shared_ptr<UContainer> comp)
 {
  vector<NNeuronLife*>::iterator I;
 
@@ -414,7 +414,7 @@ bool NLifeNet::ACalculate(void)
    SummaryFeeling.v+=NeuronsLife[i]->Output2(0,0);
    SummaryWearOut.v+=NeuronsLife[i]->Output3(0,0);
    SummaryEnergy.v+=NeuronsLife[i]->Output5(0,0);
-   UEPtr<NPulseLTZone> zone=static_pointer_cast<NPulseLTZone>(static_pointer_cast<UContainer>(NeuronsLife[i]->GetOwner())->GetComponent("LTZone"));
+   std::shared_ptr<NPulseLTZone> zone=static_pointer_cast<NPulseLTZone>(static_pointer_cast<UContainer>(NeuronsLife[i]->GetOwner())->GetComponent("LTZone"));
 //   POutputData[10].Double[i]=zone->GetNumAConnectors(0);
    SummaryFrequency.v+=zone->OutputFrequency(0,0);
    ++SummaryLiveNeurons.v;
@@ -427,7 +427,7 @@ bool NLifeNet::ACalculate(void)
  for(size_t i=0;i<best_neurons.size();i++)
  {
   best_neurons[i]->Energy=best_neurons[i]->Energy/2;
-  UEPtr<NPulseLifeNeuron> n=static_pointer_cast<NPulseLifeNeuron>(Storage->TakeObject(best_neurons[i]->GetMainOwner()->GetClass()));
+  std::shared_ptr<NPulseLifeNeuron> n=static_pointer_cast<NPulseLifeNeuron>(Storage->TakeObject(best_neurons[i]->GetMainOwner()->GetClass()));
   n->SetName("N");
   n->SetCoord(static_pointer_cast<NPulseLifeNeuron>(best_neurons[i]->GetMainOwner())->GetCoord());
   n->GetNeuronLife()->Energy=best_neurons[i]->Energy;
@@ -496,7 +496,7 @@ bool NLifeNet::CalcEnsembles(double threshold)
 
  double resthreshold=0;
  size_t numneurons=0;
- UEPtr<NPulseLifeNeuron> n;
+ std::shared_ptr<NPulseLifeNeuron> n;
  switch(EnsembleThresholdMode)
  {
  case 2:
@@ -524,24 +524,24 @@ bool NLifeNet::CalcEnsembles(double threshold)
   {
    for(int j=0;j<n->GetNumComponents();j++)
    {
-	UEPtr<NPulseMembrane> membrane=dynamic_pointer_cast<NPulseMembrane>(n->GetComponentByIndex(j));
+	std::shared_ptr<NPulseMembrane> membrane=dynamic_pointer_cast<NPulseMembrane>(n->GetComponentByIndex(j));
 	if(membrane)
 	{
 	 for(int k=0;k<membrane->GetNumComponents();k++)
 	 {
-	  UEPtr<NPulseChannel> channel=dynamic_pointer_cast<NPulseChannel>(membrane->GetComponentByIndex(k));
+	  std::shared_ptr<NPulseChannel> channel=dynamic_pointer_cast<NPulseChannel>(membrane->GetComponentByIndex(k));
 	  if(channel)
 	  {
 	   for(int m=0;m<channel->GetNumComponents();m++)
 	   {
-		UEPtr<NPulseHebbSynapse> synapse=dynamic_pointer_cast<NPulseHebbSynapse>(channel->GetComponentByIndex(m));
+		std::shared_ptr<NPulseHebbSynapse> synapse=dynamic_pointer_cast<NPulseHebbSynapse>(channel->GetComponentByIndex(m));
 		if(synapse)
 		{
 		 if(EnsembleThresholdMode == 1)
 		  resthreshold=n->OutputSummaryPosGsNorm(0,0);
 		 if(synapse->Output4(0,0) > resthreshold+threshold)
 		 {
-		  UEPtr<NPulseLifeNeuron> item=dynamic_pointer_cast<NPulseLifeNeuron>(synapse->GetCItem(0).Item->GetMainOwner());
+		  std::shared_ptr<NPulseLifeNeuron> item=dynamic_pointer_cast<NPulseLifeNeuron>(synapse->GetCItem(0).Item->GetMainOwner());
 		  if(item)
 		  {
 		   ensemble.first+=n->OutputSummaryPosGs(0,0);
@@ -638,7 +638,7 @@ bool NLifeNet::CalcEnsembleLinks(double threshold)
 	 for(int k=0;k<Ensembles[i].second[j]->GetLTZone()->GetNumOutputs();k++)
 	  for(int l=0;l<Ensembles[i].second[j]->GetLTZone()->GetNumAConnectors(k);l++)
 	  {
-	   UEPtr<NPulseHebbSynapse> synapse=
+	   std::shared_ptr<NPulseHebbSynapse> synapse=
 	   	dynamic_pointer_cast<NPulseHebbSynapse>(Ensembles[i].second[j]->GetLTZone()->GetAConnectorByIndex(int(k), int(l)));
 	   if(synapse)
 	   {

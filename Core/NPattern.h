@@ -65,7 +65,7 @@ protected:
 double OldNumGenerators;
 
 // Генераторы импульсов
- std::vector<UEPtr<NPulseGeneratorTransit> > generators;
+ std::vector<std::shared_ptr<NPulseGeneratorTransit> > generators;
 
 public: // Методы
 // --------------------------

@@ -22,7 +22,7 @@ See file license.txt for more information
 #include "../../../Rdk/Core/Engine/ModernSmartPointers.h"
 #include "../../../Rdk/Core/Engine/ModernContainers.h"
 #include "../../../Rdk/Core/System/ModernChrono.h"
-#include "UEPtr.h"
+#include <memory>
 #include <memory>
 #include <mutex>
 #include <chrono>
@@ -98,7 +98,7 @@ ULProperty<MDMatrix<int>, NPulseNeuron, ptPubParameter> TrainingSynapsisNum;
 protected:
 NConstGenerator *PosGenerator,*NegGenerator;
 
-vector<UEPtr<NPulseMembraneCommon> > Soma;
+vector<std::shared_ptr<NPulseMembraneCommon> > Soma;
 
 // ������ �������� ���������� �������� ���� � ���������
 int OldNumDendrites, OldNumSoma;
@@ -204,13 +204,13 @@ protected:
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+virtual bool AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer=0);
 
 // ��������� ��������������� ���������������� ��������
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+virtual bool ADelComponent(std::shared_ptr<UContainer> comp);
 // --------------------------
 
 // --------------------------
@@ -220,7 +220,7 @@ virtual bool ADelComponent(UEPtr<UContainer> comp);
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+virtual bool CheckComponentType(std::shared_ptr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------

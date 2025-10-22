@@ -178,8 +178,8 @@ bool NPulseSynapseStdp::ACalculate2(void)
   if(!main_owner)
    return true;
 
-  UEPtr<NPulseNeuronCommon> neuron=UEPtr<NPulseNeuronCommon>(dynamic_pointer_cast<NPulseNeuronCommon>(main_owner).get());
-  NLTZone* zone=neuron->LTZone;
+  std::shared_ptr<NPulseNeuronCommon> neuron=std::shared_ptr<NPulseNeuronCommon>(dynamic_pointer_cast<NPulseNeuronCommon>(main_owner).get());
+  NLTZone* zone=neuron->LTZone.get();
   if(!zone)
    return true;
 

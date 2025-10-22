@@ -163,14 +163,14 @@ UComponent* NNeuronFreqGroup::NewStatic(void)
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NNeuronFreqGroup::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NNeuronFreqGroup::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {            /*
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
   return false;
 
  comp->SetMainOwner(this,-1);
 
-  UEPtr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
+  std::shared_ptr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
 
   if(temp && temp->Amplitude()>0)
   {
@@ -195,7 +195,7 @@ bool NNeuronFreqGroup::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> po
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NNeuronFreqGroup::ADelComponent(UEPtr<UContainer> comp)
+bool NNeuronFreqGroup::ADelComponent(std::shared_ptr<UContainer> comp)
 {                     /*
  if(comp == PosGenerator)
   PosGenerator=0;
@@ -215,7 +215,7 @@ bool NNeuronFreqGroup::ADelComponent(UEPtr<UContainer> comp)
 bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &aff_neuron_class_name,
 										int old_num_aff_neurons, int num_aff_neurons, int min_inp_freq, int max_inp_freq)
 {
- UEPtr <NAfferentNeuron> affneuron;
+ std::shared_ptr <NAfferentNeuron> affneuron;
  bool res(true);
  int min_freq, max_freq;
 
@@ -237,7 +237,7 @@ bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &af
    min_freq = min_inp_freq + int(double(i)*freq_step + 0.5);
    max_freq = min_inp_freq + int(double(i+1)*freq_step - 0.5);
 
-   UEPtr<NReceptor> receptor=affneuron->GetComponentL<NReceptor>("Receptor");
+   std::shared_ptr<NReceptor> receptor=affneuron->GetComponentL<NReceptor>("Receptor");
    if(receptor)
    {
 	receptor->MinInputRange=min_freq;
@@ -247,16 +247,16 @@ bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &af
  }
 
 
- /*UEPtr<UContainer> membr=0,ltmembr=0;
- UEPtr<NPulseChannelCommon> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
- UEPtr<NLTZone> ltzone;
+ /*std::shared_ptr<UContainer> membr=0,ltmembr=0;
+ std::shared_ptr<NPulseChannelCommon> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
+ std::shared_ptr<NLTZone> ltzone;
  bool res(true);
  RDK::ULinkSide item,conn;
 
  ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);//dynamic_pointer_cast<NLTZone>(Storage->TakeObject(ltzone_class));
  ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*8,4.67,0));
 
- UEPtr<UNet> gen_pos,gen_neg;
+ std::shared_ptr<UNet> gen_pos,gen_neg;
  if(!ExcGeneratorClassName->empty())
  {
   gen_pos=AddMissingComponent<UNet>("PosGenerator", pos_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(pos_gen_class));
@@ -367,10 +367,10 @@ bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &af
  }
 
 
- UEPtr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(this);
+ std::shared_ptr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(this);
  if(lifeneuron)
  {
-  UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(Storage->TakeObject("NNeuronLife"));
+  std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(Storage->TakeObject("NNeuronLife"));
   res&=lifeneuron->AddComponent(nlife);
   res&=n->CreateLink(ltzone->GetLongName(this),"Output",nlife->GetLongId(this),"Input1");
  }

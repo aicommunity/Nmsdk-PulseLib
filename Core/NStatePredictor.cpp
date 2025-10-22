@@ -247,7 +247,7 @@ UComponent* NStatePredictor::NewStatic(void)
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NStatePredictor::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NStatePredictor::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
 
  return true;
@@ -257,7 +257,7 @@ bool NStatePredictor::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poi
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NStatePredictor::ADelComponent(UEPtr<UContainer> comp)
+bool NStatePredictor::ADelComponent(std::shared_ptr<UContainer> comp)
 {
 
  return true;

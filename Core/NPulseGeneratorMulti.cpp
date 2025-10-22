@@ -143,7 +143,7 @@ NPulseGeneratorMulti* NPulseGeneratorMulti::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseGeneratorMulti::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseGeneratorMulti::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
 // if(dynamic_cast<const NPulseChannel*>(comp))
 //  return true;

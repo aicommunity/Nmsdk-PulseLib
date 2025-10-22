@@ -55,10 +55,10 @@ bool NPulseSynapseCommon::SetType(const double &value)
 {
  Type.v=value;
 
- UEPtr<NPulseMembrane> membr=UEPtr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
+ std::shared_ptr<NPulseMembrane> membr=std::shared_ptr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
  if(membr)
  {
-  membr->UpdateSynapseData(dynamic_cast<NPulseSynapseCommon*>(this));
+  membr->UpdateSynapseData(std::shared_ptr<NPulseSynapseCommon>(dynamic_cast<NPulseSynapseCommon*>(this), RDK::NonOwningDeleter()));
  }
 
  return true;
@@ -147,7 +147,7 @@ bool NPulseSynapseCommon::AAfterBuild(void)
 {
     if(!TrainerClassName->empty())
     {
-     Trainer=AddMissingComponent<NSynapseTrainer>("Trainer", TrainerClassName);
+     Trainer=AddMissingComponent<NSynapseTrainer>("Trainer", TrainerClassName).get();
      if(Trainer)
       Trainer->RebuildInternalLinks();
     }
@@ -155,7 +155,7 @@ bool NPulseSynapseCommon::AAfterBuild(void)
     {
      if(Trainer)
      {
-      DelComponent(Trainer, true);
+      DelComponent(std::shared_ptr<UContainer>(Trainer, RDK::NonOwningDeleter()), true);
       //Storage->ReturnObject(Trainer);
       Trainer=0;
      }

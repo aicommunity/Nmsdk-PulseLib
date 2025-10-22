@@ -20,7 +20,7 @@ See file license.txt for more information
 #include "../../../Rdk/Core/Engine/ModernSmartPointers.h"
 #include "../../../Rdk/Core/Engine/ModernContainers.h"
 #include "../../../Rdk/Core/System/ModernChrono.h"
-#include "UEPtr.h"
+#include <memory>
 #include <memory>
 #include <mutex>
 #include <chrono>

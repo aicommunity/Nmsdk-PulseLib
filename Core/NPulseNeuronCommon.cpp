@@ -79,7 +79,7 @@ bool NPulseNeuronCommon::SetUseAverageLTZonePotential(const bool &value)
 // ���������� ��������� �� ������ �������������� ����
 NLTZone* NPulseNeuronCommon::GetLTZone(void)
 {
- return dynamic_pointer_cast<NLTZone>(LTZone);// &(*LTZone);
+ return dynamic_pointer_cast<NLTZone>(LTZone).get();// &(*LTZone);
 }
 
 // --------------------------
@@ -96,12 +96,12 @@ NPulseMembraneCommon* NPulseNeuronCommon::ElongateDendrite(const std::string &na
  if(!Storage)
   return 0;
 
- UEPtr<UContainer> cont=GetComponent(name);
+ std::shared_ptr<UContainer> cont=GetComponent(name);
  if(!cont)
   return 0;
 
 
- UEPtr<UContainer> newcont=static_pointer_cast<UContainer>(Storage->TakeObject(cont->GetClass()));
+ std::shared_ptr<UContainer> newcont=static_pointer_cast<UContainer>(Storage->TakeObject(cont->GetClass()));
  if(!newcont)
   return 0;
 
@@ -117,11 +117,11 @@ NPulseMembraneCommon* NPulseNeuronCommon::BranchDendrite(const std::string &name
  if(!Storage)
   return 0;
 
- UEPtr<NPulseMembrane> dendrite=dynamic_pointer_cast<NPulseMembrane>(GetComponent(name));
+ std::shared_ptr<NPulseMembrane> dendrite=dynamic_pointer_cast<NPulseMembrane>(GetComponent(name));
  if(!dendrite)
   return 0;
 
- UEPtr<NPulseMembrane> new_dendrite=dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(dendrite->GetClass()));
+ std::shared_ptr<NPulseMembrane> new_dendrite=dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(dendrite->GetClass()));
  if(!AddComponent(new_dendrite))
  {
   new_dendrite->Free();
@@ -143,8 +143,8 @@ NPulseMembraneCommon* NPulseNeuronCommon::BranchDendrite(const std::string &name
   size=new_dendrite->GetNumComponents();
  for(int k=0;k<size;k++)
  {
-  UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(dendrite->GetComponentByIndex(k));
-  UEPtr<NPulseChannelCommon> new_channel=dynamic_pointer_cast<NPulseChannelCommon>(new_dendrite->GetComponentL(channel->GetName()));
+  std::shared_ptr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(dendrite->GetComponentByIndex(k));
+  std::shared_ptr<NPulseChannelCommon> new_channel=dynamic_pointer_cast<NPulseChannelCommon>(new_dendrite->GetComponentL(channel->GetName()));
   if(!channel || !new_channel)
    continue;
 
@@ -162,7 +162,7 @@ NPulseMembraneCommon* NPulseNeuronCommon::BranchDendrite(const std::string &name
  }
 
  // ���������� ��������� ���������� �����������
- //UEPtr<NPulseMembrane> membrane=static_pointer_cast<NPulseMembrane>(cont);
+ //std::shared_ptr<NPulseMembrane> membrane=static_pointer_cast<NPulseMembrane>(cont);
  for(size_t k=0;k<new_dendrite->GetNumNegChannels();k++)
  {
   res&=CreateLink(PosGenerator->GetLongName(this),"Output",membrane->GetNegChannel(k)->GetLongName(this),"Inputs");
@@ -211,7 +211,7 @@ NPulseNeuronCommon* NPulseNeuronCommon::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseNeuronCommon::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseNeuronCommon::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseMembraneCommon>(comp) ||
 	dynamic_pointer_cast<NLTZone>(comp) ||
@@ -230,7 +230,7 @@ bool NPulseNeuronCommon::CheckComponentType(UEPtr<UContainer> comp) const
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-bool NPulseNeuronCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NPulseNeuronCommon::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
  if(!NNeuron::AAddComponent(comp,pointer))
   return false;
@@ -238,7 +238,7 @@ bool NPulseNeuronCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> 
  comp->SetMainOwner(std::shared_ptr<UComponent>(this),-1);
 
  {
-  UEPtr<NPulseMembraneCommon> membrane=dynamic_pointer_cast<NPulseMembraneCommon>(comp);
+  std::shared_ptr<NPulseMembraneCommon> membrane=dynamic_pointer_cast<NPulseMembraneCommon>(comp);
   if(membrane)
   {
    membrane->UseAveragePotential=UseAverageDendritesPotential;
@@ -246,19 +246,19 @@ bool NPulseNeuronCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> 
    bool exists = false;
    for(I=Membranes.begin();I!=Membranes.end();I++)
    {
-	if(comp==*I)
+	if(comp.get()==*I)
 	{
 	 exists=true;
 	 break;
 	}
    }
    if(!exists)
-	Membranes.push_back(membrane);
+        Membranes.push_back(membrane.get());
    membrane->RebuildSynapticInternalLinks();
    // ���������� ������� ����� ���� ��� ����
  /*  for(int i=0;i<membrane->GetNumComponents();i++)
    {
-	UEPtr<NPulseChannel> channel(dynamic_pointer_cast<NPulseChannel>(membrane->GetComponentByIndex(i)));
+	std::shared_ptr<NPulseChannel> channel(dynamic_pointer_cast<NPulseChannel>(membrane->GetComponentByIndex(i)));
 	if(channel)
 	 channel->InstallHebbSynapses();
    } */
@@ -272,12 +272,12 @@ bool NPulseNeuronCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> 
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-bool NPulseNeuronCommon::ADelComponent(UEPtr<UContainer> comp)
+bool NPulseNeuronCommon::ADelComponent(std::shared_ptr<UContainer> comp)
 {
   vector<NPulseMembraneCommon*>::iterator I;
   for(I=Membranes.begin();I!=Membranes.end();I++)
   {
-   if(comp==*I)
+   if(comp.get()==*I)
    {
 	Membranes.erase(I);
 	break;
@@ -315,7 +315,7 @@ bool NPulseNeuronCommon::ADefault(void)
 bool NPulseNeuronCommon::ABuild(void)
 {
  vector<NameT> buffer;
- GetComponentsNameByClassType<NLTZone>(buffer, this);
+ GetComponentsNameByClassType<NLTZone>(buffer, GetThisAsSharedContainer());
  if(buffer.empty())
   LTZone=0;
  else

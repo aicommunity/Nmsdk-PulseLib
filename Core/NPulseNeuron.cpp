@@ -220,12 +220,12 @@ NPulseMembraneCommon* NPulseNeuron::ElongateDendrite(const std::string &name, bo
  if(!Storage.lock())
   return 0;
 
- UEPtr<UContainer> cont=GetComponent(name);
+ std::shared_ptr<UContainer> cont=GetComponent(name);
  if(!cont)
   return 0;
 
 
- UEPtr<UContainer> newcont=static_pointer_cast<UContainer>(Storage.lock()->TakeObject(cont->GetClass()));
+ std::shared_ptr<UContainer> newcont=static_pointer_cast<UContainer>(Storage.lock()->TakeObject(cont->GetClass()));
  if(!newcont)
   return 0;
 
@@ -241,11 +241,11 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
  if(!Storage.lock())
   return 0;
 
- UEPtr<NPulseMembrane> dendrite=dynamic_pointer_cast<NPulseMembrane>(GetComponent(name));
+ std::shared_ptr<NPulseMembrane> dendrite=dynamic_pointer_cast<NPulseMembrane>(GetComponent(name));
  if(!dendrite)
   return 0;
 
- UEPtr<NPulseMembrane> new_dendrite=dynamic_pointer_cast<NPulseMembrane>(Storage.lock()->TakeObject(dendrite->GetClass()));
+ std::shared_ptr<NPulseMembrane> new_dendrite=dynamic_pointer_cast<NPulseMembrane>(Storage.lock()->TakeObject(dendrite->GetClass()));
  if(!AddComponent(new_dendrite))
  {
   new_dendrite->Free();
@@ -258,7 +258,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
  // ������������� �������� �����
  if(feedback)
  {
-  res&=CreateLink(GetLTZone()->GetLongName(this),"Output", new_dendrite->GetLongName(this),"InputFeedbackSignal");
+  res&=CreateLink(GetLTZone()->GetLongName(GetThisAsSharedContainer()),"Output", new_dendrite->GetLongName(GetThisAsSharedContainer()),"InputFeedbackSignal");
  }
 
  // ������������ �������� � ����������
@@ -267,17 +267,17 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
   size=new_dendrite->GetNumComponents();
  for(int k=0;k<size;k++)
  {
-  UEPtr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(dendrite->GetComponentByIndex(k));
+  std::shared_ptr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(dendrite->GetComponentByIndex(k));
   if(!channel)
 	continue;
-  UEPtr<NPulseChannelCommon> new_channel=dynamic_pointer_cast<NPulseChannelCommon>(new_dendrite->GetComponentL(channel->GetName(),true));
+  std::shared_ptr<NPulseChannelCommon> new_channel=dynamic_pointer_cast<NPulseChannelCommon>(new_dendrite->GetComponentL(channel->GetName(),true));
   if(!new_channel)
   	continue;
  /* for(int i=0;i<channel->Output. ;i++)
   {
    NPulseSynapseCommon* synapse=dynamic_cast<NPulseSynapseCommon*>(channel->Inputs.GetItem(i));
    if(!synapse)
-	res&=CreateLink(Inputs.GetItem(i)->GetLongName(this),Inputs.GetItemOutputName(i),);
+	res&=CreateLink(Inputs.GetItem(i)->GetLongName(GetThisAsSharedContainer()),Inputs.GetItemOutputName(i),);
   }                */
 
   int num_connectors=int(channel->Output.GetNumConnectors());
@@ -288,7 +288,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
 	continue;
    std::string conn_input_prop_name=channel->Output.GetConnectorInputName(i);
 
-   res &=CreateLink(new_channel->GetLongName(this),"Output",conn->GetLongName(this),conn_input_prop_name);
+   res &=CreateLink(new_channel->GetLongName(GetThisAsSharedContainer()),"Output",conn->GetLongName(GetThisAsSharedContainer()),conn_input_prop_name);
   }
 
    /*
@@ -305,11 +305,11 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
  }
 
  // ���������� ��������� ���������� �����������
- //UEPtr<NPulseMembrane> membrane=static_pointer_cast<NPulseMembrane>(cont);
+ //std::shared_ptr<NPulseMembrane> membrane=static_pointer_cast<NPulseMembrane>(cont);
  for(size_t k=0;k<new_dendrite->GetNumNegChannels();k++)
  {
-  res&=CreateLink(PosGenerator->GetLongName(this),"Output",new_dendrite->GetNegChannel(k)->GetLongName(this),"Inputs");
- /* item.Id=PosGenerator->GetLongName(this);
+  res&=CreateLink(PosGenerator->GetLongName(GetThisAsSharedContainer()),"Output",new_dendrite->GetNegChannel(k)->GetLongName(GetThisAsSharedContainer()),"Inputs");
+ /* item.Id=PosGenerator->GetLongName(GetThisAsSharedContainer());
   item.Index=0;
   conn.Id=membrane->GetNegChannel(k)->GetLongId(this);
   conn.Index=-1;
@@ -318,7 +318,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
 
  for(size_t k=0;k<new_dendrite->GetNumPosChannels();k++)
  {
-  res&=CreateLink(NegGenerator->GetLongName(this),"Output",new_dendrite->GetPosChannel(k)->GetLongName(this),"Inputs");
+  res&=CreateLink(NegGenerator->GetLongName(GetThisAsSharedContainer()),"Output",new_dendrite->GetPosChannel(k)->GetLongName(GetThisAsSharedContainer()),"Inputs");
  /*
   item.Id=NegGenerator->GetLongId(this);
   item.Index=0;
@@ -334,7 +334,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
 //  Storage.lock()->ReturnObject(cont);
   return 0;
  }
- return new_dendrite;
+ return new_dendrite.get();
 }
 
 // ������� �������� ������� ��������
@@ -368,7 +368,7 @@ UComponent* NPulseNeuron::NewStatic(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseNeuron::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseNeuron::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseMembraneCommon>(comp) ||
 	dynamic_pointer_cast<NLTZone>(comp) ||
@@ -387,20 +387,20 @@ bool NPulseNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-bool NPulseNeuron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NPulseNeuron::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
   return false;
 
  comp->SetMainOwner(std::shared_ptr<UComponent>(this),-1);
 
-  UEPtr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
+  std::shared_ptr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
 
   if(temp && temp->Amplitude()>0)
   {
    if(PosGenerator)
 	return false;
-   PosGenerator=temp;
+   PosGenerator=temp.get();
    return true;
   }
   else
@@ -408,7 +408,7 @@ bool NPulseNeuron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointe
   {
    if(NegGenerator)
 	return false;
-   NegGenerator=temp;
+   NegGenerator=temp.get();
    return true;
   }
 
@@ -419,12 +419,12 @@ bool NPulseNeuron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointe
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-bool NPulseNeuron::ADelComponent(UEPtr<UContainer> comp)
+bool NPulseNeuron::ADelComponent(std::shared_ptr<UContainer> comp)
 {
- if(comp == PosGenerator)
+ if(comp.get() == PosGenerator)
   PosGenerator=0;
  else
- if(comp == NegGenerator)
+ if(comp.get() == NegGenerator)
   NegGenerator=0;
 
  return NPulseNeuronCommon::ADelComponent(comp);
@@ -440,9 +440,9 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
 								  const string &neg_gen_class, int num_soma_membranes, int dendrite_mode,
 								  int dendrite_length, const vector<int> &dendrite_length_vec, int num_stimulates, int num_arresting)
 {
- UEPtr<NPulseMembraneCommon> membr=0,ltmembr=0;
- UEPtr<NPulseChannelCommon> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
- UEPtr<NLTZone> ltzone;
+ std::shared_ptr<NPulseMembraneCommon> membr=0,ltmembr=0;
+ std::shared_ptr<NPulseChannelCommon> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
+ std::shared_ptr<NLTZone> ltzone;
  bool res(true);
  RDK::ULinkSide item,conn;
 
@@ -462,7 +462,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);//dynamic_pointer_cast<NLTZone>(Storage.lock()->TakeObject(ltzone_class));
  ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*8,4.67,0));
 
- UEPtr<UNet> gen_pos,gen_neg;
+ std::shared_ptr<UNet> gen_pos,gen_neg;
  if(!ExcGeneratorClassName->empty())
  {
   gen_pos=AddMissingComponent<UNet>("PosGenerator", pos_gen_class);//dynamic_pointer_cast<UNet>(Storage.lock()->TakeObject(pos_gen_class));
@@ -562,13 +562,13 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   ltchannel2=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("InhChannel",true));
 
   // ������������� �������� �����
-  res&=CreateLink(ltzone->GetLongName(this),"Output",ltmembr->GetLongName(this),"InputFeedbackSignal");
+  res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",ltmembr->GetLongName(GetThisAsSharedContainer()),"InputFeedbackSignal");
 
   // ������������� ����� �������� � �������������� �����
   if(ltchannel1)
-   res&=CreateLink(ltchannel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+   res&=CreateLink(ltchannel1->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
   if(ltchannel2)
-   res&=CreateLink(ltchannel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+   res&=CreateLink(ltchannel2->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
  }
  else
   DelComponent("LTMembrane");
@@ -588,19 +588,19 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   if(!ltzonemembraneclass.empty())
   {
    if(channel1)
-	res&=CreateLink(channel1->GetLongName(this),"Output",ltchannel1->GetLongName(this),"ChannelInputs");
+	res&=CreateLink(channel1->GetLongName(GetThisAsSharedContainer()),"Output",ltchannel1->GetLongName(GetThisAsSharedContainer()),"ChannelInputs");
    if(channel2)
-	res&=CreateLink(channel2->GetLongName(this),"Output",ltchannel2->GetLongName(this),"ChannelInputs");
+	res&=CreateLink(channel2->GetLongName(GetThisAsSharedContainer()),"Output",ltchannel2->GetLongName(GetThisAsSharedContainer()),"ChannelInputs");
   }
   else // ����� ���������� ���� �������� � �������������� ����
   {
    if(channel1)
-	res&=CreateLink(channel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+	res&=CreateLink(channel1->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
    if(channel2)
-	res&=CreateLink(channel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
+        res&=CreateLink(channel2->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
 
    // ������������� �������� �����
-   res&=CreateLink(ltzone->GetLongName(this),"Output",membr->GetLongName(this),"InputFeedbackSignal");
+   res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",membr->GetLongName(GetThisAsSharedContainer()),"InputFeedbackSignal");
   }
 
   int current_dendrite_length(0);
@@ -619,9 +619,9 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
    channel2temp=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("InhChannel",true));
 
    if(channel1temp)
-	res&=CreateLink(channel1temp->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
+        res&=CreateLink(channel1temp->GetLongName(GetThisAsSharedContainer()),"Output",channel1->GetLongName(GetThisAsSharedContainer()),"ChannelInputs");
    if(channel2temp)
-    res&=CreateLink(channel2temp->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
+    res&=CreateLink(channel2temp->GetLongName(GetThisAsSharedContainer()),"Output",channel2->GetLongName(GetThisAsSharedContainer()),"ChannelInputs");
 
    channel1 = channel1temp;
    channel2 = channel2temp;
@@ -629,18 +629,18 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
 
   // ����� ����� ���������� ���������� ��������� ������ ������� � ��������
   if(channel1 && gen_neg)
-   res&=CreateLink(gen_neg->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
+   res&=CreateLink(gen_neg->GetLongName(GetThisAsSharedContainer()),"Output",channel1->GetLongName(GetThisAsSharedContainer()),"ChannelInputs");
   if(channel2 && gen_pos)
-  res&=CreateLink(gen_pos->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
+  res&=CreateLink(gen_pos->GetLongName(GetThisAsSharedContainer()),"Output",channel2->GetLongName(GetThisAsSharedContainer()),"ChannelInputs");
  }
 
   /*
- UEPtr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(this);
+ std::shared_ptr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(this);
  if(lifeneuron)
  {
-  UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(Storage.lock()->TakeObject("NNeuronLife"));
+  std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(Storage.lock()->TakeObject("NNeuronLife"));
   res&=lifeneuron->AddComponent(nlife);
-  res&=n->CreateLink(ltzone->GetLongName(this),"Output",nlife->GetLongId(this),"Input1");
+  res&=n->CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",nlife->GetLongId(this),"Input1");
  }  */
 
  if(!res)
@@ -728,7 +728,7 @@ bool NPulseNeuron::ACalculate(void)
  SomaSumPotential(0,0)=0;
 
  int channel_divisor=1;
- UEPtr<NPulseLTZoneCommon> zone = dynamic_pointer_cast<NPulseLTZoneCommon>(LTZone);
+ std::shared_ptr<NPulseLTZoneCommon> zone = dynamic_pointer_cast<NPulseLTZoneCommon>(LTZone);
  if(zone && zone->NumChannelsInGroup.v > 0)
   channel_divisor = zone->NumChannelsInGroup.v;
 

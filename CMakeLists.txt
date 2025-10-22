@@ -21,6 +21,9 @@ file(GLOB PULSE_SOURCES
 list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/.*Gui.*\\.cpp$")
 list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/NLifeNet\\.cpp$")
 list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/NResultDecoder\\.cpp$")
+# Временно исключаем файлы с проблемами совместимости с RDK core
+# list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/NPulseMembrane\\.cpp$")
+# list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/NPulseNeuronCommon\\.cpp$")
 # Не исключаем NPCAClassifier.cpp — он требуется для NMSDK::NPCAClassifier
 # Не исключаем NPulseLibrary.cpp — он определяет глобальный объект PulseLibrary
 

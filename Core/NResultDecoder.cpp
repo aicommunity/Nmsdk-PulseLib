@@ -46,7 +46,7 @@ void NSynapseTrainer::RebuildInternalLinks(void)
 {
  if(MainOwner)
  {
-  UEPtr<NPulseNeuronCommon> neuron=dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner);
+  std::shared_ptr<NPulseNeuronCommon> neuron=dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner);
   if(neuron)
   {
    bool res=true;

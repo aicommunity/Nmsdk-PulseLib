@@ -265,7 +265,7 @@ UComponent* NPainReflexSimple::NewStatic(void)
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-bool NPainReflexSimple::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NPainReflexSimple::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
 
  return true;
@@ -275,7 +275,7 @@ bool NPainReflexSimple::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> p
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-bool NPainReflexSimple::ADelComponent(UEPtr<UContainer> comp)
+bool NPainReflexSimple::ADelComponent(std::shared_ptr<UContainer> comp)
 {
 
  return true;
@@ -379,7 +379,7 @@ bool NPainReflexSimple::BuildStructure(void)
      ConditionalStimul = AddMissingComponent<NNeuronTrainer>("ConditionalStimulus", NeuronTrainerClassName);
      ConditionalStimul->SetCoord(MVector<double,3>(4.0+0*7,1*2,0));
      ConditionalStimul->NumInputDendrite = NumConditionalStimulDendrite;
-     //UEPtr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
+     //std::shared_ptr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
      //if(!ltZone)
      //    return true;
      //ltZone->TimeConstant = 0.0005;
@@ -388,7 +388,7 @@ bool NPainReflexSimple::BuildStructure(void)
      //���������� �� ��������� �������� � ����������� �� ��� ����������
      for(int i=0; i<NumConditionalStimulDendrite.v;i++)
      {
-        UEPtr<NPulseGeneratorTransit> src = ConditionalStimul->GetComponentL<NPulseGeneratorTransit>("Source"+sntoa(i+1),true);
+        std::shared_ptr<NPulseGeneratorTransit> src = ConditionalStimul->GetComponentL<NPulseGeneratorTransit>("Source"+sntoa(i+1),true);
         if(!src)
             return true;
         src->UseTransitSignal=true;
@@ -441,7 +441,7 @@ bool NPainReflexSimple::BuildStructure(void)
      AltOutputNeuron->Reset();
 
      //������� ����� ��������� ������������ � ����������� ����
-     UEPtr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
+     std::shared_ptr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
      //��� �� ��� ������ ����
      if(!ltZone)
          return true;
@@ -457,58 +457,58 @@ bool NPainReflexSimple::BuildStructure(void)
 
      //��������� ����� ����� ����������� ��������� ������ ����������� � ���������� ��������
      // �������������� ������� "��"
-     UEPtr<NPulseMembrane> soma = NormalOutputNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
+     std::shared_ptr<NPulseMembrane> soma = NormalOutputNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
      if(!soma)
          return true;
-     UEPtr<NPulseSynapse> inh_synapse_pos = soma->GetComponentL<NPulseSynapse>("InhSynapse1",true);
+     std::shared_ptr<NPulseSynapse> inh_synapse_pos = soma->GetComponentL<NPulseSynapse>("InhSynapse1",true);
      if(!inh_synapse_pos)
          return true;
-     res&=CreateLink(NormalBlocker->GetLongName(this),"Output",inh_synapse_pos->GetLongName(this),"Input");
+    res&=CreateLink(NormalBlocker->GetLongName(GetThisAsSharedContainer()),"Output",inh_synapse_pos->GetLongName(GetThisAsSharedContainer()),"Input");
      if(!res)
          return true;
 
      //��������� ����� ����� ������������� �������� ����������� � ������������
      // �������� �������������� ������� "��"
-     UEPtr<NPulseMembrane> dend_1_1 = NormalOutputNeuron->GetComponentL<NPulseMembrane>("Dendrite1_1",true);
+     std::shared_ptr<NPulseMembrane> dend_1_1 = NormalOutputNeuron->GetComponentL<NPulseMembrane>("Dendrite1_1",true);
      if(!dend_1_1)
          return true;
-     UEPtr<NPulseSynapse> exc_synapse_pos = dend_1_1->GetComponentL<NPulseSynapse>("ExcSynapse1",true);
+     std::shared_ptr<NPulseSynapse> exc_synapse_pos = dend_1_1->GetComponentL<NPulseSynapse>("ExcSynapse1",true);
      if(!exc_synapse_pos)
          return true;
-     res&=CreateLink(NormalInputGen->GetLongName(this),"Output",exc_synapse_pos->GetLongName(this),"Input");
+    res&=CreateLink(NormalInputGen->GetLongName(GetThisAsSharedContainer()),"Output",exc_synapse_pos->GetLongName(GetThisAsSharedContainer()),"Input");
      if(!res)
          return true;
 
      //��������� ����� ����� LTZone �������������� ������� "��" � �����������
      // ����������� ��� ���������� �������������� ����� ���� ��� ���������
-     UEPtr<NPulseLTZoneThreshold> pos_not_ltZone = NormalOutputNeuron->GetComponentL<NPulseLTZoneThreshold>("LTZone",true);
+     std::shared_ptr<NPulseLTZoneThreshold> pos_not_ltZone = NormalOutputNeuron->GetComponentL<NPulseLTZoneThreshold>("LTZone",true);
      if(!pos_not_ltZone)
          return true;
-     res&=CreateLink(pos_not_ltZone->GetLongName(this),"Output",AltBlocker->GetLongName(this),"Input");
+    res&=CreateLink(pos_not_ltZone->GetLongName(GetThisAsSharedContainer()),"Output",AltBlocker->GetLongName(GetThisAsSharedContainer()),"Input");
      if(!res)
          return true;
 
      //��������� ����� ����� ������� ����������� ������������� ����� ���������� �
      // ���������� ������ �������������� ������� "��"
-     UEPtr<NPulseMembrane> neg_soma = AltOutputNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
+     std::shared_ptr<NPulseMembrane> neg_soma = AltOutputNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
      if(!soma)
          return true;
-     UEPtr<NPulseSynapse> inh_synapse_neg = neg_soma->GetComponentL<NPulseSynapse>("InhSynapse1",true);
+     std::shared_ptr<NPulseSynapse> inh_synapse_neg = neg_soma->GetComponentL<NPulseSynapse>("InhSynapse1",true);
      if(!inh_synapse_pos)
          return true;
-     res&=CreateLink(AltBlocker->GetLongName(this),"Output",inh_synapse_neg->GetLongName(this),"Input");
+    res&=CreateLink(AltBlocker->GetLongName(GetThisAsSharedContainer()),"Output",inh_synapse_neg->GetLongName(GetThisAsSharedContainer()),"Input");
      if(!res)
          return true;
 
      //��������� ����� ����� ������� ����������� �������������� ���������� �
      // ������������ ������ ��������������� ������������� ����� ������� "��"
-     UEPtr<NPulseMembrane> dend_1_1_neg = AltOutputNeuron->GetComponentL<NPulseMembrane>("Dendrite1_1",true);
+     std::shared_ptr<NPulseMembrane> dend_1_1_neg = AltOutputNeuron->GetComponentL<NPulseMembrane>("Dendrite1_1",true);
      if(!dend_1_1_neg)
          return true;
-     UEPtr<NPulseSynapse> exc_synapse_neg = dend_1_1_neg->GetComponentL<NPulseSynapse>("ExcSynapse1",true);
+     std::shared_ptr<NPulseSynapse> exc_synapse_neg = dend_1_1_neg->GetComponentL<NPulseSynapse>("ExcSynapse1",true);
      if(!exc_synapse_pos)
          return true;
-     res&=CreateLink(AltInputGen->GetLongName(this),"Output",exc_synapse_neg->GetLongName(this),"Input");
+    res&=CreateLink(AltInputGen->GetLongName(GetThisAsSharedContainer()),"Output",exc_synapse_neg->GetLongName(GetThisAsSharedContainer()),"Input");
      if(!res)
          return true;
  }
@@ -551,15 +551,15 @@ bool NPainReflexSimple::ACalculate(void)
             is_conditional_stimulus_trained = true;
 
             //������� ����� ��������� ������������ � ����������� ����
-            UEPtr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
+            std::shared_ptr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
             //��� �� ��� ������ ����
             if(!ltZone)
                 return true;
 
             // ��������� ����� ����� �������� � ����������� �����������
-            std::string input_name = NormalBlocker->GetLongName(this);
+            std::string input_name = NormalBlocker->GetLongName(GetThisAsSharedContainer());
             bool res(true);
-            res&=CreateLink(ltZone->GetLongName(this),"Output",input_name,"Input");
+            res&=CreateLink(ltZone->GetLongName(GetThisAsSharedContainer()),"Output",input_name,"Input");
             if(!res)
                 return true;
 
@@ -616,7 +616,7 @@ bool NPainReflexSimple::ACalculate(void)
 		// ������� ������� ������� ������ �� ��������� ������������
 		if(!is_first_spike)
 		{
-			UEPtr<NLTZone> ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
+			std::shared_ptr<NLTZone> ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
 			double value = ltzone->Output(0,0);
@@ -632,7 +632,7 @@ bool NPainReflexSimple::ACalculate(void)
 		// ������� ������� ������� ������ �� ������������ ������������
 		if(!is_second_spike)
 		{
-			UEPtr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
+			std::shared_ptr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
 			double value = ltzone->Output(0,0);
@@ -686,17 +686,17 @@ bool NPainReflexSimple::ACalculate(void)
 			LogicalAndNeuron->InputPattern = pattern;
 
 			// ������ ����� ��������� � ������������ ������������� � ��������, ����������� ������� "�"
-			UEPtr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
+			std::shared_ptr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
 			// ������ "�"
-			UEPtr<NPulseGeneratorTransit> generator; // ��������������� ���� ������� � ������������ ��������
+			std::shared_ptr<NPulseGeneratorTransit> generator; // ��������������� ���� ������� � ������������ ��������
 			generator = LogicalAndNeuron->GetComponentL<NPulseGeneratorTransit>("Source2",true);
 			if(!generator)
 				return true;
 			// ���������
 			bool res(true);
-			res&=CreateLink(ltzone->GetLongName(this),"Output",generator->GetLongName(this),"Input");
+			res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",generator->GetLongName(GetThisAsSharedContainer()),"Input");
 			if(!res)
 				return true;
 			// �������� ������������
@@ -709,7 +709,7 @@ bool NPainReflexSimple::ACalculate(void)
 				return true;
 			// ���������
 			res = true;
-			res&=CreateLink(ltzone->GetLongName(this),"Output",generator->GetLongName(this),"Input");
+			res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",generator->GetLongName(GetThisAsSharedContainer()),"Input");
 			if(!res)
 				return true;
 
@@ -731,16 +731,16 @@ bool NPainReflexSimple::ACalculate(void)
 		{
 			// ��������� ����� ����� ��������, ����������� ������� "�" � "�������" ��������
 			// ������ "�"
-			UEPtr<NLTZone> ltzone = LogicalAndNeuron->GetComponentL<NLTZone>("Neuron.LTZone",true);
+			std::shared_ptr<NLTZone> ltzone = LogicalAndNeuron->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
 			// "�������" ������
-			UEPtr<NPulseSynapse> synapse = BigNeuron->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse1",true);
+			std::shared_ptr<NPulseSynapse> synapse = BigNeuron->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse1",true);
 			if(!synapse)
 				return true;
 			// ���������
 			bool res(true);
-			res&=CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
+			res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 			if(!res)
 				return true;
 
@@ -761,7 +761,7 @@ bool NPainReflexSimple::ACalculate(void)
 	 if(!is_big_neuron_trained)
 	 {
 		// ���� "������� ������ �������, ��������� �������� � ��������� ����� ��������� ������������ � ����������� ���������
-		UEPtr<NLTZone> ltzone = BigNeuron->GetComponentL<NLTZone>("LTZone",true);
+		std::shared_ptr<NLTZone> ltzone = BigNeuron->GetComponentL<NLTZone>("LTZone",true);
         if(!ltzone)
 			return true;
 		if(ltzone->Output(0,0) > 0)
@@ -772,7 +772,7 @@ bool NPainReflexSimple::ACalculate(void)
 			if(!ltzone)
 				return true;
 			// ����������� �������
-			UEPtr<NPulseSynapse> synapse2;
+			std::shared_ptr<NPulseSynapse> synapse2;
 			if(!IsNegInfluence)
 				synapse2 = LogicalOrNeuron->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse2",true);
 			else
@@ -781,7 +781,7 @@ bool NPainReflexSimple::ACalculate(void)
 				return true;
             // ���������
 			bool res(true);
-			res&=CreateLink(ltzone->GetLongName(this),"Output",synapse2->GetLongName(this),"Input");
+			res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse2->GetLongName(GetThisAsSharedContainer()),"Input");
 			if(!res)
 				return true;
 
@@ -802,25 +802,25 @@ bool NPainReflexSimple::ACalculate(void)
 			synapses_num++;
 
 			// ��������� ������ �� "�������" ������
-			UEPtr<NPulseMembrane> soma = BigNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
+			std::shared_ptr<NPulseMembrane> soma = BigNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
 			if(!soma)
 				return true;
-			UEPtr<NPulseSynapse> synapse = soma->AddMissingComponent<NPulseSynapse>(std::string("ExcSynapse"+sntoa(synapses_num)), SynapseClassName);
+			std::shared_ptr<NPulseSynapse> synapse = soma->AddMissingComponent<NPulseSynapse>(std::string("ExcSynapse"+sntoa(synapses_num)), SynapseClassName);
 			if(!synapse)
 				return true;
-			UEPtr<NPulseSynapse> synapse1 = soma->GetComponentL<NPulseSynapse>("ExcSynapse1",true);
+			std::shared_ptr<NPulseSynapse> synapse1 = soma->GetComponentL<NPulseSynapse>("ExcSynapse1",true);
 			if(!synapse1)
 				return true;
 			RDK::MVector<double,3> coords = synapse1->GetCoord();
 			synapse->SetCoord(MVector<double,3>(coords(0)+7.0*(synapses_num-1),coords(1),0));
 			// ��������� ����� ����� ����� �������� � ������ �������
-			std::string input_name = soma->GetLongName(this) + std::string(".ExcChannel");
+			std::string input_name = soma->GetLongName(GetThisAsSharedContainer()) + std::string(".ExcChannel");
 			bool res(true);
-			res&=CreateLink(synapse->GetLongName(this),"Output",input_name,"SynapticInputs");
+			res&=CreateLink(synapse->GetLongName(GetThisAsSharedContainer()),"Output",input_name,"SynapticInputs");
 			if(!res)
 				return true;
 			// ��������� ����� ����� ����� �������� � ������� "�" �������
-			res&=CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
+			res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 			if(!res)
 				return true;
 		}

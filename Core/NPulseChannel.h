@@ -61,7 +61,7 @@ virtual ~NPulseChannel(void);
 virtual int GetNumSynapses(void) const;
 
 // Возвращает синапс по индексу
-UEPtr<NPulseSynapse> GetSynapse(int i);
+std::shared_ptr<NPulseSynapse> GetSynapse(int i);
 // --------------------------
 virtual double GetSynOutput(void);// метод-заглушка
 virtual bool ResetOut(void);
@@ -98,7 +98,7 @@ virtual NPulseChannel* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+virtual bool CheckComponentType(std::shared_ptr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
@@ -109,13 +109,13 @@ protected:
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+virtual bool AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer=0);
 
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+virtual bool ADelComponent(std::shared_ptr<UContainer> comp);
 // --------------------------
 
 // --------------------------

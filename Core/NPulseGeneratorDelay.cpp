@@ -106,7 +106,7 @@ NPulseGeneratorDelay* NPulseGeneratorDelay::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseGeneratorDelay::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseGeneratorDelay::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  return false;
 }

@@ -129,31 +129,31 @@ protected:
  //int OldNumInputDendrite;
 
  // Безусловный раздражитель
- //UEPtr<NNeuronTrainer> UnconditionalStimul;
+ //std::shared_ptr<NNeuronTrainer> UnconditionalStimul;
  // Условный раздражитель
- UEPtr<NNeuronTrainer> ConditionalStimul;
+ std::shared_ptr<NNeuronTrainer> ConditionalStimul;
  // Нейрон, реализующий функцию "И"
- //UEPtr<NNeuronTrainer> LogicalAndNeuron;
+ //std::shared_ptr<NNeuronTrainer> LogicalAndNeuron;
  // "Большой" нейрон
- //UEPtr<NPulseNeuron> BigNeuron;
+ //std::shared_ptr<NPulseNeuron> BigNeuron;
 
  // Нейрон, пропускающий/блокирующий "нормальный" выход
- UEPtr<NPulseNeuron> NormalOutputNeuron;
+ std::shared_ptr<NPulseNeuron> NormalOutputNeuron;
 
  // Нейрон, пропускающий/блокирующий "альтернативный" выход
- UEPtr<NPulseNeuron> AltOutputNeuron;
+ std::shared_ptr<NPulseNeuron> AltOutputNeuron;
 
  //Генератор, блокирующий NormalOutputNeuron серией  импульсов, если есть выход с условного раздражителя
- UEPtr<NPulseGeneratorTransit> NormalBlocker;
+ std::shared_ptr<NPulseGeneratorTransit> NormalBlocker;
 
  //Генератор, блокирующий PainOutputNeuron серией  импульсов, если есть выход с "нормального" нейрона
- UEPtr<NPulseGeneratorTransit> AltBlocker;
+ std::shared_ptr<NPulseGeneratorTransit> AltBlocker;
 
  //Транзитный генератор, к которому подключается "нормальный" вход (основной)
- UEPtr<NPulseGeneratorTransit> NormalInputGen;
+ std::shared_ptr<NPulseGeneratorTransit> NormalInputGen;
 
  //Транзитный генератор, к которому подключается "альтернативный" вход (болевой)
- UEPtr<NPulseGeneratorTransit> AltInputGen;
+ std::shared_ptr<NPulseGeneratorTransit> AltInputGen;
 
  // Флаги, определяющие стадию формирования рефлекса
  bool is_conditional_stimulus_trained; //Признак завершения обучения условному раздражителю
@@ -271,13 +271,13 @@ protected:
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+virtual bool AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer=0);
 
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+virtual bool ADelComponent(std::shared_ptr<UContainer> comp);
 // --------------------------
 
 

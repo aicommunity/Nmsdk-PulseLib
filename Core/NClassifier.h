@@ -136,15 +136,15 @@ protected:
  double start_iter_time;
  // <-------
 
- UEPtr<NPulseNeuron> LogicalOrNeuron;
+ std::shared_ptr<NPulseNeuron> LogicalOrNeuron;
 
  // Генераторы импульсов
- std::vector<UEPtr<NPulseGeneratorTransit> > generators;
+ std::vector<std::shared_ptr<NPulseGeneratorTransit> > generators;
  // Обученные (обучающиеся) нейроны
- //std::vector<UEPtr<NNeuronTrainer> > trainers;
+ //std::vector<std::shared_ptr<NNeuronTrainer> > trainers;
 
  // Группы обучающих нейронов
- std::vector<std::vector<UEPtr<NNeuronTrainer> > >groups_trainers;
+ std::vector<std::vector<std::shared_ptr<NNeuronTrainer> > >groups_trainers;
 
 public: // Методы
 // --------------------------
@@ -247,13 +247,13 @@ protected:
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+virtual bool AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer=0);
 
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+virtual bool ADelComponent(std::shared_ptr<UContainer> comp);
 // --------------------------
 
 

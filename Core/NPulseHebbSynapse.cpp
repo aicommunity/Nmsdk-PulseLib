@@ -84,7 +84,7 @@ NPulseHebbSynapse* NPulseHebbSynapse::New(void)
 bool NPulseHebbSynapse::InstallHebbianConnection(void)
 {
  bool res=true;
- UEPtr<NPulseNeuron> mowner=UEPtr<NPulseNeuron>(dynamic_pointer_cast<NPulseNeuron>(MainOwner.lock()).get());
+ std::shared_ptr<NPulseNeuron> mowner=std::shared_ptr<NPulseNeuron>(dynamic_pointer_cast<NPulseNeuron>(MainOwner.lock()).get());
 
  if(mowner && mowner->GetLTZone())
  {
@@ -99,7 +99,7 @@ bool NPulseHebbSynapse::InstallHebbianConnection(void)
  else
   return false;
 	   /*
- UEPtr<NPulseLifeNeuron> mlowner=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
+ std::shared_ptr<NPulseLifeNeuron> mlowner=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
 
  if(mlowner && mlowner->GetNeuronLife())
  {
@@ -258,7 +258,7 @@ bool NPulseHebbSynapse::ACalculate2(void)
    /*
  if(MainOwner && Owner)
  {
-  UEPtr<NPulseLifeNeuron> neuron=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
+  std::shared_ptr<NPulseLifeNeuron> neuron=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
   if(neuron)
   {
    if(static_pointer_cast<NPulseChannel>(Owner)->Type()>0)

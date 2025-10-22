@@ -21,7 +21,7 @@ NPulseLibrary PulseLibrary;
 
 
 	  /*
-bool CreateNeuronLifeObject(UEPtr<NNeuronLife> &life, UStorage *storage)
+bool CreateNeuronLifeObject(std::shared_ptr<NNeuronLife> &life, UStorage *storage)
 {
  if(life || !storage)
   return false;
@@ -30,7 +30,7 @@ bool CreateNeuronLifeObject(UEPtr<NNeuronLife> &life, UStorage *storage)
  if(!life)
   return false;
 
- UEPtr<NSum> sum=static_pointer_cast<NSum>(storage->TakeObject("NSum"));
+ std::shared_ptr<NSum> sum=static_pointer_cast<NSum>(storage->TakeObject("NSum"));
  if(!sum)
   return false;
 
@@ -61,87 +61,87 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 {
 
  {
- UContainer *cont;
+ std::shared_ptr<UContainer> cont;
 
- cont=new NNet;
+ cont=std::make_shared<NNet>();
  cont->SetName("Net");
  cont->Default();
  UploadClass("NNet",cont);
 
- cont=new NModel;
+ cont=std::make_shared<NModel>();
  cont->SetName("Model");
  cont->Default();
  UploadClass("NModel",cont);
 
- cont=new NNeuron;
+ cont=std::make_shared<NNeuron>();
  cont->SetName("Neuron");
  cont->Default();
  UploadClass("NNeuron",cont);
 
- cont=new NSource;
+ cont=std::make_shared<NSource>();
  cont->SetName("Source");
  cont->Default();
  UploadClass("NSource",cont);
 
- cont=new NReceiver;
+ cont=std::make_shared<NReceiver>();
  cont->SetName("Receiver");
  cont->Default();
  UploadClass("NReceiver",cont);
 
 
- cont=new NMExtrapolator;
+ cont=std::make_shared<NMExtrapolator>();
  cont->SetName("MExtrapolator");
  cont->Default();
  UploadClass("NMExtrapolator",cont);
 
- cont=new NSum;
+ cont=std::make_shared<NSum>();
  cont->SetName("Sum");
  cont->Default();
  UploadClass("NSum",cont);
 
 
 
-  cont=new NPulseGenerator;
+  cont=std::make_shared<NPulseGenerator>();
  cont->SetName("PGenerator");
  cont->Default();
  UploadClass("NPGenerator",cont);
 
- cont=new NConstGenerator;
+ cont=std::make_shared<NConstGenerator>();
  cont->SetName("CGenerator");
  cont->Default();
  UploadClass("NCGenerator",cont);
 
- cont=new NSinusGenerator;
+ cont=std::make_shared<NSinusGenerator>();
  cont->SetName("SinusGenerator");
  cont->Default();
  UploadClass("NSinusGenerator",cont);
 
- cont=new NFileGenerator;
+ cont=std::make_shared<NFileGenerator>();
  cont->SetName("FileGenerator");
  cont->Default();
  UploadClass("NFileGenerator",cont);
 
- cont=new NPulseGeneratorTransit;
+ cont=std::make_shared<NPulseGeneratorTransit>();
  cont->SetName("PGenerator");
  cont->Default();
  UploadClass("NPulseGeneratorTransit",cont);
 
- cont=new NPulseGeneratorMulti;
+ cont=std::make_shared<NPulseGeneratorMulti>();
  cont->SetName("PGeneratorMulti");
  cont->Default();
  UploadClass("NPulseGeneratorMulti",cont);
 
- cont=new NPattern;
+ cont=std::make_shared<NPattern>();
  cont->SetName("Pattern");
  cont->Default();
  UploadClass("NPattern",cont);
 
- cont=new NPulseGeneratorDelay;
+ cont=std::make_shared<NPulseGeneratorDelay>();
  cont->SetName("PGeneratorDelay");
  cont->Default();
  UploadClass("NPGeneratorDelay",cont);
 
- cont=new NPulseDelay;
+ cont=std::make_shared<NPulseDelay>();
  cont->SetName("PDelay");
  cont->Default();
  UploadClass("NPDelay",cont);
@@ -149,62 +149,62 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
 
 
- cont=new NPulseLTZoneThreshold;
+ cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PLTZone");
  cont->Default();
  UploadClass("NPulseLTZoneThreshold",cont);
 
- cont=new NPulseLTZoneThreshold;
+ cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PLTZone");
  cont->Default();
  {
-  NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont);
+  NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont.get());
   ltzonet->Threshold=-0.055;
   ltzonet->ThresholdOff=-0.1;
  }
  UploadClass("NPulseLTZoneThresholdBio",cont);
 
- cont=new NPulseLTZoneThreshold;
+ cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PLTZone");
  cont->Default();
  {
-  NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont);
+  NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont.get());
   ltzonet->Threshold=-0.055;
   ltzonet->ThresholdOff=-0.07;
  }
  UploadClass("NPulseLTZoneThresholdBio2",cont);
 
- cont=new NPulseLTZone;
+ cont=std::make_shared<NPulseLTZone>();
  cont->SetName("PLTZone");
  cont->Default();
  UploadClass("NPLTZone",cont);
 
- cont=new NContinuesLTZone;
+ cont=std::make_shared<NContinuesLTZone>();
  cont->SetName("CLTZone");
  cont->Default();
  UploadClass("NCLTZone",cont);
 
- cont=new NPulseSimpleLTZone;
+ cont=std::make_shared<NPulseSimpleLTZone>();
  cont->SetName("PLTZone");
  cont->Default();
  UploadClass("NPSimpleLTZone",cont);
 
- cont=new NContinuesSimpleLTZone;
+ cont=std::make_shared<NContinuesSimpleLTZone>();
  cont->SetName("CLTZone");
  cont->Default();
  UploadClass("NCSimpleLTZone",cont);
 
- cont=new NPulseChannel;
+ cont=std::make_shared<NPulseChannel>();
  cont->SetName("PChannel");
  cont->Default();
  UploadClass("NPChannel",cont);
 
- cont=new NPulseSynapse;
+ cont=std::make_shared<NPulseSynapse>();
  cont->SetName("PSynapse");
  cont->Default();
  UploadClass("NPSynapse",cont);
 
- NPulseSynapse *syn=dynamic_pointer_cast<NPulseSynapse>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynapse"));
+ std::shared_ptr<NPulseSynapse> syn=dynamic_pointer_cast<NPulseSynapse>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynapse"));
  syn->Resistance=2e7*4.3;
  syn->DissociationTC=0.005;
  UploadClass("NPSynapseBio",syn);
@@ -214,22 +214,22 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  syn->DissociationTC=0.005;
  UploadClass("NPSynapseBio2",syn);
 
- cont=new NPulseSynChannel;
+ cont=std::make_shared<NPulseSynChannel>();
  cont->SetName("PChannel");
  cont->Default();
  UploadClass("NPSynChannel",cont);
 
- cont=new NContinuesSynChannel;
+ cont=std::make_shared<NContinuesSynChannel>();
  cont->SetName("CChannel");
  cont->Default();
  UploadClass("NCSynChannel",cont);
 
- cont=new NPulseHebbSynapse;
+ cont=std::make_shared<NPulseHebbSynapse>();
  cont->SetName("Synapse");
  cont->Default();
  UploadClass("NPHebbSynapse",cont);
 
- UEPtr<NPulseChannel> ch, ch_pos, ch_neg;
+ std::shared_ptr<NPulseChannel> ch, ch_pos, ch_neg;
  // ������ ������� ��������� ������� �������� ��������
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
  ch_pos->SetName("ExcChannel");
@@ -327,8 +327,8 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPLTSynInhChannel",ch_neg);
 
  // ������������ ������� ��������
- UEPtr<NPulseMembrane> membr;
- cont=new NPulseMembrane;
+ std::shared_ptr<NPulseMembrane> membr;
+ cont=std::make_shared<NPulseMembrane>();
  cont->SetName("PMembrane");
  cont->Default();
  UploadClass("NPMembrane",cont);
@@ -381,86 +381,86 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->Build();
  UploadClass("NPNeuronHebbMembrane",membr);
 
- cont=new NEyeMuscle;
+ cont=std::make_shared<NEyeMuscle>();
  cont->SetName("EyeMuscle");
  cont->Default();
  UploadClass("NEyeMuscle",cont);
 
- cont=new NMuscle;
+ cont=std::make_shared<NMuscle>();
  cont->SetName("Muscle");
  cont->Default();
  UploadClass("NMuscle",cont);
 
- cont=new NPac;
+ cont=std::make_shared<NPac>();
  cont->SetName("Pac");
  cont->Default();
  UploadClass("NPac",cont);
 
- cont=new NReceptor;
+ cont=std::make_shared<NReceptor>();
  cont->SetName("Receptor");
  cont->Default();
  UploadClass("NReceptor",cont);
 
- cont=new NCPac;
+ cont=std::make_shared<NCPac>();
  cont->SetName("Pac");
  cont->Default();
- dynamic_pointer_cast<NCPac>(UEPtr<UContainer>(cont))->TCMode=0;
+ dynamic_pointer_cast<NCPac>(std::shared_ptr<UContainer>(cont))->TCMode=0;
  UploadClass("NCPac",cont);
 
  // ���������� ������ ���������� PulseItemsLibrary
  cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronNegCGenerator");
- dynamic_cast<NConstGenerator*>(cont)->Amplitude=-1;
+ dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=-1;
  UploadClass("NPNeuronNegCGenerator",cont);
 
  cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronPosCGenerator");
- dynamic_cast<NConstGenerator*>(cont)->Amplitude=1;
+ dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=1;
  UploadClass("NPNeuronPosCGenerator",cont);
 
  cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronNegCGenerator");
- dynamic_cast<NConstGenerator*>(cont)->Amplitude=-2;
+ dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=-2;
  UploadClass("NCNeuronNegCGenerator",cont);
 
  cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronPosCGenerator");
- dynamic_cast<NConstGenerator*>(cont)->Amplitude=2;
+ dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=2;
  UploadClass("NCNeuronPosCGenerator",cont);
 
  cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("NegGenerator");
- dynamic_cast<NConstGenerator*>(cont)->Amplitude=-1;
+ dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=-1;
  UploadClass("NPNeuronNegCGeneratorBio",cont);
 
  cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PosGenerator");
- dynamic_cast<NConstGenerator*>(cont)->Amplitude=0.93;
+ dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=0.93;
  UploadClass("NPNeuronPosCGeneratorBio",cont);
 
  cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronPosCGenerator");
- dynamic_cast<NConstGenerator*>(cont)->Amplitude=-70e-3;
+ dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=-70e-3;
  UploadClass("NPNeuronPosCGeneratorCable",cont);
 
- cont=new NPulseNeuron;
+ cont=std::make_shared<NPulseNeuron>();
  cont->SetName("PNeuron");
  cont->Default();
  UploadClass("NPNeuron",cont);
 
- cont=new NPulseNeuron;
+ cont=std::make_shared<NPulseNeuron>();
  cont->SetName("PHebbNeuron");
  cont->Default();
- dynamic_cast<NPulseNeuron*>(cont)->MembraneClassName="NPNeuronHebbMembrane";
+ dynamic_cast<NPulseNeuron*>(cont.get())->MembraneClassName="NPNeuronHebbMembrane";
  UploadClass("NPHebbNeuron",cont);
 
- cont=new NPulseNeuron;
+ cont=std::make_shared<NPulseNeuron>();
  cont->Default();
- dynamic_cast<NPulseNeuron*>(cont)->MembraneClassName="NCSynNeuronMembrane";
- dynamic_cast<NPulseNeuron*>(cont)->LTMembraneClassName="";
- dynamic_cast<NPulseNeuron*>(cont)->LTZoneClassName="NCLTZone";
- dynamic_cast<NPulseNeuron*>(cont)->ExcGeneratorClassName="NCNeuronNegCGenerator";
- dynamic_cast<NPulseNeuron*>(cont)->InhGeneratorClassName="NCNeuronPosCGenerator";
+ dynamic_cast<NPulseNeuron*>(cont.get())->MembraneClassName="NCSynNeuronMembrane";
+ dynamic_cast<NPulseNeuron*>(cont.get())->LTMembraneClassName="";
+ dynamic_cast<NPulseNeuron*>(cont.get())->LTZoneClassName="NCLTZone";
+ dynamic_cast<NPulseNeuron*>(cont.get())->ExcGeneratorClassName="NCNeuronNegCGenerator";
+ dynamic_cast<NPulseNeuron*>(cont.get())->InhGeneratorClassName="NCNeuronPosCGenerator";
  cont->SetName("CNeuron");
  UploadClass("NCNeuron",cont);
 
@@ -469,217 +469,217 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->Default();
  UploadClass("NPLifeNeuron",cont);
   */
- cont=new NAfferentNeuron;
+ cont=std::make_shared<NAfferentNeuron>();
  cont->SetName("AfferentNeuron");
  cont->Default();
  UploadClass("NAfferentNeuron",cont);
 
- cont=new NPulseSynapseStdp;
+ cont=std::make_shared<NPulseSynapseStdp>();
  cont->SetName("SynapseStdp");
  cont->Default();
  UploadClass("NPulseSynapseStdp",cont);
 
 
-  cont=new NPulseChannelIzhikevich;
+  cont=std::make_shared<NPulseChannelIzhikevich>();
  cont->SetName("Channel");
  cont->Default();
  UploadClass("NPulseChannelIzhikevich",cont);
 
- cont=new NPulseSynapse;
+ cont=std::make_shared<NPulseSynapse>();
  cont->SetName("Synapse");
  cont->Default();
- static_cast<NPulseSynapse*>(cont)->SecretionTC=0.001;
- static_cast<NPulseSynapse*>(cont)->DissociationTC=0.005;
- static_cast<NPulseSynapse*>(cont)->UsePresynapticInhibition=false;
- static_cast<NPulseSynapse*>(cont)->Resistance=86000000;
+ static_cast<NPulseSynapse*>(cont.get())->SecretionTC=0.001;
+ static_cast<NPulseSynapse*>(cont.get())->DissociationTC=0.005;
+ static_cast<NPulseSynapse*>(cont.get())->UsePresynapticInhibition=false;
+ static_cast<NPulseSynapse*>(cont.get())->Resistance=86000000;
  UploadClass("NSynapseIaF",cont);
 
- cont=new NPulseSynapse;
+ cont=std::make_shared<NPulseSynapse>();
  cont->SetName("Synapse");
  cont->Default();
- static_cast<NPulseSynapse*>(cont)->SecretionTC=0.001;
- static_cast<NPulseSynapse*>(cont)->DissociationTC=0.005;
- static_cast<NPulseSynapse*>(cont)->UsePresynapticInhibition=false;
- static_cast<NPulseSynapse*>(cont)->Resistance=86000000;
+ static_cast<NPulseSynapse*>(cont.get())->SecretionTC=0.001;
+ static_cast<NPulseSynapse*>(cont.get())->DissociationTC=0.005;
+ static_cast<NPulseSynapse*>(cont.get())->UsePresynapticInhibition=false;
+ static_cast<NPulseSynapse*>(cont.get())->Resistance=86000000;
  UploadClass("NSynapseCable",cont);
 
- cont=new NPulseSynapse;
+ cont=std::make_shared<NPulseSynapse>();
  cont->SetName("Synapse");
  cont->Default();
- static_cast<NPulseSynapse*>(cont)->SecretionTC=0.001;
- static_cast<NPulseSynapse*>(cont)->DissociationTC=0.005;
- static_cast<NPulseSynapse*>(cont)->UsePresynapticInhibition=false;
- static_cast<NPulseSynapse*>(cont)->Resistance=86000000;
+ static_cast<NPulseSynapse*>(cont.get())->SecretionTC=0.001;
+ static_cast<NPulseSynapse*>(cont.get())->DissociationTC=0.005;
+ static_cast<NPulseSynapse*>(cont.get())->UsePresynapticInhibition=false;
+ static_cast<NPulseSynapse*>(cont.get())->Resistance=86000000;
  UploadClass("NSynapseCableMulti",cont);
 
- cont=new NPulseChannelIaF;
+ cont=std::make_shared<NPulseChannelIaF>();
  cont->SetName("Channel");
  cont->Default();
  UploadClass("NPulseChannelIaF",cont);
 
- cont=new NPulseLTZoneThreshold;
+ cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PulseLTZone");
  cont->Default();
- dynamic_cast<NLTZone*>(cont)->Threshold=30;
+ dynamic_cast<NLTZone*>(cont.get())->Threshold=30;
  UploadClass("NPulseLTZoneIzhikevich",cont);
 
- cont=new NPulseLTZoneThreshold;
+ cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PulseLTZone");
  cont->Default();
- dynamic_cast<NPulseLTZoneThreshold*>(cont)->Threshold=-0.055;
- dynamic_cast<NPulseLTZoneThreshold*>(cont)->ThresholdOff=-0.07;
- static_cast<NPulseLTZoneThreshold*>(cont)->NumChannelsInGroup=1;
+ dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->Threshold=-0.055;
+ dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->ThresholdOff=-0.07;
+ static_cast<NPulseLTZoneThreshold*>(cont.get())->NumChannelsInGroup=1;
  UploadClass("NPulseLTZoneIaF",cont);
 
- cont=new NPulseLTZoneThreshold;
+ cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PulseLTZone");
  cont->Default();
- dynamic_cast<NPulseLTZoneThreshold*>(cont)->Threshold=-0.055;
- dynamic_cast<NPulseLTZoneThreshold*>(cont)->ThresholdOff=-0.07;
- static_cast<NPulseLTZoneThreshold*>(cont)->NumChannelsInGroup=1;
+ dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->Threshold=-0.055;
+ dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->ThresholdOff=-0.07;
+ static_cast<NPulseLTZoneThreshold*>(cont.get())->NumChannelsInGroup=1;
  UploadClass("NPulseLTZoneCable",cont);
 
- cont=new NPulseMembrane;
+ cont=std::make_shared<NPulseMembrane>();
  cont->Default();
  cont->SetName("PulseMembrane");
- dynamic_cast<NPulseMembrane*>(cont)->ExcChannelClassName="NPulseChannelIzhikevich";
- dynamic_cast<NPulseMembrane*>(cont)->InhChannelClassName="";
- dynamic_cast<NPulseMembrane*>(cont)->SynapseClassName="NPulseSynapseStdp";
+ dynamic_cast<NPulseMembrane*>(cont.get())->ExcChannelClassName="NPulseChannelIzhikevich";
+ dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
+ dynamic_cast<NPulseMembrane*>(cont.get())->SynapseClassName="NPulseSynapseStdp";
  cont->Build();
  UploadClass("NPulseMembraneIzhikevich",cont);
 
- cont=new NPulseMembrane;
+ cont=std::make_shared<NPulseMembrane>();
  cont->Default();
  cont->SetName("PulseMembrane");
- dynamic_cast<NPulseMembrane*>(cont)->ExcChannelClassName="NPulseChannelIaF";
- dynamic_cast<NPulseMembrane*>(cont)->InhChannelClassName="";
- dynamic_cast<NPulseMembrane*>(cont)->SynapseClassName="NSynapseIaF";
+ dynamic_cast<NPulseMembrane*>(cont.get())->ExcChannelClassName="NPulseChannelIaF";
+ dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
+ dynamic_cast<NPulseMembrane*>(cont.get())->SynapseClassName="NSynapseIaF";
  cont->Build();
  UploadClass("NPulseMembraneIaF",cont);
 
 
- cont=new NPulseChannelCable;
+ cont=std::make_shared<NPulseChannelCable>();
  cont->SetName("Channel");
  cont->Default();
- //dynamic_cast<NPulseChannelCable*>(cont)->CalcMode = true;
- //dynamic_cast<NPulseChannelCable*>(cont)->Cm = 1.0e-9;
- //dynamic_cast<NPulseChannelCable*>(cont)->CompartmentR = 1;
- //dynamic_cast<NPulseChannelCable*>(cont)->D = 0.00002;
- //dynamic_cast<NPulseChannelCable*>(cont)->EL = -0.07;
- //dynamic_cast<NPulseChannelCable*>(cont)->ModelMaxLength = 0.0002;
- //dynamic_cast<NPulseChannelCable*>(cont)->Ri = 100000;
- //dynamic_cast<NPulseChannelCable*>(cont)->Rm = 1000;
- //dynamic_cast<NPulseChannelCable*>(cont)->SynapticR = 1.0;
-// dynamic_cast<NPulseChannelCable*>(cont)->dt = 1.0e-8;
- //dynamic_cast<NPulseChannelCable*>(cont)->dx = 1.0e-5;
+ //dynamic_cast<NPulseChannelCable*>(cont.get())->CalcMode = true;
+ //dynamic_cast<NPulseChannelCable*>(cont.get())->Cm = 1.0e-9;
+ //dynamic_cast<NPulseChannelCable*>(cont.get())->CompartmentR = 1;
+ //dynamic_cast<NPulseChannelCable*>(cont.get())->D = 0.00002;
+ //dynamic_cast<NPulseChannelCable*>(cont.get())->EL = -0.07;
+ //dynamic_cast<NPulseChannelCable*>(cont.get())->ModelMaxLength = 0.0002;
+ //dynamic_cast<NPulseChannelCable*>(cont.get())->Ri = 100000;
+ //dynamic_cast<NPulseChannelCable*>(cont.get())->Rm = 1000;
+ //dynamic_cast<NPulseChannelCable*>(cont.get())->SynapticR = 1.0;
+// dynamic_cast<NPulseChannelCable*>(cont.get())->dt = 1.0e-8;
+ //dynamic_cast<NPulseChannelCable*>(cont.get())->dx = 1.0e-5;
  UploadClass("NPulseChannelCable",cont);
 
- cont=new NPulseChannelCable;
+ cont=std::make_shared<NPulseChannelCable>();
  cont->SetName("Channel");
  cont->Default();
  UploadClass("NPulseChannelCableMulti",cont);
 
- cont=new NPulseMembrane;
+ cont=std::make_shared<NPulseMembrane>();
  cont->Default();
  cont->SetName("PulseMembrane");
- dynamic_cast<NPulseMembrane*>(cont)->ExcChannelClassName="NPulseChannelCable";
- dynamic_cast<NPulseMembrane*>(cont)->InhChannelClassName="";
- dynamic_cast<NPulseMembrane*>(cont)->SynapseClassName="NSynapseCable";
- dynamic_cast<NPulseMembrane*>(cont)->FeedbackGain=0.7;
+ dynamic_cast<NPulseMembrane*>(cont.get())->ExcChannelClassName="NPulseChannelCable";
+ dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
+ dynamic_cast<NPulseMembrane*>(cont.get())->SynapseClassName="NSynapseCable";
+ dynamic_cast<NPulseMembrane*>(cont.get())->FeedbackGain=0.7;
  cont->Build();
  UploadClass("NPulseMembraneCable",cont);
 
- cont=new NPulseMembrane;
+ cont=std::make_shared<NPulseMembrane>();
  cont->Default();
  cont->SetName("PulseMembrane");
- dynamic_cast<NPulseMembrane*>(cont)->ExcChannelClassName="NPulseChannelCableMulti";
- dynamic_cast<NPulseMembrane*>(cont)->InhChannelClassName="";
- dynamic_cast<NPulseMembrane*>(cont)->SynapseClassName="NSynapseCableMulti";
- dynamic_cast<NPulseMembrane*>(cont)->FeedbackGain=0.7;
+ dynamic_cast<NPulseMembrane*>(cont.get())->ExcChannelClassName="NPulseChannelCableMulti";
+ dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
+ dynamic_cast<NPulseMembrane*>(cont.get())->SynapseClassName="NSynapseCableMulti";
+ dynamic_cast<NPulseMembrane*>(cont.get())->FeedbackGain=0.7;
  cont->Build();
  UploadClass("NPulseMembraneCableMulti",cont);
 
- cont=new NSynapseTrainerStdp;
+ cont=std::make_shared<NSynapseTrainerStdp>();
  cont->SetName("Trainer");
  cont->Default();
  UploadClass("NSynapseTrainerStdp",cont);
 
- cont=new NSynapseTrainerStdpTD;
+ cont=std::make_shared<NSynapseTrainerStdpTD>();
  cont->SetName("TrainerTD");
  cont->Default();
  UploadClass("NSynapseTrainerStdpTD",cont);
 
- cont=new NSynapseTrainerStdpWD;
+ cont=std::make_shared<NSynapseTrainerStdpWD>();
  cont->SetName("TrainerWD");
  cont->Default();
  UploadClass("NSynapseTrainerStdpWD",cont);
 
- cont=new NSynapseTrainerStdpLobov;
+ cont=std::make_shared<NSynapseTrainerStdpLobov>();
  cont->SetName("TrainerLobov");
  cont->Default();
  UploadClass("NSynapseTrainerStdpLobov",cont);
 
- cont=new NSynapseTrainerStdpClassicDiscrete;
+ cont=std::make_shared<NSynapseTrainerStdpClassicDiscrete>();
  cont->SetName("TrainerClassicDiscrete");
  cont->Default();
  UploadClass("NSynapseTrainerStdpClassicDiscrete",cont);
 
- cont=new NSynapseTrainerStdpClassicIntegrated;
+ cont=std::make_shared<NSynapseTrainerStdpClassicIntegrated>();
  cont->SetName("TrainerClassicIntegrated");
  cont->Default();
  UploadClass("NSynapseTrainerStdpClassicIntegrated",cont);
 
- cont=new NSynapseTrainerStdpTriplet;
+ cont=std::make_shared<NSynapseTrainerStdpTriplet>();
  cont->SetName("TrainerTriplet");
  cont->Default();
  UploadClass("NSynapseTrainerStdpTriplet",cont);
 
- cont=new NSynapseTrainerStdpMirror;
+ cont=std::make_shared<NSynapseTrainerStdpMirror>();
  cont->SetName("TrainerMirror");
  cont->Default();
  UploadClass("NSynapseTrainerStdpMirror",cont);
 
- cont=new NSynapseTrainerStdpProbabilistic;
+ cont=std::make_shared<NSynapseTrainerStdpProbabilistic>();
  cont->SetName("TrainerProbabilistic");
  cont->Default();
  UploadClass("NSynapseTrainerStdpProbabilistic",cont);
 
- cont=new NSynapseTrainerStdpStable;
+ cont=std::make_shared<NSynapseTrainerStdpStable>();
  cont->SetName("TrainerStable");
  cont->Default();
  UploadClass("NSynapseTrainerStdpStable",cont);
 
 
- UEPtr<NPulseSynapse> sinStdp=dynamic_pointer_cast<NPulseSynapse>(storage->TakeObject("NPSynapse"));
+ std::shared_ptr<NPulseSynapse> sinStdp=dynamic_pointer_cast<NPulseSynapse>(storage->TakeObject("NPSynapse"));
  sinStdp->TrainerClassName="NSynapseTrainerStdp";
  UploadClass("NPSynapseStdp",sinStdp);
 
- UEPtr<NPulseMembrane> mem=dynamic_pointer_cast<NPulseMembrane>(storage->TakeObject("NPulseMembraneIaF"));
+ std::shared_ptr<NPulseMembrane> mem=dynamic_pointer_cast<NPulseMembrane>(storage->TakeObject("NPulseMembraneIaF"));
  mem->SynapseClassName="NPSynapseStdp";
  mem->Build();
  UploadClass("NPulseMembraneIaFStdp",mem);
 
- cont=new NIntegrateAndFireNeuron;
+ cont=std::make_shared<NIntegrateAndFireNeuron>();
  cont->SetName("PulseIntegrateAndFireNeuron");
  cont->Default();
  UploadClass("NIntegrateAndFireNeuron",cont);
 
- cont=new NSynapseStdp;
+ cont=std::make_shared<NSynapseStdp>();
  cont->SetName("SynapseStdp");
  cont->Default();
  UploadClass("NSynapseStdp",cont);
 
- cont=new NSynapseClassic;
+ cont=std::make_shared<NSynapseClassic>();
  cont->SetName("Synapse");
  cont->Default();
  UploadClass("NSynapseClassic",cont);
 
- cont=new NSynapseClassicSlv;
+ cont=std::make_shared<NSynapseClassicSlv>();
  cont->SetName("Synapse");
  cont->Default();
  UploadClass("NSynapseClassicSlv",cont);
 
- UEPtr<NPulseNeuron> n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+ std::shared_ptr<NPulseNeuron> n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->Default();
  n->MembraneClassName="NPulseMembraneIzhikevich";
  n->LTMembraneClassName="";
@@ -734,37 +734,37 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
 
 /*
- cont=new NPulseHebbLifeSynapse;
+ cont=std::make_shared<NPulseHebbLifeSynapse>();
  cont->SetName("Synapse");
  cont->Default();
  UploadClass("NPHebbLifeSynapse",cont);
 
- cont=new NNeuronLife;
+ cont=std::make_shared<NNeuronLife>();
  cont->SetName("NeuronLife");
  cont->Default();
  UploadClass("NNeuronLife",cont);
 
- cont=new NLifeNet;
+ cont=std::make_shared<NLifeNet>();
  cont->SetName("LifeNet");
  cont->Default();
  UploadClass("NLifeNet",cont);
 
  // ��������� ������� ����� � ������� �������� � ����
- UEPtr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ std::shared_ptr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
  membr->SetName("PMembrane");
  membr->Default();
  membr->SynapseClassName="NPHebbLifeSynapse";
  membr->Build();
  UploadClass("NPNeuronHebbLifeMembrane",membr);
 
- cont=new NPulseLifeNeuron;
+ cont=std::make_shared<NPulseLifeNeuron>();
  cont->SetName("PLifeNeuron");
  cont->Default();
- dynamic_cast<NPulseNeuron*>(cont)->MembraneClassName="NPNeuronHebbLifeMembrane";
+ dynamic_cast<NPulseNeuron*>(cont.get())->MembraneClassName="NPNeuronHebbLifeMembrane";
  UploadClass("NPLifeNeuron",cont);
 */
 	/*
- UEPtr<NNeuronLife> life;
+ std::shared_ptr<NNeuronLife> life;
  if(CreateNeuronLifeObject(life,dynamic_cast<UStorage*>(storage)))
  {
   life->Default();
@@ -774,10 +774,10 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  }
 
 {
- UEPtr<UContainer> cont;
+ std::shared_ptr<UContainer> cont;
 
  // ������������ ����������� ������
- UEPtr<NAfferentNeuron> an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
+ std::shared_ptr<NAfferentNeuron> an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
  an->StructureBuildMode=1;
  an->Build();
  UploadClass("NSAfferentNeuron",an);
@@ -789,7 +789,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  an->ExcGeneratorClassName="NCNeuronNegCGenerator";
  an->StructureBuildMode=1;
  an->Build();
- UEPtr<NReceptor> receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
+ std::shared_ptr<NReceptor> receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
  if(receptor)
  {
   receptor->ExpCoeff=100;
@@ -836,7 +836,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NContinuesSimpleAfferentNeuron",an);
 
  // ������� ������ ������
- UEPtr<NPulseNeuron> n;
+ std::shared_ptr<NPulseNeuron> n;
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->Build();
@@ -1143,80 +1143,80 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NNewSPLifeNeuron",n);
 */
    // ������� ������ ����������� ��������
- cont=new NNeuronFreqGroup;
+ cont=std::make_shared<NNeuronFreqGroup>();
  cont->SetName("NeuronFreqGroup");
  cont->Default();
  cont->Build();
  UploadClass("NNeuronFreqGroup",cont);
 
 	// ������� ���� ����� ����������� ��������
- cont=new NNeuronFreqGroupLayer;
+ cont=std::make_shared<NNeuronFreqGroupLayer>();
  cont->SetName("NeuronFreqGroupLayer");
  cont->Default();
  cont->Build();
  UploadClass("NNeuronFreqGroupLayer",cont);
 
    // ������� ������, ��������� �������������� �������� ��� ������������� ��������� �� ��������� ������
-cont=new NNeuronLearner;
+cont=std::make_shared<NNeuronLearner>();
 cont->SetName("NeuronLearner");
 cont->Default();
 cont->Build();
 UploadClass("NNeuronLearner",cont);
 
 	// ������� ���� ��������
- cont=new NNeuronsLayer;
+ cont=std::make_shared<NNeuronsLayer>();
  cont->SetName("NeuronsLayer");
  cont->Default();
  cont->Build();
  UploadClass("NNeuronsLayer",cont);
 
- UEPtr<NNeuronsLayer> layer=dynamic_pointer_cast<NNeuronsLayer>(storage->TakeObject("NNeuronsLayer"));
+ std::shared_ptr<NNeuronsLayer> layer=dynamic_pointer_cast<NNeuronsLayer>(storage->TakeObject("NNeuronsLayer"));
  layer->NeuronsClassName="NPulseNeuronIaFStdp";
  layer->Build();
  UploadClass("NNeuronsLayerIaF",layer);
 
 	// ������� ���������� ����������
- cont=new NPulsePerseptron;
+ cont=std::make_shared<NPulsePerseptron>();
  cont->SetName("PulsePerseptron");
  cont->Default();
  cont->Build();
  UploadClass("NPulsePerseptron",cont);
 
- UEPtr<NPulsePerseptron> pers=dynamic_pointer_cast<NPulsePerseptron>(storage->TakeObject("NPulsePerseptron"));
+ std::shared_ptr<NPulsePerseptron> pers=dynamic_pointer_cast<NPulsePerseptron>(storage->TakeObject("NPulsePerseptron"));
  pers->NeuronsLayerClassName="NNeuronsLayerIaF";
  pers->Build();
  UploadClass("NPulsePerseptronIaF",pers);
 
 	// ������� ������ �� ����������, �������������� ��� ������������� ��������� �������� ���������
- cont=new NNeuronTrainer;
+ cont=std::make_shared<NNeuronTrainer>();
  cont->SetName("NeuronTrainer");
  cont->Default();
  cont->Build();
  UploadClass("NNeuronTrainer",cont);
 
 	// ������� ������ ��������� �������� ��� ������������� ��������� �������� ���������
- cont=new NSpikeClassifier;
+ cont=std::make_shared<NSpikeClassifier>();
  cont->SetName("SpikeClassifier");
  cont->Default();
  cont->Build();
  UploadClass("NSpikeClassifier",cont);
 
 	// ������� �������������
- cont=new NClassifier;
+ cont=std::make_shared<NClassifier>();
  cont->SetName("Classifier");
  cont->Default();
  cont->Build();
  UploadClass("NClassifier",cont);
 
  // ������� ������ �������� ��� ������������� ��������� ��������
- cont=new NConditionedReflex;
+ cont=std::make_shared<NConditionedReflex>();
  cont->SetName("ConditionedReflex");
  cont->Default();
  cont->Build();
  UploadClass("NConditionedReflex",cont);
 
  // ������� ������ �������� ��� ������������� ����������� �������� ��������
- cont=new NPainReflexSimple;
+cont=std::make_shared<NPainReflexSimple>();
  cont->SetName("PainReflexSimple");
  cont->Default();
  cont->Build();
@@ -1224,49 +1224,49 @@ UploadClass("NNeuronLearner",cont);
 
 
 	// ������� ������ �������� ��� ������������� ������������ ������������� ������
- cont=new NAssociationFormer;
+cont=std::make_shared<NAssociationFormer>();
  cont->SetName("AssociationTrainer");
  cont->Default();
  cont->Build();
  UploadClass("NAssociationFormer",cont);
 
  // ������� ������ �������� ��� ������������� �������� �������� (���������� ��)
-cont=new NLogicalNot;
+cont=std::make_shared<NLogicalNot>();
 cont->SetName("LogicalNot");
 cont->Default();
 cont->Build();
 UploadClass("NLogicalNot",cont);
 
 // ������� ������� ���������
-cont=new NPredictor;
+cont=std::make_shared<NPredictor>();
 cont->SetName("Predictor");
 cont->Default();
 cont->Build();
 UploadClass("NPredictor",cont);
 
     // ������� ����� ������ ��������
- cont=new NDataset;
+ cont=std::make_shared<NDataset>();
  cont->SetName("Dataset");
  cont->Default();
  cont->Build();
  UploadClass("NDataset",cont);
 
 // ������� ��������� ���������
-cont=new NStatePredictor;
+cont=std::make_shared<NStatePredictor>();
 cont->SetName("StatePredictor");
 cont->Default();
 cont->Build();
 UploadClass("NStatePredictor",cont);
 
 // ������� ������������� � �������������� PCA
-cont=new NPCAClassifier;
+cont=std::make_shared<NPCAClassifier>();
 cont->SetName("PCAClassifier");
 cont->Default();
 cont->Build();
 UploadClass("NPCAClassifier",cont);
 
 #ifdef RDK_USE_ODESOLVER
-cont=new NOdeSolver;
+cont=std::make_shared<NOdeSolver>();
 cont->SetName("OdeSolver");
 cont->Default();
 cont->Build();
@@ -1278,7 +1278,7 @@ UploadClass("NOdeSolver",cont);
 
  // ������� ����� ������ ������
  /*
- UEPtr<NPulseNeuron> n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronMembrane","NPLTZone",
+ std::shared_ptr<NPulseNeuron> n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,1,1);
  n->SetName("SPNeuron");
  n->DelComponent("PNeuronMembrane.PosChannel.Synapse2");
@@ -1592,16 +1592,16 @@ UploadClass("NOdeSolver",cont);
 // ������ �������� ��������� �������
 // --------------------------
 // ����� ������������ ������ �������� ����������� �������
-UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
+std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length)
 {
- UEPtr<UContainer> membr=0,ltmembr=0;
- UEPtr<NPulseChannel> channel1, channel2, ltchannel1,ltchannel2;
- UEPtr<NPulseNeuron> n;
- UEPtr<NNet> ltzone;
+ std::shared_ptr<UContainer> membr=0,ltmembr=0;
+ std::shared_ptr<NPulseChannel> channel1, channel2, ltchannel1,ltchannel2;
+ std::shared_ptr<NPulseNeuron> n;
+ std::shared_ptr<NNet> ltzone;
  bool res;
  RDK::ULinkSide item,conn;
- vector<UEPtr<NPulseHebbSynapse> > synapse_list;
+ vector<std::shared_ptr<NPulseHebbSynapse> > synapse_list;
 
 
  if(!storage)
@@ -1616,7 +1616,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
  n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
 
- UEPtr<NConstGenerator> gen_pos,gen_neg;
+ std::shared_ptr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
  res=n->AddComponent(gen_pos);
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
@@ -1632,15 +1632,15 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
  conn.Index=-1;
 
  // ������������� �������� �����
- item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
- conn.Id=ltmembr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
+ conn.Id=ltmembr->GetLongId(std::shared_ptr<UContainer>(n.get()));
  res=n->CreateLink(item,conn);
 
  // ������������� ����� ���������� � ���������
- item.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
- conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ item.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
+ conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
  res=n->CreateLink(item,conn);
- item.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ item.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
  res=n->CreateLink(item,conn);
 
 
@@ -1653,7 +1653,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
   channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
   for(int j=0;j<channel1->GetNumComponents();j++)
   {
-   UEPtr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j));
+   std::shared_ptr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j));
    if(hebb_syn)
 	synapse_list.push_back(hebb_syn);
   }
@@ -1661,7 +1661,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
   channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
   for(int j=0;j<channel2->GetNumComponents();j++)
   {
-   UEPtr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j));
+   std::shared_ptr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j));
    if(hebb_syn)
 	synapse_list.push_back(hebb_syn);
   }
@@ -1669,20 +1669,20 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
   conn.Index=-1;
 
   // ������������� ����� ���������� � ���������
-  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
 
   // ����� ����� ���������� ���������� ��������� ������ ������� � ��������
-  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
 
-  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
  }
 
@@ -1695,7 +1695,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
   channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
   for(int j=0;j<channel1->GetNumComponents();j++)
   {
-   UEPtr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j));
+   std::shared_ptr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j));
    if(hebb_syn)
 	synapse_list.push_back(hebb_syn);
   }
@@ -1703,7 +1703,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
   channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
   for(int j=0;j<channel2->GetNumComponents();j++)
   {
-   UEPtr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j));
+   std::shared_ptr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j));
    if(hebb_syn)
 	synapse_list.push_back(hebb_syn);
   }
@@ -1716,7 +1716,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
   sitem.Id=ltzone->GetLongName(n);
   sitem.Name="DataOutput0";
   sconn.Name="DataInput1";
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   item.Index=0;
   conn.Index=1;
   for(size_t j=0;j<synapse_list.size();j++)
@@ -1724,21 +1724,21 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
    if(synapse_list[j])
    {
 	sconn.Id=synapse_list[j]->GetLongName(n);
-	conn.Id=synapse_list[j]->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+	conn.Id=synapse_list[j]->GetLongId(std::shared_ptr<UContainer>(n.get()));
 	res=n->CreateLink(item,conn);
    }
   }
  }
 /*
- UEPtr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(n);
+ std::shared_ptr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(n);
  if(lifeneuron)
  {
-  UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
+  std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
   lifeneuron->AddComponent(nlife);
 
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   item.Index=0;//1;
-  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.get()));
   conn.Index=0;
   res=n->CreateLink(item,conn);
  }
@@ -1749,13 +1749,13 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
  return dynamic_pointer_cast<NPulseNeuron>(n);
 }
 // ����� ������������ ������ �������� ����������� ������� � ������������ ���������� ����������
-UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
+std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, vector<int> &dendrite_length)
 {
- UEPtr<UContainer> membr=0,ltmembr=0;
- UEPtr<NPulseChannel> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
- UEPtr<NPulseNeuron> n;
- UEPtr<NNet> ltzone;
+ std::shared_ptr<UContainer> membr=0,ltmembr=0;
+ std::shared_ptr<NPulseChannel> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
+ std::shared_ptr<NPulseNeuron> n;
+ std::shared_ptr<NNet> ltzone;
  bool res;
  RDK::ULinkSide item,conn;
 
@@ -1772,7 +1772,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
  n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
 
- UEPtr<NConstGenerator> gen_pos,gen_neg;
+ std::shared_ptr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
  res=n->AddComponent(gen_pos);
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
@@ -1788,15 +1788,15 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
  conn.Index=-1;
 
  // ������������� �������� �����
- item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
- conn.Id=ltmembr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
+ conn.Id=ltmembr->GetLongId(std::shared_ptr<UContainer>(n.get()));
  res=n->CreateLink(item,conn);
 
  // ������������� ����� ���������� � ���������
- item.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
- conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ item.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
+ conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
  res=n->CreateLink(item,conn);
- item.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ item.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
  res=n->CreateLink(item,conn);
 
 
@@ -1814,11 +1814,11 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
   conn.Index=-1;
 
   // ������������� ����� ���������� � ���������
-  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=ltchannel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=ltchannel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
 
   for(int j=1;j<dendrite_length[i];j++)
@@ -1829,11 +1829,11 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
    channel1temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
    channel2temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
 
-   item.Id=channel1temp->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-   conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   item.Id=channel1temp->GetLongId(std::shared_ptr<UContainer>(n.get()));
+   conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
    res=n->CreateLink(item,conn);
-   item.Id=channel2temp->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-   conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   item.Id=channel2temp->GetLongId(std::shared_ptr<UContainer>(n.get()));
+   conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
    res=n->CreateLink(item,conn);
 
    channel1 = channel1temp;
@@ -1842,25 +1842,25 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
   }
 
   // ����� ����� ���������� ���������� ��������� ������ ������� � ��������
-  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
 
-  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
  }
 /*
 
- UEPtr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(n);
+ std::shared_ptr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(n);
  if(lifeneuron)
  {
-  UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
+  std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
   lifeneuron->AddComponent(nlife);
 
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   item.Index=0;//1;
-  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.get()));
   conn.Index=0;
   res=n->CreateLink(item,conn);
  }*/
@@ -1872,13 +1872,13 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
 }
 
 // ����� ������������ ������ �������� ����������� �������
-UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
+std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length)
 {
- UEPtr<UContainer> membr=0;
- UEPtr<NPulseChannel> channel1, channel2;
- UEPtr<NPulseNeuron> n;
- UEPtr<NNet> ltzone;
+ std::shared_ptr<UContainer> membr=0;
+ std::shared_ptr<NPulseChannel> channel1, channel2;
+ std::shared_ptr<NPulseNeuron> n;
+ std::shared_ptr<NNet> ltzone;
  bool res;
  RDK::ULinkSide item,conn;
 
@@ -1895,7 +1895,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, co
  n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
 
- UEPtr<NConstGenerator> gen_pos,gen_neg;
+ std::shared_ptr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
  res=n->AddComponent(gen_pos);
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
@@ -1914,24 +1914,24 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, co
   conn.Index=-1;
 
   // ������������� �������� �����
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
 
   // ������������� ����� ���������� � ���������
-  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
 
   // ����� ����� ���������� ���������� ��������� ������ ������� � ��������
-  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
 
-  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
  }
 
@@ -1946,15 +1946,15 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, co
 
  }
 /*
- UEPtr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(n);
+ std::shared_ptr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(n);
  if(lifeneuron)
  {
-  UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
+  std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
   lifeneuron->AddComponent(nlife);
 
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   item.Index=0;//1;
-  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.get()));
   conn.Index=0;
   res=n->CreateLink(item,conn);
  }
@@ -1966,13 +1966,13 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, co
 }
 
 // ����� ������������ ������ �������� ����������� ������� � ������������ ���������� ����������
-UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
+std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, std::vector<int> dendrite_length)
 {
- UEPtr<UContainer> membr=0;
- UEPtr<NPulseChannel> channel1, channel2, channel1temp, channel2temp;
- UEPtr<NPulseNeuron> n;
- UEPtr<NNet> ltzone;
+ std::shared_ptr<UContainer> membr=0;
+ std::shared_ptr<NPulseChannel> channel1, channel2, channel1temp, channel2temp;
+ std::shared_ptr<NPulseNeuron> n;
+ std::shared_ptr<NNet> ltzone;
  bool res;
  RDK::ULinkSide item,conn;
 
@@ -1989,7 +1989,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
  n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
 
- UEPtr<NConstGenerator> gen_pos,gen_neg;
+ std::shared_ptr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
  res=n->AddComponent(gen_pos);
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
@@ -2008,15 +2008,15 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
   conn.Index=-1;
 
   // ������������� �������� �����
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
 
   // ������������� ����� ���������� � ���������
-  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
 
   for(int j=1;j<dendrite_length[i];j++)
@@ -2027,11 +2027,11 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
    channel1temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
    channel2temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
 
-   item.Id=channel1temp->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-   conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   item.Id=channel1temp->GetLongId(std::shared_ptr<UContainer>(n.get()));
+   conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
    res=n->CreateLink(item,conn);
-   item.Id=channel2temp->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-   conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   item.Id=channel2temp->GetLongId(std::shared_ptr<UContainer>(n.get()));
+   conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
    res=n->CreateLink(item,conn);
 
    channel1 = channel1temp;
@@ -2040,25 +2040,25 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
   }
 
   // ����� ����� ���������� ���������� ��������� ������ ������� � ��������
-  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
 
-  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
   res=n->CreateLink(item,conn);
  }
 
 /*
- UEPtr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(n);
+ std::shared_ptr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(n);
  if(lifeneuron)
  {
-  UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
+  std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
   lifeneuron->AddComponent(nlife);
 
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   item.Index=0;//1;
-  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.get()));
   conn.Index=0;
   res=n->CreateLink(item,conn);
  }
@@ -2070,18 +2070,18 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
 }
 
 // ����� ������������ ������ �������� ����������� ������� � ��������� �����
-UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage, const string &neuronclass, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
+std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage, const string &neuronclass, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length)
 {
- UEPtr<UContainer> membr;
- UEPtr<NPulseChannel> channel1, channel2;
- UEPtr<NPulseChannel> dchannel1, dchannel2;
+ std::shared_ptr<UContainer> membr;
+ std::shared_ptr<NPulseChannel> channel1, channel2;
+ std::shared_ptr<NPulseChannel> dchannel1, dchannel2;
 
- UEPtr<NPulseNeuron> n;
- UEPtr<NPulseLTZone> ltzone;
+ std::shared_ptr<NPulseNeuron> n;
+ std::shared_ptr<NPulseLTZone> ltzone;
  bool res;
  RDK::ULinkSide item,conn;
- vector<UEPtr<NPulseHebbSynapse> > synapse_list;
+ vector<std::shared_ptr<NPulseHebbSynapse> > synapse_list;
 
  if(!storage)
   return 0;
@@ -2095,7 +2095,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
  n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
 
- NConstGenerator *gen_pos,*gen_neg;
+ std::shared_ptr<NConstGenerator> gen_pos, gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
  res=n->AddComponent(gen_pos);
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
@@ -2122,26 +2122,26 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
   conn.Index=-1;
 
   // ������������� �������� �����
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(n);
+  conn.Id=membr->GetLongId(n);
   res=n->CreateLink(item,conn);
 
   // ������������� ����� ���������� � ���������
-  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel1->GetLongId(n);
+  conn.Id=ltzone->GetLongId(n);
   res=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel2->GetLongId(n);
   res=n->CreateLink(item,conn);
 
   if(dendrite_length == 1 || i != 0)
   {
    // ����� ����� ���������� ���������� ��������� ������ ������� � ��������
-   item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-   conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   item.Id=gen_neg->GetLongId(n);
+   conn.Id=channel1->GetLongId(n);
    res=n->CreateLink(item,conn);
 
-   item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-   conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   item.Id=gen_pos->GetLongId(n);
+   conn.Id=channel2->GetLongId(n);
    res=n->CreateLink(item,conn);
   }
 
@@ -2169,12 +2169,12 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
    synapse_list.push_back(dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j)));
 
    // ����� ����� �������� � �������
-   item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-   conn.Id=dchannel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
+   conn.Id=dchannel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
    res=n->CreateLink(item,conn);
 
-   item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-   conn.Id=dchannel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+   item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
+   conn.Id=dchannel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
    res=n->CreateLink(item,conn);
 
    dchannel1=channel1;
@@ -2182,37 +2182,37 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
  }
 
  // ����� ����� ���������� ���������� ��������� ������ ������� � ��������
- item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
- conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.get()));
+ conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
  res=n->CreateLink(item,conn);
 
- item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
- conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+ item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.get()));
+ conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
  res=n->CreateLink(item,conn);
 
 
   // ������������� ����� ���������� � ��������� �����
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   item.Index=0;
   conn.Index=1;
   for(size_t j=0;j<synapse_list.size();j++)
   {
    if(synapse_list[j])
    {
-    conn.Id=synapse_list[j]->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+    conn.Id=synapse_list[j]->GetLongId(std::shared_ptr<UContainer>(n.get()));
     res=n->CreateLink(item,conn);
    }
   }
 /*
- UEPtr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(n);
+ std::shared_ptr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(n);
  if(lifeneuron)
  {
-  UEPtr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
+  std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
   lifeneuron->AddComponent(nlife);
 
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   item.Index=0;//1;
-  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  conn.Id=nlife->GetLongId(std::shared_ptr<UContainer>(n.get()));
   conn.Index=0;
   res=n->CreateLink(item,conn);
  }*/
@@ -2224,13 +2224,13 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
 }
 
 // ����� ������������ ������ ������������ �������
-UEPtr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *storage, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes)
+std::shared_ptr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *storage, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes)
 {
- UEPtr<UContainer> membr;
- UEPtr<NPulseChannel> channel1, channel2;
- UEPtr<NAfferentNeuron> n;
- UEPtr<NLTZone> ltzone;
- UEPtr<NReceptor> receptor;
+ std::shared_ptr<UContainer> membr;
+ std::shared_ptr<NPulseChannel> channel1, channel2;
+ std::shared_ptr<NAfferentNeuron> n;
+ std::shared_ptr<NLTZone> ltzone;
+ std::shared_ptr<NReceptor> receptor;
  bool res;
  RDK::ULinkSide item,conn;
 
@@ -2249,7 +2249,7 @@ UEPtr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *storage, co
  ltzone->SetName("LTZone");
  ltzone->Threshold=0;
 
- UEPtr<NConstGenerator> gen_pos,gen_neg;
+ std::shared_ptr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
  res=n->AddComponent(gen_pos);
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
@@ -2271,32 +2271,32 @@ UEPtr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *storage, co
 
   channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));//(storage->TakeObject("NPChannel"));
   // ������������� �������� �����
-  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=membr->GetLongId(std::shared_ptr<UContainer>(n.get()));
   linkres&=n->CreateLink(item,conn);
 
   // ������������� ����� ���������� � ���������
-  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   linkres&=n->CreateLink(item,conn);
-  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
 //  conn.Index=1;
   linkres&=res=n->CreateLink(item,conn);
 //  conn.Index=0;
 
   // ����� ����� ���������� ���������� ��������� ������ ������� � ��������
-  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=gen_neg->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=channel1->GetLongId(std::shared_ptr<UContainer>(n.get()));
   conn.Index=0;
   linkres&=n->CreateLink(item,conn);
 
-  item.Id=receptor->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=receptor->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
   conn.Index=0;
   linkres&=n->CreateLink(item,conn);
 
-//  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-//  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+//  item.Id=gen_pos->GetLongId(std::shared_ptr<UContainer>(n.get()));
+//  conn.Id=channel2->GetLongId(std::shared_ptr<UContainer>(n.get()));
 //  linkres=n->CreateLink(item,conn);
  }
 
@@ -2311,13 +2311,13 @@ UEPtr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *storage, co
 
 
 // ����� ������������ ������ �������� ������������ �������
-UEPtr<NAfferentNeuron> NPulseLibrary::CreateSimpleAfferentNeuron(UStorage *storage, const string &ltzone_class, double max_output)
+std::shared_ptr<NAfferentNeuron> NPulseLibrary::CreateSimpleAfferentNeuron(UStorage *storage, const string &ltzone_class, double max_output)
 {
- UEPtr<UContainer> membr;
- UEPtr<NPulseChannel> channel1, channel2;
- UEPtr<NAfferentNeuron> n;
- UEPtr<NLTZone> ltzone;
- UEPtr<NReceptor> receptor;
+ std::shared_ptr<UContainer> membr;
+ std::shared_ptr<NPulseChannel> channel1, channel2;
+ std::shared_ptr<NAfferentNeuron> n;
+ std::shared_ptr<NLTZone> ltzone;
+ std::shared_ptr<NReceptor> receptor;
  bool res;
  RDK::ULinkSide item,conn;
 
@@ -2346,8 +2346,8 @@ UEPtr<NAfferentNeuron> NPulseLibrary::CreateSimpleAfferentNeuron(UStorage *stora
   receptor->MaxOutputRange=max_output;
   res=n->AddComponent(receptor);
 
-  item.Id=receptor->GetLongId(std::shared_ptr<UContainer>(n.Get()));
-  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.Get()));
+  item.Id=receptor->GetLongId(std::shared_ptr<UContainer>(n.get()));
+  conn.Id=ltzone->GetLongId(std::shared_ptr<UContainer>(n.get()));
   conn.Index=-1;
   linkres&=n->CreateLink(item,conn);
 

@@ -138,14 +138,14 @@ UComponent* NPulsePerseptron::NewStatic(void)
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NPulsePerseptron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NPulsePerseptron::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {            /*
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
   return false;
 
  comp->SetMainOwner(this,-1);
 
-  UEPtr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
+  std::shared_ptr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
 
   if(temp && temp->Amplitude()>0)
   {
@@ -170,7 +170,7 @@ bool NPulsePerseptron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> po
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NPulsePerseptron::ADelComponent(UEPtr<UContainer> comp)
+bool NPulsePerseptron::ADelComponent(std::shared_ptr<UContainer> comp)
 {                     /*
  if(comp == PosGenerator)
   PosGenerator=0;
@@ -193,8 +193,8 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
 										const MDMatrix<int> &aff_neurons_layer_size, const MDMatrix<int> &neurons_layer_size,
 										int num_aff_neurons_in_group)
 {
- UEPtr <NNeuronFreqGroupLayer> freq_group_layer;
- UEPtr <NNeuronsLayer> neurons_layer, neurons_layer2;
+ std::shared_ptr <NNeuronFreqGroupLayer> freq_group_layer;
+ std::shared_ptr <NNeuronsLayer> neurons_layer, neurons_layer2;
  bool res(true);
 
  // 1 - автоматическая сборка производится, 1 нейрон -> 1 дендрит, связь - каждый с каждым
@@ -233,12 +233,12 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
     {
      for(int j = 0; j < num_aff_neurons_in_group; j++)
      {
-      UEPtr<NPulseNeuronCommon> n_out=freq_group_layer->GetComponentL<NPulseNeuronCommon>(std::string("AffNeuronGroup")+sntoa(i+1)+std::string(".AffNeuron")+sntoa(j+1),true);
+      std::shared_ptr<NPulseNeuronCommon> n_out=freq_group_layer->GetComponentL<NPulseNeuronCommon>(std::string("AffNeuronGroup")+sntoa(i+1)+std::string(".AffNeuron")+sntoa(j+1),true);
 
       for(int n = 0; n < neusize; n++)
       {
        neurons_layer = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(1),true);
-       UEPtr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
+       std::shared_ptr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
 
        if(!n_out)
         return true;
@@ -248,15 +248,15 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
        n_in->NumDendriteMembraneParts=1;
        n_in->Build();
 
-       UEPtr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+       std::shared_ptr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
        if(!ltzone)
         return true;
 
-       UEPtr<NPulseSynapse> synapse=n_in->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
+       std::shared_ptr<NPulseSynapse> synapse=n_in->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
        if(!synapse)
         return true;
 
-       res&=CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
+       res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 
        if(!res)
         return false;
@@ -275,12 +275,12 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
    {
     for(int j = 0; j < neusize; j++)
     {
-     UEPtr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
+     std::shared_ptr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
 
      if(!n_in)
       return true;
 
-     UEPtr<NPulseMembrane> membr=n_in->GetComponentL<NPulseMembrane>("Soma1",true);
+     std::shared_ptr<NPulseMembrane> membr=n_in->GetComponentL<NPulseMembrane>("Soma1",true);
      if(!membr)
       return true;
 
@@ -291,12 +291,12 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
 
    for(int j = 0; j < neusize; j++)
    {
-	UEPtr<NPulseNeuron> n_out=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
+	std::shared_ptr<NPulseNeuron> n_out=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
 
     int neusize2 = neurons_layer2->NeuronsHeight*neurons_layer2->NeuronsWidth;
 	for(int n = 0; n < neusize2; n++)
 	{
-	 UEPtr<NPulseNeuron> n_in=neurons_layer2->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
+	 std::shared_ptr<NPulseNeuron> n_in=neurons_layer2->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
 
 	 if(!n_out)
 	  return true;
@@ -306,11 +306,11 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
 //	 n_in->NumDendriteMembraneParts=1;
 	 n_in->Build();
 
-	 UEPtr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+	 std::shared_ptr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
 	 if(!ltzone)
 	  return true;
 
-     UEPtr<NPulseMembrane> membr=n_in->GetComponentL<NPulseMembrane>("Soma1",true);
+     std::shared_ptr<NPulseMembrane> membr=n_in->GetComponentL<NPulseMembrane>("Soma1",true);
      if(!membr)
       return true;
 
@@ -318,11 +318,11 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
      membr->Build();
      membr->RebuildSynapticInternalLinks();
 
-     UEPtr<NPulseSynapse> synapse=membr->GetComponentL<NPulseSynapse>("ExcSynapse"+sntoa(j+1),true);
+     std::shared_ptr<NPulseSynapse> synapse=membr->GetComponentL<NPulseSynapse>("ExcSynapse"+sntoa(j+1),true);
 	 if(!synapse)
 	  return true;
 
-	 res&=CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
+	 res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 
      if(!res)
 	  return false;
@@ -366,12 +366,12 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
     {
      for(int j = 0; j < num_aff_neurons_in_group; j++)
      {
-      UEPtr<NPulseNeuronCommon> n_out=freq_group_layer->GetComponentL<NPulseNeuronCommon>(std::string("AffNeuronGroup")+sntoa(i+1)+std::string(".AffNeuron")+sntoa(j+1),true);
+      std::shared_ptr<NPulseNeuronCommon> n_out=freq_group_layer->GetComponentL<NPulseNeuronCommon>(std::string("AffNeuronGroup")+sntoa(i+1)+std::string(".AffNeuron")+sntoa(j+1),true);
 
       for(int n = 0; n < neusize; n++)
       {
        neurons_layer = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(1),true);
-       UEPtr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
+       std::shared_ptr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
 
        if(!n_out)
         return true;
@@ -381,15 +381,15 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
        n_in->NumDendriteMembraneParts=1;
        n_in->Build();
 
-       UEPtr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+       std::shared_ptr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
        if(!ltzone)
         return true;
 
-       UEPtr<NPulseSynapse> synapse=n_in->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
+       std::shared_ptr<NPulseSynapse> synapse=n_in->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
        if(!synapse)
         return true;
 
-       res&=BreakLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
+       res&=BreakLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 
        if(!res)
         return false;
@@ -409,12 +409,12 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
    {
        for(int j = 0; j < neusize; j++)
        {
-        UEPtr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
+        std::shared_ptr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
 
         if(!n_in)
          return true;
 
-        UEPtr<NPulseMembrane> membr=n_in->GetComponentL<NPulseMembrane>("Soma1",true);
+        std::shared_ptr<NPulseMembrane> membr=n_in->GetComponentL<NPulseMembrane>("Soma1",true);
         if(!membr)
          return true;
 
@@ -426,12 +426,12 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
 
    for(int j = 0; j < neusize; j++)
    {
-	UEPtr<NPulseNeuron> n_out=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
+	std::shared_ptr<NPulseNeuron> n_out=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
 
     int neusize2 = neurons_layer2->NeuronsHeight*neurons_layer2->NeuronsWidth;
 	for(int n = 0; n < neusize2; n++)
 	{
-	 UEPtr<NPulseNeuron> n_in=neurons_layer2->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
+	 std::shared_ptr<NPulseNeuron> n_in=neurons_layer2->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
 
 	 if(!n_out)
 	  return true;
@@ -441,15 +441,15 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
 	 n_in->NumDendriteMembraneParts=1;
 	 n_in->Build();
 
-	 UEPtr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+	 std::shared_ptr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
 	 if(!ltzone)
 	  return true;
 
-	 UEPtr<NPulseSynapse> synapse=n_in->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
+	 std::shared_ptr<NPulseSynapse> synapse=n_in->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
 	 if(!synapse)
 	  return true;
 
-	 res&=BreakLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
+	 res&=BreakLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 
      if(!res)
 	  return false;

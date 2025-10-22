@@ -59,13 +59,13 @@ NNet* NNet::New(void)
 // ������ ���������� ���������� ����
 // --------------------------
 // ������� ����� ��������� ���������� �� ��������� � ��������� ��� � ����
-RDK::UEPtr<UContainer> NNet::InsertComponent(void)
+std::shared_ptr<UContainer> NNet::InsertComponent(void)
 {
  auto storage = Storage.lock();
  if(!storage || DefaultComponentClassId == ForbiddenId)
   return 0;
 
- RDK::UEPtr<UContainer> comp=RDK::static_pointer_cast<UContainer>(storage->TakeObject(DefaultComponentClassId));
+ std::shared_ptr<UContainer> comp=std::static_pointer_cast<UContainer>(storage->TakeObject(DefaultComponentClassId));
  if(!comp)
   return 0;
 

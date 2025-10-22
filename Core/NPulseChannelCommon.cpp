@@ -18,6 +18,7 @@ See file license.txt for more information
 
 #include "NPulseChannelCommon.h"
 #include "NPulseMembrane.h"
+#include "../../../Rdk/Core/Engine/ModernSmartPointers.h"
 
 namespace NMSDK {
 
@@ -62,15 +63,15 @@ bool NPulseChannelCommon::SetType(const double &value)
 {
  Type.v=value;
 
- UEPtr<NPulseMembrane> membr=UEPtr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
+ std::shared_ptr<NPulseMembrane> membr=std::shared_ptr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get(), RDK::NonOwningDeleter());
  if(membr)
  {
-  membr->UpdateChannelData(dynamic_cast<NPulseChannelCommon*>(this));
+  membr->UpdateChannelData(std::shared_ptr<NPulseChannelCommon>(this, RDK::NonOwningDeleter()));
  }
 
  for(int i=0;i<int(SynapticInputs->size());i++)
  {
-  UEPtr<NPulseSynapseCommon> synapse = dynamic_cast<NPulseSynapseCommon*>(SynapticInputs.GetItem(i));
+  NPulseSynapseCommon* synapse = dynamic_cast<NPulseSynapseCommon*>(SynapticInputs.GetItem(i));
   if(synapse)
    synapse->Type = value;
  }
@@ -96,7 +97,7 @@ NPulseChannelCommon* NPulseChannelCommon::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseChannelCommon::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseChannelCommon::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  return false;
 }
@@ -109,7 +110,7 @@ bool NPulseChannelCommon::CheckComponentType(UEPtr<UContainer> comp) const
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-bool NPulseChannelCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NPulseChannelCommon::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
  return true;
 }
@@ -118,7 +119,7 @@ bool NPulseChannelCommon::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer>
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-bool NPulseChannelCommon::ADelComponent(UEPtr<UContainer> comp)
+bool NPulseChannelCommon::ADelComponent(std::shared_ptr<UContainer> comp)
 {
  return true;
 }

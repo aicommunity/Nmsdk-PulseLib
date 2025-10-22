@@ -105,14 +105,14 @@ UComponent* NNeuronsLayer::NewStatic(void)
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-bool NNeuronsLayer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NNeuronsLayer::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {            /*
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
   return false;
 
  comp->SetMainOwner(this,-1);
 
-  UEPtr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
+  std::shared_ptr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
 
   if(temp && temp->Amplitude()>0)
   {
@@ -137,7 +137,7 @@ bool NNeuronsLayer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> point
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-bool NNeuronsLayer::ADelComponent(UEPtr<UContainer> comp)
+bool NNeuronsLayer::ADelComponent(std::shared_ptr<UContainer> comp)
 {                     /*
  if(comp == PosGenerator)
   PosGenerator=0;
@@ -158,7 +158,7 @@ bool NNeuronsLayer::BuildStructure(int structure_build_mode, const string &neuro
 									int old_neurons_height, int old_neurons_width,
 									int neurons_height, int neurons_width)
 {
- UEPtr <NPulseNeuron> neuron;
+ std::shared_ptr <NPulseNeuron> neuron;
  bool res(true);
  int ind;
 

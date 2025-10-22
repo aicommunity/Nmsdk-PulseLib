@@ -102,10 +102,10 @@ ULProperty<int, NLogicalNot, ptPubParameter> NumExcSynapsesNGen2;
 ULProperty<double, NLogicalNot, ptPubParameter> PatternFrequency;
 
 //Обучаемый нейрон
-UEPtr<NNeuronTrainer> NeuronTrainer;
+std::shared_ptr<NNeuronTrainer> NeuronTrainer;
 
 //Выходной нейрон
-UEPtr<NPulseNeuron> OutputNeuron;
+std::shared_ptr<NPulseNeuron> OutputNeuron;
 
 
 
@@ -115,24 +115,24 @@ protected:
 double PatternDuration;
 
 //Нейроны генераторной связки
-UEPtr<NPulseNeuron> GeneratorNeuron1;
-UEPtr<NPulseNeuron> GeneratorNeuron2;
+std::shared_ptr<NPulseNeuron> GeneratorNeuron1;
+std::shared_ptr<NPulseNeuron> GeneratorNeuron2;
 
 //Текущее число синапсов на нейронах генераторной связки
- std::vector<UEPtr<NPulseSynapse>> synapses1;
- std::vector<UEPtr<NPulseSynapse>> synapses2;
+ std::vector<std::shared_ptr<NPulseSynapse>> synapses1;
+ std::vector<std::shared_ptr<NPulseSynapse>> synapses2;
 
 //Генератор стартового импульса для генераторной связки нейронов
-UEPtr<NPulseGeneratorTransit> Generator;
+std::shared_ptr<NPulseGeneratorTransit> Generator;
 
 //Обучаемый нейрон
-//UEPtr<NNeuronTrainer> NeuronTrainer;
+//std::shared_ptr<NNeuronTrainer> NeuronTrainer;
 
 //Генератор, продлевающий тормозящее воздействие NeuronTrainer в схеме
-UEPtr<NPulseGeneratorTransit> PatternGenerator;
+std::shared_ptr<NPulseGeneratorTransit> PatternGenerator;
 
 //Выходной нейрон
-//UEPtr<NPulseNeuron> OutputNeuron;
+//std::shared_ptr<NPulseNeuron> OutputNeuron;
 
 
 
@@ -218,13 +218,13 @@ protected:
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+virtual bool AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer=0);
 
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+virtual bool ADelComponent(std::shared_ptr<UContainer> comp);
 // --------------------------
 
 

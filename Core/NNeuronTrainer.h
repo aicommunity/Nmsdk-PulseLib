@@ -107,9 +107,9 @@ protected:
  int OldNumInputDendrite;
 
  // Генераторы импульсов
- std::vector<UEPtr<NPulseGeneratorTransit> > generators;
+ std::vector<std::shared_ptr<NPulseGeneratorTransit> > generators;
  // Настраиваемый нейрон
- UEPtr <NPulseNeuron> neuron;
+ std::shared_ptr <NPulseNeuron> neuron;
 
 
  // Флаг первой итерации (необходим для замера времени начала расчёта)
@@ -247,13 +247,13 @@ protected:
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+virtual bool AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer=0);
 
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+virtual bool ADelComponent(std::shared_ptr<UContainer> comp);
 // --------------------------
 
 

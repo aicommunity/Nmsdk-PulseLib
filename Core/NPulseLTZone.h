@@ -46,7 +46,7 @@ virtual NPulseLTZoneThreshold* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+virtual bool CheckComponentType(std::shared_ptr<UContainer> comp) const;
 
 /// Возвращает true если условие для генерации импульса выполнено
 virtual bool CheckPulseOn(void);
@@ -125,7 +125,7 @@ virtual NPulseLTZone* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+virtual bool CheckComponentType(std::shared_ptr<UContainer> comp) const;
 // --------------------------
 
 
@@ -174,7 +174,7 @@ virtual NContinuesLTZone* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+virtual bool CheckComponentType(std::shared_ptr<UContainer> comp) const;
 // --------------------------
 
 
@@ -230,7 +230,7 @@ virtual NPulseSimpleLTZone* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+virtual bool CheckComponentType(std::shared_ptr<UContainer> comp) const;
 // --------------------------
 
 
@@ -289,7 +289,7 @@ virtual NContinuesSimpleLTZone* New(void);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+virtual bool CheckComponentType(std::shared_ptr<UContainer> comp) const;
 // --------------------------
 
 

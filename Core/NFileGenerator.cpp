@@ -65,7 +65,7 @@ NFileGenerator* NFileGenerator::New(void)
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-bool NFileGenerator::CheckComponentType(UEPtr<UContainer> comp) const
+bool NFileGenerator::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  return false;
 }

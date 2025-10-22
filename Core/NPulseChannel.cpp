@@ -56,9 +56,9 @@ int NPulseChannel::GetNumSynapses(void) const
 }
 
 // ���������� ������ �� �������
-UEPtr<NPulseSynapse> NPulseChannel::GetSynapse(int i)
+std::shared_ptr<NPulseSynapse> NPulseChannel::GetSynapse(int i)
 {
- return UEPtr<NPulseSynapse>(dynamic_pointer_cast<NPulseSynapse>(SynapticInputs.GetItem(i)->GetOwner()).get());
+ return std::shared_ptr<NPulseSynapse>(dynamic_pointer_cast<NPulseSynapse>(SynapticInputs.GetItem(i)->GetOwner()).get());
 }
 // --------------------------
 
@@ -110,7 +110,7 @@ NPulseChannel* NPulseChannel::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseChannel::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseChannel::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseSynapse>(comp))
   return true;
@@ -126,7 +126,7 @@ bool NPulseChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-bool NPulseChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NPulseChannel::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
  if(!NPulseChannelCommon::AAddComponent(comp, pointer))
   return false;
@@ -138,7 +138,7 @@ bool NPulseChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> point
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-bool NPulseChannel::ADelComponent(UEPtr<UContainer> comp)
+bool NPulseChannel::ADelComponent(std::shared_ptr<UContainer> comp)
 {
  if(!NPulseChannelCommon::ADelComponent(comp))
   return false;
@@ -246,7 +246,7 @@ bool NPulseChannel::ACalculate2(void)
  SumChannelInput(0,0)=channel_input;
 
  // ��������� ���������� �� �������� �����
- UEPtr<NPulseMembrane> membrane=UEPtr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
+ std::shared_ptr<NPulseMembrane> membrane=std::shared_ptr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
  if(membrane)
   channel_input-=membrane->Feedback;
 

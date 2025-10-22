@@ -148,7 +148,7 @@ NPulseSynChannel* NPulseSynChannel::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NPulseSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
+bool NPulseSynChannel::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
 // if(dynamic_cast<const NPulseSynapse*>(comp))
 //  return true;
@@ -164,7 +164,7 @@ bool NPulseSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-/*bool NPulseSynChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+/*bool NPulseSynChannel::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
  InstallHebbSynapses(comp);
  return true;
@@ -174,7 +174,7 @@ bool NPulseSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-/*bool NPulseSynChannel::ADelComponent(UEPtr<UContainer> comp)
+/*bool NPulseSynChannel::ADelComponent(std::shared_ptr<UContainer> comp)
 {
  return true;
 }                     */
@@ -258,7 +258,7 @@ bool NPulseSynChannel::AReset(void)
  SynapseInputFlagsList.resize(ChannelInputs->size(),true);
  for(int n=0;n<int(ChannelInputs->size());n++)
  {
-  UEPtr<UContainer> item=UEPtr<UContainer>(ChannelInputs.GetItem(n)->GetOwner().get());
+  std::shared_ptr<UContainer> item=std::shared_ptr<UContainer>(ChannelInputs.GetItem(n)->GetOwner().get());
   if(dynamic_pointer_cast<NPulseChannel>(item) ||
 	 dynamic_pointer_cast<NReceptor>(item) ||
 	 dynamic_pointer_cast<NConstGenerator>(item))
@@ -492,7 +492,7 @@ NContinuesSynChannel* NContinuesSynChannel::New(void)
 // � �������� ���������� ������� �������
 // ����� ���������� 'true' � ������ ������������
 // � 'false' � ������ ������������� ����
-bool NContinuesSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
+bool NContinuesSynChannel::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
 // if(dynamic_cast<const NPulseSynapse*>(comp))
 //  return true;
@@ -508,7 +508,7 @@ bool NContinuesSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-/*bool NContinuesSynChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+/*bool NContinuesSynChannel::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
  InstallHebbSynapses(comp);
  return true;
@@ -518,7 +518,7 @@ bool NContinuesSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-/*bool NContinuesSynChannel::ADelComponent(UEPtr<UContainer> comp)
+/*bool NContinuesSynChannel::ADelComponent(std::shared_ptr<UContainer> comp)
 {
  return true;
 }                     */
@@ -583,7 +583,7 @@ bool NContinuesSynChannel::AReset(void)
  SynapseInputFlagsList.resize(ChannelInputs->size(),false);
  for(int n=0;n<int(ChannelInputs->size());n++)
  {
-  UEPtr<UContainer> item=UEPtr<UContainer>(ChannelInputs.GetItem(n)->GetOwner().get());
+  std::shared_ptr<UContainer> item=std::shared_ptr<UContainer>(ChannelInputs.GetItem(n)->GetOwner().get());
   if(dynamic_pointer_cast<NPulseSynapseCommon>(item))
    SynapseInputFlagsList[n]=true;
  }

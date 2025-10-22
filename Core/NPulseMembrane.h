@@ -94,9 +94,9 @@ NPulseSynapseCommon* GetExcitatorySynapses(size_t i);
 size_t GetNumInhibitorySynapses(void) const;
 NPulseSynapseCommon* GetInhibitorySynapses(size_t i);
 
-virtual bool UpdateChannelData(UEPtr<NPulseChannelCommon> channel, UEPtr<UIPointer> pointer=0);
+virtual bool UpdateChannelData(std::shared_ptr<NPulseChannelCommon> channel, std::shared_ptr<UIPointer> pointer=0);
 
-virtual bool UpdateSynapseData(UEPtr<NPulseSynapseCommon> synapse, UEPtr<UIPointer> pointer=0);
+virtual bool UpdateSynapseData(std::shared_ptr<NPulseSynapseCommon> synapse, std::shared_ptr<UIPointer> pointer=0);
 // --------------------------
 
 // --------------------------
@@ -126,13 +126,13 @@ protected:
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+virtual bool AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer=0);
 
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+virtual bool ADelComponent(std::shared_ptr<UContainer> comp);
 // --------------------------
 
 // --------------------------
@@ -142,7 +142,7 @@ virtual bool ADelComponent(UEPtr<UContainer> comp);
 // в качестве компоненты данного объекта
 // Метод возвращает 'true' в случае допустимости
 // и 'false' в случае некорректного типа
-virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
+virtual bool CheckComponentType(std::shared_ptr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------

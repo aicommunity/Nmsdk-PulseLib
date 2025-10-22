@@ -103,17 +103,17 @@ ULProperty<bool, NAssociationFormer, ptPubParameter> UseFixedLTZThreshold;
 protected:
 
  // Второй стимул
- UEPtr<NNeuronTrainer> UnconditionalStimul;
+ std::shared_ptr<NNeuronTrainer> UnconditionalStimul;
  // Первый стимул
- UEPtr<NNeuronTrainer> ConditionalStimul;
+ std::shared_ptr<NNeuronTrainer> ConditionalStimul;
  // Нейрон, реализующий функцию "И"
- UEPtr<NNeuronTrainer> LogicalAndNeuron;
+ std::shared_ptr<NNeuronTrainer> LogicalAndNeuron;
  // "Большой" нейрон
- UEPtr<NPulseNeuron> BigNeuron;
+ std::shared_ptr<NPulseNeuron> BigNeuron;
  // Нейрон, реализующий функцию "ИЛИ" для второго стимула
- UEPtr<NPulseNeuron> LogicalOrNeuron;
+ std::shared_ptr<NPulseNeuron> LogicalOrNeuron;
  // Нейрон, реализующий функцию "ИЛИ" для первого стимула
- UEPtr<NPulseNeuron> LogicalOrNeuron1;
+ std::shared_ptr<NPulseNeuron> LogicalOrNeuron1;
 
  // Флаги, определяющие стадию формирования рефлекса
  bool is_stimuls_trained;   	// Признак завершения обучения первому и второму раздражителям
@@ -220,13 +220,13 @@ protected:
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
 // успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
+virtual bool AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer=0);
 
 // Выполняет предварительные пользовательские действия
 // при удалении дочернего компонента из этого объекта
 // Метод будет вызван только если comp
 // существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
+virtual bool ADelComponent(std::shared_ptr<UContainer> comp);
 // --------------------------
 
 

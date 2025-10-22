@@ -185,11 +185,11 @@ bool NNeuronTrainer::SetInputPattern(const MDMatrix<double> &value)
 /// ����� �������������� ���� �������
 bool NNeuronTrainer::SetLTZThreshold(const double &value)
 {
- UEPtr<NPulseNeuron> n_in=GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
+ std::shared_ptr<NPulseNeuron> n_in=GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
  if(!n_in)
   return true;
 
- UEPtr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+ std::shared_ptr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone");//GetLTZone();
  if(!ltzone)
   return true;
 
@@ -203,11 +203,11 @@ bool NNeuronTrainer::SetLTZThreshold(const double &value)
 /// ����� �������������� ���� ������� ��� ����� ��������
 bool NNeuronTrainer::SetTrainingLTZThreshold(const double &value)
 {
-// UEPtr<NPulseNeuron> n_in=GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
+// std::shared_ptr<NPulseNeuron> n_in=GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
 // if(!n_in)
 //  return true;
 //
-// UEPtr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+// std::shared_ptr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone");//GetLTZone();
 // if(!ltzone)
 //  return true;
 //
@@ -263,7 +263,7 @@ UComponent* NNeuronTrainer::NewStatic(void)
 // ��� ���������� ��������� ���������� � ���� ������
 // ����� ����� ������ ������ ���� comp ���
 // ������� �������� � ������ ���������
-bool NNeuronTrainer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
+bool NNeuronTrainer::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
  /*
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
@@ -271,7 +271,7 @@ bool NNeuronTrainer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poin
 
  comp->SetMainOwner(this,-1);
 
-  UEPtr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
+  std::shared_ptr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
 
   if(temp && temp->Amplitude()>0)
   {
@@ -296,7 +296,7 @@ bool NNeuronTrainer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poin
 // ��� �������� ��������� ���������� �� ����� �������
 // ����� ����� ������ ������ ���� comp
 // ���������� � ������ ���������
-bool NNeuronTrainer::ADelComponent(UEPtr<UContainer> comp)
+bool NNeuronTrainer::ADelComponent(std::shared_ptr<UContainer> comp)
 {                     /*
  if(comp == PosGenerator)
   PosGenerator=0;
@@ -358,7 +358,7 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 	DendriteLength[dend_index] = 1;
 
 	// ������� ������ ���������� � ������ ��������
-	UEPtr<NPulseNeuron> neuron1 = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
+	std::shared_ptr<NPulseNeuron> neuron1 = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
 	for(int i = num_input_dendrite; i < old_num_input_dendrite; i++)
 	{
 		DelComponent(std::string("Source")+sntoa(i+1));
@@ -405,10 +405,10 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 	// �������� ����� ����� ����������� � ���������
 	if(!neuron)
 	 return true;
-	UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_1.ExcSynapse1",true);
+	std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_1.ExcSynapse1",true);
 	if(!synapse)
 	 return true;
-	res&=CreateLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(this),"Input");
+res&=CreateLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 	if(!res)
 	 return true;
 	neuron->Reset();
@@ -420,11 +420,11 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 // ����� �������� �����.
 bool NNeuronTrainer::AReset(void)
 {
- UEPtr<NPulseNeuron> n_in=GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
+ std::shared_ptr<NPulseNeuron> n_in=GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
  if(!n_in)
   return true;
 
- UEPtr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone");
+ std::shared_ptr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone");
  if(!ltzone)
   return true;
 
@@ -522,10 +522,10 @@ bool NNeuronTrainer::ABuild(void)
 
 		if(!neuron)
 		 return true;
-		UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_1.ExcSynapse1",true);
+		std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_1.ExcSynapse1",true);
 		if(!synapse)
 		 return true;
-		res&=CreateLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(this),"Input");
+		res&=CreateLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 		if(!res)
 		 return true;
 		neuron->Reset();
@@ -572,11 +572,11 @@ bool NNeuronTrainer::ABuild(void)
 		if(!neuron)
 		 return true;
 
-		UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_"+sntoa(DendriteLength[dend_index])+".ExcSynapse1",true);
+		std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_"+sntoa(DendriteLength[dend_index])+".ExcSynapse1",true);
 		if(!synapse)
 		 return true;
 
-		res&=CreateLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(this),"Input");
+		res&=CreateLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 		if(!res)
 		 return true;
 
@@ -585,7 +585,7 @@ bool NNeuronTrainer::ABuild(void)
 		if(!synapse)
 		 return true;
 
-		res&=BreakLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(this),"Input");
+		res&=BreakLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 		if(!res)
 		 return true;
 
@@ -624,7 +624,7 @@ bool NNeuronTrainer::ABuild(void)
 		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		if(DendriteLength[dend_index] == 1)
 		{
-			UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(dend_index+1)+"_1",true);
+			std::shared_ptr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(dend_index+1)+"_1",true);
 			if(!dendrite)
 				return true;
 
@@ -661,11 +661,11 @@ bool NNeuronTrainer::ABuild(void)
 			if(!neuron)
 			 return true;
 
-			UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_"+sntoa(DendriteLength[dend_index]-1)+".ExcSynapse1",true);
+			std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_"+sntoa(DendriteLength[dend_index]-1)+".ExcSynapse1",true);
 			if(!synapse)
 			 return true;
 
-			res&=CreateLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(this),"Input");
+			res&=CreateLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 			if(!res)
 			 return true;
 
@@ -674,7 +674,7 @@ bool NNeuronTrainer::ABuild(void)
 			if(!synapse)
 			 return true;
 
-			res&=BreakLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(this),"Input");
+			res&=BreakLink("Source"+sntoa(dend_index+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 			if(!res)
 			 return true;
 
@@ -740,7 +740,7 @@ bool NNeuronTrainer::ABuild(void)
 			 return true;
 
 			// �������� ����� ����� ������� ����������� � ����� ��������
-			res&=CreateLink("Source"+sntoa(syn_counter),"Output",synapse->GetLongName(this),"Input");
+			res&=CreateLink("Source"+sntoa(syn_counter),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 			if(!res)
 			 return true;
 
@@ -793,7 +793,7 @@ bool NNeuronTrainer::ABuild(void)
 				synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(syn_counter)+"_"+sntoa(DendriteLength[syn_counter-1])+".ExcSynapse"+sntoa(SynapseNum[syn_counter-1]),true);
 				if(!synapse)
 				 return true;
-				DelComponent(synapse->GetLongName(this));
+				DelComponent(synapse->GetLongName(GetThisAsSharedContainer()));
 				synapse = NULL;
 
 				neuron->Reset();
@@ -879,23 +879,23 @@ bool NNeuronTrainer::ABuild(void)
 				// ��������� ������
 				if(!neuron)
 				 return true;
-				UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
+				std::shared_ptr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
 				if(!dendrite)
 				 return true;
 				dendrite->NumExcitatorySynapses=SynapseNum[i]++;
                 dendrite->Build();
-				UEPtr<NPulseSynapse> synapse=dendrite->GetComponentL<NPulseSynapse>(std::string("ExcSynapse"+sntoa(SynapseNum[i])), true);
+				std::shared_ptr<NPulseSynapse> synapse=dendrite->GetComponentL<NPulseSynapse>(std::string("ExcSynapse"+sntoa(SynapseNum[i])), true);
 				if(!synapse)
 				 return true;
 
 				synapse->Resistance = SynapseResistanceStep;
 				// �������� ����� ����� ������� ����������� � ����� ��������
-				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 				if(!res)
 				 return true;
 				// ��������� ����� ����� ����� �������� � ������ �������
-				std::string input_name = dendrite->GetLongName(this) + std::string(".ExcChannel");
-				res&=CreateLink(synapse->GetLongName(this),"Output",input_name,"SynapticInputs");
+				std::string input_name = dendrite->GetLongName(GetThisAsSharedContainer()) + std::string(".ExcChannel");
+				res&=CreateLink(synapse->GetLongName(GetThisAsSharedContainer()),"Output",input_name,"SynapticInputs");
 				if(!res)
 				 return true;
 
@@ -910,10 +910,10 @@ bool NNeuronTrainer::ABuild(void)
 				dend_status[i] = 0;
 
 				// ������� ������
-				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse"+sntoa(SynapseNum[i]+1),true);
+				std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse"+sntoa(SynapseNum[i]+1),true);
 				if(!synapse)
 				 return true;
-				DelComponent(synapse->GetLongName(this));
+				DelComponent(synapse->GetLongName(GetThisAsSharedContainer()));
 				synapse = NULL;
 
 				neuron->Reset();
@@ -945,7 +945,7 @@ bool NNeuronTrainer::ABuild(void)
 	// ���� ������������ ��������� ���������
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
-		UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_1",true);
+		std::shared_ptr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_1",true);
 		if(!dendrite)
 			return true;
 
@@ -1034,10 +1034,10 @@ bool NNeuronTrainer::SynchronizePattern(void)
 		 return true;
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
-			UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_1.ExcSynapse1",true);
+			std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_1.ExcSynapse1",true);
 			if(!synapse)
 			 return true;
-			res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+			res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 			if(!res)
 			 return true;
 
@@ -1123,11 +1123,11 @@ bool NNeuronTrainer::SynchronizePattern(void)
 				}
 
 				// �������� ����� ����� ������� ����������� � ����� ��������
-				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
+				std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
 				if(!synapse)
 				 return true;
 
-				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 				if(!res)
 				 return true;
 
@@ -1136,7 +1136,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 				if(!synapse)
 				 return true;
 
-				res&=BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+				res&=BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 				if(!res)
 				 return true;
 
@@ -1168,11 +1168,11 @@ bool NNeuronTrainer::SynchronizePattern(void)
 				dend_status[i] = 0;
 
 				// �������� ����� ����� ������� ����������� � ������ ��������
-				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
+				std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
 				if(!synapse)
 				 return true;
 
-				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 				if(!res)
 				 return true;
 
@@ -1181,7 +1181,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 				if(!synapse)
 				 return true;
 
-				res&=BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+				res&=BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 				if(!res)
 				 return true;
 
@@ -1214,7 +1214,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 	// ���� ������������ ��������� ���������
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
-		UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_1",true);
+		std::shared_ptr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_1",true);
 		if(!dendrite)
 			return true;
 
@@ -1350,18 +1350,18 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 				// ��������� ������
 				if(!neuron)
 				 return true;
-				UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
+				std::shared_ptr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
 				if(!dendrite)
 				 return true;
 				dendrite->NumExcitatorySynapses = dendrite->NumExcitatorySynapses + 1;
 				dendrite->Build();
-//				UEPtr<NPulseSynapse> synapse=dendrite->AddMissingComponent<NPulseSynapse>(std::string("ExcSynapse"+sntoa(SynapseNum[i])), SynapseClassName);
+//				std::shared_ptr<NPulseSynapse> synapse=dendrite->AddMissingComponent<NPulseSynapse>(std::string("ExcSynapse"+sntoa(SynapseNum[i])), SynapseClassName);
 //				if(!synapse)
 //				 return true;
 
 				// �������� ����� ����� ������� ����������� � ����� ��������
 				NPulseSynapseCommon *synapse=dendrite->GetExcitatorySynapses(dendrite->NumExcitatorySynapses - 1);
-				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 				if(!res)
 				 return true;
 
@@ -1377,7 +1377,7 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 				// �������� ��� �����������
 				dend_status[i] = 0;
 
-				UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
+				std::shared_ptr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
 				if(!dendrite)
 				 return true;
 				dendrite->NumExcitatorySynapses = dendrite->NumExcitatorySynapses - 1;
@@ -1413,7 +1413,7 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 	// ���� ������������ ��������� ���������
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
-		UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
+		std::shared_ptr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
 		if(!soma)
 			return true;
 
@@ -1483,10 +1483,10 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 		 return true;
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
-			UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_1.ExcSynapse1",true);
+			std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_1.ExcSynapse1",true);
 			if(!synapse)
 			 return true;
-			res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+			res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 			if(!res)
 			 return true;
 
@@ -1583,19 +1583,19 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
                 }
 
 				// �������� ����� ����� ������� ����������� � ����� ��������
-				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
+				std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
 				if(!synapse)
                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Synapse: Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1"+" not found");
                 else
                 {
-                 res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+                res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
                  if(!res)
-                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Falied create link: Source"+sntoa(i+1)+":Output -> "+synapse->GetLongName(this)+":Input");
+                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Falied create link: Source"+sntoa(i+1)+":Output -> "+synapse->GetLongName(GetThisAsSharedContainer())+":Input");
                 }
 				// ������� ����� ����� ������� ����������� � ������ ��������
 				synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]-1)+".ExcSynapse1",true);
                 if(synapse)
-                 BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+                 BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 
 				neuron->Reset();
 			}
@@ -1633,19 +1633,19 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 				dend_status[i] = 0;
 
 				// �������� ����� ����� ������� ����������� � ������ ��������
-				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
+				std::shared_ptr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
 				if(!synapse)
                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Synapse: Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1"+" not found");
                 else
                 {
-                 res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+                 res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
                  if(!res)
-                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Falied create link: Source"+sntoa(i+1)+":Output -> "+synapse->GetLongName(this)+":Input");
+                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Falied create link: Source"+sntoa(i+1)+":Output -> "+synapse->GetLongName(GetThisAsSharedContainer())+":Input");
                 }
 				// ������� ����� ����� ������� ����������� � ����� ��������
 				synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]+1)+".ExcSynapse1",true);
                 if(synapse)
-                 BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+                 BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 
 				neuron->Reset();
 			}
@@ -1676,7 +1676,7 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 	// ���� ������������ ��������� �� �����
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
-		UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
+		std::shared_ptr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
 		if(!soma)
 			return true;
 
@@ -1759,7 +1759,7 @@ bool NNeuronTrainer::CalculateProcess(void)
 	NeuronAmplitude(0,0) = 0;
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
-		UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_1",true);
+		std::shared_ptr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_1",true);
 		NeuronAmplitude(i+1,0) = dendrite->SumPotential(0,0);
 		NeuronAmplitude(0,0) = NeuronAmplitude(0,0) + /*8.0**/dendrite->SumPotential(0,0);
 	}
@@ -1767,7 +1767,7 @@ bool NNeuronTrainer::CalculateProcess(void)
 	SomaNeuronAmplitude(0,0) = 0;
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
-		UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
+		std::shared_ptr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
 		SomaNeuronAmplitude(i+1,0) = soma->SumPotential(0,0);
 		SomaNeuronAmplitude(0,0) = SomaNeuronAmplitude(0,0) + /*8.0**/soma->SumPotential(0,0);
 	}
@@ -1778,7 +1778,7 @@ bool NNeuronTrainer::CalculateProcess(void)
 		static double time_spike = 0;
 		if(!IsNeedToTrain)
 		{
-			UEPtr<NPulseLTZone> ltzone=neuron->GetComponentL<NPulseLTZone>("LTZone");
+			std::shared_ptr<NPulseLTZone> ltzone=neuron->GetComponentL<NPulseLTZone>("LTZone");
 			if(!neuron)
 				return true;
 			if(!ltzone)
@@ -1911,7 +1911,7 @@ bool NNeuronTrainer::ACalculate(void)
  	// ����� �������
 	if(neuron)
 	{
-	 UEPtr<NLTZone> ltzone=neuron->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+	 std::shared_ptr<NLTZone> ltzone=neuron->GetComponentL<NLTZone>("LTZone");//GetLTZone();
 	 if(!ltzone)
 	  return true;
 

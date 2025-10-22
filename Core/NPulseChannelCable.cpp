@@ -269,7 +269,7 @@ void NPulseChannelCable::FormingInput()
     InpV.Resize(1, t_points_number+1, 0);
 
     // ��������� ���������� �� �������� �����
-    UEPtr<NPulseMembrane> membrane=UEPtr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
+    std::shared_ptr<NPulseMembrane> membrane=std::shared_ptr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
     if(membrane)
      SumChannelInput(0,0)-=membrane->Feedback;
 

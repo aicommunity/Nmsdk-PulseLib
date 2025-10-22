@@ -105,30 +105,30 @@ virtual void CreateClassSamples(UStorage *storage);
 // Методы создания составных моделей
 // --------------------------
 // Метод формирования модели простого импульсного нейрона
-UEPtr<NPulseNeuron> CreateNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
+std::shared_ptr<NPulseNeuron> CreateNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length=1);
 
 // Метод формирования модели простого импульсного нейрона с произвольной дендритной структурой
-UEPtr<NPulseNeuron> CreateCustomNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
+std::shared_ptr<NPulseNeuron> CreateCustomNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, vector<int> &dendrite_length);
 
 // Метод формирования модели простого импульсного нейрона
-UEPtr<NPulseNeuron> CreateSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
+std::shared_ptr<NPulseNeuron> CreateSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length=1);
 
 // Метод формирования модели простого импульсного нейрона с произвольной дендритной структурой
-UEPtr<NPulseNeuron> CreateCustomSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
+std::shared_ptr<NPulseNeuron> CreateCustomSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, std::vector<int> dendrite_length);
 
 // Метод формирования модели простого импульсного нейрона с синапсами хебба
-UEPtr<NPulseNeuron> CreateSimplePulseHebbNeuron(UStorage *storage, const string &neuronclass, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
+std::shared_ptr<NPulseNeuron> CreateSimplePulseHebbNeuron(UStorage *storage, const string &neuronclass, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length=1);
 
 // Метод формирования модели афферентного нейрона
-UEPtr<NAfferentNeuron> CreateAfferentNeuron(UStorage *storage, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes);
+std::shared_ptr<NAfferentNeuron> CreateAfferentNeuron(UStorage *storage, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes);
 
 // Метод формирования модели простого афферентного нейрона
-UEPtr<NAfferentNeuron> CreateSimpleAfferentNeuron(UStorage *storage, const string &ltzone_class, double max_output);
+std::shared_ptr<NAfferentNeuron> CreateSimpleAfferentNeuron(UStorage *storage, const string &ltzone_class, double max_output);
 // --------------------------
 };                  
 

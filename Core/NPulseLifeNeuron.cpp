@@ -20,9 +20,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Конструкторы и деструкторы
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 NPulseLifeNeuron::NPulseLifeNeuron(void)
 //: NPulseNeuron(name),
@@ -58,9 +58,9 @@ NPulseLifeNeuron::~NPulseLifeNeuron(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Возвращает указатель на модель жизнеобеспечения
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 NNeuronLife* NPulseLifeNeuron::GetNeuronLife(void)
 {
  return NeuronLife;
@@ -68,9 +68,9 @@ NNeuronLife* NPulseLifeNeuron::GetNeuronLife(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 NPulseLifeNeuron* NPulseLifeNeuron::New(void)
 {
  return new NPulseLifeNeuron;
@@ -78,13 +78,13 @@ NPulseLifeNeuron* NPulseLifeNeuron::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
-bool NPulseLifeNeuron::CheckComponentType(UEPtr<UContainer> comp) const
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+// пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 'true' пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅ 'false' пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+bool NPulseLifeNeuron::CheckComponentType(std::shared_ptr<UContainer> comp) const
 {
  if(NPulseNeuron::CheckComponentType(comp) || dynamic_pointer_cast<NNeuronLife>(comp))
   return true;
@@ -94,9 +94,9 @@ bool NPulseLifeNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 bool NPulseLifeNeuron::ADefault(void)
 {
  if(!NPulseNeuron::ADefault())
@@ -123,10 +123,10 @@ bool NPulseLifeNeuron::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ Reset() пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Ready пїЅ true
+// пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulseLifeNeuron::ABuild(void)
 {
  if(!NPulseNeuron::ABuild())
@@ -134,28 +134,28 @@ bool NPulseLifeNeuron::ABuild(void)
 
  bool res(true);
 
- UEPtr<NNeuronLife> nlife=AddMissingComponent<NNeuronLife>("NeuronLife","NNeuronLife",&NeuronLife);
+ std::shared_ptr<NNeuronLife> nlife=AddMissingComponent<NNeuronLife>("NeuronLife","NNeuronLife",std::shared_ptr<UIPointer>(&NeuronLife, RDK::NonOwningDeleter()));
  if(LTZone)
-  res&=CreateLink(LTZone->GetLongName(this),"Output",nlife->GetLongName(this),"Input1");
+  res&=CreateLink(LTZone->GetLongName(GetThisAsSharedContainer()),"Output",nlife->GetLongName(GetThisAsSharedContainer()),"Input1");
 
  return true;
 }
 
-// Сброс процесса счета.
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
 bool NPulseLifeNeuron::AReset(void)
 {
  if(!NPulseNeuron::AReset())
   return false;
 
- // Суммарный динамический вес
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
  SummaryPosGd=0;
  SummaryNegGd=0;
 
- // Суммарный статический вес
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
  SummaryPosGs=0;
  SummaryNegGs=0;
 
- // Суммарный результирующий вес
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
  SummaryPosG=0;
  SummaryNegG=0;
 
@@ -175,7 +175,7 @@ bool NPulseLifeNeuron::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulseLifeNeuron::ACalculate(void)
 {
  if(/*!LTZone ||*/ !NeuronLife)
@@ -186,7 +186,7 @@ bool NPulseLifeNeuron::ACalculate(void)
 
  LTZone->Threshold=NeuronLife->OutputThreshold(0,0);
 
- // Суммарный динамический вес возбуждающей связи
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  OutputSummaryPosGd(0,0)=SummaryPosGd;
  if(ActivePosInputs(0,0) > 0)
   OutputSummaryPosGdNorm(0,0)=SummaryPosGd/ActivePosInputs(0,0);
@@ -194,7 +194,7 @@ bool NPulseLifeNeuron::ACalculate(void)
   OutputSummaryPosGdNorm(0,0)=0;
  SummaryPosGd=0;
 
- // Суммарный статический вес возбуждающей связи
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  OutputSummaryPosGs(0,0)=SummaryPosGs;
  if(ActivePosInputs(0,0) > 0)
   OutputSummaryPosGsNorm(0,0)=SummaryPosGs/ActivePosInputs(0,0);
@@ -202,7 +202,7 @@ bool NPulseLifeNeuron::ACalculate(void)
   OutputSummaryPosGsNorm(0,0)=0;
  SummaryPosGs=0;
 
- // Суммарный результирующий вес возбуждающей связи
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  OutputSummaryPosG(0,0)=SummaryPosG;
  if(ActivePosInputs(0,0) > 0)
   OutputSummaryPosGNorm(0,0)=SummaryPosG/ActivePosInputs(0,0);
@@ -210,7 +210,7 @@ bool NPulseLifeNeuron::ACalculate(void)
   OutputSummaryPosGNorm(0,0)=0;
  SummaryPosG=0;
 
- // Суммарный динамический вес тормозной связи
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  OutputSummaryNegGd(0,0)=SummaryNegGd;
  if(ActiveNegInputs(0,0) > 0)
   OutputSummaryNegGdNorm(0,0)=SummaryNegGd/ActiveNegInputs(0,0);
@@ -218,7 +218,7 @@ bool NPulseLifeNeuron::ACalculate(void)
   OutputSummaryNegGdNorm(0,0)=0;
  SummaryNegGd=0;
 
- // Суммарный статический вес тормозной связи
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  OutputSummaryNegGs(0,0)=SummaryNegGs;
  if(ActiveNegInputs(0,0) > 0)
   OutputSummaryNegGsNorm(0,0)=SummaryNegGs/ActiveNegInputs(0,0);
@@ -226,7 +226,7 @@ bool NPulseLifeNeuron::ACalculate(void)
   OutputSummaryNegGsNorm(0,0)=0;
  SummaryNegGs=0;
 
- // Суммарный результирующий вес тормозной связи
+ // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
  OutputSummaryNegG(0,0)=SummaryNegG;
  if(ActiveNegInputs(0,0) != 0)
   OutputSummaryNegGNorm(0,0)=SummaryNegG/ActiveNegInputs(0,0);
