@@ -204,12 +204,16 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->Default();
  UploadClass("NPSynapse",cont);
 
- std::shared_ptr<NPulseSynapse> syn=dynamic_pointer_cast<NPulseSynapse>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynapse"));
+ std::shared_ptr<NPulseSynapse> syn=std::make_shared<NPulseSynapse>();
+ syn->SetName("PSynapseBio");
+ syn->Default();
  syn->Resistance=2e7*4.3;
  syn->DissociationTC=0.005;
  UploadClass("NPSynapseBio",syn);
 
- syn=dynamic_pointer_cast<NPulseSynapse>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynapse"));
+ syn=std::make_shared<NPulseSynapse>();
+ syn->SetName("PSynapseBio2");
+ syn->Default();
  syn->Resistance=86000000;
  syn->DissociationTC=0.005;
  UploadClass("NPSynapseBio2",syn);
