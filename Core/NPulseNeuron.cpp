@@ -50,7 +50,7 @@ NPulseNeuron::NPulseNeuron(void)
 {
  PosGenerator=0;
  NegGenerator=0;
- MainOwner=std::shared_ptr<UComponent>(this);
+ MainOwner=UComponent::shared_from_this();
  OldNumDendrites=OldNumSoma=0;
  OldStructureBuildMode=0;
 }
@@ -392,7 +392,7 @@ bool NPulseNeuron::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_p
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
   return false;
 
- comp->SetMainOwner(std::shared_ptr<UComponent>(this),-1);
+ comp->SetMainOwner(UComponent::shared_from_this(),-1);
 
   std::shared_ptr<NConstGenerator> temp=dynamic_pointer_cast<NConstGenerator>(comp);
 

@@ -44,7 +44,7 @@ NPulseNeuronCommon::NPulseNeuronCommon(void)
    NumActiveNegInputs("NumActiveNegInputs",this)
  // LTZone("LTZone",this)
 {
- MainOwner=std::shared_ptr<UComponent>(this);
+ MainOwner=UComponent::shared_from_this();
 }
 
 NPulseNeuronCommon::~NPulseNeuronCommon(void)
@@ -235,7 +235,7 @@ bool NPulseNeuronCommon::AAddComponent(std::shared_ptr<UContainer> comp, std::sh
  if(!NNeuron::AAddComponent(comp,pointer))
   return false;
 
- comp->SetMainOwner(std::shared_ptr<UComponent>(this),-1);
+ comp->SetMainOwner(UComponent::shared_from_this(),-1);
 
  {
   std::shared_ptr<NPulseMembraneCommon> membrane=dynamic_pointer_cast<NPulseMembraneCommon>(comp);

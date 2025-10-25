@@ -63,10 +63,10 @@ bool NPulseChannelCommon::SetType(const double &value)
 {
  Type.v=value;
 
- std::shared_ptr<NPulseMembrane> membr=std::shared_ptr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get(), RDK::NonOwningDeleter());
+ std::shared_ptr<NPulseMembrane> membr=safe_shared_cast<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
  if(membr)
  {
-  membr->UpdateChannelData(std::shared_ptr<NPulseChannelCommon>(this, RDK::NonOwningDeleter()));
+  membr->UpdateChannelData(safe_shared_cast<NPulseChannelCommon>(this));
  }
 
  for(int i=0;i<int(SynapticInputs->size());i++)

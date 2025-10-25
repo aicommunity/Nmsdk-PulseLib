@@ -134,7 +134,7 @@ bool NPulseLifeNeuron::ABuild(void)
 
  bool res(true);
 
- std::shared_ptr<NNeuronLife> nlife=AddMissingComponent<NNeuronLife>("NeuronLife","NNeuronLife",std::shared_ptr<UIPointer>(&NeuronLife, RDK::NonOwningDeleter()));
+ std::shared_ptr<NNeuronLife> nlife=AddMissingComponent<NNeuronLife>("NeuronLife","NNeuronLife",safe_shared_cast<UIPointer>(&NeuronLife));
  if(LTZone)
   res&=CreateLink(LTZone->GetLongName(GetThisAsSharedContainer()),"Output",nlife->GetLongName(GetThisAsSharedContainer()),"Input1");
 

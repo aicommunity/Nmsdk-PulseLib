@@ -418,7 +418,7 @@ NPulseSimpleLTZone::NPulseSimpleLTZone(void)
  AddStaticComponent(
   "NPGenerator",
   "PGenerator",
-  std::shared_ptr<UContainer>(&generator, RDK::NonOwningDeleter())
+  safe_shared_cast<UContainer>(&generator)
  );
 }
 

@@ -193,7 +193,7 @@ bool NNeuronLife::ABuild(void)
  AddMissingComponent<NSum>(
   "ExternalEnergyBonus",
   "NSum",
-  std::shared_ptr<UIPointer>(&ExternalEnergyBonus, RDK::NonOwningDeleter())
+  safe_shared_cast<UIPointer>(&ExternalEnergyBonus)
  );
  return true;
 }
