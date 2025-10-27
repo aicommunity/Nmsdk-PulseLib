@@ -61,7 +61,7 @@ NNet* NNet::New(void)
 // ������� ����� ��������� ���������� �� ��������� � ��������� ��� � ����
 std::shared_ptr<RDK::UContainer> NNet::InsertComponent(void)
 {
- auto storage = Storage.lock();
+ auto storage = Storage;
  if(!storage || DefaultComponentClassId == ForbiddenId)
   return 0;
 

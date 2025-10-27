@@ -174,13 +174,13 @@ bool NPulseGeneratorDelay::ACalculate(void)
  double norm;
  //if ((*FlagStart)(0,0) > 0)
  {
-  auto TimeStart = Environment.lock()->GetTime().GetDoubleTime();
+  auto TimeStart = Environment->GetTime().GetDoubleTime();
   norm=(Number - MinSample)/(MaxSample - MinSample);
   Delay=norm*0.01;
-  while(Environment.lock()->GetTime().GetDoubleTime() - TimeStart < Delay){;}
+  while(Environment->GetTime().GetDoubleTime() - TimeStart < Delay){;}
   Output.Assign(1,1,Amplitude);
-  auto TimeStartPulse = Environment.lock()->GetTime().GetDoubleTime();
-  while(Environment.lock()->GetTime().GetDoubleTime() - TimeStartPulse < PulseLength){;}
+  auto TimeStartPulse = Environment->GetTime().GetDoubleTime();
+  while(Environment->GetTime().GetDoubleTime() - TimeStartPulse < PulseLength){;}
   Output.ToZero();
  }
  return true;

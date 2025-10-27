@@ -263,7 +263,7 @@ bool NDataset::TreatDataFromFile(void)
     ifstream fileDataset;
     NumFeatures=0;
     NumSamples=0;
-    //fileDataset.open(Environment.lock()->GetCurrentDataDir()+FileName.GetData());
+    //fileDataset.open(Environment->GetCurrentDataDir()+FileName.GetData());
      fileDataset.open("C:\\Users\\kirik\\Desktop\\input_data.txt");
     if (!fileDataset)
     {
@@ -280,7 +280,7 @@ bool NDataset::TreatDataFromFile(void)
     MatrixData.Resize(NumSamples,NumFeatures);
     MatrixClasses.Resize(1,NumSamples);
     fileDataset.close();
-    //fileDataset.open(Environment.lock()->GetCurrentDataDir()+"input_data.txt");
+    //fileDataset.open(Environment->GetCurrentDataDir()+"input_data.txt");
      fileDataset.open("C:\\Users\\kirik\\Desktop\\input_data.txt");
     if (!fileDataset)
     {
@@ -337,10 +337,10 @@ bool NDataset::ACalculate(void)
         {
             SetDelay(Delay);
             SetSpikesFrequency(SpikesFrequency);
-            OperatingTime = Environment.lock()->GetTime().GetDoubleTime();
+            OperatingTime = Environment->GetTime().GetDoubleTime();
             ResetDelay=false;
         }
-        if(Environment.lock()->GetTime().GetDoubleTime()-OperatingTime>TimeGeneration)
+        if(Environment->GetTime().GetDoubleTime()-OperatingTime>TimeGeneration)
         {
             for(int i = 0; i < int(Generators.size()); i++)
             {

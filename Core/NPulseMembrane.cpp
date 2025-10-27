@@ -322,7 +322,7 @@ bool NPulseMembrane::ADefault(void)
 // � ������ �������� ������
 bool NPulseMembrane::ABuild(void)
 {
- if(!Storage.lock())
+ if(!Storage)
   return true;
  std::shared_ptr<NPulseChannelCommon> exc_channel;
  std::shared_ptr<NPulseChannelCommon> inh_channel;

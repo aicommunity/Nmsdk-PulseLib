@@ -144,18 +144,18 @@ bool NSynapseTrainerStdp::ACalculate(void)
   return true;
  }
 
- if((*PreSynInput)(0,0)>0 && Environment.lock()->GetTime().GetDoubleTime()>TPre+(1.0/TimeStep))
+ if((*PreSynInput)(0,0)>0 && Environment->GetTime().GetDoubleTime()>TPre+(1.0/TimeStep))
  {
   IsInputPulseActive=true;
   TPreOld.v=TPre.v;
-  TPre=Environment.lock()->GetTime().GetDoubleTime();
+  TPre=Environment->GetTime().GetDoubleTime();
  }
 
- if((*PostSynInput)(0,0)>0 && Environment.lock()->GetTime().GetDoubleTime()>TPre+(1.0/TimeStep))
+ if((*PostSynInput)(0,0)>0 && Environment->GetTime().GetDoubleTime()>TPre+(1.0/TimeStep))
  {
    IsOutputPulseActive=true;
    TPostOld.v=TPost.v;
-   TPost=Environment.lock()->GetTime().GetDoubleTime();
+   TPost=Environment->GetTime().GetDoubleTime();
  }
  return true;
 }

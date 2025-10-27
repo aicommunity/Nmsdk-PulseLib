@@ -728,9 +728,9 @@ bool NClassifier::TreatDataFromFile(void)
     if(IsFirstFileStep)
     {
         // ��������� ���� ��� ������ ������
-        fin.open(Environment.lock()->GetCurrentDataDir()+"input_data.txt");
+        fin.open(Environment->GetCurrentDataDir()+"input_data.txt");
         // ��������� ���� ��� ������ ������
-        fout.open(Environment.lock()->GetCurrentDataDir()+"output_data.txt");
+        fout.open(Environment->GetCurrentDataDir()+"output_data.txt");
         // ���� ������ ��������
         is_first_iter = true;
         // ������� ������
@@ -743,7 +743,7 @@ bool NClassifier::TreatDataFromFile(void)
     if(is_first_iter)
     {
         // ����� ������ ������� �������� (���)
-        start_iter_time = Environment.lock()->GetTime().GetDoubleTime();
+        start_iter_time = Environment->GetTime().GetDoubleTime();
         // ������ ��������
         outputs.assign(NumClasses,0);
         // ��������� ������� ������
@@ -796,7 +796,7 @@ bool NClassifier::TreatDataFromFile(void)
     }
 
     // ��������� ��������� ��������
-    double iter_time = Environment.lock()->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
+    double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
     double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // ����� ����� ��������
     if(iter_time >= iter_length)
     {

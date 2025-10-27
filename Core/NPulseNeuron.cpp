@@ -217,7 +217,7 @@ bool NPulseNeuron::SetTrainingSynapsisNum(const MDMatrix<int> &value)
 // ���������� ��������� �� ��������� �������
 NPulseMembraneCommon* NPulseNeuron::ElongateDendrite(const std::string &name, bool feedback)
 {
- if(!Storage.lock())
+ if(!Storage)
   return 0;
 
  std::shared_ptr<UContainer> cont=GetComponent(name);
@@ -225,7 +225,7 @@ NPulseMembraneCommon* NPulseNeuron::ElongateDendrite(const std::string &name, bo
   return 0;
 
 
- std::shared_ptr<UContainer> newcont=static_pointer_cast<UContainer>(Storage.lock()->TakeObject(cont->GetClass()));
+ std::shared_ptr<UContainer> newcont=static_pointer_cast<UContainer>(Storage->TakeObject(cont->GetClass()));
  if(!newcont)
   return 0;
 
@@ -238,14 +238,14 @@ NPulseMembraneCommon* NPulseNeuron::ElongateDendrite(const std::string &name, bo
 // ���������� ��������� �� ��������� �������
 NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool feedback)
 {
- if(!Storage.lock())
+ if(!Storage)
   return 0;
 
  std::shared_ptr<NPulseMembrane> dendrite=dynamic_pointer_cast<NPulseMembrane>(GetComponent(name));
  if(!dendrite)
   return 0;
 
- std::shared_ptr<NPulseMembrane> new_dendrite=dynamic_pointer_cast<NPulseMembrane>(Storage.lock()->TakeObject(dendrite->GetClass()));
+ std::shared_ptr<NPulseMembrane> new_dendrite=dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(dendrite->GetClass()));
  if(!AddComponent(new_dendrite))
  {
   new_dendrite->Free();
@@ -331,7 +331,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
  if(!res)
  {
   new_dendrite->Free();
-//  Storage.lock()->ReturnObject(cont);
+//  Storage->ReturnObject(cont);
   return 0;
  }
  return new_dendrite.get();
@@ -459,13 +459,13 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   }
  }
 
- ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);//dynamic_pointer_cast<NLTZone>(Storage.lock()->TakeObject(ltzone_class));
+ ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);//dynamic_pointer_cast<NLTZone>(Storage->TakeObject(ltzone_class));
  ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*8,4.67,0));
 
  std::shared_ptr<UNet> gen_pos,gen_neg;
  if(!ExcGeneratorClassName->empty())
  {
-  gen_pos=AddMissingComponent<UNet>("PosGenerator", pos_gen_class);//dynamic_pointer_cast<UNet>(Storage.lock()->TakeObject(pos_gen_class));
+  gen_pos=AddMissingComponent<UNet>("PosGenerator", pos_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(pos_gen_class));
   gen_pos->SetCoord(MVector<double,3>(4,2,0));
   gen_pos->DisconnectAll("Output");
  }
@@ -474,7 +474,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
 
  if(!InhGeneratorClassName->empty())
  {
-  gen_neg=AddMissingComponent<UNet>("NegGenerator", neg_gen_class);//dynamic_pointer_cast<UNet>(Storage.lock()->TakeObject(neg_gen_class));
+  gen_neg=AddMissingComponent<UNet>("NegGenerator", neg_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(neg_gen_class));
   gen_neg->SetCoord(MVector<double,3>(4,7.3+(num_soma_membranes-1)*2,0));
   gen_neg->DisconnectAll("Output");
  }
@@ -555,7 +555,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  // ������, ���� ������ ���������� ����� �������� ������������ ����
  if(!ltzonemembraneclass.empty())
  {
-  ltmembr=AddMissingComponent<NPulseMembrane>("LTMembrane", ltzonemembraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage.lock()->TakeObject(ltzonemembraneclass));
+  ltmembr=AddMissingComponent<NPulseMembrane>("LTMembrane", ltzonemembraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(ltzonemembraneclass));
   ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*8,4.67,0));
 
   ltchannel1=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("ExcChannel",true));
@@ -576,7 +576,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  Soma.resize(num_soma_membranes);
  for(int i=0;i<num_soma_membranes;i++)
  {
-  membr=AddMissingComponent<NPulseMembrane>(std::string("Soma")+sntoa(i+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage.lock()->TakeObject(membraneclass));
+  membr=AddMissingComponent<NPulseMembrane>(std::string("Soma")+sntoa(i+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
   membr->SetCoord(MVector<double,3>(12.7+dendrite_length*8,4.67+i*2,0));
   Soma[i]=membr;
 
@@ -612,7 +612,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
 
   for(int j=0;j<current_dendrite_length;j++)
   {
-   membr=AddMissingComponent<NPulseMembrane>(std::string("Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage.lock()->TakeObject(membraneclass));
+   membr=AddMissingComponent<NPulseMembrane>(std::string("Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
    membr->SetCoord(MVector<double,3>(12.7+(dendrite_length-j-1)*8,4.67+i*2,0));
 
    channel1temp=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));
@@ -638,7 +638,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  std::shared_ptr<NPulseLifeNeuron> lifeneuron=dynamic_pointer_cast<NPulseLifeNeuron>(this);
  if(lifeneuron)
  {
-  std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(Storage.lock()->TakeObject("NNeuronLife"));
+  std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(Storage->TakeObject("NNeuronLife"));
   res&=lifeneuron->AddComponent(nlife);
   res&=n->CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",nlife->GetLongId(this),"Input1");
  }  */

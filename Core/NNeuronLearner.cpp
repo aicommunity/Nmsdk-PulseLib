@@ -524,7 +524,7 @@ bool NNeuronLearner::BuildStructure()
  {
   DelComponent(std::string("Source") + sntoa(i + 1));
  }
- Storage.lock()->FreeObjectsStorage();
+ Storage->FreeObjectsStorage();
 
  // �������������� ���������� ���������
  Generators.resize(NumInputDendrite);
@@ -996,7 +996,7 @@ bool NNeuronLearner::MeasureMaxPotentialAndTime(void)
   {
    // ���������� ����� �������� ��������� � ��� �������
    MaxIterSomaAmp[i] = currentsomaamp;
-   TimeOfMaxIterSomaAmp[i] = Environment.lock()->GetTime().GetDoubleTime();
+   TimeOfMaxIterSomaAmp[i] = Environment->GetTime().GetDoubleTime();
 
    // ��� ���������� ������� �������� ���������� �������� ���������
    if(DendriteLength[i] == 1 && NumSynapse[i] && currentsomaamp > InitialSomaPotential[i])
@@ -1105,8 +1105,8 @@ bool NNeuronLearner::PatternRecognition(void)
  if(IsFirstFileStep)
  {
   // ���������� � ������ � �������
-  Fin.open(Environment.lock()->GetCurrentDataDir()+"input_data.txt");
-  Fout.open(Environment.lock()->GetCurrentDataDir()+"output_data"+sntoa(EpochCur)+".txt");
+  Fin.open(Environment->GetCurrentDataDir()+"input_data.txt");
+  Fout.open(Environment->GetCurrentDataDir()+"output_data"+sntoa(EpochCur)+".txt");
   Inputs.Assign(NumInputDendrite, 1, 0.0);  // ������� ������
   Outputs.assign(NumInputDendrite, 0);  // �������� ������
 
@@ -1130,7 +1130,7 @@ bool NNeuronLearner::PatternRecognition(void)
  // ����� ������� ����� ������� ��������� ���������� �������� � ����� ������� �����
  if(IsFirstBeat)
  {
-  StartIterTime = Environment.lock()->GetTime().GetDoubleTime();
+  StartIterTime = Environment->GetTime().GetDoubleTime();
   IterLength = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep));
 
   // ���� �������� ����� ����� - ��������� ����� �������������
@@ -1169,7 +1169,7 @@ bool NNeuronLearner::PatternRecognition(void)
   Outputs[0]= 1;
 
  // ���������� ��������� ������������� � �������� ����
- double currentitertime = Environment.lock()->GetTime().GetDoubleTime() - StartIterTime;
+ double currentitertime = Environment->GetTime().GetDoubleTime() - StartIterTime;
  if((currentitertime - IterLength >= 0) && !IsWritten)
  {
   Fout << Outputs[0] << std::endl;
@@ -1262,7 +1262,7 @@ bool NNeuronLearner::IncrementalLearning(MDMatrix<double> initial_pattern, MDMat
  {
   InputPattern = additional_pattern;
   SetInputPattern(additional_pattern);
-  Fout.open(Environment.lock()->GetCurrentDataDir()+"output_data"+sntoa(EpochCur)+".txt");
+  Fout.open(Environment->GetCurrentDataDir()+"output_data"+sntoa(EpochCur)+".txt");
  }
 
  // ����� 5 �������� ������ ������� ������� �� ��������,
@@ -1438,7 +1438,7 @@ bool NNeuronLearner::Training(void)
  if(IsFirstBeat)
  {
   // �������� ����� ������ ������� �������� � ��������� � ������������
-  StartIterTime = Environment.lock()->GetTime().GetDoubleTime();
+  StartIterTime = Environment->GetTime().GetDoubleTime();
   IterLength = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep));
 
   // �������� ������������ ��������� ��������� ������� �� ����� ��� ������ ��������
@@ -1468,7 +1468,7 @@ bool NNeuronLearner::Training(void)
 
  // �������� ��� ���������� ��������
  // ������� ������������ �������� - ������� ������ ������� �� ������ ��������
- double currentitertime = Environment.lock()->GetTime().GetDoubleTime() - StartIterTime;
+ double currentitertime = Environment->GetTime().GetDoubleTime() - StartIterTime;
 
  if(currentitertime - IterLength >= 0)
  {

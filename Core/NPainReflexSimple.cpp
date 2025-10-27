@@ -540,7 +540,7 @@ bool NPainReflexSimple::ACalculate(void)
     if(is_first_iter)
     {
         is_first_iter=false;
-        start_iter_time = Environment.lock()->GetTime().GetDoubleTime();
+        start_iter_time = Environment->GetTime().GetDoubleTime();
     }
 
     // I. �������� ���� � �������� �������� ��������� ��������
@@ -580,7 +580,7 @@ bool NPainReflexSimple::ACalculate(void)
             }
 
 
-            double iter_time = Environment.lock()->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
+            double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
             double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // ����� ����� ��������
 
             if(iter_time>=iter_length)
@@ -623,7 +623,7 @@ bool NPainReflexSimple::ACalculate(void)
 			if(value > 0)
 			{
 				is_first_spike = true;
-				first_spike_time = Environment.lock()->GetTime().GetDoubleTime();
+				first_spike_time = Environment->GetTime().GetDoubleTime();
 				if(is_second_spike)
 					ready_time = first_spike_time;
 			}
@@ -639,7 +639,7 @@ bool NPainReflexSimple::ACalculate(void)
 			if(value > 0)
 			{
 				is_second_spike = true;
-				second_spike_time = Environment.lock()->GetTime().GetDoubleTime();
+				second_spike_time = Environment->GetTime().GetDoubleTime();
 				if(is_first_spike)
 					ready_time = second_spike_time;
 			}
@@ -648,7 +648,7 @@ bool NPainReflexSimple::ACalculate(void)
 		// ���� ��� ������:
 		if(is_first_spike && is_second_spike)
 		{
-			double curr_time = Environment.lock()->GetTime().GetDoubleTime();
+			double curr_time = Environment->GetTime().GetDoubleTime();
 			if(curr_time - ready_time < Delay)
                 return true;
 

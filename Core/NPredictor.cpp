@@ -251,12 +251,12 @@ bool NPredictor::ACalculate(void)
     else if(InputMode == 1)
     {
         Output.Resize(1, 1);
-        double time_from_start = Environment.lock()->GetTime().GetDoubleTime() - measurement_period_start;
+        double time_from_start = Environment->GetTime().GetDoubleTime() - measurement_period_start;
 
          //����������� ���������� �� ������ �������� ��������
         if (time_from_start <= 0)
         {
-            measurement_period_start = Environment.lock()->GetTime().GetDoubleTime();
+            measurement_period_start = Environment->GetTime().GetDoubleTime();
             between_measurements = true;
         }
 
@@ -266,7 +266,7 @@ bool NPredictor::ACalculate(void)
             //������ ������ �������
             if (between_measurements == false)
             {
-                measurement_period_start = Environment.lock()->GetTime().GetDoubleTime();
+                measurement_period_start = Environment->GetTime().GetDoubleTime();
                 between_measurements = true;
             }
             //������ �������� � input_pattern

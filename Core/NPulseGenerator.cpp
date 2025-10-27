@@ -188,8 +188,8 @@ bool NPulseGenerator::AReset(void)
  OutputFrequency.ToZero();
  OutputPulseTimes.ToZero();
 
- if(Environment.lock())
-  ResetTime = Environment.lock()->GetTime().GetDoubleTime();
+ if(Environment)
+  ResetTime = Environment->GetTime().GetDoubleTime();
  else
   ResetTime = 0.0;
 
@@ -211,7 +211,7 @@ bool NPulseGenerator::ACalculate(void)
   return true;
  }
 
- if(Environment.lock()->GetTime().GetDoubleTime() - ResetTime < Delay)
+ if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
   return true;
 
  if(OldFrequency != Frequency.v)
@@ -242,7 +242,7 @@ bool NPulseGenerator::ACalculate(void)
     PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
     Output.Assign(1,1,Amplitude);
     OutputPotential.Assign(1,1,Amplitude);
-    AvgFrequencyCounter->push_back(Environment.lock()->GetTime().GetDoubleTime());
+    AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
    }
   }
   OutputFrequency.Assign(1,1,Frequency);
@@ -272,7 +272,7 @@ bool NPulseGenerator::ACalculate(void)
     PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
     Output.Assign(1,1,Amplitude);
     OutputPotential.Assign(1,1,Amplitude);
-    AvgFrequencyCounter->push_back(Environment.lock()->GetTime().GetDoubleTime());
+    AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
    }
   }
   OutputFrequency.Assign(1,1,RandomFrequency);
@@ -286,7 +286,7 @@ bool NPulseGenerator::ACalculate(void)
  {
   while(I != J)
   {
-   double diff=Environment.lock()->GetTime().GetDoubleTime()-*I;
+   double diff=Environment->GetTime().GetDoubleTime()-*I;
    if(diff>AvgInterval)// && AvgFrequencyCounter->size()>3)
    {
     K=I;
@@ -431,7 +431,7 @@ bool NPulseGeneratorTransit::ACalculate(void)
    if ((Input()(0,0) >= 0.01) && (!TheSamePulse))  // ������ (������) ����������� �������
    {
     TheSamePulse = true;  // ������ �����: ������� �������
-    PatternStartTime = Environment.lock()->GetTime().GetDoubleTime();
+    PatternStartTime = Environment->GetTime().GetDoubleTime();
     Frequency = PatternFrequency;
     IsInPatternMode = true;  // ��������� � ����� ��������� � ���������� ��������
    }
@@ -444,7 +444,7 @@ bool NPulseGeneratorTransit::ACalculate(void)
   else
   {
    // 1: ����������� ��������� � ���������� ��������, ��� ��� ����� ��������� � PatternDuration �����
-   if ((PatternDuration) && (Environment.lock()->GetTime().GetDoubleTime() - PatternStartTime >= PatternDuration))
+   if ((PatternDuration) && (Environment->GetTime().GetDoubleTime() - PatternStartTime >= PatternDuration))
    {
     Frequency = 0;
     IsInPatternMode = false;

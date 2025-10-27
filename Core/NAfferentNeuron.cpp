@@ -150,7 +150,7 @@ bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const
  std::shared_ptr<NReceptor> receptor;
  bool res=true;
 
- auto storage = Storage.lock();
+ auto storage = Storage;
 if(!storage)
   return false;
 
@@ -211,7 +211,7 @@ bool NAfferentNeuron::BuildSimpleStructure(const string &ltzone_class,
  std::shared_ptr<NReceptor> receptor;
  bool res(true);
 
- auto storage = Storage.lock();
+ auto storage = Storage;
 if(!storage)
   return false;
 

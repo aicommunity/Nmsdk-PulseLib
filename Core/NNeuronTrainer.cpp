@@ -599,7 +599,7 @@ bool NNeuronTrainer::ABuild(void)
 	// ���� ������ �������� (��������� ��� ������ ������� ������ �������)
 	if(is_first_iter)
 	{
-		start_iter_time = Environment.lock()->GetTime().GetDoubleTime();
+		start_iter_time = Environment->GetTime().GetDoubleTime();
 		is_first_iter = false;
 		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//max_neuron_amp_time = 0;
@@ -617,7 +617,7 @@ bool NNeuronTrainer::ABuild(void)
 		{
 			max_iter_neuron_amp = neuron_amp;
 			// !!!!!!!!!!!!!!!!!!!!!!!!!
-			//max_neuron_amp_time = Environment.lock()->GetTime().GetDoubleTime();
+			//max_neuron_amp_time = Environment->GetTime().GetDoubleTime();
 		}
 
 		// ��� ���������� ������� �������� ���������� �������� ���������
@@ -632,13 +632,13 @@ bool NNeuronTrainer::ABuild(void)
 			{
 				InitialDendritePotential[dend_index] = dendrite->SumPotential(0,0);
                 // !!!!!!!!!!!!!!!!!!!!!!!
-				//max_neuron_amp_time = Environment.lock()->GetTime().GetDoubleTime();
+				//max_neuron_amp_time = Environment->GetTime().GetDoubleTime();
 			}
 		}
 	}
 
 	// ������� ��������� �������� (����� ��������)
-	double iter_time = Environment.lock()->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
+	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
 	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // ����� ����� ��������
 	if(iter_time >= iter_length)
 	{
@@ -754,7 +754,7 @@ bool NNeuronTrainer::ABuild(void)
 		// ���� ������ �������� (��������� ��� ������ ������� ������ �������)
 		if(is_first_iter)
 		{
-			start_iter_time = Environment.lock()->GetTime().GetDoubleTime();
+			start_iter_time = Environment->GetTime().GetDoubleTime();
 			is_first_iter = false;
 		}
 
@@ -774,7 +774,7 @@ bool NNeuronTrainer::ABuild(void)
 		}
 
 		// ������� ��������� �������� (����� ��������)
-		double iter_time = Environment.lock()->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
+		double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
 		double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // ����� ����� ��������
 		if(iter_time >= iter_length)
 		{
@@ -928,7 +928,7 @@ bool NNeuronTrainer::ABuild(void)
 	// ���� ������ �������� (��������� ��� ������ ������� ������ �������)
 	if(is_first_iter)
 	{
-		start_iter_time = Environment.lock()->GetTime().GetDoubleTime();
+		start_iter_time = Environment->GetTime().GetDoubleTime();
 
 		// ������������ ��������� ��������� ������� ��������� �� ����� ��������
 		max_iter_dend_amp.assign(NumInputDendrite, 0);
@@ -955,7 +955,7 @@ bool NNeuronTrainer::ABuild(void)
 	}
 
 	// ������� ��������� ��������
-	double iter_time = Environment.lock()->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
+	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
 	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // ����� ����� ��������
 	if(iter_time >= iter_length)
 	{
@@ -1197,7 +1197,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 	// ���� ������ �������� (��������� ��� ������ ������� ������ �������)
 	if(is_first_iter)
 	{
-		start_iter_time = Environment.lock()->GetTime().GetDoubleTime();
+		start_iter_time = Environment->GetTime().GetDoubleTime();
 
 		// ������������ ��������� ��������� ������� ��������� �� ����� ��������
 		max_iter_dend_amp.assign(NumInputDendrite, 0);
@@ -1222,7 +1222,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 		if(dendrite_amp > max_iter_dend_amp[i])
 		{
 			max_iter_dend_amp[i] = dendrite_amp;
-			max_dend_amp_time[i] = Environment.lock()->GetTime().GetDoubleTime();
+			max_dend_amp_time[i] = Environment->GetTime().GetDoubleTime();
 
 			// ��� ���������� ������� �������� ���������� �������� ���������
 			if(DendriteLength[i] == 1)
@@ -1231,7 +1231,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 	}
 
 	// ������� ��������� �������� (����� ��������)
-	double iter_time = Environment.lock()->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
+	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
 	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // ����� ����� ��������
 	if(iter_time >= iter_length)
 	{
@@ -1396,7 +1396,7 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 	// ���� ������ �������� (��������� ��� ������ ������� ������ �������)
 	if(is_first_iter)
 	{
-		start_iter_time = Environment.lock()->GetTime().GetDoubleTime();
+		start_iter_time = Environment->GetTime().GetDoubleTime();
 
 		// ������������ ��������� ��������� ������� ��������� �� ����� ��������
 		max_iter_dend_amp.assign(NumInputDendrite, 0);
@@ -1423,7 +1423,7 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 	}
 
 	// ������� ��������� ��������
-	double iter_time = Environment.lock()->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
+	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
 	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // ����� ����� ��������
 	if(iter_time >= iter_length)
 	{
@@ -1659,7 +1659,7 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 	// ���� ������ �������� (��������� ��� ������ ������� ������ �������)
 	if(is_first_iter)
 	{
-		start_iter_time = Environment.lock()->GetTime().GetDoubleTime();
+		start_iter_time = Environment->GetTime().GetDoubleTime();
 
 		// ������������ ��������� ��������� ������� ��� �� ����� ��������
 		max_iter_dend_amp.assign(NumInputDendrite, 0);
@@ -1684,7 +1684,7 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 		if(soma_amp > max_iter_dend_amp[i])
 		{
 			max_iter_dend_amp[i] = soma_amp;
-			max_dend_amp_time[i] = Environment.lock()->GetTime().GetDoubleTime();
+			max_dend_amp_time[i] = Environment->GetTime().GetDoubleTime();
 
 			// ��� ���������� ������� �������� ���������� �������� ���������
 			if(DendriteLength[i] == 1)
@@ -1693,7 +1693,7 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 	}
 
 	// ������� ��������� �������� (����� ��������)
-	double iter_time = Environment.lock()->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
+	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // ������� ����� ��������
 	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // ����� ����� ��������
 	if(iter_time >= iter_length)
 	{
@@ -1783,12 +1783,12 @@ bool NNeuronTrainer::CalculateProcess(void)
 				return true;
 			if(!ltzone)
 				return true;
-			double time_now=Environment.lock()->GetTime().GetDoubleTime();
+			double time_now=Environment->GetTime().GetDoubleTime();
 			const double step_thresh=0.0001;
 			const double diff_time = 3;     //������ 3? 2 �� ��������
 			if(ltzone->CheckPulseOn())
 			{
-				time_spike = Environment.lock()->GetTime().GetDoubleTime();
+				time_spike = Environment->GetTime().GetDoubleTime();
 				LTZThreshold=LTZThreshold+step_thresh;
 			}
 			else if(((time_now - time_spike)>diff_time)&& time_spike)

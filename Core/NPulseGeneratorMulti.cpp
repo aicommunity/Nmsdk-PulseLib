@@ -223,8 +223,8 @@ bool NPulseGeneratorMulti::AReset(void)
  OutputFrequency.ToZero();
  OutputPulseTimes.ToZero();
 
- if(Environment.lock())
-  ResetTime = Environment.lock()->GetTime().GetDoubleTime();
+ if(Environment)
+  ResetTime = Environment->GetTime().GetDoubleTime();
  else
   ResetTime = 0.0;
 
@@ -256,7 +256,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
 
 
  //��� ������ ���������� � ��������� ��������������� ���������, ��� ��� Delay �� ������ � ��� ������
- //if(Environment.lock()->GetTime().GetDoubleTime() - ResetTime < Delay)
+ //if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
  // return true;
 
  if(OldFrequency != Frequency.v)
@@ -264,7 +264,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
     for(int i=0; i<int(PulseCounters.size());i++)
     {
         double Delay = Delays(0,i);
-        if(Environment.lock()->GetTime().GetDoubleTime() - ResetTime < Delay)
+        if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
             continue;
 
         int &PulseCounter = PulseCounters[i];
@@ -280,7 +280,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
      for(int i=0; i<int(PulseCounters.size());i++)
      {
       double Delay = Delays(0,i);
-      if(Environment.lock()->GetTime().GetDoubleTime() - ResetTime < Delay)
+      if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
        continue;
 
       int &PulseCounter = PulseCounters[i];
@@ -304,7 +304,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
         pulses[i] = true;
 //        Output.Assign(1,1,Amplitude);
 //        OutputPotential.Assign(1,1,Amplitude);
-        AvgFrequencyCounter->push_back(Environment.lock()->GetTime().GetDoubleTime());
+        AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
        }
       }
      }
@@ -360,7 +360,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
 	PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
 	Output.Assign(1,1,Amplitude);
 	OutputPotential.Assign(1,1,Amplitude);
-	AvgFrequencyCounter->push_back(Environment.lock()->GetTime().GetDoubleTime());
+	AvgFrequencyCounter->push_back(Environment->GetTime().GetDoubleTime());
    }
   }
   OutputFrequency.Assign(1,1,RandomFrequency);
@@ -376,7 +376,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
  {
   while(I != J)
   {
-   double diff=Environment.lock()->GetTime().GetDoubleTime()-*I;
+   double diff=Environment->GetTime().GetDoubleTime()-*I;
    if(diff>AvgInterval)// && AvgFrequencyCounter->size()>3)
    {
 	K=I;
