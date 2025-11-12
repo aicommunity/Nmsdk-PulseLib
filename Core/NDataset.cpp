@@ -234,6 +234,14 @@ bool NDataset::ADefault(void)
 // � ������ �������� ������
 bool NDataset::ABuild(void)
 {
+	// Проверяем наличие Storage перед созданием компонентов
+	if(!Storage)
+	{
+		Generators.clear();
+		Generators.resize(NumGenerators, nullptr);
+		return true;
+	}
+	
     TreatDataFromFile();
     int old_ex_generators=int(Generators.size());
     for(int i=NumGenerators;i<old_ex_generators;i++)
@@ -247,7 +255,10 @@ bool NDataset::ABuild(void)
     for(int i=0;i<NumGenerators;i++)
     {
      std::shared_ptr<NPulseGeneratorTransit> generator=AddMissingComponent<NPulseGeneratorTransit>(std::string("Generator")+sntoa(i+1), PulseGeneratorClassName);
-     generator->SetCoord(MVector<double,3>(5+i*6,1.7,0));
+     if(generator)
+     {
+      generator->SetCoord(MVector<double,3>(5+i*6,1.7,0));
+     }
     }
   return true;
 }

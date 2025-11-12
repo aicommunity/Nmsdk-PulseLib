@@ -71,8 +71,12 @@ std::shared_ptr<RDK::UContainer> NNet::InsertComponent(void)
 
  if(AddComponent(comp) == ForbiddenId)
  {
-  comp->Free();
-//  Storage->ReturnObject(comp);
+  // With shared_ptr, we should return object to Storage instead of calling Free()
+  // Free() no longer deletes the object - shared_ptr manages lifecycle
+  if(Storage)
+  {
+   Storage->ReturnObject(comp);
+  }
   return 0;
  }
 

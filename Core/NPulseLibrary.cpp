@@ -59,91 +59,85 @@ NPulseLibrary::NPulseLibrary(void)
 // �� ��������� ��������������� ������� ������� � ������ ������.
 void NPulseLibrary::CreateClassSamples(UStorage *storage)
 {
+ if(!storage)
+  return;
 
  {
  std::shared_ptr<RDK::UContainer> cont;
 
  cont=std::make_shared<NNet>();
  cont->SetName("Net");
+ cont->SetStorage(storage);
  cont->Default();
  UploadClass("NNet",cont);
 
  cont=std::make_shared<NModel>();
  cont->SetName("Model");
+ cont->SetStorage(storage);
  cont->Default();
  UploadClass("NModel",cont);
 
  cont=std::make_shared<NNeuron>();
  cont->SetName("Neuron");
+ cont->SetStorage(storage);
  cont->Default();
  UploadClass("NNeuron",cont);
 
  cont=std::make_shared<NSource>();
  cont->SetName("Source");
+ cont->SetStorage(storage);
  cont->Default();
  UploadClass("NSource",cont);
 
  cont=std::make_shared<NReceiver>();
  cont->SetName("Receiver");
- cont->Default();
  UploadClass("NReceiver",cont);
 
 
  cont=std::make_shared<NMExtrapolator>();
  cont->SetName("MExtrapolator");
- cont->Default();
  UploadClass("NMExtrapolator",cont);
 
  cont=std::make_shared<NSum>();
  cont->SetName("Sum");
- cont->Default();
  UploadClass("NSum",cont);
 
 
 
   cont=std::make_shared<NPulseGenerator>();
  cont->SetName("PGenerator");
- cont->Default();
  UploadClass("NPGenerator",cont);
 
  cont=std::make_shared<NConstGenerator>();
  cont->SetName("CGenerator");
- cont->Default();
  UploadClass("NCGenerator",cont);
 
  cont=std::make_shared<NSinusGenerator>();
  cont->SetName("SinusGenerator");
- cont->Default();
  UploadClass("NSinusGenerator",cont);
 
  cont=std::make_shared<NFileGenerator>();
  cont->SetName("FileGenerator");
- cont->Default();
  UploadClass("NFileGenerator",cont);
 
  cont=std::make_shared<NPulseGeneratorTransit>();
  cont->SetName("PGenerator");
- cont->Default();
  UploadClass("NPulseGeneratorTransit",cont);
 
  cont=std::make_shared<NPulseGeneratorMulti>();
  cont->SetName("PGeneratorMulti");
- cont->Default();
  UploadClass("NPulseGeneratorMulti",cont);
 
  cont=std::make_shared<NPattern>();
  cont->SetName("Pattern");
- cont->Default();
  UploadClass("NPattern",cont);
 
  cont=std::make_shared<NPulseGeneratorDelay>();
  cont->SetName("PGeneratorDelay");
- cont->Default();
  UploadClass("NPGeneratorDelay",cont);
 
  cont=std::make_shared<NPulseDelay>();
  cont->SetName("PDelay");
- cont->Default();
  UploadClass("NPDelay",cont);
 
 
@@ -151,12 +145,10 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PLTZone");
- cont->Default();
  UploadClass("NPulseLTZoneThreshold",cont);
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PLTZone");
- cont->Default();
  {
   NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont.get());
   ltzonet->Threshold=-0.055;
@@ -166,7 +158,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PLTZone");
- cont->Default();
  {
   NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont.get());
   ltzonet->Threshold=-0.055;
@@ -176,32 +167,26 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseLTZone>();
  cont->SetName("PLTZone");
- cont->Default();
  UploadClass("NPLTZone",cont);
 
  cont=std::make_shared<NContinuesLTZone>();
  cont->SetName("CLTZone");
- cont->Default();
  UploadClass("NCLTZone",cont);
 
  cont=std::make_shared<NPulseSimpleLTZone>();
  cont->SetName("PLTZone");
- cont->Default();
  UploadClass("NPSimpleLTZone",cont);
 
  cont=std::make_shared<NContinuesSimpleLTZone>();
  cont->SetName("CLTZone");
- cont->Default();
  UploadClass("NCSimpleLTZone",cont);
 
  cont=std::make_shared<NPulseChannel>();
  cont->SetName("PChannel");
- cont->Default();
  UploadClass("NPChannel",cont);
 
  cont=std::make_shared<NPulseSynapse>();
  cont->SetName("PSynapse");
- cont->Default();
  UploadClass("NPSynapse",cont);
 
  std::shared_ptr<NPulseSynapse> syn=std::make_shared<NPulseSynapse>();
@@ -220,17 +205,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseSynChannel>();
  cont->SetName("PChannel");
- cont->Default();
  UploadClass("NPSynChannel",cont);
 
  cont=std::make_shared<NContinuesSynChannel>();
  cont->SetName("CChannel");
- cont->Default();
  UploadClass("NCSynChannel",cont);
 
  cont=std::make_shared<NPulseHebbSynapse>();
  cont->SetName("Synapse");
- cont->Default();
  UploadClass("NPHebbSynapse",cont);
 
  std::shared_ptr<NPulseChannel> ch, ch_pos, ch_neg;
@@ -334,7 +316,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  std::shared_ptr<NPulseMembrane> membr;
  cont=std::make_shared<NPulseMembrane>();
  cont->SetName("PMembrane");
- cont->Default();
  UploadClass("NPMembrane",cont);
 
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
@@ -387,74 +368,60 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NEyeMuscle>();
  cont->SetName("EyeMuscle");
- cont->Default();
  UploadClass("NEyeMuscle",cont);
 
  cont=std::make_shared<NMuscle>();
  cont->SetName("Muscle");
- cont->Default();
  UploadClass("NMuscle",cont);
 
  cont=std::make_shared<NPac>();
  cont->SetName("Pac");
- cont->Default();
  UploadClass("NPac",cont);
 
  cont=std::make_shared<NReceptor>();
  cont->SetName("Receptor");
- cont->Default();
  UploadClass("NReceptor",cont);
 
  cont=std::make_shared<NCPac>();
  cont->SetName("Pac");
- cont->Default();
  dynamic_pointer_cast<NCPac>(std::shared_ptr<RDK::UContainer>(cont))->TCMode=0;
  UploadClass("NCPac",cont);
 
  // ���������� ������ ���������� PulseItemsLibrary
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronNegCGenerator");
- dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=-1;
  UploadClass("NPNeuronNegCGenerator",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronPosCGenerator");
- dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=1;
  UploadClass("NPNeuronPosCGenerator",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronNegCGenerator");
- dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=-2;
  UploadClass("NCNeuronNegCGenerator",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronPosCGenerator");
- dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=2;
  UploadClass("NCNeuronPosCGenerator",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("NegGenerator");
- dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=-1;
  UploadClass("NPNeuronNegCGeneratorBio",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PosGenerator");
- dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=0.93;
  UploadClass("NPNeuronPosCGeneratorBio",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronPosCGenerator");
- dynamic_cast<NConstGenerator*>(cont.get())->Amplitude=-70e-3;
  UploadClass("NPNeuronPosCGeneratorCable",cont);
 
  cont=std::make_shared<NPulseNeuron>();
  cont->SetName("PNeuron");
- cont->Default();
  UploadClass("NPNeuron",cont);
 
  cont=std::make_shared<NPulseNeuron>();
  cont->SetName("PHebbNeuron");
- cont->Default();
  dynamic_cast<NPulseNeuron*>(cont.get())->MembraneClassName="NPNeuronHebbMembrane";
  UploadClass("NPHebbNeuron",cont);
 
@@ -466,7 +433,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  dynamic_cast<NPulseNeuron*>(cont.get())->ExcGeneratorClassName="NCNeuronNegCGenerator";
  dynamic_cast<NPulseNeuron*>(cont.get())->InhGeneratorClassName="NCNeuronPosCGenerator";
  cont->SetName("CNeuron");
- UploadClass("NCNeuron",cont);
 
 
 /* cont=new NPulseLifeNeuron("PLifeNeuron");
@@ -475,23 +441,19 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   */
  cont=std::make_shared<NAfferentNeuron>();
  cont->SetName("AfferentNeuron");
- cont->Default();
  UploadClass("NAfferentNeuron",cont);
 
  cont=std::make_shared<NPulseSynapseStdp>();
  cont->SetName("SynapseStdp");
- cont->Default();
  UploadClass("NPulseSynapseStdp",cont);
 
 
   cont=std::make_shared<NPulseChannelIzhikevich>();
  cont->SetName("Channel");
- cont->Default();
  UploadClass("NPulseChannelIzhikevich",cont);
 
  cont=std::make_shared<NPulseSynapse>();
  cont->SetName("Synapse");
- cont->Default();
  static_cast<NPulseSynapse*>(cont.get())->SecretionTC=0.001;
  static_cast<NPulseSynapse*>(cont.get())->DissociationTC=0.005;
  static_cast<NPulseSynapse*>(cont.get())->UsePresynapticInhibition=false;
@@ -500,7 +462,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseSynapse>();
  cont->SetName("Synapse");
- cont->Default();
  static_cast<NPulseSynapse*>(cont.get())->SecretionTC=0.001;
  static_cast<NPulseSynapse*>(cont.get())->DissociationTC=0.005;
  static_cast<NPulseSynapse*>(cont.get())->UsePresynapticInhibition=false;
@@ -509,7 +470,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseSynapse>();
  cont->SetName("Synapse");
- cont->Default();
  static_cast<NPulseSynapse*>(cont.get())->SecretionTC=0.001;
  static_cast<NPulseSynapse*>(cont.get())->DissociationTC=0.005;
  static_cast<NPulseSynapse*>(cont.get())->UsePresynapticInhibition=false;
@@ -518,18 +478,15 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseChannelIaF>();
  cont->SetName("Channel");
- cont->Default();
  UploadClass("NPulseChannelIaF",cont);
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PulseLTZone");
- cont->Default();
  dynamic_cast<NLTZone*>(cont.get())->Threshold=30;
  UploadClass("NPulseLTZoneIzhikevich",cont);
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PulseLTZone");
- cont->Default();
  dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->Threshold=-0.055;
  dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->ThresholdOff=-0.07;
  static_cast<NPulseLTZoneThreshold*>(cont.get())->NumChannelsInGroup=1;
@@ -537,7 +494,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
  cont->SetName("PulseLTZone");
- cont->Default();
  dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->Threshold=-0.055;
  dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->ThresholdOff=-0.07;
  static_cast<NPulseLTZoneThreshold*>(cont.get())->NumChannelsInGroup=1;
@@ -546,7 +502,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont=std::make_shared<NPulseMembrane>();
  cont->Default();
  cont->SetName("PulseMembrane");
- dynamic_cast<NPulseMembrane*>(cont.get())->ExcChannelClassName="NPulseChannelIzhikevich";
  dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
  dynamic_cast<NPulseMembrane*>(cont.get())->SynapseClassName="NPulseSynapseStdp";
  cont->Build();
@@ -555,7 +510,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont=std::make_shared<NPulseMembrane>();
  cont->Default();
  cont->SetName("PulseMembrane");
- dynamic_cast<NPulseMembrane*>(cont.get())->ExcChannelClassName="NPulseChannelIaF";
  dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
  dynamic_cast<NPulseMembrane*>(cont.get())->SynapseClassName="NSynapseIaF";
  cont->Build();
@@ -564,7 +518,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseChannelCable>();
  cont->SetName("Channel");
- cont->Default();
  //dynamic_cast<NPulseChannelCable*>(cont.get())->CalcMode = true;
  //dynamic_cast<NPulseChannelCable*>(cont.get())->Cm = 1.0e-9;
  //dynamic_cast<NPulseChannelCable*>(cont.get())->CompartmentR = 1;
@@ -580,13 +533,11 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseChannelCable>();
  cont->SetName("Channel");
- cont->Default();
  UploadClass("NPulseChannelCableMulti",cont);
 
  cont=std::make_shared<NPulseMembrane>();
  cont->Default();
  cont->SetName("PulseMembrane");
- dynamic_cast<NPulseMembrane*>(cont.get())->ExcChannelClassName="NPulseChannelCable";
  dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
  dynamic_cast<NPulseMembrane*>(cont.get())->SynapseClassName="NSynapseCable";
  dynamic_cast<NPulseMembrane*>(cont.get())->FeedbackGain=0.7;
@@ -596,7 +547,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont=std::make_shared<NPulseMembrane>();
  cont->Default();
  cont->SetName("PulseMembrane");
- dynamic_cast<NPulseMembrane*>(cont.get())->ExcChannelClassName="NPulseChannelCableMulti";
  dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
  dynamic_cast<NPulseMembrane*>(cont.get())->SynapseClassName="NSynapseCableMulti";
  dynamic_cast<NPulseMembrane*>(cont.get())->FeedbackGain=0.7;
@@ -605,52 +555,42 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NSynapseTrainerStdp>();
  cont->SetName("Trainer");
- cont->Default();
  UploadClass("NSynapseTrainerStdp",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpTD>();
  cont->SetName("TrainerTD");
- cont->Default();
  UploadClass("NSynapseTrainerStdpTD",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpWD>();
  cont->SetName("TrainerWD");
- cont->Default();
  UploadClass("NSynapseTrainerStdpWD",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpLobov>();
  cont->SetName("TrainerLobov");
- cont->Default();
  UploadClass("NSynapseTrainerStdpLobov",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpClassicDiscrete>();
  cont->SetName("TrainerClassicDiscrete");
- cont->Default();
  UploadClass("NSynapseTrainerStdpClassicDiscrete",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpClassicIntegrated>();
  cont->SetName("TrainerClassicIntegrated");
- cont->Default();
  UploadClass("NSynapseTrainerStdpClassicIntegrated",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpTriplet>();
  cont->SetName("TrainerTriplet");
- cont->Default();
  UploadClass("NSynapseTrainerStdpTriplet",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpMirror>();
  cont->SetName("TrainerMirror");
- cont->Default();
  UploadClass("NSynapseTrainerStdpMirror",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpProbabilistic>();
  cont->SetName("TrainerProbabilistic");
- cont->Default();
  UploadClass("NSynapseTrainerStdpProbabilistic",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpStable>();
  cont->SetName("TrainerStable");
- cont->Default();
  UploadClass("NSynapseTrainerStdpStable",cont);
 
 
@@ -665,22 +605,18 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NIntegrateAndFireNeuron>();
  cont->SetName("PulseIntegrateAndFireNeuron");
- cont->Default();
  UploadClass("NIntegrateAndFireNeuron",cont);
 
  cont=std::make_shared<NSynapseStdp>();
  cont->SetName("SynapseStdp");
- cont->Default();
  UploadClass("NSynapseStdp",cont);
 
  cont=std::make_shared<NSynapseClassic>();
  cont->SetName("Synapse");
- cont->Default();
  UploadClass("NSynapseClassic",cont);
 
  cont=std::make_shared<NSynapseClassicSlv>();
  cont->SetName("Synapse");
- cont->Default();
  UploadClass("NSynapseClassicSlv",cont);
 
  std::shared_ptr<NPulseNeuron> n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
@@ -740,17 +676,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 /*
  cont=std::make_shared<NPulseHebbLifeSynapse>();
  cont->SetName("Synapse");
- cont->Default();
  UploadClass("NPHebbLifeSynapse",cont);
 
  cont=std::make_shared<NNeuronLife>();
  cont->SetName("NeuronLife");
- cont->Default();
  UploadClass("NNeuronLife",cont);
 
  cont=std::make_shared<NLifeNet>();
  cont->SetName("LifeNet");
- cont->Default();
  UploadClass("NLifeNet",cont);
 
  // ��������� ������� ����� � ������� �������� � ����
@@ -763,7 +696,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  cont=std::make_shared<NPulseLifeNeuron>();
  cont->SetName("PLifeNeuron");
- cont->Default();
  dynamic_cast<NPulseNeuron*>(cont.get())->MembraneClassName="NPNeuronHebbLifeMembrane";
  UploadClass("NPLifeNeuron",cont);
 */
@@ -1149,28 +1081,24 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
    // ������� ������ ����������� ��������
  cont=std::make_shared<NNeuronFreqGroup>();
  cont->SetName("NeuronFreqGroup");
- cont->Default();
  cont->Build();
  UploadClass("NNeuronFreqGroup",cont);
 
 	// ������� ���� ����� ����������� ��������
  cont=std::make_shared<NNeuronFreqGroupLayer>();
  cont->SetName("NeuronFreqGroupLayer");
- cont->Default();
  cont->Build();
  UploadClass("NNeuronFreqGroupLayer",cont);
 
    // ������� ������, ��������� �������������� �������� ��� ������������� ��������� �� ��������� ������
 cont=std::make_shared<NNeuronLearner>();
 cont->SetName("NeuronLearner");
-cont->Default();
 cont->Build();
 UploadClass("NNeuronLearner",cont);
 
 	// ������� ���� ��������
  cont=std::make_shared<NNeuronsLayer>();
  cont->SetName("NeuronsLayer");
- cont->Default();
  cont->Build();
  UploadClass("NNeuronsLayer",cont);
 
@@ -1182,7 +1110,6 @@ UploadClass("NNeuronLearner",cont);
 	// ������� ���������� ����������
  cont=std::make_shared<NPulsePerseptron>();
  cont->SetName("PulsePerseptron");
- cont->Default();
  cont->Build();
  UploadClass("NPulsePerseptron",cont);
 
@@ -1194,35 +1121,30 @@ UploadClass("NNeuronLearner",cont);
 	// ������� ������ �� ����������, �������������� ��� ������������� ��������� �������� ���������
  cont=std::make_shared<NNeuronTrainer>();
  cont->SetName("NeuronTrainer");
- cont->Default();
  cont->Build();
  UploadClass("NNeuronTrainer",cont);
 
 	// ������� ������ ��������� �������� ��� ������������� ��������� �������� ���������
  cont=std::make_shared<NSpikeClassifier>();
  cont->SetName("SpikeClassifier");
- cont->Default();
  cont->Build();
  UploadClass("NSpikeClassifier",cont);
 
 	// ������� �������������
  cont=std::make_shared<NClassifier>();
  cont->SetName("Classifier");
- cont->Default();
  cont->Build();
  UploadClass("NClassifier",cont);
 
  // ������� ������ �������� ��� ������������� ��������� ��������
  cont=std::make_shared<NConditionedReflex>();
  cont->SetName("ConditionedReflex");
- cont->Default();
  cont->Build();
  UploadClass("NConditionedReflex",cont);
 
  // ������� ������ �������� ��� ������������� ����������� �������� ��������
 cont=std::make_shared<NPainReflexSimple>();
  cont->SetName("PainReflexSimple");
- cont->Default();
  cont->Build();
  UploadClass("NPainReflexSimple",cont);
 
@@ -1230,49 +1152,42 @@ cont=std::make_shared<NPainReflexSimple>();
 	// ������� ������ �������� ��� ������������� ������������ ������������� ������
 cont=std::make_shared<NAssociationFormer>();
  cont->SetName("AssociationTrainer");
- cont->Default();
  cont->Build();
  UploadClass("NAssociationFormer",cont);
 
  // ������� ������ �������� ��� ������������� �������� �������� (���������� ��)
 cont=std::make_shared<NLogicalNot>();
 cont->SetName("LogicalNot");
-cont->Default();
 cont->Build();
 UploadClass("NLogicalNot",cont);
 
 // ������� ������� ���������
 cont=std::make_shared<NPredictor>();
 cont->SetName("Predictor");
-cont->Default();
 cont->Build();
 UploadClass("NPredictor",cont);
 
     // ������� ����� ������ ��������
  cont=std::make_shared<NDataset>();
  cont->SetName("Dataset");
- cont->Default();
  cont->Build();
  UploadClass("NDataset",cont);
 
 // ������� ��������� ���������
 cont=std::make_shared<NStatePredictor>();
 cont->SetName("StatePredictor");
-cont->Default();
 cont->Build();
 UploadClass("NStatePredictor",cont);
 
 // ������� ������������� � �������������� PCA
 cont=std::make_shared<NPCAClassifier>();
 cont->SetName("PCAClassifier");
-cont->Default();
 cont->Build();
 UploadClass("NPCAClassifier",cont);
 
 #ifdef RDK_USE_ODESOLVER
 cont=std::make_shared<NOdeSolver>();
 cont->SetName("OdeSolver");
-cont->Default();
 cont->Build();
 UploadClass("NOdeSolver",cont);
 
