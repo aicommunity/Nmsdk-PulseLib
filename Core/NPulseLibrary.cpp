@@ -220,17 +220,21 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
+ // Remove from ObjectsStorage before using as prototype - PopObject removes object from Storage
+ storage->PopObject(ch_pos);
  UploadClass("NPExcChannel",ch_pos);
 
  ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
+ storage->PopObject(ch_neg);
  UploadClass("NPInhChannel",ch_neg);
 
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
  ch_pos->FBResistance=1e7;
+ storage->PopObject(ch_pos);
  UploadClass("NPExcChannelBio",ch_pos);
 
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
@@ -240,13 +244,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  ch_pos->Resistance=16000000;
  ch_pos->RestingResistance=3000000;
  ch_pos->Capacity = 2.5e-10;
-
+ storage->PopObject(ch_pos);
  UploadClass("NPExcChannelBio2",ch_pos);
 
  ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
  ch_neg->FBResistance=1e7;
+ storage->PopObject(ch_neg);
  UploadClass("NPInhChannelBio",ch_neg);
 
  ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
@@ -256,27 +261,32 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  ch_neg->Resistance=16000000;
  ch_neg->RestingResistance=3000000;
  ch_neg->Capacity = 2.5e-10;
+ storage->PopObject(ch_neg);
  UploadClass("NPInhChannelBio2",ch_neg);
 
 
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynChannel"));
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
+ storage->PopObject(ch_pos);
  UploadClass("NPSynExcChannel",ch_pos);
 
  ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynChannel"));
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
+ storage->PopObject(ch_neg);
  UploadClass("NPSynInhChannel",ch_neg);
 
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NCSynChannel"));
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
+ storage->PopObject(ch_pos);
  UploadClass("NCSynExcChannel",ch_pos);
 
  ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NCSynChannel"));
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
+ storage->PopObject(ch_neg);
  UploadClass("NCSynInhChannel",ch_neg);
 
  // ������ ������� ��������� �������������� ����
@@ -284,32 +294,38 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  ch->Capacity=1e-8;
  ch->RestingResistance=1e6;
  ch->SetName("PChannel");
+ storage->PopObject(ch);
  UploadClass("NPLTChannel",ch);
 
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPLTChannel"));
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
+ storage->PopObject(ch_pos);
  UploadClass("NPLTExcChannel",ch_pos);
 
  ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPLTChannel"));
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
+ storage->PopObject(ch_neg);
  UploadClass("NPLTInhChannel",ch_neg);
 
  ch=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynChannel"));
  ch->Capacity=1e-8;
  ch->RestingResistance=1e6;
  ch->SetName("PChannel");
+ storage->PopObject(ch);
  UploadClass("NPLTSynChannel",ch);
 
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPLTSynChannel"));
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
+ storage->PopObject(ch_pos);
  UploadClass("NPLTSynExcChannel",ch_pos);
 
  ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPLTSynChannel"));
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
+ storage->PopObject(ch_neg);
  UploadClass("NPLTSynInhChannel",ch_neg);
 
  // ������������ ������� ��������
@@ -323,6 +339,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->ExcChannelClassName="NPExcChannelBio";
  membr->SynapseClassName="NPSynapseBio";
  membr->InhChannelClassName="NPInhChannelBio";
+ storage->PopObject(membr);
  UploadClass("NPMembraneBio",membr);
 
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
@@ -331,6 +348,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->SynapseClassName="NPSynapseBio2";
  membr->InhChannelClassName="NPInhChannelBio2";
  membr->FeedbackGain = 0.02;
+ storage->PopObject(membr);
  UploadClass("NPMembraneBio2",membr);
 
  // ������� �������� �������������� ����
@@ -338,17 +356,20 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->SetName("LTMembrane");
  membr->ExcChannelClassName="NPLTExcChannel";
  membr->InhChannelClassName="NPLTInhChannel";
+ storage->PopObject(membr);
  UploadClass("NPLTZoneNeuronMembrane",membr);
 
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
  membr->ExcChannelClassName="NPLTSynExcChannel";
  membr->InhChannelClassName="NPLTSynInhChannel";
+ storage->PopObject(membr);
  UploadClass("NPLTZoneSynNeuronMembrane",membr);
 
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
  membr->SetName("PMembrane");
  membr->ExcChannelClassName="NPSynExcChannel";
  membr->InhChannelClassName="NPSynInhChannel";
+ storage->PopObject(membr);
  UploadClass("NPSynNeuronMembrane",membr);
 
  // ������� �������� ������������ �������
@@ -356,6 +377,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->SetName("PMembrane");
  membr->ExcChannelClassName="NCSynExcChannel";
  membr->InhChannelClassName="NCSynInhChannel";
+ storage->PopObject(membr);
  UploadClass("NCSynNeuronMembrane",membr);
 
  // ��������� ������� ����� � ������� �������� � ����
@@ -364,6 +386,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->Default();
  membr->SynapseClassName="NPHebbSynapse";
  membr->Build();
+ storage->PopObject(membr);
  UploadClass("NPNeuronHebbMembrane",membr);
 
  cont=std::make_shared<NEyeMuscle>();
@@ -390,30 +413,37 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  // ���������� ������ ���������� PulseItemsLibrary
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronNegCGenerator");
+ storage->PopObject(cont);
  UploadClass("NPNeuronNegCGenerator",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronPosCGenerator");
+ storage->PopObject(cont);
  UploadClass("NPNeuronPosCGenerator",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronNegCGenerator");
+ storage->PopObject(cont);
  UploadClass("NCNeuronNegCGenerator",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronPosCGenerator");
+ storage->PopObject(cont);
  UploadClass("NCNeuronPosCGenerator",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("NegGenerator");
+ storage->PopObject(cont);
  UploadClass("NPNeuronNegCGeneratorBio",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PosGenerator");
+ storage->PopObject(cont);
  UploadClass("NPNeuronPosCGeneratorBio",cont);
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronPosCGenerator");
+ storage->PopObject(cont);
  UploadClass("NPNeuronPosCGeneratorCable",cont);
 
  cont=std::make_shared<NPulseNeuron>();
@@ -596,11 +626,13 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  std::shared_ptr<NPulseSynapse> sinStdp=dynamic_pointer_cast<NPulseSynapse>(storage->TakeObject("NPSynapse"));
  sinStdp->TrainerClassName="NSynapseTrainerStdp";
+ storage->PopObject(sinStdp);
  UploadClass("NPSynapseStdp",sinStdp);
 
  std::shared_ptr<NPulseMembrane> mem=dynamic_pointer_cast<NPulseMembrane>(storage->TakeObject("NPulseMembraneIaF"));
  mem->SynapseClassName="NPSynapseStdp";
  mem->Build();
+ storage->PopObject(mem);
  UploadClass("NPulseMembraneIaFStdp",mem);
 
  cont=std::make_shared<NIntegrateAndFireNeuron>();
@@ -629,6 +661,9 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=1;
  n->SetName("IzhikevichNeuron");
  n->Build();
+ // Remove from ObjectsStorage before using as prototype
+ // Child components created via Build() remain in Storage, which is fine
+ storage->PopObject(n);
  UploadClass("NPulseNeuronIzhikevich",n);
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
@@ -641,11 +676,13 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=1;
  n->SetName("IaFNeuron");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NPulseNeuronIaF",n);
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPulseNeuronIaF"));
  n->MembraneClassName="NPulseMembraneIaFStdp";
  n->Build();
+ storage->PopObject(n);
  UploadClass("NPulseNeuronIaFStdp",n);
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
@@ -658,6 +695,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=1;
  n->SetName("CableNeuron");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NPulseNeuronCable",n);
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
@@ -670,6 +708,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=1;
  n->SetName("CableNeuron");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NPulseNeuronCableMulti",n);
 
 
@@ -716,6 +755,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  std::shared_ptr<NAfferentNeuron> an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
  an->StructureBuildMode=1;
  an->Build();
+ storage->PopObject(an);
  UploadClass("NSAfferentNeuron",an);
 
  // ������������ ����������� ������� � ����������� �������
@@ -735,6 +775,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   receptor->OutputAdaptationMode=4;
   receptor->InputAdaptationMode=0;
  }
+ storage->PopObject(an);
  UploadClass("NContinuesSAfferentNeuron",an);
 
  // ������� ����������� ������
@@ -752,6 +793,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   receptor->OutputAdaptationMode=0;
   receptor->InputAdaptationMode=0;
  }
+ storage->PopObject(an);
  UploadClass("NSimpleAfferentNeuron",an);
 
  // ������� ����������� ������� � ����������� �������
@@ -769,6 +811,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   receptor->OutputAdaptationMode=4;
   receptor->InputAdaptationMode=0;
  }
+ storage->PopObject(an);
  UploadClass("NContinuesSimpleAfferentNeuron",an);
 
  // ������� ������ ������
@@ -776,6 +819,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
  n->Build();
+ storage->PopObject(n);
  UploadClass("NSPNeuron",n);
 
  // ������� ������� ������
@@ -783,6 +827,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->LTMembraneClassName="";
  n->NumSomaMembraneParts=3;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NLPNeuron",n);
 
  // ������� ����������
@@ -791,6 +836,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=3;
  n->SetName("Motoneuron");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NMotoneuron",n);
 
  // ������� ������ ������
@@ -799,6 +845,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=1;
  n->SetName("RenshowCell");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NRenshowCell",n);
 
  // ������� � ����������������� ���������
@@ -808,6 +855,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->MembraneClassName="NPSynNeuronMembrane";
  n->NumSomaMembraneParts=1;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NSynSPNeuron",n);
 
  // ������� ������� ������
@@ -816,6 +864,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->MembraneClassName="NPSynNeuronMembrane";
  n->NumSomaMembraneParts=3;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NSynLPNeuron",n);
 
  // ������� ����������
@@ -825,6 +874,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=3;
  n->SetName("Motoneuron");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NSynMotoneuron",n);
 
  // ������� ������ ������
@@ -834,6 +884,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=1;
  n->SetName("RenshowCell");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NSynRenshowCell",n);
 
  // ������� ������ ������ � ��������� �����
@@ -841,6 +892,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->LTMembraneClassName="";
  n->NumSomaMembraneParts=1;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NSPHebbNeuron",n);
 
  // ������� ������� ������ � ��������� �����
@@ -848,6 +900,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->LTMembraneClassName="";
  n->NumSomaMembraneParts=3;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NLPHebbNeuron",n);
 
  // ============================================================================
@@ -857,12 +910,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->NumSomaMembraneParts=1;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NNewSPNeuron",n);
 
  // ������� ������� ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->NumSomaMembraneParts=3;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NNewLPNeuron",n);
 
  // ������� ����������
@@ -870,6 +925,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=3;
  n->SetName("Motoneuron");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NNewMotoneuron",n);
 
  // ������� ������ ������
@@ -877,6 +933,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=1;
  n->SetName("RenshowCell");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NNewRenshowCell",n);
 
  // ������� � ����������������� ���������
@@ -885,6 +942,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->MembraneClassName="NPSynNeuronMembrane";
  n->NumSomaMembraneParts=1;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NNewSynSPNeuron",n);
 
  // ������� ������� ������
@@ -892,6 +950,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->MembraneClassName="NPSynNeuronMembrane";
  n->NumSomaMembraneParts=3;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NNewSynLPNeuron",n);
 
  // ������� ����������
@@ -900,6 +959,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=3;
  n->SetName("Motoneuron");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NNewSynMotoneuron",n);
 
  // ������� ������ ������
@@ -908,6 +968,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=1;
  n->SetName("RenshowCell");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NNewSynRenshowCell",n);
  // ����� �������� � ���������������� ���������
 
@@ -915,12 +976,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPHebbNeuron"));
  n->NumSomaMembraneParts=1;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NNewSPHebbNeuron",n);
 
  // ������� ������� ������ � ��������� �����
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPHebbNeuron"));
  n->NumSomaMembraneParts=3;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NNewLPHebbNeuron",n);
  // ============================================================================
 
@@ -930,12 +993,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NCNeuron"));
  n->NumSomaMembraneParts=1;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NContinuesSynSPNeuron",n);
 
  // ������� ������� ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NCNeuron"));
  n->NumSomaMembraneParts=3;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NContinuesSynLPNeuron",n);
 
  // ������� ����������
@@ -943,6 +1008,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=3;
  n->SetName("Motoneuron");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NContinuesSynMotoneuron",n);
 
  // ������� ������ ������
@@ -950,6 +1016,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=1;
  n->SetName("RenshowCell");
  n->Build();
+ storage->PopObject(n);
  UploadClass("NContinuesSynRenshowCell",n);
  // ����� ����������� �������� � ���������������� ���������
 
@@ -962,6 +1029,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 // n->InhGeneratorClassName="NPNeuronNegCGeneratorBio";
  n->Build();
  n->LTZone->Threshold=0.0117;
+ storage->PopObject(n);
  UploadClass("NSPNeuronGen",n);
 
  // ������� ������ ������ � ������������ ��������������� �����������
@@ -972,6 +1040,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->ExcGeneratorClassName="NPNeuronPosCGeneratorBio";
  n->InhGeneratorClassName="NPNeuronNegCGeneratorBio";
  n->Build();
+ storage->PopObject(n);
  UploadClass("NSPNeuronBio",n);
 
  // ������� ������ ������ � ������������ ��������������� �����������
@@ -983,6 +1052,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->ExcGeneratorClassName="NPNeuronPosCGeneratorBio";
  n->InhGeneratorClassName="NPNeuronNegCGeneratorBio";
  n->Build();
+ storage->PopObject(n);
  UploadClass("NSPNeuronBio2",n);
 
  // ������� ������ ������ � ������������ ��������������� �����������
@@ -1017,6 +1087,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=4;
  n->NumDendriteMembraneParts=3;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NPNeuron4x4",n);
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
@@ -1024,6 +1095,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->NumSomaMembraneParts=1;
  n->NumDendriteMembraneParts=3;
  n->Build();
+ storage->PopObject(n);
  UploadClass("NPNeuron1x4",n);
  // ============================================================================
 /*

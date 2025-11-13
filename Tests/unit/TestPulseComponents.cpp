@@ -44,15 +44,14 @@ protected:
         InitTestLogging();
         storage = CreateStorageWithLibraries({&NMSDK::PulseLibrary});
         NMSDK::PulseLibrary.Upload(storage.get());
-        // Note: CreateClassSamples causes segfault during destruction
-        // This is a known issue with PulseLib - objects created in CreateClassSamples
-        // have lifecycle problems. For now, we test only with Upload (class registration)
-        // TODO: Fix CreateClassSamples lifecycle issues
-        // try {
-        //     NMSDK::PulseLibrary.CreateClassSamples(storage.get());
-        // } catch (const std::exception& ex) {
-        //     GTEST_SKIP() << "NPulseLibrary CreateClassSamples failed: " << ex.what();
-        // }
+        // CreateClassSamples should now work correctly after fixing lifecycle issues
+        // Components created via TakeObject are removed from ObjectsStorage via PopObject
+        // before being used as prototypes in UploadClass
+        try {
+            NMSDK::PulseLibrary.CreateClassSamples(storage.get());
+        } catch (const std::exception& ex) {
+            GTEST_SKIP() << "NPulseLibrary CreateClassSamples failed: " << ex.what();
+        }
     }
 
     void TearDown() override {
