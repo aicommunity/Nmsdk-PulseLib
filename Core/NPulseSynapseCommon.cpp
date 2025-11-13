@@ -55,10 +55,12 @@ bool NPulseSynapseCommon::SetType(const double &value)
 {
  Type.v=value;
 
- std::shared_ptr<NPulseMembrane> membr=std::shared_ptr<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
+ // NPulseSynapseCommon inherits from UNet, which inherits from UContainer (UComponent)
+ // Use shared_from_this() instead of safe_shared_cast
+ std::shared_ptr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(Owner.lock());
  if(membr)
  {
-  membr->UpdateSynapseData(safe_shared_cast<NPulseSynapseCommon>(dynamic_cast<NPulseSynapseCommon*>(this)));
+  membr->UpdateSynapseData(std::static_pointer_cast<NPulseSynapseCommon>(shared_from_this()));
  }
 
  return true;

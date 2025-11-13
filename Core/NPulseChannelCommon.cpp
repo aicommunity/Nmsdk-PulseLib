@@ -63,10 +63,12 @@ bool NPulseChannelCommon::SetType(const double &value)
 {
  Type.v=value;
 
- std::shared_ptr<NPulseMembrane> membr=safe_shared_cast<NPulseMembrane>(dynamic_pointer_cast<NPulseMembrane>(Owner.lock()).get());
+ // NPulseChannelCommon inherits from UNet, which inherits from UContainer (UComponent)
+ // Use shared_from_this() instead of safe_shared_cast
+ std::shared_ptr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(Owner.lock());
  if(membr)
  {
-  membr->UpdateChannelData(safe_shared_cast<NPulseChannelCommon>(this));
+  membr->UpdateChannelData(std::static_pointer_cast<NPulseChannelCommon>(shared_from_this()));
  }
 
  for(int i=0;i<int(SynapticInputs->size());i++)
