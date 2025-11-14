@@ -377,8 +377,11 @@ bool NPainReflexSimple::BuildStructure(void)
 
      // ������ ������ "�������� ������������"
      ConditionalStimul = AddMissingComponent<NNeuronTrainer>("ConditionalStimulus", NeuronTrainerClassName);
-     ConditionalStimul->SetCoord(MVector<double,3>(4.0+0*7,1*2,0));
-     ConditionalStimul->NumInputDendrite = NumConditionalStimulDendrite;
+     if(ConditionalStimul)
+     {
+      ConditionalStimul->SetCoord(MVector<double,3>(4.0+0*7,1*2,0));
+      ConditionalStimul->NumInputDendrite = NumConditionalStimulDendrite;
+     }
      //std::shared_ptr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
      //if(!ltZone)
      //    return true;
@@ -396,13 +399,19 @@ bool NPainReflexSimple::BuildStructure(void)
 
      //������� ���������� ��������� ��� �������������� �����
      NormalInputGen = AddMissingComponent<NPulseGeneratorTransit>(std::string("NormInputGen"), PulseGeneratorClassName);
-     NormalInputGen->SetCoord(MVector<double,3>(4.0+0*7,2*2,0));
-     NormalInputGen->UseTransitSignal=true;
+     if(NormalInputGen)
+     {
+      NormalInputGen->SetCoord(MVector<double,3>(4.0+0*7,2*2,0));
+      NormalInputGen->UseTransitSignal=true;
+     }
 
      //������� ���������� ��������� ��� ��������������� �����
      AltInputGen = AddMissingComponent<NPulseGeneratorTransit>(std::string("AltInputGen"), PulseGeneratorClassName);
-     AltInputGen->SetCoord(MVector<double,3>(4.0+0*7,3*2,0));
-     AltInputGen->UseTransitSignal=true;
+     if(AltInputGen)
+     {
+      AltInputGen->SetCoord(MVector<double,3>(4.0+0*7,3*2,0));
+      AltInputGen->UseTransitSignal=true;
+     }
 
      //������� ���������� ���������, ����������� ������������� ����
      NormalBlocker = AddMissingComponent<NPulseGeneratorTransit>(std::string("NormBlockerGen"), PulseGeneratorClassName);

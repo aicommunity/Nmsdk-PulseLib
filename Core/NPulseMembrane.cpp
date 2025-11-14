@@ -333,7 +333,10 @@ bool NPulseMembrane::ABuild(void)
   exc_channel=AddMissingComponent<NPulseChannelCommon>("ExcChannel", ExcChannelClassName);
 //  ExcitatoryChannels.resize(1);
 //  ExcitatoryChannels[0]=exc_channel;
-  exc_channel->SetCoord(MVector<double,3>(5,4,0));
+  if(exc_channel)
+  {
+   exc_channel->SetCoord(MVector<double,3>(5,4,0));
+  }
 
   int old_ex_synapses=int(ExcitatorySynapses.size());
 
@@ -349,11 +352,14 @@ bool NPulseMembrane::ABuild(void)
   for(int i=0;i<NumExcitatorySynapses;i++)
   {
    std::shared_ptr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("ExcSynapse")+sntoa(i+1), SynapseClassName);
-   synapse->Type = -1;
+   if(synapse)
+   {
+    synapse->Type = -1;
 //   ExcitatorySynapses.push_back(synapse);
-   res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
-   synapse->SetCoord(MVector<double,3>(5+i*6,1.7,0));
-   synapse->RebuildInternalLinks();
+    res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
+    synapse->SetCoord(MVector<double,3>(5+i*6,1.7,0));
+    synapse->RebuildInternalLinks();
+   }
   }
  }
 
@@ -363,7 +369,10 @@ bool NPulseMembrane::ABuild(void)
 
 //  InhibitoryChannels.resize(1);
 //  InhibitoryChannels[0]=inh_channel;
-  inh_channel->SetCoord(MVector<double,3>(5,8,0));
+  if(inh_channel)
+  {
+   inh_channel->SetCoord(MVector<double,3>(5,8,0));
+  }
 
   int old_in_synapses=int(InhibitorySynapses.size());
   for(int i=NumInhibitorySynapses;i<old_in_synapses;i++)
@@ -379,12 +388,15 @@ bool NPulseMembrane::ABuild(void)
   for(int i=0;i<NumInhibitorySynapses;i++)
   {
    std::shared_ptr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("InhSynapse")+sntoa(i+1), SynapseClassName);
-   synapse->Type = 1;
+   if(synapse)
+   {
+    synapse->Type = 1;
 
  //  InhibitorySynapses.push_back(synapse);
-   res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInputs");
-   synapse->SetCoord(MVector<double,3>(5+i*6,10.6,0));
-   synapse->RebuildInternalLinks();
+    res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInputs");
+    synapse->SetCoord(MVector<double,3>(5+i*6,10.6,0));
+    synapse->RebuildInternalLinks();
+   }
   }
  }
 

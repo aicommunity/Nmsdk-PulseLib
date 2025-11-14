@@ -155,12 +155,18 @@ if(!storage)
   return false;
 
  ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);
- ltzone->Threshold=0;
- ltzone->SetCoord(MVector<double,3>(20,3,0));
+ if(ltzone)
+ {
+  ltzone->Threshold=0;
+  ltzone->SetCoord(MVector<double,3>(20,3,0));
+ }
 
  std::shared_ptr<NConstGenerator> gen_neg;
  gen_neg=AddMissingComponent<NConstGenerator>("NegGenerator", neg_gen_class);
- gen_neg->SetCoord(MVector<double,3>(12,6.33,0));
+ if(gen_neg)
+ {
+  gen_neg->SetCoord(MVector<double,3>(12,6.33,0));
+ }
  //gen_neg=dynamic_pointer_cast<NConstGenerator>(Storage->TakeObject(neg_gen_class));
  //res&=AddComponent(gen_neg);
 

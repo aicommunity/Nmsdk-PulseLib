@@ -22,12 +22,12 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
 
 
-// Класс, формирующий импульсный персептрон
+// пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 namespace NMSDK {
 
-// Методы
+// пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Конструкторы и деструкторы
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 NPulsePerseptron::NPulsePerseptron(void)
 : StructureBuildMode("StructureBuildMode",this,&NPulsePerseptron::SetStructureBuildMode),
@@ -49,43 +49,43 @@ NPulsePerseptron::~NPulsePerseptron(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-/// Режим сборки структуры нейрона
+/// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ StructureBuildMode пїЅпїЅ 0
   Ready=false;
  return true;
 }
 
-/// Имя класса, создающего слой групп афферентных нейронов, чувствительных к разным диапазонам частот
+/// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::SetNeuronFreqGroupLayerClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число признаков на входе перспептрона (размер вектора признаков)
+/// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
 bool NPulsePerseptron::SetNumInputFeatures(const int &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего слой нейронов
+/// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::SetNeuronsLayerClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число слоёв нейронов
+/// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::SetNumNeuronsLayer(const int &value)
 {
  Ready=false;
@@ -94,21 +94,21 @@ bool NPulsePerseptron::SetNumNeuronsLayer(const int &value)
  return true;
 }
 
-/// Размер слоя афферентных нейронов.
+/// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
 bool NPulsePerseptron::SetAffNeuronsLayerSize(const MDMatrix<int> &value)
 {
  Ready=false;
  return true;
 }
 
-/// Размер слоя нейронов.
+/// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
 bool NPulsePerseptron::SetNeuronsLayerSize(const MDMatrix<int> &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число афферентных нейронов в группе
+/// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::SetNumAffNeuronsInGroup(const int &value)
 {
  Ready=false;
@@ -117,9 +117,9 @@ bool NPulsePerseptron::SetNumAffNeuronsInGroup(const int &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 NPulsePerseptron* NPulsePerseptron::New(void)
 {
  return new NPulsePerseptron;
@@ -132,12 +132,12 @@ UComponent* NPulsePerseptron::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ comp пїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {            /*
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
@@ -166,10 +166,10 @@ bool NPulsePerseptron::AAddComponent(std::shared_ptr<UContainer> comp, std::shar
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ comp
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::ADelComponent(std::shared_ptr<UContainer> comp)
 {                     /*
  if(comp == PosGenerator)
@@ -184,9 +184,9 @@ bool NPulsePerseptron::ADelComponent(std::shared_ptr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &neuron_freq_group_layer_class_name,
 										const string &neurons_layer_class_name,
 										int old_num_neurons_layer, int num_neurons_layer,
@@ -197,7 +197,7 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
  std::shared_ptr <NNeuronsLayer> neurons_layer, neurons_layer2;
  bool res(true);
 
- // 1 - автоматическая сборка производится, 1 нейрон -> 1 дендрит, связь - каждый с каждым
+ // 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 1 пїЅпїЅпїЅпїЅпїЅпїЅ -> 1 пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  if(StructureBuildMode == 1)
  {
   for(int i=num_neurons_layer;i<old_num_neurons_layer;i++)
@@ -217,19 +217,22 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
   for(int i=0;i<num_neurons_layer;i++)
   {
    neurons_layer=AddMissingComponent<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(i+1), neurons_layer_class_name);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
-   neurons_layer->SetCoord(MVector<double,3>(8.7,1.67+(i+1)*2,0));
-   neurons_layer->NeuronsWidth = neurons_layer_size(i,0);
-   neurons_layer->NeuronsHeight = neurons_layer_size(i,1);
-   neurons_layer->Build();
+   if(neurons_layer)
+   {
+    neurons_layer->SetCoord(MVector<double,3>(8.7,1.67+(i+1)*2,0));
+    neurons_layer->NeuronsWidth = neurons_layer_size(i,0);
+    neurons_layer->NeuronsHeight = neurons_layer_size(i,1);
+    neurons_layer->Build();
+   }
   }
 
-  // связь - каждый с каждым
+  // пїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
   int affsize = aff_neurons_layer_size(0,0)*aff_neurons_layer_size(0,1);
   int neusize = neurons_layer_size(0,0)*neurons_layer_size(0,1);
-  // афферентные нейроны - импульсные нейроны
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
   if(FlagFreqGroupLayer)
   {
-    for(int i = 0; i < affsize; i++) // выключать по флагу
+    for(int i = 0; i < affsize; i++) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
     {
      for(int j = 0; j < num_aff_neurons_in_group; j++)
      {
@@ -265,7 +268,7 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
     }
   }
 
-  // импульсные нейроны - импульсные нейроны
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
   for(int i = 0; i < NumNeuronsLayer-1; i++)
   {
    neurons_layer = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(i+1),true);
@@ -331,7 +334,7 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
   }
  }
 
- // 2 - автоматическая сборка без связей
+ // 2 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
  if(StructureBuildMode == 2)
  {
   for(int i=num_neurons_layer;i<old_num_neurons_layer;i++)
@@ -350,16 +353,19 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
   for(int i=0;i<num_neurons_layer;i++)
   {
    neurons_layer=AddMissingComponent<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(i+1), neurons_layer_class_name);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
-   neurons_layer->SetCoord(MVector<double,3>(8.7,1.67+(i+1)*2,0));
-   neurons_layer->NeuronsWidth = neurons_layer_size(i,0);
-   neurons_layer->NeuronsHeight = neurons_layer_size(i,1);
-   neurons_layer->Build();
+   if(neurons_layer)
+   {
+    neurons_layer->SetCoord(MVector<double,3>(8.7,1.67+(i+1)*2,0));
+    neurons_layer->NeuronsWidth = neurons_layer_size(i,0);
+    neurons_layer->NeuronsHeight = neurons_layer_size(i,1);
+    neurons_layer->Build();
+   }
   }
 
-  // связь - каждый с каждым
+  // пїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
   int affsize = aff_neurons_layer_size(0,0)*aff_neurons_layer_size(0,1);
   int neusize = neurons_layer_size(0,0)*neurons_layer_size(0,1);
-  // афферентные нейроны - импульсные нейроны
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
   if(FlagFreqGroupLayer)
   {
     for(int i = 0; i < affsize; i++)
@@ -398,7 +404,7 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
     }
   }
 
-  // импульсные нейроны - импульсные нейроны
+  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
   for(int i = 0; i < NumNeuronsLayer-1; i++)
   {
    neurons_layer = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(i+1),true);
@@ -464,7 +470,7 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
  return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::ADefault(void)
 {
  StructureBuildMode=1;
@@ -480,10 +486,10 @@ bool NPulsePerseptron::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ Reset() пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Ready пїЅ true
+// пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::ABuild(void)
 {
  if(StructureBuildMode>0)
@@ -499,13 +505,13 @@ bool NPulsePerseptron::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
 bool NPulsePerseptron::AReset(void)
 {
  return true;
 }
 
-// Выполняет расчет этого объекта
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPulsePerseptron::ACalculate(void)
 {
  return true;

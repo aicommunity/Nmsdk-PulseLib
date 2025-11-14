@@ -44,7 +44,15 @@ NPulseNeuronCommon::NPulseNeuronCommon(void)
    NumActiveNegInputs("NumActiveNegInputs",this)
  // LTZone("LTZone",this)
 {
- MainOwner=UComponent::shared_from_this();
+ // MainOwner should be set after object is fully constructed
+ // shared_from_this() may throw bad_weak_ptr if called during construction
+ // Set MainOwner in Default() or Build() instead
+ try {
+  MainOwner=UComponent::shared_from_this();
+ } catch (const std::bad_weak_ptr&) {
+  // Object not fully initialized - MainOwner will be set later in Default() or Build()
+  // This is OK during construction
+ }
 }
 
 NPulseNeuronCommon::~NPulseNeuronCommon(void)
@@ -235,7 +243,19 @@ bool NPulseNeuronCommon::AAddComponent(std::shared_ptr<UContainer> comp, std::sh
  if(!NNeuron::AAddComponent(comp,pointer))
   return false;
 
- comp->SetMainOwner(UComponent::shared_from_this(),-1);
+ // Set MainOwner - use shared_from_this() if available, otherwise use MainOwner if set
+ try {
+  comp->SetMainOwner(UComponent::shared_from_this(),-1);
+ } catch (const std::bad_weak_ptr&) {
+  // Object not fully initialized - use MainOwner if available
+  auto main_owner = MainOwner.lock();
+  if(main_owner) {
+   comp->SetMainOwner(main_owner, -1);
+  } else {
+   // MainOwner not set - this is OK, it will be set later
+   // Don't set MainOwner for child component
+  }
+ }
 
  {
   std::shared_ptr<NPulseMembraneCommon> membrane=dynamic_pointer_cast<NPulseMembraneCommon>(comp);
@@ -304,6 +324,17 @@ bool NPulseNeuronCommon::ADefault(void)
  SomaSumPotential.Assign(1,1,0.0);
 
  Output.Assign(1,1,0.0);
+
+ // Set MainOwner after object is fully constructed
+ // shared_from_this() should work now that object is fully initialized
+ if(!MainOwner.lock()) {
+  try {
+   MainOwner=UComponent::shared_from_this();
+  } catch (const std::bad_weak_ptr&) {
+   // Object still not fully initialized - MainOwner will be set later in Build() or AddComponent()
+   // This is OK during Default()
+  }
+ }
 
  return true;
 }

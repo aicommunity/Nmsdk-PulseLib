@@ -364,8 +364,11 @@ bool NConditionedReflex::BuildStructure(void)
 
 	// ������ ������ "�������� ������������"
 	ConditionalStimul = AddMissingComponent<NNeuronTrainer>("ConditionalStimulus", NeuronTrainerClassName);
-	ConditionalStimul->SetCoord(MVector<double,3>(4.0+0*7,1*2,0));
-	ConditionalStimul->NumInputDendrite = NumConditionalStimulDendrite;
+	if(ConditionalStimul)
+	{
+	 ConditionalStimul->SetCoord(MVector<double,3>(4.0+0*7,1*2,0));
+	 ConditionalStimul->NumInputDendrite = NumConditionalStimulDendrite;
+	}
     std::shared_ptr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
 	if(!ltZone)
 		return true;

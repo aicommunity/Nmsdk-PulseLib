@@ -25,12 +25,12 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Core/NPulseNeuron.h"
 #include <QString>
 
-// Класс, для классификации паттерна данных
+// пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 namespace NMSDK {
 
-// Методы
+// пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Конструкторы и деструкторы
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 NPCAClassifier::NPCAClassifier(void)
 : StructureBuildMode("StructureBuildMode",this,&NPCAClassifier::SetStructureBuildMode),
@@ -45,8 +45,8 @@ NPCAClassifier::NPCAClassifier(void)
   TimeWindowSize("TimeWindowSize",this, &NPCAClassifier::SetTimeWindowSize),
   TrainingPatternInx("TrainingPatternInx",this, &NPCAClassifier::SetTrainingPatternInx)
 {
- IsFirstStep = true; //первая итерация
- IsLastStep = false; //последняя итерация
+ IsFirstStep = true; //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ IsLastStep = false; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 }
 
 NPCAClassifier::~NPCAClassifier(void)
@@ -55,43 +55,43 @@ NPCAClassifier::~NPCAClassifier(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-/// Режим сборки структуры нейрона
+/// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ StructureBuildMode пїЅпїЅ 0
   Ready=false;
  return true;
 }
 
-/// Имя класса, создающего блок матрицы
+/// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::SetMatrixSourceTimeSeriesClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего блок для метода главных компонент
+/// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::SetPCAClassName(const std::string &value)
 {
     Ready=false;
  return true;
 }
 
-/// Имя класса, создающего группу обученных нейронов для распознавания заданного паттерна импульсов
+/// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::SetSpikeClassifierClassName(const std::string &value)
 {
     Ready=false;
  return true;
 }
 
-/// Имя файла с исходными данными
+/// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::SetFileName(const std::string &value)
 {
  Ready=false;
@@ -102,7 +102,7 @@ bool NPCAClassifier::SetFileName(const std::string &value)
  return true;
 }
 
-/// Число компоненент в PCA
+/// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ PCA
 bool NPCAClassifier::SetOutComponents(const int &value)
 {
  Ready=false;
@@ -113,21 +113,21 @@ bool NPCAClassifier::SetOutComponents(const int &value)
  return true;
 }
 
-/// Есть ли калибровочный дендрит
+/// пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::SetIsCalibrativeDendrite(const bool &value)
 {
     Ready=false;
  return true;
 }
 
-/// Имя выходного файла компонента
+/// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::SetOutputFile(const std::string &value)
 {
     Ready=false;
  return true;
 }
 
-/// Размер паттерна данных
+/// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::SetColCount(const int &value)
 {
     Ready=false;
@@ -138,14 +138,14 @@ bool NPCAClassifier::SetColCount(const int &value)
     return true;
 }
 
-/// Размер временного окна
+/// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 bool NPCAClassifier::SetTimeWindowSize(const double &value)
 {
  Ready=false;
  return true;
 }
 
-/// Индекс строки данных, которые используем в качестве обучающего набора
+/// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::SetTrainingPatternInx(const int &value)
 {
  Ready=false;
@@ -155,9 +155,9 @@ bool NPCAClassifier::SetTrainingPatternInx(const int &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 NPCAClassifier* NPCAClassifier::New(void)
 {
  return new NPCAClassifier;
@@ -170,22 +170,22 @@ UComponent* NPCAClassifier::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ comp пїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::AAddComponent(std::shared_ptr<UContainer> comp, std::shared_ptr<UIPointer> pointer)
 {
 
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ comp
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::ADelComponent(std::shared_ptr<UContainer> comp)
 {
 
@@ -194,9 +194,9 @@ bool NPCAClassifier::ADelComponent(std::shared_ptr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 // --------------------------
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::BuildStructure(int structure_build_mode, const string &matrix_source_time_series_class_name,
                                     const string &pca_class_name, const string &spike_classifier_class_name,
                                     const string &file_name_class_name,
@@ -210,23 +210,32 @@ bool NPCAClassifier::BuildStructure(int structure_build_mode, const string &matr
 
         bool res = true;
 
-        //Создаем блок матрицы
+        //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         MatrixSourceTimeSeries = AddMissingComponent<UMatrixSourceTimeSeries>(std::string("Source"), matrix_source_time_series_class_name);
-        MatrixSourceTimeSeries->SetCoord(MVector<double,3>(4.3, 2.67, 0));
-        MatrixSourceTimeSeries->FileName = FileName;
-        MatrixSourceTimeSeries->ColCount = ColCount;
+        if(MatrixSourceTimeSeries)
+        {
+         MatrixSourceTimeSeries->SetCoord(MVector<double,3>(4.3, 2.67, 0));
+         MatrixSourceTimeSeries->FileName = FileName;
+         MatrixSourceTimeSeries->ColCount = ColCount;
+        }
 
-        //Создаем блок PCA
+        //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ PCA
         PCA = AddMissingComponent<UCRPrincipalComponentAnalysis>(std::string("PCA"), pca_class_name);
-        PCA->SetCoord(MVector<double,3>(12.3, 2.67, 0));
-        PCA->OutComponents = OutComponents;
+        if(PCA)
+        {
+         PCA->SetCoord(MVector<double,3>(12.3, 2.67, 0));
+         PCA->OutComponents = OutComponents;
+        }
 
-        //Создаем блок обученных нейронов для распознавания заданного паттерна импульсов
+        //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         SpikeClassifier = AddMissingComponent<NSpikeClassifier>(std::string("SpikeClassifier"), spike_classifier_class_name);
-        SpikeClassifier->SetCoord(MVector<double,3>(20.3, 2.67, 0));
-        if(IsCalibrativeDendrite) //при наличии калибровочного нейрона
-                                  //число выходных параметров увеличивается на 1,
-                                  //формируем число компонент
+        if(SpikeClassifier)
+        {
+         SpikeClassifier->SetCoord(MVector<double,3>(20.3, 2.67, 0));
+        }
+        if(IsCalibrativeDendrite) //пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                                  //пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 1,
+                                  //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             {
             SpikeClassifier->NumInputDendrite = OutComponents+1;
             }
@@ -237,7 +246,7 @@ bool NPCAClassifier::BuildStructure(int structure_build_mode, const string &matr
         SpikeClassifier->SetActivity(false);
         SpikeClassifier->Reset();
 
-        //Создаем связи между блоком матрицы и PCA
+        //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ PCA
         res&=CreateLink("Source","CurrentLine","PCA","EncodingData");
         if(!res)
          return true;
@@ -250,7 +259,7 @@ bool NPCAClassifier::BuildStructure(int structure_build_mode, const string &matr
 }
 
 
-// Сброс процесса счета.
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
 bool NPCAClassifier::AReset(void)
 {
   counter = 0;
@@ -258,7 +267,7 @@ bool NPCAClassifier::AReset(void)
 return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::ADefault(void)
 {
  StructureBuildMode=1;
@@ -276,10 +285,10 @@ bool NPCAClassifier::ADefault(void)
 }
 
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ Reset() пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Ready пїЅ true
+// пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::ABuild(void)
 {
  if(StructureBuildMode>0)
@@ -290,17 +299,20 @@ bool NPCAClassifier::ABuild(void)
   if(!res)
    return false;
  }
-SpikeClassifier->DataFromFile = true;
-SpikeClassifier->SetActivity(false);
- return true;
+if(SpikeClassifier)
+{
+ SpikeClassifier->DataFromFile = true;
+ SpikeClassifier->SetActivity(false);
+}
+return true;
 }
 
-// Выполняет расчет этого объекта
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 bool NPCAClassifier::ACalculate(void)
 {
     if(!IsLastStep)
     {
-        int cd = (IsCalibrativeDendrite)? 1 : 0; //проверка на наличие калибровочного дендрита
+        int cd = (IsCalibrativeDendrite)? 1 : 0; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
         if(IsFirstStep)
         {
@@ -308,14 +320,14 @@ bool NPCAClassifier::ACalculate(void)
             if(GetEnvironment())
             file_dir=GetEnvironment()->GetCurrentDataDir();
 
-            // Открываем файл для записи данных
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
             std::string output_file = OutputFile;
             output_file = file_dir + output_file;
             fout.open(output_file);
 
-            //Определяем размер выходной матрицы
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             results.Resize(MatrixSourceTimeSeries->FullMatrix.GetRows(),OutComponents + cd);
-            //Формируем матрицы максимумов и минимумов для каждого признака
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             max_el.Resize(1, OutComponents,-1000000000.0);
             min_el.Resize(1, OutComponents,1000000000.0);
 
@@ -324,13 +336,13 @@ bool NPCAClassifier::ACalculate(void)
 
             IsFirstStep = false;
         }
-        //Формируем матрицу с данными
+        //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if(MatrixSourceTimeSeries->CurrentLineIndex < MatrixSourceTimeSeries->FullMatrix.GetRows())
         {
-            for(int i = 0; i < OutComponents; i++) //пока строка не закончилась
+            for(int i = 0; i < OutComponents; i++) //пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             {
                 results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i) = PCA->PCAResult(0,i);
-                //Ищем максимальный и минимальный элемент по строке
+                //пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                 if (results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i) > max_el(0, i))
                 {
                     max_el(0, i) = results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i);
@@ -340,7 +352,7 @@ bool NPCAClassifier::ACalculate(void)
                     min_el(0, i) = results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i);
                 }
             }
-            //Добавляем значение калибровочного дендрита при необходимости
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             if(IsCalibrativeDendrite)
             {
                 results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, OutComponents) = TimeWindowSize;
@@ -350,7 +362,7 @@ bool NPCAClassifier::ACalculate(void)
         }
         else
         {
-            //Нормализум строку
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
             for(int i = 0; i < MatrixSourceTimeSeries->FullMatrix.GetRows(); i++)
             {
                 for(int j = 0; j < OutComponents; j++)
@@ -368,29 +380,29 @@ bool NPCAClassifier::ACalculate(void)
                 }
             }
 
-            string b = ""; //пустая строка
-            MDMatrix<double> res; //матрица с данными для тренировочного набора
-            res.Resize(1, OutComponents+cd); //размер матрицы
+            string b = ""; //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+            MDMatrix<double> res; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+            res.Resize(1, OutComponents+cd); //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             for(int i = 0; i < MatrixSourceTimeSeries->FullMatrix.GetRows(); i++)
             {
-                //формируем строку
+                //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                 for(int j = 0; j < OutComponents + cd; j++)
                 {
                     string q = std::to_string(results(i, j));
                     b = b+q+"\t";
                 }
-                //записываем строку в файл
+                //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
                 fout << b << std::endl;
                 b="";
-                if (TrainingPatternInx == i) //сравниваем индекс строки обучающего набора
-                                             //с индексом текущей строки
+                if (TrainingPatternInx == i) //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+                                             //пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                     for(int j = 0; j < OutComponents + cd; j++)
                         res(0,j) = results(i,j);
-                SpikeClassifier->TrainingPatterns = res; //записываем строку в обучающий набор данных
+                SpikeClassifier->TrainingPatterns = res; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
             }
-            fout.close(); //закрываем файл
+            fout.close(); //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 
-            //Активным остается третий блок
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
             SpikeClassifier->SetActivity(true);
             MatrixSourceTimeSeries->SetActivity(false);
             PCA->SetActivity(false);

@@ -90,65 +90,93 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NSource",cont);
 
  cont=std::make_shared<NReceiver>();
+ cont->SetStorage(storage);
  cont->SetName("Receiver");
+ cont->Default();
  UploadClass("NReceiver",cont);
 
 
  cont=std::make_shared<NMExtrapolator>();
+ cont->SetStorage(storage);
  cont->SetName("MExtrapolator");
+ cont->Default();
  UploadClass("NMExtrapolator",cont);
 
  cont=std::make_shared<NSum>();
+ cont->SetStorage(storage);
  cont->SetName("Sum");
+ cont->Default();
  UploadClass("NSum",cont);
 
 
 
   cont=std::make_shared<NPulseGenerator>();
+ cont->SetStorage(storage);
  cont->SetName("PGenerator");
+ cont->Default();
  UploadClass("NPGenerator",cont);
 
  cont=std::make_shared<NConstGenerator>();
+ cont->SetStorage(storage);
  cont->SetName("CGenerator");
+ cont->Default();
  UploadClass("NCGenerator",cont);
 
  cont=std::make_shared<NSinusGenerator>();
+ cont->SetStorage(storage);
  cont->SetName("SinusGenerator");
+ cont->Default();
  UploadClass("NSinusGenerator",cont);
 
  cont=std::make_shared<NFileGenerator>();
+ cont->SetStorage(storage);
  cont->SetName("FileGenerator");
+ cont->Default();
  UploadClass("NFileGenerator",cont);
 
  cont=std::make_shared<NPulseGeneratorTransit>();
+ cont->SetStorage(storage);
  cont->SetName("PGenerator");
+ cont->Default();
  UploadClass("NPulseGeneratorTransit",cont);
 
  cont=std::make_shared<NPulseGeneratorMulti>();
+ cont->SetStorage(storage);
  cont->SetName("PGeneratorMulti");
+ cont->Default();
  UploadClass("NPulseGeneratorMulti",cont);
 
  cont=std::make_shared<NPattern>();
+ cont->SetStorage(storage);
  cont->SetName("Pattern");
+ cont->Default();
  UploadClass("NPattern",cont);
 
  cont=std::make_shared<NPulseGeneratorDelay>();
+ cont->SetStorage(storage);
  cont->SetName("PGeneratorDelay");
+ cont->Default();
  UploadClass("NPGeneratorDelay",cont);
 
  cont=std::make_shared<NPulseDelay>();
+ cont->SetStorage(storage);
  cont->SetName("PDelay");
+ cont->Default();
  UploadClass("NPDelay",cont);
 
 
 
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
+ cont->SetStorage(storage);
  cont->SetName("PLTZone");
+ cont->Default();
  UploadClass("NPulseLTZoneThreshold",cont);
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
+ cont->SetStorage(storage);
  cont->SetName("PLTZone");
+ cont->Default();
  {
   NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont.get());
   ltzonet->Threshold=-0.055;
@@ -157,7 +185,9 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPulseLTZoneThresholdBio",cont);
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
+ cont->SetStorage(storage);
  cont->SetName("PLTZone");
+ cont->Default();
  {
   NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont.get());
   ltzonet->Threshold=-0.055;
@@ -166,30 +196,43 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPulseLTZoneThresholdBio2",cont);
 
  cont=std::make_shared<NPulseLTZone>();
+ cont->SetStorage(storage);
  cont->SetName("PLTZone");
+ cont->Default();
  UploadClass("NPLTZone",cont);
 
  cont=std::make_shared<NContinuesLTZone>();
+ cont->SetStorage(storage);
  cont->SetName("CLTZone");
+ cont->Default();
  UploadClass("NCLTZone",cont);
 
  cont=std::make_shared<NPulseSimpleLTZone>();
+ cont->SetStorage(storage);
  cont->SetName("PLTZone");
+ cont->Default();
  UploadClass("NPSimpleLTZone",cont);
 
  cont=std::make_shared<NContinuesSimpleLTZone>();
+ cont->SetStorage(storage);
  cont->SetName("CLTZone");
+ cont->Default();
  UploadClass("NCSimpleLTZone",cont);
 
  cont=std::make_shared<NPulseChannel>();
+ cont->SetStorage(storage);
  cont->SetName("PChannel");
+ cont->Default();
  UploadClass("NPChannel",cont);
 
  cont=std::make_shared<NPulseSynapse>();
+ cont->SetStorage(storage);
  cont->SetName("PSynapse");
+ cont->Default();
  UploadClass("NPSynapse",cont);
 
  std::shared_ptr<NPulseSynapse> syn=std::make_shared<NPulseSynapse>();
+ syn->SetStorage(storage);
  syn->SetName("PSynapseBio");
  syn->Default();
  syn->Resistance=2e7*4.3;
@@ -197,6 +240,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPSynapseBio",syn);
 
  syn=std::make_shared<NPulseSynapse>();
+ syn->SetStorage(storage);
  syn->SetName("PSynapseBio2");
  syn->Default();
  syn->Resistance=86000000;
@@ -204,258 +248,346 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPSynapseBio2",syn);
 
  cont=std::make_shared<NPulseSynChannel>();
+ cont->SetStorage(storage);
  cont->SetName("PChannel");
+ cont->Default();
  UploadClass("NPSynChannel",cont);
 
  cont=std::make_shared<NContinuesSynChannel>();
+ cont->SetStorage(storage);
  cont->SetName("CChannel");
+ cont->Default();
  UploadClass("NCSynChannel",cont);
 
  cont=std::make_shared<NPulseHebbSynapse>();
+ cont->SetStorage(storage);
  cont->SetName("Synapse");
+ cont->Default();
  UploadClass("NPHebbSynapse",cont);
 
  std::shared_ptr<NPulseChannel> ch, ch_pos, ch_neg;
  // ������ ������� ��������� ������� �������� ��������
- ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject to simplify lifecycle
+ // Object is not added to ObjectsStorage, so no need to call PopObject
+ ch_pos=std::make_shared<NPulseChannel>();
+ ch_pos->SetStorage(storage);
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
- // Remove from ObjectsStorage before using as prototype - PopObject removes object from Storage
- storage->PopObject(ch_pos);
+ ch_pos->Default();
  UploadClass("NPExcChannel",ch_pos);
 
- ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ ch_neg=std::make_shared<NPulseChannel>();
+ ch_neg->SetStorage(storage);
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
- storage->PopObject(ch_neg);
+ ch_neg->Default();
  UploadClass("NPInhChannel",ch_neg);
 
- ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ ch_pos=std::make_shared<NPulseChannel>();
+ ch_pos->SetStorage(storage);
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
  ch_pos->FBResistance=1e7;
- storage->PopObject(ch_pos);
+ ch_pos->Default();
  UploadClass("NPExcChannelBio",ch_pos);
 
- ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ ch_pos=std::make_shared<NPulseChannel>();
+ ch_pos->SetStorage(storage);
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
  ch_pos->FBResistance=3000000;
  ch_pos->Resistance=16000000;
  ch_pos->RestingResistance=3000000;
  ch_pos->Capacity = 2.5e-10;
- storage->PopObject(ch_pos);
+ ch_pos->Default();
  UploadClass("NPExcChannelBio2",ch_pos);
 
- ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ ch_neg=std::make_shared<NPulseChannel>();
+ ch_neg->SetStorage(storage);
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
  ch_neg->FBResistance=1e7;
- storage->PopObject(ch_neg);
+ ch_neg->Default();
  UploadClass("NPInhChannelBio",ch_neg);
 
- ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ ch_neg=std::make_shared<NPulseChannel>();
+ ch_neg->SetStorage(storage);
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
  ch_neg->FBResistance=3000000;
  ch_neg->Resistance=16000000;
  ch_neg->RestingResistance=3000000;
  ch_neg->Capacity = 2.5e-10;
- storage->PopObject(ch_neg);
+ ch_neg->Default();
  UploadClass("NPInhChannelBio2",ch_neg);
 
 
- ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynChannel"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ ch_pos=std::make_shared<NPulseSynChannel>();
+ ch_pos->SetStorage(storage);
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
- storage->PopObject(ch_pos);
+ ch_pos->Default();
  UploadClass("NPSynExcChannel",ch_pos);
 
- ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynChannel"));
+ ch_neg=std::make_shared<NPulseSynChannel>();
+ ch_neg->SetStorage(storage);
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
- storage->PopObject(ch_neg);
+ ch_neg->Default();
  UploadClass("NPSynInhChannel",ch_neg);
 
- ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NCSynChannel"));
+ ch_pos=std::make_shared<NContinuesSynChannel>();
+ ch_pos->SetStorage(storage);
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
- storage->PopObject(ch_pos);
+ ch_pos->Default();
  UploadClass("NCSynExcChannel",ch_pos);
 
- ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NCSynChannel"));
+ ch_neg=std::make_shared<NContinuesSynChannel>();
+ ch_neg->SetStorage(storage);
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
- storage->PopObject(ch_neg);
+ ch_neg->Default();
  UploadClass("NCSynInhChannel",ch_neg);
 
  // ������ ������� ��������� �������������� ����
- ch=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ ch=std::make_shared<NPulseChannel>();
+ ch->SetStorage(storage);
  ch->Capacity=1e-8;
  ch->RestingResistance=1e6;
  ch->SetName("PChannel");
- storage->PopObject(ch);
+ ch->Default();
  UploadClass("NPLTChannel",ch);
 
- ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPLTChannel"));
+ ch_pos=std::make_shared<NPulseChannel>();
+ ch_pos->SetStorage(storage);
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
- storage->PopObject(ch_pos);
+ ch_pos->Capacity=1e-8;
+ ch_pos->RestingResistance=1e6;
+ ch_pos->Default();
  UploadClass("NPLTExcChannel",ch_pos);
 
- ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPLTChannel"));
+ ch_neg=std::make_shared<NPulseChannel>();
+ ch_neg->SetStorage(storage);
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
- storage->PopObject(ch_neg);
+ ch_neg->Capacity=1e-8;
+ ch_neg->RestingResistance=1e6;
+ ch_neg->Default();
  UploadClass("NPLTInhChannel",ch_neg);
 
- ch=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynChannel"));
+ ch=std::make_shared<NPulseSynChannel>();
+ ch->SetStorage(storage);
  ch->Capacity=1e-8;
  ch->RestingResistance=1e6;
  ch->SetName("PChannel");
- storage->PopObject(ch);
+ ch->Default();
  UploadClass("NPLTSynChannel",ch);
 
- ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPLTSynChannel"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ ch_pos=std::make_shared<NPulseSynChannel>();
+ ch_pos->SetStorage(storage);
  ch_pos->SetName("ExcChannel");
  ch_pos->Type=-1;
- storage->PopObject(ch_pos);
+ ch_pos->Capacity=1e-8;
+ ch_pos->RestingResistance=1e6;
+ ch_pos->Default();
  UploadClass("NPLTSynExcChannel",ch_pos);
 
- ch_neg=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPLTSynChannel"));
+ ch_neg=std::make_shared<NPulseSynChannel>();
+ ch_neg->SetStorage(storage);
  ch_neg->SetName("InhChannel");
  ch_neg->Type=1;
- storage->PopObject(ch_neg);
+ ch_neg->Capacity=1e-8;
+ ch_neg->RestingResistance=1e6;
+ ch_neg->Default();
  UploadClass("NPLTSynInhChannel",ch_neg);
 
  // ������������ ������� ��������
  std::shared_ptr<NPulseMembrane> membr;
  cont=std::make_shared<NPulseMembrane>();
+ cont->SetStorage(storage);
  cont->SetName("PMembrane");
+ cont->Default();
  UploadClass("NPMembrane",cont);
 
- membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ membr=std::make_shared<NPulseMembrane>();
+ membr->SetStorage(storage);
  membr->SetName("PMembrane");
  membr->ExcChannelClassName="NPExcChannelBio";
  membr->SynapseClassName="NPSynapseBio";
  membr->InhChannelClassName="NPInhChannelBio";
- storage->PopObject(membr);
+ membr->Default();
  UploadClass("NPMembraneBio",membr);
 
- membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ membr=std::make_shared<NPulseMembrane>();
+ membr->SetStorage(storage);
  membr->SetName("PMembrane");
  membr->ExcChannelClassName="NPExcChannelBio2";
  membr->SynapseClassName="NPSynapseBio2";
  membr->InhChannelClassName="NPInhChannelBio2";
  membr->FeedbackGain = 0.02;
- storage->PopObject(membr);
+ membr->Default();
  UploadClass("NPMembraneBio2",membr);
 
  // ������� �������� �������������� ����
- membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ membr=std::make_shared<NPulseMembrane>();
+ membr->SetStorage(storage);
  membr->SetName("LTMembrane");
  membr->ExcChannelClassName="NPLTExcChannel";
  membr->InhChannelClassName="NPLTInhChannel";
- storage->PopObject(membr);
+ membr->Default();
  UploadClass("NPLTZoneNeuronMembrane",membr);
 
- membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ membr=std::make_shared<NPulseMembrane>();
+ membr->SetStorage(storage);
  membr->ExcChannelClassName="NPLTSynExcChannel";
  membr->InhChannelClassName="NPLTSynInhChannel";
- storage->PopObject(membr);
+ membr->Default();
  UploadClass("NPLTZoneSynNeuronMembrane",membr);
 
- membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ membr=std::make_shared<NPulseMembrane>();
+ membr->SetStorage(storage);
  membr->SetName("PMembrane");
  membr->ExcChannelClassName="NPSynExcChannel";
  membr->InhChannelClassName="NPSynInhChannel";
- storage->PopObject(membr);
+ membr->Default();
  UploadClass("NPSynNeuronMembrane",membr);
 
  // ������� �������� ������������ �������
- membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ membr=std::make_shared<NPulseMembrane>();
+ membr->SetStorage(storage);
  membr->SetName("PMembrane");
  membr->ExcChannelClassName="NCSynExcChannel";
  membr->InhChannelClassName="NCSynInhChannel";
- storage->PopObject(membr);
+ membr->Default();
  UploadClass("NCSynNeuronMembrane",membr);
 
  // ��������� ������� ����� � ������� �������� � ����
- membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ // REFACTORED: Use make_shared instead of TakeObject+PopObject
+ membr=std::make_shared<NPulseMembrane>();
+ membr->SetStorage(storage);
  membr->SetName("PMembrane");
  membr->Default();
  membr->SynapseClassName="NPHebbSynapse";
  membr->Build();
- storage->PopObject(membr);
  UploadClass("NPNeuronHebbMembrane",membr);
 
  cont=std::make_shared<NEyeMuscle>();
+ cont->SetStorage(storage);
  cont->SetName("EyeMuscle");
+ cont->Default();
  UploadClass("NEyeMuscle",cont);
 
  cont=std::make_shared<NMuscle>();
+ cont->SetStorage(storage);
  cont->SetName("Muscle");
+ cont->Default();
  UploadClass("NMuscle",cont);
 
  cont=std::make_shared<NPac>();
+ cont->SetStorage(storage);
  cont->SetName("Pac");
+ cont->Default();
  UploadClass("NPac",cont);
 
  cont=std::make_shared<NReceptor>();
+ cont->SetStorage(storage);
  cont->SetName("Receptor");
+ cont->Default();
  UploadClass("NReceptor",cont);
 
  cont=std::make_shared<NCPac>();
+ cont->SetStorage(storage);
  cont->SetName("Pac");
+ cont->Default();
  dynamic_pointer_cast<NCPac>(std::shared_ptr<RDK::UContainer>(cont))->TCMode=0;
  UploadClass("NCPac",cont);
 
  // ���������� ������ ���������� PulseItemsLibrary
+ // REFACTORED: Using weak_ptr in factories - objects stay in ObjectsStorage, no need for PopObject
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
- cont->SetName("PNeuronNegCGenerator");
- storage->PopObject(cont);
- UploadClass("NPNeuronNegCGenerator",cont);
+ if(cont)
+ {
+  cont->SetName("PNeuronNegCGenerator");
+  // storage->PopObject(cont);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPNeuronNegCGenerator",cont);
+ }
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
- cont->SetName("PNeuronPosCGenerator");
- storage->PopObject(cont);
- UploadClass("NPNeuronPosCGenerator",cont);
+ if(cont)
+ {
+  cont->SetName("PNeuronPosCGenerator");
+  // storage->PopObject(cont);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPNeuronPosCGenerator",cont);
+ }
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
- cont->SetName("PNeuronNegCGenerator");
- storage->PopObject(cont);
- UploadClass("NCNeuronNegCGenerator",cont);
+ if(cont)
+ {
+  cont->SetName("PNeuronNegCGenerator");
+  // storage->PopObject(cont);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NCNeuronNegCGenerator",cont);
+ }
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
- cont->SetName("PNeuronPosCGenerator");
- storage->PopObject(cont);
- UploadClass("NCNeuronPosCGenerator",cont);
+ if(cont)
+ {
+  cont->SetName("PNeuronPosCGenerator");
+  // storage->PopObject(cont);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NCNeuronPosCGenerator",cont);
+ }
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
- cont->SetName("NegGenerator");
- storage->PopObject(cont);
- UploadClass("NPNeuronNegCGeneratorBio",cont);
+ if(cont)
+ {
+  cont->SetName("NegGenerator");
+  // storage->PopObject(cont);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPNeuronNegCGeneratorBio",cont);
+ }
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
- cont->SetName("PosGenerator");
- storage->PopObject(cont);
- UploadClass("NPNeuronPosCGeneratorBio",cont);
+ if(cont)
+ {
+  cont->SetName("PosGenerator");
+  // storage->PopObject(cont);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPNeuronPosCGeneratorBio",cont);
+ }
 
  cont=dynamic_pointer_cast<RDK::UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
- cont->SetName("PNeuronPosCGenerator");
- storage->PopObject(cont);
- UploadClass("NPNeuronPosCGeneratorCable",cont);
+ if(cont)
+ {
+  cont->SetName("PNeuronPosCGenerator");
+  // storage->PopObject(cont);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPNeuronPosCGeneratorCable",cont);
+ }
 
  cont=std::make_shared<NPulseNeuron>();
+ cont->SetStorage(storage);
  cont->SetName("PNeuron");
+ cont->Default();
  UploadClass("NPNeuron",cont);
 
  cont=std::make_shared<NPulseNeuron>();
+ cont->SetStorage(storage);
  cont->SetName("PHebbNeuron");
+ cont->Default();
  dynamic_cast<NPulseNeuron*>(cont.get())->MembraneClassName="NPNeuronHebbMembrane";
  UploadClass("NPHebbNeuron",cont);
 
  cont=std::make_shared<NPulseNeuron>();
+ cont->SetStorage(storage);
  cont->Default();
  dynamic_cast<NPulseNeuron*>(cont.get())->MembraneClassName="NCSynNeuronMembrane";
  dynamic_cast<NPulseNeuron*>(cont.get())->LTMembraneClassName="";
@@ -463,6 +595,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  dynamic_cast<NPulseNeuron*>(cont.get())->ExcGeneratorClassName="NCNeuronNegCGenerator";
  dynamic_cast<NPulseNeuron*>(cont.get())->InhGeneratorClassName="NCNeuronPosCGenerator";
  cont->SetName("CNeuron");
+ UploadClass("NCNeuron",cont);
 
 
 /* cont=new NPulseLifeNeuron("PLifeNeuron");
@@ -470,20 +603,28 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPLifeNeuron",cont);
   */
  cont=std::make_shared<NAfferentNeuron>();
+ cont->SetStorage(storage);
  cont->SetName("AfferentNeuron");
+ cont->Default();
  UploadClass("NAfferentNeuron",cont);
 
  cont=std::make_shared<NPulseSynapseStdp>();
+ cont->SetStorage(storage);
  cont->SetName("SynapseStdp");
+ cont->Default();
  UploadClass("NPulseSynapseStdp",cont);
 
 
   cont=std::make_shared<NPulseChannelIzhikevich>();
+ cont->SetStorage(storage);
  cont->SetName("Channel");
+ cont->Default();
  UploadClass("NPulseChannelIzhikevich",cont);
 
  cont=std::make_shared<NPulseSynapse>();
+ cont->SetStorage(storage);
  cont->SetName("Synapse");
+ cont->Default();
  static_cast<NPulseSynapse*>(cont.get())->SecretionTC=0.001;
  static_cast<NPulseSynapse*>(cont.get())->DissociationTC=0.005;
  static_cast<NPulseSynapse*>(cont.get())->UsePresynapticInhibition=false;
@@ -491,7 +632,9 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NSynapseIaF",cont);
 
  cont=std::make_shared<NPulseSynapse>();
+ cont->SetStorage(storage);
  cont->SetName("Synapse");
+ cont->Default();
  static_cast<NPulseSynapse*>(cont.get())->SecretionTC=0.001;
  static_cast<NPulseSynapse*>(cont.get())->DissociationTC=0.005;
  static_cast<NPulseSynapse*>(cont.get())->UsePresynapticInhibition=false;
@@ -499,7 +642,9 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NSynapseCable",cont);
 
  cont=std::make_shared<NPulseSynapse>();
+ cont->SetStorage(storage);
  cont->SetName("Synapse");
+ cont->Default();
  static_cast<NPulseSynapse*>(cont.get())->SecretionTC=0.001;
  static_cast<NPulseSynapse*>(cont.get())->DissociationTC=0.005;
  static_cast<NPulseSynapse*>(cont.get())->UsePresynapticInhibition=false;
@@ -507,29 +652,38 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NSynapseCableMulti",cont);
 
  cont=std::make_shared<NPulseChannelIaF>();
+ cont->SetStorage(storage);
  cont->SetName("Channel");
+ cont->Default();
  UploadClass("NPulseChannelIaF",cont);
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
+ cont->SetStorage(storage);
  cont->SetName("PulseLTZone");
+ cont->Default();
  dynamic_cast<NLTZone*>(cont.get())->Threshold=30;
  UploadClass("NPulseLTZoneIzhikevich",cont);
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
+ cont->SetStorage(storage);
  cont->SetName("PulseLTZone");
+ cont->Default();
  dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->Threshold=-0.055;
  dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->ThresholdOff=-0.07;
  static_cast<NPulseLTZoneThreshold*>(cont.get())->NumChannelsInGroup=1;
  UploadClass("NPulseLTZoneIaF",cont);
 
  cont=std::make_shared<NPulseLTZoneThreshold>();
+ cont->SetStorage(storage);
  cont->SetName("PulseLTZone");
+ cont->Default();
  dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->Threshold=-0.055;
  dynamic_cast<NPulseLTZoneThreshold*>(cont.get())->ThresholdOff=-0.07;
  static_cast<NPulseLTZoneThreshold*>(cont.get())->NumChannelsInGroup=1;
  UploadClass("NPulseLTZoneCable",cont);
 
  cont=std::make_shared<NPulseMembrane>();
+ cont->SetStorage(storage);
  cont->Default();
  cont->SetName("PulseMembrane");
  dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
@@ -538,6 +692,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPulseMembraneIzhikevich",cont);
 
  cont=std::make_shared<NPulseMembrane>();
+ cont->SetStorage(storage);
  cont->Default();
  cont->SetName("PulseMembrane");
  dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
@@ -547,7 +702,9 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
 
  cont=std::make_shared<NPulseChannelCable>();
+ cont->SetStorage(storage);
  cont->SetName("Channel");
+ cont->Default();
  //dynamic_cast<NPulseChannelCable*>(cont.get())->CalcMode = true;
  //dynamic_cast<NPulseChannelCable*>(cont.get())->Cm = 1.0e-9;
  //dynamic_cast<NPulseChannelCable*>(cont.get())->CompartmentR = 1;
@@ -562,10 +719,13 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPulseChannelCable",cont);
 
  cont=std::make_shared<NPulseChannelCable>();
+ cont->SetStorage(storage);
  cont->SetName("Channel");
+ cont->Default();
  UploadClass("NPulseChannelCableMulti",cont);
 
  cont=std::make_shared<NPulseMembrane>();
+ cont->SetStorage(storage);
  cont->Default();
  cont->SetName("PulseMembrane");
  dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
@@ -575,6 +735,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPulseMembraneCable",cont);
 
  cont=std::make_shared<NPulseMembrane>();
+ cont->SetStorage(storage);
  cont->Default();
  cont->SetName("PulseMembrane");
  dynamic_cast<NPulseMembrane*>(cont.get())->InhChannelClassName="";
@@ -584,132 +745,181 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPulseMembraneCableMulti",cont);
 
  cont=std::make_shared<NSynapseTrainerStdp>();
+ cont->SetStorage(storage);
  cont->SetName("Trainer");
+ cont->Default();
  UploadClass("NSynapseTrainerStdp",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpTD>();
+ cont->SetStorage(storage);
  cont->SetName("TrainerTD");
+ cont->Default();
  UploadClass("NSynapseTrainerStdpTD",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpWD>();
+ cont->SetStorage(storage);
  cont->SetName("TrainerWD");
+ cont->Default();
  UploadClass("NSynapseTrainerStdpWD",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpLobov>();
+ cont->SetStorage(storage);
  cont->SetName("TrainerLobov");
+ cont->Default();
  UploadClass("NSynapseTrainerStdpLobov",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpClassicDiscrete>();
+ cont->SetStorage(storage);
  cont->SetName("TrainerClassicDiscrete");
+ cont->Default();
  UploadClass("NSynapseTrainerStdpClassicDiscrete",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpClassicIntegrated>();
+ cont->SetStorage(storage);
  cont->SetName("TrainerClassicIntegrated");
+ cont->Default();
  UploadClass("NSynapseTrainerStdpClassicIntegrated",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpTriplet>();
+ cont->SetStorage(storage);
  cont->SetName("TrainerTriplet");
+ cont->Default();
  UploadClass("NSynapseTrainerStdpTriplet",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpMirror>();
+ cont->SetStorage(storage);
  cont->SetName("TrainerMirror");
+ cont->Default();
  UploadClass("NSynapseTrainerStdpMirror",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpProbabilistic>();
+ cont->SetStorage(storage);
  cont->SetName("TrainerProbabilistic");
+ cont->Default();
  UploadClass("NSynapseTrainerStdpProbabilistic",cont);
 
  cont=std::make_shared<NSynapseTrainerStdpStable>();
+ cont->SetStorage(storage);
  cont->SetName("TrainerStable");
+ cont->Default();
  UploadClass("NSynapseTrainerStdpStable",cont);
 
 
  std::shared_ptr<NPulseSynapse> sinStdp=dynamic_pointer_cast<NPulseSynapse>(storage->TakeObject("NPSynapse"));
- sinStdp->TrainerClassName="NSynapseTrainerStdp";
- storage->PopObject(sinStdp);
- UploadClass("NPSynapseStdp",sinStdp);
+ if(sinStdp)
+ {
+  sinStdp->TrainerClassName="NSynapseTrainerStdp";
+  // storage->PopObject(sinStdp);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPSynapseStdp",sinStdp);
+ }
 
  std::shared_ptr<NPulseMembrane> mem=dynamic_pointer_cast<NPulseMembrane>(storage->TakeObject("NPulseMembraneIaF"));
- mem->SynapseClassName="NPSynapseStdp";
- mem->Build();
- storage->PopObject(mem);
- UploadClass("NPulseMembraneIaFStdp",mem);
+ if(mem)
+ {
+  mem->SynapseClassName="NPSynapseStdp";
+  mem->Build();
+  // storage->PopObject(mem);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPulseMembraneIaFStdp",mem);
+ }
 
  cont=std::make_shared<NIntegrateAndFireNeuron>();
+ cont->SetStorage(storage);
  cont->SetName("PulseIntegrateAndFireNeuron");
+ cont->Default();
  UploadClass("NIntegrateAndFireNeuron",cont);
 
  cont=std::make_shared<NSynapseStdp>();
+ cont->SetStorage(storage);
  cont->SetName("SynapseStdp");
+ cont->Default();
  UploadClass("NSynapseStdp",cont);
 
  cont=std::make_shared<NSynapseClassic>();
+ cont->SetStorage(storage);
  cont->SetName("Synapse");
+ cont->Default();
  UploadClass("NSynapseClassic",cont);
 
  cont=std::make_shared<NSynapseClassicSlv>();
+ cont->SetStorage(storage);
  cont->SetName("Synapse");
+ cont->Default();
  UploadClass("NSynapseClassicSlv",cont);
 
  std::shared_ptr<NPulseNeuron> n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->Default();
- n->MembraneClassName="NPulseMembraneIzhikevich";
- n->LTMembraneClassName="";
- n->LTZoneClassName="NPulseLTZoneIzhikevich";
- n->ExcGeneratorClassName="";
- n->InhGeneratorClassName="";
- n->NumSomaMembraneParts=1;
- n->SetName("IzhikevichNeuron");
- n->Build();
- // Remove from ObjectsStorage before using as prototype
- // Child components created via Build() remain in Storage, which is fine
- storage->PopObject(n);
- UploadClass("NPulseNeuronIzhikevich",n);
+ if(n)
+ {
+  n->Default();
+  n->MembraneClassName="NPulseMembraneIzhikevich";
+  n->LTMembraneClassName="";
+  n->LTZoneClassName="NPulseLTZoneIzhikevich";
+  n->ExcGeneratorClassName="";
+  n->InhGeneratorClassName="";
+  n->NumSomaMembraneParts=1;
+  n->SetName("IzhikevichNeuron");
+  n->Build();
+  // Remove from ObjectsStorage before using as prototype
+  // Child components created via Build() remain in Storage, which is fine
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPulseNeuronIzhikevich",n);
+ }
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->Default();
- n->MembraneClassName="NPulseMembraneIaF";
- n->LTMembraneClassName="";
- n->LTZoneClassName="NPulseLTZoneIaF";
- n->ExcGeneratorClassName="";
- n->InhGeneratorClassName="";
- n->NumSomaMembraneParts=1;
- n->SetName("IaFNeuron");
- n->Build();
- storage->PopObject(n);
- UploadClass("NPulseNeuronIaF",n);
+ if(n)
+ {
+  n->Default();
+  n->MembraneClassName="NPulseMembraneIaF";
+  n->LTMembraneClassName="";
+  n->LTZoneClassName="NPulseLTZoneIaF";
+  n->ExcGeneratorClassName="";
+  n->InhGeneratorClassName="";
+  n->NumSomaMembraneParts=1;
+  n->SetName("IaFNeuron");
+  n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPulseNeuronIaF",n);
+ }
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPulseNeuronIaF"));
- n->MembraneClassName="NPulseMembraneIaFStdp";
- n->Build();
- storage->PopObject(n);
- UploadClass("NPulseNeuronIaFStdp",n);
+ if(n)
+ {
+  n->MembraneClassName="NPulseMembraneIaFStdp";
+  n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPulseNeuronIaFStdp",n);
+ }
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->Default();
- n->MembraneClassName="NPulseMembraneCable";
- n->LTMembraneClassName="";
- n->LTZoneClassName="NPulseLTZoneCable";
- n->ExcGeneratorClassName="";
- n->InhGeneratorClassName="NPNeuronPosCGeneratorCable";
- n->NumSomaMembraneParts=1;
- n->SetName("CableNeuron");
- n->Build();
- storage->PopObject(n);
- UploadClass("NPulseNeuronCable",n);
+ if(n)
+ {
+  n->Default();
+  n->MembraneClassName="NPulseMembraneCable";
+  n->LTMembraneClassName="";
+  n->LTZoneClassName="NPulseLTZoneCable";
+  n->ExcGeneratorClassName="";
+  n->InhGeneratorClassName="NPNeuronPosCGeneratorCable";
+  n->NumSomaMembraneParts=1;
+  n->SetName("CableNeuron");
+  n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPulseNeuronCable",n);
+ }
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->Default();
- n->MembraneClassName="NPulseMembraneCableMulti";
- n->LTMembraneClassName="";
- n->LTZoneClassName="NPulseLTZoneCable";
- n->ExcGeneratorClassName="";
- n->InhGeneratorClassName="NPNeuronPosCGeneratorCable";
- n->NumSomaMembraneParts=1;
- n->SetName("CableNeuron");
- n->Build();
- storage->PopObject(n);
- UploadClass("NPulseNeuronCableMulti",n);
+ if(n)
+ {
+  n->Default();
+  n->MembraneClassName="NPulseMembraneCableMulti";
+  n->LTMembraneClassName="";
+  n->LTZoneClassName="NPulseLTZoneCable";
+  n->ExcGeneratorClassName="";
+  n->InhGeneratorClassName="NPNeuronPosCGeneratorCable";
+  n->NumSomaMembraneParts=1;
+  n->SetName("CableNeuron");
+  n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NPulseNeuronCableMulti",n);
+ }
 
 
 /*
@@ -727,11 +937,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  // ��������� ������� ����� � ������� �������� � ����
  std::shared_ptr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
- membr->SetName("PMembrane");
- membr->Default();
- membr->SynapseClassName="NPHebbLifeSynapse";
- membr->Build();
- UploadClass("NPNeuronHebbLifeMembrane",membr);
+ if(membr)
+ {
+   membr->SetName("PMembrane");
+   membr->Default();
+   membr->SynapseClassName="NPHebbLifeSynapse";
+   membr->Build();
+   UploadClass("NPNeuronHebbLifeMembrane",membr);
+ }
 
  cont=std::make_shared<NPulseLifeNeuron>();
  cont->SetName("PLifeNeuron");
@@ -753,318 +966,414 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
  // ������������ ����������� ������
  std::shared_ptr<NAfferentNeuron> an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
- an->StructureBuildMode=1;
- an->Build();
- storage->PopObject(an);
- UploadClass("NSAfferentNeuron",an);
+ if(an)
+ {
+  an->StructureBuildMode=1;
+  an->Build();
+  // storage->PopObject(an);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NSAfferentNeuron",an);
+ }
 
  // ������������ ����������� ������� � ����������� �������
  an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
- an->MembraneClassName="NCSynNeuronMembrane";
- an->LTZoneClassName="NCLTZone";
- an->ExcGeneratorClassName="NCNeuronNegCGenerator";
- an->StructureBuildMode=1;
- an->Build();
- std::shared_ptr<NReceptor> receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
- if(receptor)
+ if(an)
  {
-  receptor->ExpCoeff=100;
-  receptor->Gain=2;
-  receptor->SumCoeff=2;
-  receptor->MaxOutputRange=1;
-  receptor->OutputAdaptationMode=4;
-  receptor->InputAdaptationMode=0;
+  an->MembraneClassName="NCSynNeuronMembrane";
+  an->LTZoneClassName="NCLTZone";
+  an->ExcGeneratorClassName="NCNeuronNegCGenerator";
+  an->StructureBuildMode=1;
+  an->Build();
+  std::shared_ptr<NReceptor> receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
+  if(receptor)
+  {
+   receptor->ExpCoeff=100;
+   receptor->Gain=2;
+   receptor->SumCoeff=2;
+   receptor->MaxOutputRange=1;
+   receptor->OutputAdaptationMode=4;
+   receptor->InputAdaptationMode=0;
+  }
+  // storage->PopObject(an);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NContinuesSAfferentNeuron",an);
  }
- storage->PopObject(an);
- UploadClass("NContinuesSAfferentNeuron",an);
 
  // ������� ����������� ������
  an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
- an->LTZoneClassName="NPSimpleLTZone";
- an->StructureBuildMode=2;
- an->Build();
- receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
- if(receptor)
+ if(an)
  {
-  receptor->ExpCoeff=10e-5;
-  receptor->Gain=1;
-  receptor->SumCoeff=2;
-  receptor->MaxOutputRange=100;
-  receptor->OutputAdaptationMode=0;
-  receptor->InputAdaptationMode=0;
+  an->LTZoneClassName="NPSimpleLTZone";
+  an->StructureBuildMode=2;
+  an->Build();
+  std::shared_ptr<NReceptor> receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
+  if(receptor)
+  {
+   receptor->ExpCoeff=10e-5;
+   receptor->Gain=1;
+   receptor->SumCoeff=2;
+   receptor->MaxOutputRange=100;
+   receptor->OutputAdaptationMode=0;
+   receptor->InputAdaptationMode=0;
+  }
+  // storage->PopObject(an);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NSimpleAfferentNeuron",an);
  }
- storage->PopObject(an);
- UploadClass("NSimpleAfferentNeuron",an);
 
  // ������� ����������� ������� � ����������� �������
  an=dynamic_pointer_cast<NAfferentNeuron>(storage->TakeObject("NAfferentNeuron"));
- an->LTZoneClassName="NCSimpleLTZone";
- an->StructureBuildMode=2;
- an->Build();
- receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
- if(receptor)
+ if(an)
  {
-  receptor->ExpCoeff=100;
-  receptor->Gain=2;
-  receptor->SumCoeff=2;
-  receptor->MaxOutputRange=1;
-  receptor->OutputAdaptationMode=4;
-  receptor->InputAdaptationMode=0;
+  an->LTZoneClassName="NCSimpleLTZone";
+  an->StructureBuildMode=2;
+  an->Build();
+  std::shared_ptr<NReceptor> receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
+  if(receptor)
+  {
+   receptor->ExpCoeff=100;
+   receptor->Gain=2;
+   receptor->SumCoeff=2;
+   receptor->MaxOutputRange=1;
+   receptor->OutputAdaptationMode=4;
+   receptor->InputAdaptationMode=0;
+  }
+  // storage->PopObject(an);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NContinuesSimpleAfferentNeuron",an);
  }
- storage->PopObject(an);
- UploadClass("NContinuesSimpleAfferentNeuron",an);
 
  // ������� ������ ������
  std::shared_ptr<NPulseNeuron> n;
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->Build();
- storage->PopObject(n);
- UploadClass("NSPNeuron",n);
+ if(n)
+ {
+  n->LTMembraneClassName="";
+  n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+  UploadClass("NSPNeuron",n);
+ }
 
  // ������� ������� ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->NumSomaMembraneParts=3;
- n->Build();
- storage->PopObject(n);
- UploadClass("NLPNeuron",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->NumSomaMembraneParts=3;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NLPNeuron",n);
+ }
 
  // ������� ����������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->NumSomaMembraneParts=3;
- n->SetName("Motoneuron");
- n->Build();
- storage->PopObject(n);
- UploadClass("NMotoneuron",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->NumSomaMembraneParts=3;
+   n->SetName("Motoneuron");
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NMotoneuron",n);
+ }
 
  // ������� ������ ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->NumSomaMembraneParts=1;
- n->SetName("RenshowCell");
- n->Build();
- storage->PopObject(n);
- UploadClass("NRenshowCell",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->NumSomaMembraneParts=1;
+   n->SetName("RenshowCell");
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NRenshowCell",n);
+ }
 
  // ������� � ����������������� ���������
  // ������� ������ ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->MembraneClassName="NPSynNeuronMembrane";
- n->NumSomaMembraneParts=1;
- n->Build();
- storage->PopObject(n);
- UploadClass("NSynSPNeuron",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->MembraneClassName="NPSynNeuronMembrane";
+   n->NumSomaMembraneParts=1;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NSynSPNeuron",n);
+ }
 
  // ������� ������� ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->MembraneClassName="NPSynNeuronMembrane";
- n->NumSomaMembraneParts=3;
- n->Build();
- storage->PopObject(n);
- UploadClass("NSynLPNeuron",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->MembraneClassName="NPSynNeuronMembrane";
+   n->NumSomaMembraneParts=3;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NSynLPNeuron",n);
+ }
 
  // ������� ����������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->MembraneClassName="NPSynNeuronMembrane";
- n->NumSomaMembraneParts=3;
- n->SetName("Motoneuron");
- n->Build();
- storage->PopObject(n);
- UploadClass("NSynMotoneuron",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->MembraneClassName="NPSynNeuronMembrane";
+   n->NumSomaMembraneParts=3;
+   n->SetName("Motoneuron");
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NSynMotoneuron",n);
+ }
 
  // ������� ������ ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->MembraneClassName="NPSynNeuronMembrane";
- n->NumSomaMembraneParts=1;
- n->SetName("RenshowCell");
- n->Build();
- storage->PopObject(n);
- UploadClass("NSynRenshowCell",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->MembraneClassName="NPSynNeuronMembrane";
+   n->NumSomaMembraneParts=1;
+   n->SetName("RenshowCell");
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NSynRenshowCell",n);
+ }
 
  // ������� ������ ������ � ��������� �����
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPHebbNeuron"));
- n->LTMembraneClassName="";
- n->NumSomaMembraneParts=1;
- n->Build();
- storage->PopObject(n);
- UploadClass("NSPHebbNeuron",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->NumSomaMembraneParts=1;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NSPHebbNeuron",n);
+ }
 
  // ������� ������� ������ � ��������� �����
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPHebbNeuron"));
- n->LTMembraneClassName="";
- n->NumSomaMembraneParts=3;
- n->Build();
- storage->PopObject(n);
- UploadClass("NLPHebbNeuron",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->NumSomaMembraneParts=3;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NLPHebbNeuron",n);
+ }
 
  // ============================================================================
  // ����� �������
  // ----------------------------------------------------------------------------
  // ������� ������ ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->NumSomaMembraneParts=1;
- n->Build();
- storage->PopObject(n);
- UploadClass("NNewSPNeuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=1;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NNewSPNeuron",n);
+ }
 
  // ������� ������� ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->NumSomaMembraneParts=3;
- n->Build();
- storage->PopObject(n);
- UploadClass("NNewLPNeuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=3;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NNewLPNeuron",n);
+ }
 
  // ������� ����������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->NumSomaMembraneParts=3;
- n->SetName("Motoneuron");
- n->Build();
- storage->PopObject(n);
- UploadClass("NNewMotoneuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=3;
+   n->SetName("Motoneuron");
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NNewMotoneuron",n);
+ }
 
  // ������� ������ ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->NumSomaMembraneParts=1;
- n->SetName("RenshowCell");
- n->Build();
- storage->PopObject(n);
- UploadClass("NNewRenshowCell",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=1;
+   n->SetName("RenshowCell");
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NNewRenshowCell",n);
+ }
 
  // ������� � ����������������� ���������
  // ������� ������ ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->MembraneClassName="NPSynNeuronMembrane";
- n->NumSomaMembraneParts=1;
- n->Build();
- storage->PopObject(n);
- UploadClass("NNewSynSPNeuron",n);
+ if(n)
+ {
+   n->MembraneClassName="NPSynNeuronMembrane";
+   n->NumSomaMembraneParts=1;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NNewSynSPNeuron",n);
+ }
 
  // ������� ������� ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->MembraneClassName="NPSynNeuronMembrane";
- n->NumSomaMembraneParts=3;
- n->Build();
- storage->PopObject(n);
- UploadClass("NNewSynLPNeuron",n);
+ if(n)
+ {
+   n->MembraneClassName="NPSynNeuronMembrane";
+   n->NumSomaMembraneParts=3;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NNewSynLPNeuron",n);
+ }
 
  // ������� ����������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->MembraneClassName="NPSynNeuronMembrane";
- n->NumSomaMembraneParts=3;
- n->SetName("Motoneuron");
- n->Build();
- storage->PopObject(n);
- UploadClass("NNewSynMotoneuron",n);
+ if(n)
+ {
+   n->MembraneClassName="NPSynNeuronMembrane";
+   n->NumSomaMembraneParts=3;
+   n->SetName("Motoneuron");
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NNewSynMotoneuron",n);
+ }
 
  // ������� ������ ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->MembraneClassName="NPSynNeuronMembrane";
- n->NumSomaMembraneParts=1;
- n->SetName("RenshowCell");
- n->Build();
- storage->PopObject(n);
- UploadClass("NNewSynRenshowCell",n);
+ if(n)
+ {
+   n->MembraneClassName="NPSynNeuronMembrane";
+   n->NumSomaMembraneParts=1;
+   n->SetName("RenshowCell");
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NNewSynRenshowCell",n);
+ }
  // ����� �������� � ���������������� ���������
 
   // ������� ������ ������ � ��������� �����
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPHebbNeuron"));
- n->NumSomaMembraneParts=1;
- n->Build();
- storage->PopObject(n);
- UploadClass("NNewSPHebbNeuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=1;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NNewSPHebbNeuron",n);
+ }
 
  // ������� ������� ������ � ��������� �����
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPHebbNeuron"));
- n->NumSomaMembraneParts=3;
- n->Build();
- storage->PopObject(n);
- UploadClass("NNewLPHebbNeuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=3;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NNewLPHebbNeuron",n);
+ }
  // ============================================================================
 
 
   // ����������� ������� � ����������������� ���������
  // ������� ������ ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NCNeuron"));
- n->NumSomaMembraneParts=1;
- n->Build();
- storage->PopObject(n);
- UploadClass("NContinuesSynSPNeuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=1;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NContinuesSynSPNeuron",n);
+ }
 
  // ������� ������� ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NCNeuron"));
- n->NumSomaMembraneParts=3;
- n->Build();
- storage->PopObject(n);
- UploadClass("NContinuesSynLPNeuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=3;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NContinuesSynLPNeuron",n);
+ }
 
  // ������� ����������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NCNeuron"));
- n->NumSomaMembraneParts=3;
- n->SetName("Motoneuron");
- n->Build();
- storage->PopObject(n);
- UploadClass("NContinuesSynMotoneuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=3;
+   n->SetName("Motoneuron");
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NContinuesSynMotoneuron",n);
+ }
 
  // ������� ������ ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NCNeuron"));
- n->NumSomaMembraneParts=1;
- n->SetName("RenshowCell");
- n->Build();
- storage->PopObject(n);
- UploadClass("NContinuesSynRenshowCell",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=1;
+   n->SetName("RenshowCell");
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NContinuesSynRenshowCell",n);
+ }
  // ����� ����������� �������� � ���������������� ���������
 
  // ������� ������� � ���������� ����������� �������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->MembraneClassName="NPMembraneBio";
- n->LTZoneClassName="NPulseLTZoneThreshold";
-// n->ExcGeneratorClassName="NPNeuronPosCGeneratorBio";
-// n->InhGeneratorClassName="NPNeuronNegCGeneratorBio";
- n->Build();
- n->LTZone->Threshold=0.0117;
- storage->PopObject(n);
- UploadClass("NSPNeuronGen",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->MembraneClassName="NPMembraneBio";
+   n->LTZoneClassName="NPulseLTZoneThreshold";
+  // n->ExcGeneratorClassName="NPNeuronPosCGeneratorBio";
+  // n->InhGeneratorClassName="NPNeuronNegCGeneratorBio";
+   n->Build();
+   n->LTZone->Threshold=0.0117;
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NSPNeuronGen",n);
+ }
 
  // ������� ������ ������ � ������������ ��������������� �����������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->MembraneClassName="NPMembraneBio";
- n->LTZoneClassName="NPulseLTZoneThresholdBio";
- n->ExcGeneratorClassName="NPNeuronPosCGeneratorBio";
- n->InhGeneratorClassName="NPNeuronNegCGeneratorBio";
- n->Build();
- storage->PopObject(n);
- UploadClass("NSPNeuronBio",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->MembraneClassName="NPMembraneBio";
+   n->LTZoneClassName="NPulseLTZoneThresholdBio";
+   n->ExcGeneratorClassName="NPNeuronPosCGeneratorBio";
+   n->InhGeneratorClassName="NPNeuronNegCGeneratorBio";
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NSPNeuronBio",n);
+ }
 
  // ������� ������ ������ � ������������ ��������������� �����������
  // ������ 2, ����������� � ��������� �������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->MembraneClassName="NPMembraneBio2";
- n->LTZoneClassName="NPulseLTZoneThresholdBio2";
- n->ExcGeneratorClassName="NPNeuronPosCGeneratorBio";
- n->InhGeneratorClassName="NPNeuronNegCGeneratorBio";
- n->Build();
- storage->PopObject(n);
- UploadClass("NSPNeuronBio2",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->MembraneClassName="NPMembraneBio2";
+   n->LTZoneClassName="NPulseLTZoneThresholdBio2";
+   n->ExcGeneratorClassName="NPNeuronPosCGeneratorBio";
+   n->InhGeneratorClassName="NPNeuronNegCGeneratorBio";
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NSPNeuronBio2",n);
+ }
 
  // ������� ������ ������ � ������������ ��������������� �����������
 /* n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->LTZoneClassName="NPulseLTZoneThreshold";
- n->Build();
- n->PosGenerator->Amplitude=0.93;
- NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(n->LTZone);
- ltzonet->Threshold=-0.055;
- ltzonet->ThresholdOff=-0.1;
- UploadClass("NGenBioNeuron",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->LTZoneClassName="NPulseLTZoneThreshold";
+   n->Build();
+   n->PosGenerator->Amplitude=0.93;
+   NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(n->LTZone);
+   ltzonet->Threshold=-0.055;
+   ltzonet->ThresholdOff=-0.1;
+   UploadClass("NGenBioNeuron",n);
+ }
   */
 
  // ����� �������� � ���������� ����������� �������
@@ -1083,72 +1392,96 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  }               */
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->NumSomaMembraneParts=4;
- n->NumDendriteMembraneParts=3;
- n->Build();
- storage->PopObject(n);
- UploadClass("NPNeuron4x4",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->NumSomaMembraneParts=4;
+   n->NumDendriteMembraneParts=3;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NPNeuron4x4",n);
+ }
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
- n->LTMembraneClassName="";
- n->NumSomaMembraneParts=1;
- n->NumDendriteMembraneParts=3;
- n->Build();
- storage->PopObject(n);
- UploadClass("NPNeuron1x4",n);
+ if(n)
+ {
+   n->LTMembraneClassName="";
+   n->NumSomaMembraneParts=1;
+   n->NumDendriteMembraneParts=3;
+   n->Build();
+  // storage->PopObject(n);  // REMOVED: Objects stay in ObjectsStorage when factories use weak_ptr
+   UploadClass("NPNeuron1x4",n);
+ }
  // ============================================================================
 /*
  // ����� �������
  // ������� ������ ����� ������
   // ������� ������ ������ � ��������� �����
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
- n->NumSomaMembraneParts=1;
- n->SetName("SPLifeNeuron");
- n->MembraneClassName="NPMembrane";
- n->LTMembraneClassName="";
- n->Build();
- UploadClass("NSPLifeNeuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=1;
+   n->SetName("SPLifeNeuron");
+   n->MembraneClassName="NPMembrane";
+   n->LTMembraneClassName="";
+   n->Build();
+   UploadClass("NSPLifeNeuron",n);
+ }
 
 
  // ������� ������� ����� ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
- n->NumSomaMembraneParts=3;
- n->SetName("LPLifeNeuron");
- n->MembraneClassName="NPMembrane";
- n->LTMembraneClassName="";
- n->Build();
- UploadClass("NLPLifeNeuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=3;
+   n->SetName("LPLifeNeuron");
+   n->MembraneClassName="NPMembrane";
+   n->LTMembraneClassName="";
+   n->Build();
+   UploadClass("NLPLifeNeuron",n);
+ }
 
  // ������� ������ ����� ������ � ��������� ����� //������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
- n->SetName("SPLifeHebbNeuron");
- n->LTMembraneClassName="";
- n->Build();
- UploadClass("NSPLifeHebbNeuron",n);
+ if(n)
+ {
+   n->SetName("SPLifeHebbNeuron");
+   n->LTMembraneClassName="";
+   n->Build();
+   UploadClass("NSPLifeHebbNeuron",n);
+ }
 
  // ������� ������ ����� ������ � ��������� ����� � ���������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
- n->NumDendriteMembraneParts=3;
- n->LTMembraneClassName="";
- n->SetName("SPDendriteLifeHebbNeuron");
- n->Build();
- UploadClass("NSPDendriteLifeHebbNeuron",n);
+ if(n)
+ {
+   n->NumDendriteMembraneParts=3;
+   n->LTMembraneClassName="";
+   n->SetName("SPDendriteLifeHebbNeuron");
+   n->Build();
+   UploadClass("NSPDendriteLifeHebbNeuron",n);
+ }
 
  // ������� ������� ����� ������ � ��������� �����
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
- n->NumSomaMembraneParts=3;
- n->LTMembraneClassName="";
- n->SetName("LPLifeHebbNeuron");
- n->Build();
- UploadClass("NLPLifeHebbNeuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=3;
+   n->LTMembraneClassName="";
+   n->SetName("LPLifeHebbNeuron");
+   n->Build();
+   UploadClass("NLPLifeHebbNeuron",n);
+ }
 
   // ������� ������ ����� ������
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPLifeNeuron"));
- n->NumSomaMembraneParts=1;
- n->SetName("SPLifeNeuron");
- n->Build();
- UploadClass("NNewSPLifeNeuron",n);
+ if(n)
+ {
+   n->NumSomaMembraneParts=1;
+   n->SetName("SPLifeNeuron");
+   n->Build();
+   UploadClass("NNewSPLifeNeuron",n);
+ }
 */
    // ������� ������ ����������� ��������
  cont=std::make_shared<NNeuronFreqGroup>();
@@ -1175,9 +1508,12 @@ UploadClass("NNeuronLearner",cont);
  UploadClass("NNeuronsLayer",cont);
 
  std::shared_ptr<NNeuronsLayer> layer=dynamic_pointer_cast<NNeuronsLayer>(storage->TakeObject("NNeuronsLayer"));
- layer->NeuronsClassName="NPulseNeuronIaFStdp";
- layer->Build();
- UploadClass("NNeuronsLayerIaF",layer);
+ if(layer)
+ {
+   layer->NeuronsClassName="NPulseNeuronIaFStdp";
+   layer->Build();
+   UploadClass("NNeuronsLayerIaF",layer);
+ }
 
 	// ������� ���������� ����������
  cont=std::make_shared<NPulsePerseptron>();
@@ -1186,9 +1522,12 @@ UploadClass("NNeuronLearner",cont);
  UploadClass("NPulsePerseptron",cont);
 
  std::shared_ptr<NPulsePerseptron> pers=dynamic_pointer_cast<NPulsePerseptron>(storage->TakeObject("NPulsePerseptron"));
- pers->NeuronsLayerClassName="NNeuronsLayerIaF";
- pers->Build();
- UploadClass("NPulsePerseptronIaF",pers);
+ if(pers)
+ {
+   pers->NeuronsLayerClassName="NNeuronsLayerIaF";
+   pers->Build();
+   UploadClass("NPulsePerseptronIaF",pers);
+ }
 
 	// ������� ������ �� ����������, �������������� ��� ������������� ��������� �������� ���������
  cont=std::make_shared<NNeuronTrainer>();

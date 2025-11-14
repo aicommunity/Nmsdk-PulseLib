@@ -50,7 +50,14 @@ NPulseNeuron::NPulseNeuron(void)
 {
  PosGenerator=0;
  NegGenerator=0;
- MainOwner=UComponent::shared_from_this();
+ // MainOwner should be set after object is fully constructed
+ // shared_from_this() may throw bad_weak_ptr if called during construction
+ try {
+  MainOwner=UComponent::shared_from_this();
+ } catch (const std::bad_weak_ptr&) {
+  // Object not fully initialized - MainOwner will be set later in Default() or Build()
+  // This is OK during construction
+ }
  OldNumDendrites=OldNumSoma=0;
  OldStructureBuildMode=0;
 }
@@ -460,14 +467,20 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  }
 
  ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);//dynamic_pointer_cast<NLTZone>(Storage->TakeObject(ltzone_class));
- ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*8,4.67,0));
+ if(ltzone)
+ {
+  ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*8,4.67,0));
+ }
 
  std::shared_ptr<UNet> gen_pos,gen_neg;
  if(!ExcGeneratorClassName->empty())
  {
   gen_pos=AddMissingComponent<UNet>("PosGenerator", pos_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(pos_gen_class));
-  gen_pos->SetCoord(MVector<double,3>(4,2,0));
-  gen_pos->DisconnectAll("Output");
+  if(gen_pos)
+  {
+   gen_pos->SetCoord(MVector<double,3>(4,2,0));
+   gen_pos->DisconnectAll("Output");
+  }
  }
  else
   DelComponent("PosGenerator");
@@ -475,8 +488,11 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  if(!InhGeneratorClassName->empty())
  {
   gen_neg=AddMissingComponent<UNet>("NegGenerator", neg_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(neg_gen_class));
-  gen_neg->SetCoord(MVector<double,3>(4,7.3+(num_soma_membranes-1)*2,0));
-  gen_neg->DisconnectAll("Output");
+  if(gen_neg)
+  {
+   gen_neg->SetCoord(MVector<double,3>(4,7.3+(num_soma_membranes-1)*2,0));
+   gen_neg->DisconnectAll("Output");
+  }
  }
  else
   DelComponent("NegGenerator");
@@ -556,19 +572,30 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  if(!ltzonemembraneclass.empty())
  {
   ltmembr=AddMissingComponent<NPulseMembrane>("LTMembrane", ltzonemembraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(ltzonemembraneclass));
-  ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*8,4.67,0));
+  if(ltmembr)
+  {
+   ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*8,4.67,0));
 
-  ltchannel1=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("ExcChannel",true));
-  ltchannel2=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("InhChannel",true));
+   ltchannel1=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("ExcChannel",true));
+   ltchannel2=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("InhChannel",true));
+  }
+  else
+  {
+   ltchannel1=nullptr;
+   ltchannel2=nullptr;
+  }
 
   // ������������� �������� �����
-  res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",ltmembr->GetLongName(GetThisAsSharedContainer()),"InputFeedbackSignal");
+  if(ltzone && ltmembr)
+  {
+   res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",ltmembr->GetLongName(GetThisAsSharedContainer()),"InputFeedbackSignal");
 
-  // ������������� ����� �������� � �������������� �����
-  if(ltchannel1)
-   res&=CreateLink(ltchannel1->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
-  if(ltchannel2)
-   res&=CreateLink(ltchannel2->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
+   // ������������� ����� �������� � �������������� �����
+   if(ltchannel1 && ltzone)
+    res&=CreateLink(ltchannel1->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
+   if(ltchannel2 && ltzone)
+    res&=CreateLink(ltchannel2->GetLongName(GetThisAsSharedContainer()),"Output",ltzone->GetLongName(GetThisAsSharedContainer()),"Inputs");
+  }
  }
  else
   DelComponent("LTMembrane");
@@ -577,6 +604,13 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  for(int i=0;i<num_soma_membranes;i++)
  {
   membr=AddMissingComponent<NPulseMembrane>(std::string("Soma")+sntoa(i+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
+  if(!membr)
+  {
+   Soma[i]=nullptr;
+   channel1=nullptr;
+   channel2=nullptr;
+   continue; // Skip this iteration if membrane creation failed
+  }
   membr->SetCoord(MVector<double,3>(12.7+dendrite_length*8,4.67+i*2,0));
   Soma[i]=membr;
 
