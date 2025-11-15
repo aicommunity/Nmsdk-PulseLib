@@ -43,9 +43,23 @@ NPulseMembraneCommon::~NPulseMembraneCommon(void)
 /// ������� ������� ���������� � �������� ������ �������
 bool NPulseMembraneCommon::SetUseAveragePotential(const bool &value)
 {
- for(size_t i=0;i<Channels.size();i++)
-  if(Channels[i])
-   Channels[i]->UseAveragePotential=value;
+ // SAFETY: Instead of using raw pointers from Channels vector,
+ // get all channels directly from components to ensure they're still valid
+ vector<NameT> channel_buffer;
+ GetComponentsNameByClassType<NPulseChannelCommon>(channel_buffer, GetThisAsSharedContainer());
+ for(size_t i=0; i<channel_buffer.size(); i++)
+ {
+  try {
+   std::shared_ptr<NPulseChannelCommon> channel = GetComponentL<NPulseChannelCommon>(channel_buffer[i], true);
+   if(channel)
+   {
+    channel->UseAveragePotential=value;
+   }
+  } catch (...) {
+   // Skip invalid or deleted components
+   // Note: LOG may not be available here, so we silently skip
+  }
+ }
  return true;
 }
 // --------------------------

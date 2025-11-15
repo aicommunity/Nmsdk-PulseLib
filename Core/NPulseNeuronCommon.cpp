@@ -66,9 +66,23 @@ NPulseNeuronCommon::~NPulseNeuronCommon(void)
 /// ������� ������� ���������� � �������� ������ �������
 bool NPulseNeuronCommon::SetUseAverageDendritesPotential(const bool &value)
 {
- for(size_t i=0;i<Membranes.size();i++)
-  if(Membranes[i])
-   Membranes[i]->UseAveragePotential=value;
+ // SAFETY: Instead of using raw pointers from Membranes vector,
+ // get all membranes directly from components to ensure they're still valid
+ vector<NameT> membrane_buffer;
+ GetComponentsNameByClassType<NPulseMembraneCommon>(membrane_buffer, GetThisAsSharedContainer());
+ for(size_t i=0; i<membrane_buffer.size(); i++)
+ {
+  try {
+   std::shared_ptr<NPulseMembraneCommon> membrane = GetComponentL<NPulseMembraneCommon>(membrane_buffer[i], true);
+   if(membrane)
+   {
+    membrane->UseAveragePotential=value;
+   }
+  } catch (...) {
+   // Skip invalid or deleted components
+   LOG(WARNING) << "NPulseNeuronCommon::SetUseAverageDendritesPotential - Failed to access membrane: " << membrane_buffer[i];
+  }
+ }
  return true;
 }
 
@@ -357,9 +371,23 @@ bool NPulseNeuronCommon::ABuild(void)
  if(LTZone)
   LTZone->UseAveragePotential=UseAverageLTZonePotential;
 
- for(size_t i=0;i<Membranes.size();i++)
-  if(Membranes[i])
-   Membranes[i]->UseAveragePotential=UseAverageDendritesPotential;
+ // SAFETY: Instead of using raw pointers from Membranes vector,
+ // get all membranes directly from components to ensure they're still valid
+ vector<NameT> membrane_buffer;
+ GetComponentsNameByClassType<NPulseMembraneCommon>(membrane_buffer, GetThisAsSharedContainer());
+ for(size_t i=0; i<membrane_buffer.size(); i++)
+ {
+  try {
+   std::shared_ptr<NPulseMembraneCommon> membrane = GetComponentL<NPulseMembraneCommon>(membrane_buffer[i], true);
+   if(membrane)
+   {
+    membrane->UseAveragePotential=UseAverageDendritesPotential;
+   }
+  } catch (...) {
+   // Skip invalid or deleted components
+   LOG(WARNING) << "NPulseNeuronCommon::ABuild - Failed to access membrane: " << membrane_buffer[i];
+  }
+ }
  return true;
 }
 

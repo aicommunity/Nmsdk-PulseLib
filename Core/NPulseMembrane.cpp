@@ -54,7 +54,31 @@ size_t NPulseMembrane::GetNumPosChannels(void) const
 
 NPulseChannelCommon* NPulseMembrane::GetPosChannel(size_t i)
 {
- return ExcitatoryChannels[i];
+ // SAFETY: Check bounds and validate pointer
+ if(i >= ExcitatoryChannels.size())
+  return nullptr;
+ 
+ NPulseChannelCommon* channel = ExcitatoryChannels[i];
+ if(!channel)
+  return nullptr;
+ 
+ // Try to verify channel still exists in components
+ try {
+  // Get all channels and check if this pointer is still valid
+  vector<NameT> channel_buffer;
+  GetComponentsNameByClassType<NPulseChannelCommon>(channel_buffer, GetThisAsSharedContainer());
+  for(size_t j=0; j<channel_buffer.size(); j++)
+  {
+   std::shared_ptr<NPulseChannelCommon> ch = GetComponentL<NPulseChannelCommon>(channel_buffer[j], true);
+   if(ch && ch.get() == channel)
+    return channel; // Pointer is still valid
+  }
+  // Pointer not found in components - it's been deleted
+  return nullptr;
+ } catch (...) {
+  // If we can't verify, return nullptr to be safe
+  return nullptr;
+ }
 }
 
 // ������ ��������� ����������������
@@ -65,7 +89,28 @@ size_t NPulseMembrane::GetNumNegChannels(void) const
 
 NPulseChannelCommon* NPulseMembrane::GetNegChannel(size_t i)
 {
- return InhibitoryChannels[i];
+ // SAFETY: Check bounds and validate pointer
+ if(i >= InhibitoryChannels.size())
+  return nullptr;
+ 
+ NPulseChannelCommon* channel = InhibitoryChannels[i];
+ if(!channel)
+  return nullptr;
+ 
+ // Try to verify channel still exists in components
+ try {
+  vector<NameT> channel_buffer;
+  GetComponentsNameByClassType<NPulseChannelCommon>(channel_buffer, GetThisAsSharedContainer());
+  for(size_t j=0; j<channel_buffer.size(); j++)
+  {
+   std::shared_ptr<NPulseChannelCommon> ch = GetComponentL<NPulseChannelCommon>(channel_buffer[j], true);
+   if(ch && ch.get() == channel)
+    return channel; // Pointer is still valid
+  }
+  return nullptr;
+ } catch (...) {
+  return nullptr;
+ }
 }
 
 // ������������ �������
@@ -76,7 +121,28 @@ size_t NPulseMembrane::GetNumExcitatorySynapses(void) const
 
 NPulseSynapseCommon* NPulseMembrane::GetExcitatorySynapses(size_t i)
 {
- return ExcitatorySynapses[i];
+ // SAFETY: Check bounds and validate pointer
+ if(i >= ExcitatorySynapses.size())
+  return nullptr;
+ 
+ NPulseSynapseCommon* synapse = ExcitatorySynapses[i];
+ if(!synapse)
+  return nullptr;
+ 
+ // Try to verify synapse still exists in components
+ try {
+  vector<NameT> synapse_buffer;
+  GetComponentsNameByClassType<NPulseSynapseCommon>(synapse_buffer, GetThisAsSharedContainer());
+  for(size_t j=0; j<synapse_buffer.size(); j++)
+  {
+   std::shared_ptr<NPulseSynapseCommon> syn = GetComponentL<NPulseSynapseCommon>(synapse_buffer[j], true);
+   if(syn && syn.get() == synapse)
+    return synapse; // Pointer is still valid
+  }
+  return nullptr;
+ } catch (...) {
+  return nullptr;
+ }
 }
 
 // ��������� �������
@@ -87,7 +153,28 @@ size_t NPulseMembrane::GetNumInhibitorySynapses(void) const
 
 NPulseSynapseCommon* NPulseMembrane::GetInhibitorySynapses(size_t i)
 {
- return InhibitorySynapses[i];
+ // SAFETY: Check bounds and validate pointer
+ if(i >= InhibitorySynapses.size())
+  return nullptr;
+ 
+ NPulseSynapseCommon* synapse = InhibitorySynapses[i];
+ if(!synapse)
+  return nullptr;
+ 
+ // Try to verify synapse still exists in components
+ try {
+  vector<NameT> synapse_buffer;
+  GetComponentsNameByClassType<NPulseSynapseCommon>(synapse_buffer, GetThisAsSharedContainer());
+  for(size_t j=0; j<synapse_buffer.size(); j++)
+  {
+   std::shared_ptr<NPulseSynapseCommon> syn = GetComponentL<NPulseSynapseCommon>(synapse_buffer[j], true);
+   if(syn && syn.get() == synapse)
+    return synapse; // Pointer is still valid
+  }
+  return nullptr;
+ } catch (...) {
+  return nullptr;
+ }
 }
 
 bool NPulseMembrane::UpdateChannelData(std::shared_ptr<NPulseChannelCommon> channel, std::shared_ptr<UIPointer> pointer)
