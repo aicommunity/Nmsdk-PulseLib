@@ -121,6 +121,14 @@ size_t NPulseMembrane::GetNumExcitatorySynapses(void) const
 
 NPulseSynapseCommon* NPulseMembrane::GetExcitatorySynapses(size_t i)
 {
+ // SAFETY: Check if this pointer is valid
+ // According to backtrace, this can be nullptr (0x0)
+ if(!this)
+ {
+  LOG(WARNING) << "NPulseMembrane::GetExcitatorySynapses - this pointer is null!";
+  return nullptr;
+ }
+ 
  // SAFETY: Check bounds and validate pointer
  if(i >= ExcitatorySynapses.size())
   return nullptr;
