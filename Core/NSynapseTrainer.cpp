@@ -49,12 +49,17 @@ void NSynapseTrainer::RebuildInternalLinks(void)
  if(main_owner)
  {
   std::shared_ptr<NPulseNeuronCommon> neuron=std::shared_ptr<NPulseNeuronCommon>(dynamic_pointer_cast<NPulseNeuronCommon>(main_owner).get());
-  if(neuron && neuron->GetLTZone() && GetOwner())
+  std::weak_ptr<RDK::UContainer> owner_weak=GetOwner();
+  if(neuron && neuron->GetLTZone() && !owner_weak.expired())
   {
-   bool res=true;
-   res&=neuron->CreateLink(neuron->GetLTZone()->GetLongName(neuron),"Output",GetLongName(neuron),"PostSynInput");
-   res&=neuron->CreateLink(GetOwner()->GetLongName(neuron),"OutInCopy",GetLongName(neuron),"PreSynInput");
-   res&=neuron->CreateLink(GetLongName(neuron),"WeightOutput", GetOwner()->GetLongName(neuron),"WeightInput");
+   std::shared_ptr<RDK::UContainer> owner=owner_weak.lock();
+   if(owner)
+   {
+    bool res=true;
+    res&=neuron->CreateLink(neuron->GetLTZone()->GetLongName(neuron),"Output",GetLongName(neuron),"PostSynInput");
+    res&=neuron->CreateLink(owner->GetLongName(neuron),"OutInCopy",GetLongName(neuron),"PreSynInput");
+    res&=neuron->CreateLink(GetLongName(neuron),"WeightOutput", owner->GetLongName(neuron),"WeightInput");
+   }
   }
  }
 }

@@ -73,10 +73,14 @@ bool NPulseNeuronCommon::SetUseAverageDendritesPotential(const bool &value)
  for(size_t i=0; i<membrane_buffer.size(); i++)
  {
   try {
-   std::shared_ptr<NPulseMembraneCommon> membrane = GetComponentL<NPulseMembraneCommon>(membrane_buffer[i], true);
-   if(membrane)
+   std::weak_ptr<RDK::UContainer> membrane_weak = GetComponentL(membrane_buffer[i], true);
+   if(!membrane_weak.expired())
    {
-    membrane->UseAveragePotential=value;
+    std::shared_ptr<NPulseMembraneCommon> membrane = std::dynamic_pointer_cast<NPulseMembraneCommon>(membrane_weak.lock());
+    if(membrane)
+    {
+     membrane->UseAveragePotential=value;
+    }
    }
   } catch (...) {
    // Skip invalid or deleted components
@@ -365,7 +369,11 @@ bool NPulseNeuronCommon::ABuild(void)
   LTZone=0;
  else
  {
-  LTZone=GetComponentL<NLTZone>(buffer[0],true);
+  std::weak_ptr<RDK::UContainer> ltzone_weak=GetComponentL(buffer[0],true);
+  if(!ltzone_weak.expired())
+   LTZone=std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+  else
+   LTZone=nullptr;
  }
 
  if(LTZone)
@@ -378,10 +386,14 @@ bool NPulseNeuronCommon::ABuild(void)
  for(size_t i=0; i<membrane_buffer.size(); i++)
  {
   try {
-   std::shared_ptr<NPulseMembraneCommon> membrane = GetComponentL<NPulseMembraneCommon>(membrane_buffer[i], true);
-   if(membrane)
+   std::weak_ptr<RDK::UContainer> membrane_weak = GetComponentL(membrane_buffer[i], true);
+   if(!membrane_weak.expired())
    {
-    membrane->UseAveragePotential=UseAverageDendritesPotential;
+    std::shared_ptr<NPulseMembraneCommon> membrane = std::dynamic_pointer_cast<NPulseMembraneCommon>(membrane_weak.lock());
+    if(membrane)
+    {
+     membrane->UseAveragePotential=UseAverageDendritesPotential;
+    }
    }
   } catch (...) {
    // Skip invalid or deleted components

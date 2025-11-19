@@ -258,7 +258,10 @@ bool NPulseSynChannel::AReset(void)
  SynapseInputFlagsList.resize(ChannelInputs->size(),true);
  for(int n=0;n<int(ChannelInputs->size());n++)
  {
-  std::shared_ptr<UContainer> item=std::shared_ptr<UContainer>(ChannelInputs.GetItem(n)->GetOwner().get());
+  std::weak_ptr<RDK::UContainer> owner_weak=ChannelInputs.GetItem(n)->GetOwner();
+  if(owner_weak.expired())
+   continue;
+  std::shared_ptr<RDK::UContainer> item=owner_weak.lock();
   if(dynamic_pointer_cast<NPulseChannel>(item) ||
 	 dynamic_pointer_cast<NReceptor>(item) ||
 	 dynamic_pointer_cast<NConstGenerator>(item))
@@ -583,7 +586,10 @@ bool NContinuesSynChannel::AReset(void)
  SynapseInputFlagsList.resize(ChannelInputs->size(),false);
  for(int n=0;n<int(ChannelInputs->size());n++)
  {
-  std::shared_ptr<UContainer> item=std::shared_ptr<UContainer>(ChannelInputs.GetItem(n)->GetOwner().get());
+  std::weak_ptr<RDK::UContainer> owner_weak=ChannelInputs.GetItem(n)->GetOwner();
+  if(owner_weak.expired())
+   continue;
+  std::shared_ptr<RDK::UContainer> item=owner_weak.lock();
   if(dynamic_pointer_cast<NPulseSynapseCommon>(item))
    SynapseInputFlagsList[n]=true;
  }

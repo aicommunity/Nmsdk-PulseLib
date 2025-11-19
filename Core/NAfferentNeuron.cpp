@@ -184,13 +184,22 @@ if(!storage)
   receptor->OutputAdaptationMode=5;
   receptor->InputAdaptationMode=0;
   receptor->SumCoeff=1;
-  AddComponent(receptor);
+  AddComponent(std::weak_ptr<RDK::UContainer>(receptor));
 
   receptor->SetCoord(MVector<double,3>(4,3,0));
   receptor->DisconnectAll("Output");
 
-  channel1=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
-  channel2=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
+  // CRITICAL: GetComponent now returns weak_ptr, need to lock
+  std::weak_ptr<UContainer> channel1_weak = membr->GetComponent("ExcChannel");
+  if(!channel1_weak.expired())
+   channel1 = std::dynamic_pointer_cast<NPulseChannel>(channel1_weak.lock());
+  else
+   channel1 = nullptr;
+  std::weak_ptr<UContainer> channel2_weak = membr->GetComponent("InhChannel");
+  if(!channel2_weak.expired())
+   channel2 = std::dynamic_pointer_cast<NPulseChannel>(channel2_weak.lock());
+  else
+   channel2 = nullptr;
 
   // ������������� �������� �����
   res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",membr->GetLongName(GetThisAsSharedContainer()),"InputFeedbackSignal");

@@ -58,7 +58,13 @@ int NPulseChannel::GetNumSynapses(void) const
 // ���������� ������ �� �������
 std::shared_ptr<NPulseSynapse> NPulseChannel::GetSynapse(int i)
 {
- return std::shared_ptr<NPulseSynapse>(dynamic_pointer_cast<NPulseSynapse>(SynapticInputs.GetItem(i)->GetOwner()).get());
+ std::weak_ptr<RDK::UContainer> owner_weak = SynapticInputs.GetItem(i)->GetOwner();
+ if(owner_weak.expired())
+  return nullptr;
+ std::shared_ptr<RDK::UContainer> owner = owner_weak.lock();
+ if(!owner)
+  return nullptr;
+ return std::dynamic_pointer_cast<NPulseSynapse>(owner);
 }
 // --------------------------
 

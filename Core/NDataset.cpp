@@ -246,7 +246,11 @@ bool NDataset::ABuild(void)
     int old_ex_generators=int(Generators.size());
     for(int i=NumGenerators;i<old_ex_generators;i++)
     {
-     std::shared_ptr<UContainer> gen = GetComponentL(std::string("Generator")+sntoa(i+1), true);
+     // CRITICAL: GetComponentL now returns weak_ptr, need to lock
+     std::weak_ptr<UContainer> gen_weak = GetComponentL(std::string("Generator")+sntoa(i+1), true);
+     std::shared_ptr<UContainer> gen;
+     if(!gen_weak.expired())
+      gen = gen_weak.lock();
      if(gen)
       DelComponent(gen, true);
       //GetStorage()->ReturnObject(gen);

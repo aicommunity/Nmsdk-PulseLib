@@ -140,12 +140,18 @@ bool NSpikeClassifier::SetNeedToTrain(const bool &value)
   std::shared_ptr<NPulseGeneratorTransit> generator;
   for(int i = 0; i < NumNeurons; i++)
   {
-   trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)),true);
+   std::weak_ptr<RDK::UContainer> trainer_weak=GetComponentL(std::string("NeuronTrainer"+sntoa(i+1)),true);
+   if(trainer_weak.expired())
+	return true;
+   trainer=std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
    if(!trainer)
 	return true;
    for(int j = 0; j < NumInputDendrite; j++)
    {
-	generator = trainer->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(j+1)),true);
+	std::weak_ptr<RDK::UContainer> generator_weak=trainer->GetComponentL(std::string("Source"+sntoa(j+1)),true);
+	if(generator_weak.expired())
+	 return true;
+	generator=std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak.lock());
 	if(!generator)
 	 return true;
 
@@ -488,10 +494,16 @@ bool NSpikeClassifier::BuildStructure(void)
 	{
 	 for(int j = 0; j < NumNeurons; j++)
 	 {
-	  trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(j+1)),true);
+	  std::weak_ptr<RDK::UContainer> trainer_weak=GetComponentL(std::string("NeuronTrainer"+sntoa(j+1)),true);
+	  if(trainer_weak.expired())
+	   return true;
+	  trainer=std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
 	  if(!trainer)
 	   return true;
-	  gen_in = trainer->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(i+1)),true);
+	  std::weak_ptr<RDK::UContainer> gen_in_weak=trainer->GetComponentL(std::string("Source"+sntoa(i+1)),true);
+	  if(gen_in_weak.expired())
+	   return true;
+	  gen_in=std::dynamic_pointer_cast<NPulseGeneratorTransit>(gen_in_weak.lock());
 	  if(!gen_in)
 	   return true;
 
@@ -587,15 +599,24 @@ bool NSpikeClassifier::TreatDataFromFile(void)
 	std::shared_ptr<NLTZone> ltzone;
 	for(int i= 0; i < NumNeurons; i++)
 	{
-		trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)),true);
+		std::weak_ptr<RDK::UContainer> trainer_weak=GetComponentL(std::string("NeuronTrainer"+sntoa(i+1)),true);
+		if(trainer_weak.expired())
+			return true;
+		trainer=std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
 		if(!trainer)
 			return true;
 
-		neuron  = trainer->GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
+		std::weak_ptr<RDK::UContainer> neuron_weak=trainer->GetComponentL(std::string("Neuron"),true);
+		if(neuron_weak.expired())
+			return true;
+		neuron=std::dynamic_pointer_cast<NPulseNeuron>(neuron_weak.lock());
 		if(!neuron)
 			return true;
 
-		ltzone = neuron->GetComponentL<NLTZone>("LTZone");
+		std::weak_ptr<RDK::UContainer> ltzone_weak=neuron->GetComponentL("LTZone");
+		if(ltzone_weak.expired())
+			return true;
+		ltzone=std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
 		if(!ltzone)
 			return true;
 
@@ -635,7 +656,10 @@ bool NSpikeClassifier::ACalculate(void)
 	 // ��������� ����������� ���� ��������
 	 for(int i = 0; i < NumNeurons; i++)
 	 {
-	  trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)),true);
+	  std::weak_ptr<RDK::UContainer> trainer_weak=GetComponentL(std::string("NeuronTrainer"+sntoa(i+1)),true);
+	  if(trainer_weak.expired())
+	   return true;
+	  trainer=std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
 	  if(!trainer)
 	   return true;
 
@@ -653,7 +677,10 @@ bool NSpikeClassifier::ACalculate(void)
 	  // ��������� ��� ���������� � ����� ��������
       for(int i = 0; i < NumNeurons; i++)
 	  {
-	   trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)),true);
+	   std::weak_ptr<RDK::UContainer> trainer_weak=GetComponentL(std::string("NeuronTrainer"+sntoa(i+1)),true);
+	   if(trainer_weak.expired())
+		return true;
+	   trainer=std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
 	   if(!trainer)
 		return true;
 
@@ -661,7 +688,10 @@ bool NSpikeClassifier::ACalculate(void)
 
 	   for(int j = 0; j < NumInputDendrite; j++)
 	   {
-		generator = trainer->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(j+1)),true);
+		std::weak_ptr<RDK::UContainer> generator_weak=trainer->GetComponentL(std::string("Source"+sntoa(j+1)),true);
+		if(generator_weak.expired())
+		 return true;
+		generator=std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak.lock());
 		if(!generator)
 		 return true;
 
@@ -677,15 +707,24 @@ bool NSpikeClassifier::ACalculate(void)
        inh_synapse_counter.assign(NumNeurons,1);
        for(int i = 0; i < NumNeurons; i++)
        {
-        trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)),true);
+        std::weak_ptr<RDK::UContainer> trainer_weak=GetComponentL(std::string("NeuronTrainer"+sntoa(i+1)),true);
+        if(trainer_weak.expired())
+         return true;
+        trainer=std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
         if(!trainer)
          return true;
 
-        neuron  = trainer->GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
+        std::weak_ptr<RDK::UContainer> neuron_weak=trainer->GetComponentL(std::string("Neuron"),true);
+        if(neuron_weak.expired())
+         return true;
+        neuron=std::dynamic_pointer_cast<NPulseNeuron>(neuron_weak.lock());
         if(!neuron)
          return true;
 
-        ltzone = neuron->GetComponentL<NLTZone>("LTZone");
+        std::weak_ptr<RDK::UContainer> ltzone_weak=neuron->GetComponentL("LTZone");
+        if(ltzone_weak.expired())
+         return true;
+        ltzone=std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
         if(!ltzone)
          return true;
 
@@ -694,19 +733,28 @@ bool NSpikeClassifier::ACalculate(void)
          if(i==j)
           continue;
 
-         neuron  = GetComponentL<NPulseNeuron>(std::string("NeuronTrainer"+sntoa(j+1)+".Neuron"),true);
+         std::weak_ptr<RDK::UContainer> neuron_weak2=GetComponentL(std::string("NeuronTrainer"+sntoa(j+1)+".Neuron"),true);
+         if(neuron_weak2.expired())
+          return true;
+         neuron=std::dynamic_pointer_cast<NPulseNeuron>(neuron_weak2.lock());
          if(!neuron)
           return true;
 
          for(int n = 0; n < NumInputDendrite; n++)
          {
-          soma = neuron->GetComponentL<NPulseMembrane>(std::string("Soma"+sntoa(n+1)),true);
+          std::weak_ptr<RDK::UContainer> soma_weak=neuron->GetComponentL(std::string("Soma"+sntoa(n+1)),true);
+          if(soma_weak.expired())
+           return true;
+          soma=std::dynamic_pointer_cast<NPulseMembrane>(soma_weak.lock());
           if(!soma)
            return true;
 
           soma->NumInhibitorySynapses=NumNeurons-1;
           soma->Reset();
-          synapse = soma->GetComponentL<NPulseSynapse>(std::string("InhSynapse")+RDK::sntoa(inh_synapse_counter[j]),true);
+          std::weak_ptr<RDK::UContainer> synapse_weak=soma->GetComponentL(std::string("InhSynapse")+RDK::sntoa(inh_synapse_counter[j]),true);
+          if(synapse_weak.expired())
+           return true;
+          synapse=std::dynamic_pointer_cast<NPulseSynapse>(synapse_weak.lock());
           if(!synapse)
            return true;
 
@@ -731,7 +779,10 @@ bool NSpikeClassifier::ACalculate(void)
 	 // ��������� ����������� ���� ��������
 	 for(int i = 0; i < NumNeurons; i++)
 	 {
-	  trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)),true);
+	  std::weak_ptr<RDK::UContainer> trainer_weak=GetComponentL(std::string("NeuronTrainer"+sntoa(i+1)),true);
+	  if(trainer_weak.expired())
+	   return true;
+	  trainer=std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
 	  if(!trainer)
 	   return true;
 
@@ -749,13 +800,19 @@ bool NSpikeClassifier::ACalculate(void)
 	  // ��������� ��� ���������� � ����� ���������
       for(int i = 0; i < NumNeurons; i++)
 	  {
-	   trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)),true);
+	   std::weak_ptr<RDK::UContainer> trainer_weak=GetComponentL(std::string("NeuronTrainer"+sntoa(i+1)),true);
+	   if(trainer_weak.expired())
+		return true;
+	   trainer=std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
 	   if(!trainer)
 		return true;
 
 	   for(int j = 0; j < NumInputDendrite; j++)
 	   {
-		generator = trainer->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(j+1)),true);
+		std::weak_ptr<RDK::UContainer> generator_weak=trainer->GetComponentL(std::string("Source"+sntoa(j+1)),true);
+		if(generator_weak.expired())
+		 return true;
+		generator=std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak.lock());
 		if(!generator)
 		 return true;
 

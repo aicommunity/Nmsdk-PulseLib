@@ -983,7 +983,12 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   an->ExcGeneratorClassName="NCNeuronNegCGenerator";
   an->StructureBuildMode=1;
   an->Build();
-  std::shared_ptr<NReceptor> receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
+  std::weak_ptr<RDK::UContainer> receptor_weak=an->GetComponent("Receptor");
+  std::shared_ptr<NReceptor> receptor;
+  if(!receptor_weak.expired())
+   receptor = std::dynamic_pointer_cast<NReceptor>(receptor_weak.lock());
+  else
+   receptor = nullptr;
   if(receptor)
   {
    receptor->ExpCoeff=100;
@@ -1004,7 +1009,12 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   an->LTZoneClassName="NPSimpleLTZone";
   an->StructureBuildMode=2;
   an->Build();
-  std::shared_ptr<NReceptor> receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
+  std::weak_ptr<RDK::UContainer> receptor_weak=an->GetComponent("Receptor");
+  std::shared_ptr<NReceptor> receptor;
+  if(!receptor_weak.expired())
+   receptor = std::dynamic_pointer_cast<NReceptor>(receptor_weak.lock());
+  else
+   receptor = nullptr;
   if(receptor)
   {
    receptor->ExpCoeff=10e-5;
@@ -1025,7 +1035,12 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   an->LTZoneClassName="NCSimpleLTZone";
   an->StructureBuildMode=2;
   an->Build();
-  std::shared_ptr<NReceptor> receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
+  std::weak_ptr<RDK::UContainer> receptor_weak=an->GetComponent("Receptor");
+  std::shared_ptr<NReceptor> receptor;
+  if(!receptor_weak.expired())
+   receptor = std::dynamic_pointer_cast<NReceptor>(receptor_weak.lock());
+  else
+   receptor = nullptr;
   if(receptor)
   {
    receptor->ExpCoeff=100;
@@ -1874,7 +1889,11 @@ UploadClass("NOdeSolver",cont);
  an=CreateAfferentNeuron(dynamic_cast<UStorage*>(storage),"NCSynNeuronMembrane","NCLTZone","NCNeuronPosCGenerator","NCNeuronNegCGenerator",
  1);
  an->SetName("AfferentNeuron");
- receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
+ std::weak_ptr<RDK::UContainer> receptor_weak=an->GetComponent("Receptor");
+ if(!receptor_weak.expired())
+  receptor = std::dynamic_pointer_cast<NReceptor>(receptor_weak.lock());
+ else
+  receptor = nullptr;
  if(receptor)
  {
   receptor->ExpCoeff=100;
@@ -1887,7 +1906,11 @@ UploadClass("NOdeSolver",cont);
 
  an=CreateSimpleAfferentNeuron(dynamic_cast<UStorage*>(storage),"NPSimpleLTZone",200);
  an->SetName("AfferentNeuron");
- receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
+ std::weak_ptr<RDK::UContainer> receptor_weak=an->GetComponent("Receptor");
+ if(!receptor_weak.expired())
+  receptor = std::dynamic_pointer_cast<NReceptor>(receptor_weak.lock());
+ else
+  receptor = nullptr;
  if(receptor)
  {
   receptor->ExpCoeff=10e-5;
@@ -1901,7 +1924,11 @@ UploadClass("NOdeSolver",cont);
 							 /*
  an=CreateSimpleAfferentNeuron(dynamic_cast<UStorage*>(storage),"NCSimpleLTZone",1);
  an->SetName("AfferentNeuron");
- receptor=dynamic_pointer_cast<NReceptor>(an->GetComponent("Receptor"));
+ std::weak_ptr<RDK::UContainer> receptor_weak=an->GetComponent("Receptor");
+ if(!receptor_weak.expired())
+  receptor = std::dynamic_pointer_cast<NReceptor>(receptor_weak.lock());
+ else
+  receptor = nullptr;
  if(receptor)
  {
   receptor->ExpCoeff=100;
@@ -1943,21 +1970,29 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage
 
 
  ltzone=static_pointer_cast<NNet>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(ltzone));//,&n->LTZone);
  ltzone->SetName("LTZone");
 
  std::shared_ptr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
- res=n->AddComponent(gen_pos);
+ res=n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_pos));
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
- n->AddComponent(gen_neg);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_neg));
 
  ltmembr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(ltzonemembraneclass));
  ltmembr->SetName("LTMembrane");
- res=n->AddComponent(ltmembr);
+ res=n->AddComponent(std::weak_ptr<RDK::UContainer>(ltmembr));
 
- ltchannel1=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("PosChannel"));
- ltchannel2=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("NegChannel"));
+ std::weak_ptr<RDK::UContainer> ltchannel1_weak=ltmembr->GetComponent("PosChannel");
+ if(!ltchannel1_weak.expired())
+  ltchannel1 = std::static_pointer_cast<NPulseChannel>(ltchannel1_weak.lock());
+ else
+  ltchannel1 = nullptr;
+ std::weak_ptr<RDK::UContainer> ltchannel2_weak=ltmembr->GetComponent("NegChannel");
+ if(!ltchannel2_weak.expired())
+  ltchannel2 = std::static_pointer_cast<NPulseChannel>(ltchannel2_weak.lock());
+ else
+  ltchannel2 = nullptr;
  item.Index=0;
  conn.Index=-1;
 
@@ -1978,22 +2013,38 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage
  for(int i=0;i<num_membranes;i++)
  {
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
-  res=n->AddComponent(membr);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  std::weak_ptr<RDK::UContainer> channel1_weak=membr->GetComponent("PosChannel");
+  if(!channel1_weak.expired())
+   channel1 = std::static_pointer_cast<NPulseChannel>(channel1_weak.lock());
+  else
+   channel1 = nullptr;
   for(int j=0;j<channel1->GetNumComponents();j++)
   {
-   std::shared_ptr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j));
-   if(hebb_syn)
-	synapse_list.push_back(hebb_syn);
+   std::weak_ptr<RDK::UContainer> hebb_syn_weak=channel1->GetComponentByIndex(j);
+   if(!hebb_syn_weak.expired())
+   {
+    std::shared_ptr<NPulseHebbSynapse> hebb_syn = std::dynamic_pointer_cast<NPulseHebbSynapse>(hebb_syn_weak.lock());
+    if(hebb_syn)
+     synapse_list.push_back(hebb_syn);
+   }
   }
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  std::weak_ptr<RDK::UContainer> channel2_weak=membr->GetComponent("NegChannel");
+  if(!channel2_weak.expired())
+   channel2 = std::static_pointer_cast<NPulseChannel>(channel2_weak.lock());
+  else
+   channel2 = nullptr;
   for(int j=0;j<channel2->GetNumComponents();j++)
   {
-   std::shared_ptr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j));
-   if(hebb_syn)
-	synapse_list.push_back(hebb_syn);
+   std::weak_ptr<RDK::UContainer> hebb_syn_weak=channel2->GetComponentByIndex(j);
+   if(!hebb_syn_weak.expired())
+   {
+    std::shared_ptr<NPulseHebbSynapse> hebb_syn = std::dynamic_pointer_cast<NPulseHebbSynapse>(hebb_syn_weak.lock());
+    if(hebb_syn)
+     synapse_list.push_back(hebb_syn);
+   }
   }
   item.Index=0;
   conn.Index=-1;
@@ -2020,22 +2071,38 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage
  for(int i=1;i<dendrite_length;i++)
  {
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
-  res=n->AddComponent(membr);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  std::weak_ptr<RDK::UContainer> channel1_weak=membr->GetComponent("PosChannel");
+  if(!channel1_weak.expired())
+   channel1 = std::static_pointer_cast<NPulseChannel>(channel1_weak.lock());
+  else
+   channel1 = nullptr;
   for(int j=0;j<channel1->GetNumComponents();j++)
   {
-   std::shared_ptr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j));
-   if(hebb_syn)
-	synapse_list.push_back(hebb_syn);
+   std::weak_ptr<RDK::UContainer> hebb_syn_weak=channel1->GetComponentByIndex(j);
+   if(!hebb_syn_weak.expired())
+   {
+    std::shared_ptr<NPulseHebbSynapse> hebb_syn = std::dynamic_pointer_cast<NPulseHebbSynapse>(hebb_syn_weak.lock());
+    if(hebb_syn)
+     synapse_list.push_back(hebb_syn);
+   }
   }
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  std::weak_ptr<RDK::UContainer> channel2_weak=membr->GetComponent("NegChannel");
+  if(!channel2_weak.expired())
+   channel2 = std::static_pointer_cast<NPulseChannel>(channel2_weak.lock());
+  else
+   channel2 = nullptr;
   for(int j=0;j<channel2->GetNumComponents();j++)
   {
-   std::shared_ptr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j));
-   if(hebb_syn)
-	synapse_list.push_back(hebb_syn);
+   std::weak_ptr<RDK::UContainer> hebb_syn_weak=channel2->GetComponentByIndex(j);
+   if(!hebb_syn_weak.expired())
+   {
+    std::shared_ptr<NPulseHebbSynapse> hebb_syn = std::dynamic_pointer_cast<NPulseHebbSynapse>(hebb_syn_weak.lock());
+    if(hebb_syn)
+     synapse_list.push_back(hebb_syn);
+   }
   }
  }
 
@@ -2064,7 +2131,7 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage
  if(lifeneuron)
  {
   std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
-  lifeneuron->AddComponent(nlife);
+  lifeneuron->AddComponent(std::weak_ptr<RDK::UContainer>(nlife));
 
   item.Id=ltzone->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
   item.Index=0;//1;
@@ -2099,21 +2166,29 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(US
 
 
  ltzone=static_pointer_cast<NNet>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(ltzone));//,&n->LTZone);
  ltzone->SetName("LTZone");
 
  std::shared_ptr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
- res=n->AddComponent(gen_pos);
+ res=n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_pos));
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
- n->AddComponent(gen_neg);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_neg));
 
  ltmembr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(ltzonemembraneclass));
  ltmembr->SetName("LTMembrane");
- res=n->AddComponent(ltmembr);
+ res=n->AddComponent(std::weak_ptr<RDK::UContainer>(ltmembr));
 
- ltchannel1=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("PosChannel"));
- ltchannel2=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("NegChannel"));
+ std::weak_ptr<RDK::UContainer> ltchannel1_weak=ltmembr->GetComponent("PosChannel");
+ if(!ltchannel1_weak.expired())
+  ltchannel1 = std::static_pointer_cast<NPulseChannel>(ltchannel1_weak.lock());
+ else
+  ltchannel1 = nullptr;
+ std::weak_ptr<RDK::UContainer> ltchannel2_weak=ltmembr->GetComponent("NegChannel");
+ if(!ltchannel2_weak.expired())
+  ltchannel2 = std::static_pointer_cast<NPulseChannel>(ltchannel2_weak.lock());
+ else
+  ltchannel2 = nullptr;
  item.Index=0;
  conn.Index=-1;
 
@@ -2134,11 +2209,19 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(US
  for(int i=0;i<num_membranes;i++)
  {
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
-  res=n->AddComponent(membr);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  std::weak_ptr<RDK::UContainer> channel1_weak=membr->GetComponent("PosChannel");
+  if(!channel1_weak.expired())
+   channel1 = std::static_pointer_cast<NPulseChannel>(channel1_weak.lock());
+  else
+   channel1 = nullptr;
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  std::weak_ptr<RDK::UContainer> channel2_weak=membr->GetComponent("NegChannel");
+  if(!channel2_weak.expired())
+   channel2 = std::static_pointer_cast<NPulseChannel>(channel2_weak.lock());
+  else
+   channel2 = nullptr;
 
   item.Index=0;
   conn.Index=-1;
@@ -2154,10 +2237,18 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(US
   for(int j=1;j<dendrite_length[i];j++)
   {
    membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
-   res=n->AddComponent(membr);
+   res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
-   channel1temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
-   channel2temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+   std::weak_ptr<RDK::UContainer> channel1temp_weak=membr->GetComponent("PosChannel");
+   if(!channel1temp_weak.expired())
+    channel1temp = std::static_pointer_cast<NPulseChannel>(channel1temp_weak.lock());
+   else
+    channel1temp = nullptr;
+   std::weak_ptr<RDK::UContainer> channel2temp_weak=membr->GetComponent("NegChannel");
+   if(!channel2temp_weak.expired())
+    channel2temp = std::static_pointer_cast<NPulseChannel>(channel2temp_weak.lock());
+   else
+    channel2temp = nullptr;
 
    item.Id=channel1temp->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
    conn.Id=channel1->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
@@ -2186,7 +2277,7 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(US
  if(lifeneuron)
  {
   std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
-  lifeneuron->AddComponent(nlife);
+  lifeneuron->AddComponent(std::weak_ptr<RDK::UContainer>(nlife));
 
   item.Id=ltzone->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
   item.Index=0;//1;
@@ -2222,23 +2313,31 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *s
 
 
  ltzone=static_pointer_cast<NNet>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(ltzone));//,&n->LTZone);
  ltzone->SetName("LTZone");
 
  std::shared_ptr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
- res=n->AddComponent(gen_pos);
+ res=n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_pos));
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
- n->AddComponent(gen_neg);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_neg));
 
  for(int i=0;i<num_membranes;i++)
  {
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
-  res=n->AddComponent(membr);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  std::weak_ptr<RDK::UContainer> channel1_weak=membr->GetComponent("PosChannel");
+  if(!channel1_weak.expired())
+   channel1 = std::static_pointer_cast<NPulseChannel>(channel1_weak.lock());
+  else
+   channel1 = nullptr;
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  std::weak_ptr<RDK::UContainer> channel2_weak=membr->GetComponent("NegChannel");
+  if(!channel2_weak.expired())
+   channel2 = std::static_pointer_cast<NPulseChannel>(channel2_weak.lock());
+  else
+   channel2 = nullptr;
 
   item.Index=0;
   conn.Index=-1;
@@ -2268,11 +2367,19 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *s
  for(int i=1;i<dendrite_length;i++)
  {
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
-  res=n->AddComponent(membr);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  std::weak_ptr<RDK::UContainer> channel1_weak=membr->GetComponent("PosChannel");
+  if(!channel1_weak.expired())
+   channel1 = std::static_pointer_cast<NPulseChannel>(channel1_weak.lock());
+  else
+   channel1 = nullptr;
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  std::weak_ptr<RDK::UContainer> channel2_weak=membr->GetComponent("NegChannel");
+  if(!channel2_weak.expired())
+   channel2 = std::static_pointer_cast<NPulseChannel>(channel2_weak.lock());
+  else
+   channel2 = nullptr;
 
  }
 /*
@@ -2280,7 +2387,7 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *s
  if(lifeneuron)
  {
   std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
-  lifeneuron->AddComponent(nlife);
+  lifeneuron->AddComponent(std::weak_ptr<RDK::UContainer>(nlife));
 
   item.Id=ltzone->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
   item.Index=0;//1;
@@ -2316,23 +2423,31 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStor
 
 
  ltzone=static_pointer_cast<NNet>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(ltzone));//,&n->LTZone);
  ltzone->SetName("LTZone");
 
  std::shared_ptr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
- res=n->AddComponent(gen_pos);
+ res=n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_pos));
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
- n->AddComponent(gen_neg);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_neg));
 
  for(int i=0;i<num_membranes;i++)
  {
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
-  res=n->AddComponent(membr);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  std::weak_ptr<RDK::UContainer> channel1_weak=membr->GetComponent("PosChannel");
+  if(!channel1_weak.expired())
+   channel1 = std::static_pointer_cast<NPulseChannel>(channel1_weak.lock());
+  else
+   channel1 = nullptr;
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  std::weak_ptr<RDK::UContainer> channel2_weak=membr->GetComponent("NegChannel");
+  if(!channel2_weak.expired())
+   channel2 = std::static_pointer_cast<NPulseChannel>(channel2_weak.lock());
+  else
+   channel2 = nullptr;
 
   item.Index=0;
   conn.Index=-1;
@@ -2352,10 +2467,18 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStor
   for(int j=1;j<dendrite_length[i];j++)
   {
    membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
-   res=n->AddComponent(membr);
+   res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
-   channel1temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
-   channel2temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+   std::weak_ptr<RDK::UContainer> channel1temp_weak=membr->GetComponent("PosChannel");
+   if(!channel1temp_weak.expired())
+    channel1temp = std::static_pointer_cast<NPulseChannel>(channel1temp_weak.lock());
+   else
+    channel1temp = nullptr;
+   std::weak_ptr<RDK::UContainer> channel2temp_weak=membr->GetComponent("NegChannel");
+   if(!channel2temp_weak.expired())
+    channel2temp = std::static_pointer_cast<NPulseChannel>(channel2temp_weak.lock());
+   else
+    channel2temp = nullptr;
 
    item.Id=channel1temp->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
    conn.Id=channel1->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
@@ -2384,7 +2507,7 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStor
  if(lifeneuron)
  {
   std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
-  lifeneuron->AddComponent(nlife);
+  lifeneuron->AddComponent(std::weak_ptr<RDK::UContainer>(nlife));
 
   item.Id=ltzone->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
   item.Index=0;//1;
@@ -2422,30 +2545,54 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorag
 
 
  ltzone=static_pointer_cast<NPulseLTZone>(storage->TakeObject("NPLTZone"));
- n->AddComponent(ltzone);//,&n->LTZone);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(ltzone));//,&n->LTZone);
  ltzone->SetName("LTZone");
 
  std::shared_ptr<NConstGenerator> gen_pos, gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
- res=n->AddComponent(gen_pos);
+ res=n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_pos));
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
- n->AddComponent(gen_neg);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_neg));
 
  synapse_list.clear();
  for(int i=0;i<num_membranes;i++)
  {
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject("NPNeuronHebbMembrane"));
-  res=n->AddComponent(membr);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  std::weak_ptr<RDK::UContainer> channel1_weak=membr->GetComponent("PosChannel");
+  if(!channel1_weak.expired())
+   channel1 = std::static_pointer_cast<NPulseChannel>(channel1_weak.lock());
+  else
+   channel1 = nullptr;
 
   for(int j=0;j<channel1->GetNumComponents();j++)
-   synapse_list.push_back(dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j)));
+  {
+   std::weak_ptr<RDK::UContainer> hebb_syn_weak=channel1->GetComponentByIndex(j);
+   if(!hebb_syn_weak.expired())
+   {
+    std::shared_ptr<NPulseHebbSynapse> hebb_syn = std::dynamic_pointer_cast<NPulseHebbSynapse>(hebb_syn_weak.lock());
+    if(hebb_syn)
+     synapse_list.push_back(hebb_syn);
+   }
+  }
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  std::weak_ptr<RDK::UContainer> channel2_weak=membr->GetComponent("NegChannel");
+  if(!channel2_weak.expired())
+   channel2 = std::static_pointer_cast<NPulseChannel>(channel2_weak.lock());
+  else
+   channel2 = nullptr;
 
   for(int j=0;j<channel2->GetNumComponents();j++)
-   synapse_list.push_back(dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j)));
+  {
+   std::weak_ptr<RDK::UContainer> hebb_syn_weak=channel2->GetComponentByIndex(j);
+   if(!hebb_syn_weak.expired())
+   {
+    std::shared_ptr<NPulseHebbSynapse> hebb_syn = std::dynamic_pointer_cast<NPulseHebbSynapse>(hebb_syn_weak.lock());
+    if(hebb_syn)
+     synapse_list.push_back(hebb_syn);
+   }
+  }
 
 
   item.Index=0;
@@ -2485,18 +2632,42 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorag
  for(int i=1;i<dendrite_length;i++)
  {
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject("NPNeuronHebbMembrane"));
-  res=n->AddComponent(membr);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  std::weak_ptr<RDK::UContainer> channel1_weak=membr->GetComponent("PosChannel");
+  if(!channel1_weak.expired())
+   channel1 = std::static_pointer_cast<NPulseChannel>(channel1_weak.lock());
+  else
+   channel1 = nullptr;
 
   for(int j=0;j<channel1->GetNumComponents();j++)
-   synapse_list.push_back(dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j)));
+  {
+   std::weak_ptr<RDK::UContainer> hebb_syn_weak=channel1->GetComponentByIndex(j);
+   if(!hebb_syn_weak.expired())
+   {
+    std::shared_ptr<NPulseHebbSynapse> hebb_syn = std::dynamic_pointer_cast<NPulseHebbSynapse>(hebb_syn_weak.lock());
+    if(hebb_syn)
+     synapse_list.push_back(hebb_syn);
+   }
+  }
 
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  std::weak_ptr<RDK::UContainer> channel2_weak=membr->GetComponent("NegChannel");
+  if(!channel2_weak.expired())
+   channel2 = std::static_pointer_cast<NPulseChannel>(channel2_weak.lock());
+  else
+   channel2 = nullptr;
 
   for(int j=0;j<channel2->GetNumComponents();j++)
-   synapse_list.push_back(dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j)));
+  {
+   std::weak_ptr<RDK::UContainer> hebb_syn_weak=channel2->GetComponentByIndex(j);
+   if(!hebb_syn_weak.expired())
+   {
+    std::shared_ptr<NPulseHebbSynapse> hebb_syn = std::dynamic_pointer_cast<NPulseHebbSynapse>(hebb_syn_weak.lock());
+    if(hebb_syn)
+     synapse_list.push_back(hebb_syn);
+   }
+  }
 
    // ����� ����� �������� � �������
    item.Id=channel1->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
@@ -2538,7 +2709,7 @@ std::shared_ptr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorag
  if(lifeneuron)
  {
   std::shared_ptr<NNeuronLife> nlife=dynamic_pointer_cast<NNeuronLife>(storage->TakeObject("NNeuronLife"));
-  lifeneuron->AddComponent(nlife);
+  lifeneuron->AddComponent(std::weak_ptr<RDK::UContainer>(nlife));
 
   item.Id=ltzone->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
   item.Index=0;//1;
@@ -2575,31 +2746,39 @@ std::shared_ptr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *s
   return 0;
 
  ltzone=static_pointer_cast<NLTZone>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(ltzone));//,&n->LTZone);
  ltzone->SetName("LTZone");
  ltzone->Threshold=0;
 
  std::shared_ptr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
- res=n->AddComponent(gen_pos);
+ res=n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_pos));
  gen_neg=static_pointer_cast<NConstGenerator>(storage->TakeObject(neg_gen_class));
- n->AddComponent(gen_neg);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(gen_neg));
 
  bool linkres=true;
  for(int i=0;i<num_membranes;i++)
  {
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass));
-  res=n->AddComponent(membr);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(membr));
 
   receptor=static_pointer_cast<NReceptor>(storage->TakeObject("NReceptor"));
   receptor->ExpCoeff=0.01;
   receptor->Gain=1;
-  res=n->AddComponent(receptor);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(receptor));
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));//(storage->TakeObject("NPChannel"));
+  std::weak_ptr<RDK::UContainer> channel1_weak=membr->GetComponent("PosChannel");
+  if(!channel1_weak.expired())
+   channel1 = std::static_pointer_cast<NPulseChannel>(channel1_weak.lock());
+  else
+   channel1 = nullptr;//(storage->TakeObject("NPChannel"));
 //  channel1->SetNumInputs(2);
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));//(storage->TakeObject("NPChannel"));
+  std::weak_ptr<RDK::UContainer> channel2_weak=membr->GetComponent("NegChannel");
+  if(!channel2_weak.expired())
+   channel2 = std::static_pointer_cast<NPulseChannel>(channel2_weak.lock());
+  else
+   channel2 = nullptr;//(storage->TakeObject("NPChannel"));
   // ������������� �������� �����
   item.Id=ltzone->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
   conn.Id=membr->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
@@ -2662,7 +2841,7 @@ std::shared_ptr<NAfferentNeuron> NPulseLibrary::CreateSimpleAfferentNeuron(UStor
   return 0;
 
  ltzone=static_pointer_cast<NLTZone>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
+ n->AddComponent(std::weak_ptr<RDK::UContainer>(ltzone));//,&n->LTZone);
  ltzone->SetName("LTZone");
  ltzone->Threshold=0;
 
@@ -2674,7 +2853,7 @@ std::shared_ptr<NAfferentNeuron> NPulseLibrary::CreateSimpleAfferentNeuron(UStor
   receptor->InputAdaptationMode=0;
   receptor->MinOutputRange=0;
   receptor->MaxOutputRange=max_output;
-  res=n->AddComponent(receptor);
+  res=n->AddComponent(std::weak_ptr<RDK::UContainer>(receptor));
 
   item.Id=receptor->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));
   conn.Id=ltzone->GetLongId(std::shared_ptr<RDK::UContainer>(n.get()));

@@ -236,28 +236,44 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
     {
      for(int j = 0; j < num_aff_neurons_in_group; j++)
      {
-      std::shared_ptr<NPulseNeuronCommon> n_out=freq_group_layer->GetComponentL<NPulseNeuronCommon>(std::string("AffNeuronGroup")+sntoa(i+1)+std::string(".AffNeuron")+sntoa(j+1),true);
+      std::weak_ptr<RDK::UContainer> n_out_weak=freq_group_layer->GetComponentL(std::string("AffNeuronGroup")+sntoa(i+1)+std::string(".AffNeuron")+sntoa(j+1),true);
+      if(n_out_weak.expired())
+       continue;
+      std::shared_ptr<NPulseNeuronCommon> n_out=std::dynamic_pointer_cast<NPulseNeuronCommon>(n_out_weak.lock());
+      if(!n_out)
+       continue;
 
       for(int n = 0; n < neusize; n++)
       {
-       neurons_layer = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(1),true);
-       std::shared_ptr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
-
-       if(!n_out)
-        return true;
+       std::weak_ptr<RDK::UContainer> neurons_layer_weak=GetComponentL(std::string("NeuronsLayer")+sntoa(1),true);
+       if(neurons_layer_weak.expired())
+        continue;
+       neurons_layer=std::dynamic_pointer_cast<NNeuronsLayer>(neurons_layer_weak.lock());
+       if(!neurons_layer)
+        continue;
+       std::weak_ptr<RDK::UContainer> n_in_weak=neurons_layer->GetComponentL(std::string("Neuron")+sntoa(n+1),true);
+       if(n_in_weak.expired())
+        continue;
+       std::shared_ptr<NPulseNeuron> n_in=std::dynamic_pointer_cast<NPulseNeuron>(n_in_weak.lock());
        if(!n_in)
-        return true;
+        continue;
 
        n_in->NumDendriteMembraneParts=1;
        n_in->Build();
 
-       std::shared_ptr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+       std::weak_ptr<RDK::UContainer> ltzone_weak=n_out->GetComponentL("LTZone");//GetLTZone();
+       if(ltzone_weak.expired())
+        continue;
+       std::shared_ptr<NLTZone> ltzone=std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
        if(!ltzone)
-        return true;
+        continue;
 
-       std::shared_ptr<NPulseSynapse> synapse=n_in->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
+       std::weak_ptr<RDK::UContainer> synapse_weak=n_in->GetComponentL("Dendrite1_1.ExcSynapse1",true);
+       if(synapse_weak.expired())
+        continue;
+       std::shared_ptr<NPulseSynapse> synapse=std::dynamic_pointer_cast<NPulseSynapse>(synapse_weak.lock());
        if(!synapse)
-        return true;
+        continue;
 
        res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 
@@ -271,21 +287,36 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
   // ���������� ������� - ���������� �������
   for(int i = 0; i < NumNeuronsLayer-1; i++)
   {
-   neurons_layer = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(i+1),true);
-   neurons_layer2 = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(i+2),true);
+   std::weak_ptr<RDK::UContainer> neurons_layer_weak=GetComponentL(std::string("NeuronsLayer")+sntoa(i+1),true);
+   if(neurons_layer_weak.expired())
+    continue;
+   neurons_layer=std::dynamic_pointer_cast<NNeuronsLayer>(neurons_layer_weak.lock());
+   if(!neurons_layer)
+    continue;
+   std::weak_ptr<RDK::UContainer> neurons_layer2_weak=GetComponentL(std::string("NeuronsLayer")+sntoa(i+2),true);
+   if(neurons_layer2_weak.expired())
+    continue;
+   neurons_layer2=std::dynamic_pointer_cast<NNeuronsLayer>(neurons_layer2_weak.lock());
+   if(!neurons_layer2)
+    continue;
    neusize = neurons_layer->NeuronsHeight*neurons_layer->NeuronsWidth;
    if(i == 0)
    {
     for(int j = 0; j < neusize; j++)
     {
-     std::shared_ptr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
-
+     std::weak_ptr<RDK::UContainer> n_in_weak=neurons_layer->GetComponentL(std::string("Neuron")+sntoa(j+1),true);
+     if(n_in_weak.expired())
+      continue;
+     std::shared_ptr<NPulseNeuron> n_in=std::dynamic_pointer_cast<NPulseNeuron>(n_in_weak.lock());
      if(!n_in)
-      return true;
+      continue;
 
-     std::shared_ptr<NPulseMembrane> membr=n_in->GetComponentL<NPulseMembrane>("Soma1",true);
+     std::weak_ptr<RDK::UContainer> membr_weak=n_in->GetComponentL("Soma1",true);
+     if(membr_weak.expired())
+      continue;
+     std::shared_ptr<NPulseMembrane> membr=std::dynamic_pointer_cast<NPulseMembrane>(membr_weak.lock());
      if(!membr)
-      return true;
+      continue;
 
      membr->NumExcitatorySynapses=NumInputFeatures;
      membr->Build();
@@ -294,36 +325,50 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
 
    for(int j = 0; j < neusize; j++)
    {
-	std::shared_ptr<NPulseNeuron> n_out=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
+	std::weak_ptr<RDK::UContainer> n_out_weak=neurons_layer->GetComponentL(std::string("Neuron")+sntoa(j+1),true);
+	if(n_out_weak.expired())
+	 continue;
+	std::shared_ptr<NPulseNeuron> n_out=std::dynamic_pointer_cast<NPulseNeuron>(n_out_weak.lock());
+	if(!n_out)
+	 continue;
 
     int neusize2 = neurons_layer2->NeuronsHeight*neurons_layer2->NeuronsWidth;
 	for(int n = 0; n < neusize2; n++)
 	{
-	 std::shared_ptr<NPulseNeuron> n_in=neurons_layer2->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
-
-	 if(!n_out)
-	  return true;
+	 std::weak_ptr<RDK::UContainer> n_in_weak=neurons_layer2->GetComponentL(std::string("Neuron")+sntoa(n+1),true);
+	 if(n_in_weak.expired())
+	  continue;
+	 std::shared_ptr<NPulseNeuron> n_in=std::dynamic_pointer_cast<NPulseNeuron>(n_in_weak.lock());
 	 if(!n_in)
-	  return true;
+	  continue;
 
 //	 n_in->NumDendriteMembraneParts=1;
 	 n_in->Build();
 
-	 std::shared_ptr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+	 std::weak_ptr<RDK::UContainer> ltzone_weak=n_out->GetComponentL("LTZone");//GetLTZone();
+	 if(ltzone_weak.expired())
+	  continue;
+	 std::shared_ptr<NLTZone> ltzone=std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
 	 if(!ltzone)
-	  return true;
+	  continue;
 
-     std::shared_ptr<NPulseMembrane> membr=n_in->GetComponentL<NPulseMembrane>("Soma1",true);
+     std::weak_ptr<RDK::UContainer> membr_weak=n_in->GetComponentL("Soma1",true);
+     if(membr_weak.expired())
+      continue;
+     std::shared_ptr<NPulseMembrane> membr=std::dynamic_pointer_cast<NPulseMembrane>(membr_weak.lock());
      if(!membr)
-      return true;
+      continue;
 
      membr->NumExcitatorySynapses=neusize;
      membr->Build();
      membr->RebuildSynapticInternalLinks();
 
-     std::shared_ptr<NPulseSynapse> synapse=membr->GetComponentL<NPulseSynapse>("ExcSynapse"+sntoa(j+1),true);
+     std::weak_ptr<RDK::UContainer> synapse_weak=membr->GetComponentL("ExcSynapse"+sntoa(j+1),true);
+	 if(synapse_weak.expired())
+	  continue;
+     std::shared_ptr<NPulseSynapse> synapse=std::dynamic_pointer_cast<NPulseSynapse>(synapse_weak.lock());
 	 if(!synapse)
-	  return true;
+	  continue;
 
 	 res&=CreateLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 
@@ -372,28 +417,44 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
     {
      for(int j = 0; j < num_aff_neurons_in_group; j++)
      {
-      std::shared_ptr<NPulseNeuronCommon> n_out=freq_group_layer->GetComponentL<NPulseNeuronCommon>(std::string("AffNeuronGroup")+sntoa(i+1)+std::string(".AffNeuron")+sntoa(j+1),true);
+      std::weak_ptr<RDK::UContainer> n_out_weak=freq_group_layer->GetComponentL(std::string("AffNeuronGroup")+sntoa(i+1)+std::string(".AffNeuron")+sntoa(j+1),true);
+      if(n_out_weak.expired())
+       continue;
+      std::shared_ptr<NPulseNeuronCommon> n_out=std::dynamic_pointer_cast<NPulseNeuronCommon>(n_out_weak.lock());
+      if(!n_out)
+       continue;
 
       for(int n = 0; n < neusize; n++)
       {
-       neurons_layer = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(1),true);
-       std::shared_ptr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
-
-       if(!n_out)
-        return true;
+       std::weak_ptr<RDK::UContainer> neurons_layer_weak=GetComponentL(std::string("NeuronsLayer")+sntoa(1),true);
+       if(neurons_layer_weak.expired())
+        continue;
+       neurons_layer=std::dynamic_pointer_cast<NNeuronsLayer>(neurons_layer_weak.lock());
+       if(!neurons_layer)
+        continue;
+       std::weak_ptr<RDK::UContainer> n_in_weak=neurons_layer->GetComponentL(std::string("Neuron")+sntoa(n+1),true);
+       if(n_in_weak.expired())
+        continue;
+       std::shared_ptr<NPulseNeuron> n_in=std::dynamic_pointer_cast<NPulseNeuron>(n_in_weak.lock());
        if(!n_in)
-        return true;
+        continue;
 
        n_in->NumDendriteMembraneParts=1;
        n_in->Build();
 
-       std::shared_ptr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+       std::weak_ptr<RDK::UContainer> ltzone_weak=n_out->GetComponentL("LTZone");//GetLTZone();
+       if(ltzone_weak.expired())
+        continue;
+       std::shared_ptr<NLTZone> ltzone=std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
        if(!ltzone)
-        return true;
+        continue;
 
-       std::shared_ptr<NPulseSynapse> synapse=n_in->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
+       std::weak_ptr<RDK::UContainer> synapse_weak=n_in->GetComponentL("Dendrite1_1.ExcSynapse1",true);
+       if(synapse_weak.expired())
+        continue;
+       std::shared_ptr<NPulseSynapse> synapse=std::dynamic_pointer_cast<NPulseSynapse>(synapse_weak.lock());
        if(!synapse)
-        return true;
+        continue;
 
        res&=BreakLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 
@@ -407,22 +468,37 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
   // ���������� ������� - ���������� �������
   for(int i = 0; i < NumNeuronsLayer-1; i++)
   {
-   neurons_layer = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(i+1),true);
-   neurons_layer2 = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(i+2),true);
+   std::weak_ptr<RDK::UContainer> neurons_layer_weak=GetComponentL(std::string("NeuronsLayer")+sntoa(i+1),true);
+   if(neurons_layer_weak.expired())
+    continue;
+   neurons_layer=std::dynamic_pointer_cast<NNeuronsLayer>(neurons_layer_weak.lock());
+   if(!neurons_layer)
+    continue;
+   std::weak_ptr<RDK::UContainer> neurons_layer2_weak=GetComponentL(std::string("NeuronsLayer")+sntoa(i+2),true);
+   if(neurons_layer2_weak.expired())
+    continue;
+   neurons_layer2=std::dynamic_pointer_cast<NNeuronsLayer>(neurons_layer2_weak.lock());
+   if(!neurons_layer2)
+    continue;
 
    neusize = neurons_layer->NeuronsHeight*neurons_layer->NeuronsWidth;
    if(i == 0)
    {
        for(int j = 0; j < neusize; j++)
        {
-        std::shared_ptr<NPulseNeuron> n_in=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
-
+        std::weak_ptr<RDK::UContainer> n_in_weak=neurons_layer->GetComponentL(std::string("Neuron")+sntoa(j+1),true);
+        if(n_in_weak.expired())
+         continue;
+        std::shared_ptr<NPulseNeuron> n_in=std::dynamic_pointer_cast<NPulseNeuron>(n_in_weak.lock());
         if(!n_in)
-         return true;
+         continue;
 
-        std::shared_ptr<NPulseMembrane> membr=n_in->GetComponentL<NPulseMembrane>("Soma1",true);
+        std::weak_ptr<RDK::UContainer> membr_weak=n_in->GetComponentL("Soma1",true);
+        if(membr_weak.expired())
+         continue;
+        std::shared_ptr<NPulseMembrane> membr=std::dynamic_pointer_cast<NPulseMembrane>(membr_weak.lock());
         if(!membr)
-         return true;
+         continue;
 
         membr->NumExcitatorySynapses=NumInputFeatures;
         membr->RebuildSynapticInternalLinks();
@@ -432,28 +508,39 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
 
    for(int j = 0; j < neusize; j++)
    {
-	std::shared_ptr<NPulseNeuron> n_out=neurons_layer->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(j+1),true);
+	std::weak_ptr<RDK::UContainer> n_out_weak=neurons_layer->GetComponentL(std::string("Neuron")+sntoa(j+1),true);
+	if(n_out_weak.expired())
+	 continue;
+	std::shared_ptr<NPulseNeuron> n_out=std::dynamic_pointer_cast<NPulseNeuron>(n_out_weak.lock());
+	if(!n_out)
+	 continue;
 
     int neusize2 = neurons_layer2->NeuronsHeight*neurons_layer2->NeuronsWidth;
 	for(int n = 0; n < neusize2; n++)
 	{
-	 std::shared_ptr<NPulseNeuron> n_in=neurons_layer2->GetComponentL<NPulseNeuron>(std::string("Neuron")+sntoa(n+1),true);
-
-	 if(!n_out)
-	  return true;
+	 std::weak_ptr<RDK::UContainer> n_in_weak=neurons_layer2->GetComponentL(std::string("Neuron")+sntoa(n+1),true);
+	 if(n_in_weak.expired())
+	  continue;
+	 std::shared_ptr<NPulseNeuron> n_in=std::dynamic_pointer_cast<NPulseNeuron>(n_in_weak.lock());
 	 if(!n_in)
-	  return true;
+	  continue;
 
 	 n_in->NumDendriteMembraneParts=1;
 	 n_in->Build();
 
-	 std::shared_ptr<NLTZone> ltzone=n_out->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+	 std::weak_ptr<RDK::UContainer> ltzone_weak=n_out->GetComponentL("LTZone");//GetLTZone();
+	 if(ltzone_weak.expired())
+	  continue;
+	 std::shared_ptr<NLTZone> ltzone=std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
 	 if(!ltzone)
-	  return true;
+	  continue;
 
-	 std::shared_ptr<NPulseSynapse> synapse=n_in->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
+	 std::weak_ptr<RDK::UContainer> synapse_weak=n_in->GetComponentL("Dendrite1_1.ExcSynapse1",true);
+	 if(synapse_weak.expired())
+	  continue;
+	 std::shared_ptr<NPulseSynapse> synapse=std::dynamic_pointer_cast<NPulseSynapse>(synapse_weak.lock());
 	 if(!synapse)
-	  return true;
+	  continue;
 
 	 res&=BreakLink(ltzone->GetLongName(GetThisAsSharedContainer()),"Output",synapse->GetLongName(GetThisAsSharedContainer()),"Input");
 

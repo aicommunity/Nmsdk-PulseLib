@@ -152,13 +152,23 @@ bool NClassifier::SetNeedToTrain(const bool &value)
 	 {
 		for(int j = 0; j < SizeTrainingSet; j++)
 		{
-			trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1)),true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+			std::weak_ptr<RDK::UContainer> trainer_weak = GetComponentL("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1),true);
+			if(!trainer_weak.expired())
+			 trainer = std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
+			else
+			 trainer = nullptr;
 			if(!trainer)
 				return true;
 			trainer->IsNeedToTrain = value;
 			for(int k = 0; k < NumInputDendrite; k++)
 			{
-				generator = trainer->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(k+1)),true);
+				// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+				std::weak_ptr<RDK::UContainer> generator_weak = trainer->GetComponentL("Source"+sntoa(k+1),true);
+				if(!generator_weak.expired())
+				 generator = std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak.lock());
+				else
+				 generator = nullptr;
 				if(!generator)
 					return true;
 
@@ -431,7 +441,12 @@ bool NClassifier::AReset(void)
  /*			std::shared_ptr<NPulseGeneratorTransit> generator;
 			for(int k = 0; k < NumInputDendrite; k++)
 			{
-				generator = groups_trainers[i][j]->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(k+1)),true);
+				// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+				std::weak_ptr<RDK::UContainer> generator_weak = groups_trainers[i][j]->GetComponentL("Source"+sntoa(k+1),true);
+				if(!generator_weak.expired())
+				 generator = std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak.lock());
+				else
+				 generator = nullptr;
 				if(!generator)
 					return true;
 
@@ -553,7 +568,13 @@ bool NClassifier::BuildStructure(void)
 				{
                  pattern[k] = TrainingPatterns(j+int(groups_trainers[i].size())*i,k);
 				 groups_trainers[i][j]->InputPattern = pattern;
-				 std::shared_ptr<NPulseGeneratorTransit> generator = groups_trainers[i][j]->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(k+1)),true);
+				 // CRITICAL: GetComponentL now returns weak_ptr, need to lock
+				 std::weak_ptr<RDK::UContainer> generator_weak = groups_trainers[i][j]->GetComponentL("Source"+sntoa(k+1),true);
+				 std::shared_ptr<NPulseGeneratorTransit> generator;
+				 if(!generator_weak.expired())
+				  generator = std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak.lock());
+				 else
+				  generator = nullptr;
 				 if(!generator)
 				  continue;
 
@@ -597,10 +618,20 @@ bool NClassifier::BuildStructure(void)
 					std::shared_ptr<NNeuronTrainer> trainer; // ������ � ������������ ��������
 					std::shared_ptr<NPulseGeneratorTransit> gen_in; // ��������������� ���� ������� � ������������ ��������
 
-					trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1)),true);
+					// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+					std::weak_ptr<RDK::UContainer> trainer_weak = GetComponentL("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1),true);
+					if(!trainer_weak.expired())
+					 trainer = std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
+					else
+					 trainer = nullptr;
 					if(!trainer)
 						return true;
-					gen_in = trainer->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(k+1)),true);
+					// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+					std::weak_ptr<RDK::UContainer> gen_in_weak = trainer->GetComponentL("Source"+sntoa(k+1),true);
+					if(!gen_in_weak.expired())
+					 gen_in = std::dynamic_pointer_cast<NPulseGeneratorTransit>(gen_in_weak.lock());
+					else
+					 gen_in = nullptr;
 					if(!gen_in)
 						return true;
 
@@ -619,7 +650,25 @@ bool NClassifier::BuildStructure(void)
 			LogicalOrNeuron = AddMissingComponent<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)), NeuronClassName);
 			LogicalOrNeuron->SetCoord(MVector<double,3>(8.7+1*7+i*20+10,(1.67+SizeTrainingSet)/2,0));
 
-			std::shared_ptr<NPulseMembrane> soma = LogicalOrNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+
+			std::weak_ptr<RDK::UContainer> soma_weak = LogicalOrNeuron->GetComponentL("Soma1",true);
+
+
+			std::shared_ptr<NPulseMembrane> soma;
+
+
+			if(!soma_weak.expired())
+
+
+			 soma = std::dynamic_pointer_cast<NPulseMembrane>(soma_weak.lock());
+
+
+			else
+
+
+			 soma = nullptr;
 			if(!soma)
 				return true;
 
@@ -630,11 +679,35 @@ bool NClassifier::BuildStructure(void)
 			//��������� ������� � ��������������� ��������� ������� ���
 			for(int j = 0; j < SizeTrainingSet; j++)
 			{
-				std::shared_ptr<NNeuronTrainer> trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1)),true);
+				// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+				std::weak_ptr<RDK::UContainer> trainer_weak = GetComponentL("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1),true);
+				std::shared_ptr<NNeuronTrainer> trainer;
+				if(!trainer_weak.expired())
+				 trainer = std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
+				else
+				 trainer = nullptr;
 				if(!trainer)
 					return true;
 
-				std::shared_ptr<NLTZone> ltzone = trainer->GetComponentL<NLTZone>("Neuron.LTZone", true);
+				// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+
+				std::weak_ptr<RDK::UContainer> ltzone_weak = trainer->GetComponentL("Neuron.LTZone", true);
+
+
+				std::shared_ptr<NLTZone> ltzone;
+
+
+				if(!ltzone_weak.expired())
+
+
+				 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+
+
+				else
+
+
+				 ltzone = nullptr;
 				if(!ltzone)
 					return true;
 
@@ -656,11 +729,23 @@ bool NClassifier::BuildStructure(void)
 		// �������� ����� ����� ��������� ���
 		for(int i = 0; i < NumClasses; i++)
 		{
-			std::shared_ptr<NPulseNeuron> LogicalOrNeuron = GetComponentL<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)),true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+			std::weak_ptr<RDK::UContainer> LogicalOrNeuron_weak = GetComponentL("OrNeuron"+sntoa(i+1),true);
+			std::shared_ptr<NPulseNeuron> LogicalOrNeuron;
+			if(!LogicalOrNeuron_weak.expired())
+			 LogicalOrNeuron = std::dynamic_pointer_cast<NPulseNeuron>(LogicalOrNeuron_weak.lock());
+			else
+			 LogicalOrNeuron = nullptr;
 			if(!LogicalOrNeuron)
 				return true;
 
-			std::shared_ptr<NPulseMembrane> soma = LogicalOrNeuron->GetComponentL<NPulseMembrane>(std::string("Soma1"),true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+			std::weak_ptr<RDK::UContainer> soma_weak = LogicalOrNeuron->GetComponentL("Soma1",true);
+			std::shared_ptr<NPulseMembrane> soma;
+			if(!soma_weak.expired())
+			 soma = std::dynamic_pointer_cast<NPulseMembrane>(soma_weak.lock());
+			else
+			 soma = nullptr;
 			if(!soma)
 				return true;
 
@@ -671,15 +756,44 @@ bool NClassifier::BuildStructure(void)
 				if (i == j)
 					continue;
 
-				LogicalOrNeuron = GetComponentL<NPulseNeuron>(std::string("OrNeuron" + sntoa(j + 1)), true);
+				// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+				std::weak_ptr<RDK::UContainer> LogicalOrNeuron_weak_2 = GetComponentL("OrNeuron" + sntoa(j + 1), true);
+				if(!LogicalOrNeuron_weak_2.expired())
+				 LogicalOrNeuron = std::dynamic_pointer_cast<NPulseNeuron>(LogicalOrNeuron_weak_2.lock());
+				else
+				 LogicalOrNeuron = nullptr;
 				if(!LogicalOrNeuron)
 					return true;
 
-				std::shared_ptr<NLTZone> ltzone = LogicalOrNeuron->GetComponentL<NLTZone>("LTZone");
+				// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+
+				std::weak_ptr<RDK::UContainer> ltzone_weak = LogicalOrNeuron->GetComponentL("LTZone");
+
+
+				std::shared_ptr<NLTZone> ltzone;
+
+
+				if(!ltzone_weak.expired())
+
+
+				 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+
+
+				else
+
+
+				 ltzone = nullptr;
 				 if(!ltzone)
 					return true;
 
-				std::shared_ptr<NPulseSynapse> synapse = soma->GetComponentL<NPulseSynapse>(std::string("InhSynapse" + sntoa(indexSynapse + 1)), true);
+				// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+				std::weak_ptr<RDK::UContainer> synapse_weak = soma->GetComponentL("InhSynapse" + sntoa(indexSynapse + 1), true);
+				std::shared_ptr<NPulseSynapse> synapse;
+				if(!synapse_weak.expired())
+				 synapse = std::dynamic_pointer_cast<NPulseSynapse>(synapse_weak.lock());
+				else
+				 synapse = nullptr;
 				if(!synapse)
 					return true;
 
@@ -783,11 +897,31 @@ bool NClassifier::TreatDataFromFile(void)
         //if(!trainer)
         //	return true;
 
-        neuron  = GetComponentL<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)),true);
+        // CRITICAL: GetComponentL now returns weak_ptr, need to lock
+        std::weak_ptr<RDK::UContainer> neuron_weak = GetComponentL("OrNeuron"+sntoa(i+1),true);
+        if(!neuron_weak.expired())
+         neuron = std::dynamic_pointer_cast<NPulseNeuron>(neuron_weak.lock());
+        else
+         neuron = nullptr;
         if(!neuron)
             return true;
 
-        ltzone = neuron->GetComponentL<NLTZone>("LTZone");
+        // CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+
+        std::weak_ptr<RDK::UContainer> ltzone_weak_assign = neuron->GetComponentL("LTZone");
+
+
+        if(!ltzone_weak_assign.expired())
+
+
+         ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak_assign.lock());
+
+
+        else
+
+
+         ltzone = nullptr;
         if(!ltzone)
             return true;
 
@@ -829,7 +963,12 @@ bool NClassifier::ACalculate(void)
 		{
 			for(int j = 0; j < SizeTrainingSet; j++)
 			{
-				trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer")+sntoa(i+1)+"_"+sntoa(j+1),true);
+				// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+				std::weak_ptr<RDK::UContainer> trainer_weak = GetComponentL("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1),true);
+				if(!trainer_weak.expired())
+				 trainer = std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
+				else
+				 trainer = nullptr;
 				if(!trainer)
 					return true;
 
@@ -850,14 +989,24 @@ bool NClassifier::ACalculate(void)
 			{
 				for(int j = 0; j < SizeTrainingSet; j++)
 				{
-					trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer")+sntoa(i+1)+"_"+sntoa(j+1),true);
+					// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+					std::weak_ptr<RDK::UContainer> trainer_weak = GetComponentL("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1),true);
+					if(!trainer_weak.expired())
+					 trainer = std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
+					else
+					 trainer = nullptr;
 					if(!trainer)
 						return true;
 
 		  			trainer->LTZThreshold=FixedLTZThreshold;
 					for(int k = 0; k < NumInputDendrite; k++)
 					{
-						generator = trainer->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(k+1)),true);
+						// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+						std::weak_ptr<RDK::UContainer> generator_weak = trainer->GetComponentL("Source"+sntoa(k+1),true);
+						if(!generator_weak.expired())
+						 generator = std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak.lock());
+						else
+						 generator = nullptr;
 						if(!generator)
 							return true;
 
@@ -878,7 +1027,12 @@ bool NClassifier::ACalculate(void)
 		{
 			for(int j = 0; j < SizeTrainingSet; j++)
 			{
-				trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer")+sntoa(i+1)+"_"+sntoa(j+1),true);
+				// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+				std::weak_ptr<RDK::UContainer> trainer_weak = GetComponentL("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1),true);
+				if(!trainer_weak.expired())
+				 trainer = std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
+				else
+				 trainer = nullptr;
 				if(!trainer)
 					return true;
 
@@ -900,18 +1054,28 @@ bool NClassifier::ACalculate(void)
 			{
 				for(int j = 0; j < SizeTrainingSet; j++)
 				{
-					trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer")+sntoa(i+1)+"_"+sntoa(j+1),true);
+					// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+					std::weak_ptr<RDK::UContainer> trainer_weak = GetComponentL("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1),true);
+					if(!trainer_weak.expired())
+					 trainer = std::dynamic_pointer_cast<NNeuronTrainer>(trainer_weak.lock());
+					else
+					 trainer = nullptr;
 					if(!trainer)
 						return true;
 
-					for(int k = 0; k < NumInputDendrite; k++)
-					{
-						generator = trainer->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(k+1)),true);
-						if(!generator)
-							return true;
+				for(int k = 0; k < NumInputDendrite; k++)
+				{
+					// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+					std::weak_ptr<RDK::UContainer> generator_weak = trainer->GetComponentL("Source"+sntoa(k+1),true);
+					if(!generator_weak.expired())
+					 generator = std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak.lock());
+					else
+					 generator = nullptr;
+					if(!generator)
+						return true;
 
-						generator->UseTransitSignal = false;
-					}
+					generator->UseTransitSignal = false;
+				}
 				}
 			}
 		}

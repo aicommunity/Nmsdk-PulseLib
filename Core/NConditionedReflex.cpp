@@ -369,7 +369,19 @@ bool NConditionedReflex::BuildStructure(void)
 	 ConditionalStimul->SetCoord(MVector<double,3>(4.0+0*7,1*2,0));
 	 ConditionalStimul->NumInputDendrite = NumConditionalStimulDendrite;
 	}
-    std::shared_ptr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
+    // CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+    std::weak_ptr<RDK::UContainer> ltZone_weak = ConditionalStimul->GetComponentL("Neuron.LTZone",true);
+
+    std::shared_ptr<NPulseLTZoneThreshold> ltZone;
+
+    if(!ltZone_weak.expired())
+
+     ltZone = std::dynamic_pointer_cast<NPulseLTZoneThreshold>(ltZone_weak.lock());
+
+    else
+
+     ltZone = nullptr;
 	if(!ltZone)
 		return true;
     //ltZone->TimeConstant = 0.0005;
@@ -379,7 +391,12 @@ bool NConditionedReflex::BuildStructure(void)
 	UnconditionalStimul = AddMissingComponent<NNeuronTrainer>("UnconditionalStimulus", NeuronTrainerClassName);
 	UnconditionalStimul->SetCoord(MVector<double,3>(4.0+0*7,5*2,0));
 	UnconditionalStimul->NumInputDendrite = NumUnconditionalStimulDendrite;
-    ltZone = UnconditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
+    // CRITICAL: GetComponentL now returns weak_ptr, need to lock
+    std::weak_ptr<RDK::UContainer> ltZone_weak_uncond = UnconditionalStimul->GetComponentL("Neuron.LTZone",true);
+    if(!ltZone_weak_uncond.expired())
+     ltZone = std::dynamic_pointer_cast<NPulseLTZoneThreshold>(ltZone_weak_uncond.lock());
+    else
+     ltZone = nullptr;
 	if(!ltZone)
 		return true;
     //ltZone->TimeConstant = 0.0005;
@@ -393,11 +410,31 @@ bool NConditionedReflex::BuildStructure(void)
 	LogicalAndNeuron->IsNeedToTrain = false;
 	// ��������� ���������� � ����� ��������
 	std::shared_ptr<NPulseGeneratorTransit> generator;
-	generator = LogicalAndNeuron->GetComponentL<NPulseGeneratorTransit>("Source1",true);
+	// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+	std::weak_ptr<RDK::UContainer> generator_weak_assign_1 = LogicalAndNeuron->GetComponentL("Source1",true);
+
+	if(!generator_weak_assign_1.expired())
+
+	 generator = std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak_assign_1.lock());
+
+	else
+
+	 generator = nullptr;
 	if(!generator)
 		return true;
 	generator->UseTransitSignal = true;
-	generator = LogicalAndNeuron->GetComponentL<NPulseGeneratorTransit>("Source2",true);
+	// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+	std::weak_ptr<RDK::UContainer> generator_weak_assign_3 = LogicalAndNeuron->GetComponentL("Source2",true);
+
+	if(!generator_weak_assign_3.expired())
+
+	 generator = std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak_assign_3.lock());
+
+	else
+
+	 generator = nullptr;
 	if(!generator)
 		return true;
 	generator->UseTransitSignal = true;
@@ -406,7 +443,12 @@ bool NConditionedReflex::BuildStructure(void)
 	BigNeuron = AddMissingComponent<NPulseNeuron>(std::string("ConditionalNeuron"), NeuronClassName);
 	BigNeuron->SetCoord(MVector<double,3>(4.0+1.5*7,3*2,0));
 	BigNeuron->NumSomaMembraneParts = BigNeuronSize;
-    ltZone = BigNeuron->GetComponentL<NPulseLTZoneThreshold>("LTZone",true);
+    // CRITICAL: GetComponentL now returns weak_ptr, need to lock
+    std::weak_ptr<RDK::UContainer> ltZone_weak_big = BigNeuron->GetComponentL("LTZone",true);
+    if(!ltZone_weak_big.expired())
+     ltZone = std::dynamic_pointer_cast<NPulseLTZoneThreshold>(ltZone_weak_big.lock());
+    else
+     ltZone = nullptr;
 	if(!ltZone)
 		return true;
 	double threshold = FixedLTZThreshold;
@@ -417,13 +459,37 @@ bool NConditionedReflex::BuildStructure(void)
 	LogicalOrNeuron = AddMissingComponent<NPulseNeuron>(std::string("UnconditionalNeuron"), NeuronClassName);
 	LogicalOrNeuron->SetCoord(MVector<double,3>(3.5+2.5*7,5*2,0));
 	// ��������� ������ ��� ���������� ������� "���"
-	std::shared_ptr<NPulseMembrane> soma = LogicalOrNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
+	// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+	std::weak_ptr<RDK::UContainer> soma_weak = LogicalOrNeuron->GetComponentL("Soma1",true);
+
+	std::shared_ptr<NPulseMembrane> soma;
+
+	if(!soma_weak.expired())
+
+	 soma = std::dynamic_pointer_cast<NPulseMembrane>(soma_weak.lock());
+
+	else
+
+	 soma = nullptr;
 	if(!soma)
 		return true;
 	std::shared_ptr<NPulseSynapse> synapse2 = soma->AddMissingComponent<NPulseSynapse>("ExcSynapse2", SynapseClassName);
 	if(!synapse2)
 		return true;
-	std::shared_ptr<NPulseSynapse> synapse1 = soma->GetComponentL<NPulseSynapse>("ExcSynapse1",true);
+	// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+	std::weak_ptr<RDK::UContainer> synapse1_weak = soma->GetComponentL("ExcSynapse1",true);
+
+	std::shared_ptr<NPulseSynapse> synapse1;
+
+	if(!synapse1_weak.expired())
+
+	 synapse1 = std::dynamic_pointer_cast<NPulseSynapse>(synapse1_weak.lock());
+
+	else
+
+	 synapse1 = nullptr;
 	if(!synapse1)
 		return true;
 	RDK::MVector<double,3> coords = synapse1->GetCoord();
@@ -439,7 +505,19 @@ bool NConditionedReflex::BuildStructure(void)
 	// ��������� "����������� ������������" � "����������� ���������"
 	std::shared_ptr<NPulseNeuron> neuron;
 	// ����������� ������������
-	std::shared_ptr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone", true);
+	// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+	std::weak_ptr<RDK::UContainer> ltzone_weak = UnconditionalStimul->GetComponentL("Neuron.LTZone", true);
+
+	std::shared_ptr<NLTZone> ltzone;
+
+	if(!ltzone_weak.expired())
+
+	 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+
+	else
+
+	 ltzone = nullptr;
 	if(!ltzone)
 		return true;
 	// ��������� c ����������� ���������
@@ -495,7 +573,19 @@ bool NConditionedReflex::ACalculate(void)
 		// ������� ������� ������� ������ �� ��������� ������������
 		if(!is_first_spike)
 		{
-			std::shared_ptr<NLTZone> ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> ltzone_weak = ConditionalStimul->GetComponentL("Neuron.LTZone",true);
+
+			std::shared_ptr<NLTZone> ltzone;
+
+			if(!ltzone_weak.expired())
+
+			 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+
+			else
+
+			 ltzone = nullptr;
 			if(!ltzone)
 				return true;
 			double value = ltzone->Output(0,0);
@@ -511,7 +601,19 @@ bool NConditionedReflex::ACalculate(void)
 		// ������� ������� ������� ������ �� ������������ ������������
 		if(!is_second_spike)
 		{
-			std::shared_ptr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> ltzone_weak = UnconditionalStimul->GetComponentL("Neuron.LTZone",true);
+
+			std::shared_ptr<NLTZone> ltzone;
+
+			if(!ltzone_weak.expired())
+
+			 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+
+			else
+
+			 ltzone = nullptr;
 			if(!ltzone)
 				return true;
 			double value = ltzone->Output(0,0);
@@ -565,12 +667,34 @@ bool NConditionedReflex::ACalculate(void)
 			LogicalAndNeuron->InputPattern = pattern;
 
 			// ������ ����� ��������� � ������������ ������������� � ��������, ����������� ������� "�"
-			std::shared_ptr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> ltzone_weak = UnconditionalStimul->GetComponentL("Neuron.LTZone",true);
+
+			std::shared_ptr<NLTZone> ltzone;
+
+			if(!ltzone_weak.expired())
+
+			 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+
+			else
+
+			 ltzone = nullptr;
 			if(!ltzone)
 				return true;
 			// ������ "�"
 			std::shared_ptr<NPulseGeneratorTransit> generator; // ��������������� ���� ������� � ������������ ��������
-			generator = LogicalAndNeuron->GetComponentL<NPulseGeneratorTransit>("Source2",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> generator_weak_assign_5 = LogicalAndNeuron->GetComponentL("Source2",true);
+
+			if(!generator_weak_assign_5.expired())
+
+			 generator = std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak_assign_5.lock());
+
+			else
+
+			 generator = nullptr;
 			if(!generator)
 				return true;
 			// ���������
@@ -579,11 +703,31 @@ bool NConditionedReflex::ACalculate(void)
 			if(!res)
 				return true;
 			// �������� ������������
-			ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> ltzone_weak_assign = ConditionalStimul->GetComponentL("Neuron.LTZone",true);
+
+			if(!ltzone_weak_assign.expired())
+
+			 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak_assign.lock());
+
+			else
+
+			 ltzone = nullptr;
 			if(!ltzone)
 				return true;
 			// ������ "�"
-			generator = LogicalAndNeuron->GetComponentL<NPulseGeneratorTransit>("Source1",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> generator_weak_assign_7_s1 = LogicalAndNeuron->GetComponentL("Source1",true);
+
+			if(!generator_weak_assign_7_s1.expired())
+
+			 generator = std::dynamic_pointer_cast<NPulseGeneratorTransit>(generator_weak_assign_7_s1.lock());
+
+			else
+
+			 generator = nullptr;
 			if(!generator)
 				return true;
 			// ���������
@@ -610,11 +754,35 @@ bool NConditionedReflex::ACalculate(void)
 		{
 			// ��������� ����� ����� ��������, ����������� ������� "�" � "�������" ��������
 			// ������ "�"
-			std::shared_ptr<NLTZone> ltzone = LogicalAndNeuron->GetComponentL<NLTZone>("Neuron.LTZone",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> ltzone_weak = LogicalAndNeuron->GetComponentL("Neuron.LTZone",true);
+
+			std::shared_ptr<NLTZone> ltzone;
+
+			if(!ltzone_weak.expired())
+
+			 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+
+			else
+
+			 ltzone = nullptr;
 			if(!ltzone)
 				return true;
 			// "�������" ������
-			std::shared_ptr<NPulseSynapse> synapse = BigNeuron->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse1",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> synapse_weak = BigNeuron->GetComponentL("Soma1.ExcSynapse1",true);
+
+			std::shared_ptr<NPulseSynapse> synapse;
+
+			if(!synapse_weak.expired())
+
+			 synapse = std::dynamic_pointer_cast<NPulseSynapse>(synapse_weak.lock());
+
+			else
+
+			 synapse = nullptr;
 			if(!synapse)
 				return true;
 			// ���������
@@ -640,22 +808,58 @@ bool NConditionedReflex::ACalculate(void)
 	 if(!is_big_neuron_trained)
 	 {
 		// ���� "������� ������ �������, ��������� �������� � ��������� ����� ��������� ������������ � ����������� ���������
-		std::shared_ptr<NLTZone> ltzone = BigNeuron->GetComponentL<NLTZone>("LTZone",true);
+		// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+		std::weak_ptr<RDK::UContainer> ltzone_weak = BigNeuron->GetComponentL("LTZone",true);
+
+		std::shared_ptr<NLTZone> ltzone;
+
+		if(!ltzone_weak.expired())
+
+		 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+
+		else
+
+		 ltzone = nullptr;
         if(!ltzone)
 			return true;
 		if(ltzone->Output(0,0) > 0)
 		{
 			// ��������� ����� ��������� ������������ � ����������� ���������
 			// �������� ������������
-			ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> ltzone_weak_assign = ConditionalStimul->GetComponentL("Neuron.LTZone",true);
+
+			if(!ltzone_weak_assign.expired())
+
+			 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak_assign.lock());
+
+			else
+
+			 ltzone = nullptr;
 			if(!ltzone)
 				return true;
 			// ����������� �������
-			std::shared_ptr<NPulseSynapse> synapse2;
-			if(!IsNegInfluence)
-				synapse2 = LogicalOrNeuron->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse2",true);
+		std::shared_ptr<NPulseSynapse> synapse2;
+		if(!IsNegInfluence)
+		{
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+			std::weak_ptr<RDK::UContainer> synapse2_weak_assign_exc = LogicalOrNeuron->GetComponentL("Soma1.ExcSynapse2",true);
+			if(!synapse2_weak_assign_exc.expired())
+			 synapse2 = std::dynamic_pointer_cast<NPulseSynapse>(synapse2_weak_assign_exc.lock());
 			else
-                synapse2 = LogicalOrNeuron->GetComponentL<NPulseSynapse>("Soma1.InhSynapse1",true);
+			 synapse2 = nullptr;
+		}
+		else
+		{
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+			std::weak_ptr<RDK::UContainer> synapse2_weak_assign_inh = LogicalOrNeuron->GetComponentL("Soma1.InhSynapse1",true);
+			if(!synapse2_weak_assign_inh.expired())
+			 synapse2 = std::dynamic_pointer_cast<NPulseSynapse>(synapse2_weak_assign_inh.lock());
+			else
+			 synapse2 = nullptr;
+		}
 			if(!synapse2)
 				return true;
             // ���������
@@ -671,7 +875,17 @@ bool NConditionedReflex::ACalculate(void)
 		}
 
 		// ���� ���� ���� � �������, ������������ ������� "�" - ��������� ������
-		ltzone = LogicalAndNeuron->GetComponentL<NLTZone>("Neuron.LTZone",true);
+		// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+		std::weak_ptr<RDK::UContainer> ltzone_weak_assign = LogicalAndNeuron->GetComponentL("Neuron.LTZone",true);
+
+		if(!ltzone_weak_assign.expired())
+
+		 ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak_assign.lock());
+
+		else
+
+		 ltzone = nullptr;
         if(!ltzone)
 			return true;
 
@@ -681,13 +895,37 @@ bool NConditionedReflex::ACalculate(void)
 			synapses_num++;
 
 			// ��������� ������ �� "�������" ������
-			std::shared_ptr<NPulseMembrane> soma = BigNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> soma_weak = BigNeuron->GetComponentL("Soma1",true);
+
+			std::shared_ptr<NPulseMembrane> soma;
+
+			if(!soma_weak.expired())
+
+			 soma = std::dynamic_pointer_cast<NPulseMembrane>(soma_weak.lock());
+
+			else
+
+			 soma = nullptr;
 			if(!soma)
 				return true;
 			std::shared_ptr<NPulseSynapse> synapse = soma->AddMissingComponent<NPulseSynapse>(std::string("ExcSynapse"+sntoa(synapses_num)), SynapseClassName);
 			if(!synapse)
 				return true;
-			std::shared_ptr<NPulseSynapse> synapse1 = soma->GetComponentL<NPulseSynapse>("ExcSynapse1",true);
+			// CRITICAL: GetComponentL now returns weak_ptr, need to lock
+
+			std::weak_ptr<RDK::UContainer> synapse1_weak = soma->GetComponentL("ExcSynapse1",true);
+
+			std::shared_ptr<NPulseSynapse> synapse1;
+
+			if(!synapse1_weak.expired())
+
+			 synapse1 = std::dynamic_pointer_cast<NPulseSynapse>(synapse1_weak.lock());
+
+			else
+
+			 synapse1 = nullptr;
 			if(!synapse1)
 				return true;
 			RDK::MVector<double,3> coords = synapse1->GetCoord();

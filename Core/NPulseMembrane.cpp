@@ -69,9 +69,13 @@ NPulseChannelCommon* NPulseMembrane::GetPosChannel(size_t i)
   GetComponentsNameByClassType<NPulseChannelCommon>(channel_buffer, GetThisAsSharedContainer());
   for(size_t j=0; j<channel_buffer.size(); j++)
   {
-   std::shared_ptr<NPulseChannelCommon> ch = GetComponentL<NPulseChannelCommon>(channel_buffer[j], true);
-   if(ch && ch.get() == channel)
-    return channel; // Pointer is still valid
+   std::weak_ptr<RDK::UContainer> ch_weak = GetComponentL(channel_buffer[j], true);
+   if(!ch_weak.expired())
+   {
+    std::shared_ptr<NPulseChannelCommon> ch = std::dynamic_pointer_cast<NPulseChannelCommon>(ch_weak.lock());
+    if(ch && ch.get() == channel)
+     return channel; // Pointer is still valid
+   }
   }
   // Pointer not found in components - it's been deleted
   return nullptr;
@@ -103,9 +107,13 @@ NPulseChannelCommon* NPulseMembrane::GetNegChannel(size_t i)
   GetComponentsNameByClassType<NPulseChannelCommon>(channel_buffer, GetThisAsSharedContainer());
   for(size_t j=0; j<channel_buffer.size(); j++)
   {
-   std::shared_ptr<NPulseChannelCommon> ch = GetComponentL<NPulseChannelCommon>(channel_buffer[j], true);
-   if(ch && ch.get() == channel)
-    return channel; // Pointer is still valid
+   std::weak_ptr<RDK::UContainer> ch_weak = GetComponentL(channel_buffer[j], true);
+   if(!ch_weak.expired())
+   {
+    std::shared_ptr<NPulseChannelCommon> ch = std::dynamic_pointer_cast<NPulseChannelCommon>(ch_weak.lock());
+    if(ch && ch.get() == channel)
+     return channel; // Pointer is still valid
+   }
   }
   return nullptr;
  } catch (...) {
@@ -143,9 +151,13 @@ NPulseSynapseCommon* NPulseMembrane::GetExcitatorySynapses(size_t i)
   GetComponentsNameByClassType<NPulseSynapseCommon>(synapse_buffer, GetThisAsSharedContainer());
   for(size_t j=0; j<synapse_buffer.size(); j++)
   {
-   std::shared_ptr<NPulseSynapseCommon> syn = GetComponentL<NPulseSynapseCommon>(synapse_buffer[j], true);
-   if(syn && syn.get() == synapse)
-    return synapse; // Pointer is still valid
+   std::weak_ptr<RDK::UContainer> syn_weak = GetComponentL(synapse_buffer[j], true);
+   if(!syn_weak.expired())
+   {
+    std::shared_ptr<NPulseSynapseCommon> syn = std::dynamic_pointer_cast<NPulseSynapseCommon>(syn_weak.lock());
+    if(syn && syn.get() == synapse)
+     return synapse; // Pointer is still valid
+   }
   }
   return nullptr;
  } catch (...) {
@@ -175,9 +187,13 @@ NPulseSynapseCommon* NPulseMembrane::GetInhibitorySynapses(size_t i)
   GetComponentsNameByClassType<NPulseSynapseCommon>(synapse_buffer, GetThisAsSharedContainer());
   for(size_t j=0; j<synapse_buffer.size(); j++)
   {
-   std::shared_ptr<NPulseSynapseCommon> syn = GetComponentL<NPulseSynapseCommon>(synapse_buffer[j], true);
-   if(syn && syn.get() == synapse)
-    return synapse; // Pointer is still valid
+   std::weak_ptr<RDK::UContainer> syn_weak = GetComponentL(synapse_buffer[j], true);
+   if(!syn_weak.expired())
+   {
+    std::shared_ptr<NPulseSynapseCommon> syn = std::dynamic_pointer_cast<NPulseSynapseCommon>(syn_weak.lock());
+    if(syn && syn.get() == synapse)
+     return synapse; // Pointer is still valid
+   }
   }
   return nullptr;
  } catch (...) {
@@ -437,9 +453,13 @@ bool NPulseMembrane::ABuild(void)
 
   for(int i=NumExcitatorySynapses;i<old_ex_synapses;i++)
   {
-   std::shared_ptr<UContainer> syn = GetComponentL(std::string("ExcSynapse")+sntoa(i+1), true);
-   if(syn)
-    DelComponent(syn, true);
+   std::weak_ptr<RDK::UContainer> syn_weak = GetComponentL(std::string("ExcSynapse")+sntoa(i+1), true);
+   if(!syn_weak.expired())
+   {
+    std::shared_ptr<RDK::UContainer> syn = syn_weak.lock();
+    if(syn)
+     DelComponent(syn_weak, true);
+   }
 //    GetStorage()->ReturnObject(syn);
   }
 //  ExcitatorySynapses.clear(); // ��� �� ������. �� ������� ������ ��������, � ���� ��������
@@ -472,9 +492,13 @@ bool NPulseMembrane::ABuild(void)
   int old_in_synapses=int(InhibitorySynapses.size());
   for(int i=NumInhibitorySynapses;i<old_in_synapses;i++)
   {
-   std::shared_ptr<UContainer> syn = GetComponentL(std::string("InhSynapse")+sntoa(i+1), true);
-   if(syn)
-    DelComponent(syn, true);
+   std::weak_ptr<RDK::UContainer> syn_weak = GetComponentL(std::string("InhSynapse")+sntoa(i+1), true);
+   if(!syn_weak.expired())
+   {
+    std::shared_ptr<RDK::UContainer> syn = syn_weak.lock();
+    if(syn)
+     DelComponent(syn_weak, true);
+   }
     //GetStorage()->ReturnObject(syn);
   }
 

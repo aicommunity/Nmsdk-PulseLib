@@ -137,11 +137,21 @@ bool NNeuronLearner::ZeroingTrainingPattern(void)
 /// ��������� ������������� ������ �������������� ���� �������
 bool NNeuronLearner::SetLTZThreshold(const double &value)
 {
- std::shared_ptr<NPulseNeuron> n_in = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
+ std::weak_ptr<RDK::UContainer> n_in_weak = GetComponentL(std::string("Neuron"),true);
+ std::shared_ptr<NPulseNeuron> n_in;
+ if(!n_in_weak.expired())
+  n_in = std::dynamic_pointer_cast<NPulseNeuron>(n_in_weak.lock());
+ else
+  n_in = nullptr;
  if(!n_in)
   return true;
 
- std::shared_ptr<NLTZone> ltzone = n_in->GetComponentL<NLTZone>("LTZone");//GetLTZone();
+ std::weak_ptr<RDK::UContainer> ltzone_weak = n_in->GetComponentL("LTZone");//GetLTZone();
+ std::shared_ptr<NLTZone> ltzone;
+ if(!ltzone_weak.expired())
+  ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+ else
+  ltzone = nullptr;
  if(!ltzone)
   return true;
 
@@ -275,8 +285,13 @@ bool NNeuronLearner::SetMaxDendriteLength(const int &value)
    // Neuron->GetStorage()->FreeObjectsStorage();
 
    // ������� ��������� �������� ��������
-   std::shared_ptr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(i + 1) +
+   std::weak_ptr<RDK::UContainer> dendrite_weak = Neuron->GetComponentL("Dendrite" + sntoa(i + 1) +
                                                                              + "_" + sntoa(DendriteLength[i]), true);
+   std::shared_ptr<NPulseMembrane> dendrite;
+   if(!dendrite_weak.expired())
+    dendrite = std::dynamic_pointer_cast<NPulseMembrane>(dendrite_weak.lock());
+   else
+    dendrite = nullptr;
    if(!dendrite)
     return true;
 
@@ -366,9 +381,14 @@ bool NNeuronLearner::SetSynapseResistanceStep(const double &value)
  {
   for(int numsyn = 2; numsyn <= NumSynapse[numdend - 1]; numsyn++)
   {
-   std::shared_ptr<NPulseSynapse> synapse = Neuron->GetComponentL<NPulseSynapse>("Dendrite" +
+   std::weak_ptr<RDK::UContainer> synapse_weak = Neuron->GetComponentL("Dendrite" +
                                                                        sntoa(numdend) + "_" + sntoa(DendriteLength[numdend - 1]) +
                                                                        ".ExcSynapse" + sntoa(numsyn), true);
+   std::shared_ptr<NPulseSynapse> synapse;
+   if(!synapse_weak.expired())
+    synapse = std::dynamic_pointer_cast<NPulseSynapse>(synapse_weak.lock());
+   else
+    synapse = nullptr;
    if(!synapse)
     continue;
 
@@ -552,8 +572,13 @@ bool NNeuronLearner::BuildStructure()
   // ������� ���������� ������� �� �������� ��������, ������� ������ ��� �������
   if ((i < OldDendriteLength.size()) && (i < DendriteLength.size()) && (OldDendriteLength[i] < DendriteLength[i]))
   {
-   std::shared_ptr<NPulseMembrane> previnputsegmentofdendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(i + 1) +
+   std::weak_ptr<RDK::UContainer> previnputsegmentofdendrite_weak = Neuron->GetComponentL("Dendrite" + sntoa(i + 1) +
                                                                               "_" + sntoa(OldDendriteLength[i]), true);
+   std::shared_ptr<NPulseMembrane> previnputsegmentofdendrite;
+   if(!previnputsegmentofdendrite_weak.expired())
+    previnputsegmentofdendrite = std::dynamic_pointer_cast<NPulseMembrane>(previnputsegmentofdendrite_weak.lock());
+   else
+    previnputsegmentofdendrite = nullptr;
    if(previnputsegmentofdendrite)
    {
     previnputsegmentofdendrite->NumExcitatorySynapses = 1;
@@ -562,8 +587,13 @@ bool NNeuronLearner::BuildStructure()
   }
 
   // ������� ������� ������� ��������
-  std::shared_ptr<NPulseMembrane> inputsegmentofdendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(i + 1) +
+  std::weak_ptr<RDK::UContainer> inputsegmentofdendrite_weak = Neuron->GetComponentL("Dendrite" + sntoa(i + 1) +
                                                                             + "_" + sntoa(DendriteLength[i]), true);
+  std::shared_ptr<NPulseMembrane> inputsegmentofdendrite;
+  if(!inputsegmentofdendrite_weak.expired())
+   inputsegmentofdendrite = std::dynamic_pointer_cast<NPulseMembrane>(inputsegmentofdendrite_weak.lock());
+  else
+   inputsegmentofdendrite = nullptr;
   if(!inputsegmentofdendrite)
    continue;
 
@@ -582,8 +612,13 @@ bool NNeuronLearner::BuildStructure()
  for(int numdend = 0; numdend < NumInputDendrite; numdend++)
  {
   // ������� ������� ������� ��������
-  std::shared_ptr<NPulseMembrane> segmentofdendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(numdend + 1) +
+  std::weak_ptr<RDK::UContainer> segmentofdendrite_weak = Neuron->GetComponentL("Dendrite" + sntoa(numdend + 1) +
                                                                             + "_" + sntoa(DendriteLength[numdend]), true);
+  std::shared_ptr<NPulseMembrane> segmentofdendrite;
+  if(!segmentofdendrite_weak.expired())
+   segmentofdendrite = std::dynamic_pointer_cast<NPulseMembrane>(segmentofdendrite_weak.lock());
+  else
+   segmentofdendrite = nullptr;
   // ��� ������� �������
   for(int numsyn = 0; numsyn < NumSynapse[numdend]; numsyn++)
   {
@@ -747,11 +782,21 @@ bool NNeuronLearner::ABuild(void)
 bool NNeuronLearner::AReset(void)
 {
  // ������������� �������� ������ �� ���������
- std::shared_ptr<NPulseNeuron> n_in = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
+ std::weak_ptr<RDK::UContainer> n_in_weak = GetComponentL(std::string("Neuron"),true);
+ std::shared_ptr<NPulseNeuron> n_in;
+ if(!n_in_weak.expired())
+  n_in = std::dynamic_pointer_cast<NPulseNeuron>(n_in_weak.lock());
+ else
+  n_in = nullptr;
  if(!n_in)
   return true;
 
- std::shared_ptr<NLTZone> ltzone = n_in->GetComponentL<NLTZone>("LTZone");
+ std::weak_ptr<RDK::UContainer> ltzone_weak = n_in->GetComponentL("LTZone");
+ std::shared_ptr<NLTZone> ltzone;
+ if(!ltzone_weak.expired())
+  ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+ else
+  ltzone = nullptr;
  if(!ltzone)
   return true;
 
@@ -862,8 +907,13 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
  // ���� ��������� �������, �� �� ���������� ����� �������� ������ 1 ������
  if((DendStatus[num] == 1) && (DendriteLength[num] > 1))
  {
-  std::shared_ptr<NPulseMembrane> prevdendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(num + 1) +
+  std::weak_ptr<RDK::UContainer> prevdendrite_weak = Neuron->GetComponentL("Dendrite" + sntoa(num + 1) +
                                                                              "_" + sntoa(DendriteLength[num] - 1), true);
+ std::shared_ptr<NPulseMembrane> prevdendrite;
+ if(!prevdendrite_weak.expired())
+  prevdendrite = std::dynamic_pointer_cast<NPulseMembrane>(prevdendrite_weak.lock());
+ else
+  prevdendrite = nullptr;
   if(!prevdendrite)
    return true;
 
@@ -875,8 +925,13 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
 
 
  // �������� ���������� �������� � ����� ��������
- std::shared_ptr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(num + 1) +
+ std::weak_ptr<RDK::UContainer> dendrite_weak = Neuron->GetComponentL("Dendrite" + sntoa(num + 1) +
                                                                          "_" + sntoa(DendriteLength[num]), true);
+ std::shared_ptr<NPulseMembrane> dendrite;
+ if(!dendrite_weak.expired())
+  dendrite = std::dynamic_pointer_cast<NPulseMembrane>(dendrite_weak.lock());
+ else
+  dendrite = nullptr;
  if(!dendrite)
   return true;
  dendrite->NumExcitatorySynapses = NumSynapse[num];
@@ -927,8 +982,13 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
  NumSynapse[num] += SynapseStatus[num];
 
  // ������� ��������� �������� ��������
- std::shared_ptr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(num + 1) +
+ std::weak_ptr<RDK::UContainer> dendrite_weak = Neuron->GetComponentL("Dendrite" + sntoa(num + 1) +
                                                                         "_" + sntoa(DendriteLength[num]), true);
+ std::shared_ptr<NPulseMembrane> dendrite;
+ if(!dendrite_weak.expired())
+  dendrite = std::dynamic_pointer_cast<NPulseMembrane>(dendrite_weak.lock());
+ else
+  dendrite = nullptr;
  if(!dendrite)
   return true;
 
@@ -983,7 +1043,12 @@ bool NNeuronLearner::MeasureMaxPotentialAndTime(void)
  for(int i = 0; i < NumInputDendrite; i++)
  {
   // ������� ����
-  std::shared_ptr<NPulseMembrane> soma = Neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
+  std::weak_ptr<RDK::UContainer> soma_weak = Neuron->GetComponentL("Soma"+sntoa(i+1),true);
+  std::shared_ptr<NPulseMembrane> soma;
+  if(!soma_weak.expired())
+   soma = std::dynamic_pointer_cast<NPulseMembrane>(soma_weak.lock());
+  else
+   soma = nullptr;
 
   if(!soma)
    return true;
@@ -1159,10 +1224,20 @@ bool NNeuronLearner::PatternRecognition(void)
  }
 
  // ������� ��������� ������������� �������� �������
- std::shared_ptr<NPulseNeuron> neuron = this->GetComponent<NPulseNeuron>(std::string("Neuron"), true);
+ std::weak_ptr<RDK::UContainer> neuron_weak = this->GetComponent(std::string("Neuron"), true);
+ std::shared_ptr<NPulseNeuron> neuron;
+ if(!neuron_weak.expired())
+  neuron = std::dynamic_pointer_cast<NPulseNeuron>(neuron_weak.lock());
+ else
+  neuron = nullptr;
  if(!neuron)
   return true;
- std::shared_ptr<NLTZone> ltzone = neuron->GetComponent<NLTZone>("LTZone");
+ std::weak_ptr<RDK::UContainer> ltzone_weak = neuron->GetComponent("LTZone");
+ std::shared_ptr<NLTZone> ltzone;
+ if(!ltzone_weak.expired())
+  ltzone = std::dynamic_pointer_cast<NLTZone>(ltzone_weak.lock());
+ else
+  ltzone = nullptr;
  if(!ltzone)
   return true;
  if(ltzone->Output(0,0) > 0.001)
@@ -1506,7 +1581,12 @@ bool NNeuronLearner::ACalculate(void)
  DendriteNeuronAmplitude(0, 0) = 0;
  for(int i = 0; i < NumInputDendrite; i++)
  {
-     std::shared_ptr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i + 1)+"_1",true);
+     std::weak_ptr<RDK::UContainer> dendrite_weak = Neuron->GetComponentL("Dendrite"+sntoa(i + 1)+"_1",true);
+     std::shared_ptr<NPulseMembrane> dendrite;
+     if(!dendrite_weak.expired())
+      dendrite = std::dynamic_pointer_cast<NPulseMembrane>(dendrite_weak.lock());
+     else
+      dendrite = nullptr;
      if(!dendrite)
       return true;
      DendriteNeuronAmplitude(i + 1, 0) = dendrite->SumPotential(0, 0);
@@ -1516,7 +1596,12 @@ bool NNeuronLearner::ACalculate(void)
  SomaNeuronAmplitude(0, 0) = 0;
  for(int i = 0; i < NumInputDendrite; i++)
  {
-     std::shared_ptr<NPulseMembrane> soma = Neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i + 1),true);
+     std::weak_ptr<RDK::UContainer> soma_weak = Neuron->GetComponentL("Soma"+sntoa(i + 1),true);
+     std::shared_ptr<NPulseMembrane> soma;
+     if(!soma_weak.expired())
+      soma = std::dynamic_pointer_cast<NPulseMembrane>(soma_weak.lock());
+     else
+      soma = nullptr;
      if(!soma)
       return true;
      SomaNeuronAmplitude(i + 1, 0) = soma->SumPotential(0, 0);

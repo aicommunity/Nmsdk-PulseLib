@@ -50,10 +50,14 @@ bool NPulseMembraneCommon::SetUseAveragePotential(const bool &value)
  for(size_t i=0; i<channel_buffer.size(); i++)
  {
   try {
-   std::shared_ptr<NPulseChannelCommon> channel = GetComponentL<NPulseChannelCommon>(channel_buffer[i], true);
-   if(channel)
+   std::weak_ptr<RDK::UContainer> channel_weak = GetComponentL(channel_buffer[i], true);
+   if(!channel_weak.expired())
    {
-    channel->UseAveragePotential=value;
+    std::shared_ptr<NPulseChannelCommon> channel = std::dynamic_pointer_cast<NPulseChannelCommon>(channel_weak.lock());
+    if(channel)
+    {
+     channel->UseAveragePotential=value;
+    }
    }
   } catch (...) {
    // Skip invalid or deleted components

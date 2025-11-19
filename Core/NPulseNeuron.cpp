@@ -227,7 +227,10 @@ NPulseMembraneCommon* NPulseNeuron::ElongateDendrite(const std::string &name, bo
  if(!Storage)
   return 0;
 
- std::shared_ptr<UContainer> cont=GetComponent(name);
+ std::weak_ptr<RDK::UContainer> cont_weak=GetComponent(name);
+ if(cont_weak.expired())
+  return 0;
+ std::shared_ptr<RDK::UContainer> cont=cont_weak.lock();
  if(!cont)
   return 0;
 
@@ -248,12 +251,16 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
  if(!Storage)
   return 0;
 
- std::shared_ptr<NPulseMembrane> dendrite=dynamic_pointer_cast<NPulseMembrane>(GetComponent(name));
+ std::weak_ptr<RDK::UContainer> dendrite_weak=GetComponent(name);
+ if(dendrite_weak.expired())
+  return 0;
+ std::shared_ptr<NPulseMembrane> dendrite=std::dynamic_pointer_cast<NPulseMembrane>(dendrite_weak.lock());
  if(!dendrite)
   return 0;
 
  std::shared_ptr<NPulseMembrane> new_dendrite=dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(dendrite->GetClass()));
- if(!AddComponent(new_dendrite))
+ UId added_id = AddComponent(std::weak_ptr<RDK::UContainer>(new_dendrite));
+ if(added_id == RDK::ForbiddenId)
  {
   new_dendrite->Free();
   return 0;
@@ -274,10 +281,16 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
   size=new_dendrite->GetNumComponents();
  for(int k=0;k<size;k++)
  {
-  std::shared_ptr<NPulseChannelCommon> channel=dynamic_pointer_cast<NPulseChannelCommon>(dendrite->GetComponentByIndex(k));
+  std::weak_ptr<RDK::UContainer> channel_weak=dendrite->GetComponentByIndex(k);
+  if(channel_weak.expired())
+	continue;
+  std::shared_ptr<NPulseChannelCommon> channel=std::dynamic_pointer_cast<NPulseChannelCommon>(channel_weak.lock());
   if(!channel)
 	continue;
-  std::shared_ptr<NPulseChannelCommon> new_channel=dynamic_pointer_cast<NPulseChannelCommon>(new_dendrite->GetComponentL(channel->GetName(),true));
+  std::weak_ptr<RDK::UContainer> new_channel_weak=new_dendrite->GetComponentL(channel->GetName(),true);
+  if(new_channel_weak.expired())
+	continue;
+  std::shared_ptr<NPulseChannelCommon> new_channel=std::dynamic_pointer_cast<NPulseChannelCommon>(new_channel_weak.lock());
   if(!new_channel)
   	continue;
  /* for(int i=0;i<channel->Output. ;i++)
@@ -576,8 +589,16 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   {
    ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*8,4.67,0));
 
-   ltchannel1=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("ExcChannel",true));
-   ltchannel2=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("InhChannel",true));
+   std::weak_ptr<RDK::UContainer> ltchannel1_weak=ltmembr->GetComponent("ExcChannel",true);
+   if(!ltchannel1_weak.expired())
+    ltchannel1=std::dynamic_pointer_cast<NPulseChannelCommon>(ltchannel1_weak.lock());
+   else
+    ltchannel1=nullptr;
+   std::weak_ptr<RDK::UContainer> ltchannel2_weak=ltmembr->GetComponent("InhChannel",true);
+   if(!ltchannel2_weak.expired())
+    ltchannel2=std::dynamic_pointer_cast<NPulseChannelCommon>(ltchannel2_weak.lock());
+   else
+    ltchannel2=nullptr;
   }
   else
   {
@@ -614,8 +635,16 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   membr->SetCoord(MVector<double,3>(12.7+dendrite_length*8,4.67+i*2,0));
   Soma[i]=membr;
 
-  channel1=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));
-  channel2=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("InhChannel",true));
+  std::weak_ptr<RDK::UContainer> channel1_weak=membr->GetComponent("ExcChannel",true);
+  if(!channel1_weak.expired())
+   channel1=std::dynamic_pointer_cast<NPulseChannelCommon>(channel1_weak.lock());
+  else
+   channel1=nullptr;
+  std::weak_ptr<RDK::UContainer> channel2_weak=membr->GetComponent("InhChannel",true);
+  if(!channel2_weak.expired())
+   channel2=std::dynamic_pointer_cast<NPulseChannelCommon>(channel2_weak.lock());
+  else
+   channel2=nullptr;
 
   // ������, ���� ������ ���������� ����� �������� ������������ ����
   // ����� ���������� ���� � ���
@@ -649,8 +678,16 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
    membr=AddMissingComponent<NPulseMembrane>(std::string("Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
    membr->SetCoord(MVector<double,3>(12.7+(dendrite_length-j-1)*8,4.67+i*2,0));
 
-   channel1temp=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));
-   channel2temp=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("InhChannel",true));
+   std::weak_ptr<RDK::UContainer> channel1temp_weak=membr->GetComponent("ExcChannel",true);
+   if(!channel1temp_weak.expired())
+    channel1temp=std::dynamic_pointer_cast<NPulseChannelCommon>(channel1temp_weak.lock());
+   else
+    channel1temp=nullptr;
+   std::weak_ptr<RDK::UContainer> channel2temp_weak=membr->GetComponent("InhChannel",true);
+   if(!channel2temp_weak.expired())
+    channel2temp=std::dynamic_pointer_cast<NPulseChannelCommon>(channel2temp_weak.lock());
+   else
+    channel2temp=nullptr;
 
    if(channel1temp)
         res&=CreateLink(channel1temp->GetLongName(GetThisAsSharedContainer()),"Output",channel1->GetLongName(GetThisAsSharedContainer()),"ChannelInputs");

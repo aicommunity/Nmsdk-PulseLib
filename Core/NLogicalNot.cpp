@@ -193,7 +193,12 @@ bool NLogicalNot::SetDendriteLengthNGen1(const int &value)
         GeneratorNeuron1->NumDendriteMembranePartsVec = dend_size;
 
         //������� ������ ������� �� ����
-        std::shared_ptr<NPulseMembrane> soma = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
+        std::weak_ptr<RDK::UContainer> soma_weak = GeneratorNeuron1->GetComponentL("Soma1",true);
+        std::shared_ptr<NPulseMembrane> soma;
+        if(!soma_weak.expired())
+         soma = std::dynamic_pointer_cast<NPulseMembrane>(soma_weak.lock());
+        else
+         soma = nullptr;
         if(!soma)
          return true;
         soma->NumExcitatorySynapses = 1;
@@ -202,7 +207,12 @@ bool NLogicalNot::SetDendriteLengthNGen1(const int &value)
         //������� ������ ������� �� ���������
         for (int i = 0; i< value; i++)
         {
-            std::shared_ptr<NPulseMembrane> dendrite = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(i+1),true);
+            std::weak_ptr<RDK::UContainer> dendrite_weak = GeneratorNeuron1->GetComponentL("Dendrite1_"+sntoa(i+1),true);
+            std::shared_ptr<NPulseMembrane> dendrite;
+            if(!dendrite_weak.expired())
+             dendrite = std::dynamic_pointer_cast<NPulseMembrane>(dendrite_weak.lock());
+            else
+             dendrite = nullptr;
             if(!dendrite)
              return true;
             dendrite->NumExcitatorySynapses = 1;
@@ -227,7 +237,12 @@ bool NLogicalNot::SetDendriteLengthNGen2(const int &value)
        GeneratorNeuron2->NumDendriteMembranePartsVec = dend_size;
 
        //������� ������ ������� �� ����
-       std::shared_ptr<NPulseMembrane> soma = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
+       std::weak_ptr<RDK::UContainer> soma_weak = GeneratorNeuron2->GetComponentL("Soma1",true);
+       std::shared_ptr<NPulseMembrane> soma;
+       if(!soma_weak.expired())
+        soma = std::dynamic_pointer_cast<NPulseMembrane>(soma_weak.lock());
+       else
+        soma = nullptr;
        if(!soma)
         return true;
        soma->NumExcitatorySynapses = 1;
@@ -236,7 +251,12 @@ bool NLogicalNot::SetDendriteLengthNGen2(const int &value)
        //������� ������ ������� �� ���������
        for (int i = 0; i< value; i++)
        {
-           std::shared_ptr<NPulseMembrane> dendrite = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(i+1),true);
+           std::weak_ptr<RDK::UContainer> dendrite_weak = GeneratorNeuron2->GetComponentL("Dendrite1_"+sntoa(i+1),true);
+           std::shared_ptr<NPulseMembrane> dendrite;
+           if(!dendrite_weak.expired())
+            dendrite = std::dynamic_pointer_cast<NPulseMembrane>(dendrite_weak.lock());
+           else
+            dendrite = nullptr;
            if(!dendrite)
             return true;
            dendrite->NumExcitatorySynapses = 1;
@@ -257,7 +277,12 @@ bool NLogicalNot::SetNumExcSynapsesNGen1(const int &value)
         //������������� ����������� ����� �������� �� ����/��������� ��������
         if(DendriteLengthNGen1 == 0)
         {
-            std::shared_ptr<NPulseMembrane> soma1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
+            std::weak_ptr<RDK::UContainer> soma1_weak = GeneratorNeuron1->GetComponentL("Soma1",true);
+            std::shared_ptr<NPulseMembrane> soma1;
+            if(!soma1_weak.expired())
+             soma1 = std::dynamic_pointer_cast<NPulseMembrane>(soma1_weak.lock());
+            else
+             soma1 = nullptr;
             if(!soma1)
              return true;
             soma1->NumExcitatorySynapses = value;
@@ -266,7 +291,12 @@ bool NLogicalNot::SetNumExcSynapsesNGen1(const int &value)
         else
         {
             int dend_length1 = DendriteLengthNGen1;
-            std::shared_ptr<NPulseMembrane> dendrite1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(dend_length1),true);
+            std::weak_ptr<RDK::UContainer> dendrite1_weak = GeneratorNeuron1->GetComponentL("Dendrite1_"+sntoa(dend_length1),true);
+            std::shared_ptr<NPulseMembrane> dendrite1;
+            if(!dendrite1_weak.expired())
+             dendrite1 = std::dynamic_pointer_cast<NPulseMembrane>(dendrite1_weak.lock());
+            else
+             dendrite1 = nullptr;
             if(!dendrite1)
              return true;
             dendrite1->NumExcitatorySynapses = value;
@@ -287,7 +317,12 @@ bool NLogicalNot::SetNumExcSynapsesNGen2(const int &value)
         //������������� ����������� ����� �������� �� ����/��������� ��������
         if(DendriteLengthNGen2 == 0)
         {
-            std::shared_ptr<NPulseMembrane> soma2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
+            std::weak_ptr<RDK::UContainer> soma2_weak = GeneratorNeuron2->GetComponentL("Soma1",true);
+            std::shared_ptr<NPulseMembrane> soma2;
+            if(!soma2_weak.expired())
+             soma2 = std::dynamic_pointer_cast<NPulseMembrane>(soma2_weak.lock());
+            else
+             soma2 = nullptr;
             if(!soma2)
              return true;
             soma2->NumExcitatorySynapses = value;
@@ -296,7 +331,12 @@ bool NLogicalNot::SetNumExcSynapsesNGen2(const int &value)
         else
         {
             int dend_length2 = DendriteLengthNGen2;
-            std::shared_ptr<NPulseMembrane> dendrite2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(dend_length2),true);
+            std::weak_ptr<RDK::UContainer> dendrite2_weak = GeneratorNeuron2->GetComponentL("Dendrite1_"+sntoa(dend_length2),true);
+            std::shared_ptr<NPulseMembrane> dendrite2;
+            if(!dendrite2_weak.expired())
+             dendrite2 = std::dynamic_pointer_cast<NPulseMembrane>(dendrite2_weak.lock());
+            else
+             dendrite2 = nullptr;
             if(!dendrite2)
              return true;
             dendrite2->NumExcitatorySynapses = value;
@@ -384,7 +424,12 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
 
         if(dendrite_length_ngen1 == 0)
         {
-            std::shared_ptr<NPulseMembrane> soma1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
+            std::weak_ptr<RDK::UContainer> soma1_weak = GeneratorNeuron1->GetComponentL("Soma1",true);
+            std::shared_ptr<NPulseMembrane> soma1;
+            if(!soma1_weak.expired())
+             soma1 = std::dynamic_pointer_cast<NPulseMembrane>(soma1_weak.lock());
+            else
+             soma1 = nullptr;
             if(!soma1)
              return true;
             soma1->NumExcitatorySynapses = num_exc_synapses_ngen1;
@@ -392,7 +437,12 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         }
         else
         {
-            std::shared_ptr<NPulseMembrane> dendrite1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(dendrite_length_ngen1),true);
+            std::weak_ptr<RDK::UContainer> dendrite1_weak = GeneratorNeuron1->GetComponentL("Dendrite1_"+sntoa(dendrite_length_ngen1),true);
+            std::shared_ptr<NPulseMembrane> dendrite1;
+            if(!dendrite1_weak.expired())
+             dendrite1 = std::dynamic_pointer_cast<NPulseMembrane>(dendrite1_weak.lock());
+            else
+             dendrite1 = nullptr;
             if(!dendrite1)
              return true;
             dendrite1->NumExcitatorySynapses = num_exc_synapses_ngen1;
@@ -412,7 +462,12 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         GeneratorNeuron2->Reset();
         if(dendrite_length_ngen2 == 0)
         {
-            std::shared_ptr<NPulseMembrane> soma2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
+            std::weak_ptr<RDK::UContainer> soma2_weak = GeneratorNeuron2->GetComponentL("Soma1",true);
+            std::shared_ptr<NPulseMembrane> soma2;
+            if(!soma2_weak.expired())
+             soma2 = std::dynamic_pointer_cast<NPulseMembrane>(soma2_weak.lock());
+            else
+             soma2 = nullptr;
             if(!soma2)
              return true;
             soma2->NumExcitatorySynapses = num_exc_synapses_ngen2;
@@ -420,7 +475,12 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         }
         else
         {
-            std::shared_ptr<NPulseMembrane> dendrite2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(dendrite_length_ngen2),true);
+            std::weak_ptr<RDK::UContainer> dendrite2_weak = GeneratorNeuron2->GetComponentL("Dendrite1_"+sntoa(dendrite_length_ngen2),true);
+            std::shared_ptr<NPulseMembrane> dendrite2;
+            if(!dendrite2_weak.expired())
+             dendrite2 = std::dynamic_pointer_cast<NPulseMembrane>(dendrite2_weak.lock());
+            else
+             dendrite2 = nullptr;
             if(!dendrite2)
              return true;
             dendrite2->NumExcitatorySynapses = num_exc_synapses_ngen2;
@@ -462,7 +522,12 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
 
         //������� ����� ����� ����������� ���������� �������� � ������ �������� �� ������������ ������
         //Generator -> Neuron1
-        std::shared_ptr<NPulseSynapse> synapse1=GeneratorNeuron1->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse1",true);
+        std::weak_ptr<RDK::UContainer> synapse1_weak=GeneratorNeuron1->GetComponentL("Soma1.ExcSynapse1",true);
+        std::shared_ptr<NPulseSynapse> synapse1;
+        if(!synapse1_weak.expired())
+         synapse1 = std::dynamic_pointer_cast<NPulseSynapse>(synapse1_weak.lock());
+        else
+         synapse1 = nullptr;
         if(!synapse1)
          return true;
         res&=CreateLink("Source","Output",synapse1->GetLongName(GetThisAsSharedContainer()),"Input");
@@ -473,7 +538,12 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
 
         //������� ����� ����� ��������� �� ������������ ������
         //Neuron1 -> Neuron2
-        std::shared_ptr<NLTZone> ltzone1 = GeneratorNeuron1->GetComponentL<NLTZone>("LTZone", true);
+        std::weak_ptr<RDK::UContainer> ltzone1_weak = GeneratorNeuron1->GetComponentL("LTZone", true);
+        std::shared_ptr<NLTZone> ltzone1;
+        if(!ltzone1_weak.expired())
+         ltzone1 = std::dynamic_pointer_cast<NLTZone>(ltzone1_weak.lock());
+        else
+         ltzone1 = nullptr;
         if(!ltzone1)
             return true;
 
@@ -482,11 +552,19 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         {
             if(dendrite_length_ngen2 == 0)
             {
-                synapses2[i] = GeneratorNeuron2->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse"+sntoa(i+1),true);
+                std::weak_ptr<RDK::UContainer> synapses2_weak = GeneratorNeuron2->GetComponentL("Soma1.ExcSynapse"+sntoa(i+1),true);
+                if(!synapses2_weak.expired())
+                 synapses2[i] = std::dynamic_pointer_cast<NPulseSynapse>(synapses2_weak.lock());
+                else
+                 synapses2[i] = nullptr;
             }
             else
             {
-                synapses2[i] = GeneratorNeuron2->GetComponentL<NPulseSynapse>("Dendrite1_"+sntoa(dendrite_length_ngen2)+".ExcSynapse"+sntoa(i+1),true);
+                std::weak_ptr<RDK::UContainer> synapses2_weak = GeneratorNeuron2->GetComponentL("Dendrite1_"+sntoa(dendrite_length_ngen2)+".ExcSynapse"+sntoa(i+1),true);
+                if(!synapses2_weak.expired())
+                 synapses2[i] = std::dynamic_pointer_cast<NPulseSynapse>(synapses2_weak.lock());
+                else
+                 synapses2[i] = nullptr;
             }
             if(!synapses2[i])
                 return true;
@@ -501,7 +579,12 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
 
         //������� �������� ����� ����� ��������� �� ������������ ������
         //Neuron2 -> Neuron1
-        std::shared_ptr<NLTZone> ltzone2 = GeneratorNeuron2->GetComponentL<NLTZone>("LTZone", true);
+        std::weak_ptr<RDK::UContainer> ltzone2_weak = GeneratorNeuron2->GetComponentL("LTZone", true);
+        std::shared_ptr<NLTZone> ltzone2;
+        if(!ltzone2_weak.expired())
+         ltzone2 = std::dynamic_pointer_cast<NLTZone>(ltzone2_weak.lock());
+        else
+         ltzone2 = nullptr;
         if(!ltzone2)
             return true;
 
@@ -510,11 +593,19 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         {
             if(dendrite_length_ngen1 == 0)
             {
-                synapses1[i] = GeneratorNeuron1->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse"+sntoa(i+1),true);
+                std::weak_ptr<RDK::UContainer> synapses1_weak = GeneratorNeuron1->GetComponentL("Soma1.ExcSynapse"+sntoa(i+1),true);
+                if(!synapses1_weak.expired())
+                 synapses1[i] = std::dynamic_pointer_cast<NPulseSynapse>(synapses1_weak.lock());
+                else
+                 synapses1[i] = nullptr;
             }
             else
             {
-                synapses1[i] = GeneratorNeuron1->GetComponentL<NPulseSynapse>("Dendrite1_"+sntoa(dendrite_length_ngen1)+".ExcSynapse"+sntoa(i+1),true);
+                std::weak_ptr<RDK::UContainer> synapses1_weak = GeneratorNeuron1->GetComponentL("Dendrite1_"+sntoa(dendrite_length_ngen1)+".ExcSynapse"+sntoa(i+1),true);
+                if(!synapses1_weak.expired())
+                 synapses1[i] = std::dynamic_pointer_cast<NPulseSynapse>(synapses1_weak.lock());
+                else
+                 synapses1[i] = nullptr;
             }
             if(!synapses1[i])
                 return true;
@@ -531,7 +622,12 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
 
         //������� ����� ����� ������ ������� �� ������������ ������ � �������� ��������
         //Neuron2 -> OutputNeuron
-        std::shared_ptr<NPulseSynapse> synapse4 = OutputNeuron->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
+        std::weak_ptr<RDK::UContainer> synapse4_weak = OutputNeuron->GetComponentL("Dendrite1_1.ExcSynapse1",true);
+        std::shared_ptr<NPulseSynapse> synapse4;
+        if(!synapse4_weak.expired())
+         synapse4 = std::dynamic_pointer_cast<NPulseSynapse>(synapse4_weak.lock());
+        else
+         synapse4 = nullptr;
         if(!synapse4)
             return true;
         res&=CreateLink(ltzone2->GetLongName(GetThisAsSharedContainer()),"Output",synapse4->GetLongName(GetThisAsSharedContainer()),"Input");
@@ -543,10 +639,20 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
 
         //������� ����� ����� ��������� �������� � �����������, ������������ ��� ���������� �����������
         //NeuronTrainer -> PatternGenerator
-        std::shared_ptr<NPulseNeuron> neuron = NeuronTrainer->GetComponentL<NPulseNeuron>("Neuron",true);
+        std::weak_ptr<RDK::UContainer> neuron_weak = NeuronTrainer->GetComponentL("Neuron",true);
+        std::shared_ptr<NPulseNeuron> neuron;
+        if(!neuron_weak.expired())
+         neuron = std::dynamic_pointer_cast<NPulseNeuron>(neuron_weak.lock());
+        else
+         neuron = nullptr;
         if(!neuron)
          return true;
-        std::shared_ptr<NLTZone> ltzoneTr = neuron->GetComponentL<NLTZone>("LTZone", true);
+        std::weak_ptr<RDK::UContainer> ltzoneTr_weak = neuron->GetComponentL("LTZone", true);
+        std::shared_ptr<NLTZone> ltzoneTr;
+        if(!ltzoneTr_weak.expired())
+         ltzoneTr = std::dynamic_pointer_cast<NLTZone>(ltzoneTr_weak.lock());
+        else
+         ltzoneTr = nullptr;
         if(!ltzoneTr)
          return true;
         res&=CreateLink(ltzoneTr->GetLongName(GetThisAsSharedContainer()),"Output", "PatternSource","Input");
@@ -557,7 +663,12 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
 
         //������� ����� ����� �����������, ������������ ���������� ����������� ���������� �������, � �������� ��������
         //PatternGenerator -> OutputNeuron
-        std::shared_ptr<NPulseSynapse> synapse5 = OutputNeuron->GetComponentL<NPulseSynapse>("Soma1.InhSynapse1",true);
+        std::weak_ptr<RDK::UContainer> synapse5_weak = OutputNeuron->GetComponentL("Soma1.InhSynapse1",true);
+        std::shared_ptr<NPulseSynapse> synapse5;
+        if(!synapse5_weak.expired())
+         synapse5 = std::dynamic_pointer_cast<NPulseSynapse>(synapse5_weak.lock());
+        else
+         synapse5 = nullptr;
         if(!synapse5)
             return true;
         res&=CreateLink("PatternSource","Output", synapse5->GetLongName(GetThisAsSharedContainer()),"Input");
@@ -582,7 +693,12 @@ bool NLogicalNot::AReset(void)
   GeneratorNeuron1->NumDendriteMembranePartsVec = dend_size1;
 
   //������� ������ ������� �� ����
-  std::shared_ptr<NPulseMembrane> soma1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
+  std::weak_ptr<RDK::UContainer> soma1_weak = GeneratorNeuron1->GetComponentL("Soma1",true);
+  std::shared_ptr<NPulseMembrane> soma1;
+  if(!soma1_weak.expired())
+   soma1 = std::dynamic_pointer_cast<NPulseMembrane>(soma1_weak.lock());
+  else
+   soma1 = nullptr;
   if(!soma1)
    return true;
   soma1->NumExcitatorySynapses = 1;
@@ -591,7 +707,12 @@ bool NLogicalNot::AReset(void)
   //������� ������ ������� �� ���������
   for (int i = 0; i< (DendriteLengthNGen1-1); i++)
   {
-      std::shared_ptr<NPulseMembrane> dendrite = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(i+1),true);
+      std::weak_ptr<RDK::UContainer> dendrite_weak = GeneratorNeuron1->GetComponentL("Dendrite1_"+sntoa(i+1),true);
+      std::shared_ptr<NPulseMembrane> dendrite;
+      if(!dendrite_weak.expired())
+       dendrite = std::dynamic_pointer_cast<NPulseMembrane>(dendrite_weak.lock());
+      else
+       dendrite = nullptr;
       if(!dendrite)
        return true;
       dendrite->NumExcitatorySynapses = 1;
@@ -601,7 +722,12 @@ bool NLogicalNot::AReset(void)
   //������������� ����������� ����� �������� �� ���� ��� ��������� ��������
   if(DendriteLengthNGen1 == 0)
   {
-      std::shared_ptr<NPulseMembrane> soma1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
+      std::weak_ptr<RDK::UContainer> soma1_weak = GeneratorNeuron1->GetComponentL("Soma1",true);
+      std::shared_ptr<NPulseMembrane> soma1;
+      if(!soma1_weak.expired())
+       soma1 = std::dynamic_pointer_cast<NPulseMembrane>(soma1_weak.lock());
+      else
+       soma1 = nullptr;
       if(!soma1)
        return true;
       soma1->NumExcitatorySynapses = NumExcSynapsesNGen1;
@@ -610,7 +736,12 @@ bool NLogicalNot::AReset(void)
   else
   {
       int dend_length = DendriteLengthNGen1;
-      std::shared_ptr<NPulseMembrane> dendrite1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(dend_length),true);
+      std::weak_ptr<RDK::UContainer> dendrite1_weak = GeneratorNeuron1->GetComponentL("Dendrite1_"+sntoa(dend_length),true);
+      std::shared_ptr<NPulseMembrane> dendrite1;
+      if(!dendrite1_weak.expired())
+       dendrite1 = std::dynamic_pointer_cast<NPulseMembrane>(dendrite1_weak.lock());
+      else
+       dendrite1 = nullptr;
       if(!dendrite1)
        return true;
       dendrite1->NumExcitatorySynapses = NumExcSynapsesNGen1;
@@ -626,7 +757,12 @@ bool NLogicalNot::AReset(void)
   GeneratorNeuron2->NumDendriteMembranePartsVec = dend_size2;
 
   //������� ������ ������� �� ����
-  std::shared_ptr<NPulseMembrane> soma2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
+  std::weak_ptr<RDK::UContainer> soma2_weak = GeneratorNeuron2->GetComponentL("Soma1",true);
+  std::shared_ptr<NPulseMembrane> soma2;
+  if(!soma2_weak.expired())
+   soma2 = std::dynamic_pointer_cast<NPulseMembrane>(soma2_weak.lock());
+  else
+   soma2 = nullptr;
   if(!soma2)
    return true;
   soma2->NumExcitatorySynapses = 1;
@@ -635,7 +771,12 @@ bool NLogicalNot::AReset(void)
   //������� ������ ������� �� ���������
   for (int i = 0; i< (DendriteLengthNGen2-1); i++)
   {
-      std::shared_ptr<NPulseMembrane> dendrite = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(i+1),true);
+      std::weak_ptr<RDK::UContainer> dendrite_weak = GeneratorNeuron2->GetComponentL("Dendrite1_"+sntoa(i+1),true);
+      std::shared_ptr<NPulseMembrane> dendrite;
+      if(!dendrite_weak.expired())
+       dendrite = std::dynamic_pointer_cast<NPulseMembrane>(dendrite_weak.lock());
+      else
+       dendrite = nullptr;
       if(!dendrite)
        return true;
       dendrite->NumExcitatorySynapses = 1;
@@ -646,7 +787,12 @@ bool NLogicalNot::AReset(void)
   //������������� ����������� ����� �������� �� ���� ��� ��������� ��������
   if(DendriteLengthNGen2 == 0)
   {
-      std::shared_ptr<NPulseMembrane> soma2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
+      std::weak_ptr<RDK::UContainer> soma2_weak = GeneratorNeuron2->GetComponentL("Soma1",true);
+      std::shared_ptr<NPulseMembrane> soma2;
+      if(!soma2_weak.expired())
+       soma2 = std::dynamic_pointer_cast<NPulseMembrane>(soma2_weak.lock());
+      else
+       soma2 = nullptr;
       if(!soma2)
        return true;
       soma2->NumExcitatorySynapses = NumExcSynapsesNGen2;
@@ -655,7 +801,12 @@ bool NLogicalNot::AReset(void)
   else
   {
       int dend_length2 = DendriteLengthNGen2;
-      std::shared_ptr<NPulseMembrane> dendrite2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(dend_length2),true);
+      std::weak_ptr<RDK::UContainer> dendrite2_weak = GeneratorNeuron2->GetComponentL("Dendrite1_"+sntoa(dend_length2),true);
+      std::shared_ptr<NPulseMembrane> dendrite2;
+      if(!dendrite2_weak.expired())
+       dendrite2 = std::dynamic_pointer_cast<NPulseMembrane>(dendrite2_weak.lock());
+      else
+       dendrite2 = nullptr;
       if(!dendrite2)
        return true;
       dendrite2->NumExcitatorySynapses = NumExcSynapsesNGen2;
@@ -666,7 +817,12 @@ bool NLogicalNot::AReset(void)
 
   //������� ������ ����� ����� ��������� �� ������������ ������
   //Neuron1 -> Neuron2
-  std::shared_ptr<NLTZone> ltzone1 = GeneratorNeuron1->GetComponentL<NLTZone>("LTZone", true);
+  std::weak_ptr<RDK::UContainer> ltzone1_weak = GeneratorNeuron1->GetComponentL("LTZone", true);
+  std::shared_ptr<NLTZone> ltzone1;
+  if(!ltzone1_weak.expired())
+   ltzone1 = std::dynamic_pointer_cast<NLTZone>(ltzone1_weak.lock());
+  else
+   ltzone1 = nullptr;
   if(!ltzone1)
       return true;
 
@@ -675,12 +831,20 @@ bool NLogicalNot::AReset(void)
   {
       if(DendriteLengthNGen2 == 0)
       {
-          synapses2[i] = GeneratorNeuron2->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse"+sntoa(i+1),true);
+          std::weak_ptr<RDK::UContainer> synapses2_weak = GeneratorNeuron2->GetComponentL("Soma1.ExcSynapse"+sntoa(i+1),true);
+          if(!synapses2_weak.expired())
+           synapses2[i] = std::dynamic_pointer_cast<NPulseSynapse>(synapses2_weak.lock());
+          else
+           synapses2[i] = nullptr;
       }
       else
       {
           int dend_length2 = DendriteLengthNGen2;
-          synapses2[i] = GeneratorNeuron2->GetComponentL<NPulseSynapse>("Dendrite1_"+sntoa(dend_length2)+".ExcSynapse"+sntoa(i+1),true);
+          std::weak_ptr<RDK::UContainer> synapses2_weak = GeneratorNeuron2->GetComponentL("Dendrite1_"+sntoa(dend_length2)+".ExcSynapse"+sntoa(i+1),true);
+          if(!synapses2_weak.expired())
+           synapses2[i] = std::dynamic_pointer_cast<NPulseSynapse>(synapses2_weak.lock());
+          else
+           synapses2[i] = nullptr;
       }
       if(!synapses2[i])
           return true;
@@ -694,7 +858,12 @@ bool NLogicalNot::AReset(void)
 
   //������� �������� ����� ����� ��������� �� ������������ ������
   //Neuron2 -> Neuron1
-  std::shared_ptr<NLTZone> ltzone2 = GeneratorNeuron2->GetComponentL<NLTZone>("LTZone", true);
+  std::weak_ptr<RDK::UContainer> ltzone2_weak = GeneratorNeuron2->GetComponentL("LTZone", true);
+  std::shared_ptr<NLTZone> ltzone2;
+  if(!ltzone2_weak.expired())
+   ltzone2 = std::dynamic_pointer_cast<NLTZone>(ltzone2_weak.lock());
+  else
+   ltzone2 = nullptr;
   if(!ltzone2)
       return true;
 
@@ -703,12 +872,20 @@ bool NLogicalNot::AReset(void)
   {
       if(DendriteLengthNGen1 == 0)
       {
-          synapses1[i] = GeneratorNeuron1->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse"+sntoa(i+1),true);
+          std::weak_ptr<RDK::UContainer> synapses1_weak = GeneratorNeuron1->GetComponentL("Soma1.ExcSynapse"+sntoa(i+1),true);
+          if(!synapses1_weak.expired())
+           synapses1[i] = std::dynamic_pointer_cast<NPulseSynapse>(synapses1_weak.lock());
+          else
+           synapses1[i] = nullptr;
       }
       else
       {
           int dend_length1 = DendriteLengthNGen1;
-          synapses1[i] = GeneratorNeuron1->GetComponentL<NPulseSynapse>("Dendrite1_"+sntoa(dend_length1)+".ExcSynapse"+sntoa(i+1),true);
+          std::weak_ptr<RDK::UContainer> synapses1_weak = GeneratorNeuron1->GetComponentL("Dendrite1_"+sntoa(dend_length1)+".ExcSynapse"+sntoa(i+1),true);
+          if(!synapses1_weak.expired())
+           synapses1[i] = std::dynamic_pointer_cast<NPulseSynapse>(synapses1_weak.lock());
+          else
+           synapses1[i] = nullptr;
       }
       if(!synapses1[i])
           return true;
