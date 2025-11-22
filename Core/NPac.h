@@ -22,41 +22,41 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPac: public UNet
 {
-public: // Общедоступные свойства
-/// Амплитуда входных импульсов
-UCLProperty<vector<vector<double> >,NPac, ptPubParameter> PulseAmplitude;
+public: //  
+///   
+UProperty<vector<vector<double> >,NPac, ptPubParameter> PulseAmplitude;
 
-/// Постоянная времени выделения медиатора
-UCLProperty<vector<vector<double> >,NPac, ptPubParameter> SecretionTC;
+///    
+UProperty<vector<vector<double> >,NPac, ptPubParameter> SecretionTC;
 
-/// Постоянная времени распада медиатора
-UCLProperty<vector<vector<double> >,NPac, ptPubParameter> DissociationTC;
+///    
+UProperty<vector<vector<double> >,NPac, ptPubParameter> DissociationTC;
 
-/// Коэффициент усиления
-UCLProperty<vector<vector<double> >,NPac, ptPubParameter> Gain;
+///  
+UProperty<vector<vector<double> >,NPac, ptPubParameter> Gain;
 
-/// Режим работы
-/// 0 - Обычный режим
-/// 1 - Со сбросом при одновременной активации обоих каналов
-ULProperty<int,NPac, ptPubParameter> Mode;
+///  
+/// 0 -  
+/// 1 -       
+UProperty<int,NPac, ptPubParameter> Mode;
 
-/// Режим накопления
-/// 0 - Выключен
-/// 1 - Включен
-ULProperty<int,NPac, ptPubParameter> TCMode;
+///  
+/// 0 - 
+/// 1 - 
+UProperty<int,NPac, ptPubParameter> TCMode;
 
-public: // Входы и выходы
-UPropertyInputCData<MDMatrix<double>, NPac> Inputs;
+public: //   
+UProperty<std::vector<MDMatrix<double>>, NPac, ptPubInput> Inputs;
 
-UPropertyOutputData<MDMatrix<double>, NPac, ptOutput | ptPubState> Output;
+UProperty<MDMatrix<double>, NPac, ptOutput | ptPubState> Output;
 
-protected: // Временные переменные
-/// Промежуточное значение эффективности синапса
-UCLProperty<vector<vector<double> >,NPac, ptPubState> PreOutput;
+protected: //  
+///    
+UProperty<vector<vector<double> >,NPac, ptPubState> PreOutput;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NPac(void);
 virtual ~NPac(void);
@@ -64,46 +64,46 @@ virtual ~NPac(void);
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
-// Устанавливает амплитуду импульсов
+//   
 bool SetPulseAmplitude(const vector<vector<double> > &value);
 
-// Постоянная времени выделения медиатора
+//    
 bool SetSecretionTC(const vector<vector<double> > &value);
 
-// Постоянная времени распада медиатора
+//    
 bool SetDissociationTC(const vector<vector<double> > &value);
 
-// Усиление
+// 
 bool SetGain(const vector<vector<double> > &value);
 // --------------------------
 
 public:
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NPac* New(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate(void);
 // --------------------------
 };
@@ -112,9 +112,9 @@ class RDK_LIB_TYPE NCPac: public NPac
 {
 public:
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NCPac* New(void);
 // --------------------------
 

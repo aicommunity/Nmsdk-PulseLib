@@ -24,12 +24,12 @@ See file license.txt for more information
 //#include <QDateTime>
 //#include <QFile>
 
-// Класс, создающий нейрон со структурой, оптимизованной для распознавания заданного паттерна импульсов
+// РљР»Р°СЃСЃ, СЃРѕР·РґР°СЋС‰РёР№ РЅРµР№СЂРѕРЅ СЃРѕ СЃС‚СЂСѓРєС‚СѓСЂРѕР№, РѕРїС‚РёРјРёР·РѕРІР°РЅРЅРѕР№ РґР»СЏ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ Р·Р°РґР°РЅРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР° РёРјРїСѓР»СЊСЃРѕРІ
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NNeuronTrainer::NNeuronTrainer(void)
 : StructureBuildMode("StructureBuildMode",this,&NNeuronTrainer::SetStructureBuildMode),
@@ -68,49 +68,49 @@ NNeuronTrainer::~NNeuronTrainer(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NNeuronTrainer::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
   Ready=false;
  return true;
 }
 
-/// Режим расчёта нейрона
+/// Р РµР¶РёРј СЂР°СЃС‡С‘С‚Р° РЅРµР№СЂРѕРЅР°
 bool NNeuronTrainer::SetCalculateMode(const int &value)
 {
  return true;
 }
 
-/// Имя класса, создающего генератор импульсов
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РіРµРЅРµСЂР°С‚РѕСЂ РёРјРїСѓР»СЊСЃРѕРІ
 bool NNeuronTrainer::SetPulseGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего нейрон
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РЅРµР№СЂРѕРЅ
 bool NNeuronTrainer::SetNeuronClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего синапс
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СЃРёРЅР°РїСЃ
 bool NNeuronTrainer::SetSynapseClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Признак необходимости обучения
+/// РџСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РѕР±СѓС‡РµРЅРёСЏ
 bool NNeuronTrainer::SetNeedToTrain(const bool &value)
 {
  if(value)
@@ -130,13 +130,13 @@ bool NNeuronTrainer::SetNeedToTrain(const bool &value)
 }
 
 
-/// Время задержки начала обучения относительно старта системы (сек)
+/// Р’СЂРµРјСЏ Р·Р°РґРµСЂР¶РєРё РЅР°С‡Р°Р»Р° РѕР±СѓС‡РµРЅРёСЏ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ СЃС‚Р°СЂС‚Р° СЃРёСЃС‚РµРјС‹ (СЃРµРє)
 bool NNeuronTrainer::SetDelay(const double &value)
 {
  return true;
 }
 
-/// Частота генераторов (Гц)
+/// Р§Р°СЃС‚РѕС‚Р° РіРµРЅРµСЂР°С‚РѕСЂРѕРІ (Р“С†)
 bool NNeuronTrainer::SetSpikesFrequency(const double &value)
 {
  for(size_t i = 0; i < generators.size(); i++)
@@ -148,7 +148,7 @@ bool NNeuronTrainer::SetSpikesFrequency(const double &value)
  return true;
 }
 
-/// Число входных дендритов
+/// Р§РёСЃР»Рѕ РІС…РѕРґРЅС‹С… РґРµРЅРґСЂРёС‚РѕРІ
 bool NNeuronTrainer::SetNumInputDendrite(const int &value)
 {
  Ready=false;
@@ -157,13 +157,13 @@ bool NNeuronTrainer::SetNumInputDendrite(const int &value)
  return true;
 }
 
-/// Максимальная длина дендрита
+/// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° РґРµРЅРґСЂРёС‚Р°
 bool NNeuronTrainer::SetMaxDendriteLength(const int &value)
 {
  return true;
 }
 
-/// Паттерн для запоминания
+/// РџР°С‚С‚РµСЂРЅ РґР»СЏ Р·Р°РїРѕРјРёРЅР°РЅРёСЏ
 bool NNeuronTrainer::SetInputPattern(const MDMatrix<double> &value)
 {
  if(IsNeedToTrain)
@@ -182,7 +182,7 @@ bool NNeuronTrainer::SetInputPattern(const MDMatrix<double> &value)
  return true;
 }
 
-/// Порог низкопороговой зоны нейрона
+/// РџРѕСЂРѕРі РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NNeuronTrainer::SetLTZThreshold(const double &value)
 {
  UEPtr<NPulseNeuron> n_in=GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
@@ -200,7 +200,7 @@ bool NNeuronTrainer::SetLTZThreshold(const double &value)
  return true;
 }
 
-/// Порог низкопороговой зоны нейрона для этапа обучения
+/// РџРѕСЂРѕРі РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР° РґР»СЏ СЌС‚Р°РїР° РѕР±СѓС‡РµРЅРёСЏ
 bool NNeuronTrainer::SetTrainingLTZThreshold(const double &value)
 {
 // UEPtr<NPulseNeuron> n_in=GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
@@ -216,13 +216,13 @@ bool NNeuronTrainer::SetTrainingLTZThreshold(const double &value)
  return true;
 }
 
-/// Фиксированный порог низкопороговой зоны нейрона
+/// Р¤РёРєСЃРёСЂРѕРІР°РЅРЅС‹Р№ РїРѕСЂРѕРі РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NNeuronTrainer::SetFixedLTZThreshold(const double &value)
 {
  return true;
 }
 
-/// Признак необходимости использования фиксированного порога низкопороговой зоны нейрона
+/// РџСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРіРѕ РїРѕСЂРѕРіР° РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NNeuronTrainer::SetUseFixedLTZThreshold(const bool &value)
 {
  if(value)
@@ -233,7 +233,7 @@ bool NNeuronTrainer::SetUseFixedLTZThreshold(const bool &value)
 
  return true;
 }
-/// Сопротивление нарастающих синапсов
+/// РЎРѕРїСЂРѕС‚РёРІР»РµРЅРёРµ РЅР°СЂР°СЃС‚Р°СЋС‰РёС… СЃРёРЅР°РїСЃРѕРІ
 bool NNeuronTrainer::SetSynapseResistanceStep(const double &value)
 {
  return true;
@@ -242,9 +242,9 @@ bool NNeuronTrainer::SetSynapseResistanceStep(const double &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NNeuronTrainer* NNeuronTrainer::New(void)
 {
  return new NNeuronTrainer;
@@ -257,12 +257,12 @@ UComponent* NNeuronTrainer::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NNeuronTrainer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  /*
@@ -292,10 +292,10 @@ bool NNeuronTrainer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poin
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NNeuronTrainer::ADelComponent(UEPtr<UContainer> comp)
 {                     /*
  if(comp == PosGenerator)
@@ -310,43 +310,43 @@ bool NNeuronTrainer::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &pulse_generator_class_name,
 									const string &neuron_class_name,
 									int old_num_input_dendrite, int num_input_dendrite,
 									const MDMatrix<double> &input_pattern)
 {
- // 1 - создаём нейрон, настраивающий длину своих дендритов для максимального отклика по амплетуде на заданный паттерн импульсов
+ // 1 - СЃРѕР·РґР°С‘Рј РЅРµР№СЂРѕРЅ, РЅР°СЃС‚СЂР°РёРІР°СЋС‰РёР№ РґР»РёРЅСѓ СЃРІРѕРёС… РґРµРЅРґСЂРёС‚РѕРІ РґР»СЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РѕС‚РєР»РёРєР° РїРѕ Р°РјРїР»РµС‚СѓРґРµ РЅР° Р·Р°РґР°РЅРЅС‹Р№ РїР°С‚С‚РµСЂРЅ РёРјРїСѓР»СЊСЃРѕРІ
  if(StructureBuildMode == 1)
  {
 	bool res(true);
-    is_first_iter = true; // Флаг первой итерации (необходим для замера времени начала расчёта)
-	max_iter_neuron_amp = 0; // Максимальная амплитуда выходного сигнала на одной итерации
-	max_neuron_amp = 0; // Максимальная суммарная амплитуда
-	dend_counter = 1; // Обрабатываемый по счёту дендрит
-	is_new_dend = false; // Признак расчёта нового дендрита
-	is_new_iteration = false; // Признак новой итерации (добавления участка дендрита)
-	dend_index = -1; // Индекс обрабатываемого дендрит
-	syn_counter = 0; // Обрабатываемый по счёту синапс = индекc+1 дендрита, на котором растим синапсы
+    is_first_iter = true; // Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
+	max_iter_neuron_amp = 0; // РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ Р°РјРїР»РёС‚СѓРґР° РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° РЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
+	max_neuron_amp = 0; // РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ СЃСѓРјРјР°СЂРЅР°СЏ Р°РјРїР»РёС‚СѓРґР°
+	dend_counter = 1; // РћР±СЂР°Р±Р°С‚С‹РІР°РµРјС‹Р№ РїРѕ СЃС‡С‘С‚Сѓ РґРµРЅРґСЂРёС‚
+	is_new_dend = false; // РџСЂРёР·РЅР°Рє СЂР°СЃС‡С‘С‚Р° РЅРѕРІРѕРіРѕ РґРµРЅРґСЂРёС‚Р°
+	is_new_iteration = false; // РџСЂРёР·РЅР°Рє РЅРѕРІРѕР№ РёС‚РµСЂР°С†РёРё (РґРѕР±Р°РІР»РµРЅРёСЏ СѓС‡Р°СЃС‚РєР° РґРµРЅРґСЂРёС‚Р°)
+	dend_index = -1; // РРЅРґРµРєСЃ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјРѕРіРѕ РґРµРЅРґСЂРёС‚
+	syn_counter = 0; // РћР±СЂР°Р±Р°С‚С‹РІР°РµРјС‹Р№ РїРѕ СЃС‡С‘С‚Сѓ СЃРёРЅР°РїСЃ = РёРЅРґРµРєc+1 РґРµРЅРґСЂРёС‚Р°, РЅР° РєРѕС‚РѕСЂРѕРј СЂР°СЃС‚РёРј СЃРёРЅР°РїСЃС‹
 
-	// Параметры для синхронизации по времени
-	is_need_to_build = true; // Флаг необходимости досабрать нейрон
+	// РџР°СЂР°РјРµС‚СЂС‹ РґР»СЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё РїРѕ РІСЂРµРјРµРЅРё
+	is_need_to_build = true; // Р¤Р»Р°Рі РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РґРѕСЃР°Р±СЂР°С‚СЊ РЅРµР№СЂРѕРЅ
 
 	NeuronAmplitude.Assign(1+num_input_dendrite,1,0.0);
 	SomaNeuronAmplitude.Assign(1+num_input_dendrite,1,0.0);
 
-	// Инициализация массива длин дендритов
+	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РјР°СЃСЃРёРІР° РґР»РёРЅ РґРµРЅРґСЂРёС‚РѕРІ
 	DendriteLength.assign(num_input_dendrite,0);
-	// Массив выходов дендритов при единичной их длине
+	// РњР°СЃСЃРёРІ РІС‹С…РѕРґРѕРІ РґРµРЅРґСЂРёС‚РѕРІ РїСЂРё РµРґРёРЅРёС‡РЅРѕР№ РёС… РґР»РёРЅРµ
 	InitialDendritePotential.assign(num_input_dendrite,0);
-	// Массив количества синапсов на дендрите
+	// РњР°СЃСЃРёРІ РєРѕР»РёС‡РµСЃС‚РІР° СЃРёРЅР°РїСЃРѕРІ РЅР° РґРµРЅРґСЂРёС‚Рµ
 	SynapseNum.assign(num_input_dendrite,1);
 
-	// Вычисляем индекс дендрита, на который входной сигнал пришёл последним
-	// и устанавливаем длину данного дендрита равной 1
-	double max_delay = -1; // максимальное время задержки дендрита, относительно первого импулься
+	// Р’С‹С‡РёСЃР»СЏРµРј РёРЅРґРµРєСЃ РґРµРЅРґСЂРёС‚Р°, РЅР° РєРѕС‚РѕСЂС‹Р№ РІС…РѕРґРЅРѕР№ СЃРёРіРЅР°Р» РїСЂРёС€С‘Р» РїРѕСЃР»РµРґРЅРёРј
+	// Рё СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РґР»РёРЅСѓ РґР°РЅРЅРѕРіРѕ РґРµРЅРґСЂРёС‚Р° СЂР°РІРЅРѕР№ 1
+	double max_delay = -1; // РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РІСЂРµРјСЏ Р·Р°РґРµСЂР¶РєРё РґРµРЅРґСЂРёС‚Р°, РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РїРµСЂРІРѕРіРѕ РёРјРїСѓР»СЊСЃСЏ
 	for(int i = 0; i < num_input_dendrite; i++)
 	{
 		if(input_pattern[i] > max_delay)
@@ -357,7 +357,7 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 	}
 	DendriteLength[dend_index] = 1;
 
-	// Удаляем старые генераторы и старые дендриты
+	// РЈРґР°Р»СЏРµРј СЃС‚Р°СЂС‹Рµ РіРµРЅРµСЂР°С‚РѕСЂС‹ Рё СЃС‚Р°СЂС‹Рµ РґРµРЅРґСЂРёС‚С‹
 	UEPtr<NPulseNeuron> neuron1 = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
 	for(int i = num_input_dendrite; i < old_num_input_dendrite; i++)
 	{
@@ -366,7 +366,7 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 		neuron1->DelComponent(std::string("Dendrite")+sntoa(i+1)+"_1")  ;
 	}
 
-	// Инициализируем генераторы импульсов
+	// РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РіРµРЅРµСЂР°С‚РѕСЂС‹ РёРјРїСѓР»СЊСЃРѕРІ
     //OldNumInputDendrite = int(generators.size());
 	generators.resize(num_input_dendrite);
 	for(int i = 0; i < num_input_dendrite; i++)
@@ -374,21 +374,21 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 		generators[i] = AddMissingComponent<NPulseGeneratorTransit>(std::string("Source")+sntoa(i+1), pulse_generator_class_name);
 		generators[i]->SetCoord(MVector<double,3>(6.7,1.67+i*2,0));
 	}
-	// Разрываем выходные связи генераторов
+	// Р Р°Р·СЂС‹РІР°РµРј РІС‹С…РѕРґРЅС‹Рµ СЃРІСЏР·Рё РіРµРЅРµСЂР°С‚РѕСЂРѕРІ
 	for(int i = 0; i < num_input_dendrite; i++)
 	{
 		generators[i]->DisconnectAll("Output");
 	}
 
-	// Инициализируем нейрон
+	// РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РЅРµР№СЂРѕРЅ
     if(IsNeedToTrain)
 	{
-		// создаём новый нейрон
+		// СЃРѕР·РґР°С‘Рј РЅРѕРІС‹Р№ РЅРµР№СЂРѕРЅ
 		neuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron"), neuron_class_name);
 		neuron->SetCoord(MVector<double,3>(8.7+1*7,1.67,0));
-		// устанавливаем количество дендритов
+		// СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РґРµРЅРґСЂРёС‚РѕРІ
 		neuron->NumSomaMembraneParts = num_input_dendrite;
-		// устанавливаем длину дендритов
+		// СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РґР»РёРЅСѓ РґРµРЅРґСЂРёС‚РѕРІ
 		if(neuron->StructureBuildMode != 2)
 			neuron->NumDendriteMembraneParts = 1;
 		else
@@ -402,7 +402,7 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 		neuron->Reset();
 	}
 
-	// Добаляем связи между генератором и синапсами
+	// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·Рё РјРµР¶РґСѓ РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё СЃРёРЅР°РїСЃР°РјРё
 	if(!neuron)
 	 return true;
 	UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_1.ExcSynapse1",true);
@@ -417,7 +417,7 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NNeuronTrainer::AReset(void)
 {
  UEPtr<NPulseNeuron> n_in=GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
@@ -441,7 +441,7 @@ bool NNeuronTrainer::AReset(void)
  return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NNeuronTrainer::ADefault(void)
 {
  generators.clear();
@@ -469,10 +469,10 @@ bool NNeuronTrainer::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NNeuronTrainer::ABuild(void)
 {
  if(StructureBuildMode>0)
@@ -489,26 +489,26 @@ bool NNeuronTrainer::ABuild(void)
  return true;
 }
 
-// Выполняется обучение путём наращивания длины дендритов
-// путём максимизации амплитуды нейрона
+// Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ
+// РїСѓС‚С‘Рј РјР°РєСЃРёРјРёР·Р°С†РёРё Р°РјРїР»РёС‚СѓРґС‹ РЅРµР№СЂРѕРЅР°
 /*bool NNeuronTrainer::MaximazeAmplitude(void)
 {
 	bool res(true);
 
 	////////////////////////////////////////////////////////////////////////////
-	// 1 - обучение путём наращивания длины дендритов путём максимизации амплитуды нейрона
-	// Если нейрон обучен - возвращаемся
+	// 1 - РѕР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ РїСѓС‚С‘Рј РјР°РєСЃРёРјРёР·Р°С†РёРё Р°РјРїР»РёС‚СѓРґС‹ РЅРµР№СЂРѕРЅР°
+	// Р•СЃР»Рё РЅРµР№СЂРѕРЅ РѕР±СѓС‡РµРЅ - РІРѕР·РІСЂР°С‰Р°РµРјСЃСЏ
 	if(NumInputDendrite < dend_counter && CalculateMode < 2)
 	{
 		IsNeedToTrain = false;
 		return true;
 	}
 
-	// Проверяем необходимость перейти к следующему дендриту
+	// РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РїРµСЂРµР№С‚Рё Рє СЃР»РµРґСѓСЋС‰РµРјСѓ РґРµРЅРґСЂРёС‚Сѓ
 	if(is_new_dend)
 	{
-		// Вычисляем индекс дендрита, на который входной сигнал пришёл последним,
-		// из ещё не обработанных
+		// Р’С‹С‡РёСЃР»СЏРµРј РёРЅРґРµРєСЃ РґРµРЅРґСЂРёС‚Р°, РЅР° РєРѕС‚РѕСЂС‹Р№ РІС…РѕРґРЅРѕР№ СЃРёРіРЅР°Р» РїСЂРёС€С‘Р» РїРѕСЃР»РµРґРЅРёРј,
+		// РёР· РµС‰С‘ РЅРµ РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹С…
 		double max_delay = -1;
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
@@ -536,13 +536,13 @@ bool NNeuronTrainer::ABuild(void)
 		return true;
 	}
 
-	// Проверяем необходимость нарастить текущий дендрит
+	// РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РЅР°СЂР°СЃС‚РёС‚СЊ С‚РµРєСѓС‰РёР№ РґРµРЅРґСЂРёС‚
 	if(is_new_iteration)
 	{
-		// Если возможно, наращиваем дендрит
+		// Р•СЃР»Рё РІРѕР·РјРѕР¶РЅРѕ, РЅР°СЂР°С‰РёРІР°РµРј РґРµРЅРґСЂРёС‚
 		if(DendriteLength[dend_index] < MaxDendriteLength)
 			DendriteLength[dend_index]++;
-		// Если невозможно нарастить дендрит - переходим к следующему
+		// Р•СЃР»Рё РЅРµРІРѕР·РјРѕР¶РЅРѕ РЅР°СЂР°СЃС‚РёС‚СЊ РґРµРЅРґСЂРёС‚ - РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 		else
 		{
 			is_new_dend = true;
@@ -550,7 +550,7 @@ bool NNeuronTrainer::ABuild(void)
 			return true;
 		}
 
-		// Если необходимо, устанавливаем новуй длину дендритов
+		// Р•СЃР»Рё РЅРµРѕР±С…РѕРґРёРјРѕ, СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅРѕРІСѓР№ РґР»РёРЅСѓ РґРµРЅРґСЂРёС‚РѕРІ
 		bool is_need_to_increase = true;
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
@@ -568,7 +568,7 @@ bool NNeuronTrainer::ABuild(void)
 			neuron->Reset();
 		}
 
-		// Добаляем связь между текущим генератором и новым синапсом
+		// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј
 		if(!neuron)
 		 return true;
 
@@ -580,7 +580,7 @@ bool NNeuronTrainer::ABuild(void)
 		if(!res)
 		 return true;
 
-		// Удаляем связь между текущим генератором и старым синапсом
+		// РЈРґР°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё СЃС‚Р°СЂС‹Рј СЃРёРЅР°РїСЃРѕРј
 		synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_"+sntoa(DendriteLength[dend_index]-1)+".ExcSynapse1",true);
 		if(!synapse)
 		 return true;
@@ -596,7 +596,7 @@ bool NNeuronTrainer::ABuild(void)
 		return true;
 	}
 
-	// Флаг первой итерации (необходим для замера времени начала расчёта)
+	// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 	if(is_first_iter)
 	{
 		start_iter_time = Environment->GetTime().GetDoubleTime();
@@ -606,11 +606,11 @@ bool NNeuronTrainer::ABuild(void)
 		//InitialDendritePotential[dend_index] = 0;
 	}
 
-	// Вычисляем максимальную амплитуду выходного сигнала
+	// Р’С‹С‡РёСЃР»СЏРµРј РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ Р°РјРїР»РёС‚СѓРґСѓ РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р°
 	{
 		if(!neuron)
 		 return true;
-		// Амплитуда нейрона
+		// РђРјРїР»РёС‚СѓРґР° РЅРµР№СЂРѕРЅР°
 		double neuron_amp;
 		neuron_amp = neuron->DendriticSumPotential(0,0);
 		if(neuron_amp > max_iter_neuron_amp)
@@ -620,7 +620,7 @@ bool NNeuronTrainer::ABuild(void)
 			//max_neuron_amp_time = Environment->GetTime().GetDoubleTime();
 		}
 
-		// Для начального участка дендрита запоминаем выходную амплитуду
+		// Р”Р»СЏ РЅР°С‡Р°Р»СЊРЅРѕРіРѕ СѓС‡Р°СЃС‚РєР° РґРµРЅРґСЂРёС‚Р° Р·Р°РїРѕРјРёРЅР°РµРј РІС‹С…РѕРґРЅСѓСЋ Р°РјРїР»РёС‚СѓРґСѓ
 		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		if(DendriteLength[dend_index] == 1)
 		{
@@ -637,27 +637,27 @@ bool NNeuronTrainer::ABuild(void)
 		}
 	}
 
-	// Признак окончания итерации (роста дендрита)
-	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
-	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Длина одной итерации
+	// РџСЂРёР·РЅР°Рє РѕРєРѕРЅС‡Р°РЅРёСЏ РёС‚РµСЂР°С†РёРё (СЂРѕСЃС‚Р° РґРµРЅРґСЂРёС‚Р°)
+	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // РўРµРєСѓС‰РµРµ РІСЂРµРјСЏ РёС‚РµСЂР°С†РёРё
+	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Р”Р»РёРЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 	if(iter_time >= iter_length)
 	{
-		// Если выходная амплитуда нейрона увеличилась - растим дендрит дальше
+		// Р•СЃР»Рё РІС‹С…РѕРґРЅР°СЏ Р°РјРїР»РёС‚СѓРґР° РЅРµР№СЂРѕРЅР° СѓРІРµР»РёС‡РёР»Р°СЃСЊ - СЂР°СЃС‚РёРј РґРµРЅРґСЂРёС‚ РґР°Р»СЊС€Рµ
 		if(max_iter_neuron_amp > max_neuron_amp - 0.000005)
 		{
 			max_neuron_amp = max_iter_neuron_amp;
 			NeuronAmplitude(0,0) = max_neuron_amp;
 			is_new_iteration = true;
 		}
-		// Если нет - удаляем текущий участок и переходим к следующиму дендриту
+		// Р•СЃР»Рё РЅРµС‚ - СѓРґР°Р»СЏРµРј С‚РµРєСѓС‰РёР№ СѓС‡Р°СЃС‚РѕРє Рё РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РёРјСѓ РґРµРЅРґСЂРёС‚Сѓ
 		else
 		{
 			is_new_dend = true;
 			dend_counter++;
 			is_new_iteration = false;
 
-			// Переключаем вход на предыдущий синапс
-			// Добаляем связь между текущим генератором и старым синапсом
+			// РџРµСЂРµРєР»СЋС‡Р°РµРј РІС…РѕРґ РЅР° РїСЂРµРґС‹РґСѓС‰РёР№ СЃРёРЅР°РїСЃ
+			// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё СЃС‚Р°СЂС‹Рј СЃРёРЅР°РїСЃРѕРј
 			if(!neuron)
 			 return true;
 
@@ -669,7 +669,7 @@ bool NNeuronTrainer::ABuild(void)
 			if(!res)
 			 return true;
 
-			// Удаляем связь между текущим генератором и новым синапсом
+			// РЈРґР°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј
 			synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(dend_index+1)+"_"+sntoa(DendriteLength[dend_index])+".ExcSynapse1",true);
 			if(!synapse)
 			 return true;
@@ -683,7 +683,7 @@ bool NNeuronTrainer::ABuild(void)
 			DendriteLength[dend_index]--;
 		}
 
-        // Флаг первой итерации (необходим для замера времени начала расчёта)
+        // Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 		is_first_iter = true;
 		max_iter_neuron_amp = 0;
 
@@ -693,20 +693,20 @@ bool NNeuronTrainer::ABuild(void)
 		return true;
 
 	////////////////////////////////////////////////////////////////////////////
-	// 2 - обучение путём наращивания длины дендритов по амплитуде и количества синапсов на дендрите
+	// 2 - РѕР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ РїРѕ Р°РјРїР»РёС‚СѓРґРµ Рё РєРѕР»РёС‡РµСЃС‚РІР° СЃРёРЅР°РїСЃРѕРІ РЅР° РґРµРЅРґСЂРёС‚Рµ
 */	/*if(NumInputDendrite < dend_counter && CalculateMode == 2)
 	{
-        // Если нейрон обучен - возвращаемся
+        // Р•СЃР»Рё РЅРµР№СЂРѕРЅ РѕР±СѓС‡РµРЅ - РІРѕР·РІСЂР°С‰Р°РµРјСЃСЏ
 		if(NumInputDendrite < syn_counter)
 		{
 			IsNeedToTrain = false;
 			return true;
 		}
 
-		// Проверяем необходимость перейти к следующему дендриту
+		// РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РїРµСЂРµР№С‚Рё Рє СЃР»РµРґСѓСЋС‰РµРјСѓ РґРµРЅРґСЂРёС‚Сѓ
 		if(is_new_dend)
 		{
-			// Обрабатываемый по счёту синапс = индекc+1 дендрита, на котором растим синапсы
+			// РћР±СЂР°Р±Р°С‚С‹РІР°РµРјС‹Р№ РїРѕ СЃС‡С‘С‚Сѓ СЃРёРЅР°РїСЃ = РёРЅРґРµРєc+1 РґРµРЅРґСЂРёС‚Р°, РЅР° РєРѕС‚РѕСЂРѕРј СЂР°СЃС‚РёРј СЃРёРЅР°РїСЃС‹
 			syn_counter++;
 			SynapseNum[syn_counter-1] = 1;
 
@@ -716,20 +716,20 @@ bool NNeuronTrainer::ABuild(void)
 			return true;
 		}
 
-		// Проверяем необходимость добавить синапс на дендрит
+		// РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РґРѕР±Р°РІРёС‚СЊ СЃРёРЅР°РїСЃ РЅР° РґРµРЅРґСЂРёС‚
 		if(is_new_iteration)
 		{
-			// Если возможно, наращиваем дендрит
+			// Р•СЃР»Рё РІРѕР·РјРѕР¶РЅРѕ, РЅР°СЂР°С‰РёРІР°РµРј РґРµРЅРґСЂРёС‚
 			if(SynapseNum[syn_counter-1] < MaxDendriteLength)
 				SynapseNum[syn_counter-1]++;
-			// Если невозможно наростить дендрит - переходим к следующему
+			// Р•СЃР»Рё РЅРµРІРѕР·РјРѕР¶РЅРѕ РЅР°СЂРѕСЃС‚РёС‚СЊ РґРµРЅРґСЂРёС‚ - РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 			else
 			{
 				is_new_dend = true;
 				return true;
 			}
 
-			// Добавляем новый синапс
+			// Р”РѕР±Р°РІР»СЏРµРј РЅРѕРІС‹Р№ СЃРёРЅР°РїСЃ
 			if(!neuron)
 			 return true;
 			dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(syn_counter)+"_"+sntoa(DendriteLength[syn_counter-1]),true);
@@ -739,7 +739,7 @@ bool NNeuronTrainer::ABuild(void)
 			if(!synapse)
 			 return true;
 
-			// Добаляем связь между текущим генератором и новым синапсом
+			// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј
 			res&=CreateLink("Source"+sntoa(syn_counter),"Output",synapse->GetLongName(this),"Input");
 			if(!res)
 			 return true;
@@ -751,14 +751,14 @@ bool NNeuronTrainer::ABuild(void)
 			return true;
 		}
 
-		// Флаг первой итерации (необходим для замера времени начала расчёта)
+		// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 		if(is_first_iter)
 		{
 			start_iter_time = Environment->GetTime().GetDoubleTime();
 			is_first_iter = false;
 		}
 
-		// Вычисляем максимальную амплитуду выходного сигнала
+		// Р’С‹С‡РёСЃР»СЏРµРј РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ Р°РјРїР»РёС‚СѓРґСѓ РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р°
 		{
 			if(!neuron)
 			 return true;
@@ -766,30 +766,30 @@ bool NNeuronTrainer::ABuild(void)
 			if(!dendrite)
 			 return true;
 
-			// Амплитуда нейрона
+			// РђРјРїР»РёС‚СѓРґР° РЅРµР№СЂРѕРЅР°
 			double neuron_amp;
 			neuron_amp = dendrite->SumPotential(0,0);
 			if(neuron_amp > max_iter_neuron_amp)
 				max_iter_neuron_amp = neuron_amp;
 		}
 
-		// Признак окончания итерации (роста дендрита)
-		double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
-		double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Длина одной итерации
+		// РџСЂРёР·РЅР°Рє РѕРєРѕРЅС‡Р°РЅРёСЏ РёС‚РµСЂР°С†РёРё (СЂРѕСЃС‚Р° РґРµРЅРґСЂРёС‚Р°)
+		double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // РўРµРєСѓС‰РµРµ РІСЂРµРјСЏ РёС‚РµСЂР°С†РёРё
+		double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Р”Р»РёРЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 		if(iter_time >= iter_length)
 		{
-			// Если выходная амплитуда нейрона меньше начальной - добавляем синапсы дальше
+			// Р•СЃР»Рё РІС‹С…РѕРґРЅР°СЏ Р°РјРїР»РёС‚СѓРґР° РЅРµР№СЂРѕРЅР° РјРµРЅСЊС€Рµ РЅР°С‡Р°Р»СЊРЅРѕР№ - РґРѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃС‹ РґР°Р»СЊС€Рµ
 			if(max_iter_neuron_amp < InitialDendritePotential[syn_counter-1] - 0.000005)
 			{
 				is_new_iteration = true;
 			}
-			// Если нет - удаляем текущий участок и переходим к следующиму дендриту
+			// Р•СЃР»Рё РЅРµС‚ - СѓРґР°Р»СЏРµРј С‚РµРєСѓС‰РёР№ СѓС‡Р°СЃС‚РѕРє Рё РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РёРјСѓ РґРµРЅРґСЂРёС‚Сѓ
 			else
 			{
 				is_new_dend = true;
 				is_new_iteration = false;
 
-				// Удаляем синапс
+				// РЈРґР°Р»СЏРµРј СЃРёРЅР°РїСЃ
 				synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(syn_counter)+"_"+sntoa(DendriteLength[syn_counter-1])+".ExcSynapse"+sntoa(SynapseNum[syn_counter-1]),true);
 				if(!synapse)
 				 return true;
@@ -801,7 +801,7 @@ bool NNeuronTrainer::ABuild(void)
 				SynapseNum[dend_index]--;
 			}
 
-			// Флаг первой итерации (необходим для замера времени начала расчёта)
+			// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 			is_first_iter = true;
 			max_iter_neuron_amp = 0;
 
@@ -814,16 +814,16 @@ bool NNeuronTrainer::ABuild(void)
 /*	return true;
 }*/
 
-// Добавляем синапсы для компенсации потерь амплитуды при наращивании дендритов
+// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃС‹ РґР»СЏ РєРѕРјРїРµРЅСЃР°С†РёРё РїРѕС‚РµСЂСЊ Р°РјРїР»РёС‚СѓРґС‹ РїСЂРё РЅР°СЂР°С‰РёРІР°РЅРёРё РґРµРЅРґСЂРёС‚РѕРІ
 /*bool NNeuronTrainer::SynapseNormalization(void)
 {
 	bool res(true);
 
 	////////////////////////////////////////////////////////////////////////////
-	// 4 - Обучение путём наращивания длины дендритов по времени и количества синапсов на дендрите
+	// 4 - РћР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ РїРѕ РІСЂРµРјРµРЅРё Рё РєРѕР»РёС‡РµСЃС‚РІР° СЃРёРЅР°РїСЃРѕРІ РЅР° РґРµРЅРґСЂРёС‚Рµ
 	////////////////////////////////////////////////////////////////////////////
 
-	//  Проверяем обученность нейрона
+	//  РџСЂРѕРІРµСЂСЏРµРј РѕР±СѓС‡РµРЅРЅРѕСЃС‚СЊ РЅРµР№СЂРѕРЅР°
 	bool is_trained = true;
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
@@ -836,15 +836,15 @@ bool NNeuronTrainer::ABuild(void)
 	if(is_trained)
 	{
 		IsNeedToTrain = false;
-		// Паттерн, которому обучен нейрон
+		// РџР°С‚С‚РµСЂРЅ, РєРѕС‚РѕСЂРѕРјСѓ РѕР±СѓС‡РµРЅ РЅРµР№СЂРѕРЅ
 		neuron->TrainingPattern = InputPattern;
-		// Индексы входных участков на дендритах
+		// РРЅРґРµРєСЃС‹ РІС…РѕРґРЅС‹С… СѓС‡Р°СЃС‚РєРѕРІ РЅР° РґРµРЅРґСЂРёС‚Р°С…
 		neuron->TrainingDendIndexes.Resize(NumInputDendrite,1);
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
 		 neuron->TrainingDendIndexes(i,0) = DendriteLength[i];
 		}
-		// Количество синапсов на входных участков на дендритах
+		// РљРѕР»РёС‡РµСЃС‚РІРѕ СЃРёРЅР°РїСЃРѕРІ РЅР° РІС…РѕРґРЅС‹С… СѓС‡Р°СЃС‚РєРѕРІ РЅР° РґРµРЅРґСЂРёС‚Р°С…
 		neuron->TrainingSynapsisNum.Resize(NumInputDendrite,1);
         for(int i = 0; i < NumInputDendrite; i++)
 		{
@@ -854,29 +854,29 @@ bool NNeuronTrainer::ABuild(void)
 		return true;
 	}
 
-	// Проверяем необходимость добавить синапс на дендрит
+	// РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РґРѕР±Р°РІРёС‚СЊ СЃРёРЅР°РїСЃ РЅР° РґРµРЅРґСЂРёС‚
 	if(is_new_iteration)
 	{
-		// Для всех дендритов
+		// Р”Р»СЏ РІСЃРµС… РґРµРЅРґСЂРёС‚РѕРІ
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
-			// Если амплитуда дендрита уже нормализована - переходим к следующиму
+			// Р•СЃР»Рё Р°РјРїР»РёС‚СѓРґР° РґРµРЅРґСЂРёС‚Р° СѓР¶Рµ РЅРѕСЂРјР°Р»РёР·РѕРІР°РЅР° - РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РёРјСѓ
 			if(!dend_status[i])
 			 continue;
-			// Добавляем синапс
+			// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ
 			else if(dend_status[i] == 2)
 			{
-				// Проверяем условие на максимальное количество синапсов
-				// ПАРАМЕТР НЕ ЗАВЕДЁН. НУЖЕН ЛИ?
+				// РџСЂРѕРІРµСЂСЏРµРј СѓСЃР»РѕРІРёРµ РЅР° РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРёРЅР°РїСЃРѕРІ
+				// РџРђР РђРњР•РўР  РќР• Р—РђР’Р•Р”РЃРќ. РќРЈР–Р•Рќ Р›Р?
 				//if(DendriteLength[i] >= MaxDendriteLength)
 				//{
 				//	dend_status[i] = 0;
 				//	continue;
 				//}
 
-				// Добавляем синапс
+				// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ
 				SynapseNum[i]++;
-				// Добавляем синапс
+				// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ
 				if(!neuron)
 				 return true;
 				UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
@@ -889,11 +889,11 @@ bool NNeuronTrainer::ABuild(void)
 				 return true;
 
 				synapse->Resistance = SynapseResistanceStep;
-				// Добаляем связь между текущим генератором и новым синапсом
+				// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј
 				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
 				if(!res)
 				 return true;
-				// Добавляем связь между новым синапсом и ионным каналом
+				// Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј Рё РёРѕРЅРЅС‹Рј РєР°РЅР°Р»РѕРј
 				std::string input_name = dendrite->GetLongName(this) + std::string(".ExcChannel");
 				res&=CreateLink(synapse->GetLongName(this),"Output",input_name,"SynapticInputs");
 				if(!res)
@@ -901,15 +901,15 @@ bool NNeuronTrainer::ABuild(void)
 
 				neuron->Reset();
 			}
-			// Удаляем синапс
+			// РЈРґР°Р»СЏРµРј СЃРёРЅР°РїСЃ
 			else if(dend_status[i] == -2)
 			{
-				// Удаляем синапс
+				// РЈРґР°Р»СЏРµРј СЃРёРЅР°РїСЃ
 				SynapseNum[i]--;
-				// Помечаем как посчитанный
+				// РџРѕРјРµС‡Р°РµРј РєР°Рє РїРѕСЃС‡РёС‚Р°РЅРЅС‹Р№
 				dend_status[i] = 0;
 
-				// Удаляем синапс
+				// РЈРґР°Р»СЏРµРј СЃРёРЅР°РїСЃ
 				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse"+sntoa(SynapseNum[i]+1),true);
 				if(!synapse)
 				 return true;
@@ -925,24 +925,24 @@ bool NNeuronTrainer::ABuild(void)
 		return true;
 	}
 
-	// Флаг первой итерации (необходим для замера времени начала расчёта)
+	// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 	if(is_first_iter)
 	{
 		start_iter_time = Environment->GetTime().GetDoubleTime();
 
-		// Максимальная амплитуда выходного сигнала дендритов на одной итерации
+		// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ Р°РјРїР»РёС‚СѓРґР° РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° РґРµРЅРґСЂРёС‚РѕРІ РЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 		max_iter_dend_amp.assign(NumInputDendrite, 0);
 
 		is_first_iter = false;
 	}
 
-	// Вычисляем максимальную амплитуду выходного сигнала каждого дендрита
+	// Р’С‹С‡РёСЃР»СЏРµРј РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ Р°РјРїР»РёС‚СѓРґСѓ РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° РєР°Р¶РґРѕРіРѕ РґРµРЅРґСЂРёС‚Р°
 	if(!neuron)
 	 return true;
 
-	// Амплитуда дендрита
+	// РђРјРїР»РёС‚СѓРґР° РґРµРЅРґСЂРёС‚Р°
 	double dendrite_amp;
-	// Ищем максимальные амплитуды дендритов
+	// РС‰РµРј РјР°РєСЃРёРјР°Р»СЊРЅС‹Рµ Р°РјРїР»РёС‚СѓРґС‹ РґРµРЅРґСЂРёС‚РѕРІ
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
 		UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_1",true);
@@ -954,12 +954,12 @@ bool NNeuronTrainer::ABuild(void)
 			max_iter_dend_amp[i] = dendrite_amp;
 	}
 
-	// Признак окончания итерации
-	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
-	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Длина одной итерации
+	// РџСЂРёР·РЅР°Рє РѕРєРѕРЅС‡Р°РЅРёСЏ РёС‚РµСЂР°С†РёРё
+	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // РўРµРєСѓС‰РµРµ РІСЂРµРјСЏ РёС‚РµСЂР°С†РёРё
+	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Р”Р»РёРЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 	if(iter_time >= iter_length)
 	{
-		// Для всех дендритов
+		// Р”Р»СЏ РІСЃРµС… РґРµРЅРґСЂРёС‚РѕРІ
 		//NeuronAmplitude(0,0) = 0;
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
@@ -970,12 +970,12 @@ bool NNeuronTrainer::ABuild(void)
 			if(!dend_status[i])
 			 continue;
 
-			// Если амплитуда меньше начальной - добавляем синапсы дальше
+			// Р•СЃР»Рё Р°РјРїР»РёС‚СѓРґР° РјРµРЅСЊС€Рµ РЅР°С‡Р°Р»СЊРЅРѕР№ - РґРѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃС‹ РґР°Р»СЊС€Рµ
 			if(max_iter_dend_amp[i] < InitialDendritePotential[i] + 0.000005)
 			{
 				dend_status[i] = 2;
 			}
-			// В противном случае - удаляем синапс
+			// Р’ РїСЂРѕС‚РёРІРЅРѕРј СЃР»СѓС‡Р°Рµ - СѓРґР°Р»СЏРµРј СЃРёРЅР°РїСЃ
 			else
 			{
 				dend_status[i] = -2;
@@ -984,7 +984,7 @@ bool NNeuronTrainer::ABuild(void)
 			is_new_iteration = true;
 		}
 
-		// Флаг первой итерации (необходим для замера времени начала расчёта)
+		// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 		is_first_iter = true;
 
 		return true;
@@ -995,20 +995,20 @@ bool NNeuronTrainer::ABuild(void)
 	return true;
 }
 
-// Выполняется обучение путём наращивания длины дендритов
-// путём синхронизации входного паттерна
+// Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ
+// РїСѓС‚С‘Рј СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё РІС…РѕРґРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР°
 bool NNeuronTrainer::SynchronizePattern(void)
 {
 	bool res(true);
 
 	////////////////////////////////////////////////////////////////////////////
-	// 3 - Обучение путём наращивания длины дендритов путём максимального выравнивания времени прихода сигналов на сому
-	// Если нейрон обучен - возвращаемся
+	// 3 - РћР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ РїСѓС‚С‘Рј РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РІС‹СЂР°РІРЅРёРІР°РЅРёСЏ РІСЂРµРјРµРЅРё РїСЂРёС…РѕРґР° СЃРёРіРЅР°Р»РѕРІ РЅР° СЃРѕРјСѓ
+	// Р•СЃР»Рё РЅРµР№СЂРѕРЅ РѕР±СѓС‡РµРЅ - РІРѕР·РІСЂР°С‰Р°РµРјСЃСЏ
 
-	// При первом входе дособираем нейрон
+	// РџСЂРё РїРµСЂРІРѕРј РІС…РѕРґРµ РґРѕСЃРѕР±РёСЂР°РµРј РЅРµР№СЂРѕРЅ
 	if(is_need_to_build)
 	{
-		// Вычисляем индекс дендрита, на который входной сигнал пришёл последним
+		// Р’С‹С‡РёСЃР»СЏРµРј РёРЅРґРµРєСЃ РґРµРЅРґСЂРёС‚Р°, РЅР° РєРѕС‚РѕСЂС‹Р№ РІС…РѕРґРЅРѕР№ СЃРёРіРЅР°Р» РїСЂРёС€С‘Р» РїРѕСЃР»РµРґРЅРёРј
     */	/*double max_delay = -1;
 		for(int i = 0; i < NumInputDendrite; i++)
             DendriteLength[i] = 0;
@@ -1029,7 +1029,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 		}
 		DendriteLength[dend_index] = 1; */
 
-		// Добаляем связи между генератором и синапсами
+		// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·Рё РјРµР¶РґСѓ РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё СЃРёРЅР°РїСЃР°РјРё
         /*if(!neuron)
 		 return true;
 		for(int i = 0; i < NumInputDendrite; i++)
@@ -1045,20 +1045,20 @@ bool NNeuronTrainer::SynchronizePattern(void)
 		}
 		neuron->Reset();
 
-		// Параметры для синхронизации по времени
-		is_need_to_build = false; // Флаг необходимости досабрать нейрон
-		max_dend_amp_time.assign(NumInputDendrite, 0); // Время нахождения максимальной амплитуды выходного сигнала дендритов на одной итерации
-		double pepiod = 1.0 / SpikesFrequency + 0.001; // период итерации
-		dissynchronization.assign(NumInputDendrite, pepiod); // Текущая рассинхронизация дендрита
+		// РџР°СЂР°РјРµС‚СЂС‹ РґР»СЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё РїРѕ РІСЂРµРјРµРЅРё
+		is_need_to_build = false; // Р¤Р»Р°Рі РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РґРѕСЃР°Р±СЂР°С‚СЊ РЅРµР№СЂРѕРЅ
+		max_dend_amp_time.assign(NumInputDendrite, 0); // Р’СЂРµРјСЏ РЅР°С…РѕР¶РґРµРЅРёСЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕР№ Р°РјРїР»РёС‚СѓРґС‹ РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° РґРµРЅРґСЂРёС‚РѕРІ РЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
+		double pepiod = 1.0 / SpikesFrequency + 0.001; // РїРµСЂРёРѕРґ РёС‚РµСЂР°С†РёРё
+		dissynchronization.assign(NumInputDendrite, pepiod); // РўРµРєСѓС‰Р°СЏ СЂР°СЃСЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ РґРµРЅРґСЂРёС‚Р°
 		dissynchronization[dend_index] = 0;
-		dend_status.assign(NumInputDendrite, 1); // Статус дендритов
+		dend_status.assign(NumInputDendrite, 1); // РЎС‚Р°С‚СѓСЃ РґРµРЅРґСЂРёС‚РѕРІ
 		dend_status[dend_index] = 0;
-		is_synchronizated = false; // Признак завершения синхронизации
+		is_synchronizated = false; // РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
 
 		return true;
 	}
 
-	//  Проверяем обученность нейрона
+	//  РџСЂРѕРІРµСЂСЏРµРј РѕР±СѓС‡РµРЅРЅРѕСЃС‚СЊ РЅРµР№СЂРѕРЅР°
 	bool is_trained = true;
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
@@ -1070,36 +1070,36 @@ bool NNeuronTrainer::SynchronizePattern(void)
 	}
 	if(is_trained)
 	{
-		dend_status.assign(NumInputDendrite, 2); // Статус дендритов
+		dend_status.assign(NumInputDendrite, 2); // РЎС‚Р°С‚СѓСЃ РґРµРЅРґСЂРёС‚РѕРІ
 		dend_status[dend_index] = 0;
-		is_synchronizated = true; // Признак завершения синхронизации
+		is_synchronizated = true; // РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
 		if(CalculateMode == 3)
 		 IsNeedToTrain = false;
 		return true;
 	}
 
-	// Проверяем необходимость наростить текущий дендрит
+	// РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РЅР°СЂРѕСЃС‚РёС‚СЊ С‚РµРєСѓС‰РёР№ РґРµРЅРґСЂРёС‚
 	if(is_new_iteration)
 	{
-		// Для всех дендритов
+		// Р”Р»СЏ РІСЃРµС… РґРµРЅРґСЂРёС‚РѕРІ
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
-			// Если дендрит уже вырос - переходим к следующиму
+			// Р•СЃР»Рё РґРµРЅРґСЂРёС‚ СѓР¶Рµ РІС‹СЂРѕСЃ - РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РёРјСѓ
 			if(!dend_status[i])
 			 continue;
-			// Наращиваем дендрит
+			// РќР°СЂР°С‰РёРІР°РµРј РґРµРЅРґСЂРёС‚
 			else if(dend_status[i] == 1)
 			{
-				// Проверяем условие на максимальную длину дендритов
+				// РџСЂРѕРІРµСЂСЏРµРј СѓСЃР»РѕРІРёРµ РЅР° РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ РґР»РёРЅСѓ РґРµРЅРґСЂРёС‚РѕРІ
 				if(DendriteLength[i] >= MaxDendriteLength)
 				{
 					dend_status[i] = 0;
 					continue;
 				}
 
-				// Наращиваем дендрит
+				// РќР°СЂР°С‰РёРІР°РµРј РґРµРЅРґСЂРёС‚
 				DendriteLength[i]++;
-				// Добавляем дендрит
+				// Р”РѕР±Р°РІР»СЏРµРј РґРµРЅРґСЂРёС‚
 				if(!neuron)
 				 return true;
 
@@ -1122,7 +1122,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 					neuron->Reset();
 				}
 
-				// Добаляем связь между текущим генератором и новым синапсом
+				// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј
 				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
 				if(!synapse)
 				 return true;
@@ -1131,7 +1131,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 				if(!res)
 				 return true;
 
-				// Удаляем связь между текущим генератором и старым синапсом
+				// РЈРґР°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё СЃС‚Р°СЂС‹Рј СЃРёРЅР°РїСЃРѕРј
 				synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]-1)+".ExcSynapse1",true);
 				if(!synapse)
 				 return true;
@@ -1142,13 +1142,13 @@ bool NNeuronTrainer::SynchronizePattern(void)
 
 				neuron->Reset();
 			}
-			// Укорачиваем дендрит
+			// РЈРєРѕСЂР°С‡РёРІР°РµРј РґРµРЅРґСЂРёС‚
 			else if(dend_status[i] == -1)
 			{
                 if(!neuron)
 				 return true;
 
-				// Укорачиваем дендрит
+				// РЈРєРѕСЂР°С‡РёРІР°РµРј РґРµРЅРґСЂРёС‚
 				DendriteLength[i]--;
 				if(neuron->StructureBuildMode == 2)
 				{
@@ -1164,10 +1164,10 @@ bool NNeuronTrainer::SynchronizePattern(void)
 					neuron->Reset();
 				}
 
-				// Помечаем как посчитанный
+				// РџРѕРјРµС‡Р°РµРј РєР°Рє РїРѕСЃС‡РёС‚Р°РЅРЅС‹Р№
 				dend_status[i] = 0;
 
-				// Добаляем связь между текущим генератором и старым синапсом
+				// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё СЃС‚Р°СЂС‹Рј СЃРёРЅР°РїСЃРѕРј
 				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
 				if(!synapse)
 				 return true;
@@ -1176,7 +1176,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 				if(!res)
 				 return true;
 
-				// Удаляем связь между текущим генератором и новым синапсом
+				// РЈРґР°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј
 				synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]+1)+".ExcSynapse1",true);
 				if(!synapse)
 				 return true;
@@ -1194,24 +1194,24 @@ bool NNeuronTrainer::SynchronizePattern(void)
 		return true;
 	}
 
-	// Флаг первой итерации (необходим для замера времени начала расчёта)
+	// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 	if(is_first_iter)
 	{
 		start_iter_time = Environment->GetTime().GetDoubleTime();
 
-		// Максимальная амплитуда выходного сигнала дендритов на одной итерации
+		// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ Р°РјРїР»РёС‚СѓРґР° РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° РґРµРЅРґСЂРёС‚РѕРІ РЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 		max_iter_dend_amp.assign(NumInputDendrite, 0);
 
 		is_first_iter = false;
 	}
 
-	// Вычисляем максимальную амплитуду выходного сигнала каждого дендрита
+	// Р’С‹С‡РёСЃР»СЏРµРј РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ Р°РјРїР»РёС‚СѓРґСѓ РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° РєР°Р¶РґРѕРіРѕ РґРµРЅРґСЂРёС‚Р°
 	if(!neuron)
 	 return true;
 
-	// Амплитуда дендрита
+	// РђРјРїР»РёС‚СѓРґР° РґРµРЅРґСЂРёС‚Р°
 	double dendrite_amp;
-	// Ищем максимальные амплитуды дендритов
+	// РС‰РµРј РјР°РєСЃРёРјР°Р»СЊРЅС‹Рµ Р°РјРїР»РёС‚СѓРґС‹ РґРµРЅРґСЂРёС‚РѕРІ
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
 		UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_1",true);
@@ -1224,18 +1224,18 @@ bool NNeuronTrainer::SynchronizePattern(void)
 			max_iter_dend_amp[i] = dendrite_amp;
 			max_dend_amp_time[i] = Environment->GetTime().GetDoubleTime();
 
-			// Для начального участка дендрита запоминаем выходную амплитуду
+			// Р”Р»СЏ РЅР°С‡Р°Р»СЊРЅРѕРіРѕ СѓС‡Р°СЃС‚РєР° РґРµРЅРґСЂРёС‚Р° Р·Р°РїРѕРјРёРЅР°РµРј РІС‹С…РѕРґРЅСѓСЋ Р°РјРїР»РёС‚СѓРґСѓ
 			if(DendriteLength[i] == 1)
 			 InitialDendritePotential[i] = dendrite_amp;
 		}
 	}
 
-	// Признак окончания итерации (роста дендрита)
-	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
-	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Длина одной итерации
+	// РџСЂРёР·РЅР°Рє РѕРєРѕРЅС‡Р°РЅРёСЏ РёС‚РµСЂР°С†РёРё (СЂРѕСЃС‚Р° РґРµРЅРґСЂРёС‚Р°)
+	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // РўРµРєСѓС‰РµРµ РІСЂРµРјСЏ РёС‚РµСЂР°С†РёРё
+	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Р”Р»РёРЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 	if(iter_time >= iter_length)
 	{
-		// Для всех дендритов
+		// Р”Р»СЏ РІСЃРµС… РґРµРЅРґСЂРёС‚РѕРІ
 		//NeuronAmplitude(0,0) = 0;
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
@@ -1244,16 +1244,16 @@ bool NNeuronTrainer::SynchronizePattern(void)
 			if(!dend_status[i])
 			 continue;
 
-			// Текущий рассинхрон
+			// РўРµРєСѓС‰РёР№ СЂР°СЃСЃРёРЅС…СЂРѕРЅ
 			double dt = fabs(max_dend_amp_time[dend_index] - max_dend_amp_time[i]);
 
-			// Рассинхрон уменьшается - растим дендрит дальше
+			// Р Р°СЃСЃРёРЅС…СЂРѕРЅ СѓРјРµРЅСЊС€Р°РµС‚СЃСЏ - СЂР°СЃС‚РёРј РґРµРЅРґСЂРёС‚ РґР°Р»СЊС€Рµ
 			if(dt < dissynchronization[i])
 			{
 				dissynchronization[i] = dt;
 				dend_status[i] = 1;
 			}
-			// В противном случае - укарачиваем дендрит
+			// Р’ РїСЂРѕС‚РёРІРЅРѕРј СЃР»СѓС‡Р°Рµ - СѓРєР°СЂР°С‡РёРІР°РµРј РґРµРЅРґСЂРёС‚
 			else
 			{
 				dend_status[i] = -1;
@@ -1262,7 +1262,7 @@ bool NNeuronTrainer::SynchronizePattern(void)
 			is_new_iteration = true;
 		}
 
-		// Флаг первой итерации (необходим для замера времени начала расчёта)
+		// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 		is_first_iter = true;
 
 		return true;
@@ -1273,17 +1273,17 @@ bool NNeuronTrainer::SynchronizePattern(void)
 	return true;
 }*/
 
-// Добавляем синапсы для компенсации потерь амплитуды при наращивании дендритов
+// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃС‹ РґР»СЏ РєРѕРјРїРµРЅСЃР°С†РёРё РїРѕС‚РµСЂСЊ Р°РјРїР»РёС‚СѓРґС‹ РїСЂРё РЅР°СЂР°С‰РёРІР°РЅРёРё РґРµРЅРґСЂРёС‚РѕРІ
 bool NNeuronTrainer::SomaSynapseNormalization(void)
 {
 	bool res(true);
 
 	////////////////////////////////////////////////////////////////////////////
-	// Обучение путём наращивания длины дендритов по времени и количества синапсов на дендрите
-	//     в зависимости от потенциала на выходе с сомы
+	// РћР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ РїРѕ РІСЂРµРјРµРЅРё Рё РєРѕР»РёС‡РµСЃС‚РІР° СЃРёРЅР°РїСЃРѕРІ РЅР° РґРµРЅРґСЂРёС‚Рµ
+	//     РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РїРѕС‚РµРЅС†РёР°Р»Р° РЅР° РІС‹С…РѕРґРµ СЃ СЃРѕРјС‹
 	////////////////////////////////////////////////////////////////////////////
 
-	//  Проверяем обученность нейрона
+	//  РџСЂРѕРІРµСЂСЏРµРј РѕР±СѓС‡РµРЅРЅРѕСЃС‚СЊ РЅРµР№СЂРѕРЅР°
 	bool is_trained = true;
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
@@ -1303,15 +1303,15 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 //            file.write(dateTime.toUtf8());
 //            file.close();
 //        }
-		// Паттерн, которому обучен нейрон
+		// РџР°С‚С‚РµСЂРЅ, РєРѕС‚РѕСЂРѕРјСѓ РѕР±СѓС‡РµРЅ РЅРµР№СЂРѕРЅ
 		neuron->TrainingPattern = InputPattern;
-		// Индексы входных участков на дендритах
+		// РРЅРґРµРєСЃС‹ РІС…РѕРґРЅС‹С… СѓС‡Р°СЃС‚РєРѕРІ РЅР° РґРµРЅРґСЂРёС‚Р°С…
 		neuron->TrainingDendIndexes.Resize(NumInputDendrite,1);
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
 		 neuron->TrainingDendIndexes(i,0) = DendriteLength[i];
 		}
-		// Количество синапсов на входных участков на дендритах
+		// РљРѕР»РёС‡РµСЃС‚РІРѕ СЃРёРЅР°РїСЃРѕРІ РЅР° РІС…РѕРґРЅС‹С… СѓС‡Р°СЃС‚РєРѕРІ РЅР° РґРµРЅРґСЂРёС‚Р°С…
 		neuron->TrainingSynapsisNum.Resize(NumInputDendrite,1);
         for(int i = 0; i < NumInputDendrite; i++)
 		{
@@ -1324,30 +1324,30 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 		return true;
 	}
 
-	// Проверяем необходимость добавить синапс на дендрит
+	// РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РґРѕР±Р°РІРёС‚СЊ СЃРёРЅР°РїСЃ РЅР° РґРµРЅРґСЂРёС‚
 	if(is_new_iteration)
 	{
-		// Для всех дендритов
+		// Р”Р»СЏ РІСЃРµС… РґРµРЅРґСЂРёС‚РѕРІ
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
-			// Если амплитуда дендрита уже нормализована - переходим к следующиму
+			// Р•СЃР»Рё Р°РјРїР»РёС‚СѓРґР° РґРµРЅРґСЂРёС‚Р° СѓР¶Рµ РЅРѕСЂРјР°Р»РёР·РѕРІР°РЅР° - РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РёРјСѓ
 			if(!dend_status[i])
 			 continue;
-			// Добавляем синапс
+			// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ
 			else if(dend_status[i] == 2)
 			{
-				// Проверяем условие на максимальное количество синапсов
-				// ПАРАМЕТР НЕ ЗАВЕДЁН. НУЖЕН ЛИ?
+				// РџСЂРѕРІРµСЂСЏРµРј СѓСЃР»РѕРІРёРµ РЅР° РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРёРЅР°РїСЃРѕРІ
+				// РџРђР РђРњР•РўР  РќР• Р—РђР’Р•Р”РЃРќ. РќРЈР–Р•Рќ Р›Р?
 				//if(DendriteLength[i] >= MaxDendriteLength)
 				//{
 				//	dend_status[i] = 0;
 				//	continue;
 				//}
 
-				// Добавляем синапс
+				// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ
 				SynapseNum[i]++;
 
-				// Добавляем синапс
+				// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ
 				if(!neuron)
 				 return true;
 				UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
@@ -1359,7 +1359,7 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 //				if(!synapse)
 //				 return true;
 
-				// Добаляем связь между текущим генератором и новым синапсом
+				// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј
 				NPulseSynapseCommon *synapse=dendrite->GetExcitatorySynapses(dendrite->NumExcitatorySynapses - 1);
 				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
 				if(!res)
@@ -1369,12 +1369,12 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 
 				neuron->Reset();
 			}
-			// Удаляем синапс
+			// РЈРґР°Р»СЏРµРј СЃРёРЅР°РїСЃ
 			else if(dend_status[i] == -2)
 			{
-				// Удаляем синапс
+				// РЈРґР°Р»СЏРµРј СЃРёРЅР°РїСЃ
 				SynapseNum[i]--;
-				// Помечаем как посчитанный
+				// РџРѕРјРµС‡Р°РµРј РєР°Рє РїРѕСЃС‡РёС‚Р°РЅРЅС‹Р№
 				dend_status[i] = 0;
 
 				UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
@@ -1393,24 +1393,24 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 		return true;
 	}
 
-	// Флаг первой итерации (необходим для замера времени начала расчёта)
+	// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 	if(is_first_iter)
 	{
 		start_iter_time = Environment->GetTime().GetDoubleTime();
 
-		// Максимальная амплитуда выходного сигнала дендритов на одной итерации
+		// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ Р°РјРїР»РёС‚СѓРґР° РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° РґРµРЅРґСЂРёС‚РѕРІ РЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 		max_iter_dend_amp.assign(NumInputDendrite, 0);
 
 		is_first_iter = false;
 	}
 
-	// Вычисляем максимальную амплитуду выходного сигнала каждого дендрита
+	// Р’С‹С‡РёСЃР»СЏРµРј РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ Р°РјРїР»РёС‚СѓРґСѓ РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° РєР°Р¶РґРѕРіРѕ РґРµРЅРґСЂРёС‚Р°
 	if(!neuron)
 	 return true;
 
-	// Амплитуда дендрита
+	// РђРјРїР»РёС‚СѓРґР° РґРµРЅРґСЂРёС‚Р°
 	double soma_amp;
-	// Ищем максимальные амплитуды дендритов
+	// РС‰РµРј РјР°РєСЃРёРјР°Р»СЊРЅС‹Рµ Р°РјРїР»РёС‚СѓРґС‹ РґРµРЅРґСЂРёС‚РѕРІ
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
 		UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
@@ -1422,12 +1422,12 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 			max_iter_dend_amp[i] = soma_amp;
 	}
 
-	// Признак окончания итерации
-	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
-	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Длина одной итерации
+	// РџСЂРёР·РЅР°Рє РѕРєРѕРЅС‡Р°РЅРёСЏ РёС‚РµСЂР°С†РёРё
+	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // РўРµРєСѓС‰РµРµ РІСЂРµРјСЏ РёС‚РµСЂР°С†РёРё
+	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Р”Р»РёРЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 	if(iter_time >= iter_length)
 	{
-		// Для всех дендритов
+		// Р”Р»СЏ РІСЃРµС… РґРµРЅРґСЂРёС‚РѕРІ
 		//NeuronAmplitude(0,0) = 0;
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
@@ -1438,12 +1438,12 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 			if(!dend_status[i])
 			 continue;
 
-			// Если амплитуда меньше начальной - добавляем синапсы дальше
+			// Р•СЃР»Рё Р°РјРїР»РёС‚СѓРґР° РјРµРЅСЊС€Рµ РЅР°С‡Р°Р»СЊРЅРѕР№ - РґРѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃС‹ РґР°Р»СЊС€Рµ
 			if(max_iter_dend_amp[i] < InitialDendritePotential[i] + 0.000005)
 			{
 				dend_status[i] = 2;
 			}
-			// В противном случае - удаляем синапс
+			// Р’ РїСЂРѕС‚РёРІРЅРѕРј СЃР»СѓС‡Р°Рµ - СѓРґР°Р»СЏРµРј СЃРёРЅР°РїСЃ
 			else
 			{
 				dend_status[i] = -2;
@@ -1452,7 +1452,7 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 			is_new_iteration = true;
 		}
 
-		// Флаг первой итерации (необходим для замера времени начала расчёта)
+		// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 		is_first_iter = true;
 
 		return true;
@@ -1463,22 +1463,22 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 	return true;
 }
 
-// Выполняется обучение путём наращивания длины дендритов
-// путём синхронизации входного паттерна на выходе сомы
+// Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ
+// РїСѓС‚С‘Рј СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё РІС…РѕРґРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР° РЅР° РІС‹С…РѕРґРµ СЃРѕРјС‹
 bool NNeuronTrainer::SomaSynchronizePattern(void)
 {
 	bool res(true);
 
 	////////////////////////////////////////////////////////////////////////////
-	// 6 - Обучение путём наращивания длины дендритов по времени и количества синапсов на дендрите
-	//     в зависимости от потенциала на выходе сомы
+	// 6 - РћР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ РїРѕ РІСЂРµРјРµРЅРё Рё РєРѕР»РёС‡РµСЃС‚РІР° СЃРёРЅР°РїСЃРѕРІ РЅР° РґРµРЅРґСЂРёС‚Рµ
+	//     РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РїРѕС‚РµРЅС†РёР°Р»Р° РЅР° РІС‹С…РѕРґРµ СЃРѕРјС‹
 	////////////////////////////////////////////////////////////////////////////
-	// Если нейрон обучен - возвращаемся
+	// Р•СЃР»Рё РЅРµР№СЂРѕРЅ РѕР±СѓС‡РµРЅ - РІРѕР·РІСЂР°С‰Р°РµРјСЃСЏ
 
-	// При первом входе дособираем нейрон
+	// РџСЂРё РїРµСЂРІРѕРј РІС…РѕРґРµ РґРѕСЃРѕР±РёСЂР°РµРј РЅРµР№СЂРѕРЅ
 	if(is_need_to_build)
 	{
-		// Добаляем связи между генератором и синапсами
+		// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·Рё РјРµР¶РґСѓ РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё СЃРёРЅР°РїСЃР°РјРё
 		if(!neuron)
 		 return true;
 		for(int i = 0; i < NumInputDendrite; i++)
@@ -1494,20 +1494,20 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 		}
 		neuron->Reset();
 
-		// Параметры для синхронизации по времени
-		is_need_to_build = false; // Флаг необходимости досабрать нейрон
-		max_dend_amp_time.assign(NumInputDendrite, 0); // Время нахождения максимальной амплитуды выходного сигнала с сом на одной итерации
-		double period = 1.0 / SpikesFrequency + 0.001; // период итерации
-		dissynchronization.assign(NumInputDendrite, period); // Текущая рассинхронизация сомы
+		// РџР°СЂР°РјРµС‚СЂС‹ РґР»СЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё РїРѕ РІСЂРµРјРµРЅРё
+		is_need_to_build = false; // Р¤Р»Р°Рі РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РґРѕСЃР°Р±СЂР°С‚СЊ РЅРµР№СЂРѕРЅ
+		max_dend_amp_time.assign(NumInputDendrite, 0); // Р’СЂРµРјСЏ РЅР°С…РѕР¶РґРµРЅРёСЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕР№ Р°РјРїР»РёС‚СѓРґС‹ РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° СЃ СЃРѕРј РЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
+		double period = 1.0 / SpikesFrequency + 0.001; // РїРµСЂРёРѕРґ РёС‚РµСЂР°С†РёРё
+		dissynchronization.assign(NumInputDendrite, period); // РўРµРєСѓС‰Р°СЏ СЂР°СЃСЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ СЃРѕРјС‹
 		dissynchronization[dend_index] = 0;
-		dend_status.assign(NumInputDendrite, 1); // Статус дендритов
+		dend_status.assign(NumInputDendrite, 1); // РЎС‚Р°С‚СѓСЃ РґРµРЅРґСЂРёС‚РѕРІ
 		dend_status[dend_index] = 0;
-		is_synchronizated = false; // Признак завершения синхронизации
+		is_synchronizated = false; // РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
 
 		return true;
 	}
 
-	//  Проверяем обученность нейрона
+	//  РџСЂРѕРІРµСЂСЏРµРј РѕР±СѓС‡РµРЅРЅРѕСЃС‚СЊ РЅРµР№СЂРѕРЅР°
 	bool is_trained = true;
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
@@ -1519,36 +1519,36 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 	}
 	if(is_trained)
 	{
-		dend_status.assign(NumInputDendrite, 2); // Статус дендритов
+		dend_status.assign(NumInputDendrite, 2); // РЎС‚Р°С‚СѓСЃ РґРµРЅРґСЂРёС‚РѕРІ
 		dend_status[dend_index] = 0;
-		is_synchronizated = true; // Признак завершения синхронизации
+		is_synchronizated = true; // РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
 		if(CalculateMode == 3)
 		 IsNeedToTrain = false;
 		return true;
 	}
 
-	// Проверяем необходимость наростить текущий дендрит
+	// РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РЅР°СЂРѕСЃС‚РёС‚СЊ С‚РµРєСѓС‰РёР№ РґРµРЅРґСЂРёС‚
 	if(is_new_iteration)
 	{
-		// Для всех дендритов
+		// Р”Р»СЏ РІСЃРµС… РґРµРЅРґСЂРёС‚РѕРІ
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
-			// Если дендрит уже вырос - переходим к следующиму
+			// Р•СЃР»Рё РґРµРЅРґСЂРёС‚ СѓР¶Рµ РІС‹СЂРѕСЃ - РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РёРјСѓ
 			if(!dend_status[i])
 			 continue;
-			// Наращиваем дендрит
+			// РќР°СЂР°С‰РёРІР°РµРј РґРµРЅРґСЂРёС‚
 			else if(dend_status[i] == 1)
 			{
-				// Проверяем условие на максимальную длину дендритов
+				// РџСЂРѕРІРµСЂСЏРµРј СѓСЃР»РѕРІРёРµ РЅР° РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ РґР»РёРЅСѓ РґРµРЅРґСЂРёС‚РѕРІ
 				if(DendriteLength[i] >= MaxDendriteLength)
 				{
 					dend_status[i] = 0;
 					continue;
 				}
 
-				// Наращиваем дендрит
+				// РќР°СЂР°С‰РёРІР°РµРј РґРµРЅРґСЂРёС‚
 				DendriteLength[i]++;
-				// Добавляем участок дендрита
+				// Р”РѕР±Р°РІР»СЏРµРј СѓС‡Р°СЃС‚РѕРє РґРµРЅРґСЂРёС‚Р°
 				if(!neuron)
 				 return true;
 
@@ -1582,7 +1582,7 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 //                    LogMessageEx(RDK_EX_INFO,__FUNCTION__,"Dendritic lengths : "+sss.str());
                 }
 
-				// Добаляем связь между текущим генератором и новым синапсом
+				// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј
 				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
 				if(!synapse)
                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Synapse: Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1"+" not found");
@@ -1592,20 +1592,20 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
                  if(!res)
                   LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Falied create link: Source"+sntoa(i+1)+":Output -> "+synapse->GetLongName(this)+":Input");
                 }
-				// Удаляем связь между текущим генератором и старым синапсом
+				// РЈРґР°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё СЃС‚Р°СЂС‹Рј СЃРёРЅР°РїСЃРѕРј
 				synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]-1)+".ExcSynapse1",true);
                 if(synapse)
                  BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
 
 				neuron->Reset();
 			}
-			// Укорачиваем дендрит
+			// РЈРєРѕСЂР°С‡РёРІР°РµРј РґРµРЅРґСЂРёС‚
 			else if(dend_status[i] == -1)
 			{
                 if(!neuron)
 				 return true;
 
-				// Укорачиваем дендрит
+				// РЈРєРѕСЂР°С‡РёРІР°РµРј РґРµРЅРґСЂРёС‚
 				DendriteLength[i]--;
 				if(neuron->StructureBuildMode == 2)
 				{
@@ -1629,10 +1629,10 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
                 }
 
 
-				// Помечаем как посчитанный
+				// РџРѕРјРµС‡Р°РµРј РєР°Рє РїРѕСЃС‡РёС‚Р°РЅРЅС‹Р№
 				dend_status[i] = 0;
 
-				// Добаляем связь между текущим генератором и старым синапсом
+				// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё СЃС‚Р°СЂС‹Рј СЃРёРЅР°РїСЃРѕРј
 				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
 				if(!synapse)
                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Synapse: Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1"+" not found");
@@ -1642,7 +1642,7 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
                  if(!res)
                   LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Falied create link: Source"+sntoa(i+1)+":Output -> "+synapse->GetLongName(this)+":Input");
                 }
-				// Удаляем связь между текущим генератором и новым синапсом
+				// РЈРґР°Р»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ С‚РµРєСѓС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј
 				synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]+1)+".ExcSynapse1",true);
                 if(synapse)
                  BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
@@ -1656,24 +1656,24 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 		return true;
 	}
 
-	// Флаг первой итерации (необходим для замера времени начала расчёта)
+	// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 	if(is_first_iter)
 	{
 		start_iter_time = Environment->GetTime().GetDoubleTime();
 
-		// Максимальная амплитуда выходного сигнала сом на одной итерации
+		// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ Р°РјРїР»РёС‚СѓРґР° РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° СЃРѕРј РЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 		max_iter_dend_amp.assign(NumInputDendrite, 0);
 
 		is_first_iter = false;
 	}
 
-	// Вычисляем максимальную амплитуду выходного сигнала каждой сомы
+	// Р’С‹С‡РёСЃР»СЏРµРј РјР°РєСЃРёРјР°Р»СЊРЅСѓСЋ Р°РјРїР»РёС‚СѓРґСѓ РІС‹С…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р° РєР°Р¶РґРѕР№ СЃРѕРјС‹
 	if(!neuron)
 	 return true;
 
-	// Амплитуда сомы
+	// РђРјРїР»РёС‚СѓРґР° СЃРѕРјС‹
 	double soma_amp;
-	// Ищем максимальные амплитуды на сомах
+	// РС‰РµРј РјР°РєСЃРёРјР°Р»СЊРЅС‹Рµ Р°РјРїР»РёС‚СѓРґС‹ РЅР° СЃРѕРјР°С…
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
 		UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
@@ -1686,18 +1686,18 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 			max_iter_dend_amp[i] = soma_amp;
 			max_dend_amp_time[i] = Environment->GetTime().GetDoubleTime();
 
-			// Для начального участка дендрита запоминаем выходную амплитуду
+			// Р”Р»СЏ РЅР°С‡Р°Р»СЊРЅРѕРіРѕ СѓС‡Р°СЃС‚РєР° РґРµРЅРґСЂРёС‚Р° Р·Р°РїРѕРјРёРЅР°РµРј РІС‹С…РѕРґРЅСѓСЋ Р°РјРїР»РёС‚СѓРґСѓ
 			if(DendriteLength[i] == 1)
 			 InitialDendritePotential[i] = soma_amp;
 		}
 	}
 
-	// Признак окончания итерации (роста дендрита)
-	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
-	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Длина одной итерации
+	// РџСЂРёР·РЅР°Рє РѕРєРѕРЅС‡Р°РЅРёСЏ РёС‚РµСЂР°С†РёРё (СЂРѕСЃС‚Р° РґРµРЅРґСЂРёС‚Р°)
+	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // РўРµРєСѓС‰РµРµ РІСЂРµРјСЏ РёС‚РµСЂР°С†РёРё
+	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Р”Р»РёРЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 	if(iter_time >= iter_length)
 	{
-		// Для всех дендритов
+		// Р”Р»СЏ РІСЃРµС… РґРµРЅРґСЂРёС‚РѕРІ
 		//NeuronAmplitude(0,0) = 0;
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
@@ -1706,16 +1706,16 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 			if(!dend_status[i])
 			 continue;
 
-			// Текущий рассинхрон
+			// РўРµРєСѓС‰РёР№ СЂР°СЃСЃРёРЅС…СЂРѕРЅ
 			double dt = fabs(max_dend_amp_time[dend_index] - max_dend_amp_time[i]);
 
-			// Рассинхрон уменьшается - растим дендрит дальше
+			// Р Р°СЃСЃРёРЅС…СЂРѕРЅ СѓРјРµРЅСЊС€Р°РµС‚СЃСЏ - СЂР°СЃС‚РёРј РґРµРЅРґСЂРёС‚ РґР°Р»СЊС€Рµ
 			if(dt < dissynchronization[i])
 			{
 				dissynchronization[i] = dt;
 				dend_status[i] = 1;
 			}
-			// В противном случае - укарачиваем дендрит
+			// Р’ РїСЂРѕС‚РёРІРЅРѕРј СЃР»СѓС‡Р°Рµ - СѓРєР°СЂР°С‡РёРІР°РµРј РґРµРЅРґСЂРёС‚
 			else
 			{
 				dend_status[i] = -1;
@@ -1724,7 +1724,7 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 			is_new_iteration = true;
 		}
 
-		// Флаг первой итерации (необходим для замера времени начала расчёта)
+		// Р¤Р»Р°Рі РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё (РЅРµРѕР±С…РѕРґРёРј РґР»СЏ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё РЅР°С‡Р°Р»Р° СЂР°СЃС‡С‘С‚Р°)
 		is_first_iter = true;
 
 		return true;
@@ -1736,17 +1736,17 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 }
 
 
-// Процесс расчёта
+// РџСЂРѕС†РµСЃСЃ СЂР°СЃС‡С‘С‚Р°
 bool NNeuronTrainer::CalculateProcess(void)
 {
 	bool res(true);
-	//static bool first_iter = 1;//теперь флаг в конструкторе
+	//static bool first_iter = 1;//С‚РµРїРµСЂСЊ С„Р»Р°Рі РІ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂРµ
 	static MDMatrix<double> auto_puttern;
-	static ofstream fout("C:\\Test_out2.txt"); // брать оттуда где проект
-	static ifstream fin("C:\\Test.txt");// сохранять туда же где и проект?
+	static ofstream fout("C:\\Test_out2.txt"); // Р±СЂР°С‚СЊ РѕС‚С‚СѓРґР° РіРґРµ РїСЂРѕРµРєС‚
+	static ifstream fin("C:\\Test.txt");// СЃРѕС…СЂР°РЅСЏС‚СЊ С‚СѓРґР° Р¶Рµ РіРґРµ Рё РїСЂРѕРµРєС‚?
 	static double local_trainigLTZtresh = 0;
 
-	//Меняем порог для этапа обучения
+	//РњРµРЅСЏРµРј РїРѕСЂРѕРі РґР»СЏ СЌС‚Р°РїР° РѕР±СѓС‡РµРЅРёСЏ
  if (IsNeedToTrain && thresh_first_iter)
 	{
 		local_trainigLTZtresh = TrainingLTZThreshold;
@@ -1754,8 +1754,8 @@ bool NNeuronTrainer::CalculateProcess(void)
 		thresh_first_iter = 0;
 	}
 
-	// выход N-ого дендрита
-	// Для расчёта не нужно, может быть полезно для отладки и/или отображения
+	// РІС‹С…РѕРґ N-РѕРіРѕ РґРµРЅРґСЂРёС‚Р°
+	// Р”Р»СЏ СЂР°СЃС‡С‘С‚Р° РЅРµ РЅСѓР¶РЅРѕ, РјРѕР¶РµС‚ Р±С‹С‚СЊ РїРѕР»РµР·РЅРѕ РґР»СЏ РѕС‚Р»Р°РґРєРё Рё/РёР»Рё РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ
 	NeuronAmplitude(0,0) = 0;
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
@@ -1772,7 +1772,7 @@ bool NNeuronTrainer::CalculateProcess(void)
 		SomaNeuronAmplitude(0,0) = SomaNeuronAmplitude(0,0) + /*8.0**/soma->SumPotential(0,0);
 	}
 
-	// Проверяем необходимость обучения
+	// РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РѕР±СѓС‡РµРЅРёСЏ
 	if(CalculateMode==5)
 	{
 		static double time_spike = 0;
@@ -1785,7 +1785,7 @@ bool NNeuronTrainer::CalculateProcess(void)
 				return true;
 			double time_now=Environment->GetTime().GetDoubleTime();
 			const double step_thresh=0.0001;
-			const double diff_time = 3;     //почему 3? 2 не работает
+			const double diff_time = 3;     //РїРѕС‡РµРјСѓ 3? 2 РЅРµ СЂР°Р±РѕС‚Р°РµС‚
 			if(ltzone->CheckPulseOn())
 			{
 				time_spike = Environment->GetTime().GetDoubleTime();
@@ -1813,70 +1813,70 @@ bool NNeuronTrainer::CalculateProcess(void)
 	{
 		if(!IsNeedToTrain)
 		{
-		//  порог после обучения надо возвращать вручную
+		//  РїРѕСЂРѕРі РїРѕСЃР»Рµ РѕР±СѓС‡РµРЅРёСЏ РЅР°РґРѕ РІРѕР·РІСЂР°С‰Р°С‚СЊ РІСЂСѓС‡РЅСѓСЋ
 			return true;
 		}
 	}
 
 
-	// Выбираем способ расчёта
+	// Р’С‹Р±РёСЂР°РµРј СЃРїРѕСЃРѕР± СЂР°СЃС‡С‘С‚Р°
 	switch(CalculateMode)
 	{
 	 case 0:
 		return true;
 		break;
 	 case 1: case 2:
-        // Выполняется обучение путём наращивания длины дендритов
-		// путём максимизации амплитуды нейрона
+        // Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ
+		// РїСѓС‚С‘Рј РјР°РєСЃРёРјРёР·Р°С†РёРё Р°РјРїР»РёС‚СѓРґС‹ РЅРµР№СЂРѕРЅР°
         //res = MaximazeAmplitude();
         //return res;
         //break;
 	 case 3:
-		// Выполняется обучение путём наращивания длины дендритов
-		// путём синхронизации входного паттерна
+		// Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ
+		// РїСѓС‚С‘Рј СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё РІС…РѕРґРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР°
         //res = SynchronizePattern();
         //return res;
         //break;
 	 case 4:
 	 {
-		// Выполняется обучение путём наращивания длины дендритов
-		// путём синхронизации входного паттерна
+		// Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ
+		// РїСѓС‚С‘Рј СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё РІС…РѕРґРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР°
 
         /*if(!is_synchronizated)
 		 res = SynchronizePattern();
-		// Добавляем синапсы для компенсации потерь амплитуды при наращивании дендритов
+		// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃС‹ РґР»СЏ РєРѕРјРїРµРЅСЃР°С†РёРё РїРѕС‚РµСЂСЊ Р°РјРїР»РёС‚СѓРґС‹ РїСЂРё РЅР°СЂР°С‰РёРІР°РЅРёРё РґРµРЅРґСЂРёС‚РѕРІ
 		if(is_synchronizated)
 		 res = SynapseNormalization();
         return res;*/
         //break;
 	 }
 	 case 5:
-		//Выполняется автоматический подбор порога срабатывания нейрона
-		//для каждого автоматичеки сгенерированного паттерна.
-		//В header подключены станд. библиотеки <iostream><fstream><cstring>
+		//Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРёР№ РїРѕРґР±РѕСЂ РїРѕСЂРѕРіР° СЃСЂР°Р±Р°С‚С‹РІР°РЅРёСЏ РЅРµР№СЂРѕРЅР°
+		//РґР»СЏ РєР°Р¶РґРѕРіРѕ Р°РІС‚РѕРјР°С‚РёС‡РµРєРё СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР°.
+		//Р’ header РїРѕРґРєР»СЋС‡РµРЅС‹ СЃС‚Р°РЅРґ. Р±РёР±Р»РёРѕС‚РµРєРё <iostream><fstream><cstring>
      {/*
-		//позиция в файле
+		//РїРѕР·РёС†РёСЏ РІ С„Р°Р№Р»Рµ
         static std::streamoff pos_file = 0;
 		auto_puttern.Resize(NumInputDendrite,1);
-		//проверка на открытие файлов и первую итерацию, чтобы задать паттерн из файла
+		//РїСЂРѕРІРµСЂРєР° РЅР° РѕС‚РєСЂС‹С‚РёРµ С„Р°Р№Р»РѕРІ Рё РїРµСЂРІСѓСЋ РёС‚РµСЂР°С†РёСЋ, С‡С‚РѕР±С‹ Р·Р°РґР°С‚СЊ РїР°С‚С‚РµСЂРЅ РёР· С„Р°Р№Р»Р°
 		if (fin.is_open()&&thresh_first_iter&&fout.is_open())
 		{
-			//переход к запоненной позиции
+			//РїРµСЂРµС…РѕРґ Рє Р·Р°РїРѕРЅРµРЅРЅРѕР№ РїРѕР·РёС†РёРё
 			fin.seekg(pos_file);
 			for(int i=0;i<NumInputDendrite;++i)
 			{
 				fin >> auto_puttern(i,0);
 			}
-			//запоминаем позицию, чтобы потом перейти к следующему паттерну
+			//Р·Р°РїРѕРјРёРЅР°РµРј РїРѕР·РёС†РёСЋ, С‡С‚РѕР±С‹ РїРѕС‚РѕРј РїРµСЂРµР№С‚Рё Рє СЃР»РµРґСѓСЋС‰РµРјСѓ РїР°С‚С‚РµСЂРЅСѓ
 			pos_file = fin.tellg();
 			thresh_first_iter=0;
 		}
 		InputPattern = auto_puttern;
-		//начальное приближение порога
-		LTZThreshold = 0.003; //если сразу порог будет превышен то не будет подбора!!!!!!!!!!
+		//РЅР°С‡Р°Р»СЊРЅРѕРµ РїСЂРёР±Р»РёР¶РµРЅРёРµ РїРѕСЂРѕРіР°
+		LTZThreshold = 0.003; //РµСЃР»Рё СЃСЂР°Р·Сѓ РїРѕСЂРѕРі Р±СѓРґРµС‚ РїСЂРµРІС‹С€РµРЅ С‚Рѕ РЅРµ Р±СѓРґРµС‚ РїРѕРґР±РѕСЂР°!!!!!!!!!!
 		if(!is_synchronizated)
 		 res = SynchronizePattern();
-		// Добавляем синапсы для компенсации потерь амплитуды при наращивании дендритов
+		// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃС‹ РґР»СЏ РєРѕРјРїРµРЅСЃР°С†РёРё РїРѕС‚РµСЂСЊ Р°РјРїР»РёС‚СѓРґС‹ РїСЂРё РЅР°СЂР°С‰РёРІР°РЅРёРё РґРµРЅРґСЂРёС‚РѕРІ
 		if(is_synchronizated)
 		 res = SynapseNormalization();
         return res;*/
@@ -1884,12 +1884,12 @@ bool NNeuronTrainer::CalculateProcess(void)
 	 }
 	 case 6:
 	 {
-		// Выполняется обучение путём наращивания длины дендритов
-		// путём синхронизации входного паттерна на выходе сомы
+		// Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕР±СѓС‡РµРЅРёРµ РїСѓС‚С‘Рј РЅР°СЂР°С‰РёРІР°РЅРёСЏ РґР»РёРЅС‹ РґРµРЅРґСЂРёС‚РѕРІ
+		// РїСѓС‚С‘Рј СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё РІС…РѕРґРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР° РЅР° РІС‹С…РѕРґРµ СЃРѕРјС‹
 
 		if(!is_synchronizated)
 		 res = SomaSynchronizePattern();
-		// Добавляем синапсы для компенсации потерь амплитуды на выходе сомы при наращивании дендритов
+		// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃС‹ РґР»СЏ РєРѕРјРїРµРЅСЃР°С†РёРё РїРѕС‚РµСЂСЊ Р°РјРїР»РёС‚СѓРґС‹ РЅР° РІС‹С…РѕРґРµ СЃРѕРјС‹ РїСЂРё РЅР°СЂР°С‰РёРІР°РЅРёРё РґРµРЅРґСЂРёС‚РѕРІ
 		if(is_synchronizated)
 		 res = SomaSynapseNormalization();
 		return res;
@@ -1903,12 +1903,12 @@ bool NNeuronTrainer::CalculateProcess(void)
 	return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NNeuronTrainer::ACalculate(void)
 {
 	CalculateProcess();
 
- 	// выход нейрона
+ 	// РІС‹С…РѕРґ РЅРµР№СЂРѕРЅР°
 	if(neuron)
 	{
 	 UEPtr<NLTZone> ltzone=neuron->GetComponentL<NLTZone>("LTZone");//GetLTZone();
@@ -1921,7 +1921,7 @@ bool NNeuronTrainer::ACalculate(void)
 	return true;
 }
 
-// Устанавливает компоненты в требуемый порядок расчета
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РєРѕРјРїРѕРЅРµРЅС‚С‹ РІ С‚СЂРµР±СѓРµРјС‹Р№ РїРѕСЂСЏРґРѕРє СЂР°СЃС‡РµС‚Р°
 void NNeuronTrainer::UpdateComputationOrder(void)
 {
  int position=0;

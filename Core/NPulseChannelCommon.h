@@ -22,119 +22,119 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseChannelCommon: public UNet
 {
-public: // Общедоступные свойства
-/// Тип ионного механизма
-/// <0 - накапливает отрицательный вклад в потенциал (или гиперполяризует мембрану)
-/// >0 - накапливает положительный вклад в потенциал (или деполяризует мембрану)
-ULProperty<double,NPulseChannelCommon, ptPubParameter> Type;
+public: //  
+///   
+/// <0 -      (  )
+/// >0 -      (  )
+UProperty<double,NPulseChannelCommon, ptPubParameter> Type;
 
-/// Флаг включения усреднения в выходных данных нейрона
-ULProperty<bool, NPulseChannelCommon, ptPubParameter> UseAveragePotential;
+///       
+UProperty<bool, NPulseChannelCommon, ptPubParameter> UseAveragePotential;
 
-/// Флаг включения усреднения выходов всех синапсов
-ULProperty<bool, NPulseChannelCommon, ptPubParameter> UseAverageSynapsis;
+///      
+UProperty<bool, NPulseChannelCommon, ptPubParameter> UseAverageSynapsis;
 
-public: // Входы и выходы
-/// Входной сигнал от канала предыдущего участка мембраны
-UPropertyInputCData<MDMatrix<double>, NPulseChannelCommon, ptInput | ptPubState> ChannelInputs;
+public: //   
+///       
+UProperty<std::vector<MDMatrix<double>>, NPulseChannelCommon, ptInput | ptPubState> ChannelInputs;
 
-/// Входной сигнал от синапсов
-UPropertyInputCData<MDMatrix<double>, NPulseChannelCommon, ptInput | ptPubState> SynapticInputs;
+///    
+UProperty<std::vector<MDMatrix<double>>, NPulseChannelCommon, ptInput | ptPubState> SynapticInputs;
 
-/// Выходное влияние синапса на мембрану
-UPropertyOutputData<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> Output;
+///     
+UProperty<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> Output;
 
-/// Суммарное входное влияние от каналов всех предыдущих участков мембраны
-/// (всех, т.к. возможно ветвление)
-UPropertyOutputData<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> SumChannelInput;
+///         
+/// (, ..  )
+UProperty<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> SumChannelInput;
 
-/// Суммарное влияние синапсов
-ULProperty<MDMatrix<double>, NPulseChannelCommon, ptOutput | ptPubState> SumSynapticInput;
+///   
+UProperty<MDMatrix<double>, NPulseChannelCommon, ptOutput | ptPubState> SumSynapticInput;
 
-public: // Временные переменные
-/// Признак активации нейрона-владельца (сбрасывается автоматически немедленно
-/// по завершении текущей итерации счета).
-ULProperty<bool,NPulseChannelCommon, ptPubState> IsNeuronActivated;
+public: //  
+///   - (  
+///     ).
+UProperty<bool,NPulseChannelCommon, ptPubState> IsNeuronActivated;
 
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NPulseChannelCommon(void);
 virtual ~NPulseChannelCommon(void);
 // --------------------------
 
 // --------------------------
-// Методы управления специфическими компонентами
+//    
 // --------------------------
-// Возвращает число синапсов
+//   
 virtual int GetNumSynapses(void) const;
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
-// Тип ионного механизма
+//   
 bool SetType(const double &value);
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NPulseChannelCommon* New(void);
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+//    
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+//       
+//     
+//   'true'   
+//  'false'    
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+//    
 // --------------------------
 protected:
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+//    
+//       
+//      comp 
+//     
 virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+//    
+//       
+//      comp
+//    
 virtual bool ADelComponent(UEPtr<UContainer> comp);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 public:
-/// Принимает сигнал о генерации сигнала низкопороговой зоной
-/// (однократно по началу импульса)
+///       
+/// (   )
 virtual void NeuronActivated(void);
 
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate(void);
 virtual bool ACalculate2(void);
 // --------------------------

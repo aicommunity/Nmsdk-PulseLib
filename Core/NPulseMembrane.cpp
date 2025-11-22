@@ -21,9 +21,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseMembrane::NPulseMembrane(void)
  : FeedbackGain("FeedbackGain",this,&NPulseMembrane::SetFeedbackGain),
@@ -44,9 +44,9 @@ NPulseMembrane::~NPulseMembrane(void)
 // --------------------------
 
 // --------------------------
-// Методы управления временными перменными
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РІСЂРµРјРµРЅРЅС‹РјРё РїРµСЂРјРµРЅРЅС‹РјРё
 // --------------------------
-// Ионные механизмы деполяризации
+// РРѕРЅРЅС‹Рµ РјРµС…Р°РЅРёР·РјС‹ РґРµРїРѕР»СЏСЂРёР·Р°С†РёРё
 size_t NPulseMembrane::GetNumPosChannels(void) const
 {
  return ExcitatoryChannels.size();
@@ -57,7 +57,7 @@ NPulseChannelCommon* NPulseMembrane::GetPosChannel(size_t i)
  return ExcitatoryChannels[i];
 }
 
-// Ионные механизмы гиперполяризации
+// РРѕРЅРЅС‹Рµ РјРµС…Р°РЅРёР·РјС‹ РіРёРїРµСЂРїРѕР»СЏСЂРёР·Р°С†РёРё
 size_t NPulseMembrane::GetNumNegChannels(void) const
 {
  return InhibitoryChannels.size();
@@ -68,7 +68,7 @@ NPulseChannelCommon* NPulseMembrane::GetNegChannel(size_t i)
  return InhibitoryChannels[i];
 }
 
-// Возбуждающие синапсы
+// Р’РѕР·Р±СѓР¶РґР°СЋС‰РёРµ СЃРёРЅР°РїСЃС‹
 size_t NPulseMembrane::GetNumExcitatorySynapses(void) const
 {
  return ExcitatorySynapses.size();
@@ -79,7 +79,7 @@ NPulseSynapseCommon* NPulseMembrane::GetExcitatorySynapses(size_t i)
  return ExcitatorySynapses[i];
 }
 
-// Тормозные синапсы
+// РўРѕСЂРјРѕР·РЅС‹Рµ СЃРёРЅР°РїСЃС‹
 size_t NPulseMembrane::GetNumInhibitorySynapses(void) const
 {
  return InhibitorySynapses.size();
@@ -142,15 +142,15 @@ bool NPulseMembrane::UpdateSynapseData(UEPtr<NPulseSynapseCommon> synapse, UEPtr
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
-/// Наличие механизма сброса
+/// РќР°Р»РёС‡РёРµ РјРµС…Р°РЅРёР·РјР° СЃР±СЂРѕСЃР°
 bool NPulseMembrane::SetResetAvailable(const bool &value)
 {
  return true;
 }
 
-// Коэффициент обратной связи
+// РљРѕСЌС„С„РёС†РёРµРЅС‚ РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·Рё
 bool NPulseMembrane::SetFeedbackGain(const double &value)
 {
  if(value < 0)
@@ -191,18 +191,18 @@ bool NPulseMembrane::SetNumInhibitorySynapses(const int &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseMembrane* NPulseMembrane::New(void)
 {
  return new NPulseMembrane;
 }
 
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  if(!NPulseMembraneCommon::AAddComponent(comp,pointer))
@@ -243,10 +243,10 @@ bool NPulseMembrane::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> poin
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
 {
 
@@ -281,12 +281,12 @@ bool NPulseMembrane::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NPulseMembrane::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseChannelCommon>(comp) ||
@@ -298,9 +298,9 @@ bool NPulseMembrane::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseMembrane::ADefault(void)
 {
  if(!NPulseMembraneCommon::ADefault())
@@ -316,10 +316,10 @@ bool NPulseMembrane::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseMembrane::ABuild(void)
 {
  if(!Storage)
@@ -344,8 +344,8 @@ bool NPulseMembrane::ABuild(void)
     DelComponent(syn, true);
 //    GetStorage()->ReturnObject(syn);
   }
-//  ExcitatorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
-							  // по всем синапсам используя AddMissingComponent
+//  ExcitatorySynapses.clear(); // Р­С‚Рѕ РќР• РѕС€РёР±РєР°. РњС‹ СѓРґР°Р»СЏРµРј С‚РѕР»СЊРєРѕ РЅРµРЅСѓР¶РЅС‹Рµ, Р° РЅРёР¶Рµ РїСЂРѕС…РѕРґРёРј
+							  // РїРѕ РІСЃРµРј СЃРёРЅР°РїСЃР°Рј РёСЃРїРѕР»СЊР·СѓСЏ AddMissingComponent
   for(int i=0;i<NumExcitatorySynapses;i++)
   {
    UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("ExcSynapse")+sntoa(i+1), SynapseClassName);
@@ -374,8 +374,8 @@ bool NPulseMembrane::ABuild(void)
     //GetStorage()->ReturnObject(syn);
   }
 
-//  InhibitorySynapses.clear(); // Это НЕ ошибка. Мы удаляем только ненужные, а ниже проходим
-							  // по всем синапсам используя AddMissingComponent
+//  InhibitorySynapses.clear(); // Р­С‚Рѕ РќР• РѕС€РёР±РєР°. РњС‹ СѓРґР°Р»СЏРµРј С‚РѕР»СЊРєРѕ РЅРµРЅСѓР¶РЅС‹Рµ, Р° РЅРёР¶Рµ РїСЂРѕС…РѕРґРёРј
+							  // РїРѕ РІСЃРµРј СЃРёРЅР°РїСЃР°Рј РёСЃРїРѕР»СЊР·СѓСЏ AddMissingComponent
   for(int i=0;i<NumInhibitorySynapses;i++)
   {
    UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("InhSynapse")+sntoa(i+1), SynapseClassName);
@@ -393,7 +393,7 @@ bool NPulseMembrane::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseMembrane::AReset(void)
 {
  if(!NPulseMembraneCommon::AReset())
@@ -401,7 +401,7 @@ bool NPulseMembrane::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseMembrane::ACalculate2(void)
 {
  if(!ExcitatoryChannels.empty() && !InhibitoryChannels.empty() && ResetAvailable)
@@ -434,7 +434,7 @@ bool NPulseMembrane::ACalculate2(void)
  return true;
 }
 
-// Устанавливает компоненты в требуемый порядок расчета
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РєРѕРјРїРѕРЅРµРЅС‚С‹ РІ С‚СЂРµР±СѓРµРјС‹Р№ РїРѕСЂСЏРґРѕРє СЂР°СЃС‡РµС‚Р°
 void NPulseMembrane::UpdateComputationOrder(void)
 {
  int position=0;

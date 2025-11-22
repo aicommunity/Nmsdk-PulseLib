@@ -22,12 +22,12 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Core/NPulseNeuron.h"
 
 
-// Класс, создающий группу нейронов для моделирования условного рефлекса
+// РљР»Р°СЃСЃ, СЃРѕР·РґР°СЋС‰РёР№ РіСЂСѓРїРїСѓ РЅРµР№СЂРѕРЅРѕРІ РґР»СЏ РјРѕРґРµР»РёСЂРѕРІР°РЅРёСЏ СѓСЃР»РѕРІРЅРѕРіРѕ СЂРµС„Р»РµРєСЃР°
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPainReflexSimple::NPainReflexSimple(void)
 : StructureBuildMode("StructureBuildMode",this,&NPainReflexSimple::SetStructureBuildMode),
@@ -60,50 +60,50 @@ NPainReflexSimple::~NPainReflexSimple(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NPainReflexSimple::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
   Ready=false;
  return true;
 }
 
-/// Имя класса, создающего генератор импульсов
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РіРµРЅРµСЂР°С‚РѕСЂ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPainReflexSimple::SetPulseGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего учитель нейрона
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СѓС‡РёС‚РµР»СЊ РЅРµР№СЂРѕРЅР°
 bool NPainReflexSimple::SetNeuronTrainerClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего нейрон
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РЅРµР№СЂРѕРЅ
 bool NPainReflexSimple::SetNeuronClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего синапс
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СЃРёРЅР°РїСЃ
 bool NPainReflexSimple::SetSynapseClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Размер "большого" нейрона
+/// Р Р°Р·РјРµСЂ "Р±РѕР»СЊС€РѕРіРѕ" РЅРµР№СЂРѕРЅР°
 /*
 bool NPainReflexSimple::SetBigNeuronSize(const int &value)
 {
@@ -113,7 +113,7 @@ bool NPainReflexSimple::SetBigNeuronSize(const int &value)
 }
 */
 
-/// Признак необходимости обучения
+/// РџСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РѕР±СѓС‡РµРЅРёСЏ
 bool NPainReflexSimple::SetNeedToTrain(const bool &value)
 {
  if(value)
@@ -124,19 +124,19 @@ bool NPainReflexSimple::SetNeedToTrain(const bool &value)
  return true;
 }
 
-/// Время задержки начала обучения относительно старта системы (сек)
+/// Р’СЂРµРјСЏ Р·Р°РґРµСЂР¶РєРё РЅР°С‡Р°Р»Р° РѕР±СѓС‡РµРЅРёСЏ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ СЃС‚Р°СЂС‚Р° СЃРёСЃС‚РµРјС‹ (СЃРµРє)
 bool NPainReflexSimple::SetDelay(const double &value)
 {
  return true;
 }
 
-/// Частота генераторов (Гц)
+/// Р§Р°СЃС‚РѕС‚Р° РіРµРЅРµСЂР°С‚РѕСЂРѕРІ (Р“С†)
 bool NPainReflexSimple::SetSpikesFrequency(const double &value)
 {
  return true;
 }
 
-/// Число входных дендритов для нейрона безусловного раздражителя
+/// Р§РёСЃР»Рѕ РІС…РѕРґРЅС‹С… РґРµРЅРґСЂРёС‚РѕРІ РґР»СЏ РЅРµР№СЂРѕРЅР° Р±РµР·СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ
 /*
 bool NPainReflexSimple::SetNumUnconditionalStimulDendrite(const int &value)
 {
@@ -148,7 +148,7 @@ bool NPainReflexSimple::SetNumUnconditionalStimulDendrite(const int &value)
 }
 */
 
-/// Число входных дендритов для нейрона условного раздражителя
+/// Р§РёСЃР»Рѕ РІС…РѕРґРЅС‹С… РґРµРЅРґСЂРёС‚РѕРІ РґР»СЏ РЅРµР№СЂРѕРЅР° СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ
 bool NPainReflexSimple::SetNumConditionalStimulDendrite(const int &value)
 {
  Ready=false;
@@ -159,13 +159,13 @@ bool NPainReflexSimple::SetNumConditionalStimulDendrite(const int &value)
  return true;
 }
 
-/// Максимальная длина дендрита
+/// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° РґРµРЅРґСЂРёС‚Р°
 bool NPainReflexSimple::SetMaxDendriteLength(const int &value)
 {
  return true;
 }
 
-/// Паттерн для запоминания  нейроном безусловного раздражителя
+/// РџР°С‚С‚РµСЂРЅ РґР»СЏ Р·Р°РїРѕРјРёРЅР°РЅРёСЏ  РЅРµР№СЂРѕРЅРѕРј Р±РµР·СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ
 /*
 bool NPainReflexSimple::SetUnconditionalStimulPattern(const MDMatrix<double> &value)
 {
@@ -186,7 +186,7 @@ bool NPainReflexSimple::SetUnconditionalStimulPattern(const MDMatrix<double> &va
 }
 */
 
-/// Паттерн для запоминания  нейроном условного раздражителя
+/// РџР°С‚С‚РµСЂРЅ РґР»СЏ Р·Р°РїРѕРјРёРЅР°РЅРёСЏ  РЅРµР№СЂРѕРЅРѕРј СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ
 /*
 bool NPainReflexSimple::SetConditionalStimulPattern(const MDMatrix<double> &value)
 {
@@ -207,30 +207,30 @@ bool NPainReflexSimple::SetConditionalStimulPattern(const MDMatrix<double> &valu
 }
 */
 
-/// Характеристика воздействия
-/// false - позитивное подкрепление
-/// true - негативное подкрепление
+/// РҐР°СЂР°РєС‚РµСЂРёСЃС‚РёРєР° РІРѕР·РґРµР№СЃС‚РІРёСЏ
+/// false - РїРѕР·РёС‚РёРІРЅРѕРµ РїРѕРґРєСЂРµРїР»РµРЅРёРµ
+/// true - РЅРµРіР°С‚РёРІРЅРѕРµ РїРѕРґРєСЂРµРїР»РµРЅРёРµ
 bool NPainReflexSimple::SetNegInfluence(const bool &value)
 {
 
  return true;
 }
 
-/// Порог низкопороговой зоны нейрона
+/// РџРѕСЂРѕРі РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NPainReflexSimple::SetLTZThreshold(const double &value)
 {
 
  return true;
 }
 
-/// Фиксированный порог низкопороговой зоны нейрона
+/// Р¤РёРєСЃРёСЂРѕРІР°РЅРЅС‹Р№ РїРѕСЂРѕРі РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NPainReflexSimple::SetFixedLTZThreshold(const double &value)
 {
 
  return true;
 }
 
-/// Признак необходимости использования фиксированного порога низкопороговой зоны нейрона
+/// РџСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРіРѕ РїРѕСЂРѕРіР° РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NPainReflexSimple::SetUseFixedLTZThreshold(const bool &value)
 {
  if(value)
@@ -244,9 +244,9 @@ bool NPainReflexSimple::SetUseFixedLTZThreshold(const bool &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPainReflexSimple* NPainReflexSimple::New(void)
 {
  return new NPainReflexSimple;
@@ -259,22 +259,22 @@ UComponent* NPainReflexSimple::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NPainReflexSimple::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
 
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NPainReflexSimple::ADelComponent(UEPtr<UContainer> comp)
 {
 
@@ -283,9 +283,9 @@ bool NPainReflexSimple::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPainReflexSimple::AReset(void)
 {
 
@@ -332,7 +332,7 @@ bool NPainReflexSimple::AReset(void)
  //for(int j = 0; j < NumConditionalStimulDendrite; j++)
  //	pattern[j] = ConditionalStimulPattern(j,0);
 
- //Так ли оно должно быть ???
+ //РўР°Рє Р»Рё РѕРЅРѕ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ ???
  ConditionalStimul->SetActivity(false);
  ConditionalStimul->Reset();
 
@@ -342,7 +342,7 @@ bool NPainReflexSimple::AReset(void)
  return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPainReflexSimple::ADefault(void)
 {
  StructureBuildMode=1;
@@ -366,16 +366,16 @@ bool NPainReflexSimple::ADefault(void)
  return true;
 }
 
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NPainReflexSimple::BuildStructure(void)
 {
- // 1 - Создаём группу нейронов для моделирования условного рефлекса
+ // 1 - РЎРѕР·РґР°С‘Рј РіСЂСѓРїРїСѓ РЅРµР№СЂРѕРЅРѕРІ РґР»СЏ РјРѕРґРµР»РёСЂРѕРІР°РЅРёСЏ СѓСЃР»РѕРІРЅРѕРіРѕ СЂРµС„Р»РµРєСЃР°
  if(StructureBuildMode == 1)
  {
-     // Признак завершения обучения условному раздражителю
+     // РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ СѓСЃР»РѕРІРЅРѕРјСѓ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЋ
      is_conditional_stimulus_trained = false;
 
-     // Создаём нейрон "Условный раздражитель"
+     // РЎРѕР·РґР°С‘Рј РЅРµР№СЂРѕРЅ "РЈСЃР»РѕРІРЅС‹Р№ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЊ"
      ConditionalStimul = AddMissingComponent<NNeuronTrainer>("ConditionalStimulus", NeuronTrainerClassName);
      ConditionalStimul->SetCoord(MVector<double,3>(4.0+0*7,1*2,0));
      ConditionalStimul->NumInputDendrite = NumConditionalStimulDendrite;
@@ -385,7 +385,7 @@ bool NPainReflexSimple::BuildStructure(void)
      //ltZone->TimeConstant = 0.0005;
      ConditionalStimul->Reset();
 
-     //Добираемся до условного рефлекса и настраиваем их как транзитные
+     //Р”РѕР±РёСЂР°РµРјСЃСЏ РґРѕ СѓСЃР»РѕРІРЅРѕРіРѕ СЂРµС„Р»РµРєСЃР° Рё РЅР°СЃС‚СЂР°РёРІР°РµРј РёС… РєР°Рє С‚СЂР°РЅР·РёС‚РЅС‹Рµ
      for(int i=0; i<NumConditionalStimulDendrite.v;i++)
      {
         UEPtr<NPulseGeneratorTransit> src = ConditionalStimul->GetComponentL<NPulseGeneratorTransit>("Source"+sntoa(i+1),true);
@@ -394,37 +394,37 @@ bool NPainReflexSimple::BuildStructure(void)
         src->UseTransitSignal=true;
      }
 
-     //Создаем транзитный генератор для положительного входа
+     //РЎРѕР·РґР°РµРј С‚СЂР°РЅР·РёС‚РЅС‹Р№ РіРµРЅРµСЂР°С‚РѕСЂ РґР»СЏ РїРѕР»РѕР¶РёС‚РµР»СЊРЅРѕРіРѕ РІС…РѕРґР°
      NormalInputGen = AddMissingComponent<NPulseGeneratorTransit>(std::string("NormInputGen"), PulseGeneratorClassName);
      NormalInputGen->SetCoord(MVector<double,3>(4.0+0*7,2*2,0));
      NormalInputGen->UseTransitSignal=true;
 
-     //Создаем транзитный генератор для альтернативного входа
+     //РЎРѕР·РґР°РµРј С‚СЂР°РЅР·РёС‚РЅС‹Р№ РіРµРЅРµСЂР°С‚РѕСЂ РґР»СЏ Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅРѕРіРѕ РІС…РѕРґР°
      AltInputGen = AddMissingComponent<NPulseGeneratorTransit>(std::string("AltInputGen"), PulseGeneratorClassName);
      AltInputGen->SetCoord(MVector<double,3>(4.0+0*7,3*2,0));
      AltInputGen->UseTransitSignal=true;
 
-     //Создаем транзитный генератор, блокирующий положительный вход
+     //РЎРѕР·РґР°РµРј С‚СЂР°РЅР·РёС‚РЅС‹Р№ РіРµРЅРµСЂР°С‚РѕСЂ, Р±Р»РѕРєРёСЂСѓСЋС‰РёР№ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Р№ РІС…РѕРґ
      NormalBlocker = AddMissingComponent<NPulseGeneratorTransit>(std::string("NormBlockerGen"), PulseGeneratorClassName);
      NormalBlocker->SetCoord(MVector<double,3>(4.0+1*7,1*2,0));
-     //Настраиваем умноженный импульс (? правильно ли так ?)
+     //РќР°СЃС‚СЂР°РёРІР°РµРј СѓРјРЅРѕР¶РµРЅРЅС‹Р№ РёРјРїСѓР»СЊСЃ (? РїСЂР°РІРёР»СЊРЅРѕ Р»Рё С‚Р°Рє ?)
      NormalBlocker->UseTransitSignal=false;
      NormalBlocker->Frequency=SpikesFrequency;
      NormalBlocker->UsePatternOutput=true;
-     NormalBlocker->PatternDuration=0.6656; //??? скопировано с NLogicalNot
-     NormalBlocker->PatternFrequency=500; //??? скопировано с NLogicalNot
+     NormalBlocker->PatternDuration=0.6656; //??? СЃРєРѕРїРёСЂРѕРІР°РЅРѕ СЃ NLogicalNot
+     NormalBlocker->PatternFrequency=500; //??? СЃРєРѕРїРёСЂРѕРІР°РЅРѕ СЃ NLogicalNot
 
-     //Создаем транзитный генератор, блокирующий альтернативный вход
+     //РЎРѕР·РґР°РµРј С‚СЂР°РЅР·РёС‚РЅС‹Р№ РіРµРЅРµСЂР°С‚РѕСЂ, Р±Р»РѕРєРёСЂСѓСЋС‰РёР№ Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Р№ РІС…РѕРґ
      AltBlocker = AddMissingComponent<NPulseGeneratorTransit>(std::string("AltBlockerGen"), PulseGeneratorClassName);
      AltBlocker->SetCoord(MVector<double,3>(4.0+2*7,2*2,0));
-     //Настраиваем умноженный импульс (? правильно ли так ?)
+     //РќР°СЃС‚СЂР°РёРІР°РµРј СѓРјРЅРѕР¶РµРЅРЅС‹Р№ РёРјРїСѓР»СЊСЃ (? РїСЂР°РІРёР»СЊРЅРѕ Р»Рё С‚Р°Рє ?)
      AltBlocker->UseTransitSignal=false;
      AltBlocker->Frequency=SpikesFrequency;
      AltBlocker->UsePatternOutput=true;
-     AltBlocker->PatternDuration=0.6656; //??? скопировано с NLogicalNot
-     AltBlocker->PatternFrequency=500; //??? скопировано с NLogicalNot
+     AltBlocker->PatternDuration=0.6656; //??? СЃРєРѕРїРёСЂРѕРІР°РЅРѕ СЃ NLogicalNot
+     AltBlocker->PatternFrequency=500; //??? СЃРєРѕРїРёСЂРѕРІР°РЅРѕ СЃ NLogicalNot
 
-     // Создаём нейрон, контролирующий положительный выход
+     // РЎРѕР·РґР°С‘Рј РЅРµР№СЂРѕРЅ, РєРѕРЅС‚СЂРѕР»РёСЂСѓСЋС‰РёР№ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Р№ РІС‹С…РѕРґ
      std::vector<int> dend_size;
      dend_size.resize(1);
      dend_size[0] = 1;
@@ -434,29 +434,29 @@ bool NPainReflexSimple::BuildStructure(void)
      NormalOutputNeuron->NumDendriteMembranePartsVec = dend_size;
      NormalOutputNeuron->Reset();
 
-     // Создаём нейрон, контролирующий альтернативный выход
+     // РЎРѕР·РґР°С‘Рј РЅРµР№СЂРѕРЅ, РєРѕРЅС‚СЂРѕР»РёСЂСѓСЋС‰РёР№ Р°Р»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Р№ РІС‹С…РѕРґ
      AltOutputNeuron = AddMissingComponent<NPulseNeuron>(std::string("AltOutputNeuron"), NeuronClassName);
      AltOutputNeuron->SetCoord(MVector<double,3>(4.0+2*7,3*2,0));
      AltOutputNeuron->NumDendriteMembranePartsVec = dend_size;
      AltOutputNeuron->Reset();
 
-     //Связать выход условного раздражителя и замедляющий вход
+     //РЎРІСЏР·Р°С‚СЊ РІС‹С…РѕРґ СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ Рё Р·Р°РјРµРґР»СЏСЋС‰РёР№ РІС…РѕРґ
      UEPtr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
-     //Так ли оно должно быть
+     //РўР°Рє Р»Рё РѕРЅРѕ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ
      if(!ltZone)
          return true;
 
-     // Добавляем связь между нейроном и разгоняющим генератором
-     // **Временно убрал связывание, так как логика подсказывает, что во время обучения могут быть эксцессы (?) **
-     // вынес в расчет, но мб потом верну
+     // Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРµР№СЂРѕРЅРѕРј Рё СЂР°Р·РіРѕРЅСЏСЋС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј
+     // **Р’СЂРµРјРµРЅРЅРѕ СѓР±СЂР°Р» СЃРІСЏР·С‹РІР°РЅРёРµ, С‚Р°Рє РєР°Рє Р»РѕРіРёРєР° РїРѕРґСЃРєР°Р·С‹РІР°РµС‚, С‡С‚Рѕ РІРѕ РІСЂРµРјСЏ РѕР±СѓС‡РµРЅРёСЏ РјРѕРіСѓС‚ Р±С‹С‚СЊ СЌРєСЃС†РµСЃСЃС‹ (?) **
+     // РІС‹РЅРµСЃ РІ СЂР°СЃС‡РµС‚, РЅРѕ РјР± РїРѕС‚РѕРј РІРµСЂРЅСѓ
      //std::string input_name = NormalBlocker->GetLongName(this);
      bool res(true);
      //res&=CreateLink(ltZone->GetLongName(this),"Output",input_name,"Input");
      //if(!res)
      //    return true;
 
-     //Добавляем связь между разгоняющим тормозный сигнал генератором и тормозящим синапсом
-     // положительного нейрона "НЕ"
+     //Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ СЂР°Р·РіРѕРЅСЏСЋС‰РёРј С‚РѕСЂРјРѕР·РЅС‹Р№ СЃРёРіРЅР°Р» РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё С‚РѕСЂРјРѕР·СЏС‰РёРј СЃРёРЅР°РїСЃРѕРј
+     // РїРѕР»РѕР¶РёС‚РµР»СЊРЅРѕРіРѕ РЅРµР№СЂРѕРЅР° "РќР•"
      UEPtr<NPulseMembrane> soma = NormalOutputNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
      if(!soma)
          return true;
@@ -467,8 +467,8 @@ bool NPainReflexSimple::BuildStructure(void)
      if(!res)
          return true;
 
-     //Добавляем связь между положительным входящим генератором и возбуждающим
-     // синапсом положительного нейрона "НЕ"
+     //Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј РІС…РѕРґСЏС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј Рё РІРѕР·Р±СѓР¶РґР°СЋС‰РёРј
+     // СЃРёРЅР°РїСЃРѕРј РїРѕР»РѕР¶РёС‚РµР»СЊРЅРѕРіРѕ РЅРµР№СЂРѕРЅР° "РќР•"
      UEPtr<NPulseMembrane> dend_1_1 = NormalOutputNeuron->GetComponentL<NPulseMembrane>("Dendrite1_1",true);
      if(!dend_1_1)
          return true;
@@ -479,8 +479,8 @@ bool NPainReflexSimple::BuildStructure(void)
      if(!res)
          return true;
 
-     //Добавляем связь между LTZone положительного нейрона "НЕ" и разгоняющим
-     // генератором для торможения отрицательного входа пока все нормально
+     //Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ LTZone РїРѕР»РѕР¶РёС‚РµР»СЊРЅРѕРіРѕ РЅРµР№СЂРѕРЅР° "РќР•" Рё СЂР°Р·РіРѕРЅСЏСЋС‰РёРј
+     // РіРµРЅРµСЂР°С‚РѕСЂРѕРј РґР»СЏ С‚РѕСЂРјРѕР¶РµРЅРёСЏ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕРіРѕ РІС…РѕРґР° РїРѕРєР° РІСЃРµ РЅРѕСЂРјР°Р»СЊРЅРѕ
      UEPtr<NPulseLTZoneThreshold> pos_not_ltZone = NormalOutputNeuron->GetComponentL<NPulseLTZoneThreshold>("LTZone",true);
      if(!pos_not_ltZone)
          return true;
@@ -488,8 +488,8 @@ bool NPainReflexSimple::BuildStructure(void)
      if(!res)
          return true;
 
-     //Добавляем связь между выходом тормозящего отрицательный выход генератора и
-     // тормозящим входом отрицательного нейрона "НЕ"
+     //Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РІС‹С…РѕРґРѕРј С‚РѕСЂРјРѕР·СЏС‰РµРіРѕ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹Р№ РІС‹С…РѕРґ РіРµРЅРµСЂР°С‚РѕСЂР° Рё
+     // С‚РѕСЂРјРѕР·СЏС‰РёРј РІС…РѕРґРѕРј РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕРіРѕ РЅРµР№СЂРѕРЅР° "РќР•"
      UEPtr<NPulseMembrane> neg_soma = AltOutputNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
      if(!soma)
          return true;
@@ -500,8 +500,8 @@ bool NPainReflexSimple::BuildStructure(void)
      if(!res)
          return true;
 
-     //Добавляем связь между выходом транзитного отрицательного генератора и
-     // возбуждающим входом контролирующего отрицательный выход нейрона "НЕ"
+     //Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РІС‹С…РѕРґРѕРј С‚СЂР°РЅР·РёС‚РЅРѕРіРѕ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕРіРѕ РіРµРЅРµСЂР°С‚РѕСЂР° Рё
+     // РІРѕР·Р±СѓР¶РґР°СЋС‰РёРј РІС…РѕРґРѕРј РєРѕРЅС‚СЂРѕР»РёСЂСѓСЋС‰РµРіРѕ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹Р№ РІС‹С…РѕРґ РЅРµР№СЂРѕРЅР° "РќР•"
      UEPtr<NPulseMembrane> dend_1_1_neg = AltOutputNeuron->GetComponentL<NPulseMembrane>("Dendrite1_1",true);
      if(!dend_1_1_neg)
          return true;
@@ -516,10 +516,10 @@ bool NPainReflexSimple::BuildStructure(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPainReflexSimple::ABuild(void)
 {
  if(StructureBuildMode>0)
@@ -534,7 +534,7 @@ bool NPainReflexSimple::ABuild(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPainReflexSimple::ACalculate(void)
 {
     if(is_first_iter)
@@ -543,20 +543,20 @@ bool NPainReflexSimple::ACalculate(void)
         start_iter_time = Environment->GetTime().GetDoubleTime();
     }
 
-    // I. Контроль боли и ожидание обучения условного рефлекса
+    // I. РљРѕРЅС‚СЂРѕР»СЊ Р±РѕР»Рё Рё РѕР¶РёРґР°РЅРёРµ РѕР±СѓС‡РµРЅРёСЏ СѓСЃР»РѕРІРЅРѕРіРѕ СЂРµС„Р»РµРєСЃР°
     if(!is_conditional_stimulus_trained)
     {
         if(!ConditionalStimul->IsNeedToTrain)
         {
             is_conditional_stimulus_trained = true;
 
-            //Связать выход условного раздражителя и замедляющий вход
+            //РЎРІСЏР·Р°С‚СЊ РІС‹С…РѕРґ СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ Рё Р·Р°РјРµРґР»СЏСЋС‰РёР№ РІС…РѕРґ
             UEPtr<NPulseLTZoneThreshold> ltZone = ConditionalStimul->GetComponentL<NPulseLTZoneThreshold>("Neuron.LTZone",true);
-            //Так ли оно должно быть
+            //РўР°Рє Р»Рё РѕРЅРѕ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ
             if(!ltZone)
                 return true;
 
-            // Добавляем связь между нейроном и разгоняющим генератором
+            // Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРµР№СЂРѕРЅРѕРј Рё СЂР°Р·РіРѕРЅСЏСЋС‰РёРј РіРµРЅРµСЂР°С‚РѕСЂРѕРј
             std::string input_name = NormalBlocker->GetLongName(this);
             bool res(true);
             res&=CreateLink(ltZone->GetLongName(this),"Output",input_name,"Input");
@@ -572,36 +572,36 @@ bool NPainReflexSimple::ACalculate(void)
                 return true;
             }
 
-            //Если пришел болевой сигнал
+            //Р•СЃР»Рё РїСЂРёС€РµР» Р±РѕР»РµРІРѕР№ СЃРёРіРЅР°Р»
             if((*PainInput)(0,0)>0)
             {
-                //Включаем активность (обучение) нейрона условного раздражителя
+                //Р’РєР»СЋС‡Р°РµРј Р°РєС‚РёРІРЅРѕСЃС‚СЊ (РѕР±СѓС‡РµРЅРёРµ) РЅРµР№СЂРѕРЅР° СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ
                 ConditionalStimul->SetActivity(true);
             }
 
 
-            double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
-            double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Длина одной итерации
+            double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // РўРµРєСѓС‰РµРµ РІСЂРµРјСЏ РёС‚РµСЂР°С†РёРё
+            double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Р”Р»РёРЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
 
             if(iter_time>=iter_length)
             {
-                //TODO:  Что-то необходимо в рамках окончания итерации?
+                //TODO:  Р§С‚Рѕ-С‚Рѕ РЅРµРѕР±С…РѕРґРёРјРѕ РІ СЂР°РјРєР°С… РѕРєРѕРЅС‡Р°РЅРёСЏ РёС‚РµСЂР°С†РёРё?
 
-                //Сбрасываем флаг активности (обучения) у нейрона условного (болевого) стимула
+                //РЎР±СЂР°СЃС‹РІР°РµРј С„Р»Р°Рі Р°РєС‚РёРІРЅРѕСЃС‚Рё (РѕР±СѓС‡РµРЅРёСЏ) Сѓ РЅРµР№СЂРѕРЅР° СѓСЃР»РѕРІРЅРѕРіРѕ (Р±РѕР»РµРІРѕРіРѕ) СЃС‚РёРјСѓР»Р°
                 ConditionalStimul->SetActivity(false);
             }
         }
     }
 
     /*
-	// I. Обучение условному и безусловному раздражителям
+	// I. РћР±СѓС‡РµРЅРёРµ СѓСЃР»РѕРІРЅРѕРјСѓ Рё Р±РµР·СѓСЃР»РѕРІРЅРѕРјСѓ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏРј
 	if(!is_stimuls_trained)
 	{
 		if(!UnconditionalStimul->IsNeedToTrain && !ConditionalStimul->IsNeedToTrain)
 		{
 			is_stimuls_trained = true;
 
-            // Признак нахождения разности в приходе импульсов от условного и безусловного раздражителей
+            // РџСЂРёР·РЅР°Рє РЅР°С…РѕР¶РґРµРЅРёСЏ СЂР°Р·РЅРѕСЃС‚Рё РІ РїСЂРёС…РѕРґРµ РёРјРїСѓР»СЊСЃРѕРІ РѕС‚ СѓСЃР»РѕРІРЅРѕРіРѕ Рё Р±РµР·СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»РµР№
 			is_interval_found = false;
 			is_first_spike = false;
 			is_second_spike = false;
@@ -610,10 +610,10 @@ bool NPainReflexSimple::ACalculate(void)
 		}
 	}
 
-	 // II. Ищем интервал между входными импульсами
+	 // II. РС‰РµРј РёРЅС‚РµСЂРІР°Р» РјРµР¶РґСѓ РІС…РѕРґРЅС‹РјРё РёРјРїСѓР»СЊСЃР°РјРё
 	 if(!is_interval_found)
 	 {
-		// Ожидаем прихода первого спайка от условного раздражителя
+		// РћР¶РёРґР°РµРј РїСЂРёС…РѕРґР° РїРµСЂРІРѕРіРѕ СЃРїР°Р№РєР° РѕС‚ СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ
 		if(!is_first_spike)
 		{
 			UEPtr<NLTZone> ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
@@ -629,7 +629,7 @@ bool NPainReflexSimple::ACalculate(void)
 			}
 		}
 
-		// Ожидаем прихода первого спайка от безусловного раздражителя
+		// РћР¶РёРґР°РµРј РїСЂРёС…РѕРґР° РїРµСЂРІРѕРіРѕ СЃРїР°Р№РєР° РѕС‚ Р±РµР·СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ
 		if(!is_second_spike)
 		{
 			UEPtr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
@@ -645,7 +645,7 @@ bool NPainReflexSimple::ACalculate(void)
 			}
 		}
 
-		// Если оба пришли:
+		// Р•СЃР»Рё РѕР±Р° РїСЂРёС€Р»Рё:
 		if(is_first_spike && is_second_spike)
 		{
 			double curr_time = Environment->GetTime().GetDoubleTime();
@@ -670,7 +670,7 @@ bool NPainReflexSimple::ACalculate(void)
 				difference = (1.0 / SpikesFrequency) - difference;
 			}
 
-			// Задаём интервалы входного паттерна
+			// Р—Р°РґР°С‘Рј РёРЅС‚РµСЂРІР°Р»С‹ РІС…РѕРґРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР°
 			MDMatrix<double> pattern;
 			pattern.Resize(LogicalAndNeuron->NumInputDendrite,1);
 			if(type == 1)
@@ -685,93 +685,93 @@ bool NPainReflexSimple::ACalculate(void)
 			}
 			LogicalAndNeuron->InputPattern = pattern;
 
-			// Создаём связи условного и безусловного раздражителей с нейроном, реализующим функцию "И"
+			// РЎРѕР·РґР°С‘Рј СЃРІСЏР·Рё СѓСЃР»РѕРІРЅРѕРіРѕ Рё Р±РµР·СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»РµР№ СЃ РЅРµР№СЂРѕРЅРѕРј, СЂРµР°Р»РёР·СѓСЋС‰РёРј С„СѓРЅРєС†РёСЋ "Р"
 			UEPtr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
-			// Нейрон "И"
-			UEPtr<NPulseGeneratorTransit> generator; // соответствующий вход нейрона с возможностью обучения
+			// РќРµР№СЂРѕРЅ "Р"
+			UEPtr<NPulseGeneratorTransit> generator; // СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РІС…РѕРґ РЅРµР№СЂРѕРЅР° СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ РѕР±СѓС‡РµРЅРёСЏ
 			generator = LogicalAndNeuron->GetComponentL<NPulseGeneratorTransit>("Source2",true);
 			if(!generator)
 				return true;
-			// Связываем
+			// РЎРІСЏР·С‹РІР°РµРј
 			bool res(true);
 			res&=CreateLink(ltzone->GetLongName(this),"Output",generator->GetLongName(this),"Input");
 			if(!res)
 				return true;
-			// Условный раздражитель
+			// РЈСЃР»РѕРІРЅС‹Р№ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЊ
 			ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
-			// Нейрон "И"
+			// РќРµР№СЂРѕРЅ "Р"
 			generator = LogicalAndNeuron->GetComponentL<NPulseGeneratorTransit>("Source1",true);
 			if(!generator)
 				return true;
-			// Связываем
+			// РЎРІСЏР·С‹РІР°РµРј
 			res = true;
 			res&=CreateLink(ltzone->GetLongName(this),"Output",generator->GetLongName(this),"Input");
 			if(!res)
 				return true;
 
-			// Активируем обучение нейрона "И"
+			// РђРєС‚РёРІРёСЂСѓРµРј РѕР±СѓС‡РµРЅРёРµ РЅРµР№СЂРѕРЅР° "Р"
 			LogicalAndNeuron->IsNeedToTrain = true;
-            // Признак завершения обучения нейрона "И"
+            // РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ РЅРµР№СЂРѕРЅР° "Р"
 			is_and_neuron_trained = false;
-            // Признак нахождения разности в приходе импульсов от условного и безусловного раздражителей
+            // РџСЂРёР·РЅР°Рє РЅР°С…РѕР¶РґРµРЅРёСЏ СЂР°Р·РЅРѕСЃС‚Рё РІ РїСЂРёС…РѕРґРµ РёРјРїСѓР»СЊСЃРѕРІ РѕС‚ СѓСЃР»РѕРІРЅРѕРіРѕ Рё Р±РµР·СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»РµР№
 			is_interval_found = true;
 		}
 
 		return true;
 	 }
 
-	 // III. Обучение нейрона, реализующего функцию "И"
+	 // III. РћР±СѓС‡РµРЅРёРµ РЅРµР№СЂРѕРЅР°, СЂРµР°Р»РёР·СѓСЋС‰РµРіРѕ С„СѓРЅРєС†РёСЋ "Р"
 	 if(!is_and_neuron_trained)
 	 {
 		if(!LogicalAndNeuron->IsNeedToTrain)
 		{
-			// Формируем связь между нейроном, реализующим функцию "И" и "большим" нейроном
-			// Нейрон "И"
+			// Р¤РѕСЂРјРёСЂСѓРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРµР№СЂРѕРЅРѕРј, СЂРµР°Р»РёР·СѓСЋС‰РёРј С„СѓРЅРєС†РёСЋ "Р" Рё "Р±РѕР»СЊС€РёРј" РЅРµР№СЂРѕРЅРѕРј
+			// РќРµР№СЂРѕРЅ "Р"
 			UEPtr<NLTZone> ltzone = LogicalAndNeuron->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
-			// "Большой" нейрон
+			// "Р‘РѕР»СЊС€РѕР№" РЅРµР№СЂРѕРЅ
 			UEPtr<NPulseSynapse> synapse = BigNeuron->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse1",true);
 			if(!synapse)
 				return true;
-			// Связываем
+			// РЎРІСЏР·С‹РІР°РµРј
 			bool res(true);
 			res&=CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
 			if(!res)
 				return true;
 
-			// Признак завершения обучения большого нейрона
+			// РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ Р±РѕР»СЊС€РѕРіРѕ РЅРµР№СЂРѕРЅР°
 			is_big_neuron_trained = false;
-			// Признак одного спайка при наращивании синапсов на "большом" нейроне
+			// РџСЂРёР·РЅР°Рє РѕРґРЅРѕРіРѕ СЃРїР°Р№РєР° РїСЂРё РЅР°СЂР°С‰РёРІР°РЅРёРё СЃРёРЅР°РїСЃРѕРІ РЅР° "Р±РѕР»СЊС€РѕРј" РЅРµР№СЂРѕРЅРµ
 			one_spike = false;
-            // Текущее число синапсов на "большом" нейроне
+            // РўРµРєСѓС‰РµРµ С‡РёСЃР»Рѕ СЃРёРЅР°РїСЃРѕРІ РЅР° "Р±РѕР»СЊС€РѕРј" РЅРµР№СЂРѕРЅРµ
 			synapses_num = 1;
-			// Признак завершения обучения нейрона "И"
+			// РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ РЅРµР№СЂРѕРЅР° "Р"
 			is_and_neuron_trained = true;
 		}
 
 		return true;
 	 }
 
-	 // IV. Обучение "большого" нейрона
+	 // IV. РћР±СѓС‡РµРЅРёРµ "Р±РѕР»СЊС€РѕРіРѕ" РЅРµР№СЂРѕРЅР°
 	 if(!is_big_neuron_trained)
 	 {
-		// Если "большой нейрон ответил, завершаем обучение и формируем связь условного раздражителя с безусловным рефлексом
+		// Р•СЃР»Рё "Р±РѕР»СЊС€РѕР№ РЅРµР№СЂРѕРЅ РѕС‚РІРµС‚РёР», Р·Р°РІРµСЂС€Р°РµРј РѕР±СѓС‡РµРЅРёРµ Рё С„РѕСЂРјРёСЂСѓРµРј СЃРІСЏР·СЊ СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ СЃ Р±РµР·СѓСЃР»РѕРІРЅС‹Рј СЂРµС„Р»РµРєСЃРѕРј
 		UEPtr<NLTZone> ltzone = BigNeuron->GetComponentL<NLTZone>("LTZone",true);
         if(!ltzone)
 			return true;
 		if(ltzone->Output(0,0) > 0)
 		{
-			// Формируем связь условного раздражителя с безусловным рефлексом
-			// Условный раздражитель
+			// Р¤РѕСЂРјРёСЂСѓРµРј СЃРІСЏР·СЊ СѓСЃР»РѕРІРЅРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ СЃ Р±РµР·СѓСЃР»РѕРІРЅС‹Рј СЂРµС„Р»РµРєСЃРѕРј
+			// РЈСЃР»РѕРІРЅС‹Р№ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЊ
 			ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
-			// Безусловный рефлекс
+			// Р‘РµР·СѓСЃР»РѕРІРЅС‹Р№ СЂРµС„Р»РµРєСЃ
 			UEPtr<NPulseSynapse> synapse2;
 			if(!IsNegInfluence)
 				synapse2 = LogicalOrNeuron->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse2",true);
@@ -779,19 +779,19 @@ bool NPainReflexSimple::ACalculate(void)
                 synapse2 = LogicalOrNeuron->GetComponentL<NPulseSynapse>("Soma1.InhSynapse1",true);
 			if(!synapse2)
 				return true;
-            // Связываем
+            // РЎРІСЏР·С‹РІР°РµРј
 			bool res(true);
 			res&=CreateLink(ltzone->GetLongName(this),"Output",synapse2->GetLongName(this),"Input");
 			if(!res)
 				return true;
 
-			// Признак завершения обучения большого нейрона
+			// РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ Р±РѕР»СЊС€РѕРіРѕ РЅРµР№СЂРѕРЅР°
 			is_big_neuron_trained = true;
 
 			return true;
 		}
 
-		// Если есть вход с нейрона, реализующего функцию "И" - добавляем синапс
+		// Р•СЃР»Рё РµСЃС‚СЊ РІС…РѕРґ СЃ РЅРµР№СЂРѕРЅР°, СЂРµР°Р»РёР·СѓСЋС‰РµРіРѕ С„СѓРЅРєС†РёСЋ "Р" - РґРѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ
 		ltzone = LogicalAndNeuron->GetComponentL<NLTZone>("Neuron.LTZone",true);
         if(!ltzone)
 			return true;
@@ -801,7 +801,7 @@ bool NPainReflexSimple::ACalculate(void)
 			one_spike = true;
 			synapses_num++;
 
-			// Добавляем синапс на "большой" нейрон
+			// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ РЅР° "Р±РѕР»СЊС€РѕР№" РЅРµР№СЂРѕРЅ
 			UEPtr<NPulseMembrane> soma = BigNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
 			if(!soma)
 				return true;
@@ -813,13 +813,13 @@ bool NPainReflexSimple::ACalculate(void)
 				return true;
 			RDK::MVector<double,3> coords = synapse1->GetCoord();
 			synapse->SetCoord(MVector<double,3>(coords(0)+7.0*(synapses_num-1),coords(1),0));
-			// Добавляем связь между новым синапсом и ионным каналом
+			// Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј Рё РёРѕРЅРЅС‹Рј РєР°РЅР°Р»РѕРј
 			std::string input_name = soma->GetLongName(this) + std::string(".ExcChannel");
 			bool res(true);
 			res&=CreateLink(synapse->GetLongName(this),"Output",input_name,"SynapticInputs");
 			if(!res)
 				return true;
-			// Добавляем связь между новым синапсом и выходом "И" нейрона
+			// Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј Рё РІС‹С…РѕРґРѕРј "Р" РЅРµР№СЂРѕРЅР°
 			res&=CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
 			if(!res)
 				return true;

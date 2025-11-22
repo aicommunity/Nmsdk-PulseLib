@@ -22,29 +22,29 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NFileGenerator: public NSource
 {
-public: // Общедоступные свойства
-// Имя файла с данными
-ULProperty<string,NFileGenerator> FileName;
+public: //  
+//    
+UProperty<string,NFileGenerator, ptPubParameter> FileName;
 
-public: // Входы и выходы
+public: //   
 
-protected: // Данные
+protected: // 
 RDK::UIniFile<char> Ini;
 
-// 2D массив входов на каждый момент времени
+// 2D      
 map<double,MDMatrix<double> > Data;
 
-public: // Временные переменные
-// Итератор, указывающий на текущий момент времени
+public: //  
+// ,     
 map<double,MDMatrix<double> >::iterator CurrentIndex;
 
-// Момент времени начала очередной итерации
+//     
 double DataStartTime;
 
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NFileGenerator(void);
 virtual ~NFileGenerator(void);
@@ -52,47 +52,47 @@ virtual ~NFileGenerator(void);
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
-// Устанавливает имя файла с данными
+//     
 bool SetFileName(const string &value);
 // --------------------------
 
 public:
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NFileGenerator* New(void);
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+//    
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+//       
+//     
+//   'true'   
+//  'false'    
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate(void);
 // --------------------------
 };

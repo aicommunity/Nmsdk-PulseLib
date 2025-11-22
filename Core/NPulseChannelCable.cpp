@@ -23,9 +23,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseChannelCable::NPulseChannelCable(void)
  :
@@ -56,9 +56,9 @@ NPulseChannelCable::~NPulseChannelCable(void)
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Потенциал покоя
+/// РџРѕС‚РµРЅС†РёР°Р» РїРѕРєРѕСЏ
 bool NPulseChannelCable::SetEL(const double &value)
 {
     Ready = false;
@@ -86,14 +86,14 @@ bool NPulseChannelCable::SetD(const double &value)
     return true;
 }
 
-/// Сопротивление мембраны
+/// РЎРѕРїСЂРѕС‚РёРІР»РµРЅРёРµ РјРµРјР±СЂР°РЅС‹
 bool NPulseChannelCable::SetRm(const double &value)
 {
     Ready = false;
     return true;
 }
 
-/// Ёмкость мембраны
+/// РЃРјРєРѕСЃС‚СЊ РјРµРјР±СЂР°РЅС‹
 bool NPulseChannelCable::SetCm(const double &value)
 {
     Ready = false;
@@ -153,9 +153,9 @@ bool NPulseChannelCable::SetCalcMode(const bool &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseChannelCable* NPulseChannelCable::New(void)
 {
  return new NPulseChannelCable;
@@ -164,9 +164,9 @@ NPulseChannelCable* NPulseChannelCable::New(void)
 
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseChannelCable::ADefault(void)
 {
  if(!NPulseChannelClassic::ADefault())
@@ -196,10 +196,10 @@ bool NPulseChannelCable::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseChannelCable::ABuild(void)
 {
  if(!NPulseChannelClassic::ABuild())
@@ -228,7 +228,7 @@ bool NPulseChannelCable::ABuild(void)
   double lambdaSq = rm/ri;
   dt = (dx*dx)/(4*lambdaSq/tau_m);
 
- //Создание сетки
+ //РЎРѕР·РґР°РЅРёРµ СЃРµС‚РєРё
    t_points_number = int(ModelMaxTime/dt); //t
    x_points_number = int(ModelMaxLength/dx); //x
 
@@ -248,27 +248,27 @@ bool NPulseChannelCable::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета без потери настроек
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р° Р±РµР· РїРѕС‚РµСЂРё РЅР°СЃС‚СЂРѕРµРє
 bool NPulseChannelCable::AReset(void)
 {
  if(!NPulseChannelClassic::ABuild())
   return false;
 
- SumChannelInput->Assign(1,1,EL); // TODO: костыль
+ SumChannelInput->Assign(1,1,EL); // TODO: РєРѕСЃС‚С‹Р»СЊ
 
- //Задание начальных значений в матрице
+ //Р—Р°РґР°РЅРёРµ РЅР°С‡Р°Р»СЊРЅС‹С… Р·РЅР°С‡РµРЅРёР№ РІ РјР°С‚СЂРёС†Рµ
  Vm.Assign(t_points_number+1, x_points_number+1, SumChannelInput(0,0));
 
  return true;
 }
 
 
-//Формирует входной потенциал в виде функции синуса
+//Р¤РѕСЂРјРёСЂСѓРµС‚ РІС…РѕРґРЅРѕР№ РїРѕС‚РµРЅС†РёР°Р» РІ РІРёРґРµ С„СѓРЅРєС†РёРё СЃРёРЅСѓСЃР°
 void NPulseChannelCable::FormingInput()
 {
     InpV.Resize(1, t_points_number+1, 0);
 
-    // Получение информации об обратной связи
+    // РџРѕР»СѓС‡РµРЅРёРµ РёРЅС„РѕСЂРјР°С†РёРё РѕР± РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·Рё
     UEPtr<NPulseMembrane> membrane=dynamic_pointer_cast<NPulseMembrane>(Owner);
     if(membrane)
      SumChannelInput(0,0)-=membrane->Feedback;
@@ -280,7 +280,7 @@ void NPulseChannelCable::FormingInput()
  return;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseChannelCable::ACalculate2(void)
 {
     FormingInput();
@@ -314,7 +314,7 @@ bool NPulseChannelCable::ACalculate2(void)
         }
     }
 
-    //Проверка на inf
+    //РџСЂРѕРІРµСЂРєР° РЅР° inf
     if(isnan(Vm(t_points_number, x_points_number-1)) || isinf(Vm(t_points_number, x_points_number-1)) || isinf(-Vm(t_points_number, x_points_number-1)))
     {
         Output(0,0) = -1;

@@ -24,12 +24,12 @@ See file license.txt for more information
 #include <QString>
 
 
-// Класс, создающий группу нейронов для моделирования условного рефлекса
+// РљР»Р°СЃСЃ, СЃРѕР·РґР°СЋС‰РёР№ РіСЂСѓРїРїСѓ РЅРµР№СЂРѕРЅРѕРІ РґР»СЏ РјРѕРґРµР»РёСЂРѕРІР°РЅРёСЏ СѓСЃР»РѕРІРЅРѕРіРѕ СЂРµС„Р»РµРєСЃР°
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NLogicalNot::NLogicalNot(void)
 : StructureBuildMode("StructureBuildMode",this,&NLogicalNot::SetStructureBuildMode),
@@ -58,63 +58,63 @@ NLogicalNot::~NLogicalNot(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NLogicalNot::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
   Ready=false;
  return true;
 }
 
-/// Режим расчёта нейрона
+/// Р РµР¶РёРј СЂР°СЃС‡С‘С‚Р° РЅРµР№СЂРѕРЅР°
 bool NLogicalNot::SetCalculateMode(const int &value)
 {
  return true;
 }
 
-/// Имя класса, создающего генератор импульсов
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РіРµРЅРµСЂР°С‚РѕСЂ РёРјРїСѓР»СЊСЃРѕРІ
 bool NLogicalNot::SetPulseGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего модель логического "НЕ" (модель боли)
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РјРѕРґРµР»СЊ Р»РѕРіРёС‡РµСЃРєРѕРіРѕ "РќР•" (РјРѕРґРµР»СЊ Р±РѕР»Рё)
 bool NLogicalNot::SetLogicalNotClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего учитель нейрона
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СѓС‡РёС‚РµР»СЊ РЅРµР№СЂРѕРЅР°
 bool NLogicalNot::SetNeuronTrainerClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего нейрон
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РЅРµР№СЂРѕРЅ
 bool NLogicalNot::SetNeuronClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего синапс
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СЃРёРЅР°РїСЃ
 bool NLogicalNot::SetSynapseClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число входных дендритов
+/// Р§РёСЃР»Рѕ РІС…РѕРґРЅС‹С… РґРµРЅРґСЂРёС‚РѕРІ
 bool NLogicalNot::SetNumInputDendrite(const int &value)
 {
  Ready=false;
@@ -127,7 +127,7 @@ bool NLogicalNot::SetNumInputDendrite(const int &value)
  return true;
 }
 
-/// Признак необходимости обучения
+/// РџСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РѕР±СѓС‡РµРЅРёСЏ
 bool NLogicalNot::SetNeedToTrain(const bool &value)
 {
     if(NeuronTrainer)
@@ -142,7 +142,7 @@ bool NLogicalNot::SetNeedToTrain(const bool &value)
 }
 
 
-/// Частота генераторов (Гц)
+/// Р§Р°СЃС‚РѕС‚Р° РіРµРЅРµСЂР°С‚РѕСЂРѕРІ (Р“С†)
 bool NLogicalNot::SetSpikesFrequency(const double &value)
 {
     Ready=false;
@@ -156,7 +156,7 @@ bool NLogicalNot::SetSpikesFrequency(const double &value)
 }
 
 
-/// Паттерн для запоминания
+/// РџР°С‚С‚РµСЂРЅ РґР»СЏ Р·Р°РїРѕРјРёРЅР°РЅРёСЏ
 bool NLogicalNot::SetInputPattern(const MDMatrix<double> &value)
 {          
     if(NeuronTrainer)
@@ -170,7 +170,7 @@ bool NLogicalNot::SetInputPattern(const MDMatrix<double> &value)
   return true;
 }
 
-/// Частота генератора в режиме повышенной частоты (UsePatternOutput) (Гц)
+/// Р§Р°СЃС‚РѕС‚Р° РіРµРЅРµСЂР°С‚РѕСЂР° РІ СЂРµР¶РёРјРµ РїРѕРІС‹С€РµРЅРЅРѕР№ С‡Р°СЃС‚РѕС‚С‹ (UsePatternOutput) (Р“С†)
 bool NLogicalNot::SetPatternFrequency(const double &value)
 {
     Ready=false;
@@ -181,7 +181,7 @@ bool NLogicalNot::SetPatternFrequency(const double &value)
  return true;
 }
 
-/// Длина дендрита на первом нейроне в генераторной связке (число сегментов)
+/// Р”Р»РёРЅР° РґРµРЅРґСЂРёС‚Р° РЅР° РїРµСЂРІРѕРј РЅРµР№СЂРѕРЅРµ РІ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРµ (С‡РёСЃР»Рѕ СЃРµРіРјРµРЅС‚РѕРІ)
 bool NLogicalNot::SetDendriteLengthNGen1(const int &value)
 {
     Ready=false;
@@ -192,14 +192,14 @@ bool NLogicalNot::SetDendriteLengthNGen1(const int &value)
         dend_size[0] = value;
         GeneratorNeuron1->NumDendriteMembranePartsVec = dend_size;
 
-        //Удаляем лишние синапсы на соме
+        //РЈРґР°Р»СЏРµРј Р»РёС€РЅРёРµ СЃРёРЅР°РїСЃС‹ РЅР° СЃРѕРјРµ
         UEPtr<NPulseMembrane> soma = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
         if(!soma)
          return true;
         soma->NumExcitatorySynapses = 1;
         soma->Reset();
 
-        //Удаляем лишние синапсы на дендритах
+        //РЈРґР°Р»СЏРµРј Р»РёС€РЅРёРµ СЃРёРЅР°РїСЃС‹ РЅР° РґРµРЅРґСЂРёС‚Р°С…
         for (int i = 0; i< value; i++)
         {
             UEPtr<NPulseMembrane> dendrite = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(i+1),true);
@@ -215,7 +215,7 @@ bool NLogicalNot::SetDendriteLengthNGen1(const int &value)
  return true;
 }
 
-/// Длина дендрита на втором нейроне в генераторной связке (число сегментов)
+/// Р”Р»РёРЅР° РґРµРЅРґСЂРёС‚Р° РЅР° РІС‚РѕСЂРѕРј РЅРµР№СЂРѕРЅРµ РІ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРµ (С‡РёСЃР»Рѕ СЃРµРіРјРµРЅС‚РѕРІ)
 bool NLogicalNot::SetDendriteLengthNGen2(const int &value)
 {
    Ready=false;
@@ -226,14 +226,14 @@ bool NLogicalNot::SetDendriteLengthNGen2(const int &value)
        dend_size[0] = value;
        GeneratorNeuron2->NumDendriteMembranePartsVec = dend_size;
 
-       //Удаляем лишние синапсы на соме
+       //РЈРґР°Р»СЏРµРј Р»РёС€РЅРёРµ СЃРёРЅР°РїСЃС‹ РЅР° СЃРѕРјРµ
        UEPtr<NPulseMembrane> soma = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
        if(!soma)
         return true;
        soma->NumExcitatorySynapses = 1;
        soma->Reset();
 
-       //Удаляем лишние синапсы на дендритах
+       //РЈРґР°Р»СЏРµРј Р»РёС€РЅРёРµ СЃРёРЅР°РїСЃС‹ РЅР° РґРµРЅРґСЂРёС‚Р°С…
        for (int i = 0; i< value; i++)
        {
            UEPtr<NPulseMembrane> dendrite = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(i+1),true);
@@ -248,13 +248,13 @@ bool NLogicalNot::SetDendriteLengthNGen2(const int &value)
  return true;
 }
 
-/// Число синапсов на дендрите первого нейрона в генераторной связке
+/// Р§РёСЃР»Рѕ СЃРёРЅР°РїСЃРѕРІ РЅР° РґРµРЅРґСЂРёС‚Рµ РїРµСЂРІРѕРіРѕ РЅРµР№СЂРѕРЅР° РІ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРµ
 bool NLogicalNot::SetNumExcSynapsesNGen1(const int &value)
 {
     Ready=false;
     if (GeneratorNeuron1)
     {
-        //Устанавливаем необходимое число синапсов на соме/окончании дендрита
+        //РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅРµРѕР±С…РѕРґРёРјРѕРµ С‡РёСЃР»Рѕ СЃРёРЅР°РїСЃРѕРІ РЅР° СЃРѕРјРµ/РѕРєРѕРЅС‡Р°РЅРёРё РґРµРЅРґСЂРёС‚Р°
         if(DendriteLengthNGen1 == 0)
         {
             UEPtr<NPulseMembrane> soma1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
@@ -278,13 +278,13 @@ bool NLogicalNot::SetNumExcSynapsesNGen1(const int &value)
  return true;
 }
 
-/// Число синапсов на дендрите второго нейрона в генераторной связке
+/// Р§РёСЃР»Рѕ СЃРёРЅР°РїСЃРѕРІ РЅР° РґРµРЅРґСЂРёС‚Рµ РІС‚РѕСЂРѕРіРѕ РЅРµР№СЂРѕРЅР° РІ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРµ
 bool NLogicalNot::SetNumExcSynapsesNGen2(const int &value)
 {
     Ready=false;
     if (GeneratorNeuron2)
     {
-        //Устанавливаем необходимое число синапсов на соме/окончании дендрита
+        //РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅРµРѕР±С…РѕРґРёРјРѕРµ С‡РёСЃР»Рѕ СЃРёРЅР°РїСЃРѕРІ РЅР° СЃРѕРјРµ/РѕРєРѕРЅС‡Р°РЅРёРё РґРµРЅРґСЂРёС‚Р°
         if(DendriteLengthNGen2 == 0)
         {
             UEPtr<NPulseMembrane> soma2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
@@ -310,9 +310,9 @@ bool NLogicalNot::SetNumExcSynapsesNGen2(const int &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NLogicalNot* NLogicalNot::New(void)
 {
  return new NLogicalNot;
@@ -325,22 +325,22 @@ UComponent* NLogicalNot::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NLogicalNot::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
 
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NLogicalNot::ADelComponent(UEPtr<UContainer> comp)
 {
 
@@ -349,9 +349,9 @@ bool NLogicalNot::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_generator_class_name,
                                  const string &neuron_class_name, int num_input_dendrite,
                                  double spikes_frequency,
@@ -364,7 +364,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         bool res(true);
 
 
-        //Создаем генератор стартового импульса для генераторной связки нейронов
+        //РЎРѕР·РґР°РµРј РіРµРЅРµСЂР°С‚РѕСЂ СЃС‚Р°СЂС‚РѕРІРѕРіРѕ РёРјРїСѓР»СЊСЃР° РґР»СЏ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРё РЅРµР№СЂРѕРЅРѕРІ
         Generator = AddMissingComponent<NPulseGeneratorTransit>(std::string("Source"), PulseGeneratorClassName);
         Generator->SetCoord(MVector<double,3>(4.3, 2.67, 0));
         Generator->Frequency = 0.001;
@@ -372,7 +372,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         Generator->Reset();
 
 
-        //Создаем нейроны генераторной связки
+        //РЎРѕР·РґР°РµРј РЅРµР№СЂРѕРЅС‹ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРё
         //Neuron1
         GeneratorNeuron1 = AddMissingComponent<NPulseNeuron>(std::string("Neuron1"), NeuronClassName);
         GeneratorNeuron1->SetCoord(MVector<double,3>(11.6, 2.3, 0));
@@ -401,7 +401,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         GeneratorNeuron1->Reset();
 
 
-        //Создаем нейроны генераторной связки
+        //РЎРѕР·РґР°РµРј РЅРµР№СЂРѕРЅС‹ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРё
         //Neuron2
         GeneratorNeuron2 = AddMissingComponent<NPulseNeuron>(std::string("Neuron2"), NeuronClassName);
         GeneratorNeuron2->SetCoord(MVector<double,3>(11.6, 4.6, 0));
@@ -429,7 +429,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
          GeneratorNeuron2->Reset();
 
 
-        //Создаем обучаемый нейрон
+        //РЎРѕР·РґР°РµРј РѕР±СѓС‡Р°РµРјС‹Р№ РЅРµР№СЂРѕРЅ
         NeuronTrainer = AddMissingComponent<NNeuronTrainer>(std::string("NeuronTrainer"), NeuronTrainerClassName);
         NeuronTrainer->SetCoord(MVector<double,3>(4.3, 9.67, 0));
         NeuronTrainer->NumInputDendrite = num_input_dendrite;
@@ -438,7 +438,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         NeuronTrainer->Reset();
 
 
-        //Создем генератор, продлевающий тормозящее воздействие NeuronTrainer в схеме
+        //РЎРѕР·РґРµРј РіРµРЅРµСЂР°С‚РѕСЂ, РїСЂРѕРґР»РµРІР°СЋС‰РёР№ С‚РѕСЂРјРѕР·СЏС‰РµРµ РІРѕР·РґРµР№СЃС‚РІРёРµ NeuronTrainer РІ СЃС…РµРјРµ
         PatternGenerator = AddMissingComponent<NPulseGeneratorTransit>(std::string("PatternSource"), PulseGeneratorClassName);
         PatternGenerator->SetCoord(MVector<double,3>(11.67, 9.67, 0));
         PatternGenerator->UsePatternOutput = true;
@@ -450,7 +450,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         PatternGenerator->Reset();
 
 
-        //Создаем выходной нейрон
+        //РЎРѕР·РґР°РµРј РІС‹С…РѕРґРЅРѕР№ РЅРµР№СЂРѕРЅ
         OutputNeuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron"), NeuronClassName);
         OutputNeuron->SetCoord(MVector<double,3>(18.3, 7.0, 0));
         std::vector<int> dend_size3;
@@ -460,7 +460,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         OutputNeuron->Reset();
 
 
-        //Создаем связь между генератором стартового импульса и первым нейроном из генераторной связки
+        //РЎРѕР·РґР°РµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РіРµРЅРµСЂР°С‚РѕСЂРѕРј СЃС‚Р°СЂС‚РѕРІРѕРіРѕ РёРјРїСѓР»СЊСЃР° Рё РїРµСЂРІС‹Рј РЅРµР№СЂРѕРЅРѕРј РёР· РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРё
         //Generator -> Neuron1
         UEPtr<NPulseSynapse> synapse1=GeneratorNeuron1->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse1",true);
         if(!synapse1)
@@ -471,7 +471,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         Generator->Reset();
 
 
-        //Создаем связь между нейронами из генераторной связки
+        //РЎРѕР·РґР°РµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРµР№СЂРѕРЅР°РјРё РёР· РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРё
         //Neuron1 -> Neuron2
         UEPtr<NLTZone> ltzone1 = GeneratorNeuron1->GetComponentL<NLTZone>("LTZone", true);
         if(!ltzone1)
@@ -499,7 +499,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         GeneratorNeuron2->Reset();
 
 
-        //Создаем обратную связь между нейронами из генераторной связки
+        //РЎРѕР·РґР°РµРј РѕР±СЂР°С‚РЅСѓСЋ СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРµР№СЂРѕРЅР°РјРё РёР· РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРё
         //Neuron2 -> Neuron1
         UEPtr<NLTZone> ltzone2 = GeneratorNeuron2->GetComponentL<NLTZone>("LTZone", true);
         if(!ltzone2)
@@ -529,7 +529,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         GeneratorNeuron2->Reset();
 
 
-        //Создаем связь между вторым нейрном из генераторной связки и выходным нейроном
+        //РЎРѕР·РґР°РµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РІС‚РѕСЂС‹Рј РЅРµР№СЂРЅРѕРј РёР· РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРё Рё РІС‹С…РѕРґРЅС‹Рј РЅРµР№СЂРѕРЅРѕРј
         //Neuron2 -> OutputNeuron
         UEPtr<NPulseSynapse> synapse4 = OutputNeuron->GetComponentL<NPulseSynapse>("Dendrite1_1.ExcSynapse1",true);
         if(!synapse4)
@@ -541,7 +541,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         OutputNeuron->Reset();
 
 
-        //Создаем связь между обучаемым нейроном и генератором, продлевающим его тормозящее воздействие
+        //РЎРѕР·РґР°РµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РѕР±СѓС‡Р°РµРјС‹Рј РЅРµР№СЂРѕРЅРѕРј Рё РіРµРЅРµСЂР°С‚РѕСЂРѕРј, РїСЂРѕРґР»РµРІР°СЋС‰РёРј РµРіРѕ С‚РѕСЂРјРѕР·СЏС‰РµРµ РІРѕР·РґРµР№СЃС‚РІРёРµ
         //NeuronTrainer -> PatternGenerator
         UEPtr<NPulseNeuron> neuron = NeuronTrainer->GetComponentL<NPulseNeuron>("Neuron",true);
         if(!neuron)
@@ -555,7 +555,7 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
         NeuronTrainer->Reset();
         PatternGenerator->Reset();
 
-        //Создаем связь между генератором, продлевающим тормозящее воздействие обучаемого нейрона, и выходным нейроном
+        //РЎРѕР·РґР°РµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РіРµРЅРµСЂР°С‚РѕСЂРѕРј, РїСЂРѕРґР»РµРІР°СЋС‰РёРј С‚РѕСЂРјРѕР·СЏС‰РµРµ РІРѕР·РґРµР№СЃС‚РІРёРµ РѕР±СѓС‡Р°РµРјРѕРіРѕ РЅРµР№СЂРѕРЅР°, Рё РІС‹С…РѕРґРЅС‹Рј РЅРµР№СЂРѕРЅРѕРј
         //PatternGenerator -> OutputNeuron
         UEPtr<NPulseSynapse> synapse5 = OutputNeuron->GetComponentL<NPulseSynapse>("Soma1.InhSynapse1",true);
         if(!synapse5)
@@ -570,25 +570,25 @@ bool NLogicalNot::BuildStructure(int structure_build_mode, const string &pulse_g
 }
 
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NLogicalNot::AReset(void)
 {
      bool res(true);
 
-  //Настройка Neuron1
+  //РќР°СЃС‚СЂРѕР№РєР° Neuron1
   std::vector<int> dend_size1;
   dend_size1.resize(1);
   dend_size1[0] = DendriteLengthNGen1;
   GeneratorNeuron1->NumDendriteMembranePartsVec = dend_size1;
 
-  //Удаляем лишние синапсы на соме
+  //РЈРґР°Р»СЏРµРј Р»РёС€РЅРёРµ СЃРёРЅР°РїСЃС‹ РЅР° СЃРѕРјРµ
   UEPtr<NPulseMembrane> soma1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
   if(!soma1)
    return true;
   soma1->NumExcitatorySynapses = 1;
   soma1->Reset();
 
-  //Удаляем лишние синапсы на дендритах
+  //РЈРґР°Р»СЏРµРј Р»РёС€РЅРёРµ СЃРёРЅР°РїСЃС‹ РЅР° РґРµРЅРґСЂРёС‚Р°С…
   for (int i = 0; i< (DendriteLengthNGen1-1); i++)
   {
       UEPtr<NPulseMembrane> dendrite = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(i+1),true);
@@ -598,7 +598,7 @@ bool NLogicalNot::AReset(void)
       dendrite->Reset();
 
   }
-  //Устанавливаем необходимое число синапсов на соме или окончании дендрита
+  //РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅРµРѕР±С…РѕРґРёРјРѕРµ С‡РёСЃР»Рѕ СЃРёРЅР°РїСЃРѕРІ РЅР° СЃРѕРјРµ РёР»Рё РѕРєРѕРЅС‡Р°РЅРёРё РґРµРЅРґСЂРёС‚Р°
   if(DendriteLengthNGen1 == 0)
   {
       UEPtr<NPulseMembrane> soma1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
@@ -619,20 +619,20 @@ bool NLogicalNot::AReset(void)
   GeneratorNeuron1->Reset();
 
 
-  //Настройка Neuron2
+  //РќР°СЃС‚СЂРѕР№РєР° Neuron2
   std::vector<int> dend_size2;
   dend_size2.resize(1);
   dend_size2[0] = DendriteLengthNGen2;
   GeneratorNeuron2->NumDendriteMembranePartsVec = dend_size2;
 
-  //Удаляем лишние синапсы на соме
+  //РЈРґР°Р»СЏРµРј Р»РёС€РЅРёРµ СЃРёРЅР°РїСЃС‹ РЅР° СЃРѕРјРµ
   UEPtr<NPulseMembrane> soma2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
   if(!soma2)
    return true;
   soma2->NumExcitatorySynapses = 1;
   soma2->Reset();
 
-  //Удаляем лишние синапсы на дендритах
+  //РЈРґР°Р»СЏРµРј Р»РёС€РЅРёРµ СЃРёРЅР°РїСЃС‹ РЅР° РґРµРЅРґСЂРёС‚Р°С…
   for (int i = 0; i< (DendriteLengthNGen2-1); i++)
   {
       UEPtr<NPulseMembrane> dendrite = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Dendrite1_"+sntoa(i+1),true);
@@ -643,7 +643,7 @@ bool NLogicalNot::AReset(void)
 
   }
 
-  //Устанавливаем необходимое число синапсов на соме или окончании дендрита
+  //РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅРµРѕР±С…РѕРґРёРјРѕРµ С‡РёСЃР»Рѕ СЃРёРЅР°РїСЃРѕРІ РЅР° СЃРѕРјРµ РёР»Рё РѕРєРѕРЅС‡Р°РЅРёРё РґРµРЅРґСЂРёС‚Р°
   if(DendriteLengthNGen2 == 0)
   {
       UEPtr<NPulseMembrane> soma2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
@@ -664,7 +664,7 @@ bool NLogicalNot::AReset(void)
   GeneratorNeuron2->Reset();
 
 
-  //Создаем заново связь между нейронами из генераторной связки
+  //РЎРѕР·РґР°РµРј Р·Р°РЅРѕРІРѕ СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРµР№СЂРѕРЅР°РјРё РёР· РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРё
   //Neuron1 -> Neuron2
   UEPtr<NLTZone> ltzone1 = GeneratorNeuron1->GetComponentL<NLTZone>("LTZone", true);
   if(!ltzone1)
@@ -692,7 +692,7 @@ bool NLogicalNot::AReset(void)
         GeneratorNeuron1->Reset();
         GeneratorNeuron2->Reset();
 
-  //Создаем обратную связь между нейронами из генераторной связки
+  //РЎРѕР·РґР°РµРј РѕР±СЂР°С‚РЅСѓСЋ СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРµР№СЂРѕРЅР°РјРё РёР· РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ СЃРІСЏР·РєРё
   //Neuron2 -> Neuron1
   UEPtr<NLTZone> ltzone2 = GeneratorNeuron2->GetComponentL<NLTZone>("LTZone", true);
   if(!ltzone2)
@@ -723,7 +723,7 @@ bool NLogicalNot::AReset(void)
   GeneratorNeuron2->Reset();
 
 
-  //Настройка NeuronTrainer
+  //РќР°СЃС‚СЂРѕР№РєР° NeuronTrainer
   NeuronTrainer->InputPattern = InputPattern;
   NeuronTrainer->NumInputDendrite = NumInputDendrite;
   NeuronTrainer->SpikesFrequency = SpikesFrequency;
@@ -738,7 +738,7 @@ bool NLogicalNot::AReset(void)
  return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NLogicalNot::ADefault(void)
 {
  StructureBuildMode=1;
@@ -760,10 +760,10 @@ bool NLogicalNot::ADefault(void)
 }
 
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NLogicalNot::ABuild(void)
 {
  if(StructureBuildMode>0)
@@ -781,7 +781,7 @@ bool NLogicalNot::ABuild(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NLogicalNot::ACalculate(void)
 {
     IsNeedToTrain = NeuronTrainer->IsNeedToTrain;

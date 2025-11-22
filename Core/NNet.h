@@ -24,121 +24,121 @@ using namespace RDK;
 
 class RDK_LIB_TYPE NNet: public UNet
 {
-public: // Типы данных
+public: //  
 typedef vector<vector<vector<vector<vector<UId> > > > > NNetStructure;
-// Расстояние организации связей
-RDK::ULProperty<double, NNet> LinkDistance;
+//   
+RDK::UProperty<double, NNet, ptPubParameter> LinkDistance;
 
-public: // Общедоступные свойства
-// Класс компонента по умолчанию в хранилище
-RDK::ULProperty<UId,NNet> DefaultComponentClassId;
+public: //  
+//      
+RDK::UProperty<UId,NNet, ptPubParameter> DefaultComponentClassId;
 
-// Структура сети
-// 0 - Произвольная структура
-// 1 - многослойная сеть
-// 2 - рецептивная многослойная сеть
-RDK::ULProperty<int,NNet> NetType;
+//  
+// 0 -  
+// 1 -  
+// 2 -   
+RDK::UProperty<int,NNet, ptPubParameter> NetType;
 
-// Число слоев
-RDK::ULProperty<size_t,NNet> NumLayers;
+//  
+RDK::UProperty<size_t,NNet, ptPubParameter> NumLayers;
 
-// Ширина слоя
-RDK::ULProperty<size_t,NNet> LayerWidth;
+//  
+RDK::UProperty<size_t,NNet, ptPubParameter> LayerWidth;
 
-// Глубина слоя
-RDK::ULProperty<size_t,NNet> LayerHeight;
+//  
+RDK::UProperty<size_t,NNet, ptPubParameter> LayerHeight;
 
-// Ширина рецептивного поля
-RDK::ULProperty<size_t,NNet> ReceptorFieldWidth;
+//   
+RDK::UProperty<size_t,NNet, ptPubParameter> ReceptorFieldWidth;
 
-// Глубина рецептивного поля
-RDK::ULProperty<size_t,NNet> ReceptorFieldHeight;
+//   
+RDK::UProperty<size_t,NNet, ptPubParameter> ReceptorFieldHeight;
 
-// Способ организации связей сети
-// 0 - нет
-// 1 - межслойные - все со всеми между слоями с расстоянием 'LinkDistance'
-// 2 - межслойные - рецептивные поля между соседними слоями
-// 3 - все со всеми в заданном радиусе 'LinkDistance'
-RDK::ULProperty<size_t, NNet> LinksOrganizationMode;
+//    
+// 0 - 
+// 1 -  -        'LinkDistance'
+// 2 -  -     
+// 3 -       'LinkDistance'
+RDK::UProperty<size_t, NNet, ptPubParameter> LinksOrganizationMode;
 
-protected: // Данные
-// Структура сети
-RDK::UCLProperty<NNetStructure,NNet,ptPubState> NetStructure;
+protected: // 
+//  
+RDK::UProperty<NNetStructure,NNet,ptPubState> NetStructure;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NNet(void);
 virtual ~NNet(void);
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NNet* New(void);
 // --------------------------
 
 // --------------------------
-// Методы управления структурой сети
+//    
 // --------------------------
-// Создает новый экземпляр компонента по умолчанию и добавляет его в сеть
+//           
 RDK::UEPtr<UContainer> InsertComponent(void);
 // --------------------------
 
 // --------------------------
-// Методы управления счетом
+//   
 // --------------------------
 public:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool Default(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool Build(void);
 
-// Сброс процесса счета без потери настроек
+//      
 virtual bool Reset(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Собирает структуру сети
+//   
 virtual bool BuildNetStructure(void);
 
-// Собирает структуру слоя 'layer'
+//    'layer'
 virtual bool BuildLayerStructure(size_t layer);
 
-// Собирает структуру рецептивного поля слоя 'layer', с координатами
-// 'i' по ширине, 'j' по глубине
+//      'layer',  
+// 'i'  , 'j'  
 virtual bool BuildReceptorField(size_t layer, size_t i, size_t j);
 
-// Организует связи сети
+//   
 virtual bool BuildLinksStructure(void);
 
-// Организует связи компонента слоя 'layer', с координатами
-// 'i' по ширине, 'j' по глубине
+//     'layer',  
+// 'i'  , 'j'  
 virtual bool BuildLinksStructure(size_t layer, size_t i, size_t j);
 
-// Способ организации связей сети, определяемый LinksOrganizationMode
-// 0 - нет
+//    ,  LinksOrganizationMode
+// 0 - 
 virtual bool BuildLinksStructureNone(size_t layer, size_t i, size_t j);
 
-// Способ организации связей сети, определяемый LinksOrganizationMode
-// 1 - межслойные - все со всеми между слоями с расстоянием 'LinkDistance'
+//    ,  LinksOrganizationMode
+// 1 -  -        'LinkDistance'
 virtual bool BuildLinksStructureMultilayer(size_t layer, size_t i, size_t j);
 
-// Способ организации связей сети, определяемый LinksOrganizationMode
-// 2 - межслойные - рецептивные поля между соседними слоями
+//    ,  LinksOrganizationMode
+// 2 -  -     
 virtual bool BuildLinksStructureReceptor(size_t layer, size_t i, size_t j);
 
-// Способ организации связей сети, определяемый LinksOrganizationMode
-// 3 - все со всеми в заданном радиусе 'LinkDistance'
+//    ,  LinksOrganizationMode
+// 3 -       'LinkDistance'
 virtual bool BuildLinksStructureFullRadius(size_t layer, size_t i, size_t j);
 // --------------------------
 };

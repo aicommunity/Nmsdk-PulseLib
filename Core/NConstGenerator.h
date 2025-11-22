@@ -23,17 +23,17 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NConstGenerator: public NSource
 {
-public: // Общедоступные свойства
-/// Амплитуда выходного сигнала
-ULProperty<double,NConstGenerator, ptPubParameter> Amplitude;
+public: //  
+///   
+UProperty<double,NConstGenerator, ptPubParameter> Amplitude;
 
-protected: // Временные переменные
-/// Флаг необходимости сменить константу на выходе
+protected: //  
+///      
 bool UpdateOutputFlag;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NConstGenerator(void);
 virtual ~NConstGenerator(void);
@@ -41,37 +41,37 @@ virtual ~NConstGenerator(void);
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
-/// Устанавливает амплитуду импульсов
+///   
 bool SetAmplitude(const double &value);
 // --------------------------
 
 public:
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-/// Выделяет память для новой чистой копии объекта этого класса
+///         
 virtual NConstGenerator* New(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-/// Восстановление настроек по умолчанию и сброс процесса счета
+///        
 virtual bool ADefault(void);
 
-/// Обеспечивает сборку внутренней структуры объекта
-/// после настройки параметров
-/// Автоматически вызывает метод Reset() и выставляет Ready в true
-/// в случае успешной сборки
+///     
+///   
+///    Reset()   Ready  true
+///    
 virtual bool ABuild(void);
 
-/// Сброс процесса счета.
+///   .
 virtual bool AReset(void);
 
-/// Выполняет расчет этого объекта
+///    
 virtual bool ACalculate(void);
 // --------------------------
 };

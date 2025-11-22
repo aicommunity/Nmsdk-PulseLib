@@ -21,12 +21,12 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
 
 
-// Класс, создающий слой групп афферентных нейронов, чувствительных к разным диапазонам частот
+// РљР»Р°СЃСЃ, СЃРѕР·РґР°СЋС‰РёР№ СЃР»РѕР№ РіСЂСѓРїРї Р°С„С„РµСЂРµРЅС‚РЅС‹С… РЅРµР№СЂРѕРЅРѕРІ, С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅС‹С… Рє СЂР°Р·РЅС‹Рј РґРёР°РїР°Р·РѕРЅР°Рј С‡Р°СЃС‚РѕС‚
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NNeuronFreqGroupLayer::NNeuronFreqGroupLayer(void)
 : StructureBuildMode("StructureBuildMode",this,&NNeuronFreqGroupLayer::SetStructureBuildMode),
@@ -44,29 +44,29 @@ NNeuronFreqGroupLayer::~NNeuronFreqGroupLayer(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NNeuronFreqGroupLayer::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
   Ready=false;
  return true;
 }
 
-/// Имя класса участка мембраны
+/// РРјСЏ РєР»Р°СЃСЃР° СѓС‡Р°СЃС‚РєР° РјРµРјР±СЂР°РЅС‹
 bool NNeuronFreqGroupLayer::SetAffNeuronGroupClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число групп афферентных нейронов по оси у
+/// Р§РёСЃР»Рѕ РіСЂСѓРїРї Р°С„С„РµСЂРµРЅС‚РЅС‹С… РЅРµР№СЂРѕРЅРѕРІ РїРѕ РѕСЃРё Сѓ
 bool NNeuronFreqGroupLayer::SetAffNeuronsGroupHeight(const int &value)
 {
  Ready=false;
@@ -74,7 +74,7 @@ bool NNeuronFreqGroupLayer::SetAffNeuronsGroupHeight(const int &value)
  return true;
 }
 
-/// Число групп афферентных нейронов по оси x
+/// Р§РёСЃР»Рѕ РіСЂСѓРїРї Р°С„С„РµСЂРµРЅС‚РЅС‹С… РЅРµР№СЂРѕРЅРѕРІ РїРѕ РѕСЃРё x
 bool NNeuronFreqGroupLayer::SetAffNeuronsGroupWidth(const int &value)
 {
  Ready=false;
@@ -82,7 +82,7 @@ bool NNeuronFreqGroupLayer::SetAffNeuronsGroupWidth(const int &value)
  return true;
 }
 
-/// Число афферентных нейронов в группе
+/// Р§РёСЃР»Рѕ Р°С„С„РµСЂРµРЅС‚РЅС‹С… РЅРµР№СЂРѕРЅРѕРІ РІ РіСЂСѓРїРїРµ
 bool NNeuronFreqGroupLayer::SetNumAffNeuronsInGroup(const int &value)
 {
  Ready=false;
@@ -91,9 +91,9 @@ bool NNeuronFreqGroupLayer::SetNumAffNeuronsInGroup(const int &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NNeuronFreqGroupLayer* NNeuronFreqGroupLayer::New(void)
 {
  return new NNeuronFreqGroupLayer;
@@ -106,12 +106,12 @@ UComponent* NNeuronFreqGroupLayer::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NNeuronFreqGroupLayer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {            /*
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
@@ -140,10 +140,10 @@ bool NNeuronFreqGroupLayer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointe
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NNeuronFreqGroupLayer::ADelComponent(UEPtr<UContainer> comp)
 {                     /*
  if(comp == PosGenerator)
@@ -158,9 +158,9 @@ bool NNeuronFreqGroupLayer::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NNeuronFreqGroupLayer::BuildStructure(int structure_build_mode, const string &aff_neuron_group_class_name,
 											int old_num_aff_neurons_group_height, int old_num_aff_neurons_group_width,
 											int num_aff_neurons_group_height, int num_aff_neurons_group_width,
@@ -202,7 +202,7 @@ bool NNeuronFreqGroupLayer::BuildStructure(int structure_build_mode, const strin
  return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NNeuronFreqGroupLayer::ADefault(void)
 {
  StructureBuildMode=1;
@@ -214,10 +214,10 @@ bool NNeuronFreqGroupLayer::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NNeuronFreqGroupLayer::ABuild(void)
 {
  if(StructureBuildMode>0)
@@ -233,13 +233,13 @@ bool NNeuronFreqGroupLayer::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NNeuronFreqGroupLayer::AReset(void)
 {
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NNeuronFreqGroupLayer::ACalculate(void)
 {
  return true;

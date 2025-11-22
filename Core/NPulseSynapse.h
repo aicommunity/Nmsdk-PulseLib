@@ -23,42 +23,42 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseSynapse: public NPulseSynapseCommon
 {
-public: // Общедоступные свойства
-/// Постоянная времени выделения медиатора
-ULProperty<double,NPulseSynapse, ptPubParameter> SecretionTC;
+public: //  
+///    
+UProperty<double,NPulseSynapse, ptPubParameter> SecretionTC;
 
-/// Постоянная времени распада медиатора
-ULProperty<double,NPulseSynapse, ptPubParameter> DissociationTC;
+///    
+UProperty<double,NPulseSynapse, ptPubParameter> DissociationTC;
 
-/// Коэффициент пресинаптического торможения
-ULProperty<double,NPulseSynapse, ptPubParameter> InhibitionCoeff;
+///   
+UProperty<double,NPulseSynapse, ptPubParameter> InhibitionCoeff;
 
-/// Типовая длительность импульса, с
-ULProperty<double,NPulseSynapse, ptPubParameter> TypicalPulseDuration;
+///   , 
+UProperty<double,NPulseSynapse, ptPubParameter> TypicalPulseDuration;
 
-/// Флаг работы в режиме симуляции пришедшего импульса по сигналу
-ULProperty<bool,NPulseSynapse, ptPubParameter> UsePulseSignal;
+///         
+UProperty<bool,NPulseSynapse, ptPubParameter> UsePulseSignal;
 
-/// Флаг включения пресинаптического торможения
-ULProperty<bool,NPulseSynapse, ptPubParameter> UsePresynapticInhibition;
+///    
+UProperty<bool,NPulseSynapse, ptPubParameter> UsePresynapticInhibition;
 
-public: // Входы и выходы
+public: //   
 
-protected: // Основные свойства
+protected: //  
 
-protected: // Временные переменные
-// Постоянные времени выделения и распада медиатора в единицах шага интегрирования
+protected: //  
+//          
 double VSecretionTC,VDissociationTC;
 
-// Постоянная составляющая результатов вычислений
+//    
 double OutputConstData;
 
-/// Счетчик числа итераций в течении которых на входет присутствует импульс
+///          
 int PulseCounter;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NPulseSynapse(void);
 virtual ~NPulseSynapse(void);
@@ -66,58 +66,58 @@ virtual ~NPulseSynapse(void);
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
-// Устанавливает амплитуду импульсов
+//   
 bool SetPulseAmplitude(const double &value);
 
-// Постоянная времени выделения медиатора
+//    
 bool SetSecretionTC(const double &value);
 
-// Постоянная времени распада медиатора
+//    
 bool SetDissociationTC(const double &value);
 
-/// Типовая длительность импульса, с
+///   , 
 bool SetTypicalPulseDuration(const double &value);
 
-// Коэффициент пресинаптического торможения
+//   
 bool SetInhibitionCoeff(const double &value);
 
-/// Флаг работы в режиме симуляции пришедшего импульса по сигналу
+///         
 bool SetUsePulseSignal(const bool &value);
 
-// Задание флага включения пресинаптического торомжения
+//     
 bool SetUsePresynapticInhibition(const bool &value);
 
-// Вес (эффективность синапса) синапса
+//  ( ) 
 bool SetResistance(const double &value);
 // --------------------------
 
 public:
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NPulseSynapse* New(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate2(void);
 // --------------------------
 };

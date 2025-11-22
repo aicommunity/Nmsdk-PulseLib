@@ -25,9 +25,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseGeneratorMulti::NPulseGeneratorMulti(void)
 //: NSource(name),
@@ -57,9 +57,9 @@ NPulseGeneratorMulti::~NPulseGeneratorMulti(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
-// Устанавливает частоту импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ С‡Р°СЃС‚РѕС‚Сѓ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPulseGeneratorMulti::SetFrequency(const double &value)
 {
  if(value <0)
@@ -75,7 +75,7 @@ bool NPulseGeneratorMulti::SetFrequency(const double &value)
  return true;
 }
 
-// Устанавливает длительность импульса
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ РёРјРїСѓР»СЊСЃР°
 bool NPulseGeneratorMulti::SetPulseLength(const double &value)
 {
  if(value <= 0)
@@ -84,13 +84,13 @@ bool NPulseGeneratorMulti::SetPulseLength(const double &value)
  return true;
 }
 
-// Устанавливает амплитуду импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р°РјРїР»РёС‚СѓРґСѓ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPulseGeneratorMulti::SetAmplitude(const double &value)
 {
  return true;
 }
 
-// Устанавливает число импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ С‡РёСЃР»Рѕ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPulseGeneratorMulti::SetPulseCount(const int &value)
 {
     if(value<0)
@@ -100,7 +100,7 @@ bool NPulseGeneratorMulti::SetPulseCount(const int &value)
     return true;
 }
 
-// Устанавливает задержку запуска генератора
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р·Р°РґРµСЂР¶РєСѓ Р·Р°РїСѓСЃРєР° РіРµРЅРµСЂР°С‚РѕСЂР°
 bool NPulseGeneratorMulti::SetDelays(const MDMatrix<double> &value)
 {
  if(value.GetCols()<=0)
@@ -115,8 +115,8 @@ bool NPulseGeneratorMulti::SetDelays(const MDMatrix<double> &value)
  return true;
 }
 
-// Устанавливает отклонение частоты
-// (Задает диапазон, не является стандартным отклонением!)
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РѕС‚РєР»РѕРЅРµРЅРёРµ С‡Р°СЃС‚РѕС‚С‹
+// (Р—Р°РґР°РµС‚ РґРёР°РїР°Р·РѕРЅ, РЅРµ СЏРІР»СЏРµС‚СЃСЏ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Рј РѕС‚РєР»РѕРЅРµРЅРёРµРј!)
 bool NPulseGeneratorMulti::SetFrequencyDeviation(const double &value)
 {
  if(value<0)
@@ -127,9 +127,9 @@ bool NPulseGeneratorMulti::SetFrequencyDeviation(const double &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseGeneratorMulti* NPulseGeneratorMulti::New(void)
 {
  return new NPulseGeneratorMulti;
@@ -137,12 +137,12 @@ NPulseGeneratorMulti* NPulseGeneratorMulti::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NPulseGeneratorMulti::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NPulseChannel*>(comp))
@@ -153,9 +153,9 @@ bool NPulseGeneratorMulti::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseGeneratorMulti::ADefault(void)
 {
 // SetNumOutputs(4);
@@ -164,7 +164,7 @@ bool NPulseGeneratorMulti::ADefault(void)
  Frequency=0.0;
  PulseLength=0.001;
  Amplitude=1.0;
- //Проверить, надо ли это
+ //РџСЂРѕРІРµСЂРёС‚СЊ, РЅР°РґРѕ Р»Рё СЌС‚Рѕ
  Delays.Assign(1,1,0.0);
  FrequencyDeviation=0;
  AvgInterval=5;
@@ -180,10 +180,10 @@ bool NPulseGeneratorMulti::ADefault(void)
  return NSource::ADefault();
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseGeneratorMulti::ABuild(void)
 {
  AvgFrequencyCounter->clear();
@@ -194,7 +194,7 @@ bool NPulseGeneratorMulti::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseGeneratorMulti::AReset(void)
 {
  time_t tm;
@@ -231,7 +231,7 @@ bool NPulseGeneratorMulti::AReset(void)
  return NSource::AReset();
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseGeneratorMulti::ACalculate(void)
 {
  if(Frequency<1e-8 || TimeStep/Frequency<1)
@@ -255,7 +255,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
  }
 
 
- //Это теперь переезжает в обработку соответствующих импульсов, так как Delay по логике у них разный
+ //Р­С‚Рѕ С‚РµРїРµСЂСЊ РїРµСЂРµРµР·Р¶Р°РµС‚ РІ РѕР±СЂР°Р±РѕС‚РєСѓ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёС… РёРјРїСѓР»СЊСЃРѕРІ, С‚Р°Рє РєР°Рє Delay РїРѕ Р»РѕРіРёРєРµ Сѓ РЅРёС… СЂР°Р·РЅС‹Р№
  //if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
  // return true;
 
@@ -284,10 +284,10 @@ bool NPulseGeneratorMulti::ACalculate(void)
        continue;
 
       int &PulseCounter = PulseCounters[i];
-      if(PulseCounter>0) // Если импульс идет
+      if(PulseCounter>0) // Р•СЃР»Рё РёРјРїСѓР»СЊСЃ РёРґРµС‚
       {
        --PulseCounter;
-       if(PulseCounter <= 0) // Выключаем импульс и включаем ожидание
+       if(PulseCounter <= 0) // Р’С‹РєР»СЋС‡Р°РµРј РёРјРїСѓР»СЊСЃ Рё РІРєР»СЋС‡Р°РµРј РѕР¶РёРґР°РЅРёРµ
        {
         PulseCounter=static_cast<int>(-int(TimeStep/Frequency)+PulseLength*TimeStep);
         pulses[i] = false;
@@ -298,7 +298,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
       else
       {
        ++PulseCounter;
-       if(PulseCounter >= 0) // Включаем импульс
+       if(PulseCounter >= 0) // Р’РєР»СЋС‡Р°РµРј РёРјРїСѓР»СЊСЃ
        {
         PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
         pulses[i] = true;
@@ -331,16 +331,16 @@ bool NPulseGeneratorMulti::ACalculate(void)
 
 
 
-     //ХЗ зачем это надо (и как причесывать и надо ли для мультивыходов)
+     //РҐР— Р·Р°С‡РµРј СЌС‚Рѕ РЅР°РґРѕ (Рё РєР°Рє РїСЂРёС‡РµСЃС‹РІР°С‚СЊ Рё РЅР°РґРѕ Р»Рё РґР»СЏ РјСѓР»СЊС‚РёРІС‹С…РѕРґРѕРІ)
      OutputFrequency.Assign(1,1,Frequency);
  }
  else
  {
   /*
-  if(PulseCounter>0) // Если импульс идет
+  if(PulseCounter>0) // Р•СЃР»Рё РёРјРїСѓР»СЊСЃ РёРґРµС‚
   {
    --PulseCounter;
-   if(PulseCounter <= 0) // Выключаем импульс и включаем ожидание
+   if(PulseCounter <= 0) // Р’С‹РєР»СЋС‡Р°РµРј РёРјРїСѓР»СЊСЃ Рё РІРєР»СЋС‡Р°РµРј РѕР¶РёРґР°РЅРёРµ
    {
 	RandomFrequency=double(rand()*FrequencyDeviation*2.0)/double(RAND_MAX)+
 							Frequency-FrequencyDeviation;
@@ -355,7 +355,7 @@ bool NPulseGeneratorMulti::ACalculate(void)
   else
   {
    ++PulseCounter;
-   if(PulseCounter >= 0) // Включаем импульс
+   if(PulseCounter >= 0) // Р’РєР»СЋС‡Р°РµРј РёРјРїСѓР»СЊСЃ
    {
 	PulseCounter=static_cast<RDK::UTime>(PulseLength*TimeStep);
 	Output.Assign(1,1,Amplitude);

@@ -26,142 +26,142 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseNeuronCommon: public NNeuron
 {
-public: // Параметры
-/// Признак наличия усреднения в ветвлении дендритов
-ULProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageDendritesPotential;
+public: // 
+///      
+UProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageDendritesPotential;
 
-/// Признак наличия усреднения в ветвлении дендритов
-ULProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageLTZonePotential;
+///      
+UProperty<bool, NPulseNeuronCommon, ptPubParameter> UseAverageLTZonePotential;
 
-public: // Входы и выходы
-/// Выход компонента
-UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> Output;
+public: //   
+///  
+UProperty<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> Output;
 
-/// Число связей организованных этим нейроном на других (и себе)
-UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveOutputs;
+///        ( )
+UProperty<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveOutputs;
 
-/// Число возбуждающих связей организованных другими нейронами на этом
-UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActivePosInputs;
+///        
+UProperty<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActivePosInputs;
 
-/// Число тормозных связей организованных другими нейронами на этом
-UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveNegInputs;
+///        
+UProperty<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> ActiveNegInputs;
 
-/// Суммарный мембранный потенциал на дендритах
-UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> DendriticSumPotential;
+///     
+UProperty<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> DendriticSumPotential;
 
-/// Суммарный мембранный потенциал на соме
-UPropertyOutputData<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> SomaSumPotential;
+///     
+UProperty<MDMatrix<double>,NPulseNeuronCommon,ptOutput | ptPubState> SomaSumPotential;
 
-public: // Статистика
-/// Число связей организованных этим нейроном на других (и себе)
-ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;
+public: // 
+///        ( )
+UProperty<double,NPulseNeuronCommon,ptPubState> NumActiveOutputs;
 
-/// Число возбуждающих связей организованных другими нейронами на этом
-ULProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
+///        
+UProperty<double,NPulseNeuronCommon,ptPubState> NumActivePosInputs;
 
-/// Число тормозных связей организованных другими нейронами на этом
-ULProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
+///        
+UProperty<double,NPulseNeuronCommon,ptPubState> NumActiveNegInputs;
 
-public: // Временные переменные
+public: //  
 UEPtr<NLTZone> LTZone;
 
 vector<NPulseMembraneCommon*> Membranes;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NPulseNeuronCommon(void);
 virtual ~NPulseNeuronCommon(void);
 // --------------------------
 
 // --------------------------
-// Методы управления параметрами
+//   
 // --------------------------
-/// Признак наличия усреднения в выходных данных нейрона
+///       
 bool SetUseAverageDendritesPotential(const bool &value);
 
-/// Признак наличия усреднения в выходных данных нейрона
+///       
 bool SetUseAverageLTZonePotential(const bool &value);
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+//     
 // --------------------------
-// Возвращает указатель на модель низкопороговой зоны
+//      
 NLTZone* GetLTZone(void);
 // --------------------------
 
 // --------------------------
-// Методы управления структурой объекта
+//    
 // --------------------------
-//// Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
-//// и переключая входы заданного участка на входы нового
-//// Возвращает указатель на созданный участок
+////    ,      ,
+////        
+////     
 //virtual NPulseMembraneCommon* ElongateDendrite(const std::string &name, bool feedback=false);
 
-//// Разветвляет заданный участок мембраны, добавляя к точке его подключения
-//// дополнительно новый участок мембраны
-//// Возвращает указатель на созданный участок
+////    ,     
+////    
+////     
 //virtual NPulseMembraneCommon* BranchDendrite(const std::string &name, bool feedback=false);
 
-//// Удаляет заданный участок мембраны
-//// Если full == true, то удаляет и все другие участки, подключенные к нему
-//// Иначе перенаправляет связи со входов на свои выходы
+////    
+////  full == true,      ,   
+////        
 //virtual bool EraseDendrite(const std::string &name);
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NPulseNeuronCommon* New(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+//    
 // --------------------------
 protected:
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+//    
+//       
+//      comp 
+//     
 virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+//    
+//       
+//      comp
+//    
 virtual bool ADelComponent(UEPtr<UContainer> comp);
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+//    
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+//       
+//     
+//   'true'   
+//  'false'    
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate(void);
 // --------------------------
 };

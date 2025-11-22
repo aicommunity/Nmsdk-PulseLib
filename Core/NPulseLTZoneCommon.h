@@ -24,63 +24,63 @@ class NPulseNeuron;
 
 class RDK_LIB_TYPE NLTZone: public UNet
 {
-public: // Общедоступные свойства
-/// Порог возбуждения нейрона
-ULProperty<double,NLTZone, ptPubParameter> Threshold;
+public: //  
+///   
+UProperty<double,NLTZone, ptPubParameter> Threshold;
 
-/// Порог завершения генерации импульса нейроном
-ULProperty<double,NLTZone, ptPubParameter> ThresholdOff;
+///     
+UProperty<double,NLTZone, ptPubParameter> ThresholdOff;
 
-/// Признак наличия усреднения в выходных данных нейрона
-ULProperty<bool,NLTZone, ptPubParameter> UseAveragePotential;
+///       
+UProperty<bool,NLTZone, ptPubParameter> UseAveragePotential;
 
-public: // Входы и выходы
-/// Данные с ионных механизмов участков мембраны
-UPropertyInputCData<MDMatrix<double>,NLTZone, ptInput | ptPubState> Inputs;
+public: //   
+///      
+UProperty<std::vector<MDMatrix<double>>,NLTZone, ptInput | ptPubState> Inputs;
 
-/// Выход источника сигнала
-UPropertyOutputData<MDMatrix<double>, NLTZone, ptOutput | ptPubState> Output;
+///   
+UProperty<MDMatrix<double>, NLTZone, ptOutput | ptPubState> Output;
 
-public: // Данные
-/// Потенциал нейрона, сравниваемый с порогом
-ULProperty<double,NLTZone, ptPubState> Potential;
+public: // 
+///  ,   
+UProperty<double,NLTZone, ptPubState> Potential;
 
 
-/// Нейрон владелец мембраны канала
+///    
 //NPulseNeuron* Neuron;
 
-protected: // Основные свойства
+protected: //  
 
-protected: // Временные переменные
-/// Число подключенных синапсов к этой низкопороговой зоне
+protected: //  
+///       
 int CachedNumAConnectors;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NLTZone(void);
 virtual ~NLTZone(void);
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
-// Устанавливает порог нейрона
+//   
 bool SetThreshold(const double &value);
 
-// Устанавливает порог завершения генерации импульса нейроном
+//      
 bool SetThresholdOff(const double &value);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 // --------------------------
 };
@@ -88,109 +88,109 @@ virtual bool AReset(void);
 
 class RDK_LIB_TYPE NPulseLTZoneCommon: public NLTZone
 {
-public: // Общедоступные свойства
-/// Число ионных механизмов в группе
-/// (используется при нормировке суммарного входного потенциала)
-/// Например если участок мембраны всегда состоит из 2 ионых механизмов
-/// дающих вклад разных знаков, то параметр равен 2. Иначе 1.
-ULProperty<int,NPulseLTZoneCommon, ptPubParameter> NumChannelsInGroup;
+public: //  
+///     
+/// (     )
+///        2  
+///    ,    2.  1.
+UProperty<int,NPulseLTZoneCommon, ptPubParameter> NumChannelsInGroup;
 
-/// Амплитуда импульсов
-ULProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseAmplitude;
+///  
+UProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseAmplitude;
 
-/// Длительность импульса
-ULProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseLength;
+///  
+UProperty<double,NPulseLTZoneCommon, ptPubParameter> PulseLength;
 
-/// Интервал времени оценки частоты генерации
-ULProperty<double,NPulseLTZoneCommon, ptPubParameter> AvgInterval;
+///     
+UProperty<double,NPulseLTZoneCommon, ptPubParameter> AvgInterval;
 
-public: // Входы и выходы
-/// Потенциал (для этого компонента копирует PulseOutput) (1)
-UPropertyOutputData<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputPotential;
+public: //   
+///  (    PulseOutput) (1)
+UProperty<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputPotential;
 
-/// Частота (2)
-UPropertyOutputData<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputFrequency;
+///  (2)
+UProperty<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputFrequency;
 
-/// Массив моментов времени начала импульсов (3)
-UPropertyOutputData<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputPulseTimes;
+///      (3)
+UProperty<MDMatrix<double>,NPulseLTZoneCommon, ptOutput | ptPubState> OutputPulseTimes;
 
-public: // Данные
-/// Промежуточное значение потенциала
-/// Следует использовать эту переменную для сохранения состояния мембранного потенциала
-ULProperty<double,NPulseLTZoneCommon,ptPubState> PrePotential;
+public: // 
+///   
+///         
+UProperty<double,NPulseLTZoneCommon,ptPubState> PrePotential;
 
-protected: // Основные свойства
+protected: //  
 
-protected: // Временные переменные
-// Суммарный потенциал
-RDK::ULProperty<double,NPulseLTZoneCommon,ptPubState> NeuralPotential;
+protected: //  
+//  
+RDK::UProperty<double,NPulseLTZoneCommon,ptPubState> NeuralPotential;
 
-/// Флаг наличия генерации
-ULProperty<int,NPulseLTZoneCommon,ptPubState> PulseCounter;
+///   
+UProperty<int,NPulseLTZoneCommon,ptPubState> PulseCounter;
 
-/// Средняя частота за заданный интервал времени
-UCLProperty<list<double>,NPulseLTZoneCommon,ptPubState> AvgFrequencyCounter;
+///      
+UProperty<list<double>,NPulseLTZoneCommon,ptPubState> AvgFrequencyCounter;
 
-/// Признак текущей генерации импульса
-ULProperty<bool,NPulseLTZoneCommon,ptPubState> PulseFlag;
+///    
+UProperty<bool,NPulseLTZoneCommon,ptPubState> PulseFlag;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NPulseLTZoneCommon(void);
 virtual ~NPulseLTZoneCommon(void);
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
-// Устанавливает амплитуду импульсов
+//   
 bool SetPulseAmplitude(const double &value);
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NPulseLTZoneCommon* New(void);
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+//    
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+//       
+//     
+//   'true'   
+//  'false'    
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate(void);
 virtual bool ACalculate2(void);
 
-/// Возвращает true если условие для генерации импульса выполнено
+///  true      
 virtual bool CheckPulseOn(void);
 
-/// Возвращает true если условие для генерации имульса не выполнено
+///  true       
 virtual bool CheckPulseOff(void);
 // --------------------------
 };
