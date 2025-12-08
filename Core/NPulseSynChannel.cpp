@@ -591,7 +591,7 @@ bool NContinuesSynChannel::AReset(void)
 // Выполняет расчет этого объекта
 bool NContinuesSynChannel::ACalculate2(void)
 {
- double channel_input=0;
+double channel_input_sum=0;
  int num_connected_channels=0;
  double G=0;
 
@@ -615,7 +615,7 @@ bool NContinuesSynChannel::ACalculate2(void)
    {
     double *data=ChannelInputs[n].Data;
     for(int j=0;j<inpsize;j++,++data)
-     channel_input+=*data;
+     channel_input_sum+=*data;
     ++num_connected_channels;
    }
   }
@@ -651,15 +651,15 @@ bool NContinuesSynChannel::ACalculate2(void)
  }
  NumConnectedSynapsis=num_connected_synapsis;
 
- if(UseAveragePotential && num_connected_channels>0)
-  channel_input/=num_connected_channels;
- SumChannelInput(0,0)=channel_input;
+if(UseAveragePotential && num_connected_channels>0)
+ channel_input_sum/=num_connected_channels;
+SumChannelInput(0,0)=channel_input_sum;
 
  if(UseAverageSynapsis && num_connected_synapsis>0)
   G/=num_connected_synapsis;
 
  // Расчет
- double *out=&Output(0,0);
+double *out=&Output(0,0);
  double Ti(0.0),sum_u(0.0);
 
 
@@ -673,7 +673,7 @@ bool NContinuesSynChannel::ACalculate2(void)
 // }
 
  double resistance(0.0);
- if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))
+if((*out<channel_input_sum && Type == 1) || (*out>channel_input_sum && Type == -1))
   resistance=RestingResistance.v;
  else
   resistance=Resistance.v;
@@ -681,7 +681,7 @@ bool NContinuesSynChannel::ACalculate2(void)
  Ti=Capacity/(G+1.0/resistance);
  sum_u=(1.0+G*resistance);
 
- *out+=(channel_input-(*out)*sum_u)/(Ti*TimeStep);
+*out+=(channel_input_sum-(*out)*sum_u)/(Ti*TimeStep);
 
  return true;
 }

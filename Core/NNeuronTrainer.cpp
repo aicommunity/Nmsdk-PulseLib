@@ -991,8 +991,6 @@ bool NNeuronTrainer::ABuild(void)
 	}
 	else
 		return true;
-
-	return true;
 }
 
 // Выполняется обучение путём наращивания длины дендритов
@@ -1269,8 +1267,6 @@ bool NNeuronTrainer::SynchronizePattern(void)
 	}
 	else
 		return true;
-
-	return true;
 }*/
 
 // Добавляем синапсы для компенсации потерь амплитуды при наращивании дендритов
@@ -1459,8 +1455,6 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 	}
 	else
 		return true;
-
-	return true;
 }
 
 // Выполняется обучение путём наращивания длины дендритов
@@ -1731,8 +1725,6 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 	}
 	else
 		return true;
-
-	return true;
 }
 
 
@@ -1899,11 +1891,13 @@ bool NNeuronTrainer::CalculateProcess(void)
 	 default:
 		return true;
 	}
-
-	return true;
 }
 
 // Выполняет расчет этого объекта
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4702)
+#endif
 bool NNeuronTrainer::ACalculate(void)
 {
 	CalculateProcess();
@@ -1920,6 +1914,9 @@ bool NNeuronTrainer::ACalculate(void)
 
 	return true;
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 // Устанавливает компоненты в требуемый порядок расчета
 void NNeuronTrainer::UpdateComputationOrder(void)

@@ -675,9 +675,9 @@ bool NSpikeClassifier::ACalculate(void)
        UEPtr<NLTZone> ltzone;
        std::vector<int> inh_synapse_counter;
        inh_synapse_counter.assign(NumNeurons,1);
-       for(int i = 0; i < NumNeurons; i++)
+       for(int neuron_idx = 0; neuron_idx < NumNeurons; neuron_idx++)
        {
-        trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)),true);
+        trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(neuron_idx+1)),true);
         if(!trainer)
          return true;
 
@@ -691,7 +691,7 @@ bool NSpikeClassifier::ACalculate(void)
 
         for(int j = 0; j < NumNeurons; j++)
         {
-         if(i==j)
+         if(neuron_idx==j)
           continue;
 
          neuron  = GetComponentL<NPulseNeuron>(std::string("NeuronTrainer"+sntoa(j+1)+".Neuron"),true);
@@ -704,7 +704,7 @@ bool NSpikeClassifier::ACalculate(void)
           if(!soma)
            return true;
 
-          soma->NumInhibitorySynapses=NumNeurons-1;
+         soma->NumInhibitorySynapses=NumNeurons-1;
           soma->Reset();
           synapse = soma->GetComponentL<NPulseSynapse>(std::string("InhSynapse")+RDK::sntoa(inh_synapse_counter[j]),true);
           if(!synapse)
