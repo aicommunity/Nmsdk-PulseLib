@@ -654,13 +654,13 @@ bool NClassifier::BuildStructure(void)
 		}
 
 		// Обратные связи между нейронами ИЛИ
-		for(int i = 0; i < NumClasses; i++)
+        for(int i = 0; i < NumClasses; i++)
 		{
-			UEPtr<NPulseNeuron> LogicalOrNeuron = GetComponentL<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)),true);
-			if(!LogicalOrNeuron)
+            UEPtr<NPulseNeuron> logical_or_neuron = GetComponentL<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)),true);
+            if(!logical_or_neuron)
 				return true;
 
-			UEPtr<NPulseMembrane> soma = LogicalOrNeuron->GetComponentL<NPulseMembrane>(std::string("Soma1"),true);
+            UEPtr<NPulseMembrane> soma = logical_or_neuron->GetComponentL<NPulseMembrane>(std::string("Soma1"),true);
 			if(!soma)
 				return true;
 

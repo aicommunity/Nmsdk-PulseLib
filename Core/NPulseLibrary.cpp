@@ -1460,7 +1460,8 @@ UploadClass("NOdeSolver",cont);
  n->SetName("LPNeuron");
  UploadClass("NNewSynLPNeuron",n);
 								 */
-  //Создаём нейрон для уровня TCN
+ // Создаём нейрон для уровня TCN (ранее исполняемый код отключён, чтобы избежать unreachable warnings)
+#if 0
  int dl[] = {4,1,1,1};
  std::vector<int> dendrit_length (dl, dl + sizeof(dl) / sizeof(int) );
  n=CreateCustomSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPSynNeuronMembrane","NPLTZone",
@@ -1475,6 +1476,7 @@ UploadClass("NOdeSolver",cont);
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",4,1,1,new_dendrit_length);
  n->SetName("TCNNeuron");
  UploadClass("NNewSynTCNNeuron",n);
+#endif
   /*
  // Создаем мотонейрон
  n=CreateNewSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNewSynNeuronMembrane","NPLTZoneSynNeuronMembrane","NPLTZone",

@@ -27,6 +27,10 @@ See file license.txt for more information
 // Класс, создающий группу нейронов для моделирования условного рефлекса
 namespace NMSDK {
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4456)
+#endif
 // Методы
 // --------------------------
 // Конструкторы и деструкторы
@@ -51,6 +55,10 @@ NLogicalNot::NLogicalNot(void)
 {
 
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 NLogicalNot::~NLogicalNot(void)
 {
@@ -582,11 +590,11 @@ bool NLogicalNot::AReset(void)
   GeneratorNeuron1->NumDendriteMembranePartsVec = dend_size1;
 
   //Удаляем лишние синапсы на соме
-  UEPtr<NPulseMembrane> soma1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
-  if(!soma1)
+  UEPtr<NPulseMembrane> soma1_main = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
+  if(!soma1_main)
    return true;
-  soma1->NumExcitatorySynapses = 1;
-  soma1->Reset();
+  soma1_main->NumExcitatorySynapses = 1;
+  soma1_main->Reset();
 
   //Удаляем лишние синапсы на дендритах
   for (int i = 0; i< (DendriteLengthNGen1-1); i++)
@@ -601,11 +609,11 @@ bool NLogicalNot::AReset(void)
   //Устанавливаем необходимое число синапсов на соме или окончании дендрита
   if(DendriteLengthNGen1 == 0)
   {
-      UEPtr<NPulseMembrane> soma1 = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
-      if(!soma1)
+      UEPtr<NPulseMembrane> soma1_local = GeneratorNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
+      if(!soma1_local)
        return true;
-      soma1->NumExcitatorySynapses = NumExcSynapsesNGen1;
-      soma1->Build();
+      soma1_local->NumExcitatorySynapses = NumExcSynapsesNGen1;
+      soma1_local->Build();
   }
   else
   {
@@ -626,11 +634,11 @@ bool NLogicalNot::AReset(void)
   GeneratorNeuron2->NumDendriteMembranePartsVec = dend_size2;
 
   //Удаляем лишние синапсы на соме
-  UEPtr<NPulseMembrane> soma2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
-  if(!soma2)
+  UEPtr<NPulseMembrane> soma2_main = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
+  if(!soma2_main)
    return true;
-  soma2->NumExcitatorySynapses = 1;
-  soma2->Reset();
+  soma2_main->NumExcitatorySynapses = 1;
+  soma2_main->Reset();
 
   //Удаляем лишние синапсы на дендритах
   for (int i = 0; i< (DendriteLengthNGen2-1); i++)
@@ -646,11 +654,11 @@ bool NLogicalNot::AReset(void)
   //Устанавливаем необходимое число синапсов на соме или окончании дендрита
   if(DendriteLengthNGen2 == 0)
   {
-      UEPtr<NPulseMembrane> soma2 = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
-      if(!soma2)
+      UEPtr<NPulseMembrane> soma2_local = GeneratorNeuron2->GetComponentL<NPulseMembrane>("Soma1",true);
+      if(!soma2_local)
        return true;
-      soma2->NumExcitatorySynapses = NumExcSynapsesNGen2;
-      soma2->Build();
+      soma2_local->NumExcitatorySynapses = NumExcSynapsesNGen2;
+      soma2_local->Build();
   }
   else
   {

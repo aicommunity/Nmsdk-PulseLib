@@ -201,19 +201,19 @@ bool NPredictor::ABuild(void)
 }
 
 
-double NPredictor::Predict(MDMatrix<double> &input_pattern)
+double NPredictor::Predict(MDMatrix<double> &input_pattern_param)
 {
-    int input_size = input_pattern.GetSize();
+    int input_size = input_pattern_param.GetSize();
     int num_of_layers = input_size - 1;
-    double output_sum = input_pattern[0];
+    double output_sum = input_pattern_param[0];
 
     MDMatrix<double> prev_differences;
     prev_differences.Resize(input_size,1);
-    prev_differences = input_pattern;
+    prev_differences = input_pattern_param;
 
-    for(int k = 0; k < num_of_layers; k++)
+    for(int layer_index = 0; layer_index < num_of_layers; layer_index++)
     {
-        const int end = num_of_layers - k;
+        const int end = num_of_layers - layer_index;
         MDMatrix<double> differences;
         differences.Resize(end,1);
 

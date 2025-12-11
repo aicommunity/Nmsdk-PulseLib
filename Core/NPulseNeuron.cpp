@@ -252,7 +252,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
   return 0;
  }
 
- RDK::ULinkSide item,conn;
+ RDK::ULinkSide item, link_conn;
  bool res=true;
 
  // ”станавливаем обратную св€зь
@@ -444,7 +444,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  UEPtr<NPulseChannelCommon> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
  UEPtr<NLTZone> ltzone;
  bool res(true);
- RDK::ULinkSide item,conn;
+  RDK::ULinkSide item, link_conn;
 
  if(dendrite_mode == 2)
  {
