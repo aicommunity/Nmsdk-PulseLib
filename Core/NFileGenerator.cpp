@@ -17,7 +17,7 @@ See file license.txt for more information
 #define NFILE_GENERATOR_CPP
 
 #include "NFileGenerator.h"
-#include <strstream>
+#include <sstream>
 
 namespace NMSDK {
 
@@ -113,9 +113,10 @@ bool NFileGenerator::AReset(void)
    svalue=Ini(sections[i],variables[0],"");
    if(svalue.size()>0)
    {
-	strstream stream(&svalue[0],svalue.size());
-	RDK::operator >> (stream,value);
-	//stream>>value;
+    // Используем современный поток из строки вместо устаревшего strstream
+    std::istringstream stream(svalue);
+    RDK::operator >> (stream,value);
+    //stream>>value;
 	data.Resize(1,int(value.size()));
 	for(size_t k=0;k<value.size();k++)
      data(0,int(k))=value[k];
