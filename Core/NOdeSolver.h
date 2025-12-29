@@ -3,11 +3,15 @@
 
 #include "NNet.h"
 
+#ifdef RDK_USE_ODESOLVER
 #include "../../../Rdk/ThirdParty/ode-solver/include/OdeSolverBase.hpp"
 #include "../../../Rdk/ThirdParty/ode-solver/include/OdeSolverFactory.hpp"
+#endif
 
 
 namespace NMSDK {
+
+#ifdef RDK_USE_ODESOLVER
 
 class RDK_LIB_TYPE NOdeSolver: public UNet
 {
@@ -93,6 +97,8 @@ virtual bool AReset(void);
 virtual bool ACalculate(void);
 // --------------------------
 };
+
+#endif // RDK_USE_ODESOLVER
 
 }
 
