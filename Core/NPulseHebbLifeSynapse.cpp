@@ -21,9 +21,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseHebbLifeSynapse::NPulseHebbLifeSynapse(void)
 {
@@ -35,9 +35,9 @@ NPulseHebbLifeSynapse::~NPulseHebbLifeSynapse(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseHebbLifeSynapse* NPulseHebbLifeSynapse::New(void)
 {
  return new NPulseHebbLifeSynapse;
@@ -45,9 +45,9 @@ NPulseHebbLifeSynapse* NPulseHebbLifeSynapse::New(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Подключает синапс хебба к модели жизнеобеспечения нейрона
+// РџРѕРґРєР»СЋС‡Р°РµС‚ СЃРёРЅР°РїСЃ С…РµР±Р±Р° Рє РјРѕРґРµР»Рё Р¶РёР·РЅРµРѕР±РµСЃРїРµС‡РµРЅРёСЏ РЅРµР№СЂРѕРЅР°
 bool NPulseHebbLifeSynapse::InstallLifeConnection(void)
 {
  bool res=true;
@@ -70,7 +70,7 @@ bool NPulseHebbLifeSynapse::InstallLifeConnection(void)
  return res;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseHebbLifeSynapse::ADefault(void)
 {
  if(!NPulseHebbSynapse::ADefault())
@@ -79,17 +79,17 @@ bool NPulseHebbLifeSynapse::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseHebbLifeSynapse::ABuild(void)
 {
  Type=0;
  return NPulseHebbSynapse::ABuild();
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseHebbLifeSynapse::AReset(void)
 {
  if(!NPulseHebbSynapse::AReset())
@@ -99,7 +99,7 @@ bool NPulseHebbLifeSynapse::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseHebbLifeSynapse::ACalculate2(void)
 {
  if(!NPulseHebbSynapse::ACalculate2())

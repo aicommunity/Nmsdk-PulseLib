@@ -86,48 +86,48 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseLibrary: public ULibrary
 {
-public: // Методы
+public: // РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseLibrary(void);
 // --------------------------
 
 // --------------------------
-// Методы заполенения бибилиотеки
+// РњРµС‚РѕРґС‹ Р·Р°РїРѕР»РµРЅРµРЅРёСЏ Р±РёР±РёР»РёРѕС‚РµРєРё
 // --------------------------
-// Заполняет массив ClassSamples готовыми экземплярами образцов и их именами.
-// Не требуется предварительная очистка массива и уборка памяти.
+// Р—Р°РїРѕР»РЅСЏРµС‚ РјР°СЃСЃРёРІ ClassSamples РіРѕС‚РѕРІС‹РјРё СЌРєР·РµРјРїР»СЏСЂР°РјРё РѕР±СЂР°Р·С†РѕРІ Рё РёС… РёРјРµРЅР°РјРё.
+// РќРµ С‚СЂРµР±СѓРµС‚СЃСЏ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅР°СЏ РѕС‡РёСЃС‚РєР° РјР°СЃСЃРёРІР° Рё СѓР±РѕСЂРєР° РїР°РјСЏС‚Рё.
 virtual void CreateClassSamples(UStorage *storage);
 // --------------------------
 
 // --------------------------
-// Методы создания составных моделей
+// РњРµС‚РѕРґС‹ СЃРѕР·РґР°РЅРёСЏ СЃРѕСЃС‚Р°РІРЅС‹С… РјРѕРґРµР»РµР№
 // --------------------------
-// Метод формирования модели простого импульсного нейрона
+// РњРµС‚РѕРґ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РјРѕРґРµР»Рё РїСЂРѕСЃС‚РѕРіРѕ РёРјРїСѓР»СЊСЃРЅРѕРіРѕ РЅРµР№СЂРѕРЅР°
 UEPtr<NPulseNeuron> CreateNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length=1);
 
-// Метод формирования модели простого импульсного нейрона с произвольной дендритной структурой
+// РњРµС‚РѕРґ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РјРѕРґРµР»Рё РїСЂРѕСЃС‚РѕРіРѕ РёРјРїСѓР»СЊСЃРЅРѕРіРѕ РЅРµР№СЂРѕРЅР° СЃ РїСЂРѕРёР·РІРѕР»СЊРЅРѕР№ РґРµРЅРґСЂРёС‚РЅРѕР№ СЃС‚СЂСѓРєС‚СѓСЂРѕР№
 UEPtr<NPulseNeuron> CreateCustomNewSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzonemembraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, vector<int> &dendrite_length);
 
-// Метод формирования модели простого импульсного нейрона
+// РњРµС‚РѕРґ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РјРѕРґРµР»Рё РїСЂРѕСЃС‚РѕРіРѕ РёРјРїСѓР»СЊСЃРЅРѕРіРѕ РЅРµР№СЂРѕРЅР°
 UEPtr<NPulseNeuron> CreateSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length=1);
 
-// Метод формирования модели простого импульсного нейрона с произвольной дендритной структурой
+// РњРµС‚РѕРґ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РјРѕРґРµР»Рё РїСЂРѕСЃС‚РѕРіРѕ РёРјРїСѓР»СЊСЃРЅРѕРіРѕ РЅРµР№СЂРѕРЅР° СЃ РїСЂРѕРёР·РІРѕР»СЊРЅРѕР№ РґРµРЅРґСЂРёС‚РЅРѕР№ СЃС‚СЂСѓРєС‚СѓСЂРѕР№
 UEPtr<NPulseNeuron> CreateCustomSimplePulseNeuron(UStorage *storage, const string &neuronclass, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, std::vector<int> dendrite_length);
 
-// Метод формирования модели простого импульсного нейрона с синапсами хебба
+// РњРµС‚РѕРґ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РјРѕРґРµР»Рё РїСЂРѕСЃС‚РѕРіРѕ РёРјРїСѓР»СЊСЃРЅРѕРіРѕ РЅРµР№СЂРѕРЅР° СЃ СЃРёРЅР°РїСЃР°РјРё С…РµР±Р±Р°
 UEPtr<NPulseNeuron> CreateSimplePulseHebbNeuron(UStorage *storage, const string &neuronclass, const string &pos_gen_class, const string &neg_gen_class, int num_membranes,
 					int num_stimulates, int num_arresting, int dendrite_length=1);
 
-// Метод формирования модели афферентного нейрона
+// РњРµС‚РѕРґ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РјРѕРґРµР»Рё Р°С„С„РµСЂРµРЅС‚РЅРѕРіРѕ РЅРµР№СЂРѕРЅР°
 UEPtr<NAfferentNeuron> CreateAfferentNeuron(UStorage *storage, const string &membraneclass, const string &ltzone_class, const string &pos_gen_class, const string &neg_gen_class, int num_membranes);
 
-// Метод формирования модели простого афферентного нейрона
+// РњРµС‚РѕРґ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РјРѕРґРµР»Рё РїСЂРѕСЃС‚РѕРіРѕ Р°С„С„РµСЂРµРЅС‚РЅРѕРіРѕ РЅРµР№СЂРѕРЅР°
 UEPtr<NAfferentNeuron> CreateSimpleAfferentNeuron(UStorage *storage, const string &ltzone_class, double max_output);
 // --------------------------
 };                  

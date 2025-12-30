@@ -23,44 +23,44 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseSynapseStdp: public NPulseSynapse
 {
-public: // Общедоступные свойства
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> XModCoeff;
+public: //  
+UProperty<double,NPulseSynapseStdp, ptPubParameter> XModCoeff;
 
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> YModCoeff;
+UProperty<double,NPulseSynapseStdp, ptPubParameter> YModCoeff;
 
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> APlus;
+UProperty<double,NPulseSynapseStdp, ptPubParameter> APlus;
 
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> AMinus;
+UProperty<double,NPulseSynapseStdp, ptPubParameter> AMinus;
 
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> XTau;
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> YTau;
+UProperty<double,NPulseSynapseStdp, ptPubParameter> XTau;
+UProperty<double,NPulseSynapseStdp, ptPubParameter> YTau;
 
-public: // Переменные состояния
-/// Усреденение входного импульса
-ULProperty<double,NPulseSynapseStdp, ptPubState> XAvg;
+public: //  
+///   
+UProperty<double,NPulseSynapseStdp, ptPubState> XAvg;
 
-/// Усреденение выходного импульса
-ULProperty<double,NPulseSynapseStdp, ptPubState> YAvg;
+///   
+UProperty<double,NPulseSynapseStdp, ptPubState> YAvg;
 
-/// Промежуточная разность влияния X и Y компонент
-ULProperty<double,NPulseSynapseStdp, ptPubState> XYDiff;
+///    X  Y 
+UProperty<double,NPulseSynapseStdp, ptPubState> XYDiff;
 
 
-public: // Входы и выходы
-/// Входной сигнал внешней постсинаптической активности
-/// (например модулирующего нейрона)
-UPropertyInputData<MDMatrix<double>, NPulseSynapseStdp, ptInput | ptPubState> PsActivityInput;
+public: //   
+///     
+/// (  )
+UProperty<MDMatrix<double>, NPulseSynapseStdp, ptInput | ptPubState> PsActivityInput;
 
-/// Выходной сигнал влияния STDP
-UPropertyOutputData<MDMatrix<double>, NPulseSynapseStdp, ptOutput | ptPubState> StdpInfluence;
+///    STDP
+UProperty<MDMatrix<double>, NPulseSynapseStdp, ptOutput | ptPubState> StdpInfluence;
 
-protected: // Основные свойства
+protected: //  
 
-protected: // Временные переменные
+protected: //  
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NPulseSynapseStdp(void);
 virtual ~NPulseSynapseStdp(void);
@@ -68,7 +68,7 @@ virtual ~NPulseSynapseStdp(void);
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
 bool SetXModCoeff(const double &value);
 
@@ -85,29 +85,29 @@ bool SetYTau(const double &value);
 
 public:
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NPulseSynapseStdp* New(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate2(void);
 // --------------------------
 };

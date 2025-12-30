@@ -23,118 +23,118 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseChannel: public NPulseChannelCommon
 {
-public: // Общедоступные свойства
-/// Емкость мембраны
-ULProperty<double,NPulseChannel, ptPubParameter> Capacity;
+public: //  
+///  
+UProperty<double,NPulseChannel, ptPubParameter> Capacity;
 
-/// Сопротивление мембраны
-ULProperty<double,NPulseChannel, ptPubParameter> Resistance;
+///  
+UProperty<double,NPulseChannel, ptPubParameter> Resistance;
 
-/// Сопротивление перезаряда мембраны
-ULProperty<double,NPulseChannel, ptPubParameter> FBResistance;
+///   
+UProperty<double,NPulseChannel, ptPubParameter> FBResistance;
 
-/// Сопротивление мембраны на переход в состояние покоя
-ULProperty<double,NPulseChannel, ptPubParameter> RestingResistance;
+///       
+UProperty<double,NPulseChannel, ptPubParameter> RestingResistance;
 
-/// Число подключенных к каналу синапсов
-ULProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
+///     
+UProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
 
-/// Текущая постоянная времени
-ULProperty<double,NPulseChannel, ptPubState> TimeConstant;
+///   
+UProperty<double,NPulseChannel, ptPubState> TimeConstant;
 
-public: // Входы и выходы
+public: //   
 double channel_input;
 //double out;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NPulseChannel(void);
 virtual ~NPulseChannel(void);
 // --------------------------
 
 // --------------------------
-// Методы управления специфическими компонентами
+//    
 // --------------------------
-// Возвращает число синапсов
+//   
 virtual int GetNumSynapses(void) const;
 
-// Возвращает синапс по индексу
+//    
 UEPtr<NPulseSynapse> GetSynapse(int i);
 // --------------------------
-virtual double GetSynOutput(void);// метод-заглушка
+virtual double GetSynOutput(void);// -
 virtual bool ResetOut(void);
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
-// Емкость мембраны
+//  
 bool SetCapacity(const double &value);
 
-// Сопротивление мембраны
+//  
 bool SetResistance(const double &value);
 
-// Сопротивление перезаряда мембраны
+//   
 bool SetFBResistance(const double &value);
 
-/// Имя класса синапса
+///   
 bool SetSynapseClassName(const std::string &value);
 
-/// Число синапсов
+///  
 bool SetNumSynapses(const int &value);
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NPulseChannel* New(void);
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+//    
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+//       
+//     
+//   'true'   
+//  'false'    
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+//    
 // --------------------------
 protected:
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+//    
+//       
+//      comp 
+//     
 virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+//    
+//       
+//      comp
+//    
 virtual bool ADelComponent(UEPtr<UContainer> comp);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate2(void);
 // --------------------------
 };

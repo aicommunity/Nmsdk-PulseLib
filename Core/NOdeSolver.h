@@ -3,22 +3,26 @@
 
 #include "NNet.h"
 
+#ifdef RDK_USE_ODESOLVER
 #include "../../../Rdk/ThirdParty/ode-solver/include/OdeSolverBase.hpp"
 #include "../../../Rdk/ThirdParty/ode-solver/include/OdeSolverFactory.hpp"
+#endif
 
 
 namespace NMSDK {
 
+#ifdef RDK_USE_ODESOLVER
+
 class RDK_LIB_TYPE NOdeSolver: public UNet
 {
-public: // Общедоступные свойства
+public: //  
 /// Device
 /// 0 - auto (Gpu if possible)
 /// 1 - CPU
 /// 2 - GPU
 UProperty<int, NOdeSolver, ptPubParameter> DeviceMode;
 
-/// Число уравнений
+///  
 UProperty<int, NOdeSolver, ptPubParameter> NumEquations;
 
 UProperty<MDMatrix<float>, NOdeSolver, ptPubParameter> Coeffs;
@@ -29,10 +33,10 @@ UProperty<MDMatrix<int>, NOdeSolver, ptPubParameter> InputCorrTable;
 
 UProperty<float, NOdeSolver, ptPubParameter> InternalTimeStep;
 
-public: // Входы и выходы
-UPropertyInputData<MDMatrix<double>, NOdeSolver, ptInput | ptPubState> Inputs;
+public: //   
+UProperty<MDMatrix<double>, NOdeSolver, ptInput | ptPubState> Inputs;
 
-UPropertyOutputData<MDMatrix<double>, NOdeSolver, ptOutput | ptPubState> Outputs;
+UProperty<MDMatrix<double>, NOdeSolver, ptOutput | ptPubState> Outputs;
 
 protected:
 
@@ -43,9 +47,9 @@ std::unique_ptr<ode::OdeSolverBase> Solver;
 
 //MDMatrix<double> InvCoeffs;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NOdeSolver(void);
 virtual ~NOdeSolver(void);
@@ -53,7 +57,7 @@ virtual ~NOdeSolver(void);
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
 bool SetInternalTimeStep(const float &value);
 
@@ -64,9 +68,9 @@ bool SetNumEquations(const int &value);
 
 public:
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NOdeSolver* New(void);
 // --------------------------
 
@@ -74,25 +78,27 @@ protected: // Setters
 bool SetCoeffs(const MDMatrix<float> &value);
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate(void);
 // --------------------------
 };
+
+#endif // RDK_USE_ODESOLVER
 
 }
 

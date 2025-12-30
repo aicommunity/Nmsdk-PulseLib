@@ -26,7 +26,7 @@ namespace NMSDK {
 
 
 // ------------------------
-// Операторы
+// РћРїРµСЂР°С‚РѕСЂС‹
 // ------------------------
 bool operator < (const NEnsembleLink &link1,const NEnsembleLink &link2)
 {
@@ -35,9 +35,9 @@ bool operator < (const NEnsembleLink &link1,const NEnsembleLink &link2)
 // ------------------------
 
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NLifeNet::NLifeNet(void)
 //: NNet(name),
@@ -76,57 +76,57 @@ NLifeNet::~NLifeNet(void)
 // --------------------------
 
 // --------------------------
-// Методы управления данными
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РґР°РЅРЅС‹РјРё
 // --------------------------
-// Возвращает число систем жизнеобеспечения нейронов
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ С‡РёСЃР»Рѕ СЃРёСЃС‚РµРј Р¶РёР·РЅРµРѕР±РµСЃРїРµС‡РµРЅРёСЏ РЅРµР№СЂРѕРЅРѕРІ
 size_t NLifeNet::GetNumNeuronsLife(void) const
 {
  return NeuronsLife.size();
 }
 
-// Возвращает заданную систему жизнеобеспечения нейрона
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ Р·Р°РґР°РЅРЅСѓСЋ СЃРёСЃС‚РµРјСѓ Р¶РёР·РЅРµРѕР±РµСЃРїРµС‡РµРЅРёСЏ РЅРµР№СЂРѕРЅР°
 NNeuronLife* NLifeNet::GetNeuronLife(size_t i)
 {
  return NeuronsLife[i];
 }
 
-// Возвращает число бета-ансамблей нейронов
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ С‡РёСЃР»Рѕ Р±РµС‚Р°-Р°РЅСЃР°РјР±Р»РµР№ РЅРµР№СЂРѕРЅРѕРІ
 size_t NLifeNet::GetNumBetaEnsembles(void) const
 {
  return BetaEnsembles.size();
 }
 
-// Возвращает заданный бета-ансамбль
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ Р·Р°РґР°РЅРЅС‹Р№ Р±РµС‚Р°-Р°РЅСЃР°РјР±Р»СЊ
 const NEnsemble& NLifeNet::GetBetaEnsemble(size_t i)
 {
  return BetaEnsembles[i].second;
 }
 
-// Возвращает мощность заданного бета-ансамбля
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РјРѕС‰РЅРѕСЃС‚СЊ Р·Р°РґР°РЅРЅРѕРіРѕ Р±РµС‚Р°-Р°РЅСЃР°РјР±Р»СЏ
 double NLifeNet::GetBetaEnsemblePower(size_t i) const
 {
  return BetaEnsembles[i].first;
 }
 
-// Возвращает число ансамблей нейронов
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ С‡РёСЃР»Рѕ Р°РЅСЃР°РјР±Р»РµР№ РЅРµР№СЂРѕРЅРѕРІ
 size_t NLifeNet::GetNumEnsembles(void) const
 {
  return Ensembles.size();
 }
 
-// Возвращает заданный ансамбль
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ Р·Р°РґР°РЅРЅС‹Р№ Р°РЅСЃР°РјР±Р»СЊ
 const NEnsemble& NLifeNet::GetEnsemble(size_t i)
 {
  return Ensembles[i].second;
 }
 
-// Возвращает мощность заданного ансамбля
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РјРѕС‰РЅРѕСЃС‚СЊ Р·Р°РґР°РЅРЅРѕРіРѕ Р°РЅСЃР°РјР±Р»СЏ
 double NLifeNet::GetEnsemblePower(size_t i) const
 {
  return Ensembles[i].first;
 }
 
-// Возвращает имя ансамбля по имени составляющих нейронов
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РёРјСЏ Р°РЅСЃР°РјР±Р»СЏ РїРѕ РёРјРµРЅРё СЃРѕСЃС‚Р°РІР»СЏСЋС‰РёС… РЅРµР№СЂРѕРЅРѕРІ
 NameT NLifeNet::GetEnsembleName(size_t i) const
 {
  NameT name;
@@ -139,8 +139,8 @@ NameT NLifeNet::GetEnsembleName(size_t i) const
  return name;
 }
 
-// Возвращает абсолютное значение активности ансамбля
-// (средняя частота всех нейронов ансамбля)
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ Р°Р±СЃРѕР»СЋС‚РЅРѕРµ Р·РЅР°С‡РµРЅРёРµ Р°РєС‚РёРІРЅРѕСЃС‚Рё Р°РЅСЃР°РјР±Р»СЏ
+// (СЃСЂРµРґРЅСЏСЏ С‡Р°СЃС‚РѕС‚Р° РІСЃРµС… РЅРµР№СЂРѕРЅРѕРІ Р°РЅСЃР°РјР±Р»СЏ)
 double NLifeNet::GetEnsembleActivity(size_t i) const
 {
  double eactivity=0;
@@ -160,13 +160,13 @@ double NLifeNet::GetRelativeEnsembleActivity(size_t i) const
  return eactivity-Output10(0,0);
 }
 
-// Возвращает число связей между ансамблями
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ С‡РёСЃР»Рѕ СЃРІСЏР·РµР№ РјРµР¶РґСѓ Р°РЅСЃР°РјР±Р»СЏРјРё
 size_t NLifeNet::GetNumEnsembleLinks(void) const
 {
  return EnsembleLinks.size();
 }
 
-// Возвращает связь между ансамблями
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРІСЏР·СЊ РјРµР¶РґСѓ Р°РЅСЃР°РјР±Р»СЏРјРё
 const NEnsembleLink& NLifeNet::GetEnsembleLink(size_t i) const
 {
  return EnsembleLinks[i];
@@ -175,9 +175,9 @@ const NEnsembleLink& NLifeNet::GetEnsembleLink(size_t i) const
 
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NLifeNet* NLifeNet::New(void)
 {
  return new NLifeNet;
@@ -185,12 +185,12 @@ NLifeNet* NLifeNet::New(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NLifeNet::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  if(!NNet::AAddComponent(comp,pointer))
@@ -213,7 +213,7 @@ bool NLifeNet::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 	res&=Connect(life,1,1);
    }
 
-  // Устанавливает первичные связи нейрона
+  // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РїРµСЂРІРёС‡РЅС‹Рµ СЃРІСЏР·Рё РЅРµР№СЂРѕРЅР°
   for(int i=0;i<GetNumComponents();i++)
   {
    UEPtr<NPulseLifeNeuron> nn=dynamic_pointer_cast<NPulseLifeNeuron>(GetComponentByIndex(i));
@@ -226,13 +226,13 @@ bool NLifeNet::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 	 res&=life2->Connect(pebonus,7);
 	}
 	RDK::MMatrix<double,3,1> dist=n->GetCoord()-nn->GetCoord();
-	if((!dist)<=LinkDistance) // Фиксированное расстояние
+	if((!dist)<=LinkDistance) // Р¤РёРєСЃРёСЂРѕРІР°РЅРЅРѕРµ СЂР°СЃСЃС‚РѕСЏРЅРёРµ
 	{
 	 NPulseMembrane *cont=dynamic_cast<NPulseMembrane*>(n->BranchDendrite("PNeuronHebbMembrane4",true));
 	 NPulseMembrane *cont2=dynamic_cast<NPulseMembrane*>(nn->BranchDendrite("PNeuronHebbMembrane4",true));
 	 RDK::ULinkSide item,conn;
 
-	 // Подключаем возбуждающие синапсы
+	 // РџРѕРґРєР»СЋС‡Р°РµРј РІРѕР·Р±СѓР¶РґР°СЋС‰РёРµ СЃРёРЅР°РїСЃС‹
 	 RDK::MVector<double,3> diff1(n->GetCoord()-nn->GetCoord()),
 						  diff2(nn->GetCoord()-n->GetCoord());
 	 double mul1=diff1*RDK::MVector<double,3>(1,0,0);
@@ -272,7 +272,7 @@ bool NLifeNet::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 	 {
 	  cont=dynamic_cast<NPulseMembrane*>(n->BranchDendrite("PNeuronHebbMembrane3",true));
 	  cont2=dynamic_cast<NPulseMembrane*>(nn->BranchDendrite("PNeuronHebbMembrane3",true));
-	  // Подключаем тормозные синапсы
+	  // РџРѕРґРєР»СЋС‡Р°РµРј С‚РѕСЂРјРѕР·РЅС‹Рµ СЃРёРЅР°РїСЃС‹
 	  item.Id=n->GetLTZone()->GetLongId(this);
 	  item.Index=0;
 	  for(size_t k=0;k<cont2->GetNumNegChannels();k++)
@@ -310,10 +310,10 @@ bool NLifeNet::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
  return res;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NLifeNet::ADelComponent(UEPtr<UContainer> comp)
 {
  vector<NNeuronLife*>::iterator I;
@@ -339,9 +339,9 @@ bool NLifeNet::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NLifeNet::ADefault(void)
 {
 /* SetNumOutputs(10);
@@ -378,23 +378,23 @@ bool NLifeNet::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NLifeNet::ABuild(void)
 {
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NLifeNet::AReset(void)
 {
  EnsembleCalculationCounter=0;
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NLifeNet::ACalculate(void)
 {
  vector<NNeuronLife*> best_neurons;
@@ -423,7 +423,7 @@ bool NLifeNet::ACalculate(void)
   }
  }
 
- // Нейроны способные делится - делятся
+ // РќРµР№СЂРѕРЅС‹ СЃРїРѕСЃРѕР±РЅС‹Рµ РґРµР»РёС‚СЃСЏ - РґРµР»СЏС‚СЃСЏ
  for(size_t i=0;i<best_neurons.size();i++)
  {
   best_neurons[i]->Energy=best_neurons[i]->Energy/2;
@@ -488,7 +488,7 @@ bool NLifeNet::ACalculate(void)
  return true;
 }
 
-// Вычисляет ансамбли сети
+// Р’С‹С‡РёСЃР»СЏРµС‚ Р°РЅСЃР°РјР±Р»Рё СЃРµС‚Рё
 bool NLifeNet::CalcEnsembles(double threshold)
 {
  Ensembles.clear();
@@ -560,10 +560,10 @@ bool NLifeNet::CalcEnsembles(double threshold)
   }
  }
 
- // Формируем список ансамблей
+ // Р¤РѕСЂРјРёСЂСѓРµРј СЃРїРёСЃРѕРє Р°РЅСЃР°РјР±Р»РµР№
  for(size_t i=0;i<BetaEnsembles.size();i++)
  {
-  // Берем бета-ансабль...
+  // Р‘РµСЂРµРј Р±РµС‚Р°-Р°РЅСЃР°Р±Р»СЊ...
   pair<double, NEnsemble > bensemble=BetaEnsembles[i];
   pair<double, NEnsemble > ensemble;
   vector<pair<double, NEnsemble > > egroup;
@@ -589,13 +589,13 @@ bool NLifeNet::CalcEnsembles(double threshold)
    }
   }
 
-  // Сформировали egroup, проверяем его размер
+  // РЎС„РѕСЂРјРёСЂРѕРІР°Р»Рё egroup, РїСЂРѕРІРµСЂСЏРµРј РµРіРѕ СЂР°Р·РјРµСЂ
   if(egroup.size() >= bensemble.second.size())
   {
    for(size_t m=1;m<egroup.size();m++)
 	bensemble.first+=egroup[m].first;
 
-   // Сортируем ансамбль
+   // РЎРѕСЂС‚РёСЂСѓРµРј Р°РЅСЃР°РјР±Р»СЊ
    vector<string> enames;
    enames.resize(bensemble.second.size());
    for(size_t m=0;m<enames.size();m++)
@@ -611,7 +611,7 @@ bool NLifeNet::CalcEnsembles(double threshold)
 	  swap(bensemble.second[m],bensemble.second[mm]);
 	}
    }
-   // Конец сортировки
+   // РљРѕРЅРµС† СЃРѕСЂС‚РёСЂРѕРІРєРё
 
 
    size_t m;
@@ -627,7 +627,7 @@ bool NLifeNet::CalcEnsembles(double threshold)
  return true;
 }
 
-// Вычисляет связи между ансамблями сети
+// Р’С‹С‡РёСЃР»СЏРµС‚ СЃРІСЏР·Рё РјРµР¶РґСѓ Р°РЅСЃР°РјР±Р»СЏРјРё СЃРµС‚Рё
 bool NLifeNet::CalcEnsembleLinks(double threshold)
 {
  EnsembleLinks.clear();

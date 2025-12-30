@@ -23,47 +23,47 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseHebbSynapse: public NPulseSynapse
 {
-public: // Общедоступные свойства
-ULProperty<double,NPulseHebbSynapse, ptPubParameter> Min;
-ULProperty<double,NPulseHebbSynapse, ptPubParameter> Mout;
-ULProperty<double,NPulseHebbSynapse, ptPubParameter> Md;
-UCLProperty<vector<double>,NPulseHebbSynapse, ptPubParameter> ActiveMs;
-UCLProperty<vector<double>,NPulseHebbSynapse, ptPubParameter> PassiveMs;
-UCLProperty<vector<double>,NPulseHebbSynapse, ptPubParameter> Kmot;
-ULProperty<double,NPulseHebbSynapse, ptPubParameter> Kin;
-ULProperty<double,NPulseHebbSynapse, ptPubParameter> Kout;
+public: //  
+UProperty<double,NPulseHebbSynapse, ptPubParameter> Min;
+UProperty<double,NPulseHebbSynapse, ptPubParameter> Mout;
+UProperty<double,NPulseHebbSynapse, ptPubParameter> Md;
+UProperty<vector<double>,NPulseHebbSynapse, ptPubParameter> ActiveMs;
+UProperty<vector<double>,NPulseHebbSynapse, ptPubParameter> PassiveMs;
+UProperty<vector<double>,NPulseHebbSynapse, ptPubParameter> Kmot;
+UProperty<double,NPulseHebbSynapse, ptPubParameter> Kin;
+UProperty<double,NPulseHebbSynapse, ptPubParameter> Kout;
 
-// К-т усиления динамической связи
-RDK::ULProperty<double,NPulseHebbSynapse, ptPubParameter> GdGain;
+// -   
+RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> GdGain;
 
-// К-т усиления статической связи
-RDK::ULProperty<double,NPulseHebbSynapse, ptPubParameter> GsGain;
+// -   
+RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> GsGain;
 
-public: // Входы и выходы
-/// Входной сигнал от низкопороговой зоны
-UPropertyInputData<MDMatrix<double>, NPulseHebbSynapse, ptInput | ptPubState> InputLTZoneFeedbackSignal;
+public: //   
+///     
+UProperty<MDMatrix<double>, NPulseHebbSynapse, ptInput | ptPubState> InputLTZoneFeedbackSignal;
 
-/// Сигнал "мотивации"
-UPropertyInputData<MDMatrix<double>, NPulseHebbSynapse, ptInput | ptPubState> InputMotivation;
+///  ""
+UProperty<MDMatrix<double>, NPulseHebbSynapse, ptInput | ptPubState> InputMotivation;
 
-UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output1;
-UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output2;
-UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output3;
-UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output4;
-UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output5;
-UPropertyOutputData<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output6;
+UProperty<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output1;
+UProperty<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output2;
+UProperty<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output3;
+UProperty<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output4;
+UProperty<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output5;
+UProperty<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output6;
 
-protected: // Временные переменные
-ULProperty<double,NPulseHebbSynapse,ptPubState> G;
-ULProperty<double,NPulseHebbSynapse,ptPubState> Gd;
-UCLProperty<vector<double>,NPulseHebbSynapse,ptPubState> Gs;
-ULProperty<double,NPulseHebbSynapse,ptPubState> GsSum;
-ULProperty<double,NPulseHebbSynapse,ptPubState> Win;
-ULProperty<double,NPulseHebbSynapse,ptPubState> Wout;
+protected: //  
+UProperty<double,NPulseHebbSynapse,ptPubState> G;
+UProperty<double,NPulseHebbSynapse,ptPubState> Gd;
+UProperty<vector<double>,NPulseHebbSynapse,ptPubState> Gs;
+UProperty<double,NPulseHebbSynapse,ptPubState> GsSum;
+UProperty<double,NPulseHebbSynapse,ptPubState> Win;
+UProperty<double,NPulseHebbSynapse,ptPubState> Wout;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NPulseHebbSynapse(void);
 virtual ~NPulseHebbSynapse(void);
@@ -71,34 +71,34 @@ virtual ~NPulseHebbSynapse(void);
 
 public:
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NPulseHebbSynapse* New(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Подключает синапс хебба к низкопороговой зоне нейрона-владельца
-// Возвращает false только если произошла ошибка установки связи
-// Если synapse == 0, то подключает все синапсы хебба
+//       -
+//  false      
+//  synapse == 0,     
 bool InstallHebbianConnection(void);
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate2(void);
 // --------------------------
 };

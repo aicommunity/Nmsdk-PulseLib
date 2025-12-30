@@ -25,12 +25,12 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Core/NPulseNeuron.h"
 #include <QString>
 
-// Класс, для классификации паттерна данных
+// РљР»Р°СЃСЃ, РґР»СЏ РєР»Р°СЃСЃРёС„РёРєР°С†РёРё РїР°С‚С‚РµСЂРЅР° РґР°РЅРЅС‹С…
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPCAClassifier::NPCAClassifier(void)
 : StructureBuildMode("StructureBuildMode",this,&NPCAClassifier::SetStructureBuildMode),
@@ -45,8 +45,8 @@ NPCAClassifier::NPCAClassifier(void)
   TimeWindowSize("TimeWindowSize",this, &NPCAClassifier::SetTimeWindowSize),
   TrainingPatternInx("TrainingPatternInx",this, &NPCAClassifier::SetTrainingPatternInx)
 {
- IsFirstStep = true; //первая итерация
- IsLastStep = false; //последняя итерация
+ IsFirstStep = true; //РїРµСЂРІР°СЏ РёС‚РµСЂР°С†РёСЏ
+ IsLastStep = false; //РїРѕСЃР»РµРґРЅСЏСЏ РёС‚РµСЂР°С†РёСЏ
 }
 
 NPCAClassifier::~NPCAClassifier(void)
@@ -55,43 +55,43 @@ NPCAClassifier::~NPCAClassifier(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NPCAClassifier::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
   Ready=false;
  return true;
 }
 
-/// Имя класса, создающего блок матрицы
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ Р±Р»РѕРє РјР°С‚СЂРёС†С‹
 bool NPCAClassifier::SetMatrixSourceTimeSeriesClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего блок для метода главных компонент
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ Р±Р»РѕРє РґР»СЏ РјРµС‚РѕРґР° РіР»Р°РІРЅС‹С… РєРѕРјРїРѕРЅРµРЅС‚
 bool NPCAClassifier::SetPCAClassName(const std::string &value)
 {
     Ready=false;
  return true;
 }
 
-/// Имя класса, создающего группу обученных нейронов для распознавания заданного паттерна импульсов
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РіСЂСѓРїРїСѓ РѕР±СѓС‡РµРЅРЅС‹С… РЅРµР№СЂРѕРЅРѕРІ РґР»СЏ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ Р·Р°РґР°РЅРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР° РёРјРїСѓР»СЊСЃРѕРІ
 bool NPCAClassifier::SetSpikeClassifierClassName(const std::string &value)
 {
     Ready=false;
  return true;
 }
 
-/// Имя файла с исходными данными
+/// РРјСЏ С„Р°Р№Р»Р° СЃ РёСЃС…РѕРґРЅС‹РјРё РґР°РЅРЅС‹РјРё
 bool NPCAClassifier::SetFileName(const std::string &value)
 {
  Ready=false;
@@ -102,7 +102,7 @@ bool NPCAClassifier::SetFileName(const std::string &value)
  return true;
 }
 
-/// Число компоненент в PCA
+/// Р§РёСЃР»Рѕ РєРѕРјРїРѕРЅРµРЅРµРЅС‚ РІ PCA
 bool NPCAClassifier::SetOutComponents(const int &value)
 {
  Ready=false;
@@ -113,21 +113,21 @@ bool NPCAClassifier::SetOutComponents(const int &value)
  return true;
 }
 
-/// Есть ли калибровочный дендрит
+/// Р•СЃС‚СЊ Р»Рё РєР°Р»РёР±СЂРѕРІРѕС‡РЅС‹Р№ РґРµРЅРґСЂРёС‚
 bool NPCAClassifier::SetIsCalibrativeDendrite(const bool &value)
 {
     Ready=false;
  return true;
 }
 
-/// Имя выходного файла компонента
+/// РРјСЏ РІС‹С…РѕРґРЅРѕРіРѕ С„Р°Р№Р»Р° РєРѕРјРїРѕРЅРµРЅС‚Р°
 bool NPCAClassifier::SetOutputFile(const std::string &value)
 {
     Ready=false;
  return true;
 }
 
-/// Размер паттерна данных
+/// Р Р°Р·РјРµСЂ РїР°С‚С‚РµСЂРЅР° РґР°РЅРЅС‹С…
 bool NPCAClassifier::SetColCount(const int &value)
 {
     Ready=false;
@@ -138,14 +138,14 @@ bool NPCAClassifier::SetColCount(const int &value)
     return true;
 }
 
-/// Размер временного окна
+/// Р Р°Р·РјРµСЂ РІСЂРµРјРµРЅРЅРѕРіРѕ РѕРєРЅР°
 bool NPCAClassifier::SetTimeWindowSize(const double &value)
 {
  Ready=false;
  return true;
 }
 
-/// Индекс строки данных, которые используем в качестве обучающего набора
+/// РРЅРґРµРєСЃ СЃС‚СЂРѕРєРё РґР°РЅРЅС‹С…, РєРѕС‚РѕСЂС‹Рµ РёСЃРїРѕР»СЊР·СѓРµРј РІ РєР°С‡РµСЃС‚РІРµ РѕР±СѓС‡Р°СЋС‰РµРіРѕ РЅР°Р±РѕСЂР°
 bool NPCAClassifier::SetTrainingPatternInx(const int &value)
 {
  Ready=false;
@@ -155,9 +155,9 @@ bool NPCAClassifier::SetTrainingPatternInx(const int &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPCAClassifier* NPCAClassifier::New(void)
 {
  return new NPCAClassifier;
@@ -170,22 +170,22 @@ UComponent* NPCAClassifier::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NPCAClassifier::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
 
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NPCAClassifier::ADelComponent(UEPtr<UContainer> comp)
 {
 
@@ -194,9 +194,9 @@ bool NPCAClassifier::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NPCAClassifier::BuildStructure(int structure_build_mode, const string &matrix_source_time_series_class_name,
                                     const string &pca_class_name, const string &spike_classifier_class_name,
                                     const string &file_name_class_name,
@@ -210,23 +210,23 @@ bool NPCAClassifier::BuildStructure(int structure_build_mode, const string &matr
 
         bool res = true;
 
-        //Создаем блок матрицы
+        //РЎРѕР·РґР°РµРј Р±Р»РѕРє РјР°С‚СЂРёС†С‹
         MatrixSourceTimeSeries = AddMissingComponent<UMatrixSourceTimeSeries>(std::string("Source"), matrix_source_time_series_class_name);
         MatrixSourceTimeSeries->SetCoord(MVector<double,3>(4.3, 2.67, 0));
         MatrixSourceTimeSeries->FileName = FileName;
         MatrixSourceTimeSeries->ColCount = ColCount;
 
-        //Создаем блок PCA
+        //РЎРѕР·РґР°РµРј Р±Р»РѕРє PCA
         PCA = AddMissingComponent<UCRPrincipalComponentAnalysis>(std::string("PCA"), pca_class_name);
         PCA->SetCoord(MVector<double,3>(12.3, 2.67, 0));
         PCA->OutComponents = OutComponents;
 
-        //Создаем блок обученных нейронов для распознавания заданного паттерна импульсов
+        //РЎРѕР·РґР°РµРј Р±Р»РѕРє РѕР±СѓС‡РµРЅРЅС‹С… РЅРµР№СЂРѕРЅРѕРІ РґР»СЏ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ Р·Р°РґР°РЅРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР° РёРјРїСѓР»СЊСЃРѕРІ
         SpikeClassifier = AddMissingComponent<NSpikeClassifier>(std::string("SpikeClassifier"), spike_classifier_class_name);
         SpikeClassifier->SetCoord(MVector<double,3>(20.3, 2.67, 0));
-        if(IsCalibrativeDendrite) //при наличии калибровочного нейрона
-                                  //число выходных параметров увеличивается на 1,
-                                  //формируем число компонент
+        if(IsCalibrativeDendrite) //РїСЂРё РЅР°Р»РёС‡РёРё РєР°Р»РёР±СЂРѕРІРѕС‡РЅРѕРіРѕ РЅРµР№СЂРѕРЅР°
+                                  //С‡РёСЃР»Рѕ РІС‹С…РѕРґРЅС‹С… РїР°СЂР°РјРµС‚СЂРѕРІ СѓРІРµР»РёС‡РёРІР°РµС‚СЃСЏ РЅР° 1,
+                                  //С„РѕСЂРјРёСЂСѓРµРј С‡РёСЃР»Рѕ РєРѕРјРїРѕРЅРµРЅС‚
             {
             SpikeClassifier->NumInputDendrite = OutComponents+1;
             }
@@ -237,7 +237,7 @@ bool NPCAClassifier::BuildStructure(int structure_build_mode, const string &matr
         SpikeClassifier->SetActivity(false);
         SpikeClassifier->Reset();
 
-        //Создаем связи между блоком матрицы и PCA
+        //РЎРѕР·РґР°РµРј СЃРІСЏР·Рё РјРµР¶РґСѓ Р±Р»РѕРєРѕРј РјР°С‚СЂРёС†С‹ Рё PCA
         res&=CreateLink("Source","CurrentLine","PCA","EncodingData");
         if(!res)
          return true;
@@ -250,7 +250,7 @@ bool NPCAClassifier::BuildStructure(int structure_build_mode, const string &matr
 }
 
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPCAClassifier::AReset(void)
 {
   counter = 0;
@@ -258,7 +258,7 @@ bool NPCAClassifier::AReset(void)
 return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPCAClassifier::ADefault(void)
 {
  StructureBuildMode=1;
@@ -276,10 +276,10 @@ bool NPCAClassifier::ADefault(void)
 }
 
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPCAClassifier::ABuild(void)
 {
  if(StructureBuildMode>0)
@@ -295,12 +295,12 @@ SpikeClassifier->SetActivity(false);
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPCAClassifier::ACalculate(void)
 {
     if(!IsLastStep)
     {
-        int cd = (IsCalibrativeDendrite)? 1 : 0; //проверка на наличие калибровочного дендрита
+        int cd = (IsCalibrativeDendrite)? 1 : 0; //РїСЂРѕРІРµСЂРєР° РЅР° РЅР°Р»РёС‡РёРµ РєР°Р»РёР±СЂРѕРІРѕС‡РЅРѕРіРѕ РґРµРЅРґСЂРёС‚Р°
 
         if(IsFirstStep)
         {
@@ -308,14 +308,14 @@ bool NPCAClassifier::ACalculate(void)
             if(GetEnvironment())
             file_dir=GetEnvironment()->GetCurrentDataDir();
 
-            // Открываем файл для записи данных
+            // РћС‚РєСЂС‹РІР°РµРј С„Р°Р№Р» РґР»СЏ Р·Р°РїРёСЃРё РґР°РЅРЅС‹С…
             std::string output_file = OutputFile;
             output_file = file_dir + output_file;
             fout.open(output_file);
 
-            //Определяем размер выходной матрицы
+            //РћРїСЂРµРґРµР»СЏРµРј СЂР°Р·РјРµСЂ РІС‹С…РѕРґРЅРѕР№ РјР°С‚СЂРёС†С‹
             results.Resize(MatrixSourceTimeSeries->FullMatrix.GetRows(),OutComponents + cd);
-            //Формируем матрицы максимумов и минимумов для каждого признака
+            //Р¤РѕСЂРјРёСЂСѓРµРј РјР°С‚СЂРёС†С‹ РјР°РєСЃРёРјСѓРјРѕРІ Рё РјРёРЅРёРјСѓРјРѕРІ РґР»СЏ РєР°Р¶РґРѕРіРѕ РїСЂРёР·РЅР°РєР°
             max_el.Resize(1, OutComponents,-1000000000.0);
             min_el.Resize(1, OutComponents,1000000000.0);
 
@@ -324,13 +324,13 @@ bool NPCAClassifier::ACalculate(void)
 
             IsFirstStep = false;
         }
-        //Формируем матрицу с данными
+        //Р¤РѕСЂРјРёСЂСѓРµРј РјР°С‚СЂРёС†Сѓ СЃ РґР°РЅРЅС‹РјРё
         if(MatrixSourceTimeSeries->CurrentLineIndex < MatrixSourceTimeSeries->FullMatrix.GetRows())
         {
-            for(int i = 0; i < OutComponents; i++) //пока строка не закончилась
+            for(int i = 0; i < OutComponents; i++) //РїРѕРєР° СЃС‚СЂРѕРєР° РЅРµ Р·Р°РєРѕРЅС‡РёР»Р°СЃСЊ
             {
                 results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i) = PCA->PCAResult(0,i);
-                //Ищем максимальный и минимальный элемент по строке
+                //РС‰РµРј РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ Рё РјРёРЅРёРјР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚ РїРѕ СЃС‚СЂРѕРєРµ
                 if (results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i) > max_el(0, i))
                 {
                     max_el(0, i) = results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i);
@@ -340,7 +340,7 @@ bool NPCAClassifier::ACalculate(void)
                     min_el(0, i) = results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i);
                 }
             }
-            //Добавляем значение калибровочного дендрита при необходимости
+            //Р”РѕР±Р°РІР»СЏРµРј Р·РЅР°С‡РµРЅРёРµ РєР°Р»РёР±СЂРѕРІРѕС‡РЅРѕРіРѕ РґРµРЅРґСЂРёС‚Р° РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё
             if(IsCalibrativeDendrite)
             {
                 results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, OutComponents) = TimeWindowSize;
@@ -350,7 +350,7 @@ bool NPCAClassifier::ACalculate(void)
         }
         else
         {
-            //Нормализум строку
+            //РќРѕСЂРјР°Р»РёР·СѓРј СЃС‚СЂРѕРєСѓ
             for(int i = 0; i < MatrixSourceTimeSeries->FullMatrix.GetRows(); i++)
             {
                 for(int j = 0; j < OutComponents; j++)
@@ -368,29 +368,29 @@ bool NPCAClassifier::ACalculate(void)
                 }
             }
 
-            string b = ""; //пустая строка
-            MDMatrix<double> res; //матрица с данными для тренировочного набора
-            res.Resize(1, OutComponents+cd); //размер матрицы
+            string b = ""; //РїСѓСЃС‚Р°СЏ СЃС‚СЂРѕРєР°
+            MDMatrix<double> res; //РјР°С‚СЂРёС†Р° СЃ РґР°РЅРЅС‹РјРё РґР»СЏ С‚СЂРµРЅРёСЂРѕРІРѕС‡РЅРѕРіРѕ РЅР°Р±РѕСЂР°
+            res.Resize(1, OutComponents+cd); //СЂР°Р·РјРµСЂ РјР°С‚СЂРёС†С‹
             for(int i = 0; i < MatrixSourceTimeSeries->FullMatrix.GetRows(); i++)
             {
-                //формируем строку
+                //С„РѕСЂРјРёСЂСѓРµРј СЃС‚СЂРѕРєСѓ
                 for(int j = 0; j < OutComponents + cd; j++)
                 {
                     string q = std::to_string(results(i, j));
                     b = b+q+"\t";
                 }
-                //записываем строку в файл
+                //Р·Р°РїРёСЃС‹РІР°РµРј СЃС‚СЂРѕРєСѓ РІ С„Р°Р№Р»
                 fout << b << std::endl;
                 b="";
-                if (TrainingPatternInx == i) //сравниваем индекс строки обучающего набора
-                                             //с индексом текущей строки
+                if (TrainingPatternInx == i) //СЃСЂР°РІРЅРёРІР°РµРј РёРЅРґРµРєСЃ СЃС‚СЂРѕРєРё РѕР±СѓС‡Р°СЋС‰РµРіРѕ РЅР°Р±РѕСЂР°
+                                             //СЃ РёРЅРґРµРєСЃРѕРј С‚РµРєСѓС‰РµР№ СЃС‚СЂРѕРєРё
                     for(int j = 0; j < OutComponents + cd; j++)
                         res(0,j) = results(i,j);
-                SpikeClassifier->TrainingPatterns = res; //записываем строку в обучающий набор данных
+                SpikeClassifier->TrainingPatterns = res; //Р·Р°РїРёСЃС‹РІР°РµРј СЃС‚СЂРѕРєСѓ РІ РѕР±СѓС‡Р°СЋС‰РёР№ РЅР°Р±РѕСЂ РґР°РЅРЅС‹С…
             }
-            fout.close(); //закрываем файл
+            fout.close(); //Р·Р°РєСЂС‹РІР°РµРј С„Р°Р№Р»
 
-            //Активным остается третий блок
+            //РђРєС‚РёРІРЅС‹Рј РѕСЃС‚Р°РµС‚СЃСЏ С‚СЂРµС‚РёР№ Р±Р»РѕРє
             SpikeClassifier->SetActivity(true);
             MatrixSourceTimeSeries->SetActivity(false);
             PCA->SetActivity(false);

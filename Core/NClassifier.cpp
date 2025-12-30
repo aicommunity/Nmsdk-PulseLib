@@ -24,12 +24,12 @@ See file license.txt for more information
 //#include <QDateTime>
 //#include <QFile>
 
-// Класс, создающий группу обученных нейронов для распознавания заданного паттерна импульсов
+// РљР»Р°СЃСЃ, СЃРѕР·РґР°СЋС‰РёР№ РіСЂСѓРїРїСѓ РѕР±СѓС‡РµРЅРЅС‹С… РЅРµР№СЂРѕРЅРѕРІ РґР»СЏ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ Р·Р°РґР°РЅРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР° РёРјРїСѓР»СЊСЃРѕРІ
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NClassifier::NClassifier(void)
 : StructureBuildMode("StructureBuildMode",this,&NClassifier::SetStructureBuildMode),
@@ -60,9 +60,9 @@ NClassifier::NClassifier(void)
  generators.clear();
  groups_trainers.clear();
 
- // Переменные для чтение и записи данных в файл
+ // РџРµСЂРµРјРµРЅРЅС‹Рµ РґР»СЏ С‡С‚РµРЅРёРµ Рё Р·Р°РїРёСЃРё РґР°РЅРЅС‹С… РІ С„Р°Р№Р»
  // ------->
- // Признак первой итерации
+ // РџСЂРёР·РЅР°Рє РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё
  IsFirstFileStep = true;
  // <-------
 }
@@ -73,22 +73,22 @@ NClassifier::~NClassifier(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NClassifier::SetStructureBuildMode(const int &value)
 {
-	if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+	if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
 		Ready=false;
 	return true;
 }
 
-/// Режим расчёта нейрона
+/// Р РµР¶РёРј СЂР°СЃС‡С‘С‚Р° РЅРµР№СЂРѕРЅР°
 bool NClassifier::SetCalculateMode(const int &value)
 {
     for(size_t i = 0; i < groups_trainers.size(); i++)
@@ -101,28 +101,28 @@ bool NClassifier::SetCalculateMode(const int &value)
 	return true;
 }
 
-/// Имя класса, создающего генератор импульсов
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РіРµРЅРµСЂР°С‚РѕСЂ РёРјРїСѓР»СЊСЃРѕРІ
 bool NClassifier::SetPulseGeneratorClassName(const std::string &value)
 {
 	Ready=false;
 	return true;
 }
 
-/// Имя класса, создающего учитель нейрона
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СѓС‡РёС‚РµР»СЊ РЅРµР№СЂРѕРЅР°
 bool NClassifier::SetNeuronTrainerClassName(const std::string &value)
 {
 	Ready=false;
 	return true;
 }
 
-/// Имя класса, создающего нейрон
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РЅРµР№СЂРѕРЅ
 bool NClassifier::SetNeuronClassName(const std::string &value)
 {
 	Ready=false;
 	return true;
 }
 
-/// Имя класса, создающего синапс
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СЃРёРЅР°РїСЃ
 bool NClassifier::SetSynapseClassName(const std::string &value)
 {
 	Ready=false;
@@ -130,7 +130,7 @@ bool NClassifier::SetSynapseClassName(const std::string &value)
 }
 
 
-/// Признак необходимости обучения
+/// РџСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РѕР±СѓС‡РµРЅРёСЏ
 bool NClassifier::SetNeedToTrain(const bool &value)
 {
 	if(value)
@@ -170,7 +170,7 @@ bool NClassifier::SetNeedToTrain(const bool &value)
 	return true;
 }
 
-/// Время задержки начала обучения относительно старта системы (сек)
+/// Р’СЂРµРјСЏ Р·Р°РґРµСЂР¶РєРё РЅР°С‡Р°Р»Р° РѕР±СѓС‡РµРЅРёСЏ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ СЃС‚Р°СЂС‚Р° СЃРёСЃС‚РµРјС‹ (СЃРµРє)
 bool NClassifier::SetDelay(const double &value)
 {
 	for(size_t i = 0; i < groups_trainers.size(); i++)
@@ -189,7 +189,7 @@ bool NClassifier::SetDelay(const double &value)
 	return true;
 }
 
-/// Частота генераторов (Гц)
+/// Р§Р°СЃС‚РѕС‚Р° РіРµРЅРµСЂР°С‚РѕСЂРѕРІ (Р“С†)
 bool NClassifier::SetSpikesFrequency(const double &value)
 {
 	for(size_t i = 0; i < groups_trainers.size(); i++)
@@ -209,7 +209,7 @@ bool NClassifier::SetSpikesFrequency(const double &value)
 	return true;
 }
 
-/// Число входных дендритов
+/// Р§РёСЃР»Рѕ РІС…РѕРґРЅС‹С… РґРµРЅРґСЂРёС‚РѕРІ
 bool NClassifier::SetNumInputDendrite(const int &value)
 {
 	Ready=false;
@@ -232,7 +232,7 @@ bool NClassifier::SetNumInputDendrite(const int &value)
 	return true;
 }
 
-/// Максимальная длина дендрита
+/// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° РґРµРЅРґСЂРёС‚Р°
 bool NClassifier::SetMaxDendriteLength(const int &value)
 {
 	for(size_t i = 0; i < groups_trainers.size(); i++)
@@ -245,7 +245,7 @@ bool NClassifier::SetMaxDendriteLength(const int &value)
 	return true;
 }
 
-/// Паттерн для запоминания
+/// РџР°С‚С‚РµСЂРЅ РґР»СЏ Р·Р°РїРѕРјРёРЅР°РЅРёСЏ
 bool NClassifier::SetTrainingPatterns(const MDMatrix<double> &value)
 {
 	if(IsNeedToTrain)
@@ -270,7 +270,7 @@ bool NClassifier::SetTrainingPatterns(const MDMatrix<double> &value)
 	return true;
 }
 
-/// Паттерн для распознавания
+/// РџР°С‚С‚РµСЂРЅ РґР»СЏ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ
 bool NClassifier::SetInputPattern(const MDMatrix<double> &value)
 {
     for(int i = 0; i < int(generators.size()); i++)
@@ -282,7 +282,7 @@ bool NClassifier::SetInputPattern(const MDMatrix<double> &value)
 	return true;
 }
 
-/// Порог низкопороговой зоны нейрона
+/// РџРѕСЂРѕРі РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NClassifier::SetLTZThreshold(const double &value)
 {
 	for(size_t i = 0; i < groups_trainers.size(); i++)
@@ -296,7 +296,7 @@ bool NClassifier::SetLTZThreshold(const double &value)
 	return true;
 }
 
-/// Порог низкопороговой зоны нейрона для этапа обучения
+/// РџРѕСЂРѕРі РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР° РґР»СЏ СЌС‚Р°РїР° РѕР±СѓС‡РµРЅРёСЏ
 bool NClassifier::SetTrainingLTZThreshold(const double &value)
 {
 	for(size_t i = 0; i < groups_trainers.size(); i++)
@@ -310,7 +310,7 @@ bool NClassifier::SetTrainingLTZThreshold(const double &value)
 	return true;
 }
 
-/// Фиксированный порог низкопороговой зоны нейрона
+/// Р¤РёРєСЃРёСЂРѕРІР°РЅРЅС‹Р№ РїРѕСЂРѕРі РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NClassifier::SetFixedLTZThreshold(const double &value)
 {
 	for(size_t i = 0; i < groups_trainers.size(); i++)
@@ -324,7 +324,7 @@ bool NClassifier::SetFixedLTZThreshold(const double &value)
 	return true;
 }
 
-/// Признак необходимости использования фиксированного порога низкопороговой зоны нейрона
+/// РџСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРіРѕ РїРѕСЂРѕРіР° РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NClassifier::SetUseFixedLTZThreshold(const bool &value)
 {
 	if(value)
@@ -336,7 +336,7 @@ bool NClassifier::SetUseFixedLTZThreshold(const bool &value)
 	return true;
 }
 
-// Устанавливает необходимость транзита сигнала от внешнего источника
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ С‚СЂР°РЅР·РёС‚Р° СЃРёРіРЅР°Р»Р° РѕС‚ РІРЅРµС€РЅРµРіРѕ РёСЃС‚РѕС‡РЅРёРєР°
 bool NClassifier::SetUseTransitSignal(const bool &value)
 {
 	for(size_t i = 0; i < generators.size(); i++)
@@ -347,7 +347,7 @@ bool NClassifier::SetUseTransitSignal(const bool &value)
 	return true;
 }
 
-/// Число классов
+/// Р§РёСЃР»Рѕ РєР»Р°СЃСЃРѕРІ
 bool NClassifier::SetNumClasses(const int &value)
 {
 	Ready=false;
@@ -356,7 +356,7 @@ bool NClassifier::SetNumClasses(const int &value)
 	return true;
 }
 
-/// Число каждого класса обучающей выборки
+/// Р§РёСЃР»Рѕ РєР°Р¶РґРѕРіРѕ РєР»Р°СЃСЃР° РѕР±СѓС‡Р°СЋС‰РµР№ РІС‹Р±РѕСЂРєРё
 bool NClassifier::SetSizeTrainingSet(const int &value)
 {
 	Ready=false;
@@ -365,7 +365,7 @@ bool NClassifier::SetSizeTrainingSet(const int &value)
 	return true;
 }
 
-// Устанавливает необходимость транзита сигнала от внешнего источника
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ С‚СЂР°РЅР·РёС‚Р° СЃРёРіРЅР°Р»Р° РѕС‚ РІРЅРµС€РЅРµРіРѕ РёСЃС‚РѕС‡РЅРёРєР°
 bool NClassifier::SetDataFromFile(const bool &value)
 {
  if(!value)
@@ -380,9 +380,9 @@ bool NClassifier::SetDataFromFile(const bool &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NClassifier* NClassifier::New(void)
 {
 	return new NClassifier;
@@ -395,21 +395,21 @@ UComponent* NClassifier::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NClassifier::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
 	return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NClassifier::ADelComponent(UEPtr<UContainer> comp)
 {
 	return true;
@@ -417,9 +417,9 @@ bool NClassifier::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NClassifier::AReset(void)
 {
 	for(size_t i = 0; i < groups_trainers.size(); i++)
@@ -469,7 +469,7 @@ bool NClassifier::AReset(void)
 	return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NClassifier::ADefault(void)
 {
 	groups_trainers.clear();
@@ -501,12 +501,12 @@ bool NClassifier::ADefault(void)
 	return true;
 }
 
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NClassifier::BuildStructure(void)
 {
 	if(StructureBuildMode == 2)
 	{
-		// Удаляем старые нейроны
+		// РЈРґР°Р»СЏРµРј СЃС‚Р°СЂС‹Рµ РЅРµР№СЂРѕРЅС‹
 		for(int i = NumClasses; i < OldNumClasses; i++)
 		{
 			DelComponent(std::string("OrNeuron"+sntoa(i+1)));
@@ -525,7 +525,7 @@ bool NClassifier::BuildStructure(void)
 			}
 		}
 
-		// Инициализируем нейроны с возможностью обучения
+		// РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РЅРµР№СЂРѕРЅС‹ СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ РѕР±СѓС‡РµРЅРёСЏ
 		groups_trainers.resize(NumClasses);
 		for(size_t i = 0; i < groups_trainers.size(); i++)
 		{
@@ -563,13 +563,13 @@ bool NClassifier::BuildStructure(void)
 			}
 		}
 
-		// Удаляем старые генераторы
+		// РЈРґР°Р»СЏРµРј СЃС‚Р°СЂС‹Рµ РіРµРЅРµСЂР°С‚РѕСЂС‹
 		for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
 		{
 			DelComponent(std::string("Source")+sntoa(i+1));
 		}
 
-		// Инициализируем генераторы импульсов
+		// РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РіРµРЅРµСЂР°С‚РѕСЂС‹ РёРјРїСѓР»СЊСЃРѕРІ
 		generators.resize(NumInputDendrite);
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
@@ -581,21 +581,21 @@ bool NClassifier::BuildStructure(void)
 			generators[i]->Reset();
 		}
 
-		// Разрываем выходные связи генераторов
+		// Р Р°Р·СЂС‹РІР°РµРј РІС‹С…РѕРґРЅС‹Рµ СЃРІСЏР·Рё РіРµРЅРµСЂР°С‚РѕСЂРѕРІ
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
 			generators[i]->DisconnectAll("Output");
 		}
 
-		// Добаляем связи между генераторами и нейронами с возможностью обучения
+		// Р”РѕР±Р°Р»СЏРµРј СЃРІСЏР·Рё РјРµР¶РґСѓ РіРµРЅРµСЂР°С‚РѕСЂР°РјРё Рё РЅРµР№СЂРѕРЅР°РјРё СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ РѕР±СѓС‡РµРЅРёСЏ
 		for(int k = 0; k < NumInputDendrite; k++)
 		{
 			for(int i = 0; i < NumClasses; i++)
 			{
 				for(int j = 0; j < SizeTrainingSet; j++)
 				{
-					UEPtr<NNeuronTrainer> trainer; // нейрон с возможностью обучения
-					UEPtr<NPulseGeneratorTransit> gen_in; // соответствующий вход нейрона с возможностью обучения
+					UEPtr<NNeuronTrainer> trainer; // РЅРµР№СЂРѕРЅ СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ РѕР±СѓС‡РµРЅРёСЏ
+					UEPtr<NPulseGeneratorTransit> gen_in; // СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РІС…РѕРґ РЅРµР№СЂРѕРЅР° СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ РѕР±СѓС‡РµРЅРёСЏ
 
 					trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1)),true);
 					if(!trainer)
@@ -613,7 +613,7 @@ bool NClassifier::BuildStructure(void)
 		}
 
 
-		// Создаём нейроны ИЛИ
+		// РЎРѕР·РґР°С‘Рј РЅРµР№СЂРѕРЅС‹ РР›Р
 		for(int i = 0; i < NumClasses; i++)
 		{
 			LogicalOrNeuron = AddMissingComponent<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)), NeuronClassName);
@@ -623,11 +623,11 @@ bool NClassifier::BuildStructure(void)
 			if(!soma)
 				return true;
 
-			// Добавляем возбуждающие синапсы для реализации функции "ИЛИ"
+			// Р”РѕР±Р°РІР»СЏРµРј РІРѕР·Р±СѓР¶РґР°СЋС‰РёРµ СЃРёРЅР°РїСЃС‹ РґР»СЏ СЂРµР°Р»РёР·Р°С†РёРё С„СѓРЅРєС†РёРё "РР›Р"
 			soma->NumExcitatorySynapses=*SizeTrainingSet;//soma->NumExcitatorySynapses+1;
 			soma->Build();
 
-			//Связываем тренера с соответсвующими синапсами нейрона ИЛИ
+			//РЎРІСЏР·С‹РІР°РµРј С‚СЂРµРЅРµСЂР° СЃ СЃРѕРѕС‚РІРµС‚СЃРІСѓСЋС‰РёРјРё СЃРёРЅР°РїСЃР°РјРё РЅРµР№СЂРѕРЅР° РР›Р
 			for(int j = 0; j < SizeTrainingSet; j++)
 			{
 				UEPtr<NNeuronTrainer> trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1)),true);
@@ -646,21 +646,21 @@ bool NClassifier::BuildStructure(void)
 					return true;
 			}
 
-			// Добавляем тормозные синапсы для реализации функции "ИЛИ"
+			// Р”РѕР±Р°РІР»СЏРµРј С‚РѕСЂРјРѕР·РЅС‹Рµ СЃРёРЅР°РїСЃС‹ РґР»СЏ СЂРµР°Р»РёР·Р°С†РёРё С„СѓРЅРєС†РёРё "РР›Р"
 			soma->NumInhibitorySynapses = NumClasses - 1;
 			soma->Build();
 
 			LogicalOrNeuron->Reset();
 		}
 
-		// Обратные связи между нейронами ИЛИ
-		for(int i = 0; i < NumClasses; i++)
+		// РћР±СЂР°С‚РЅС‹Рµ СЃРІСЏР·Рё РјРµР¶РґСѓ РЅРµР№СЂРѕРЅР°РјРё РР›Р
+        for(int i = 0; i < NumClasses; i++)
 		{
-			UEPtr<NPulseNeuron> LogicalOrNeuron = GetComponentL<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)),true);
-			if(!LogicalOrNeuron)
+            UEPtr<NPulseNeuron> logical_or_neuron = GetComponentL<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)),true);
+            if(!logical_or_neuron)
 				return true;
 
-			UEPtr<NPulseMembrane> soma = LogicalOrNeuron->GetComponentL<NPulseMembrane>(std::string("Soma1"),true);
+            UEPtr<NPulseMembrane> soma = logical_or_neuron->GetComponentL<NPulseMembrane>(std::string("Soma1"),true);
 			if(!soma)
 				return true;
 
@@ -699,10 +699,10 @@ bool NClassifier::BuildStructure(void)
 	return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NClassifier::ABuild(void)
 {
 	if(StructureBuildMode>0)
@@ -719,34 +719,34 @@ bool NClassifier::ABuild(void)
 }
 
 
-// Функция для работы с файлами.
-// Осуществляет чтение входных данных из файла,
-// Обработку результатов и запись результатов в файл
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ С„Р°Р№Р»Р°РјРё.
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ С‡С‚РµРЅРёРµ РІС…РѕРґРЅС‹С… РґР°РЅРЅС‹С… РёР· С„Р°Р№Р»Р°,
+// РћР±СЂР°Р±РѕС‚РєСѓ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ Рё Р·Р°РїРёСЃСЊ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РІ С„Р°Р№Р»
 bool NClassifier::TreatDataFromFile(void)
 {
-    // Признак первого входа в функцию
+    // РџСЂРёР·РЅР°Рє РїРµСЂРІРѕРіРѕ РІС…РѕРґР° РІ С„СѓРЅРєС†РёСЋ
     if(IsFirstFileStep)
     {
-        // Открываем файл для чтения данных
+        // РћС‚РєСЂС‹РІР°РµРј С„Р°Р№Р» РґР»СЏ С‡С‚РµРЅРёСЏ РґР°РЅРЅС‹С…
         fin.open(Environment->GetCurrentDataDir()+"input_data.txt");
-        // Открываем файл для записи данных
+        // РћС‚РєСЂС‹РІР°РµРј С„Р°Р№Р» РґР»СЏ Р·Р°РїРёСЃРё РґР°РЅРЅС‹С…
         fout.open(Environment->GetCurrentDataDir()+"output_data.txt");
-        // Флаг начала итерации
+        // Р¤Р»Р°Рі РЅР°С‡Р°Р»Р° РёС‚РµСЂР°С†РёРё
         is_first_iter = true;
-        // Входные данные
+        // Р’С…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ
         inputs.Assign(NumInputDendrite, 1, 0.0);
 
         IsFirstFileStep = false;
     }
 
-    // Признак начала новой итерации
+    // РџСЂРёР·РЅР°Рє РЅР°С‡Р°Р»Р° РЅРѕРІРѕР№ РёС‚РµСЂР°С†РёРё
     if(is_first_iter)
     {
-        // Время начала текущей итерации (сек)
+        // Р’СЂРµРјСЏ РЅР°С‡Р°Р»Р° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё (СЃРµРє)
         start_iter_time = Environment->GetTime().GetDoubleTime();
-        // Ответы нейронов
+        // РћС‚РІРµС‚С‹ РЅРµР№СЂРѕРЅРѕРІ
         outputs.assign(NumClasses,0);
-        // Считываем входной вектор
+        // РЎС‡РёС‚С‹РІР°РµРј РІС…РѕРґРЅРѕР№ РІРµРєС‚РѕСЂ
         if(fin.eof())
         {
             fin.close();
@@ -773,8 +773,8 @@ bool NClassifier::TreatDataFromFile(void)
         is_first_iter = false;
     }
 
-    // Фиксируем выходы нейронов
-    //UEPtr<NNeuronTrainer> trainer; // нейрон с возможностью обучения
+    // Р¤РёРєСЃРёСЂСѓРµРј РІС‹С…РѕРґС‹ РЅРµР№СЂРѕРЅРѕРІ
+    //UEPtr<NNeuronTrainer> trainer; // РЅРµР№СЂРѕРЅ СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ РѕР±СѓС‡РµРЅРёСЏ
     UEPtr<NPulseNeuron> neuron;
     UEPtr<NLTZone> ltzone;
     for(int i= 0; i < NumClasses; i++)
@@ -795,12 +795,12 @@ bool NClassifier::TreatDataFromFile(void)
             outputs[i] = 1;
     }
 
-    // Проверяем окончание итерации
-    double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
-    double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Длина одной итерации
+    // РџСЂРѕРІРµСЂСЏРµРј РѕРєРѕРЅС‡Р°РЅРёРµ РёС‚РµСЂР°С†РёРё
+    double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // РўРµРєСѓС‰РµРµ РІСЂРµРјСЏ РёС‚РµСЂР°С†РёРё
+    double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Р”Р»РёРЅР° РѕРґРЅРѕР№ РёС‚РµСЂР°С†РёРё
     if(iter_time >= iter_length)
     {
-        // Записываем результаты в файл
+        // Р—Р°РїРёСЃС‹РІР°РµРј СЂРµР·СѓР»СЊС‚Р°С‚С‹ РІ С„Р°Р№Р»
         for(int i = 0; i < NumClasses; i++)
         {
             fout << outputs[i] << "\t";
@@ -814,17 +814,17 @@ bool NClassifier::TreatDataFromFile(void)
 }
 
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NClassifier::ACalculate(void)
 {
-	UEPtr<NNeuronTrainer> trainer; // нейрон с возможностью обучения
-	UEPtr<NPulseGeneratorTransit> generator;  // генератор
+	UEPtr<NNeuronTrainer> trainer; // РЅРµР№СЂРѕРЅ СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ РѕР±СѓС‡РµРЅРёСЏ
+	UEPtr<NPulseGeneratorTransit> generator;  // РіРµРЅРµСЂР°С‚РѕСЂ
 
 	if(IsNeedToTrain)
 	{
 		bool is_trained(true);
 
-		// Проверяем обученность всех нейронов
+		// РџСЂРѕРІРµСЂСЏРµРј РѕР±СѓС‡РµРЅРЅРѕСЃС‚СЊ РІСЃРµС… РЅРµР№СЂРѕРЅРѕРІ
 		for(int i = 0; i < NumClasses; i++)
 		{
 			for(int j = 0; j < SizeTrainingSet; j++)
@@ -845,7 +845,7 @@ bool NClassifier::ACalculate(void)
 		{
 			IsNeedToTrain = false;
 
-			// Переводим все генераторы в режим транзита
+			// РџРµСЂРµРІРѕРґРёРј РІСЃРµ РіРµРЅРµСЂР°С‚РѕСЂС‹ РІ СЂРµР¶РёРј С‚СЂР°РЅР·РёС‚Р°
 			for(int i = 0; i < NumClasses; i++)
 			{
 				for(int j = 0; j < SizeTrainingSet; j++)
@@ -873,7 +873,7 @@ bool NClassifier::ACalculate(void)
 	{
 		bool is_trained(true);
 
-		// Проверяем обученность всех нейронов
+		// РџСЂРѕРІРµСЂСЏРµРј РѕР±СѓС‡РµРЅРЅРѕСЃС‚СЊ РІСЃРµС… РЅРµР№СЂРѕРЅРѕРІ
 		for(int i = 0; i < NumClasses; i++)
 		{
 			for(int j = 0; j < SizeTrainingSet; j++)
@@ -894,8 +894,8 @@ bool NClassifier::ACalculate(void)
 		{
 			IsNeedToTrain = true;
 
-			// Переводим все генераторы в режим транзита
-			// Проверяем обученность всех нейронов
+			// РџРµСЂРµРІРѕРґРёРј РІСЃРµ РіРµРЅРµСЂР°С‚РѕСЂС‹ РІ СЂРµР¶РёРј С‚СЂР°РЅР·РёС‚Р°
+			// РџСЂРѕРІРµСЂСЏРµРј РѕР±СѓС‡РµРЅРЅРѕСЃС‚СЊ РІСЃРµС… РЅРµР№СЂРѕРЅРѕРІ
 			for(int i = 0; i < NumClasses; i++)
 			{
 				for(int j = 0; j < SizeTrainingSet; j++)
@@ -915,9 +915,9 @@ bool NClassifier::ACalculate(void)
 				}
 			}
 		}
-		// Функция для работы с файлами.
-		// Осуществляет чтение входных данных из файла,
-		// Обработку результатов и запись результатов в файл
+		// Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ С„Р°Р№Р»Р°РјРё.
+		// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ С‡С‚РµРЅРёРµ РІС…РѕРґРЅС‹С… РґР°РЅРЅС‹С… РёР· С„Р°Р№Р»Р°,
+		// РћР±СЂР°Р±РѕС‚РєСѓ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ Рё Р·Р°РїРёСЃСЊ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РІ С„Р°Р№Р»
 		if(DataFromFile)
 			TreatDataFromFile();
 		return true;

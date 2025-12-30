@@ -22,9 +22,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NNeuronLife::NNeuronLife(void)
  : Threshold("Threshold",this,&NNeuronLife::SetThreshold),
@@ -98,14 +98,14 @@ NNeuronLife::~NNeuronLife(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
 bool NNeuronLife::SetThreshold(const double &value)
 {
  return true;
 }
 
-// Устанавливает ожидаемое значение максимального градиента выхода нейрона
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РѕР¶РёРґР°РµРјРѕРµ Р·РЅР°С‡РµРЅРёРµ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РіСЂР°РґРёРµРЅС‚Р° РІС‹С…РѕРґР° РЅРµР№СЂРѕРЅР°
 bool NNeuronLife::SetMaxPotentialGradient(const double &value)
 {
  if(value <= 0)
@@ -154,9 +154,9 @@ bool NNeuronLife::SetQsummax(const double &value)
 
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NNeuronLife* NNeuronLife::New(void)
 {
  return new NNeuronLife;
@@ -164,12 +164,12 @@ NNeuronLife* NNeuronLife::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NNeuronLife::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NSum>(comp))
@@ -180,20 +180,20 @@ bool NNeuronLife::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
 
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NNeuronLife::ABuild(void)
 {
  AddMissingComponent<NSum>("ExternalEnergyBonus","NSum",&ExternalEnergyBonus);
  return true;
 }
- // Восстановление настроек по умолчанию и сброс процесса счета
+ // Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NNeuronLife::ADefault(void)
 {
  Output1.Assign(1,4,0.0);
@@ -206,7 +206,7 @@ bool NNeuronLife::ADefault(void)
  Output8.Assign(1,1,0.0);
 
 
- // Начальные значения всем параметрам
+ // РќР°С‡Р°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІСЃРµРј РїР°СЂР°РјРµС‚СЂР°Рј
  Threshold=static_cast<double>(0.001);
  WearOutConstPositive = static_cast<double>(100);//0.01;
  WearOutConstNegative = 1;//0.1;
@@ -248,10 +248,10 @@ bool NNeuronLife::ADefault(void)
 
  return true;
 }
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NNeuronLife::AReset(void)
 {
- // Сброс временных переменных
+ // РЎР±СЂРѕСЃ РІСЂРµРјРµРЅРЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С…
 // NeuralPotential=0;
 // PrePotential=0;
 // PulseCounter=0;
@@ -283,10 +283,10 @@ bool NNeuronLife::AReset(void)
 
 bool NNeuronLife::ACalcWearOut(void)
 {
- // Добавляем фиксированную прибавку к износу в секунду
+ // Р”РѕР±Р°РІР»СЏРµРј С„РёРєСЃРёСЂРѕРІР°РЅРЅСѓСЋ РїСЂРёР±Р°РІРєСѓ Рє РёР·РЅРѕСЃСѓ РІ СЃРµРєСѓРЅРґСѓ
  WearOut.v+=WearOutConstPositive/TimeStep;
 
- // Вычитаем обновление нейрона за счет генерации
+ // Р’С‹С‡РёС‚Р°РµРј РѕР±РЅРѕРІР»РµРЅРёРµ РЅРµР№СЂРѕРЅР° Р·Р° СЃС‡РµС‚ РіРµРЅРµСЂР°С†РёРё
 // WearOut-=WearOut*(1/(1+exp(-Kw*fabs(Usum)))-0.5)*WearOutConstNegative/TimeStep;
 // WearOut-=fabs(Usum)*WearOutConstNegative/TimeStep;//(1.0/(1.0+exp(-Kw*fabs(Usum)))-0.5)*WearOutConstNegative/TimeStep;
  WearOut.v-=WearOut*fabs(Usum)*WearOutConstNegative/TimeStep;
@@ -296,7 +296,7 @@ bool NNeuronLife::ACalcWearOut(void)
 bool NNeuronLife::ACalcEnergy(void)
 {
  double old_Energy=Energy;
- // Вычисляем бонус энергии
+ // Р’С‹С‡РёСЃР»СЏРµРј Р±РѕРЅСѓСЃ СЌРЅРµСЂРіРёРё
 // EnergyBonus+=fabs(Usum)*EyBonusPos/TimeStep;
 // EnergyBonus-=EnergyBonus*EyBonusNeg/TimeStep;
  EnergyBonus.v+=fabs(Usum)*EyBonusPos;
@@ -363,7 +363,7 @@ double NNeuronLife::FeelDiff(double kq, double ediff, double en)
  return static_cast<double>((1.0/(1.0+exp(-kq*ediff))-0.5)*en*2.0);
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NNeuronLife::ACalculate(void)
 {
  if(!Input1.IsConnected() || !Input2.IsConnected() || !Input3.IsConnected() || Input1->GetCols()<1 || Input2->GetCols() || Input3->GetCols())
@@ -410,7 +410,7 @@ bool NNeuronLife::ACalculate(void)
  if(!ACalcThresholdLife())
   return false;
 
- if(Energy.v < 0) // Вместо 0 должен быть параметр остаточного минимума
+ if(Energy.v < 0) // Р’РјРµСЃС‚Рѕ 0 РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РїР°СЂР°РјРµС‚СЂ РѕСЃС‚Р°С‚РѕС‡РЅРѕРіРѕ РјРёРЅРёРјСѓРјР°
  {
   UEPtr<UItem> item=dynamic_pointer_cast<UItem>(Owner);
   if(item)
@@ -445,14 +445,14 @@ bool NNeuronLife::ACalculate(void)
 
  Output5(0,0)=Energy.v;
 
- // Вычисляем мотивацию для возбуждающих синапсов
+ // Р’С‹С‡РёСЃР»СЏРµРј РјРѕС‚РёРІР°С†РёСЋ РґР»СЏ РІРѕР·Р±СѓР¶РґР°СЋС‰РёС… СЃРёРЅР°РїСЃРѕРІ
  Output6(0,0)=dEa*TimeStep;
  Output6(0,1)=-dEy;
  Output6(0,2)=-dEe*TimeStep;
  Output6(0,3)=dEh*TimeStep;
  Output6(0,4)=0;//dE*TimeStep;
 
- // Вычисляем мотивацию для тормозных синапсов
+ // Р’С‹С‡РёСЃР»СЏРµРј РјРѕС‚РёРІР°С†РёСЋ РґР»СЏ С‚РѕСЂРјРѕР·РЅС‹С… СЃРёРЅР°РїСЃРѕРІ
 /* POutputData[6].Double[0]=dEa*TimeStep;
  POutputData[6].Double[1]=-dEy;
  POutputData[6].Double[2]=-dEe*TimeStep;
@@ -465,7 +465,7 @@ bool NNeuronLife::ACalculate(void)
  Output7(0,3)=-dEh*TimeStep;
  Output7(0,4)=0;//-dE*TimeStep;
 
- // Вычисляем опосредованные воздействия - энергетический бонус
+ // Р’С‹С‡РёСЃР»СЏРµРј РѕРїРѕСЃСЂРµРґРѕРІР°РЅРЅС‹Рµ РІРѕР·РґРµР№СЃС‚РІРёСЏ - СЌРЅРµСЂРіРµС‚РёС‡РµСЃРєРёР№ Р±РѕРЅСѓСЃ
  Output8(0,0)=EnergyBonus.v;
 
  return true;

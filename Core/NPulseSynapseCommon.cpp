@@ -22,9 +22,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Ìåòîäû
+// ÐœÐµÑ‚Ð¾Ð´Ñ‹
 // --------------------------
-// Êîíñòðóêòîðû è äåñòðóêòîðû
+// ÐšÐ¾Ð½ÑÑ‚Ñ€ÑƒÐºÑ‚Ð¾Ñ€Ñ‹ Ð¸ Ð´ÐµÑÑ‚Ñ€ÑƒÐºÑ‚Ð¾Ñ€Ñ‹
 // --------------------------
 NPulseSynapseCommon::NPulseSynapseCommon(void)
 : Type("Type", this, &NPulseSynapseCommon::SetType),
@@ -49,7 +49,7 @@ NPulseSynapseCommon::~NPulseSynapseCommon(void)
 
 
 // --------------------------
-// Ìåòîäû óïðàâëåíèÿ îáùåäîñòóïíûìè ñâîéñòâàìè
+// ÐœÐµÑ‚Ð¾Ð´Ñ‹ ÑƒÐ¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ñ Ð¾Ð±Ñ‰ÐµÐ´Ð¾ÑÑ‚ÑƒÐ¿Ð½Ñ‹Ð¼Ð¸ ÑÐ²Ð¾Ð¹ÑÑ‚Ð²Ð°Ð¼Ð¸
 // --------------------------
 bool NPulseSynapseCommon::SetType(const double &value)
 {
@@ -64,19 +64,19 @@ bool NPulseSynapseCommon::SetType(const double &value)
  return true;
 }
 
-// Óñòàíàâëèâàåò àìïëèòóäó èìïóëüñîâ
+// Ð£ÑÑ‚Ð°Ð½Ð°Ð²Ð»Ð¸Ð²Ð°ÐµÑ‚ Ð°Ð¼Ð¿Ð»Ð¸Ñ‚ÑƒÐ´Ñƒ Ð¸Ð¼Ð¿ÑƒÐ»ÑŒÑÐ¾Ð²
 bool NPulseSynapseCommon::SetPulseAmplitude(const double &value)
 {
  return true;
 }
 
-// Âåñ (ýôôåêòèâíîñòü ñèíàïñà) ñèíàïñà
+// Ð’ÐµÑ (ÑÑ„Ñ„ÐµÐºÑ‚Ð¸Ð²Ð½Ð¾ÑÑ‚ÑŒ ÑÐ¸Ð½Ð°Ð¿ÑÐ°) ÑÐ¸Ð½Ð°Ð¿ÑÐ°
 bool NPulseSynapseCommon::SetResistance(const double &value)
 {
  return true;
 }
 
-/// Èìÿ êëàññà-ó÷èòåëÿ, íàñòðàèâàþùåãî âåñ ñèíàïñà
+/// Ð˜Ð¼Ñ ÐºÐ»Ð°ÑÑÐ°-ÑƒÑ‡Ð¸Ñ‚ÐµÐ»Ñ, Ð½Ð°ÑÑ‚Ñ€Ð°Ð¸Ð²Ð°ÑŽÑ‰ÐµÐ³Ð¾ Ð²ÐµÑ ÑÐ¸Ð½Ð°Ð¿ÑÐ°
 bool NPulseSynapseCommon::SetTrainerClassName(const std::string &value)
 {
  Ready=false;
@@ -86,21 +86,21 @@ bool NPulseSynapseCommon::SetTrainerClassName(const std::string &value)
 
 
 // --------------------------
-// Ñèñòåìíûå ìåòîäû óïðàâëåíèÿ îáúåêòîì
+// Ð¡Ð¸ÑÑ‚ÐµÐ¼Ð½Ñ‹Ðµ Ð¼ÐµÑ‚Ð¾Ð´Ñ‹ ÑƒÐ¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ñ Ð¾Ð±ÑŠÐµÐºÑ‚Ð¾Ð¼
 // --------------------------
-// Âûäåëÿåò ïàìÿòü äëÿ íîâîé ÷èñòîé êîïèè îáúåêòà ýòîãî êëàññà
+// Ð’Ñ‹Ð´ÐµÐ»ÑÐµÑ‚ Ð¿Ð°Ð¼ÑÑ‚ÑŒ Ð´Ð»Ñ Ð½Ð¾Ð²Ð¾Ð¹ Ñ‡Ð¸ÑÑ‚Ð¾Ð¹ ÐºÐ¾Ð¿Ð¸Ð¸ Ð¾Ð±ÑŠÐµÐºÑ‚Ð° ÑÑ‚Ð¾Ð³Ð¾ ÐºÐ»Ð°ÑÑÐ°
 NPulseSynapseCommon* NPulseSynapseCommon::New(void)
 {
  return new NPulseSynapseCommon;
 }
 
-// Âîçâðàùàåò óêàçàòåëü íà ó÷èòåëÿ
+// Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ ÑƒÐºÐ°Ð·Ð°Ñ‚ÐµÐ»ÑŒ Ð½Ð° ÑƒÑ‡Ð¸Ñ‚ÐµÐ»Ñ
 NSynapseTrainer* NPulseSynapseCommon::GetTrainer(void)
 {
  return Trainer;
 }
 
-// Óñòàíàâëèâàåò ñâÿçè òðåíåðà åñëè îí åñòü
+// Ð£ÑÑ‚Ð°Ð½Ð°Ð²Ð»Ð¸Ð²Ð°ÐµÑ‚ ÑÐ²ÑÐ·Ð¸ Ñ‚Ñ€ÐµÐ½ÐµÑ€Ð° ÐµÑÐ»Ð¸ Ð¾Ð½ ÐµÑÑ‚ÑŒ
 void NPulseSynapseCommon::RebuildInternalLinks(void)
 {
  if(Trainer)
@@ -109,18 +109,18 @@ void NPulseSynapseCommon::RebuildInternalLinks(void)
 // --------------------------
 
 // --------------------------
-// Ñêðûòûå ìåòîäû óïðàâëåíèÿ ñ÷åòîì
+// Ð¡ÐºÑ€Ñ‹Ñ‚Ñ‹Ðµ Ð¼ÐµÑ‚Ð¾Ð´Ñ‹ ÑƒÐ¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ñ ÑÑ‡ÐµÑ‚Ð¾Ð¼
 // --------------------------
-// Âîññòàíîâëåíèå íàñòðîåê ïî óìîë÷àíèþ è ñáðîñ ïðîöåññà ñ÷åòà
+// Ð’Ð¾ÑÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐº Ð¿Ð¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ Ð¸ ÑÐ±Ñ€Ð¾Ñ Ð¿Ñ€Ð¾Ñ†ÐµÑÑÐ° ÑÑ‡ÐµÑ‚Ð°
 bool NPulseSynapseCommon::ADefault(void)
 {
  Type = -1;
 
- // Íà÷àëüíûå çíà÷åíèÿ âñåì ïàðàìåòðàì
- // Àìïëèòóäà âõîäíûõ èìïóëüñîâ
+ // ÐÐ°Ñ‡Ð°Ð»ÑŒÐ½Ñ‹Ðµ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ñ Ð²ÑÐµÐ¼ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ð°Ð¼
+ // ÐÐ¼Ð¿Ð»Ð¸Ñ‚ÑƒÐ´Ð° Ð²Ñ…Ð¾Ð´Ð½Ñ‹Ñ… Ð¸Ð¼Ð¿ÑƒÐ»ÑŒÑÐ¾Ð²
  PulseAmplitude=1;
 
- // Âåñ (ýôôåêòèâíîñòü ñèíàïñà) ñèíàïñà
+ // Ð’ÐµÑ (ÑÑ„Ñ„ÐµÐºÑ‚Ð¸Ð²Ð½Ð¾ÑÑ‚ÑŒ ÑÐ¸Ð½Ð°Ð¿ÑÐ°) ÑÐ¸Ð½Ð°Ð¿ÑÐ°
  Resistance=10.0;
 
  Output.Assign(1,1,0.0);
@@ -134,10 +134,10 @@ bool NPulseSynapseCommon::ADefault(void)
  return true;
 }
 
-// Îáåñïå÷èâàåò ñáîðêó âíóòðåííåé ñòðóêòóðû îáúåêòà
-// ïîñëå íàñòðîéêè ïàðàìåòðîâ
-// Àâòîìàòè÷åñêè âûçûâàåò ìåòîä Reset() è âûñòàâëÿåò Ready â true
-// â ñëó÷àå óñïåøíîé ñáîðêè
+// ÐžÐ±ÐµÑÐ¿ÐµÑ‡Ð¸Ð²Ð°ÐµÑ‚ ÑÐ±Ð¾Ñ€ÐºÑƒ Ð²Ð½ÑƒÑ‚Ñ€ÐµÐ½Ð½ÐµÐ¹ ÑÑ‚Ñ€ÑƒÐºÑ‚ÑƒÑ€Ñ‹ Ð¾Ð±ÑŠÐµÐºÑ‚Ð°
+// Ð¿Ð¾ÑÐ»Ðµ Ð½Ð°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ð¾Ð²
+// ÐÐ²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸Ñ‡ÐµÑÐºÐ¸ Ð²Ñ‹Ð·Ñ‹Ð²Ð°ÐµÑ‚ Ð¼ÐµÑ‚Ð¾Ð´ Reset() Ð¸ Ð²Ñ‹ÑÑ‚Ð°Ð²Ð»ÑÐµÑ‚ Ready Ð² true
+// Ð² ÑÐ»ÑƒÑ‡Ð°Ðµ ÑƒÑÐ¿ÐµÑˆÐ½Ð¾Ð¹ ÑÐ±Ð¾Ñ€ÐºÐ¸
 bool NPulseSynapseCommon::ABuild(void)
 {
  return true;
@@ -163,10 +163,10 @@ bool NPulseSynapseCommon::AAfterBuild(void)
  return true;
 }
 
-// Ñáðîñ ïðîöåññà ñ÷åòà.
+// Ð¡Ð±Ñ€Ð¾Ñ Ð¿Ñ€Ð¾Ñ†ÐµÑÑÐ° ÑÑ‡ÐµÑ‚Ð°.
 bool NPulseSynapseCommon::AReset(void)
 {
- // Ñáðîñ âðåìåííûõ ïåðåìåííûõ
+ // Ð¡Ð±Ñ€Ð¾Ñ Ð²Ñ€ÐµÐ¼ÐµÐ½Ð½Ñ‹Ñ… Ð¿ÐµÑ€ÐµÐ¼ÐµÐ½Ð½Ñ‹Ñ…
  PreOutput=0;
  InputPulseSignal=false;
  PulseSignalTemp=false;
@@ -174,7 +174,7 @@ bool NPulseSynapseCommon::AReset(void)
  return true;
 }
 
-// Âûïîëíÿåò ðàñ÷åò ýòîãî îáúåêòà
+// Ð’Ñ‹Ð¿Ð¾Ð»Ð½ÑÐµÑ‚ Ñ€Ð°ÑÑ‡ÐµÑ‚ ÑÑ‚Ð¾Ð³Ð¾ Ð¾Ð±ÑŠÐµÐºÑ‚Ð°
 bool NPulseSynapseCommon::ACalculate(void)
 {
  if((*Input)(0,0)>0 && !PulseSignalTemp)

@@ -8,9 +8,9 @@
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseNeuronIzhikevich::NPulseNeuronIzhikevich(void)
 {
@@ -22,9 +22,9 @@ NPulseNeuronIzhikevich::~NPulseNeuronIzhikevich(void)
 // --------------------------    
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseNeuronIzhikevich* NPulseNeuronIzhikevich::New(void)
 {
  return new NPulseNeuronIzhikevich;
@@ -32,9 +32,9 @@ NPulseNeuronIzhikevich* NPulseNeuronIzhikevich::New(void)
 // --------------------------
 
 // --------------------------
-// Методы управления счетом
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-/// Создает структуру простого нейрона
+/// РЎРѕР·РґР°РµС‚ СЃС‚СЂСѓРєС‚СѓСЂСѓ РїСЂРѕСЃС‚РѕРіРѕ РЅРµР№СЂРѕРЅР°
 void NPulseNeuronIzhikevich::CreateSimpleNeuron(void)
 {
  AddMissingComponent<NPulseMembraneIzhikevich>("PulseMembrane", "NPulseMembraneIzhikevich");
@@ -47,9 +47,9 @@ void NPulseNeuronIzhikevich::CreateSimpleNeuron(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseNeuronIzhikevich::ADefault(void)
 {
  if(!NPulseNeuronCommon::ADefault())
@@ -57,10 +57,10 @@ bool NPulseNeuronIzhikevich::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseNeuronIzhikevich::ABuild(void)
 {
  if(!NPulseNeuronCommon::ABuild())
@@ -70,7 +70,7 @@ bool NPulseNeuronIzhikevich::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета без потери настроек
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р° Р±РµР· РїРѕС‚РµСЂРё РЅР°СЃС‚СЂРѕРµРє
 bool NPulseNeuronIzhikevich::AReset(void)
 {
  if(!NPulseNeuronCommon::AReset())
@@ -79,7 +79,7 @@ bool NPulseNeuronIzhikevich::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseNeuronIzhikevich::ACalculate(void)
 {
  if(!NPulseNeuronCommon::ACalculate())

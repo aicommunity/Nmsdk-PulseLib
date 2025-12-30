@@ -24,102 +24,102 @@ class NPulseNeuron;
 
 class RDK_LIB_TYPE NPulseMembraneCommon: public UNet
 {
-public: // Параметры
-/// Признак наличия усреднения в выходных данных нейрона
-ULProperty<bool, NPulseMembraneCommon, ptPubParameter> UseAveragePotential;
+public: // 
+///       
+UProperty<bool, NPulseMembraneCommon, ptPubParameter> UseAveragePotential;
 
-public: // Данные
-/// Значение обратной связи
-ULProperty<double,NPulseMembraneCommon,ptPubState> Feedback;
+public: // 
+///   
+UProperty<double,NPulseMembraneCommon,ptPubState> Feedback;
 
-/// Суммарное значение потенциала на участке мембраны
-UPropertyOutputData<MDMatrix<double>, NPulseMembraneCommon, ptPubState> SumPotential;
+///      
+UProperty<MDMatrix<double>, NPulseMembraneCommon, ptPubState> SumPotential;
 
 
-protected: // Временные переменные
-// Ионные механизмы
+protected: //  
+//  
 vector<NPulseChannelCommon*> Channels;
 
-// Синапсы
+// 
 vector<NPulseSynapseCommon*> Synapses;
 
-/// Флаг, который взводится на время наличия обратной связи
+/// ,       
 bool IsNeuronActive;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NPulseMembraneCommon(void);
 virtual ~NPulseMembraneCommon(void);
 // --------------------------
 
 // --------------------------
-// Методы управления параметрами
+//   
 // --------------------------
-/// Признак наличия усреднения в выходных данных нейрона
+///       
 bool SetUseAveragePotential(const bool &value);
 // --------------------------
 
 // --------------------------
-// Методы управления временными перменными
+//    
 // --------------------------
-// Ионные механизмы
+//  
 size_t GetNumChannels(void) const;
 NPulseChannelCommon* GetChannel(size_t i);
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NPulseMembraneCommon* New(void);
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+//    
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+//       
+//     
+//   'true'   
+//  'false'    
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+//    
 // --------------------------
 protected:
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+//    
+//       
+//      comp 
+//     
 virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+//    
+//       
+//      comp
+//    
 virtual bool ADelComponent(UEPtr<UContainer> comp);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+//    
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+//   .
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate(void);
 virtual bool ACalculate2(void);
 // --------------------------

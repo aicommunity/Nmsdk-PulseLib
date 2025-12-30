@@ -24,9 +24,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NAfferentNeuron::NAfferentNeuron(void)
 : StructureBuildMode("StructureBuildMode",this,&NAfferentNeuron::SetStructureBuildMode),
@@ -46,59 +46,59 @@ NAfferentNeuron::~NAfferentNeuron(void)
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NAfferentNeuron::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
   Ready=false;
  return true;
 }
 
-/// Имя класса участка мембраны
+/// РРјСЏ РєР»Р°СЃСЃР° СѓС‡Р°СЃС‚РєР° РјРµРјР±СЂР°РЅС‹
 bool NAfferentNeuron::SetMembraneClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса генераторной зоны
+/// РРјСЏ РєР»Р°СЃСЃР° РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ Р·РѕРЅС‹
 bool NAfferentNeuron::SetLTZoneClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса рецептора
+/// РРјСЏ РєР»Р°СЃСЃР° СЂРµС†РµРїС‚РѕСЂР°
 bool NAfferentNeuron::SetReceptorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса источника задающего сигнала для возбуждающего ионного механизма
+/// РРјСЏ РєР»Р°СЃСЃР° РёСЃС‚РѕС‡РЅРёРєР° Р·Р°РґР°СЋС‰РµРіРѕ СЃРёРіРЅР°Р»Р° РґР»СЏ РІРѕР·Р±СѓР¶РґР°СЋС‰РµРіРѕ РёРѕРЅРЅРѕРіРѕ РјРµС…Р°РЅРёР·РјР°
 bool NAfferentNeuron::SetExcGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 		/*
-/// Имя класса источника задающего сигнала для тормозного ионного механизма
+/// РРјСЏ РєР»Р°СЃСЃР° РёСЃС‚РѕС‡РЅРёРєР° Р·Р°РґР°СЋС‰РµРіРѕ СЃРёРіРЅР°Р»Р° РґР»СЏ С‚РѕСЂРјРѕР·РЅРѕРіРѕ РёРѕРЅРЅРѕРіРѕ РјРµС…Р°РЅРёР·РјР°
 bool NAfferentNeuron::SetInhGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }        */
 
-/// Число участков мембраны тела нейрона
+/// Р§РёСЃР»Рѕ СѓС‡Р°СЃС‚РєРѕРІ РјРµРјР±СЂР°РЅС‹ С‚РµР»Р° РЅРµР№СЂРѕРЅР°
 bool NAfferentNeuron::SetNumSomaMembraneParts(const int &value)
 {
  Ready=false;
  return true;
 }
 
-/// Максимальная величина входного значения рецептора
+/// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РІРµР»РёС‡РёРЅР° РІС…РѕРґРЅРѕРіРѕ Р·РЅР°С‡РµРЅРёСЏ СЂРµС†РµРїС‚РѕСЂР°
 bool NAfferentNeuron::SetMaxReceptorOutput(const double &value)
 {
  Ready=false;
@@ -107,9 +107,9 @@ bool NAfferentNeuron::SetMaxReceptorOutput(const double &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NAfferentNeuron* NAfferentNeuron::New(void)
 {
  return new NAfferentNeuron;
@@ -117,12 +117,12 @@ NAfferentNeuron* NAfferentNeuron::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NAfferentNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseMembrane>(comp) ||
@@ -137,9 +137,9 @@ bool NAfferentNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-/// Осуществляет сборку классической структуры
+/// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ РєР»Р°СЃСЃРёС‡РµСЃРєРѕР№ СЃС‚СЂСѓРєС‚СѓСЂС‹
 bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const string &ltzone_class,
 					const string &receptorclass, const string &neg_gen_class,
 					/*const string &neg_gen_class,*/ int num_membranes)
@@ -185,14 +185,14 @@ bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const
   channel1=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
   channel2=dynamic_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
 
-  // Устанавливаем обратную связь
+  // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РѕР±СЂР°С‚РЅСѓСЋ СЃРІСЏР·СЊ
   res&=CreateLink(ltzone->GetLongName(this),"Output",membr->GetLongName(this),"InputFeedbackSignal");
 
-  // Устанавливаем связь мембраны с низкопороговой зоной
+  // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЃРІСЏР·СЊ РјРµРјР±СЂР°РЅС‹ СЃ РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅРѕР№
   res&=CreateLink(channel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
   res&=CreateLink(channel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
 
-  // Связь между начальными значениями мощностей ионных каналов и каналами
+  // РЎРІСЏР·СЊ РјРµР¶РґСѓ РЅР°С‡Р°Р»СЊРЅС‹РјРё Р·РЅР°С‡РµРЅРёСЏРјРё РјРѕС‰РЅРѕСЃС‚РµР№ РёРѕРЅРЅС‹С… РєР°РЅР°Р»РѕРІ Рё РєР°РЅР°Р»Р°РјРё
   res&=CreateLink(receptor->GetLongName(this),"Output",channel2->GetLongName(this),"ChannelInputs");
   res&=CreateLink(gen_neg->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
  }
@@ -200,7 +200,7 @@ bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const
  return res;
 }
 
-/// Осуществляет сборку упрощенной структуры
+/// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СѓРїСЂРѕС‰РµРЅРЅРѕР№ СЃС‚СЂСѓРєС‚СѓСЂС‹
 bool NAfferentNeuron::BuildSimpleStructure(const string &ltzone_class,
 					const string &receptorclass, double max_output)
 {
@@ -235,7 +235,7 @@ bool NAfferentNeuron::BuildSimpleStructure(const string &ltzone_class,
 }
 
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NAfferentNeuron::ADefault(void)
 {
  if(!NPulseNeuronCommon::ADefault())
@@ -253,10 +253,10 @@ bool NAfferentNeuron::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NAfferentNeuron::ABuild(void)
 {
  if(!NPulseNeuronCommon::ABuild())
@@ -282,7 +282,7 @@ bool NAfferentNeuron::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NAfferentNeuron::AReset(void)
 {
  if(!NPulseNeuronCommon::AReset())
@@ -291,7 +291,7 @@ bool NAfferentNeuron::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NAfferentNeuron::ACalculate(void)
 {
  if(!NPulseNeuronCommon::ACalculate())

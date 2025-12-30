@@ -30,9 +30,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// С›РµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// В РѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseNeuron::NPulseNeuron(void)
 : StructureBuildMode("StructureBuildMode",this,&NPulseNeuron::SetStructureBuildMode),
@@ -62,21 +62,21 @@ NPulseNeuron::~NPulseNeuron(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// С›РµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
-// Возвращает указатель на модель источника возбуждаюшего потенциала
+// В¬РѕР·РІСЂР°С‰Р°РµС‚ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РјРѕРґРµР»СЊ РёСЃС‚РѕС‡РЅРёРєР° РІРѕР·Р±СѓР¶РґР°СЋС€РµРіРѕ РїРѕС‚РµРЅС†РёР°Р»Р°
 NConstGenerator* NPulseNeuron::GetPosGenerator(void)
 {
  return PosGenerator;
 }
 
-// Возвращает указатель на модель источника тормозного потенциала
+// В¬РѕР·РІСЂР°С‰Р°РµС‚ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РјРѕРґРµР»СЊ РёСЃС‚РѕС‡РЅРёРєР° С‚РѕСЂРјРѕР·РЅРѕРіРѕ РїРѕС‚РµРЅС†РёР°Р»Р°
 NConstGenerator* NPulseNeuron::GetNegGenerator(void)
 {
  return NegGenerator;
 }
 
-/// Доступ к участкам мембраны
+/// Ж’РѕСЃС‚СѓРї Рє СѓС‡Р°СЃС‚РєР°Рј РјРµРјР±СЂР°РЅС‹
 size_t NPulseNeuron::GetNumMembranes(void) const
 {
  return Membranes.size();
@@ -89,12 +89,12 @@ NPulseMembrane* NPulseNeuron::GetMembrane(size_t i)
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// С›РµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёв‚¬ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// вЂ“РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NPulseNeuron::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // С•РµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
  {
   OldStructureBuildMode=StructureBuildMode;
   Ready=false;
@@ -121,21 +121,21 @@ bool NPulseNeuron::SetStructureBuildMode(const int &value)
  return true;
 }
 
-/// Имя класса участка мембраны
+/// В»Рјв‚¬ РєР»Р°СЃСЃР° СѓС‡Р°СЃС‚РєР° РјРµРјР±СЂР°РЅС‹
 bool NPulseNeuron::SetMembraneClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса выделенного участка мембраны для генераторной зоны
+/// В»Рјв‚¬ РєР»Р°СЃСЃР° РІС‹РґРµР»РµРЅРЅРѕРіРѕ СѓС‡Р°СЃС‚РєР° РјРµРјР±СЂР°РЅС‹ РґР»в‚¬ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ Р·РѕРЅС‹
 bool NPulseNeuron::SetLTMembraneClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса генераторной зоны
+/// В»Рјв‚¬ РєР»Р°СЃСЃР° РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ Р·РѕРЅС‹
 bool NPulseNeuron::SetLTZoneClassName(const std::string &value)
 {
  Ready=false;
@@ -143,21 +143,21 @@ bool NPulseNeuron::SetLTZoneClassName(const std::string &value)
 }
 
 
-/// Имя класса источника задающего сигнала для возбуждающего ионного механизма
+/// В»Рјв‚¬ РєР»Р°СЃСЃР° РёСЃС‚РѕС‡РЅРёРєР° Р·Р°РґР°СЋС‰РµРіРѕ СЃРёРіРЅР°Р»Р° РґР»в‚¬ РІРѕР·Р±СѓР¶РґР°СЋС‰РµРіРѕ РёРѕРЅРЅРѕРіРѕ РјРµС…Р°РЅРёР·РјР°
 bool NPulseNeuron::SetExcGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса источника задающего сигнала для тормозного ионного механизма
+/// В»Рјв‚¬ РєР»Р°СЃСЃР° РёСЃС‚РѕС‡РЅРёРєР° Р·Р°РґР°СЋС‰РµРіРѕ СЃРёРіРЅР°Р»Р° РґР»в‚¬ С‚РѕСЂРјРѕР·РЅРѕРіРѕ РёРѕРЅРЅРѕРіРѕ РјРµС…Р°РЅРёР·РјР°
 bool NPulseNeuron::SetInhGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число участков мембраны тела нейрона
+/// вЂћРёСЃР»Рѕ СѓС‡Р°СЃС‚РєРѕРІ РјРµРјР±СЂР°РЅС‹ С‚РµР»Р° РЅРµР№СЂРѕРЅР°
 bool NPulseNeuron::SetNumSomaMembraneParts(const int &value)
 {
  OldNumSoma=NumSomaMembraneParts;
@@ -167,7 +167,7 @@ bool NPulseNeuron::SetNumSomaMembraneParts(const int &value)
  return true;
 }
 
-/// Число участков мембраны дендритов (исключая участок тела)
+/// вЂћРёСЃР»Рѕ СѓС‡Р°СЃС‚РєРѕРІ РјРµРјР±СЂР°РЅС‹ РґРµРЅРґСЂРёС‚РѕРІ (РёСЃРєР»СЋС‡Р°в‚¬ СѓС‡Р°СЃС‚РѕРє С‚РµР»Р°)
 bool NPulseNeuron::SetNumDendriteMembraneParts(const int &value)
 {
  OldNumDendrites=NumDendriteMembraneParts;
@@ -176,7 +176,7 @@ bool NPulseNeuron::SetNumDendriteMembraneParts(const int &value)
 }
 
 
-/// Число участков мембраны дендритов (исключая участок тела)
+/// вЂћРёСЃР»Рѕ СѓС‡Р°СЃС‚РєРѕРІ РјРµРјР±СЂР°РЅС‹ РґРµРЅРґСЂРёС‚РѕРІ (РёСЃРєР»СЋС‡Р°в‚¬ СѓС‡Р°СЃС‚РѕРє С‚РµР»Р°)
 bool NPulseNeuron::SetNumDendriteMembranePartsVec(const std::vector<int> &value)
 {
  OldNumDendritesVec=NumDendriteMembranePartsVec;
@@ -184,25 +184,25 @@ bool NPulseNeuron::SetNumDendriteMembranePartsVec(const std::vector<int> &value)
  return true;
 }
 
-/// Паттерн, которому обучен нейрон
-/// (если нейрон не обучен Size = 0)
-/// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+/// С•Р°С‚С‚РµСЂРЅ, РєРѕС‚РѕСЂРѕРјСѓ РѕР±СѓС‡РµРЅ РЅРµР№СЂРѕРЅ
+/// (РµСЃР»Рё РЅРµР№СЂРѕРЅ РЅРµ РѕР±СѓС‡РµРЅ Size = 0)
+/// РЊСВ«РЊСвЂћСв‰€вЂњвЂ”СЏ С•вЂ“Сњв€љвЂ“СС›С›РЊСњ! РЊв‰€ Ж’СњР‹в€†в‰€РЊ С›в‰€РЊСЏвЂњв„–вЂ”СЏ С•СњР‹в„–В«СњВ¬СвЂњв‰€Р‹в‰€С›!!!
 bool NPulseNeuron::SetTrainingPattern(const MDMatrix<double> &value)
 {
  return true;
 }
 
-/// Индексы входных участков на дендритах
-/// (если нейрон не обучен Size = 0)
-/// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+/// В»РЅРґРµРєСЃС‹ РІС…РѕРґРЅС‹С… СѓС‡Р°СЃС‚РєРѕРІ РЅР° РґРµРЅРґСЂРёС‚Р°С…
+/// (РµСЃР»Рё РЅРµР№СЂРѕРЅ РЅРµ РѕР±СѓС‡РµРЅ Size = 0)
+/// РЊСВ«РЊСвЂћСв‰€вЂњвЂ”СЏ С•вЂ“Сњв€љвЂ“СС›С›РЊСњ! РЊв‰€ Ж’СњР‹в€†в‰€РЊ С›в‰€РЊСЏвЂњв„–вЂ”СЏ С•СњР‹в„–В«СњВ¬СвЂњв‰€Р‹в‰€С›!!!
 bool NPulseNeuron::SetTrainingDendIndexes(const MDMatrix<int> &value)
 {
  return true;
 }
 
-/// Количество синапсов на входных участков на дендритах
-/// (если нейрон не обучен Size = 0)
-/// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
+/// В РѕР»РёС‡РµСЃС‚РІРѕ СЃРёРЅР°РїСЃРѕРІ РЅР° РІС…РѕРґРЅС‹С… СѓС‡Р°СЃС‚РєРѕРІ РЅР° РґРµРЅРґСЂРёС‚Р°С…
+/// (РµСЃР»Рё РЅРµР№СЂРѕРЅ РЅРµ РѕР±СѓС‡РµРЅ Size = 0)
+/// РЊСВ«РЊСвЂћСв‰€вЂњвЂ”СЏ С•вЂ“Сњв€љвЂ“СС›С›РЊСњ! РЊв‰€ Ж’СњР‹в€†в‰€РЊ С›в‰€РЊСЏвЂњв„–вЂ”СЏ С•СњР‹в„–В«СњВ¬СвЂњв‰€Р‹в‰€С›!!!
 bool NPulseNeuron::SetTrainingSynapsisNum(const MDMatrix<int> &value)
 {
  return true;
@@ -210,11 +210,11 @@ bool NPulseNeuron::SetTrainingSynapsisNum(const MDMatrix<int> &value)
 // --------------------------
 
 // --------------------------
-// Методы управления структурой объекта
+// С›РµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёв‚¬ СЃС‚СЂСѓРєС‚СѓСЂРѕР№ РѕР±СЉРµРєС‚Р°
 // --------------------------
-// Удлинняет заданный участок мембраны, добавляя к нему новый участок мембраны,
-// и переключая входы заданного участка на входы нового
-// Возвращает указатель на созданный участок
+// вЂќРґР»РёРЅРЅв‚¬РµС‚ Р·Р°РґР°РЅРЅС‹Р№ СѓС‡Р°СЃС‚РѕРє РјРµРјР±СЂР°РЅС‹, РґРѕР±Р°РІР»в‚¬в‚¬ Рє РЅРµРјСѓ РЅРѕРІС‹Р№ СѓС‡Р°СЃС‚РѕРє РјРµРјР±СЂР°РЅС‹,
+// Рё РїРµСЂРµРєР»СЋС‡Р°в‚¬ РІС…РѕРґС‹ Р·Р°РґР°РЅРЅРѕРіРѕ СѓС‡Р°СЃС‚РєР° РЅР° РІС…РѕРґС‹ РЅРѕРІРѕРіРѕ
+// В¬РѕР·РІСЂР°С‰Р°РµС‚ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃРѕР·РґР°РЅРЅС‹Р№ СѓС‡Р°СЃС‚РѕРє
 NPulseMembraneCommon* NPulseNeuron::ElongateDendrite(const std::string &name, bool feedback)
 {
  if(!Storage)
@@ -233,9 +233,9 @@ NPulseMembraneCommon* NPulseNeuron::ElongateDendrite(const std::string &name, bo
  return 0;
 }
 
-// Разветвляет заданный участок мембраны, добавляя к точке его подключения
-// дополнительно новый участок мембраны
-// Возвращает указатель на созданный участок
+// вЂ“Р°Р·РІРµС‚РІР»в‚¬РµС‚ Р·Р°РґР°РЅРЅС‹Р№ СѓС‡Р°СЃС‚РѕРє РјРµРјР±СЂР°РЅС‹, РґРѕР±Р°РІР»в‚¬в‚¬ Рє С‚РѕС‡РєРµ РµРіРѕ РїРѕРґРєР»СЋС‡РµРЅРёв‚¬
+// РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕ РЅРѕРІС‹Р№ СѓС‡Р°СЃС‚РѕРє РјРµРјР±СЂР°РЅС‹
+// В¬РѕР·РІСЂР°С‰Р°РµС‚ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃРѕР·РґР°РЅРЅС‹Р№ СѓС‡Р°СЃС‚РѕРє
 NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool feedback)
 {
  if(!Storage)
@@ -252,16 +252,16 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
   return 0;
  }
 
- RDK::ULinkSide item,conn;
+ RDK::ULinkSide item, link_conn;
  bool res=true;
 
- // Устанавливаем обратную связь
+ // вЂќСЃС‚Р°РЅР°РІР»РёРІР°РµРј РѕР±СЂР°С‚РЅСѓСЋ СЃРІв‚¬Р·СЊ
  if(feedback)
  {
   res&=CreateLink(GetLTZone()->GetLongName(this),"Output", new_dendrite->GetLongName(this),"InputFeedbackSignal");
  }
 
- // Подключаемся каналами к приемникам
+ // С•РѕРґРєР»СЋС‡Р°РµРјСЃв‚¬ РєР°РЅР°Р»Р°РјРё Рє РїСЂРёРµРјРЅРёРєР°Рј
  int size=dendrite->GetNumComponents();
  if(size>new_dendrite->GetNumComponents())
   size=new_dendrite->GetNumComponents();
@@ -304,7 +304,7 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
    }    */
  }
 
- // Подключаем источники мембранных потенциалов
+ // С•РѕРґРєР»СЋС‡Р°РµРј РёСЃС‚РѕС‡РЅРёРєРё РјРµРјР±СЂР°РЅРЅС‹С… РїРѕС‚РµРЅС†РёР°Р»РѕРІ
  //UEPtr<NPulseMembrane> membrane=static_pointer_cast<NPulseMembrane>(cont);
  for(size_t k=0;k<new_dendrite->GetNumNegChannels();k++)
  {
@@ -337,9 +337,9 @@ NPulseMembraneCommon* NPulseNeuron::BranchDendrite(const std::string &name, bool
  return new_dendrite;
 }
 
-// Удаляет заданный участок мембраны
-// Если full == true, то удаляет и все другие участки, подключенные к нему
-// Иначе перенаправляет связи со входов на свои выходы
+// вЂќРґР°Р»в‚¬РµС‚ Р·Р°РґР°РЅРЅС‹Р№ СѓС‡Р°СЃС‚РѕРє РјРµРјР±СЂР°РЅС‹
+// в‰€СЃР»Рё full == true, С‚Рѕ СѓРґР°Р»в‚¬РµС‚ Рё РІСЃРµ РґСЂСѓРіРёРµ СѓС‡Р°СЃС‚РєРё, РїРѕРґРєР»СЋС‡РµРЅРЅС‹Рµ Рє РЅРµРјСѓ
+// В»РЅР°С‡Рµ РїРµСЂРµРЅР°РїСЂР°РІР»в‚¬РµС‚ СЃРІв‚¬Р·Рё СЃРѕ РІС…РѕРґРѕРІ РЅР° СЃРІРѕРё РІС‹С…РѕРґС‹
 bool NPulseNeuron::EraseDendrite(const std::string &name)
 {
  return true;
@@ -347,9 +347,9 @@ bool NPulseNeuron::EraseDendrite(const std::string &name)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// вЂ”РёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёв‚¬ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// В¬С‹РґРµР»в‚¬РµС‚ РїР°Рјв‚¬С‚СЊ РґР»в‚¬ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseNeuron* NPulseNeuron::New(void)
 {
  return new NPulseNeuron;
@@ -362,12 +362,12 @@ UComponent* NPulseNeuron::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// С›РµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// С›РµС‚РѕРґ РїСЂРѕРІРµСЂв‚¬РµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// С›РµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NPulseNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseMembraneCommon>(comp) ||
@@ -381,12 +381,12 @@ bool NPulseNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// вЂ”РєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёв‚¬ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// В¬С‹РїРѕР»РЅв‚¬РµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёв‚¬
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// С›РµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NPulseNeuron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
@@ -415,10 +415,10 @@ bool NPulseNeuron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointe
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// В¬С‹РїРѕР»РЅв‚¬РµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёв‚¬
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// С›РµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NPulseNeuron::ADelComponent(UEPtr<UContainer> comp)
 {
  if(comp == PosGenerator)
@@ -432,9 +432,9 @@ bool NPulseNeuron::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// вЂ”РєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёв‚¬ СЃС‡РµС‚РѕРј
 // --------------------------
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// СњСЃСѓС‰РµСЃС‚РІР»в‚¬РµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltzonemembraneclass,
 								  const string &ltzone_class, const string &pos_gen_class,
 								  const string &neg_gen_class, int num_soma_membranes, int dendrite_mode,
@@ -444,7 +444,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  UEPtr<NPulseChannelCommon> channel1, channel2, ltchannel1,ltchannel2, channel1temp,channel2temp;
  UEPtr<NLTZone> ltzone;
  bool res(true);
- RDK::ULinkSide item,conn;
+  RDK::ULinkSide item, link_conn;
 
  if(dendrite_mode == 2)
  {
@@ -552,7 +552,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
    DelComponent(std::string("Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1));
  }
 
- // Случай, если задана выделенная часть мембраны генераторной зоны
+ // вЂ”Р»СѓС‡Р°Р№, РµСЃР»Рё Р·Р°РґР°РЅР° РІС‹РґРµР»РµРЅРЅР°в‚¬ С‡Р°СЃС‚СЊ РјРµРјР±СЂР°РЅС‹ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ Р·РѕРЅС‹
  if(!ltzonemembraneclass.empty())
  {
   ltmembr=AddMissingComponent<NPulseMembrane>("LTMembrane", ltzonemembraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(ltzonemembraneclass));
@@ -561,10 +561,10 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   ltchannel1=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("ExcChannel",true));
   ltchannel2=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("InhChannel",true));
 
-  // Устанавливаем обратную связь
+  // вЂќСЃС‚Р°РЅР°РІР»РёРІР°РµРј РѕР±СЂР°С‚РЅСѓСЋ СЃРІв‚¬Р·СЊ
   res&=CreateLink(ltzone->GetLongName(this),"Output",ltmembr->GetLongName(this),"InputFeedbackSignal");
 
-  // Устанавливаем связь мембраны с низкопороговой зоной
+  // вЂќСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЃРІв‚¬Р·СЊ РјРµРјР±СЂР°РЅС‹ СЃ РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅРѕР№
   if(ltchannel1)
    res&=CreateLink(ltchannel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
   if(ltchannel2)
@@ -583,8 +583,8 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   channel1=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));
   channel2=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("InhChannel",true));
 
-  // Случай, если задана выделенная часть мембраны генераторной зоны
-  // тогда подключаем сому к ней
+  // вЂ”Р»СѓС‡Р°Р№, РµСЃР»Рё Р·Р°РґР°РЅР° РІС‹РґРµР»РµРЅРЅР°в‚¬ С‡Р°СЃС‚СЊ РјРµРјР±СЂР°РЅС‹ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ Р·РѕРЅС‹
+  // С‚РѕРіРґР° РїРѕРґРєР»СЋС‡Р°РµРј СЃРѕРјСѓ Рє РЅРµР№
   if(!ltzonemembraneclass.empty())
   {
    if(channel1)
@@ -592,14 +592,14 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
    if(channel2)
 	res&=CreateLink(channel2->GetLongName(this),"Output",ltchannel2->GetLongName(this),"ChannelInputs");
   }
-  else // иначе подключаем сому напрямую к низкопороговой зоне
+  else // РёРЅР°С‡Рµ РїРѕРґРєР»СЋС‡Р°РµРј СЃРѕРјСѓ РЅР°РїСЂв‚¬РјСѓСЋ Рє РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅРµ
   {
    if(channel1)
 	res&=CreateLink(channel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
    if(channel2)
 	res&=CreateLink(channel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
 
-   // Устанавливаем обратную связь
+   // вЂќСЃС‚Р°РЅР°РІР»РёРІР°РµРј РѕР±СЂР°С‚РЅСѓСЋ СЃРІв‚¬Р·СЊ
    res&=CreateLink(ltzone->GetLongName(this),"Output",membr->GetLongName(this),"InputFeedbackSignal");
   }
 
@@ -627,7 +627,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
    channel2 = channel2temp;
   }
 
-  // Связь между начальными значениями мощностей ионных каналов и каналами
+  // вЂ”РІв‚¬Р·СЊ РјРµР¶РґСѓ РЅР°С‡Р°Р»СЊРЅС‹РјРё Р·РЅР°С‡РµРЅРёв‚¬РјРё РјРѕС‰РЅРѕСЃС‚РµР№ РёРѕРЅРЅС‹С… РєР°РЅР°Р»РѕРІ Рё РєР°РЅР°Р»Р°РјРё
   if(channel1 && gen_neg)
    res&=CreateLink(gen_neg->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
   if(channel2 && gen_pos)
@@ -649,7 +649,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// В¬РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseNeuron::ADefault(void)
 {
  if(!NPulseNeuronCommon::ADefault())
@@ -670,10 +670,10 @@ bool NPulseNeuron::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// СњР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// СРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»в‚¬РµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseNeuron::ABuild(void)
 {
  if(StructureBuildMode == 1)
@@ -708,7 +708,7 @@ bool NPulseNeuron::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// вЂ”Р±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseNeuron::AReset(void)
 {
  if(!NPulseNeuronCommon::AReset())
@@ -717,13 +717,13 @@ bool NPulseNeuron::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// В¬С‹РїРѕР»РЅв‚¬РµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseNeuron::ACalculate(void)
 {
  if(!NPulseNeuronCommon::ACalculate())
   return false;
 
- // Считаем суммарный выходной потеницал всех дендритов и участков сомы
+ // вЂ”С‡РёС‚Р°РµРј СЃСѓРјРјР°СЂРЅС‹Р№ РІС‹С…РѕРґРЅРѕР№ РїРѕС‚РµРЅРёС†Р°Р» РІСЃРµС… РґРµРЅРґСЂРёС‚РѕРІ Рё СѓС‡Р°СЃС‚РєРѕРІ СЃРѕРјС‹
  DendriticSumPotential(0,0)=0;
  SomaSumPotential(0,0)=0;
 
@@ -759,7 +759,7 @@ bool NPulseNeuron::ACalculate(void)
 }
 
 
-// Устанавливает компоненты в требуемый порядок расчета
+// вЂќСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РєРѕРјРїРѕРЅРµРЅС‚С‹ РІ С‚СЂРµР±СѓРµРјС‹Р№ РїРѕСЂв‚¬РґРѕРє СЂР°СЃС‡РµС‚Р°
 void NPulseNeuron::UpdateComputationOrder(void)
 {
  int position = 0;

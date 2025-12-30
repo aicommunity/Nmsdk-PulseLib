@@ -5,10 +5,10 @@
 
 namespace NMSDK {
 
-///Родительский класс STDP
-// Методы
+///Р РѕРґРёС‚РµР»СЊСЃРєРёР№ РєР»Р°СЃСЃ STDP
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseTrainerStdp::NSynapseTrainerStdp(void)
 : APlus("APlus",this,&NSynapseTrainerStdp::SetAPlus),
@@ -33,9 +33,9 @@ NSynapseTrainerStdp::~NSynapseTrainerStdp(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseTrainerStdp* NSynapseTrainerStdp::New(void)
 {
  return new NSynapseTrainerStdp;
@@ -43,7 +43,7 @@ NSynapseTrainerStdp* NSynapseTrainerStdp::New(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
 bool NSynapseTrainerStdp::SetAPlus(const double &value)
 {
@@ -65,7 +65,7 @@ bool NSynapseTrainerStdp::SetWMax(const double &value)
  return true;
 }
 // --------------------------
-//Запись в файл
+//Р—Р°РїРёСЃСЊ РІ С„Р°Р№Р»
 bool NSynapseTrainerStdp::WriteIntoFile(double deltaT, double deltaW)
 {
  ofstream fileDeltaW;
@@ -85,9 +85,9 @@ bool NSynapseTrainerStdp::WriteIntoFile(double deltaT, double deltaW)
 
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseTrainerStdp::ADefault(void)
 {
  WeightOutput.Assign(1,1,1.0);
@@ -109,7 +109,7 @@ bool NSynapseTrainerStdp::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NSynapseTrainerStdp::AReset(void)
 {
  TPre=0.0;
@@ -122,7 +122,7 @@ bool NSynapseTrainerStdp::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseTrainerStdp::ACalculate(void)
 {
 
@@ -161,10 +161,10 @@ bool NSynapseTrainerStdp::ACalculate(void)
 }
 // --------------------------
 
-///STDP, зависящий от времени напрямую
-// Методы
+///STDP, Р·Р°РІРёСЃСЏС‰РёР№ РѕС‚ РІСЂРµРјРµРЅРё РЅР°РїСЂСЏРјСѓСЋ
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseTrainerStdpTD::NSynapseTrainerStdpTD(void)
 : TauX("TauX",this, &NSynapseTrainerStdpTD::SetTauX),
@@ -183,9 +183,9 @@ NSynapseTrainerStdpTD::~NSynapseTrainerStdpTD(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseTrainerStdpTD* NSynapseTrainerStdpTD::New(void)
 {
  return new NSynapseTrainerStdpTD;
@@ -193,7 +193,7 @@ NSynapseTrainerStdpTD* NSynapseTrainerStdpTD::New(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
 bool NSynapseTrainerStdpTD::SetTauX(const double &value)
 {
@@ -227,9 +227,9 @@ bool NSynapseTrainerStdpTD::SetYAvg(const double &value)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseTrainerStdpTD::ADefault(void)
 {
  NSynapseTrainerStdp::ADefault();
@@ -245,7 +245,7 @@ bool NSynapseTrainerStdpTD::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NSynapseTrainerStdpTD::AReset(void)
 {
  NSynapseTrainerStdp::AReset();
@@ -254,7 +254,7 @@ bool NSynapseTrainerStdpTD::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseTrainerStdpTD::ACalculate(void)
 {
  NSynapseTrainerStdp::ACalculate();
@@ -262,10 +262,10 @@ bool NSynapseTrainerStdpTD::ACalculate(void)
 }
 // --------------------------
 
-///STDP, зависящий от веса напрямую
-// Методы
+///STDP, Р·Р°РІРёСЃСЏС‰РёР№ РѕС‚ РІРµСЃР° РЅР°РїСЂСЏРјСѓСЋ
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseTrainerStdpWD::NSynapseTrainerStdpWD(void)
 {
@@ -277,9 +277,9 @@ NSynapseTrainerStdpWD::~NSynapseTrainerStdpWD(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseTrainerStdpWD* NSynapseTrainerStdpWD::New(void)
 {
  return new NSynapseTrainerStdpWD;
@@ -287,9 +287,9 @@ NSynapseTrainerStdpWD* NSynapseTrainerStdpWD::New(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseTrainerStdpWD::ADefault(void)
 {
  NSynapseTrainerStdp::ADefault();
@@ -302,14 +302,14 @@ bool NSynapseTrainerStdpWD::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NSynapseTrainerStdpWD::AReset(void)
 {
  NSynapseTrainerStdp::AReset();
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseTrainerStdpWD::ACalculate(void)
 {
  NSynapseTrainerStdp::ACalculate();
@@ -317,10 +317,10 @@ bool NSynapseTrainerStdpWD::ACalculate(void)
 }
 // --------------------------
 
-/// STDP - изначальный (не работает, по Лобову)
-// Методы
+/// STDP - РёР·РЅР°С‡Р°Р»СЊРЅС‹Р№ (РЅРµ СЂР°Р±РѕС‚Р°РµС‚, РїРѕ Р›РѕР±РѕРІСѓ)
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseTrainerStdpLobov::NSynapseTrainerStdpLobov(void)
 : XModCoeff("XModCoeff",this, &NSynapseTrainerStdpLobov::SetXModCoeff),
@@ -335,9 +335,9 @@ NSynapseTrainerStdpLobov::~NSynapseTrainerStdpLobov(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseTrainerStdpLobov* NSynapseTrainerStdpLobov::New(void)
 {
  return new NSynapseTrainerStdpLobov;
@@ -345,7 +345,7 @@ NSynapseTrainerStdpLobov* NSynapseTrainerStdpLobov::New(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
 bool NSynapseTrainerStdpLobov::SetXModCoeff(const double &value)
 {
@@ -364,9 +364,9 @@ bool NSynapseTrainerStdpLobov::SetStartWeight(const double &value)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseTrainerStdpLobov::ADefault(void)
 {
  NSynapseTrainerStdpTD::ADefault();
@@ -385,7 +385,7 @@ bool NSynapseTrainerStdpLobov::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NSynapseTrainerStdpLobov::AReset(void)
 {
  NSynapseTrainerStdpTD::AReset();
@@ -393,7 +393,7 @@ bool NSynapseTrainerStdpLobov::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseTrainerStdpLobov::ACalculate(void)
 {
  NSynapseTrainerStdpTD::ACalculate();
@@ -419,7 +419,7 @@ bool NSynapseTrainerStdpLobov::ACalculate(void)
  if (WeightOutput(0,0) < WMin) WeightOutput(0,0)=WMin;
  if (WeightOutput(0,0) > WMax) WeightOutput(0,0)=WMax;
 
- // Запись в файл
+ // Р—Р°РїРёСЃСЊ РІ С„Р°Р№Р»
  if ((IsOutputPulseActive || IsInputPulseActive) && (WeightOutput(0,0)-oldW)!=0 && WeightOutput(0,0) != WMin && WeightOutput(0,0) !=WMax)
  {
   NSynapseTrainerStdp::WriteIntoFile(TPost-TPre, WeightOutput(0,0)-oldW);
@@ -429,10 +429,10 @@ bool NSynapseTrainerStdpLobov::ACalculate(void)
 }
 // --------------------------
 
-///STDP - классический, лобовая реализация
-// Методы
+///STDP - РєР»Р°СЃСЃРёС‡РµСЃРєРёР№, Р»РѕР±РѕРІР°СЏ СЂРµР°Р»РёР·Р°С†РёСЏ
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseTrainerStdpClassicDiscrete::NSynapseTrainerStdpClassicDiscrete(void)
 : Mu("Mu",this)
@@ -445,9 +445,9 @@ NSynapseTrainerStdpClassicDiscrete::~NSynapseTrainerStdpClassicDiscrete(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseTrainerStdpClassicDiscrete* NSynapseTrainerStdpClassicDiscrete::New(void)
 {
  return new NSynapseTrainerStdpClassicDiscrete;
@@ -455,9 +455,9 @@ NSynapseTrainerStdpClassicDiscrete* NSynapseTrainerStdpClassicDiscrete::New(void
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseTrainerStdpClassicDiscrete::ADefault(void)
 {
  NSynapseTrainerStdpTD::ADefault();
@@ -475,14 +475,14 @@ bool NSynapseTrainerStdpClassicDiscrete::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NSynapseTrainerStdpClassicDiscrete::AReset(void)
 {
  NSynapseTrainerStdpTD::AReset();
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseTrainerStdpClassicDiscrete::ACalculate(void)
 {
  NSynapseTrainerStdpTD::ACalculate();
@@ -515,10 +515,10 @@ bool NSynapseTrainerStdpClassicDiscrete::ACalculate(void)
 }
 // --------------------------
 
-///STDP - классический, интегрирование
-// Методы
+///STDP - РєР»Р°СЃСЃРёС‡РµСЃРєРёР№, РёРЅС‚РµРіСЂРёСЂРѕРІР°РЅРёРµ
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseTrainerStdpClassicIntegrated::NSynapseTrainerStdpClassicIntegrated(void)
 : MuPlus("MuPlus",this),
@@ -532,9 +532,9 @@ NSynapseTrainerStdpClassicIntegrated::~NSynapseTrainerStdpClassicIntegrated(void
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseTrainerStdpClassicIntegrated* NSynapseTrainerStdpClassicIntegrated::New(void)
 {
  return new NSynapseTrainerStdpClassicIntegrated;
@@ -542,9 +542,9 @@ NSynapseTrainerStdpClassicIntegrated* NSynapseTrainerStdpClassicIntegrated::New(
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseTrainerStdpClassicIntegrated::ADefault(void)
 {
  NSynapseTrainerStdpTD::ADefault();
@@ -563,14 +563,14 @@ bool NSynapseTrainerStdpClassicIntegrated::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NSynapseTrainerStdpClassicIntegrated::AReset(void)
 {
  NSynapseTrainerStdpTD::AReset();
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseTrainerStdpClassicIntegrated::ACalculate(void)
 {
  NSynapseTrainerStdpTD::ACalculate();
@@ -598,9 +598,9 @@ bool NSynapseTrainerStdpClassicIntegrated::ACalculate(void)
 // --------------------------
 
 ///STDP Triplet
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseTrainerStdpTriplet::NSynapseTrainerStdpTriplet(void)
 : APlus3("XModCoeff",this, &NSynapseTrainerStdpTriplet::SetAPlus3),
@@ -614,9 +614,9 @@ NSynapseTrainerStdpTriplet::~NSynapseTrainerStdpTriplet(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseTrainerStdpTriplet* NSynapseTrainerStdpTriplet::New(void)
 {
  return new NSynapseTrainerStdpTriplet;
@@ -624,7 +624,7 @@ NSynapseTrainerStdpTriplet* NSynapseTrainerStdpTriplet::New(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
 bool NSynapseTrainerStdpTriplet::SetAPlus3(const double &value)
 {
@@ -638,9 +638,9 @@ bool NSynapseTrainerStdpTriplet::SetAMinus3(const double &value)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseTrainerStdpTriplet::ADefault(void)
 {
  NSynapseTrainerStdpTD::ADefault();
@@ -661,14 +661,14 @@ bool NSynapseTrainerStdpTriplet::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NSynapseTrainerStdpTriplet::AReset(void)
 {
  NSynapseTrainerStdpTD::AReset();
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseTrainerStdpTriplet::ACalculate(void)
 {
  NSynapseTrainerStdpTD::ACalculate();
@@ -699,9 +699,9 @@ bool NSynapseTrainerStdpTriplet::ACalculate(void)
 // --------------------------
 
 ///STDP Mirror
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseTrainerStdpMirror::NSynapseTrainerStdpMirror(void)
 : APlus3("XModCoeff",this, &NSynapseTrainerStdpMirror::SetAPlus3),
@@ -719,9 +719,9 @@ NSynapseTrainerStdpMirror::~NSynapseTrainerStdpMirror(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseTrainerStdpMirror* NSynapseTrainerStdpMirror::New(void)
 {
  return new NSynapseTrainerStdpMirror;
@@ -729,7 +729,7 @@ NSynapseTrainerStdpMirror* NSynapseTrainerStdpMirror::New(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
 bool NSynapseTrainerStdpMirror::SetAPlus3(const double &value)
 {
@@ -743,9 +743,9 @@ bool NSynapseTrainerStdpMirror::SetAMinus3(const double &value)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseTrainerStdpMirror::ADefault(void)
 {
  NSynapseTrainerStdpTD::ADefault();
@@ -770,7 +770,7 @@ bool NSynapseTrainerStdpMirror::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NSynapseTrainerStdpMirror::AReset(void)
 {
  NSynapseTrainerStdpTD::AReset();
@@ -781,7 +781,7 @@ bool NSynapseTrainerStdpMirror::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseTrainerStdpMirror::ACalculate(void)
 {
  NSynapseTrainerStdpTD::ACalculate();
@@ -816,10 +816,10 @@ bool NSynapseTrainerStdpMirror::ACalculate(void)
 }
 // --------------------------
 
-///Вероятностный STDP
-// Методы
+///Р’РµСЂРѕСЏС‚РЅРѕСЃС‚РЅС‹Р№ STDP
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseTrainerStdpProbabilistic::NSynapseTrainerStdpProbabilistic(void)
 {
@@ -831,9 +831,9 @@ NSynapseTrainerStdpProbabilistic::~NSynapseTrainerStdpProbabilistic(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseTrainerStdpProbabilistic* NSynapseTrainerStdpProbabilistic::New(void)
 {
  return new NSynapseTrainerStdpProbabilistic;
@@ -841,9 +841,9 @@ NSynapseTrainerStdpProbabilistic* NSynapseTrainerStdpProbabilistic::New(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseTrainerStdpProbabilistic::ADefault(void)
 {
  NSynapseTrainerStdpWD::ADefault();
@@ -858,14 +858,14 @@ bool NSynapseTrainerStdpProbabilistic::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NSynapseTrainerStdpProbabilistic::AReset(void)
 {
  NSynapseTrainerStdpWD::AReset();
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseTrainerStdpProbabilistic::ACalculate(void)
 {
  NSynapseTrainerStdpWD::ACalculate();
@@ -902,10 +902,10 @@ bool NSynapseTrainerStdpProbabilistic::ACalculate(void)
 }
 // --------------------------
 
-///Стабильный STDP
-// Методы
+///РЎС‚Р°Р±РёР»СЊРЅС‹Р№ STDP
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseTrainerStdpStable::NSynapseTrainerStdpStable(void)
 : TauLTP("TauLTP",this, &NSynapseTrainerStdpStable::SetTauLTP),
@@ -919,9 +919,9 @@ NSynapseTrainerStdpStable::~NSynapseTrainerStdpStable(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseTrainerStdpStable* NSynapseTrainerStdpStable::New(void)
 {
  return new NSynapseTrainerStdpStable;
@@ -929,7 +929,7 @@ NSynapseTrainerStdpStable* NSynapseTrainerStdpStable::New(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
 bool NSynapseTrainerStdpStable::SetTauLTP(const double &value)
 {
@@ -943,9 +943,9 @@ bool NSynapseTrainerStdpStable::SetTauLTD(const double &value)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseTrainerStdpStable::ADefault(void)
 {
  NSynapseTrainerStdpWD::ADefault();
@@ -962,7 +962,7 @@ bool NSynapseTrainerStdpStable::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NSynapseTrainerStdpStable::AReset(void)
 {
  NSynapseTrainerStdpWD::AReset();
@@ -970,7 +970,7 @@ bool NSynapseTrainerStdpStable::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseTrainerStdpStable::ACalculate(void)
 {
  NSynapseTrainerStdpWD::ACalculate();

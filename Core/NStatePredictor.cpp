@@ -26,12 +26,12 @@ See file license.txt for more information
 #include <QString>
 
 
-// Класс, создающий группу нейронов для моделирования условного рефлекса
+// РљР»Р°СЃСЃ, СЃРѕР·РґР°СЋС‰РёР№ РіСЂСѓРїРїСѓ РЅРµР№СЂРѕРЅРѕРІ РґР»СЏ РјРѕРґРµР»РёСЂРѕРІР°РЅРёСЏ СѓСЃР»РѕРІРЅРѕРіРѕ СЂРµС„Р»РµРєСЃР°
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NStatePredictor::NStatePredictor(void)
 : StructureBuildMode("StructureBuildMode",this,&NStatePredictor::SetStructureBuildMode),
@@ -60,50 +60,50 @@ NStatePredictor::~NStatePredictor(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NStatePredictor::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
   Ready=false;
  return true;
 }
 
-/// Имя класса, создающего нейрон
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РЅРµР№СЂРѕРЅ
 bool NStatePredictor::SetNeuronClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего предиктор
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РїСЂРµРґРёРєС‚РѕСЂ
 bool NStatePredictor::SetPredictorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего обучаемый нейрон
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РѕР±СѓС‡Р°РµРјС‹Р№ РЅРµР№СЂРѕРЅ
 bool NStatePredictor::SetNeuronLearnerClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего блок болевых ощущений
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ Р±Р»РѕРє Р±РѕР»РµРІС‹С… РѕС‰СѓС‰РµРЅРёР№
 bool NStatePredictor::SetLogicalNotClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего синапс
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СЃРёРЅР°РїСЃ
 bool NStatePredictor::SetSynapseClassName(const std::string &value)
 {
  Ready=false;
@@ -111,9 +111,9 @@ bool NStatePredictor::SetSynapseClassName(const std::string &value)
 }
 
 
-/// Режим расчёта
-/// 0 - ручной ввод матрицы входных значений
-/// 1 - при подключении внешнего блока-источника
+/// Р РµР¶РёРј СЂР°СЃС‡С‘С‚Р°
+/// 0 - СЂСѓС‡РЅРѕР№ РІРІРѕРґ РјР°С‚СЂРёС†С‹ РІС…РѕРґРЅС‹С… Р·РЅР°С‡РµРЅРёР№
+/// 1 - РїСЂРё РїРѕРґРєР»СЋС‡РµРЅРёРё РІРЅРµС€РЅРµРіРѕ Р±Р»РѕРєР°-РёСЃС‚РѕС‡РЅРёРєР°
 bool NStatePredictor::SetInputMode(const int &value)
 {
     Ready=false;
@@ -125,7 +125,7 @@ bool NStatePredictor::SetInputMode(const int &value)
     return true;
 }
 
-/// Признак необходимости обучения
+/// РџСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РѕР±СѓС‡РµРЅРёСЏ
 bool NStatePredictor::SetNeedToTrain(const bool &value)
 {
     if(LogicalNot)
@@ -139,7 +139,7 @@ bool NStatePredictor::SetNeedToTrain(const bool &value)
     return true;
 }
 
-// Паттерн для запоминания
+// РџР°С‚С‚РµСЂРЅ РґР»СЏ Р·Р°РїРѕРјРёРЅР°РЅРёСЏ
 bool NStatePredictor::SetInputPattern(const MDMatrix<double> &value)
 {
     if(LogicalNot)
@@ -154,12 +154,12 @@ bool NStatePredictor::SetInputPattern(const MDMatrix<double> &value)
 }
 
 
-/// Матрица входных значений (используется в ручном режиме)
-/// Строки содержат N значений элемента входного вектора в моменты времени t, t-tau, ... t-(N-1)tau,
-/// где tau - интервал между измерениями состояния входа, N - число измерений
-/// Столбцы содержат M значений, составляющих входной вектор. M - размерность вектора
-/// ВАЖНО! Все вводимые значения должны принадлежать отрезку [0; 0,2],
-/// это важно для правильной работы обучаемого нейрона
+/// РњР°С‚СЂРёС†Р° РІС…РѕРґРЅС‹С… Р·РЅР°С‡РµРЅРёР№ (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ СЂСѓС‡РЅРѕРј СЂРµР¶РёРјРµ)
+/// РЎС‚СЂРѕРєРё СЃРѕРґРµСЂР¶Р°С‚ N Р·РЅР°С‡РµРЅРёР№ СЌР»РµРјРµРЅС‚Р° РІС…РѕРґРЅРѕРіРѕ РІРµРєС‚РѕСЂР° РІ РјРѕРјРµРЅС‚С‹ РІСЂРµРјРµРЅРё t, t-tau, ... t-(N-1)tau,
+/// РіРґРµ tau - РёРЅС‚РµСЂРІР°Р» РјРµР¶РґСѓ РёР·РјРµСЂРµРЅРёСЏРјРё СЃРѕСЃС‚РѕСЏРЅРёСЏ РІС…РѕРґР°, N - С‡РёСЃР»Рѕ РёР·РјРµСЂРµРЅРёР№
+/// РЎС‚РѕР»Р±С†С‹ СЃРѕРґРµСЂР¶Р°С‚ M Р·РЅР°С‡РµРЅРёР№, СЃРѕСЃС‚Р°РІР»СЏСЋС‰РёС… РІС…РѕРґРЅРѕР№ РІРµРєС‚РѕСЂ. M - СЂР°Р·РјРµСЂРЅРѕСЃС‚СЊ РІРµРєС‚РѕСЂР°
+/// Р’РђР–РќРћ! Р’СЃРµ РІРІРѕРґРёРјС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РґРѕР»Р¶РЅС‹ РїСЂРёРЅР°РґР»РµР¶Р°С‚СЊ РѕС‚СЂРµР·РєСѓ [0; 0,2],
+/// СЌС‚Рѕ РІР°Р¶РЅРѕ РґР»СЏ РїСЂР°РІРёР»СЊРЅРѕР№ СЂР°Р±РѕС‚С‹ РѕР±СѓС‡Р°РµРјРѕРіРѕ РЅРµР№СЂРѕРЅР°
 bool NStatePredictor::SetInputMatrix(const MDMatrix<double> &value)
 {
     Ready=false;
@@ -172,7 +172,7 @@ bool NStatePredictor::SetInputMatrix(const MDMatrix<double> &value)
     return true;
 }
 
-///Число входных нейронов = числу столбцов матрицы входных значений
+///Р§РёСЃР»Рѕ РІС…РѕРґРЅС‹С… РЅРµР№СЂРѕРЅРѕРІ = С‡РёСЃР»Сѓ СЃС‚РѕР»Р±С†РѕРІ РјР°С‚СЂРёС†С‹ РІС…РѕРґРЅС‹С… Р·РЅР°С‡РµРЅРёР№
 bool NStatePredictor::SetStatesNumber(const int &value)
 {
     Ready=false;
@@ -185,7 +185,7 @@ bool NStatePredictor::SetStatesNumber(const int &value)
  return true;
 }
 
-///Число признаков, описывающих состояние = числу строк матрицы входных значений
+///Р§РёСЃР»Рѕ РїСЂРёР·РЅР°РєРѕРІ, РѕРїРёСЃС‹РІР°СЋС‰РёС… СЃРѕСЃС‚РѕСЏРЅРёРµ = С‡РёСЃР»Сѓ СЃС‚СЂРѕРє РјР°С‚СЂРёС†С‹ РІС…РѕРґРЅС‹С… Р·РЅР°С‡РµРЅРёР№
 bool NStatePredictor::SetFeaturesNumber(const int &value)
 {
     Ready=false;
@@ -209,8 +209,8 @@ bool NStatePredictor::SetFeaturesNumber(const int &value)
    return true;
 }
 
-///Интервал tau между измерениями состояния входа
-/// (в режиме работы с источником сигнала)
+///РРЅС‚РµСЂРІР°Р» tau РјРµР¶РґСѓ РёР·РјРµСЂРµРЅРёСЏРјРё СЃРѕСЃС‚РѕСЏРЅРёСЏ РІС…РѕРґР°
+/// (РІ СЂРµР¶РёРјРµ СЂР°Р±РѕС‚С‹ СЃ РёСЃС‚РѕС‡РЅРёРєРѕРј СЃРёРіРЅР°Р»Р°)
 bool NStatePredictor::SetMeasurementPeriod(const double &value)
 {
     Ready=false;
@@ -226,9 +226,9 @@ bool NStatePredictor::SetMeasurementPeriod(const double &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NStatePredictor* NStatePredictor::New(void)
 {
  return new NStatePredictor;
@@ -241,22 +241,22 @@ UComponent* NStatePredictor::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NStatePredictor::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
 
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NStatePredictor::ADelComponent(UEPtr<UContainer> comp)
 {
 
@@ -265,14 +265,14 @@ bool NStatePredictor::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NStatePredictor::BuildStructure()
 {
     if(StructureBuildMode == 1)
     {
-        //Создаем предиктор
+        //РЎРѕР·РґР°РµРј РїСЂРµРґРёРєС‚РѕСЂ
         Predictor = AddMissingComponent<NPredictor>(std::string("Predictor"), PredictorClassName);
         Predictor->SetCoord(MVector<double,3>(5, 2, 0));
         Predictor->InputCols = StatesNumber;
@@ -282,14 +282,14 @@ bool NStatePredictor::BuildStructure()
         Predictor->InputMode = InputMode;
         Predictor->Reset();
 
-        //Создаем блок болевых ощущений
+        //РЎРѕР·РґР°РµРј Р±Р»РѕРє Р±РѕР»РµРІС‹С… РѕС‰СѓС‰РµРЅРёР№
         LogicalNot = AddMissingComponent<NLogicalNot>(std::string("LogicalNot"), LogicalNotClassName);
         LogicalNot->SetCoord(MVector<double,3>(5, 5, 0));
         LogicalNot->InputPattern.Resize(FeaturesNumber, 1);
         LogicalNot->NeuronTrainer->NumInputDendrite = FeaturesNumber;
         LogicalNot->Reset();
 
-//      //Создаем выходной нейрон
+//      //РЎРѕР·РґР°РµРј РІС‹С…РѕРґРЅРѕР№ РЅРµР№СЂРѕРЅ
 //      //OutputNeuron = AddMissingComponent<NNeuronLearner>(std::string("OutputNeuron"), NeuronLearnerClassName);
 //      OutputNeuron = AddMissingComponent<NNeuronTrainer>(std::string("OutputNeuron"), NeuronLearnerClassName);
 //      OutputNeuron->SetCoord(MVector<double,3>(22, 9.5, 0));
@@ -305,7 +305,7 @@ bool NStatePredictor::BuildStructure()
 }
 
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NStatePredictor::AReset(void)
 {
      InputMatrix.Resize(FeaturesNumber, StatesNumber);
@@ -315,7 +315,7 @@ bool NStatePredictor::AReset(void)
      return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NStatePredictor::ADefault(void)
 {
     StructureBuildMode=1;
@@ -329,8 +329,8 @@ bool NStatePredictor::ADefault(void)
 
 
     InputMode = 0;
-    FeaturesNumber = 5; // = числу элементов вектора состояний (InputRows в Predictor)
-    StatesNumber = 4; // = числу измерений каждого элемента вектора состояний (InputCols в Predictor)
+    FeaturesNumber = 5; // = С‡РёСЃР»Сѓ СЌР»РµРјРµРЅС‚РѕРІ РІРµРєС‚РѕСЂР° СЃРѕСЃС‚РѕСЏРЅРёР№ (InputRows РІ Predictor)
+    StatesNumber = 4; // = С‡РёСЃР»Сѓ РёР·РјРµСЂРµРЅРёР№ РєР°Р¶РґРѕРіРѕ СЌР»РµРјРµРЅС‚Р° РІРµРєС‚РѕСЂР° СЃРѕСЃС‚РѕСЏРЅРёР№ (InputCols РІ Predictor)
     InputMatrix.Resize(FeaturesNumber, StatesNumber);
     Input->Assign(1,1,0.0);
 
@@ -347,10 +347,10 @@ bool NStatePredictor::ADefault(void)
 }
 
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NStatePredictor::ABuild(void)
 {
     if(StructureBuildMode>0)
@@ -363,19 +363,19 @@ bool NStatePredictor::ABuild(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NStatePredictor::ACalculate(void)
 {
     IsNeedToTrain = LogicalNot->IsNeedToTrain;
     InputPattern =  LogicalNot->InputPattern;
 
-   //Передача значений с выхода предиктора на вход LogicalNot
+   //РџРµСЂРµРґР°С‡Р° Р·РЅР°С‡РµРЅРёР№ СЃ РІС‹С…РѕРґР° РїСЂРµРґРёРєС‚РѕСЂР° РЅР° РІС…РѕРґ LogicalNot
    if (!IsNeedToTrain)
    {
        LogicalNot->InputPattern = Predictor->Output;
    }
 
-   //Передача значенй с выхода LogicalNot к выходу блока
+   //РџРµСЂРµРґР°С‡Р° Р·РЅР°С‡РµРЅР№ СЃ РІС‹С…РѕРґР° LogicalNot Рє РІС‹С…РѕРґСѓ Р±Р»РѕРєР°
     Output = LogicalNot->OutputNeuron->LTZone->Output;
 
     return true;

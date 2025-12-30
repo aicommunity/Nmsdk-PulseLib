@@ -22,12 +22,12 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Core/NPulseNeuron.h"
 
 
-// Класс, создающий группу нейронов для моделирования формирования ассоциативных связей
+// РљР»Р°СЃСЃ, СЃРѕР·РґР°СЋС‰РёР№ РіСЂСѓРїРїСѓ РЅРµР№СЂРѕРЅРѕРІ РґР»СЏ РјРѕРґРµР»РёСЂРѕРІР°РЅРёСЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ Р°СЃСЃРѕС†РёР°С‚РёРІРЅС‹С… СЃРІСЏР·РµР№
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NAssociationFormer::NAssociationFormer(void)
 : StructureBuildMode("StructureBuildMode",this,&NAssociationFormer::SetStructureBuildMode),
@@ -57,50 +57,50 @@ NAssociationFormer::~NAssociationFormer(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NAssociationFormer::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
   Ready=false;
  return true;
 }
 
-/// Имя класса, создающего генератор импульсов
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РіРµРЅРµСЂР°С‚РѕСЂ РёРјРїСѓР»СЊСЃРѕРІ
 bool NAssociationFormer::SetPulseGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего учитель нейрона
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СѓС‡РёС‚РµР»СЊ РЅРµР№СЂРѕРЅР°
 bool NAssociationFormer::SetNeuronTrainerClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего нейрон
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РЅРµР№СЂРѕРЅ
 bool NAssociationFormer::SetNeuronClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего синапс
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СЃРёРЅР°РїСЃ
 bool NAssociationFormer::SetSynapseClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Размер "большого" нейрона
+/// Р Р°Р·РјРµСЂ "Р±РѕР»СЊС€РѕРіРѕ" РЅРµР№СЂРѕРЅР°
 bool NAssociationFormer::SetBigNeuronSize(const int &value)
 {
  Ready=false;
@@ -108,7 +108,7 @@ bool NAssociationFormer::SetBigNeuronSize(const int &value)
  return true;
 }
 
-/// Признак необходимости обучения
+/// РџСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РѕР±СѓС‡РµРЅРёСЏ
 bool NAssociationFormer::SetNeedToTrain(const bool &value)
 {
  if(value)
@@ -119,19 +119,19 @@ bool NAssociationFormer::SetNeedToTrain(const bool &value)
  return true;
 }
 
-/// Время задержки начала обучения относительно старта системы (сек)
+/// Р’СЂРµРјСЏ Р·Р°РґРµСЂР¶РєРё РЅР°С‡Р°Р»Р° РѕР±СѓС‡РµРЅРёСЏ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ СЃС‚Р°СЂС‚Р° СЃРёСЃС‚РµРјС‹ (СЃРµРє)
 bool NAssociationFormer::SetDelay(const double &value)
 {
  return true;
 }
 
-/// Частота генераторов (Гц)
+/// Р§Р°СЃС‚РѕС‚Р° РіРµРЅРµСЂР°С‚РѕСЂРѕРІ (Р“С†)
 bool NAssociationFormer::SetSpikesFrequency(const double &value)
 {
  return true;
 }
 
-/// Число входных дендритов для нейрона, формирующего второй стимул
+/// Р§РёСЃР»Рѕ РІС…РѕРґРЅС‹С… РґРµРЅРґСЂРёС‚РѕРІ РґР»СЏ РЅРµР№СЂРѕРЅР°, С„РѕСЂРјРёСЂСѓСЋС‰РµРіРѕ РІС‚РѕСЂРѕР№ СЃС‚РёРјСѓР»
 bool NAssociationFormer::SetNumUnconditionalStimulDendrite(const int &value)
 {
  Ready=false;
@@ -141,7 +141,7 @@ bool NAssociationFormer::SetNumUnconditionalStimulDendrite(const int &value)
  return true;
 }
 
-/// Число входных дендритов для нейрона, формирующего первый стимул
+/// Р§РёСЃР»Рѕ РІС…РѕРґРЅС‹С… РґРµРЅРґСЂРёС‚РѕРІ РґР»СЏ РЅРµР№СЂРѕРЅР°, С„РѕСЂРјРёСЂСѓСЋС‰РµРіРѕ РїРµСЂРІС‹Р№ СЃС‚РёРјСѓР»
 bool NAssociationFormer::SetNumConditionalStimulDendrite(const int &value)
 {
  Ready=false;
@@ -151,13 +151,13 @@ bool NAssociationFormer::SetNumConditionalStimulDendrite(const int &value)
  return true;
 }
 
-/// Максимальная длина дендрита
+/// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° РґРµРЅРґСЂРёС‚Р°
 bool NAssociationFormer::SetMaxDendriteLength(const int &value)
 {
  return true;
 }
 
-/// Паттерн для запоминания  нейроном, формирующим второй стимул
+/// РџР°С‚С‚РµСЂРЅ РґР»СЏ Р·Р°РїРѕРјРёРЅР°РЅРёСЏ  РЅРµР№СЂРѕРЅРѕРј, С„РѕСЂРјРёСЂСѓСЋС‰РёРј РІС‚РѕСЂРѕР№ СЃС‚РёРјСѓР»
 bool NAssociationFormer::SetUnconditionalStimulPattern(const MDMatrix<double> &value)
 {
  if(IsNeedToTrain)
@@ -176,7 +176,7 @@ bool NAssociationFormer::SetUnconditionalStimulPattern(const MDMatrix<double> &v
  return true;
 }
 
-/// Паттерн для запоминания  нейроном, формирующим первый стимул
+/// РџР°С‚С‚РµСЂРЅ РґР»СЏ Р·Р°РїРѕРјРёРЅР°РЅРёСЏ  РЅРµР№СЂРѕРЅРѕРј, С„РѕСЂРјРёСЂСѓСЋС‰РёРј РїРµСЂРІС‹Р№ СЃС‚РёРјСѓР»
 bool NAssociationFormer::SetConditionalStimulPattern(const MDMatrix<double> &value)
 {
  if(IsNeedToTrain)
@@ -195,21 +195,21 @@ bool NAssociationFormer::SetConditionalStimulPattern(const MDMatrix<double> &val
  return true;
 }
 
-/// Порог низкопороговой зоны нейрона
+/// РџРѕСЂРѕРі РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NAssociationFormer::SetLTZThreshold(const double &value)
 {
 
  return true;
 }
 
-/// Фиксированный порог низкопороговой зоны нейрона
+/// Р¤РёРєСЃРёСЂРѕРІР°РЅРЅС‹Р№ РїРѕСЂРѕРі РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NAssociationFormer::SetFixedLTZThreshold(const double &value)
 {
 
  return true;
 }
 
-/// Признак необходимости использования фиксированного порога низкопороговой зоны нейрона
+/// РџСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРіРѕ РїРѕСЂРѕРіР° РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹ РЅРµР№СЂРѕРЅР°
 bool NAssociationFormer::SetUseFixedLTZThreshold(const bool &value)
 {
  if(value)
@@ -223,9 +223,9 @@ bool NAssociationFormer::SetUseFixedLTZThreshold(const bool &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NAssociationFormer* NAssociationFormer::New(void)
 {
  return new NAssociationFormer;
@@ -238,22 +238,22 @@ UComponent* NAssociationFormer::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NAssociationFormer::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
 
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NAssociationFormer::ADelComponent(UEPtr<UContainer> comp)
 {
 
@@ -262,9 +262,9 @@ bool NAssociationFormer::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NAssociationFormer::AReset(void)
 {
 
@@ -310,7 +310,7 @@ bool NAssociationFormer::AReset(void)
  return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NAssociationFormer::ADefault(void)
 {
  StructureBuildMode=1;
@@ -334,23 +334,23 @@ bool NAssociationFormer::ADefault(void)
  return true;
 }
 
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NAssociationFormer::BuildStructure(void)
 {
- // 1 - Создаём группу нейронов для моделирования формирования ассоциативных связей
+ // 1 - РЎРѕР·РґР°С‘Рј РіСЂСѓРїРїСѓ РЅРµР№СЂРѕРЅРѕРІ РґР»СЏ РјРѕРґРµР»РёСЂРѕРІР°РЅРёСЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ Р°СЃСЃРѕС†РёР°С‚РёРІРЅС‹С… СЃРІСЏР·РµР№
  if(StructureBuildMode == 1)
  {
-	// Признак завершения обучения первому и второму раздражителям
+	// РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ РїРµСЂРІРѕРјСѓ Рё РІС‚РѕСЂРѕРјСѓ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏРј
 	is_stimuls_trained = false;
-	// Признак нахождения разности в приходе импульсов от первого и второго раздражителей
+	// РџСЂРёР·РЅР°Рє РЅР°С…РѕР¶РґРµРЅРёСЏ СЂР°Р·РЅРѕСЃС‚Рё РІ РїСЂРёС…РѕРґРµ РёРјРїСѓР»СЊСЃРѕРІ РѕС‚ РїРµСЂРІРѕРіРѕ Рё РІС‚РѕСЂРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»РµР№
 	is_interval_found = true;
-	// Признак завершения обучения нейрона "И"
+	// РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ РЅРµР№СЂРѕРЅР° "Р"
 	is_and_neuron_trained = true;
-	// Признак завершения обучения большого нейрона
+	// РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ Р±РѕР»СЊС€РѕРіРѕ РЅРµР№СЂРѕРЅР°
 	is_big_neuron_trained = true;
 
 
-	// Создаём нейрон, формирующий первый стимул
+	// РЎРѕР·РґР°С‘Рј РЅРµР№СЂРѕРЅ, С„РѕСЂРјРёСЂСѓСЋС‰РёР№ РїРµСЂРІС‹Р№ СЃС‚РёРјСѓР»
 	ConditionalStimul = AddMissingComponent<NNeuronTrainer>("Stimulus1", NeuronTrainerClassName);
 	ConditionalStimul->SetCoord(MVector<double,3>(4.0+0*7,1*2,0));
 	ConditionalStimul->NumInputDendrite = NumConditionalStimulDendrite;
@@ -360,7 +360,7 @@ bool NAssociationFormer::BuildStructure(void)
     //ltZone->TimeConstant = 0.0005;
 	ConditionalStimul->Reset();
 
-	// Создаём нейрон, формирующий второй стимул
+	// РЎРѕР·РґР°С‘Рј РЅРµР№СЂРѕРЅ, С„РѕСЂРјРёСЂСѓСЋС‰РёР№ РІС‚РѕСЂРѕР№ СЃС‚РёРјСѓР»
 	UnconditionalStimul = AddMissingComponent<NNeuronTrainer>("Stimulus2", NeuronTrainerClassName);
 	UnconditionalStimul->SetCoord(MVector<double,3>(4.0+0*7,5*2,0));
 	UnconditionalStimul->NumInputDendrite = NumUnconditionalStimulDendrite;
@@ -370,13 +370,13 @@ bool NAssociationFormer::BuildStructure(void)
     //ltZone->TimeConstant = 0.0005;
 	UnconditionalStimul->Reset();
 
-	// Создаём нейрон, реализующий функцию "И"
+	// РЎРѕР·РґР°С‘Рј РЅРµР№СЂРѕРЅ, СЂРµР°Р»РёР·СѓСЋС‰РёР№ С„СѓРЅРєС†РёСЋ "Р"
 	LogicalAndNeuron = AddMissingComponent<NNeuronTrainer>("AndNeuron", NeuronTrainerClassName);
 	LogicalAndNeuron->SetCoord(MVector<double,3>(4.0+0.5*7,3*2,0));
 	LogicalAndNeuron->NumInputDendrite = 2;
 	LogicalAndNeuron->Reset();
 	LogicalAndNeuron->IsNeedToTrain = false;
-	// Переводим генераторы в режим транзита
+	// РџРµСЂРµРІРѕРґРёРј РіРµРЅРµСЂР°С‚РѕСЂС‹ РІ СЂРµР¶РёРј С‚СЂР°РЅР·РёС‚Р°
 	UEPtr<NPulseGeneratorTransit> generator;
 	generator = LogicalAndNeuron->GetComponentL<NPulseGeneratorTransit>("Source1",true);
 	if(!generator)
@@ -387,7 +387,7 @@ bool NAssociationFormer::BuildStructure(void)
 		return true;
 	generator->UseTransitSignal = true;
 
-	// Создаём "большой" нейрон
+	// РЎРѕР·РґР°С‘Рј "Р±РѕР»СЊС€РѕР№" РЅРµР№СЂРѕРЅ
 	BigNeuron = AddMissingComponent<NPulseNeuron>(std::string("TrainingNeuron"), NeuronClassName);
 	BigNeuron->SetCoord(MVector<double,3>(4.0+1.5*7,3*2,0));
 	BigNeuron->NumSomaMembraneParts = BigNeuronSize;
@@ -398,10 +398,10 @@ bool NAssociationFormer::BuildStructure(void)
 	ltZone->Threshold = threshold;
     BigNeuron->Reset();
 
-	// Создаём нейрон, реагирующий на второй стимул
+	// РЎРѕР·РґР°С‘Рј РЅРµР№СЂРѕРЅ, СЂРµР°РіРёСЂСѓСЋС‰РёР№ РЅР° РІС‚РѕСЂРѕР№ СЃС‚РёРјСѓР»
 	LogicalOrNeuron = AddMissingComponent<NPulseNeuron>(std::string("Reaction2"), NeuronClassName);
 	LogicalOrNeuron->SetCoord(MVector<double,3>(3.5+2.5*7,5*2,0));
-	// Добавляем синапс для реализации функции "ИЛИ"
+	// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ РґР»СЏ СЂРµР°Р»РёР·Р°С†РёРё С„СѓРЅРєС†РёРё "РР›Р"
 	UEPtr<NPulseMembrane> soma = LogicalOrNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
 	if(!soma)
 		return true;
@@ -413,7 +413,7 @@ bool NAssociationFormer::BuildStructure(void)
 		return true;
 	RDK::MVector<double,3> coords = synapse1->GetCoord();
 	synapse2->SetCoord(MVector<double,3>(coords(0)+7.0,coords(1),0));
-	// Добавляем связь между новым синапсом и ионным каналом
+	// Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј Рё РёРѕРЅРЅС‹Рј РєР°РЅР°Р»РѕРј
 	std::string input_name = soma->GetLongName(this) + std::string(".ExcChannel");
 	bool res(true);
 	res&=CreateLink(synapse2->GetLongName(this),"Output",input_name,"SynapticInputs");
@@ -421,21 +421,21 @@ bool NAssociationFormer::BuildStructure(void)
 		return true;
 	LogicalOrNeuron->Reset();
 
- 	// Связываем нейрон, формирующий второй стимул, с нейроном, реагирующим на второй стимул
+ 	// РЎРІСЏР·С‹РІР°РµРј РЅРµР№СЂРѕРЅ, С„РѕСЂРјРёСЂСѓСЋС‰РёР№ РІС‚РѕСЂРѕР№ СЃС‚РёРјСѓР», СЃ РЅРµР№СЂРѕРЅРѕРј, СЂРµР°РіРёСЂСѓСЋС‰РёРј РЅР° РІС‚РѕСЂРѕР№ СЃС‚РёРјСѓР»
 	UEPtr<NPulseNeuron> neuron;
-	// Второй стимул
+	// Р’С‚РѕСЂРѕР№ СЃС‚РёРјСѓР»
     UEPtr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone", true);
 	if(!ltzone)
 		return true;
-	// Связываем c реагирующшим нейроном
+	// РЎРІСЏР·С‹РІР°РµРј c СЂРµР°РіРёСЂСѓСЋС‰С€РёРј РЅРµР№СЂРѕРЅРѕРј
 	res&=CreateLink(ltzone->GetLongName(this),"Output",synapse1->GetLongName(this),"Input");
 	if(!res)
 		return true;
 
-	// Создаём нейрон, реагирующий на первый стимул
+	// РЎРѕР·РґР°С‘Рј РЅРµР№СЂРѕРЅ, СЂРµР°РіРёСЂСѓСЋС‰РёР№ РЅР° РїРµСЂРІС‹Р№ СЃС‚РёРјСѓР»
 	LogicalOrNeuron1 = AddMissingComponent<NPulseNeuron>(std::string("Reaction1"), NeuronClassName);
 	LogicalOrNeuron1->SetCoord(MVector<double,3>(3.5+2.5*7,1*2,0));
-	// Добавляем синапс для реализации функции "ИЛИ"
+	// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ РґР»СЏ СЂРµР°Р»РёР·Р°С†РёРё С„СѓРЅРєС†РёРё "РР›Р"
 	soma = LogicalOrNeuron1->GetComponentL<NPulseMembrane>("Soma1",true);
 	if(!soma)
 		return true;
@@ -447,19 +447,19 @@ bool NAssociationFormer::BuildStructure(void)
 		return true;
 	coords = synapse1->GetCoord();
 	synapse2->SetCoord(MVector<double,3>(coords(0)+7.0,coords(1),0));
-	// Добавляем связь между новым синапсом и ионным каналом
+	// Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј Рё РёРѕРЅРЅС‹Рј РєР°РЅР°Р»РѕРј
 	input_name = soma->GetLongName(this) + std::string(".ExcChannel");
 	res&=CreateLink(synapse2->GetLongName(this),"Output",input_name,"SynapticInputs");
 	if(!res)
 		return true;
 	LogicalOrNeuron1->Reset();
 
-	// Связываем нейрон, формирующий первый стимул, с нейроном, реагирующим на первый стимул
-	// Первый стимул
+	// РЎРІСЏР·С‹РІР°РµРј РЅРµР№СЂРѕРЅ, С„РѕСЂРјРёСЂСѓСЋС‰РёР№ РїРµСЂРІС‹Р№ СЃС‚РёРјСѓР», СЃ РЅРµР№СЂРѕРЅРѕРј, СЂРµР°РіРёСЂСѓСЋС‰РёРј РЅР° РїРµСЂРІС‹Р№ СЃС‚РёРјСѓР»
+	// РџРµСЂРІС‹Р№ СЃС‚РёРјСѓР»
 	ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone", true);
 	if(!ltzone)
 		return true;
-	// Связываем c реагирующшим нейроном
+	// РЎРІСЏР·С‹РІР°РµРј c СЂРµР°РіРёСЂСѓСЋС‰С€РёРј РЅРµР№СЂРѕРЅРѕРј
 	res&=CreateLink(ltzone->GetLongName(this),"Output",synapse1->GetLongName(this),"Input");
 	if(!res)
 		return true;
@@ -468,10 +468,10 @@ bool NAssociationFormer::BuildStructure(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NAssociationFormer::ABuild(void)
 {
  if(StructureBuildMode>0)
@@ -484,17 +484,17 @@ bool NAssociationFormer::ABuild(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NAssociationFormer::ACalculate(void)
 {
-	// I. Обучение первому и второму раздражителям
+	// I. РћР±СѓС‡РµРЅРёРµ РїРµСЂРІРѕРјСѓ Рё РІС‚РѕСЂРѕРјСѓ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏРј
 	if(!is_stimuls_trained)
 	{
 		if(!UnconditionalStimul->IsNeedToTrain && !ConditionalStimul->IsNeedToTrain)
 		{
 			is_stimuls_trained = true;
 
-			// Признак нахождения разности в приходе импульсов от первого и второго раздражителей
+			// РџСЂРёР·РЅР°Рє РЅР°С…РѕР¶РґРµРЅРёСЏ СЂР°Р·РЅРѕСЃС‚Рё РІ РїСЂРёС…РѕРґРµ РёРјРїСѓР»СЊСЃРѕРІ РѕС‚ РїРµСЂРІРѕРіРѕ Рё РІС‚РѕСЂРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»РµР№
 			is_interval_found = false;
 			is_first_spike = false;
 			is_second_spike = false;
@@ -503,10 +503,10 @@ bool NAssociationFormer::ACalculate(void)
 		}
 	}
 
-	 // II. Ищем интервал между входными импульсами
+	 // II. РС‰РµРј РёРЅС‚РµСЂРІР°Р» РјРµР¶РґСѓ РІС…РѕРґРЅС‹РјРё РёРјРїСѓР»СЊСЃР°РјРё
 	 if(!is_interval_found)
 	 {
-		// Ожидаем прихода первого спайка от первого раздражителя
+		// РћР¶РёРґР°РµРј РїСЂРёС…РѕРґР° РїРµСЂРІРѕРіРѕ СЃРїР°Р№РєР° РѕС‚ РїРµСЂРІРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ
 		if(!is_first_spike)
 		{
 			UEPtr<NLTZone> ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
@@ -522,7 +522,7 @@ bool NAssociationFormer::ACalculate(void)
 			}
 		}
 
-		// Ожидаем прихода первого спайка от второго раздражителя
+		// РћР¶РёРґР°РµРј РїСЂРёС…РѕРґР° РїРµСЂРІРѕРіРѕ СЃРїР°Р№РєР° РѕС‚ РІС‚РѕСЂРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ
 		if(!is_second_spike)
 		{
 			UEPtr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
@@ -538,7 +538,7 @@ bool NAssociationFormer::ACalculate(void)
 			}
 		}
 
-		// Если оба пришли:
+		// Р•СЃР»Рё РѕР±Р° РїСЂРёС€Р»Рё:
 		if(is_first_spike && is_second_spike)
 		{
 			double curr_time = Environment->GetTime().GetDoubleTime();
@@ -563,7 +563,7 @@ bool NAssociationFormer::ACalculate(void)
 				difference = (1.0 / SpikesFrequency) - difference;
 			}
 
-			// Задаём интервалы входного паттерна
+			// Р—Р°РґР°С‘Рј РёРЅС‚РµСЂРІР°Р»С‹ РІС…РѕРґРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР°
 			MDMatrix<double> pattern;
 			pattern.Resize(LogicalAndNeuron->NumInputDendrite,1);
 			if(type == 1)
@@ -578,124 +578,124 @@ bool NAssociationFormer::ACalculate(void)
 			}
 			LogicalAndNeuron->InputPattern = pattern;
 
-			// Создаём связи первого и второго раздражителей с нейроном, реализующим функцию "И"
+			// РЎРѕР·РґР°С‘Рј СЃРІСЏР·Рё РїРµСЂРІРѕРіРѕ Рё РІС‚РѕСЂРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»РµР№ СЃ РЅРµР№СЂРѕРЅРѕРј, СЂРµР°Р»РёР·СѓСЋС‰РёРј С„СѓРЅРєС†РёСЋ "Р"
 			UEPtr<NLTZone> ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
-			// Нейрон "И"
-			UEPtr<NPulseGeneratorTransit> generator; // соответствующий вход нейрона с возможностью обучения
+			// РќРµР№СЂРѕРЅ "Р"
+			UEPtr<NPulseGeneratorTransit> generator; // СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РІС…РѕРґ РЅРµР№СЂРѕРЅР° СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ РѕР±СѓС‡РµРЅРёСЏ
 			generator = LogicalAndNeuron->GetComponentL<NPulseGeneratorTransit>("Source2",true);
 			if(!generator)
 				return true;
-			// Связываем
+			// РЎРІСЏР·С‹РІР°РµРј
 			bool res(true);
 			res&=CreateLink(ltzone->GetLongName(this),"Output",generator->GetLongName(this),"Input");
 			if(!res)
 				return true;
-			// Первый раздражитель
+			// РџРµСЂРІС‹Р№ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЊ
 			ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
-			// Нейрон "И"
+			// РќРµР№СЂРѕРЅ "Р"
 			generator = LogicalAndNeuron->GetComponentL<NPulseGeneratorTransit>("Source1",true);
 			if(!generator)
 				return true;
-			// Связываем
+			// РЎРІСЏР·С‹РІР°РµРј
 			res = true;
 			res&=CreateLink(ltzone->GetLongName(this),"Output",generator->GetLongName(this),"Input");
 			if(!res)
 				return true;
 
-			// Активируем обучение нейрона "И"
+			// РђРєС‚РёРІРёСЂСѓРµРј РѕР±СѓС‡РµРЅРёРµ РЅРµР№СЂРѕРЅР° "Р"
 			LogicalAndNeuron->IsNeedToTrain = true;
-            // Признак завершения обучения нейрона "И"
+            // РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ РЅРµР№СЂРѕРЅР° "Р"
 			is_and_neuron_trained = false;
-			// Признак нахождения разности в приходе импульсов от первого и второго раздражителей
+			// РџСЂРёР·РЅР°Рє РЅР°С…РѕР¶РґРµРЅРёСЏ СЂР°Р·РЅРѕСЃС‚Рё РІ РїСЂРёС…РѕРґРµ РёРјРїСѓР»СЊСЃРѕРІ РѕС‚ РїРµСЂРІРѕРіРѕ Рё РІС‚РѕСЂРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»РµР№
 			is_interval_found = true;
 		}
 
 		return true;
 	 }
 
-	 // III. Обучение нейрона, реализующего функцию "И"
+	 // III. РћР±СѓС‡РµРЅРёРµ РЅРµР№СЂРѕРЅР°, СЂРµР°Р»РёР·СѓСЋС‰РµРіРѕ С„СѓРЅРєС†РёСЋ "Р"
 	 if(!is_and_neuron_trained)
 	 {
 		if(!LogicalAndNeuron->IsNeedToTrain)
 		{
-			// Формируем связь между нейроном, реализующим функцию "И" и "большим" нейроном
-			// Нейрон "И"
+			// Р¤РѕСЂРјРёСЂСѓРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРµР№СЂРѕРЅРѕРј, СЂРµР°Р»РёР·СѓСЋС‰РёРј С„СѓРЅРєС†РёСЋ "Р" Рё "Р±РѕР»СЊС€РёРј" РЅРµР№СЂРѕРЅРѕРј
+			// РќРµР№СЂРѕРЅ "Р"
 			UEPtr<NLTZone> ltzone = LogicalAndNeuron->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
-			// "Большой" нейрон
+			// "Р‘РѕР»СЊС€РѕР№" РЅРµР№СЂРѕРЅ
 			UEPtr<NPulseSynapse> synapse = BigNeuron->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse1",true);
 			if(!synapse)
 				return true;
-			// Связываем
+			// РЎРІСЏР·С‹РІР°РµРј
 			bool res(true);
 			res&=CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
 			if(!res)
 				return true;
 
-			// Признак завершения обучения большого нейрона
+			// РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ Р±РѕР»СЊС€РѕРіРѕ РЅРµР№СЂРѕРЅР°
 			is_big_neuron_trained = false;
-			// Признак одного спайка при наращивании синапсов на "большом" нейроне
+			// РџСЂРёР·РЅР°Рє РѕРґРЅРѕРіРѕ СЃРїР°Р№РєР° РїСЂРё РЅР°СЂР°С‰РёРІР°РЅРёРё СЃРёРЅР°РїСЃРѕРІ РЅР° "Р±РѕР»СЊС€РѕРј" РЅРµР№СЂРѕРЅРµ
 			one_spike = false;
-            // Текущее число синапсов на "большом" нейроне
+            // РўРµРєСѓС‰РµРµ С‡РёСЃР»Рѕ СЃРёРЅР°РїСЃРѕРІ РЅР° "Р±РѕР»СЊС€РѕРј" РЅРµР№СЂРѕРЅРµ
 			synapses_num = 1;
-			// Признак завершения обучения нейрона "И"
+			// РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ РЅРµР№СЂРѕРЅР° "Р"
 			is_and_neuron_trained = true;
 		}
 
 		return true;
 	 }
 
-	 // IV. Обучение "большого" нейрона
+	 // IV. РћР±СѓС‡РµРЅРёРµ "Р±РѕР»СЊС€РѕРіРѕ" РЅРµР№СЂРѕРЅР°
 	 if(!is_big_neuron_trained)
 	 {
-		// Если "большой нейрон ответил, завершаем обучение и формируем связь первого раздражителя с нейроном, реализующим функцию "ИЛИ" для второго стимула
+		// Р•СЃР»Рё "Р±РѕР»СЊС€РѕР№ РЅРµР№СЂРѕРЅ РѕС‚РІРµС‚РёР», Р·Р°РІРµСЂС€Р°РµРј РѕР±СѓС‡РµРЅРёРµ Рё С„РѕСЂРјРёСЂСѓРµРј СЃРІСЏР·СЊ РїРµСЂРІРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ СЃ РЅРµР№СЂРѕРЅРѕРј, СЂРµР°Р»РёР·СѓСЋС‰РёРј С„СѓРЅРєС†РёСЋ "РР›Р" РґР»СЏ РІС‚РѕСЂРѕРіРѕ СЃС‚РёРјСѓР»Р°
 		UEPtr<NLTZone> ltzone = BigNeuron->GetComponentL<NLTZone>("LTZone",true);
         if(!ltzone)
 			return true;
 		if(ltzone->Output(0,0) > 0)
 		{
-			// Формируем связь первого раздражителя с нейроном, реализующим функцию "ИЛИ" для второго стимула
-			// Первый раздражитель
+			// Р¤РѕСЂРјРёСЂСѓРµРј СЃРІСЏР·СЊ РїРµСЂРІРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ СЃ РЅРµР№СЂРѕРЅРѕРј, СЂРµР°Р»РёР·СѓСЋС‰РёРј С„СѓРЅРєС†РёСЋ "РР›Р" РґР»СЏ РІС‚РѕСЂРѕРіРѕ СЃС‚РёРјСѓР»Р°
+			// РџРµСЂРІС‹Р№ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЊ
 			ltzone = ConditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
-			// Нейрон, реализующий функцию "ИЛИ" для второго стимула
+			// РќРµР№СЂРѕРЅ, СЂРµР°Р»РёР·СѓСЋС‰РёР№ С„СѓРЅРєС†РёСЋ "РР›Р" РґР»СЏ РІС‚РѕСЂРѕРіРѕ СЃС‚РёРјСѓР»Р°
 			UEPtr<NPulseSynapse> synapse2;
 			synapse2 = LogicalOrNeuron->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse2",true);
             if(!synapse2)
 				return true;
-            // Связываем
+            // РЎРІСЏР·С‹РІР°РµРј
 			bool res(true);
 			res&=CreateLink(ltzone->GetLongName(this),"Output",synapse2->GetLongName(this),"Input");
 			if(!res)
 				return true;
 
-			// Формируем связь второго раздражителя с нейроном, реализующим функцию "ИЛИ" для первого стимула
-			// Второй раздражитель
+			// Р¤РѕСЂРјРёСЂСѓРµРј СЃРІСЏР·СЊ РІС‚РѕСЂРѕРіРѕ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЏ СЃ РЅРµР№СЂРѕРЅРѕРј, СЂРµР°Р»РёР·СѓСЋС‰РёРј С„СѓРЅРєС†РёСЋ "РР›Р" РґР»СЏ РїРµСЂРІРѕРіРѕ СЃС‚РёРјСѓР»Р°
+			// Р’С‚РѕСЂРѕР№ СЂР°Р·РґСЂР°Р¶РёС‚РµР»СЊ
 			ltzone = UnconditionalStimul->GetComponentL<NLTZone>("Neuron.LTZone",true);
 			if(!ltzone)
 				return true;
-			// Нейрон, реализующий функцию "ИЛИ" для первого стимула
+			// РќРµР№СЂРѕРЅ, СЂРµР°Р»РёР·СѓСЋС‰РёР№ С„СѓРЅРєС†РёСЋ "РР›Р" РґР»СЏ РїРµСЂРІРѕРіРѕ СЃС‚РёРјСѓР»Р°
 			synapse2 = LogicalOrNeuron1->GetComponentL<NPulseSynapse>("Soma1.ExcSynapse2",true);
             if(!synapse2)
 				return true;
-            // Связываем
+            // РЎРІСЏР·С‹РІР°РµРј
 			res&=CreateLink(ltzone->GetLongName(this),"Output",synapse2->GetLongName(this),"Input");
 			if(!res)
 				return true;
 
-			// Признак завершения обучения большого нейрона
+			// РџСЂРёР·РЅР°Рє Р·Р°РІРµСЂС€РµРЅРёСЏ РѕР±СѓС‡РµРЅРёСЏ Р±РѕР»СЊС€РѕРіРѕ РЅРµР№СЂРѕРЅР°
 			is_big_neuron_trained = true;
 
 			return true;
 		}
 
-		// Если есть вход с нейрона, реализующего функцию "И" - добавляем синапс
+		// Р•СЃР»Рё РµСЃС‚СЊ РІС…РѕРґ СЃ РЅРµР№СЂРѕРЅР°, СЂРµР°Р»РёР·СѓСЋС‰РµРіРѕ С„СѓРЅРєС†РёСЋ "Р" - РґРѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ
 		ltzone = LogicalAndNeuron->GetComponentL<NLTZone>("Neuron.LTZone",true);
         if(!ltzone)
 			return true;
@@ -705,7 +705,7 @@ bool NAssociationFormer::ACalculate(void)
 			one_spike = true;
 			synapses_num++;
 
-			// Добавляем синапс на "большой" нейрон
+			// Р”РѕР±Р°РІР»СЏРµРј СЃРёРЅР°РїСЃ РЅР° "Р±РѕР»СЊС€РѕР№" РЅРµР№СЂРѕРЅ
 			UEPtr<NPulseMembrane> soma = BigNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
 			if(!soma)
 				return true;
@@ -717,13 +717,13 @@ bool NAssociationFormer::ACalculate(void)
 				return true;
 			RDK::MVector<double,3> coords = synapse1->GetCoord();
 			synapse->SetCoord(MVector<double,3>(coords(0)+7.0*(synapses_num-1),coords(1),0));
-			// Добавляем связь между новым синапсом и ионным каналом
+			// Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј Рё РёРѕРЅРЅС‹Рј РєР°РЅР°Р»РѕРј
 			std::string input_name = soma->GetLongName(this) + std::string(".ExcChannel");
 			bool res(true);
 			res&=CreateLink(synapse->GetLongName(this),"Output",input_name,"SynapticInputs");
 			if(!res)
 				return true;
-			// Добавляем связь между новым синапсом и выходом "И" нейрона
+			// Р”РѕР±Р°РІР»СЏРµРј СЃРІСЏР·СЊ РјРµР¶РґСѓ РЅРѕРІС‹Рј СЃРёРЅР°РїСЃРѕРј Рё РІС‹С…РѕРґРѕРј "Р" РЅРµР№СЂРѕРЅР°
 			res&=CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
 			if(!res)
 				return true;

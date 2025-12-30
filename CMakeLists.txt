@@ -22,9 +22,19 @@ list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/NResultD
 # Не исключаем NPCAClassifier.cpp — он требуется для NMSDK::NPCAClassifier
 # Не исключаем NPulseLibrary.cpp — он определяет глобальный объект PulseLibrary
 
+# Исключаем NOdeSolver.cpp, если RDK_USE_ODESOLVER выключен
+if(NOT RDK_USE_ODESOLVER)
+  list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/NOdeSolver\\.cpp$")
+endif()
+
 target_sources(${TARGET_NAME} PRIVATE ${PULSE_SOURCES})
 
 target_compile_definitions(${TARGET_NAME} PUBLIC RDK_QT RDK_LIB_CVS_REVISION=0)
+
+# Передаём RDK_USE_ODESOLVER в компилятор, если он включён
+if(RDK_USE_ODESOLVER)
+  target_compile_definitions(${TARGET_NAME} PUBLIC RDK_USE_ODESOLVER)
+endif()
 
 find_package(Qt5 REQUIRED COMPONENTS Core)
 target_link_libraries(${TARGET_NAME} PUBLIC Qt5::Core Threads::Threads rdk.static.qt Rdk-BasicLib.qt Rdk-CvBasicLib.qt)
