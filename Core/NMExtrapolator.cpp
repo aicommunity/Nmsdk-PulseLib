@@ -99,7 +99,8 @@ bool NMExtrapolator::AReset(void)
 // for(size_t i=0;i<History.size();i++)
 //  History[i].assign(History[i].size(),0);
  History.clear();
- History.reserve((PredictionTime.GetData()*TimeStep)*(NumLevels+1));
+ const double predictionTime = PredictionTime.GetData();
+ History.reserve((predictionTime*TimeStep)*(NumLevels+1));
  //History2.clear();
  HistoryCounter=0;
 
@@ -122,7 +123,8 @@ bool NMExtrapolator::ACalculate(void)
  }
 
  History.push(input);
- if(History.size()>(PredictionTime.GetData()*TimeStep)*(NumLevels+1))
+ const double predictionTime = PredictionTime.GetData();
+ if(History.size()>(predictionTime*TimeStep)*(NumLevels+1))
   History.pop();
  else
    return true;

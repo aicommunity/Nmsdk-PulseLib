@@ -163,13 +163,15 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
 /// Возвращает true если условие для генерации импульса выполнено
 bool NPulseLTZoneThreshold::CheckPulseOn(void)
 {
- return Potential.GetData()>=Threshold.GetData();
+ const double potential = Potential.GetData();
+ const double threshold = Threshold.GetData();
+ return potential >= threshold;
 }
 
 /// Возвращает true если условие для генерации имульса не выполнено
 bool NPulseLTZoneThreshold::CheckPulseOff(void)
 {
- return Potential.GetData()<ThresholdOff;
+ return Potential.GetData() < ThresholdOff;
 }
 // --------------------------
 
@@ -389,21 +391,25 @@ bool NContinuesLTZone::ACalculate2(void)
 {
  Potential = tanh(NeuralPotential.GetData());
 
- if(Potential.GetData()>=Threshold.GetData())
+ // Кэшируем значения для оптимизации
+ const double potential = Potential.GetData();
+ const double threshold = Threshold.GetData();
+ 
+ if(potential >= threshold)
  {
-  Output(0,0)=Potential.GetData();
-  OutputPotential(0,0)=Potential.GetData();
+  Output(0,0)=potential;
+  OutputPotential(0,0)=potential;
   PulseFlag=true;
  }
  else
- if(Potential.GetData()<=0)
+ if(potential <= 0)
  {
   PulseFlag=false;
   Output(0,0)=0;
-  OutputPotential(0,0)=Potential.GetData();
+  OutputPotential(0,0)=potential;
  }
  else
-  OutputPotential(0,0)=Potential.GetData();
+  OutputPotential(0,0)=potential;
 
  if(MainOwner)
   dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
@@ -491,14 +497,19 @@ bool NPulseSimpleLTZone::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseSimpleLTZone::ACalculate2(void)
 {
+ // Кэшируем часто используемые значения в начале метода
+ const double potential = Potential.GetData();
+ const double maxFrequency = MaxFrequency.GetData();
+ 
  generator.Amplitude=PulseAmplitude;
- if(Potential.GetData()>MaxFrequency)
-  Potential = MaxFrequency;
- if(Potential.GetData()>0)
+ if(potential > maxFrequency)
+  Potential = maxFrequency;
+ if(potential > 0)
  {
-  if(fabs(generator.Frequency.GetData()-Potential.GetData())>0.001)
+  const double generatorFreq = generator.Frequency.GetData();
+  if(fabs(generatorFreq - potential) > 0.001)
   {
-   generator.Frequency=Potential.GetData();
+   generator.Frequency = potential;
 //   generator.Reset();
   }
  }
@@ -510,7 +521,7 @@ bool NPulseSimpleLTZone::ACalculate2(void)
 
  Output(0,0)=generator.Output(0,0);
  OutputPotential(0,0)=generator.OutputPotential(0,0);
- OutputFrequency(0,0)=Potential.GetData();
+ OutputFrequency(0,0)=potential;
 
  OutputPulseTimes(0,0)=generator.OutputPulseTimes(0,0);
 

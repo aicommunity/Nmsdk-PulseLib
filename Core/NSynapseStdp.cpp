@@ -156,22 +156,27 @@ bool NSynapseStdp::ACalculate2(void)
  double aMinusVal = AMinus.GetData();
  double resistanceVal = Resistance.GetData();
  
+ // Кэшируем текущие значения для оптимизации
+ double xAvg = XAvg.GetData();
+ double yAvg = YAvg.GetData();
+ 
  if(is_output_pulse_active)
-  XAvg = XAvg.GetData() + (xModCoeffVal - XAvg.GetData())/(xTauVal*TimeStep);
+  xAvg = xAvg + (xModCoeffVal - xAvg)/(xTauVal*TimeStep);
  else
-  XAvg = XAvg.GetData() - XAvg.GetData()/(xTauVal*TimeStep);
+  xAvg = xAvg - xAvg/(xTauVal*TimeStep);
+ XAvg = xAvg;
 
  if(is_input_pulse_active)
-  YAvg = YAvg.GetData() + (yModCoeffVal - YAvg.GetData())/(yTauVal*TimeStep);
+  yAvg = yAvg + (yModCoeffVal - yAvg)/(yTauVal*TimeStep);
  else
-  YAvg = YAvg.GetData() - YAvg.GetData()/(yTauVal*TimeStep);
+  yAvg = yAvg - yAvg/(yTauVal*TimeStep);
+ YAvg = yAvg;
 
- double xAvgVal = XAvg.GetData();
- double yAvgVal = YAvg.GetData();
- double x_avg_res=(is_output_pulse_active)?xAvgVal*aPlusVal:0;
- double y_avg_res=(is_input_pulse_active)?yAvgVal*aMinusVal:0;;
+ double x_avg_res=(is_output_pulse_active)?xAvg*aPlusVal:0;
+ double y_avg_res=(is_input_pulse_active)?yAvg*aMinusVal:0;;
 
- XYDiff = XYDiff.GetData() + (x_avg_res-y_avg_res)/TimeStep;
+ const double xyDiff = XYDiff.GetData();
+ XYDiff = xyDiff + (x_avg_res-y_avg_res)/TimeStep;
 
  StdpInfluence(0,0)=(1-XYDiff.GetData());
  Output(0,0)=StdpInfluence(0,0)*resistanceVal;

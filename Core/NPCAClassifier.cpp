@@ -327,17 +327,20 @@ bool NPCAClassifier::ACalculate(void)
         //Формируем матрицу с данными
         if(MatrixSourceTimeSeries->CurrentLineIndex < MatrixSourceTimeSeries->FullMatrix.GetRows())
         {
+            // Кэшируем значение индекса для оптимизации (вызывается в цикле)
+            const int currentLineIndex = MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1;
             for(int i = 0; i < OutComponents; i++) //пока строка не закончилась
             {
-                results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, i) = PCA->PCAResult(0,i);
+                const double resultValue = PCA->PCAResult(0,i);
+                results(currentLineIndex, i) = resultValue;
                 //Ищем максимальный и минимальный элемент по строке
-                if (results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, i) > max_el(0, i))
+                if (resultValue > max_el(0, i))
                 {
-                    max_el(0, i) = results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, i);
+                    max_el(0, i) = resultValue;
                 }
-                if (results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, i) < min_el(0, i))
+                if (resultValue < min_el(0, i))
                 {
-                    min_el(0, i) = results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, i);
+                    min_el(0, i) = resultValue;
                 }
             }
             //Добавляем значение калибровочного дендрита при необходимости

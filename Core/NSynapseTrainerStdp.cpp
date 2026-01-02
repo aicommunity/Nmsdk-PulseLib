@@ -405,22 +405,27 @@ bool NSynapseTrainerStdpLobov::ACalculate(void)
  double aPlusVal = APlus.GetData();
  double aMinusVal = AMinus.GetData();
  
+ // Кэшируем текущие значения для оптимизации
+ double xAvg = XAvg.GetData();
+ double yAvg = YAvg.GetData();
+ 
  if(IsOutputPulseActive)
-  XAvg = XAvg.GetData() + (xModCoeffVal - XAvg.GetData())/(tauXVal*TimeStep);
+  xAvg = xAvg + (xModCoeffVal - xAvg)/(tauXVal*TimeStep);
  else
-  XAvg = XAvg.GetData() - XAvg.GetData()/(tauXVal*TimeStep);
+  xAvg = xAvg - xAvg/(tauXVal*TimeStep);
+ XAvg = xAvg;
 
  if(IsInputPulseActive)
-  YAvg = YAvg.GetData() + (yModCoeffVal - YAvg.GetData())/(tauYVal*TimeStep);
+  yAvg = yAvg + (yModCoeffVal - yAvg)/(tauYVal*TimeStep);
  else
-  YAvg = YAvg.GetData() - YAvg.GetData()/(tauYVal*TimeStep);
+  yAvg = yAvg - yAvg/(tauYVal*TimeStep);
+ YAvg = yAvg;
 
- double xAvgVal = XAvg.GetData();
- double yAvgVal = YAvg.GetData();
- double x_avg_res=(IsOutputPulseActive)?xAvgVal*aPlusVal:0;
- double y_avg_res=(IsInputPulseActive)?yAvgVal*aMinusVal:0;;
+ double x_avg_res=(IsOutputPulseActive)?xAvg*aPlusVal:0;
+ double y_avg_res=(IsInputPulseActive)?yAvg*aMinusVal:0;;
 
- XYDiff = XYDiff.GetData() + (x_avg_res-y_avg_res)/TimeStep;
+ const double xyDiff = XYDiff.GetData();
+ XYDiff = xyDiff + (x_avg_res-y_avg_res)/TimeStep;
 
  double oldW=WeightOutput(0,0);
 
@@ -593,19 +598,23 @@ bool NSynapseTrainerStdpClassicIntegrated::ACalculate(void)
  double aPlusVal = APlus.GetData();
  double aMinusVal = AMinus.GetData();
  
+ // Кэшируем текущие значения для оптимизации
+ double xAvg = XAvg.GetData();
+ double yAvg = YAvg.GetData();
+ 
  if(IsInputPulseActive)
-  XAvg = XAvg.GetData() + 1;
- XAvg = XAvg.GetData() - XAvg.GetData()/(tauXVal*TimeStep);
+  xAvg = xAvg + 1;
+ xAvg = xAvg - xAvg/(tauXVal*TimeStep);
+ XAvg = xAvg;
 
  if(IsOutputPulseActive)
-  YAvg = YAvg.GetData() + 1;
- YAvg = YAvg.GetData() - YAvg.GetData()/(tauYVal*TimeStep);
+  yAvg = yAvg + 1;
+ yAvg = yAvg - yAvg/(tauYVal*TimeStep);
+ YAvg = yAvg;
 
  double oldW=WeightOutput(0,0);
- double xAvgVal = XAvg.GetData();
- double yAvgVal = YAvg.GetData();
 
- WeightOutput(0,0) += (aPlusVal*pow((1-((WeightOutput(0,0)-WMin)/WRange)),MuPlus)*xAvgVal*((IsOutputPulseActive)?1:0)-aMinusVal*pow((WeightOutput(0,0)-WMin+0.0001)/WRange,MuMinus)*yAvgVal*((IsInputPulseActive)?1:0))/TimeStep;
+ WeightOutput(0,0) += (aPlusVal*pow((1-((WeightOutput(0,0)-WMin)/WRange)),MuPlus)*xAvg*((IsOutputPulseActive)?1:0)-aMinusVal*pow((WeightOutput(0,0)-WMin+0.0001)/WRange,MuMinus)*yAvg*((IsInputPulseActive)?1:0))/TimeStep;
  if (WeightOutput(0,0) < WMin) WeightOutput(0,0)=WMin;
  if (WeightOutput(0,0) > WMax) WeightOutput(0,0)=WMax;
 
@@ -810,16 +819,23 @@ bool NSynapseTrainerStdpMirror::ACalculate(void)
  double tauPlusVal = TauPlus.GetData();
  double tauXVal = TauX.GetData();
  
- o1 = o1.GetData() - (1/(TimeStep*tauMinusVal))*o1.GetData();
- o2 = o2.GetData() - (1/(TimeStep*tauYVal))*o2.GetData();
- r1 = r1.GetData() - (1/(TimeStep*tauPlusVal))*r1.GetData();
- r2 = r2.GetData() - (1/(TimeStep*tauXVal))*r2.GetData();
-
- double oldW=WeightOutput(0,0);
+ // Кэшируем текущие значения для оптимизации
  double o1Val = o1.GetData();
  double o2Val = o2.GetData();
  double r1Val = r1.GetData();
  double r2Val = r2.GetData();
+ 
+ o1Val = o1Val - (1/(TimeStep*tauMinusVal))*o1Val;
+ o2Val = o2Val - (1/(TimeStep*tauYVal))*o2Val;
+ r1Val = r1Val - (1/(TimeStep*tauPlusVal))*r1Val;
+ r2Val = r2Val - (1/(TimeStep*tauXVal))*r2Val;
+ 
+ o1 = o1Val;
+ o2 = o2Val;
+ r1 = r1Val;
+ r2 = r2Val;
+
+ double oldW=WeightOutput(0,0);
 
  if(IsInputPulseActive)
  {

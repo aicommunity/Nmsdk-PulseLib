@@ -457,8 +457,9 @@ bool NContinuesSynChannel::SetDissociationTC(const double &value)
 // Коэффициент пресинаптического торможения
 bool NContinuesSynChannel::SetInhibitionCoeff(const double &value)
 {
- if(SynapseResistance.GetData() > 0)
-  OutputConstData=4.0*(value+1)/SynapseResistance.GetData();
+ const double synapseResistance = SynapseResistance.GetData();
+ if(synapseResistance > 0)
+  OutputConstData=4.0*(value+1)/synapseResistance;
  else
   OutputConstData=0;
 
@@ -471,7 +472,8 @@ bool NContinuesSynChannel::SetSynapseResistance(const double &value)
  if(value<=0)
   return false;
 
- OutputConstData=4.0*InhibitionCoeff.GetData()/value;
+ const double inhibitionCoeff = InhibitionCoeff.GetData();
+ OutputConstData=4.0*inhibitionCoeff/value;
 
  return true;
 }

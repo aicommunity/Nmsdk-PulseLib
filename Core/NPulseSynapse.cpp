@@ -91,12 +91,13 @@ bool NPulseSynapse::SetTypicalPulseDuration(const double &value)
 // Коэффициент пресинаптического торможения
 bool NPulseSynapse::SetInhibitionCoeff(const double &value)
 {
- if(Resistance.GetData() > 0)
+ const double resistance = Resistance.GetData();
+ if(resistance > 0)
  {
   if(value>0)
-   OutputConstData=4.0*(value+1)/Resistance.GetData();
+   OutputConstData=4.0*(value+1)/resistance;
   else
-   OutputConstData=1.0/Resistance.GetData();
+   OutputConstData=1.0/resistance;
  }
  else
   OutputConstData=0;
@@ -127,11 +128,12 @@ bool NPulseSynapse::SetUsePulseSignal(const bool &value)
 // Задание флага включения пресинаптического торомжения
 bool NPulseSynapse::SetUsePresynapticInhibition(const bool &value)
 {
- double inhibitionCoeffVal = InhibitionCoeff.GetData();
+ const double inhibitionCoeffVal = InhibitionCoeff.GetData();
+ const double resistance = Resistance.GetData();
  if(inhibitionCoeffVal>0 && value)
-  OutputConstData=4.0*inhibitionCoeffVal/Resistance;
+  OutputConstData=4.0*inhibitionCoeffVal/resistance;
  else
-  OutputConstData=1.0/Resistance;
+  OutputConstData=1.0/resistance;
 
  return true;
 }

@@ -110,17 +110,24 @@ bool NPulseHebbLifeSynapse::ACalculate2(void)
   UEPtr<NPulseLifeNeuron> neuron=dynamic_pointer_cast<NPulseLifeNeuron>(MainOwner);
   if(neuron)
   {
+   // Кэшируем значения для оптимизации
+   const double gsSum = GsSum.GetData();
+   const double gsGain = GsGain.GetData();
+   const double gd = Gd.GetData();
+   const double gdGain = GdGain.GetData();
+   const double g = G.GetData();
+   
    if(Type>0)
    {
-	neuron->SummaryNegGs = neuron->SummaryNegGs.GetData() + GsSum.GetData()*GsGain.GetData();
-	neuron->SummaryNegGd = neuron->SummaryNegGd.GetData() + Gd.GetData()*GdGain.GetData();
-	neuron->SummaryNegG = neuron->SummaryNegG.GetData() + G;
+	neuron->SummaryNegGs = neuron->SummaryNegGs.GetData() + gsSum*gsGain;
+	neuron->SummaryNegGd = neuron->SummaryNegGd.GetData() + gd*gdGain;
+	neuron->SummaryNegG = neuron->SummaryNegG.GetData() + g;
    }
    else
    {
-	neuron->SummaryPosGs = neuron->SummaryPosGs.GetData() + GsSum.GetData()*GsGain.GetData();
-	neuron->SummaryPosGd = neuron->SummaryPosGd.GetData() + Gd.GetData()*GdGain.GetData();
-	neuron->SummaryPosG = neuron->SummaryPosG.GetData() + G;
+	neuron->SummaryPosGs = neuron->SummaryPosGs.GetData() + gsSum*gsGain;
+	neuron->SummaryPosGd = neuron->SummaryPosGd.GetData() + gd*gdGain;
+	neuron->SummaryPosG = neuron->SummaryPosG.GetData() + g;
    }
   }
  }

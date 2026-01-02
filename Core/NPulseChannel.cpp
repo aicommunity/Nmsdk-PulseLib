@@ -262,13 +262,16 @@ bool NPulseChannel::ACalculate2(void)
   else
    resistance=Resistance.GetData();
 
-  Ti=Capacity.GetData()/(G+1.0/resistance);
+  const double capacity = Capacity.GetData();
+  Ti=capacity/(G+1.0/resistance);
   sum_u=(1.0+G*resistance);
  }
  else
  {
-  Ti=Capacity.GetData()/(G+1.0/FBResistance.GetData());
-  sum_u=(1.0+G*FBResistance.GetData());
+  const double capacity = Capacity.GetData();
+  const double fbResistance = FBResistance.GetData();
+  Ti=capacity/(G+1.0/fbResistance);
+  sum_u=(1.0+G*fbResistance);
  }
 
  TimeConstant = Ti;

@@ -226,35 +226,52 @@ bool NPulseHebbSynapse::ACalculate2(void)
    motivation[i]=(*InputMotivation)(0,i)*Kmot[i];
  }
 
- Win = Win.GetData() + (Kin.GetData()*input - Min.GetData()*Win.GetData())/TimeStep;
- Wout = Wout.GetData() + (Kout.GetData()*ltzoneoutput - Mout.GetData()*Wout.GetData())/TimeStep;
+ // Кэшируем все свойства в начале метода для оптимизации
+ const double win = Win.GetData();
+ const double kin = Kin.GetData();
+ const double min = Min.GetData();
+ const double wout = Wout.GetData();
+ const double kout = Kout.GetData();
+ const double mout = Mout.GetData();
+ const double md = Md.GetData();
+ const double gd = Gd.GetData();
+ const double gdGain = GdGain.GetData();
+ const double gsGain = GsGain.GetData();
+
+ Win = win + (kin*input - min*win)/TimeStep;
+ Wout = wout + (kout*ltzoneoutput - mout*wout)/TimeStep;
 // Wout.v=1;
 
- Gd = Gd.GetData() + (Win.GetData()*Wout.GetData() - Md.GetData()*Gd.GetData())/TimeStep;
+ const double winUpdated = Win.GetData();
+ const double woutUpdated = Wout.GetData();
+ Gd = gd + (winUpdated*woutUpdated - md*gd)/TimeStep;
 
 // for(size_t i=0;i<Gs->size();i++)
 //  Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
 
+ const double gdUpdated = Gd.GetData();
  for(int i=0;i<int(Gs->size());i++)
   if(motivation[i]>0)
 //  if(motivation[i]*Gd.v > PassiveMs[i]*Gs[i])
-   Gs[i] += (motivation[i]*Gd.GetData() - ActiveMs[i]*Gs[i])/TimeStep;
+   Gs[i] += (motivation[i]*gdUpdated - ActiveMs[i]*Gs[i])/TimeStep;
   else
-   Gs[i] += (motivation[i]*Gd.GetData() - PassiveMs[i]*Gs[i])/TimeStep;
+   Gs[i] += (motivation[i]*gdUpdated - PassiveMs[i]*Gs[i])/TimeStep;
 
  double gs_res=0;
  for(int i=0;i<int(Gs->size());i++)
   gs_res+=Gs[i];
  GsSum=gs_res;
 
- G = (Gd.GetData()*GdGain + GsSum.GetData()*GsGain);
- Output(0,0)*=(1.0+G.GetData());
+ const double gsSum = GsSum.GetData();
+ G = (gdUpdated*gdGain + gsSum*gsGain);
+ const double g = G.GetData();
+ Output(0,0)*=(1.0+g);
  Output1(0,0)=Output(0,0);
- Output2(0,0)=G.GetData();
- Output3(0,0)=Gd.GetData()*GdGain;
- Output4(0,0)=GsSum.GetData()*GsGain;
- Output5(0,0)=Win.GetData();
- Output6(0,0)=Wout.GetData();
+ Output2(0,0)=g;
+ Output3(0,0)=gdUpdated*gdGain;
+ Output4(0,0)=gsSum*gsGain;
+ Output5(0,0)=winUpdated;
+ Output6(0,0)=woutUpdated;
    /*
  if(MainOwner && Owner)
  {

@@ -267,7 +267,10 @@ bool NNeuronLife::AReset(void)
  ThresholdWearOut=1;
  ThresholdFeel=1;
 // ThresholdLife=(ThresholdWearOut.v+ThresholdFeel.v+1)*Threshold;
- ThresholdLife=(ThresholdWearOut.GetData()+ThresholdFeel.GetData()+Threshold.GetData());
+ const double thresholdWearOut = ThresholdWearOut.GetData();
+ const double thresholdFeel = ThresholdFeel.GetData();
+ const double threshold = Threshold.GetData();
+ ThresholdLife = thresholdWearOut + thresholdFeel + threshold;
  WearOut=static_cast<double>(0.1);
 
  dEa=0;
@@ -283,49 +286,71 @@ bool NNeuronLife::AReset(void)
 
 bool NNeuronLife::ACalcWearOut(void)
 {
+ // Кэшируем значение WearOut для оптимизации
+ const double wearOut = WearOut.GetData();
+ 
  // Добавляем фиксированную прибавку к износу в секунду
- WearOut = WearOut.GetData() + WearOutConstPositive/TimeStep;
+ WearOut = wearOut + WearOutConstPositive/TimeStep;
 
  // Вычитаем обновление нейрона за счет генерации
 // WearOut-=WearOut*(1/(1+exp(-Kw*fabs(Usum)))-0.5)*WearOutConstNegative/TimeStep;
 // WearOut-=fabs(Usum)*WearOutConstNegative/TimeStep;//(1.0/(1.0+exp(-Kw*fabs(Usum)))-0.5)*WearOutConstNegative/TimeStep;
- WearOut = WearOut.GetData() - WearOut.GetData()*fabs(Usum)*WearOutConstNegative/TimeStep;
+ const double wearOutAfterPositive = WearOut.GetData();
+ WearOut = wearOutAfterPositive - wearOutAfterPositive*fabs(Usum)*WearOutConstNegative/TimeStep;
 
  return true;
 }
 bool NNeuronLife::ACalcEnergy(void)
 {
- double old_Energy=Energy;
+ // Кэшируем часто используемые значения в начале метода
+ const double old_Energy = Energy.GetData();
+ const double energyBonus = EnergyBonus.GetData();
+ const double energy = old_Energy;
+ const double ey = Ey.GetData();
+ const double ee = Ee.GetData();
+ const double eh = Eh.GetData();
+ const double wearOut = WearOut.GetData();
+ 
  // Вычисляем бонус энергии
 // EnergyBonus+=fabs(Usum)*EyBonusPos/TimeStep;
 // EnergyBonus-=EnergyBonus*EyBonusNeg/TimeStep;
- EnergyBonus = EnergyBonus.GetData() + fabs(Usum)*EyBonusPos;
- EnergyBonus = EnergyBonus.GetData() - EnergyBonus.GetData()*EyBonusNeg.GetData();
+ const double eyBonusNeg = EyBonusNeg.GetData();
+ EnergyBonus = energyBonus + fabs(Usum)*EyBonusPos;
+ EnergyBonus = EnergyBonus.GetData() - EnergyBonus.GetData()*eyBonusNeg;
 
- Energy = Energy.GetData() + Ea;
+ Energy = energy + Ea;
 
- dEy=fabs(Usum)*EyConst/TimeStep-Ey;
- Ey = Ey.GetData() + dEy;
+ dEy=fabs(Usum)*EyConst/TimeStep-ey;
+ Ey = ey + dEy;
 
- dEe=Ee0*exp((log(2.0)/Ecr)*Energy)/TimeStep-Ee;
- Ee = Ee.GetData() + dEe;
+ dEe=Ee0*exp((log(2.0)/Ecr)*Energy.GetData())/TimeStep-ee;
+ Ee = ee + dEe;
 
- dEh=Eh0*(1+exp((log(1.5)/EnergyWearOutCritical)*WearOut))/TimeStep-Eh;
- Eh = Eh.GetData() + dEh;
+ dEh=Eh0*(1+exp((log(1.5)/EnergyWearOutCritical)*wearOut))/TimeStep-eh;
+ Eh = eh + dEh;
 
- Energy = Energy.GetData() - (Ey.GetData()+Ee.GetData()+Eh.GetData());
+ // Кэшируем обновленные значения для финального расчета
+ const double eyUpdated = Ey.GetData();
+ const double eeUpdated = Ee.GetData();
+ const double ehUpdated = Eh.GetData();
+ Energy = Energy.GetData() - (eyUpdated + eeUpdated + ehUpdated);
 
- dE=(Energy-old_Energy)/TimeStep;
+ dE=(Energy.GetData()-old_Energy)/TimeStep;
 
  return true;
 }
 bool NNeuronLife::ACalcFeel(void)
 {
- EsumProizv = (Energy.GetData()-EsumOld.GetData())*TimeStep;
+ // Кэшируем значения для оптимизации
+ const double energy = Energy.GetData();
+ const double esumOld = EsumOld.GetData();
+ const double en = En.GetData();
+ 
+ EsumProizv = (energy - esumOld)*TimeStep;
 
- EsumOld = Energy;
+ EsumOld = energy;
 
- Feel=(Energy.GetData()-En.GetData()) + FeelDiff(Kq,EsumProizv,En);
+ Feel = (energy - en) + FeelDiff(Kq, EsumProizv, En);
 
  return true;
 }

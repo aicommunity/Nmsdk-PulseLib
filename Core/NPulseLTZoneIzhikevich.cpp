@@ -73,10 +73,12 @@ bool NPulseLTZoneIzhikevich::ACalculate(void)
  PrePotential = Inputs[0](0,0);
 
  double current_time=GetTime().GetDoubleTime();
- OutputPotential(0,0)=PrePotential.GetData();
- if(PrePotential.GetData()>=Threshold && !PulseFlag)
+ const double prePotential = PrePotential.GetData();
+ OutputPotential(0,0)=prePotential;
+ if(prePotential>=Threshold && !PulseFlag)
  {
-  Output(0,0)=PulseAmplitude.GetData();
+  const double pulseAmplitude = PulseAmplitude.GetData();
+  Output(0,0)=pulseAmplitude;
   if(!PulseFlag)
    AvgFrequencyCounter->push_back(current_time);
   PulseFlag=true;
@@ -91,7 +93,10 @@ bool NPulseLTZoneIzhikevich::ACalculate(void)
  }
 
  if(PulseFlag)
-  PulseCounter = PulseCounter.GetData() - 1;
+ {
+  const int pulseCounter = PulseCounter.GetData();
+  PulseCounter = pulseCounter - 1;
+ }
 
  list<double>::iterator I,J,K;
  I=AvgFrequencyCounter->begin();
@@ -139,7 +144,9 @@ bool NPulseLTZoneIzhikevich::ACalculate(void)
 /// Возвращает true если условие для генерации импульса выполнено
 bool NPulseLTZoneIzhikevich::CheckPulseOn(void)
 {
- return PrePotential.GetData()>=Threshold;
+ const double prePotential = PrePotential.GetData();
+ const double threshold = Threshold.GetData();
+ return prePotential >= threshold;
 }
 
 /// Возвращает true если условие для генерации имульса не выполнено

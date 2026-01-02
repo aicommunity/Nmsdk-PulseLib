@@ -109,7 +109,9 @@ bool NReceptor::AReset(void)
 // Выполняет расчет этого объекта
 bool NReceptor::ACalculate(void)
 {
- OutputRange=MaxOutputRange.GetData()-MinOutputRange.GetData();
+ const double maxOutputRange = MaxOutputRange.GetData();
+ const double minOutputRange = MinOutputRange.GetData();
+ OutputRange = maxOutputRange - minOutputRange;
 
  Output.Resize(Input->GetRows(),Input->GetCols());
 
@@ -129,23 +131,30 @@ bool NReceptor::ACalculate(void)
    break;
 
    case 2:
-	if(input<MinInputRange.GetData())
-	 MinInputRange=input;
-	else // забывание
 	{
-	 MinInputRange = MinInputRange.GetData() - MinInputRange.GetData()/(InputAdaptationArrestingTC*TimeStep);
-	}
+	 const double minInputRange = MinInputRange.GetData();
+	 if(input<minInputRange)
+	  MinInputRange=input;
+	 else // забывание
+	 {
+	  MinInputRange = minInputRange - minInputRange/(InputAdaptationArrestingTC*TimeStep);
+	 }
 
-	if(input>MaxInputRange.GetData())
-	 MaxInputRange=input;
-	else // забывание
-	{
-     MaxInputRange = MaxInputRange.GetData() - MaxInputRange.GetData()/(InputAdaptationArrestingTC*TimeStep);
+	 const double maxInputRange = MaxInputRange.GetData();
+	 if(input>maxInputRange)
+	  MaxInputRange=input;
+	 else // забывание
+	 {
+      const double maxInputRangeVal = MaxInputRange.GetData();
+      MaxInputRange = maxInputRangeVal - maxInputRangeVal/(InputAdaptationArrestingTC*TimeStep);
+	 }
 	}
    break;
    }
 
-   InputRange=MaxInputRange.GetData()-MinInputRange.GetData();
+   const double maxInputRangeFinal = MaxInputRange.GetData();
+   const double minInputRangeFinal = MinInputRange.GetData();
+   InputRange = maxInputRangeFinal - minInputRangeFinal;
    if(!InputRange)
 	return true;
 

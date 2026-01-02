@@ -245,7 +245,8 @@ bool NPulseLTZoneCommon::ACalculate(void)
     }
    }
   }
-  int div_coeff=int(Inputs->size())/((NumChannelsInGroup.GetData()>0)?NumChannelsInGroup.GetData():1);
+  const int numChannelsInGroup = NumChannelsInGroup.GetData();
+  int div_coeff=int(Inputs->size())/((numChannelsInGroup>0)?numChannelsInGroup:1);
   if(UseAveragePotential && div_coeff>0)
    NeuralPotential = NeuralPotential.GetData() / div_coeff;
  }

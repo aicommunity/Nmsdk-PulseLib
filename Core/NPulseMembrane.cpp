@@ -425,11 +425,13 @@ bool NPulseMembrane::ACalculate2(void)
 
  Feedback=0;
 
+  double feedback = Feedback.GetData();
   for(int j=0;j<InputFeedbackSignal->GetRows();j++)
    for(int i=0;i<InputFeedbackSignal->GetCols();i++)
-    Feedback = Feedback.GetData() + (*InputFeedbackSignal)(j,i);
+    feedback = feedback + (*InputFeedbackSignal)(j,i);
 
- Feedback = Feedback.GetData() * FeedbackGain.GetData();
+  const double feedbackGain = FeedbackGain.GetData();
+  Feedback = feedback * feedbackGain;
 
  return true;
 }
