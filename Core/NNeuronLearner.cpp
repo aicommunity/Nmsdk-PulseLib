@@ -168,14 +168,14 @@ bool NNeuronLearner::SetIsNeedToTrain(const bool &value)
  // При поднятии флага надо установить порогу LTZone учебное значение
  if(value)
  {
-  SetLTZThreshold(TrainingLTZThreshold.v);
-  LTZThreshold.v = TrainingLTZThreshold.v;
+  SetLTZThreshold(TrainingLTZThreshold.GetData());
+  LTZThreshold.SetDataDirect(TrainingLTZThreshold.GetData());
  }
  // При опускании флага надо установить фиксированное значение
  else
  {
-  SetLTZThreshold(FixedLTZThreshold.v);
-  LTZThreshold.v = FixedLTZThreshold.v;
+  SetLTZThreshold(FixedLTZThreshold.GetData());
+  LTZThreshold.SetDataDirect(FixedLTZThreshold.GetData());
  }
  return true;
 }
@@ -346,8 +346,8 @@ bool NNeuronLearner::SetUseFixedLTZThreshold(const bool &value)
 {
  if(value)
  {
-  SetLTZThreshold(FixedLTZThreshold.v);
-  LTZThreshold.v = FixedLTZThreshold.v;
+  SetLTZThreshold(FixedLTZThreshold.GetData());
+  LTZThreshold.SetDataDirect(FixedLTZThreshold.GetData());
  }
 
  return true;
@@ -389,7 +389,7 @@ bool NNeuronLearner::SetExperimentMode(const bool &value)
  }
  else
  {
-  ExperimentNum = 1;  // По умлочанию включаем 1-й эксперимент
+  ExperimentNum.SetDataDirect(1);  // По умлочанию включаем 1-й эксперимент
   EpochCur = 1;
  }
  IsFirstFileStep = true;
@@ -424,17 +424,17 @@ bool NNeuronLearner::SetNumSynapse(const std::vector<int> &value)
 /// 2 - LearningSecondPattern()
 bool NNeuronLearner::SetExperimentNum(const int &value)
 {
- CalculateMode = 1;
+ CalculateMode.SetDataDirect(1);
  SetCalculateMode(1);
  IsFirstFileStep = true;
  if (value == 1)
  {
-  IsNeedToTrain = false;
+  IsNeedToTrain.SetDataDirect(false);
   SetIsNeedToTrain(false);
  }
  if (value == 2)
  {
-  IsNeedToTrain = true;
+  IsNeedToTrain.SetDataDirect(true);
   SetIsNeedToTrain(true);
  }
  return true;
@@ -630,7 +630,7 @@ bool NNeuronLearner::BuildStructure()
   std::vector<double> newinitialsomapotential;
   newinitialsomapotential.assign(NumInputDendrite, 0.0);
   // Копирование старой информации
-  for (int i = 0; i < std::min(NumInputDendrite.v, int(InitialSomaPotential.size())); i++)
+  for (int i = 0; i < std::min(NumInputDendrite.GetData(), int(InitialSomaPotential.size())); i++)
   {
    newinitialsomapotential[i] = InitialSomaPotential[i];
   }

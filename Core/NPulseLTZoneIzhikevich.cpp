@@ -70,13 +70,13 @@ bool NPulseLTZoneIzhikevich::ACalculate(void)
 {
  if(Inputs->size()<2)
   return true;
- PrePotential.v=Inputs[0](0,0);
+ PrePotential = Inputs[0](0,0);
 
  double current_time=GetTime().GetDoubleTime();
- OutputPotential(0,0)=PrePotential.v;
- if(PrePotential.v>=Threshold && !PulseFlag)
+ OutputPotential(0,0)=PrePotential.GetData();
+ if(PrePotential.GetData()>=Threshold && !PulseFlag)
  {
-  Output(0,0)=PulseAmplitude.v;
+  Output(0,0)=PulseAmplitude.GetData();
   if(!PulseFlag)
    AvgFrequencyCounter->push_back(current_time);
   PulseFlag=true;
@@ -91,7 +91,7 @@ bool NPulseLTZoneIzhikevich::ACalculate(void)
  }
 
  if(PulseFlag)
-  --PulseCounter.v;
+  PulseCounter = PulseCounter.GetData() - 1;
 
  list<double>::iterator I,J,K;
  I=AvgFrequencyCounter->begin();
@@ -131,7 +131,7 @@ bool NPulseLTZoneIzhikevich::ACalculate(void)
   OutputPulseTimes(0,i)=*I;
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
@@ -139,7 +139,7 @@ bool NPulseLTZoneIzhikevich::ACalculate(void)
 /// Возвращает true если условие для генерации импульса выполнено
 bool NPulseLTZoneIzhikevich::CheckPulseOn(void)
 {
- return PrePotential.v>=Threshold;
+ return PrePotential.GetData()>=Threshold;
 }
 
 /// Возвращает true если условие для генерации имульса не выполнено

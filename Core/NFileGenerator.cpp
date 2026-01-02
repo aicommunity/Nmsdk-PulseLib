@@ -43,7 +43,7 @@ NFileGenerator::~NFileGenerator(void)
 // Устанавливает имя файла с данными
 bool NFileGenerator::SetFileName(const string &value)
 {
- FileName.v=value;
+ FileName.SetDataDirect(value);
  return Reset();
 }
 // --------------------------

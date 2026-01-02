@@ -329,21 +329,21 @@ bool NPCAClassifier::ACalculate(void)
         {
             for(int i = 0; i < OutComponents; i++) //пока строка не закончилась
             {
-                results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i) = PCA->PCAResult(0,i);
+                results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, i) = PCA->PCAResult(0,i);
                 //Ищем максимальный и минимальный элемент по строке
-                if (results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i) > max_el(0, i))
+                if (results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, i) > max_el(0, i))
                 {
-                    max_el(0, i) = results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i);
+                    max_el(0, i) = results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, i);
                 }
-                if (results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i) < min_el(0, i))
+                if (results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, i) < min_el(0, i))
                 {
-                    min_el(0, i) = results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, i);
+                    min_el(0, i) = results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, i);
                 }
             }
             //Добавляем значение калибровочного дендрита при необходимости
             if(IsCalibrativeDendrite)
             {
-                results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, OutComponents) = TimeWindowSize;
+                results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, OutComponents) = TimeWindowSize;
             }
 
             return true;
@@ -364,7 +364,7 @@ bool NPCAClassifier::ACalculate(void)
                 }
                 if(IsCalibrativeDendrite)
                 {
-                    results(MatrixSourceTimeSeries->CurrentLineIndex.v - 1, OutComponents) = TimeWindowSize;
+                    results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, OutComponents) = TimeWindowSize;
                 }
             }
 

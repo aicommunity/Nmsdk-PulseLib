@@ -214,7 +214,7 @@ bool NPulseGenerator::ACalculate(void)
  if(Environment->GetTime().GetDoubleTime() - ResetTime < Delay)
   return true;
 
- if(OldFrequency != Frequency.v)
+ if(OldFrequency != Frequency.GetData())
  {
   if(PulseCounter < 0 && PulseCounter < static_cast<int>(-int(TimeStep/Frequency)+PulseLength*TimeStep))
    PulseCounter = static_cast<int>(-int(TimeStep/Frequency));
@@ -256,7 +256,7 @@ bool NPulseGenerator::ACalculate(void)
    {
     RandomFrequency=double(rand()*FrequencyDeviation*2.0)/double(RAND_MAX)+
                            Frequency-FrequencyDeviation;
-    if(RandomFrequency.v>0)
+    if(RandomFrequency.GetData()>0)
      PulseCounter=static_cast<int>(-int(TimeStep/RandomFrequency)+PulseLength*TimeStep);
     else
      PulseCounter=0;

@@ -148,23 +148,33 @@ bool NSynapseStdp::ACalculate2(void)
  if((*PsActivityInput)(0,0)>0)
   is_output_pulse_active=true;
 
+ double xTauVal = XTau.GetData();
+ double yTauVal = YTau.GetData();
+ double xModCoeffVal = XModCoeff.GetData();
+ double yModCoeffVal = YModCoeff.GetData();
+ double aPlusVal = APlus.GetData();
+ double aMinusVal = AMinus.GetData();
+ double resistanceVal = Resistance.GetData();
+ 
  if(is_output_pulse_active)
-  XAvg.v+=(XModCoeff.v-XAvg.v)/(XTau.v*TimeStep);
+  XAvg = XAvg.GetData() + (xModCoeffVal - XAvg.GetData())/(xTauVal*TimeStep);
  else
-  XAvg.v-=XAvg.v/(XTau.v*TimeStep);
+  XAvg = XAvg.GetData() - XAvg.GetData()/(xTauVal*TimeStep);
 
  if(is_input_pulse_active)
-  YAvg.v+=(YModCoeff.v-YAvg.v)/(YTau.v*TimeStep);
+  YAvg = YAvg.GetData() + (yModCoeffVal - YAvg.GetData())/(yTauVal*TimeStep);
  else
-  YAvg.v-=YAvg.v/(YTau.v*TimeStep);
+  YAvg = YAvg.GetData() - YAvg.GetData()/(yTauVal*TimeStep);
 
- double x_avg_res=(is_output_pulse_active)?XAvg.v*APlus.v:0;
- double y_avg_res=(is_input_pulse_active)?YAvg.v*AMinus.v:0;;
+ double xAvgVal = XAvg.GetData();
+ double yAvgVal = YAvg.GetData();
+ double x_avg_res=(is_output_pulse_active)?xAvgVal*aPlusVal:0;
+ double y_avg_res=(is_input_pulse_active)?yAvgVal*aMinusVal:0;;
 
- XYDiff.v+=(x_avg_res-y_avg_res)/TimeStep;
+ XYDiff = XYDiff.GetData() + (x_avg_res-y_avg_res)/TimeStep;
 
- StdpInfluence(0,0)=(1-XYDiff.v);
- Output(0,0)=StdpInfluence(0,0)*Resistance.v;
+ StdpInfluence(0,0)=(1-XYDiff.GetData());
+ Output(0,0)=StdpInfluence(0,0)*resistanceVal;
 
  return true;
 }

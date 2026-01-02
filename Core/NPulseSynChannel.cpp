@@ -103,12 +103,13 @@ bool NPulseSynChannel::SetDissociationTC(const double &value)
 // Коэффициент пресинаптического торможения
 bool NPulseSynChannel::SetInhibitionCoeff(const double &value)
 {
- if(SynapseResistance.v > 0)
+ double synapseResistanceVal = SynapseResistance.GetData();
+ if(synapseResistanceVal > 0)
  {
   if(value>0)
-   OutputConstData=4.0*(value+1)/SynapseResistance.v;
+   OutputConstData=4.0*(value+1)/synapseResistanceVal;
   else
-   OutputConstData=1.0/SynapseResistance.v;
+   OutputConstData=1.0/synapseResistanceVal;
  }
  else
   OutputConstData=0;
@@ -122,8 +123,9 @@ bool NPulseSynChannel::SetSynapseResistance(const double &value)
  if(value<=0)
   return false;
 
- if(InhibitionCoeff.v>0)
-  OutputConstData=4.0*(InhibitionCoeff.v+1)/value;
+ double inhibitionCoeffVal = InhibitionCoeff.GetData();
+ if(inhibitionCoeffVal>0)
+  OutputConstData=4.0*(inhibitionCoeffVal+1)/value;
  else
   OutputConstData=1.0/value;
 
@@ -297,10 +299,11 @@ bool NPulseSynChannel::ACalculate2(void)
   else // Остальные подключенные компоненты считаем входами синапсов
   {
    ++num_connected_synapsis;
-   if(int(PreOutput->size())<num_connected_synapsis)
+   std::vector<double>& preOutputVec = *PreOutput;
+   if(int(preOutputVec.size())<num_connected_synapsis)
    {
-    PreOutput->resize(num_connected_synapsis);
-    PreOutput.v[num_connected_synapsis-1]=0;
+    preOutputVec.resize(num_connected_synapsis);
+    preOutputVec[num_connected_synapsis-1]=0;
    }
 
    input=ChannelInputs[n](0,0);
@@ -308,17 +311,19 @@ bool NPulseSynChannel::ACalculate2(void)
    if(MainOwner && Owner)
    {
     if(Type() < 0)
-     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
+     static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.GetData() + 1;
     else
-     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
+     static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.GetData() + 1;
    }
 
+   double pulseAmplitudeVal = PulseAmplitude.GetData();
+   double inhibitionCoeffVal = InhibitionCoeff.GetData();
    if(input>0)
-    PreOutput.v[num_connected_synapsis-1]+=(input/PulseAmplitude.v-PreOutput.v[num_connected_synapsis-1])/VSecretionTC;
+    preOutputVec[num_connected_synapsis-1]+=(input/pulseAmplitudeVal-preOutputVec[num_connected_synapsis-1])/VSecretionTC;
    else
-    PreOutput.v[num_connected_synapsis-1]-=PreOutput.v[num_connected_synapsis-1]/VDissociationTC;
+    preOutputVec[num_connected_synapsis-1]-=preOutputVec[num_connected_synapsis-1]/VDissociationTC;
 
-   syn_output=OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v[num_connected_synapsis-1])*PreOutput.v[num_connected_synapsis-1];
+   syn_output=OutputConstData*(1.0-inhibitionCoeffVal*preOutputVec[num_connected_synapsis-1])*preOutputVec[num_connected_synapsis-1];
 
    if(syn_output>0)
     G+=syn_output;
@@ -355,9 +360,9 @@ bool NPulseSynChannel::ACalculate2(void)
  {
   double resistance(0.0);
   if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))
-   resistance=RestingResistance.v;
+   resistance=RestingResistance.GetData();
   else
-   resistance=Resistance.v;
+   resistance=Resistance.GetData();
 
   Ti=Capacity/(G+1.0/resistance);
   sum_u=(1.0+G*resistance);
@@ -452,8 +457,8 @@ bool NContinuesSynChannel::SetDissociationTC(const double &value)
 // Коэффициент пресинаптического торможения
 bool NContinuesSynChannel::SetInhibitionCoeff(const double &value)
 {
- if(SynapseResistance.v > 0)
-  OutputConstData=4.0*(value+1)/SynapseResistance.v;
+ if(SynapseResistance.GetData() > 0)
+  OutputConstData=4.0*(value+1)/SynapseResistance.GetData();
  else
   OutputConstData=0;
 
@@ -466,7 +471,7 @@ bool NContinuesSynChannel::SetSynapseResistance(const double &value)
  if(value<=0)
   return false;
 
- OutputConstData=4.0*InhibitionCoeff.v/value;
+ OutputConstData=4.0*InhibitionCoeff.GetData()/value;
 
  return true;
 }
@@ -625,7 +630,7 @@ double channel_input_sum=0;
    if(int(PreOutput->size())<num_connected_synapsis)
    {
     PreOutput->resize(num_connected_synapsis);
-    PreOutput.v[num_connected_synapsis-1]=0;
+    (*PreOutput)[num_connected_synapsis-1]=0;
    }
 
    input=ChannelInputs[n](0,0);
@@ -633,17 +638,17 @@ double channel_input_sum=0;
    if(MainOwner && Owner)
    {
     if(Type() < 0)
-     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
+     static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.GetData() + 1;
     else
-     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
+     static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.GetData() + 1;
    }
 
    if(input>0)
-    PreOutput.v[num_connected_synapsis-1]+=(input/PulseAmplitude.v-PreOutput.v[num_connected_synapsis-1])/VSecretionTC;
+    (*PreOutput)[num_connected_synapsis-1] += (input/PulseAmplitude.GetData()-(*PreOutput)[num_connected_synapsis-1])/VSecretionTC;
    else
-    PreOutput.v[num_connected_synapsis-1]-=PreOutput.v[num_connected_synapsis-1]/VDissociationTC;
+    (*PreOutput)[num_connected_synapsis-1] -= (*PreOutput)[num_connected_synapsis-1]/VDissociationTC;
 
-   syn_output=PreOutput.v[num_connected_synapsis-1]/SynapseResistance.v;//OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v[num_connected_synapsis-1])*PreOutput.v[num_connected_synapsis-1];
+   syn_output=(*PreOutput)[num_connected_synapsis-1]/SynapseResistance.GetData();//OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v[num_connected_synapsis-1])*PreOutput.v[num_connected_synapsis-1];
 
    if(syn_output>0)
     G+=syn_output;
@@ -674,9 +679,9 @@ double *out=&Output(0,0);
 
  double resistance(0.0);
 if((*out<channel_input_sum && Type == 1) || (*out>channel_input_sum && Type == -1))
-  resistance=RestingResistance.v;
+  resistance=RestingResistance.GetData();
  else
-  resistance=Resistance.v;
+  resistance=Resistance.GetData();
 
  Ti=Capacity/(G+1.0/resistance);
  sum_u=(1.0+G*resistance);

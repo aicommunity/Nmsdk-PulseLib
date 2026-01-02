@@ -267,7 +267,7 @@ bool NNeuronLife::AReset(void)
  ThresholdWearOut=1;
  ThresholdFeel=1;
 // ThresholdLife=(ThresholdWearOut.v+ThresholdFeel.v+1)*Threshold;
- ThresholdLife=(ThresholdWearOut.v+ThresholdFeel.v+Threshold.v);
+ ThresholdLife=(ThresholdWearOut.GetData()+ThresholdFeel.GetData()+Threshold.GetData());
  WearOut=static_cast<double>(0.1);
 
  dEa=0;
@@ -284,12 +284,12 @@ bool NNeuronLife::AReset(void)
 bool NNeuronLife::ACalcWearOut(void)
 {
  // Добавляем фиксированную прибавку к износу в секунду
- WearOut.v+=WearOutConstPositive/TimeStep;
+ WearOut = WearOut.GetData() + WearOutConstPositive/TimeStep;
 
  // Вычитаем обновление нейрона за счет генерации
 // WearOut-=WearOut*(1/(1+exp(-Kw*fabs(Usum)))-0.5)*WearOutConstNegative/TimeStep;
 // WearOut-=fabs(Usum)*WearOutConstNegative/TimeStep;//(1.0/(1.0+exp(-Kw*fabs(Usum)))-0.5)*WearOutConstNegative/TimeStep;
- WearOut.v-=WearOut*fabs(Usum)*WearOutConstNegative/TimeStep;
+ WearOut = WearOut.GetData() - WearOut.GetData()*fabs(Usum)*WearOutConstNegative/TimeStep;
 
  return true;
 }
@@ -299,21 +299,21 @@ bool NNeuronLife::ACalcEnergy(void)
  // Вычисляем бонус энергии
 // EnergyBonus+=fabs(Usum)*EyBonusPos/TimeStep;
 // EnergyBonus-=EnergyBonus*EyBonusNeg/TimeStep;
- EnergyBonus.v+=fabs(Usum)*EyBonusPos;
- EnergyBonus.v-=EnergyBonus.v*EyBonusNeg.v;
+ EnergyBonus = EnergyBonus.GetData() + fabs(Usum)*EyBonusPos;
+ EnergyBonus = EnergyBonus.GetData() - EnergyBonus.GetData()*EyBonusNeg.GetData();
 
- Energy.v+=Ea;
+ Energy = Energy.GetData() + Ea;
 
  dEy=fabs(Usum)*EyConst/TimeStep-Ey;
- Ey.v+=dEy;
+ Ey = Ey.GetData() + dEy;
 
  dEe=Ee0*exp((log(2.0)/Ecr)*Energy)/TimeStep-Ee;
- Ee.v+=dEe;
+ Ee = Ee.GetData() + dEe;
 
  dEh=Eh0*(1+exp((log(1.5)/EnergyWearOutCritical)*WearOut))/TimeStep-Eh;
- Eh.v+=dEh;
+ Eh = Eh.GetData() + dEh;
 
- Energy.v-=Ey.v+Ee.v+Eh.v;
+ Energy = Energy.GetData() - (Ey.GetData()+Ee.GetData()+Eh.GetData());
 
  dE=(Energy-old_Energy)/TimeStep;
 
@@ -321,11 +321,11 @@ bool NNeuronLife::ACalcEnergy(void)
 }
 bool NNeuronLife::ACalcFeel(void)
 {
- EsumProizv = (Energy.v-EsumOld.v)*TimeStep;
+ EsumProizv = (Energy.GetData()-EsumOld.GetData())*TimeStep;
 
  EsumOld = Energy;
 
- Feel=(Energy.v-En.v) + FeelDiff(Kq,EsumProizv,En);
+ Feel=(Energy.GetData()-En.GetData()) + FeelDiff(Kq,EsumProizv,En);
 
  return true;
 }
@@ -333,17 +333,17 @@ bool NNeuronLife::ACalcThresholdLife(void)
 {
 // ThresholdFeel = Pdmax/(1+exp(-Kdp*(CriticalEnergy-Energy)));
 // ThresholdFeel = Pdmax/(1+exp(-Kdp*(Qsum.v-Qd.v)));
- ThresholdFeel = Pdmax/(1+exp(-Kdp*(Feel.v-Qd.v)));
+ ThresholdFeel = Pdmax/(1+exp(-Kdp*(Feel.GetData()-Qd.GetData())));
 
  if (WearOut < WearOutcr)
  {
-  if(WearOut.v<0.05)
+  if(WearOut.GetData()<0.05)
    ThresholdWearOut=1e10;
   else
-   ThresholdWearOut = exp(Khp0.v/WearOut.v) - exp(Khp0.v/WearOutcr.v);
+   ThresholdWearOut = exp(Khp0.GetData()/WearOut.GetData()) - exp(Khp0.GetData()/WearOutcr.GetData());
  }
  else
-  ThresholdWearOut = static_cast<double>(1.0-exp(Khp1*(WearOut.v - WearOutcr.v)));
+  ThresholdWearOut = static_cast<double>(1.0-exp(Khp1*(WearOut.GetData() - WearOutcr.GetData())));
 
 // ThresholdLife = static_cast<double>((ThresholdWearOut.v + ThresholdFeel.v + 0.5)*Threshold);
  ThresholdLife = 0;//static_cast<double>(ThresholdWearOut.v + ThresholdFeel.v + Threshold);
@@ -396,7 +396,7 @@ bool NNeuronLife::ACalculate(void)
    epos=EnergyComprehensibility;
  }
  dEa=epos/TimeStep-Ea;
- Ea.v+=dEa;
+ Ea = Ea.GetData() + dEa;
 
  if(!ACalcWearOut())
   return false;
@@ -410,7 +410,7 @@ bool NNeuronLife::ACalculate(void)
  if(!ACalcThresholdLife())
   return false;
 
- if(Energy.v < 0) // Вместо 0 должен быть параметр остаточного минимума
+ if(Energy.GetData() < 0) // Вместо 0 должен быть параметр остаточного минимума
  {
   UEPtr<UItem> item=dynamic_pointer_cast<UItem>(Owner);
   if(item)
@@ -429,21 +429,21 @@ bool NNeuronLife::ACalculate(void)
   }
  }
 
- Output1(0,0)=Threshold.v;
- Output1(0,1)=ThresholdWearOut.v;
- Output1(0,2)=ThresholdFeel.v;
- Output1(0,3)=ThresholdLife.v;
+ Output1(0,0)=Threshold.GetData();
+ Output1(0,1)=ThresholdWearOut.GetData();
+ Output1(0,2)=ThresholdFeel.GetData();
+ Output1(0,3)=ThresholdLife.GetData();
 
- Output2(0,0)=Feel.v;
+ Output2(0,0)=Feel.GetData();
 
- Output3(0,0)=WearOut.v;
+ Output3(0,0)=WearOut.GetData();
 
- OutputThreshold(0,0)=Ey.v;
- OutputThreshold(0,1)=Ee.v;
- OutputThreshold(0,2)=Eh.v;
- OutputThreshold(0,3)=Ey.v+Ee.v+Eh.v;
+ OutputThreshold(0,0)=Ey.GetData();
+ OutputThreshold(0,1)=Ee.GetData();
+ OutputThreshold(0,2)=Eh.GetData();
+ OutputThreshold(0,3)=Ey.GetData()+Ee.GetData()+Eh.GetData();
 
- Output5(0,0)=Energy.v;
+ Output5(0,0)=Energy.GetData();
 
  // Вычисляем мотивацию для возбуждающих синапсов
  Output6(0,0)=dEa*TimeStep;
@@ -466,7 +466,7 @@ bool NNeuronLife::ACalculate(void)
  Output7(0,4)=0;//-dE*TimeStep;
 
  // Вычисляем опосредованные воздействия - энергетический бонус
- Output8(0,0)=EnergyBonus.v;
+ Output8(0,0)=EnergyBonus.GetData();
 
  return true;
 }

@@ -53,7 +53,7 @@ NPulseSynapseCommon::~NPulseSynapseCommon(void)
 // --------------------------
 bool NPulseSynapseCommon::SetType(const double &value)
 {
- Type.v=value;
+ Type.SetDataDirect(value);
 
  UEPtr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(Owner);
  if(membr)

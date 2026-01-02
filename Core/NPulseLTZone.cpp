@@ -103,7 +103,7 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
   //double eee = Potential.v;
   // < ----
 
-  Output(0,0)=PulseAmplitude.v;
+  Output(0,0)=PulseAmplitude.GetData();
   if(!PulseFlag)
    AvgFrequencyCounter->push_back(current_time);
   PulseFlag=true;
@@ -115,7 +115,7 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
   Output(0,0)=0;
  }
 
- OutputPotential(0,0)=Potential.v;
+ OutputPotential(0,0)=Potential.GetData();
 
  list<double>::iterator I,J,K;
  I=AvgFrequencyCounter->begin();
@@ -155,7 +155,7 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
   OutputPulseTimes(0,i)=*I;
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
@@ -163,13 +163,13 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
 /// Возвращает true если условие для генерации импульса выполнено
 bool NPulseLTZoneThreshold::CheckPulseOn(void)
 {
- return Potential.v>=Threshold.v;
+ return Potential.GetData()>=Threshold.GetData();
 }
 
 /// Возвращает true если условие для генерации имульса не выполнено
 bool NPulseLTZoneThreshold::CheckPulseOff(void)
 {
- return Potential.v<ThresholdOff;
+ return Potential.GetData()<ThresholdOff;
 }
 // --------------------------
 
@@ -210,7 +210,7 @@ bool NPulseLTZone::SetLTZIntegtation(const bool &value)
 // Флаг включения стабилизации длительности импульса
 bool NPulseLTZone::SetUseSpikeStabilizer(const bool &value)
 {
- TimeConstant=0.00144; // Force change time constant
+ TimeConstant.SetDataDirect(0.00144); // Force change time constant
  return true;
 }
 // --------------------------
@@ -284,16 +284,20 @@ bool NPulseLTZone::ACalculate2(void)
  if(UseLTZIntegtation)
  {
   double input(0.0);
-  if(UseSpikeStabilizer.v)
+  double timeConstantVal = TimeConstant.GetData();
+  double thresholdVal = Threshold.GetData();
+  double neuralPotentialVal = NeuralPotential.GetData();
+  if(UseSpikeStabilizer.GetData())
   {
-   input=(Output(0,0)>0)?-Threshold.v:NeuralPotential.v;
+   input=(Output(0,0)>0)?-thresholdVal:neuralPotentialVal;
   }
-  PrePotential.v+=(input-PrePotential.v)/(TimeConstant.v*TimeStep);
+  double prePotentialVal = PrePotential.GetData();
+  PrePotential = prePotentialVal + (input-prePotentialVal)/(timeConstantVal*TimeStep);
  }
  else
-  PrePotential.v = NeuralPotential.v;
+  PrePotential = NeuralPotential.GetData();
 
- Potential.v=PrePotential.v;
+ Potential = PrePotential.GetData();
  return NPulseLTZoneThreshold::ACalculate2();
 }
 // --------------------------
@@ -383,26 +387,26 @@ bool NContinuesLTZone::AReset(void)
 // Выполняет расчет этого объекта
 bool NContinuesLTZone::ACalculate2(void)
 {
- Potential.v=tanh(NeuralPotential.v);
+ Potential = tanh(NeuralPotential.GetData());
 
- if(Potential.v>=Threshold.v)
+ if(Potential.GetData()>=Threshold.GetData())
  {
-  Output(0,0)=Potential.v;
-  OutputPotential(0,0)=Potential.v;
+  Output(0,0)=Potential.GetData();
+  OutputPotential(0,0)=Potential.GetData();
   PulseFlag=true;
  }
  else
- if(Potential.v<=0)
+ if(Potential.GetData()<=0)
  {
   PulseFlag=false;
   Output(0,0)=0;
-  OutputPotential(0,0)=Potential.v;
+  OutputPotential(0,0)=Potential.GetData();
  }
  else
-  OutputPotential(0,0)=Potential.v;
+  OutputPotential(0,0)=Potential.GetData();
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
@@ -488,13 +492,13 @@ bool NPulseSimpleLTZone::AReset(void)
 bool NPulseSimpleLTZone::ACalculate2(void)
 {
  generator.Amplitude=PulseAmplitude;
- if(Potential.v>MaxFrequency)
-  Potential.v=MaxFrequency;
- if(Potential.v>0)
+ if(Potential.GetData()>MaxFrequency)
+  Potential = MaxFrequency;
+ if(Potential.GetData()>0)
  {
-  if(fabs(generator.Frequency.v-Potential.v)>0.001)
+  if(fabs(generator.Frequency.GetData()-Potential.GetData())>0.001)
   {
-   generator.Frequency=Potential.v;
+   generator.Frequency=Potential.GetData();
 //   generator.Reset();
   }
  }
@@ -506,12 +510,12 @@ bool NPulseSimpleLTZone::ACalculate2(void)
 
  Output(0,0)=generator.Output(0,0);
  OutputPotential(0,0)=generator.OutputPotential(0,0);
- OutputFrequency(0,0)=Potential.v;
+ OutputFrequency(0,0)=Potential.GetData();
 
  OutputPulseTimes(0,0)=generator.OutputPulseTimes(0,0);
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
@@ -584,11 +588,11 @@ bool NContinuesSimpleLTZone::AReset(void)
 // Выполняет расчет этого объекта
 bool NContinuesSimpleLTZone::ACalculate2(void)
 {
- Output(0,0)=Potential.v;
- OutputPotential(0,0)=Potential.v;
+ Output(0,0)=Potential.GetData();
+ OutputPotential(0,0)=Potential.GetData();
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }

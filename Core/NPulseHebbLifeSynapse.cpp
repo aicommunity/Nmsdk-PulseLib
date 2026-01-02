@@ -62,7 +62,7 @@ bool NPulseHebbLifeSynapse::InstallLifeConnection(void)
    return false;
 
   Type=channel->Type;
-  if(channel->Type.v>0)
+  if(channel->Type.GetData()>0)
    res&=mlowner->CreateLink(mlowner->GetNeuronLife()->GetLongName(mlowner),"Output7",GetLongName(mlowner), "InputNeuronLifeSignal");
   else
    res&=mlowner->CreateLink(mlowner->GetNeuronLife()->GetLongName(mlowner),"Output6",GetLongName(mlowner), "InputNeuronLifeSignal");
@@ -112,15 +112,15 @@ bool NPulseHebbLifeSynapse::ACalculate2(void)
   {
    if(Type>0)
    {
-	neuron->SummaryNegGs.v+=GsSum.v*GsGain.v;
-	neuron->SummaryNegGd.v+=Gd.v*GdGain.v;
-	neuron->SummaryNegG.v+=G;
+	neuron->SummaryNegGs = neuron->SummaryNegGs.GetData() + GsSum.GetData()*GsGain.GetData();
+	neuron->SummaryNegGd = neuron->SummaryNegGd.GetData() + Gd.GetData()*GdGain.GetData();
+	neuron->SummaryNegG = neuron->SummaryNegG.GetData() + G;
    }
    else
    {
-	neuron->SummaryPosGs.v+=GsSum.v*GsGain.v;
-	neuron->SummaryPosGd.v+=Gd.v*GdGain.v;
-	neuron->SummaryPosG.v+=G;
+	neuron->SummaryPosGs = neuron->SummaryPosGs.GetData() + GsSum.GetData()*GsGain.GetData();
+	neuron->SummaryPosGd = neuron->SummaryPosGd.GetData() + Gd.GetData()*GdGain.GetData();
+	neuron->SummaryPosG = neuron->SummaryPosG.GetData() + G;
    }
   }
  }

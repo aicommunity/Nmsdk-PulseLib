@@ -236,7 +236,7 @@ bool NPainReflexSimple::SetUseFixedLTZThreshold(const bool &value)
  if(value)
  {
   double threshold = FixedLTZThreshold;
-  LTZThreshold = threshold;
+  LTZThreshold.SetDataDirect(threshold);
  }
 
  return true;
@@ -386,7 +386,7 @@ bool NPainReflexSimple::BuildStructure(void)
      ConditionalStimul->Reset();
 
      //Добираемся до условного рефлекса и настраиваем их как транзитные
-     for(int i=0; i<NumConditionalStimulDendrite.v;i++)
+     for(int i=0; i<NumConditionalStimulDendrite.GetData();i++)
      {
         UEPtr<NPulseGeneratorTransit> src = ConditionalStimul->GetComponentL<NPulseGeneratorTransit>("Source"+sntoa(i+1),true);
         if(!src)

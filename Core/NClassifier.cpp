@@ -330,7 +330,7 @@ bool NClassifier::SetUseFixedLTZThreshold(const bool &value)
 	if(value)
 	{
 		double threshold = FixedLTZThreshold;
-		LTZThreshold = threshold;
+		LTZThreshold.SetDataDirect(threshold);
 	}
 
 	return true;
@@ -557,7 +557,7 @@ bool NClassifier::BuildStructure(void)
 				 if(!generator)
 				  continue;
 
-				 generator->UseTransitSignal = (IsNeedToTrain.v)? false : true;
+				 generator->UseTransitSignal = (IsNeedToTrain.GetData())? false : true;
 				}
     groups_trainers[i][j]->Reset();
 			}

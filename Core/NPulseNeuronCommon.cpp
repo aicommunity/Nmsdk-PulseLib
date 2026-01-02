@@ -357,14 +357,14 @@ bool NPulseNeuronCommon::ACalculate(void)
   Output = LTZone->Output;
 
  // Число связей организованных этим нейроном на других (и себе)
- ActiveOutputs(0,0)=NumActiveOutputs.v;
- NumActiveOutputs.v=0;
+ ActiveOutputs(0,0)=NumActiveOutputs.GetData();
+ NumActiveOutputs = 0;
 
  // Число связей организованных другими нейронами на этом
- ActivePosInputs(0,0)=NumActivePosInputs.v;
- NumActivePosInputs.v=0;
- ActiveNegInputs(0,0)=NumActiveNegInputs.v;
- NumActiveNegInputs.v=0;
+ ActivePosInputs(0,0)=NumActivePosInputs.GetData();
+ NumActivePosInputs = 0;
+ ActiveNegInputs(0,0)=NumActiveNegInputs.GetData();
+ NumActiveNegInputs = 0;
 
  return true;
 }

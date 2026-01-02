@@ -278,7 +278,7 @@ bool NSpikeClassifier::SetUseFixedLTZThreshold(const bool &value)
  if(value)
  {
   double threshold = FixedLTZThreshold;
-  LTZThreshold = threshold;
+  LTZThreshold.SetDataDirect(threshold);
  }
 
  for(size_t i = 0; i < trainers.size(); i++)
@@ -495,7 +495,7 @@ bool NSpikeClassifier::BuildStructure(void)
 	  if(!gen_in)
 	   return true;
 
-	  gen_in->UseTransitSignal=(IsNeedToTrain.v)? false : true;
+	  gen_in->UseTransitSignal=(IsNeedToTrain.GetData())? false : true;
 
 
 	  bool res(true);

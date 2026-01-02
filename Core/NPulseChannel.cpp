@@ -258,17 +258,17 @@ bool NPulseChannel::ACalculate2(void)
  {
   double resistance(0.0);
   if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))
-   resistance=RestingResistance.v;
+   resistance=RestingResistance.GetData();
   else
-   resistance=Resistance.v;
+   resistance=Resistance.GetData();
 
-  Ti=Capacity.v/(G+1.0/resistance);
+  Ti=Capacity.GetData()/(G+1.0/resistance);
   sum_u=(1.0+G*resistance);
  }
  else
  {
-  Ti=Capacity.v/(G+1.0/FBResistance.v);
-  sum_u=(1.0+G*FBResistance.v);
+  Ti=Capacity.GetData()/(G+1.0/FBResistance.GetData());
+  sum_u=(1.0+G*FBResistance.GetData());
  }
 
  TimeConstant = Ti;

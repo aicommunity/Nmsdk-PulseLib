@@ -104,7 +104,7 @@ bool NPulseNeuron::SetStructureBuildMode(const int &value)
    ChangeLookupPropertyType("NumDendriteMembraneParts",ptState);
    ChangeLookupPropertyType("NumDendriteMembranePartsVec",ptPubParameter);
    std::vector<int> vecs;
-   vecs.assign(NumSomaMembraneParts.v,NumDendriteMembraneParts.v);
+   vecs.assign(NumSomaMembraneParts.GetData(),NumDendriteMembraneParts.GetData());
    NumDendriteMembranePartsVec=vecs;
   }
   else
@@ -729,8 +729,8 @@ bool NPulseNeuron::ACalculate(void)
 
  int channel_divisor=1;
  UEPtr<NPulseLTZoneCommon> zone = dynamic_pointer_cast<NPulseLTZoneCommon>(LTZone);
- if(zone && zone->NumChannelsInGroup.v > 0)
-  channel_divisor = zone->NumChannelsInGroup.v;
+ if(zone && zone->NumChannelsInGroup.GetData() > 0)
+  channel_divisor = zone->NumChannelsInGroup.GetData();
 
  int full_ch_counter(0);
  for(size_t i=0;i<Soma.size();i++)

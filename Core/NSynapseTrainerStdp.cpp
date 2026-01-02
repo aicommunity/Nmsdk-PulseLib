@@ -398,24 +398,33 @@ bool NSynapseTrainerStdpLobov::ACalculate(void)
 {
  NSynapseTrainerStdpTD::ACalculate();
 
+ double tauXVal = TauX.GetData();
+ double tauYVal = TauY.GetData();
+ double xModCoeffVal = XModCoeff.GetData();
+ double yModCoeffVal = YModCoeff.GetData();
+ double aPlusVal = APlus.GetData();
+ double aMinusVal = AMinus.GetData();
+ 
  if(IsOutputPulseActive)
-  XAvg.v+=(XModCoeff.v-XAvg.v)/(TauX.v*TimeStep);
+  XAvg = XAvg.GetData() + (xModCoeffVal - XAvg.GetData())/(tauXVal*TimeStep);
  else
-  XAvg.v-=XAvg.v/(TauX.v*TimeStep);
+  XAvg = XAvg.GetData() - XAvg.GetData()/(tauXVal*TimeStep);
 
  if(IsInputPulseActive)
-  YAvg.v+=(YModCoeff.v-YAvg.v)/(TauY.v*TimeStep);
+  YAvg = YAvg.GetData() + (yModCoeffVal - YAvg.GetData())/(tauYVal*TimeStep);
  else
-  YAvg.v-=YAvg.v/(TauY.v*TimeStep);
+  YAvg = YAvg.GetData() - YAvg.GetData()/(tauYVal*TimeStep);
 
- double x_avg_res=(IsOutputPulseActive)?XAvg.v*APlus.v:0;
- double y_avg_res=(IsInputPulseActive)?YAvg.v*AMinus.v:0;;
+ double xAvgVal = XAvg.GetData();
+ double yAvgVal = YAvg.GetData();
+ double x_avg_res=(IsOutputPulseActive)?xAvgVal*aPlusVal:0;
+ double y_avg_res=(IsInputPulseActive)?yAvgVal*aMinusVal:0;;
 
- XYDiff.v+=(x_avg_res-y_avg_res)/TimeStep;
+ XYDiff = XYDiff.GetData() + (x_avg_res-y_avg_res)/TimeStep;
 
  double oldW=WeightOutput(0,0);
 
- WeightOutput(0,0)=(StartWeight-XYDiff.v);
+ WeightOutput(0,0)=(StartWeight-XYDiff.GetData());
  if (WeightOutput(0,0) < WMin) WeightOutput(0,0)=WMin;
  if (WeightOutput(0,0) > WMax) WeightOutput(0,0)=WMax;
 
@@ -493,16 +502,20 @@ bool NSynapseTrainerStdpClassicDiscrete::ACalculate(void)
 
   if(TDiff>0)
   {
-    XYDiff.v=APlus.v*pow((1-((WeightOutput(0,0)-WMin)/WRange)),Mu)*exp(-TDiff/TauPlus.v);
+    double aPlusVal = APlus.GetData();
+    double tauPlusVal = TauPlus.GetData();
+    XYDiff = aPlusVal*pow((1-((WeightOutput(0,0)-WMin)/WRange)),Mu)*exp(-TDiff/tauPlusVal);
   }
   if(TDiff<0)
   {
-    XYDiff.v=AMinus.v*pow(((WeightOutput(0,0)-WMin)/WRange),Mu)*exp(TDiff/TauMinus.v);
+    double aMinusVal = AMinus.GetData();
+    double tauMinusVal = TauMinus.GetData();
+    XYDiff = aMinusVal*pow(((WeightOutput(0,0)-WMin)/WRange),Mu)*exp(TDiff/tauMinusVal);
   }
 
   double oldW=WeightOutput(0,0);
 
-  WeightOutput(0,0)+=XYDiff.v;
+  WeightOutput(0,0)+=XYDiff.GetData();
   if (WeightOutput(0,0) < WMin) WeightOutput(0,0)=WMin;
   if (WeightOutput(0,0) > WMax) WeightOutput(0,0)=WMax;
 
@@ -575,17 +588,24 @@ bool NSynapseTrainerStdpClassicIntegrated::ACalculate(void)
 {
  NSynapseTrainerStdpTD::ACalculate();
 
+ double tauXVal = TauX.GetData();
+ double tauYVal = TauY.GetData();
+ double aPlusVal = APlus.GetData();
+ double aMinusVal = AMinus.GetData();
+ 
  if(IsInputPulseActive)
-  XAvg.v+=1;
- XAvg.v-=XAvg.v/(TauX.v*TimeStep);
+  XAvg = XAvg.GetData() + 1;
+ XAvg = XAvg.GetData() - XAvg.GetData()/(tauXVal*TimeStep);
 
  if(IsOutputPulseActive)
-  YAvg.v+=1;
- YAvg.v-=YAvg.v/(TauY.v*TimeStep);
+  YAvg = YAvg.GetData() + 1;
+ YAvg = YAvg.GetData() - YAvg.GetData()/(tauYVal*TimeStep);
 
  double oldW=WeightOutput(0,0);
+ double xAvgVal = XAvg.GetData();
+ double yAvgVal = YAvg.GetData();
 
- WeightOutput(0,0) += (APlus.v*pow((1-((WeightOutput(0,0)-WMin)/WRange)),MuPlus)*XAvg.v*((IsOutputPulseActive)?1:0)-AMinus.v*pow((WeightOutput(0,0)-WMin+0.0001)/WRange,MuMinus)*YAvg.v*((IsInputPulseActive)?1:0))/TimeStep;
+ WeightOutput(0,0) += (aPlusVal*pow((1-((WeightOutput(0,0)-WMin)/WRange)),MuPlus)*xAvgVal*((IsOutputPulseActive)?1:0)-aMinusVal*pow((WeightOutput(0,0)-WMin+0.0001)/WRange,MuMinus)*yAvgVal*((IsInputPulseActive)?1:0))/TimeStep;
  if (WeightOutput(0,0) < WMin) WeightOutput(0,0)=WMin;
  if (WeightOutput(0,0) > WMax) WeightOutput(0,0)=WMax;
 
@@ -785,24 +805,33 @@ bool NSynapseTrainerStdpMirror::AReset(void)
 bool NSynapseTrainerStdpMirror::ACalculate(void)
 {
  NSynapseTrainerStdpTD::ACalculate();
- o1.v-=(1/(TimeStep*TauMinus))*o1.v;
- o2.v-=(1/(TimeStep*TauY))*o2.v;
- r1.v-=(1/(TimeStep*TauPlus))*r1.v;
- r2.v-=(1/(TimeStep*TauX))*r2.v;
+ double tauMinusVal = TauMinus.GetData();
+ double tauYVal = TauY.GetData();
+ double tauPlusVal = TauPlus.GetData();
+ double tauXVal = TauX.GetData();
+ 
+ o1 = o1.GetData() - (1/(TimeStep*tauMinusVal))*o1.GetData();
+ o2 = o2.GetData() - (1/(TimeStep*tauYVal))*o2.GetData();
+ r1 = r1.GetData() - (1/(TimeStep*tauPlusVal))*r1.GetData();
+ r2 = r2.GetData() - (1/(TimeStep*tauXVal))*r2.GetData();
 
  double oldW=WeightOutput(0,0);
+ double o1Val = o1.GetData();
+ double o2Val = o2.GetData();
+ double r1Val = r1.GetData();
+ double r2Val = r2.GetData();
 
  if(IsInputPulseActive)
  {
-  WeightOutput(0,0)-=o1.v*(AMinus+AMinus3*r2.v);
-  r1.v+=1;
-  r2.v+=1;
+  WeightOutput(0,0)-=o1Val*(AMinus+AMinus3*r2Val);
+  r1 = r1Val + 1;
+  r2 = r2Val + 1;
  }
  if(IsOutputPulseActive)
  {
-  WeightOutput(0,0)-=r1.v*(APlus+APlus3*o2.v);
-  o1.v+=1;
-  o2.v+=1;
+  WeightOutput(0,0)-=r1Val*(APlus+APlus3*o2Val);
+  o1 = o1Val + 1;
+  o2 = o2Val + 1;
  }
  if (WeightOutput(0,0) < WMin) WeightOutput(0,0)=WMin;
  if (WeightOutput(0,0) > WMax) WeightOutput(0,0)=WMax;
@@ -879,16 +908,16 @@ bool NSynapseTrainerStdpProbabilistic::ACalculate(void)
 
   if(TDiff>0)
   {
-   XYDiff.v=APlus*exp(-WeightOutput(0,0));
+   XYDiff = APlus*exp(-WeightOutput(0,0));
   }
   if(TDiff<0)
   {
-   XYDiff.v=-AMinus;
+   XYDiff = -AMinus;
   }
 
   double oldW=WeightOutput(0,0);
 
-  WeightOutput(0,0)+=XYDiff.v;
+  WeightOutput(0,0)+=XYDiff.GetData();
   if (WeightOutput(0,0) < WMin) WeightOutput(0,0)=WMin;
   if (WeightOutput(0,0) > WMax) WeightOutput(0,0)=WMax;
 
