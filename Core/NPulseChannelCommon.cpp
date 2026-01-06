@@ -60,7 +60,7 @@ int NPulseChannelCommon::GetNumSynapses(void) const
 //
 bool NPulseChannelCommon::SetType(const double &value)
 {
- Type.v=value;
+ Type.SetDataDirect(value);
 
  UEPtr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(Owner);
  if(membr)
@@ -72,7 +72,7 @@ bool NPulseChannelCommon::SetType(const double &value)
  {
   UEPtr<NPulseSynapseCommon> synapse = dynamic_cast<NPulseSynapseCommon*>(SynapticInputs.GetItem(i));
   if(synapse)
-   synapse->Type = value;
+   synapse->Type.SetDataDirect(value);
  }
 
  return true;

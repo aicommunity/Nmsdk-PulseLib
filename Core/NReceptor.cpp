@@ -109,7 +109,9 @@ bool NReceptor::AReset(void)
 // Выполняет расчет этого объекта
 bool NReceptor::ACalculate(void)
 {
- OutputRange=MaxOutputRange.v-MinOutputRange.v;
+ const double maxOutputRange = MaxOutputRange.GetData();
+ const double minOutputRange = MinOutputRange.GetData();
+ OutputRange = maxOutputRange - minOutputRange;
 
  Output.Resize(Input->GetRows(),Input->GetCols());
 
@@ -119,41 +121,50 @@ bool NReceptor::ACalculate(void)
    double input=0;
    input=(*Input)(i,j);// GetInputData(i)->Double[j];
 
-   switch(InputAdaptationMode.v)
+   switch(InputAdaptationMode.GetData())
    {
    case 1:
-	if(input<MinInputRange.v)
+	if(input<MinInputRange.GetData())
 	 MinInputRange=input;
-	if(input>MaxInputRange.v)
+	if(input>MaxInputRange.GetData())
 	 MaxInputRange=input;
    break;
 
    case 2:
-	if(input<MinInputRange.v)
-	 MinInputRange=input;
-	else // забывание
 	{
-	 MinInputRange.v-=MinInputRange.v/(InputAdaptationArrestingTC*TimeStep);
-	}
+	 const double minInputRange = MinInputRange.GetData();
+	 if(input<minInputRange)
+	  MinInputRange=input;
+	 else // забывание
+	 {
+	  MinInputRange = minInputRange - minInputRange/(InputAdaptationArrestingTC*TimeStep);
+	 }
 
-	if(input>MaxInputRange.v)
-	 MaxInputRange=input;
-	else // забывание
-	{
-     MaxInputRange.v-=MaxInputRange.v/(InputAdaptationArrestingTC*TimeStep);
+	 const double maxInputRange = MaxInputRange.GetData();
+	 if(input>maxInputRange)
+	  MaxInputRange=input;
+	 else // забывание
+	 {
+      const double maxInputRangeVal = MaxInputRange.GetData();
+      MaxInputRange = maxInputRangeVal - maxInputRangeVal/(InputAdaptationArrestingTC*TimeStep);
+	 }
 	}
    break;
    }
 
-   InputRange=MaxInputRange.v-MinInputRange.v;
+   const double maxInputRangeFinal = MaxInputRange.GetData();
+   const double minInputRangeFinal = MinInputRange.GetData();
+   InputRange = maxInputRangeFinal - minInputRangeFinal;
    if(!InputRange)
 	return true;
 
    // Преобразовываем сигнал к заданному диапазону
-   input=(input-MinInputRange.v)*OutputRange/InputRange+MinOutputRange.v;
+   input=(input-MinInputRange.GetData())*OutputRange/InputRange+MinOutputRange.GetData();
 
    double exp_coeff;
-   switch(OutputAdaptationMode.v)
+   double sumCoeffVal = SumCoeff.GetData();
+   double expCoeffVal = ExpCoeff.GetData();
+   switch(OutputAdaptationMode.GetData())
    {
    case 0:
 	Output(i,j)=Gain*input;
@@ -161,26 +172,26 @@ bool NReceptor::ACalculate(void)
 
    case 1:
 	// Преобразовываем сигнал к заданному диапазону
-	Output(i,j)=Gain*(SumCoeff.v-exp(-ExpCoeff.v*input));
+	Output(i,j)=Gain*(sumCoeffVal-exp(-expCoeffVal*input));
    break;
 
    case 2:
 	// Преобразовываем сигнал к заданному диапазону
-	Output(i,j)=Gain*exp(-ExpCoeff.v*input);
+	Output(i,j)=Gain*exp(-expCoeffVal*input);
    break;
 
    case 3:
 	// Преобразовываем сигнал к автодиапазону
 	exp_coeff=-log(0.9)/InputRange;
-	Output(i,j)=Gain*(SumCoeff.v-exp(-exp_coeff*input));
+	Output(i,j)=Gain*(sumCoeffVal-exp(-exp_coeff*input));
    break;
 
    case 4:
-	Output(i,j)=Gain*(SumCoeff.v+input);
+	Output(i,j)=Gain*(sumCoeffVal+input);
    break;
 
    case 5:
-	Output(i,j)=Gain*(SumCoeff.v+(1.0-exp(-ExpCoeff.v*input)));
+	Output(i,j)=Gain*(sumCoeffVal+(1.0-exp(-expCoeffVal*input)));
    break;
    }
   }

@@ -171,8 +171,8 @@ bool NNet::BuildNetStructure(void)
 // Собирает структуру слоя 'layer'
 bool NNet::BuildLayerStructure(size_t layer)
 {
- for(size_t i=0;i<LayerWidth.v;i++)
-  for(size_t j=0;j<LayerHeight.v;j++)
+ for(size_t i=0;i<LayerWidth.GetData();i++)
+  for(size_t j=0;j<LayerHeight.GetData();j++)
    if(!BuildReceptorField(layer,i,j))
     return false;
 
@@ -201,10 +201,10 @@ bool NNet::BuildReceptorField(size_t layer, size_t i, size_t j)
 // Организует связи сети
 bool NNet::BuildLinksStructure(void)
 {
- for(size_t k=0;k<NumLayers.v;k++)
+ for(size_t k=0;k<NumLayers.GetData();k++)
  {
-  for(size_t i=0;i<LayerWidth.v;i++)
-   for(size_t j=0;j<LayerHeight.v;j++)
+  for(size_t i=0;i<LayerWidth.GetData();i++)
+   for(size_t j=0;j<LayerHeight.GetData();j++)
 	if(!BuildLinksStructure(k, i, j))
 	 return false;
  }

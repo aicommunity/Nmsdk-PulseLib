@@ -44,7 +44,7 @@ NConstGenerator::~NConstGenerator(void)
 // Устанавливает амплитуду импульсов
 bool NConstGenerator::SetAmplitude(const double &value)
 {
- if(Amplitude.v != value)
+ if(Amplitude.GetData() != value)
   UpdateOutputFlag=true;
  return true;
 }
@@ -92,7 +92,7 @@ bool NConstGenerator::ACalculate(void)
 {
  if(UpdateOutputFlag)
  {
-  Output.Assign(1,1,Amplitude.v);
+  Output.Assign(1,1,Amplitude.GetData());
   UpdateOutputFlag=false;
  }
  return true;

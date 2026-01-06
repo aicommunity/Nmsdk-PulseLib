@@ -74,13 +74,17 @@ bool NPulseChannelClassic::ACalculate(void)
  for(int i=0;i<int(SynapticInputs->size());i++)
   for(int j=0;j<SynapticInputs[i].GetCols();j++)
    SumSynapticInput(0,0)+=SynapticInputs[i](0,j);
- SumSynapticInput.v *= SynapticInputCoeff.v;
+ const double sumSynapticInput = SumSynapticInput.GetData()(0,0);
+ const double synapticInputCoeff = SynapticInputCoeff.GetData();
+ SumSynapticInput(0,0) = sumSynapticInput * synapticInputCoeff;
 
  SumChannelInput.ToZero();
  for(int i=0;i<int(ChannelInputs->size());i++)
   for(int j=0;j<ChannelInputs[i].GetCols();j++)
    SumChannelInput(0,0)+=ChannelInputs[i](0,j);
- SumChannelInput.v *= ChannelInputCoeff.v;
+ const double sumChannelInput = SumChannelInput.GetData()(0,0);
+ const double channelInputCoeff = ChannelInputCoeff.GetData();
+ SumChannelInput(0,0) = sumChannelInput * channelInputCoeff;
 
  ACalculate2();
  IsNeuronActivated=false;

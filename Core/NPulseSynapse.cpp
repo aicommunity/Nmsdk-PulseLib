@@ -91,12 +91,13 @@ bool NPulseSynapse::SetTypicalPulseDuration(const double &value)
 // Коэффициент пресинаптического торможения
 bool NPulseSynapse::SetInhibitionCoeff(const double &value)
 {
- if(Resistance.v > 0)
+ const double resistance = Resistance.GetData();
+ if(resistance > 0)
  {
   if(value>0)
-   OutputConstData=4.0*(value+1)/Resistance.v;
+   OutputConstData=4.0*(value+1)/resistance;
   else
-   OutputConstData=1.0/Resistance.v;
+   OutputConstData=1.0/resistance;
  }
  else
   OutputConstData=0;
@@ -110,8 +111,9 @@ bool NPulseSynapse::SetResistance(const double &value)
  if(value<=0)
   return false;
 
- if(InhibitionCoeff.v>0 && UsePresynapticInhibition)
-  OutputConstData=4.0*InhibitionCoeff.v/value;
+ double inhibitionCoeffVal = InhibitionCoeff.GetData();
+ if(inhibitionCoeffVal>0 && UsePresynapticInhibition)
+  OutputConstData=4.0*inhibitionCoeffVal/value;
  else
   OutputConstData=1.0/value;
 
@@ -126,10 +128,12 @@ bool NPulseSynapse::SetUsePulseSignal(const bool &value)
 // Задание флага включения пресинаптического торомжения
 bool NPulseSynapse::SetUsePresynapticInhibition(const bool &value)
 {
- if(InhibitionCoeff.v>0 && value)
-  OutputConstData=4.0*InhibitionCoeff.v/Resistance;
+ const double inhibitionCoeffVal = InhibitionCoeff.GetData();
+ const double resistance = Resistance.GetData();
+ if(inhibitionCoeffVal>0 && value)
+  OutputConstData=4.0*inhibitionCoeffVal/resistance;
  else
-  OutputConstData=1.0/Resistance;
+  OutputConstData=1.0/resistance;
 
  return true;
 }
@@ -237,20 +241,24 @@ bool NPulseSynapse::ACalculate2(void)
  if(is_spike && MainOwner && Owner)
  {
   if(static_pointer_cast<NPulseChannel>(Owner)->Type() < 0)
-   ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
+   static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.GetData() + 1;
   else
-   ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
+   static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.GetData() + 1;
  }
 
+ double pulseAmplitudeVal = PulseAmplitude.GetData();
+ double preOutputVal = PreOutput.GetData();
  if(input>0)
-  PreOutput.v+=(input/PulseAmplitude.v-PreOutput.v)/VSecretionTC;
+  PreOutput = preOutputVal + (input/pulseAmplitudeVal - preOutputVal)/VSecretionTC;
  else
-  PreOutput.v-=PreOutput.v/VDissociationTC;
+  PreOutput = preOutputVal - preOutputVal/VDissociationTC;
 
+ double preOutputNewVal = PreOutput.GetData();
+ double inhibitionCoeffVal = InhibitionCoeff.GetData();
  if(UsePresynapticInhibition)
-  Output(0,0)=OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v)*PreOutput.v;
+  Output(0,0)=OutputConstData*(1.0-inhibitionCoeffVal*preOutputNewVal)*preOutputNewVal;
  else
-  Output(0,0)=OutputConstData*PreOutput.v;
+  Output(0,0)=OutputConstData*preOutputNewVal;
 
  if(Output(0,0)<0)
   Output(0,0)=0;

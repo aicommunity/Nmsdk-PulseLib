@@ -134,7 +134,7 @@ bool NPulseChannelCable::SetCalcMode(const bool &value)
     {
         ChangeLookupPropertyType("CableMembraneResistance", ptPubParameter);
         ChangeLookupPropertyType("D", ptPubState);
-        CableMembraneResistance =  (Rm)/(M_PI*D);
+        CableMembraneResistance.SetDataDirect((Rm)/(M_PI*D));
         TauM = CableMembraneResistance*Cm;
     }
     else
@@ -222,9 +222,9 @@ bool NPulseChannelCable::ABuild(void)
 
   ModelMaxTime = 1.0/TimeStep; // seconds
 
-  double tau_m = TauM.v;
+  double tau_m = TauM.GetData();
   double ri = (4*Ri)/(M_PI*D*D);
-  double rm = CableMembraneResistance.v;
+  double rm = CableMembraneResistance.GetData();
   double lambdaSq = rm/ri;
   dt = (dx*dx)/(4*lambdaSq/tau_m);
 
@@ -275,7 +275,7 @@ void NPulseChannelCable::FormingInput()
 
     for (int j = 0; j < (t_points_number+1); j++) //t
     {
-     InpV(0,j) = SumChannelInput(0,0)+SumSynapticInput(0,0)/Cm.v;
+     InpV(0,j) = SumChannelInput(0,0)+SumSynapticInput(0,0)/Cm.GetData();
     }
  return;
 }
@@ -293,10 +293,10 @@ bool NPulseChannelCable::ACalculate2(void)
         Vm(j, inpX) = InpV(0, j);
     }
 
-    double tau_m = TauM.v;
+    double tau_m = TauM.GetData();
 
     double ri = (4*Ri)/(M_PI*D*D);
-    double rm = CableMembraneResistance.v;
+    double rm = CableMembraneResistance.GetData();
     double lambdaSq = rm/ri;
     double dt_tau_m = dt/tau_m;
     double s = lambdaSq*dt_tau_m/(dx*dx);
@@ -305,8 +305,8 @@ bool NPulseChannelCable::ACalculate2(void)
 
     for (int j = 0; j < (t_points_number); j++) //t
     {
-        double* vm_curr_line = &Vm.v(j,0);
-        double* vm_new_line = &Vm.v(j+1,0);
+        double* vm_curr_line = &Vm(j,0);
+        double* vm_new_line = &Vm(j+1,0);
         for (int i = 1; i < (x_points_number); i++) //x
         {
 //             Vm.v(j+1,i) = el + s*Vm.v(j,i+1) + s1*Vm.v(j,i) + s*Vm.v(j,i-1);

@@ -237,7 +237,7 @@ bool NPulseLTZoneCommon::ACalculate(void)
      // -----> ОТЛАДКА
      //double eee = *data;
      // <-----
-     NeuralPotential.v+=*data;
+     NeuralPotential = NeuralPotential.GetData() + *data;
      // -----> ОТЛАДКА
      //double eеee = NeuralPotential.v;
         //int ttt = 0;
@@ -245,15 +245,16 @@ bool NPulseLTZoneCommon::ACalculate(void)
     }
    }
   }
-  int div_coeff=int(Inputs->size())/((NumChannelsInGroup.v>0)?NumChannelsInGroup.v:1);
+  const int numChannelsInGroup = NumChannelsInGroup.GetData();
+  int div_coeff=int(Inputs->size())/((numChannelsInGroup>0)?numChannelsInGroup:1);
   if(UseAveragePotential && div_coeff>0)
-   NeuralPotential.v/=div_coeff;
+   NeuralPotential = NeuralPotential.GetData() / div_coeff;
  }
 
 // if(NumChannelsInGroup>0)
 //  NeuralPotential.v/=NumChannelsInGroup.v; // Делим пополам, чтобы учесть, что у нас по 2 ионных механизма на участок мембраны
 
- Potential.v=NeuralPotential.v; // TODO: это может быть изменено в дочерних классах
+ Potential = NeuralPotential.GetData(); // TODO: это может быть изменено в дочерних классах
 
  return ACalculate2();
 }

@@ -106,7 +106,7 @@ bool NPulseHebbSynapse::InstallHebbianConnection(void)
 	RDK::UStringLinkSide item,conn;
 //	item.Id=mlowner->GetNeuronLife()->GetLongName(mlowner);
 #pragma warning
-	if(Type.v>0)
+	if(Type.GetData()>0)
 	 item.Name="Output7";
 	else
 	 item.Name="Output6";
@@ -226,35 +226,52 @@ bool NPulseHebbSynapse::ACalculate2(void)
    motivation[i]=(*InputMotivation)(0,i)*Kmot[i];
  }
 
- Win.v += (Kin.v*input - Min.v*Win.v)/TimeStep;
- Wout.v += (Kout.v*ltzoneoutput - Mout.v*Wout.v)/TimeStep;
+ // Кэшируем все свойства в начале метода для оптимизации
+ const double win = Win.GetData();
+ const double kin = Kin.GetData();
+ const double min = Min.GetData();
+ const double wout = Wout.GetData();
+ const double kout = Kout.GetData();
+ const double mout = Mout.GetData();
+ const double md = Md.GetData();
+ const double gd = Gd.GetData();
+ const double gdGain = GdGain.GetData();
+ const double gsGain = GsGain.GetData();
+
+ Win = win + (kin*input - min*win)/TimeStep;
+ Wout = wout + (kout*ltzoneoutput - mout*wout)/TimeStep;
 // Wout.v=1;
 
- Gd.v += (Win.v*Wout.v - Md.v*Gd.v)/TimeStep;
+ const double winUpdated = Win.GetData();
+ const double woutUpdated = Wout.GetData();
+ Gd = gd + (winUpdated*woutUpdated - md*gd)/TimeStep;
 
 // for(size_t i=0;i<Gs->size();i++)
 //  Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
 
+ const double gdUpdated = Gd.GetData();
  for(int i=0;i<int(Gs->size());i++)
   if(motivation[i]>0)
 //  if(motivation[i]*Gd.v > PassiveMs[i]*Gs[i])
-   Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
+   Gs[i] += (motivation[i]*gdUpdated - ActiveMs[i]*Gs[i])/TimeStep;
   else
-   Gs[i] += (motivation[i]*Gd.v - PassiveMs[i]*Gs[i])/TimeStep;
+   Gs[i] += (motivation[i]*gdUpdated - PassiveMs[i]*Gs[i])/TimeStep;
 
  double gs_res=0;
  for(int i=0;i<int(Gs->size());i++)
   gs_res+=Gs[i];
  GsSum=gs_res;
 
- G.v = (Gd.v*GdGain + GsSum.v*GsGain);
- Output(0,0)*=(1.0+G.v);
+ const double gsSum = GsSum.GetData();
+ G = (gdUpdated*gdGain + gsSum*gsGain);
+ const double g = G.GetData();
+ Output(0,0)*=(1.0+g);
  Output1(0,0)=Output(0,0);
- Output2(0,0)=G.v;
- Output3(0,0)=Gd.v*GdGain;
- Output4(0,0)=GsSum.v*GsGain;
- Output5(0,0)=Win.v;
- Output6(0,0)=Wout.v;
+ Output2(0,0)=g;
+ Output3(0,0)=gdUpdated*gdGain;
+ Output4(0,0)=gsSum*gsGain;
+ Output5(0,0)=winUpdated;
+ Output6(0,0)=woutUpdated;
    /*
  if(MainOwner && Owner)
  {
@@ -263,15 +280,15 @@ bool NPulseHebbSynapse::ACalculate2(void)
   {
    if(static_pointer_cast<NPulseChannel>(Owner)->Type()>0)
    {
-	neuron->SummaryNegGs.v+=gs_res*GsGain.v;
-	neuron->SummaryNegGd.v+=Gd.v*GdGain.v;
-	neuron->SummaryNegG.v+=G;
+	neuron->SummaryNegGs = neuron->SummaryNegGs.GetData() + gs_res*GsGain.GetData();
+	neuron->SummaryNegGd = neuron->SummaryNegGd.GetData() + Gd.GetData()*GdGain.GetData();
+	neuron->SummaryNegG = neuron->SummaryNegG.GetData() + G;
    }
    else
    {
-	neuron->SummaryPosGs.v+=gs_res*GsGain.v;
-	neuron->SummaryPosGd.v+=Gd.v*GdGain.v;
-	neuron->SummaryPosG.v+=G;
+	neuron->SummaryPosGs = neuron->SummaryPosGs.GetData() + gs_res*GsGain.GetData();
+	neuron->SummaryPosGd = neuron->SummaryPosGd.GetData() + Gd.GetData()*GdGain.GetData();
+	neuron->SummaryPosG = neuron->SummaryPosG.GetData() + G;
    }
   }
  } */

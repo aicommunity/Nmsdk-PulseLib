@@ -226,7 +226,7 @@ bool NConditionedReflex::SetUseFixedLTZThreshold(const bool &value)
  if(value)
  {
   double threshold = FixedLTZThreshold;
-  LTZThreshold = threshold;
+  LTZThreshold.SetDataDirect(threshold);
  }
 
  return true;
