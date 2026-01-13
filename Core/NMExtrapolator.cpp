@@ -100,7 +100,7 @@ bool NMExtrapolator::AReset(void)
 //  History[i].assign(History[i].size(),0);
  History.clear();
  const double predictionTime = PredictionTime.GetData();
- History.reserve((predictionTime*TimeStep)*(NumLevels+1));
+ History.reserve(static_cast<size_t>((predictionTime*TimeStep)*(NumLevels+1)));
  //History2.clear();
  HistoryCounter=0;
 
@@ -154,7 +154,7 @@ bool NMExtrapolator::ACalculate(void)
    res-=History[0][k];
 
    Output(0,k)=res;
-  
+
    ++k;
   }
  }
