@@ -85,6 +85,36 @@ Nmsdk-PulseLib implements spiking neural networks with various neuron models and
 
 ### Library Structure
 
+```mermaid
+flowchart TB
+    subgraph Neurons
+        NPulseNeuron_EN[NPulseNeuron]
+        NPulseNeuronIzhikevich_EN[NPulseNeuronIzhikevich]
+        NIntegrateAndFireNeuron_EN[NIntegrateAndFireNeuron]
+    end
+    
+    subgraph Synapses
+        NPulseSynapse_EN[NPulseSynapse]
+        NSynapseStdp_EN[NSynapseStdp]
+    end
+    
+    subgraph Channels
+        NPulseChannel_EN[NPulseChannel]
+        NPulseChannelIzhikevich_EN[NPulseChannelIzhikevich]
+    end
+    
+    subgraph Classification
+        NClassifier_EN[NClassifier]
+        NSpikeClassifier_EN[NSpikeClassifier]
+    end
+    
+    NPulseNeuron_EN --> NPulseSynapse_EN
+    NPulseSynapse_EN --> NPulseChannel_EN
+    NPulseChannel_EN --> NClassifier_EN
+```
+
+The library is structured around spiking neuron models, synapses (including STDP), channels for spike propagation, and classifiers operating on spike trains. Components are combined into networks using standard Rdk engine connection mechanisms.
+
 ### Main Modules
 
 #### Neurons
