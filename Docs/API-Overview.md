@@ -55,7 +55,6 @@
 
 ### См. также
 
-- [Reports/06-Nmsdk-PulseLib.md](../../../Reports/06-Nmsdk-PulseLib.md) - детальное описание
 - Исходный код: `Libraries/Nmsdk-PulseLib/Core/`
 
 ---
@@ -115,5 +114,4 @@ Spike-based classifier.
 
 ### See Also
 
-- [Reports/06-Nmsdk-PulseLib.md](../../../Reports/06-Nmsdk-PulseLib.md) - detailed description
 - Source code: `Libraries/Nmsdk-PulseLib/Core/`
