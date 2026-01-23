@@ -2,7 +2,29 @@
 
 ## RU
 
-### Пример 1: Создание импульсного нейрона
+### С чего начать
+
+Если вы новичок в работе с Nmsdk-PulseLib, рекомендуем начать с следующих готовых экспериментов:
+
+1. **Простой STDP-эксперимент**: `Bin/Configs/!OldConfigs/STDP-Simple-01/`
+   - Демонстрирует базовый механизм STDP-обучения между двумя нейронами
+   - Простая структура для понимания основ
+
+2. **Тест модели Ижикевича**: `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`
+   - Демонстрирует различные типы нейронов по модели Ижикевича
+   - Хорошо для понимания параметров нейронов
+
+3. **Простой классификатор**: `Bin/Configs/!OldConfigs/SpikeClassifier/`
+   - Пример классификации паттернов спайков
+   - Демонстрирует работу с входными данными и обучением
+
+Эти проекты можно запустить напрямую в Nmsdk Engine и модифицировать параметры для экспериментов.
+
+### Примеры по типам задач
+
+#### Базовый нейрон/синапс/STDP
+
+##### Пример 1: Создание импульсного нейрона
 
 ```cpp
 // Создание нейрона по модели Ижикевича
@@ -14,7 +36,24 @@ neuron->D = 8.0;
 neuron->Build();
 ```
 
-### Пример 2: Создание синапса с STDP
+**Соответствующая конфигурация:** `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`
+
+В конфигурационном проекте нейрон Ижикевича настраивается через XML:
+
+```xml
+<Neuron1 Class="NPulseNeuronIzhikevich">
+    <Parameters>
+        <A>0.02</A>
+        <B>0.2</B>
+        <C>-65.0</C>
+        <D>8.0</D>
+    </Parameters>
+</Neuron1>
+```
+
+Параметры A, B, C, D соответствуют свойствам класса `NPulseNeuronIzhikevich` в коде.
+
+##### Пример 2: Создание синапса с STDP
 
 ```cpp
 // Создание синапса с обучением STDP
@@ -26,7 +65,28 @@ synapse->LearningRate = 0.01;
 synapse->Build();
 ```
 
-### Пример 3: Классификация на основе спайков
+**Соответствующая конфигурация:** `Bin/Configs/!OldConfigs/STDP-Simple-01/`
+
+В конфигурации STDP-синапс настраивается так:
+
+```xml
+<Synapse1 Class="NSynapseStdp">
+    <Parameters>
+        <PreNeuron>Neuron1</PreNeuron>
+        <PostNeuron>Neuron2</PostNeuron>
+        <Weight>0.5</Weight>
+        <LearningRate>0.01</LearningRate>
+        <TauPlus>0.02</TauPlus>
+        <TauMinus>0.02</TauMinus>
+    </Parameters>
+</Synapse1>
+```
+
+Эти параметры можно изменять в `Parameters_*.xml` для экспериментов с различными скоростями обучения.
+
+#### Классификация паттернов спайков
+
+##### Пример 3: Классификация на основе спайков
 
 ```cpp
 // Создание классификатора
@@ -40,7 +100,31 @@ classifier->Calculate();
 auto classLabel = classifier->ClassLabel;
 ```
 
-### Пример 4: Создание сложной импульсной нейросети с обучением
+**Соответствующая конфигурация:** `Bin/Configs/!OldConfigs/SpikeANPA3/`, `Bin/Configs/!OldConfigs/SpikeClassifier/`
+
+В конфигурационных проектах классификатор обычно используется вместе с входным слоем нейронов:
+
+```xml
+<InputLayer Class="NNeuronsLayer">
+    <Parameters>
+        <NeuronsClassName>NPulseNeuronIzhikevich</NeuronsClassName>
+        <LayerWidth>20</LayerWidth>
+    </Parameters>
+</InputLayer>
+
+<Classifier Class="NSpikeClassifier">
+    <Parameters>
+        <InputNeurons>InputLayer.Neurons</InputNeurons>
+        <OutputClasses>5</OutputClasses>
+    </Parameters>
+</Classifier>
+```
+
+Входные данные подаются на нейроны входного слоя, которые кодируют их в паттерны спайков для классификатора.
+
+#### Управление движением/мышцами
+
+##### Пример 4: Создание сложной импульсной нейросети с обучением
 
 ```cpp
 // Создание сети из нескольких слоев нейронов
@@ -126,7 +210,34 @@ for (int epoch = 0; epoch < 100; epoch++) {
 }
 ```
 
-### Пример 5: Классификация паттернов спайков
+**Соответствующая конфигурация:** `Bin/Configs/!OldConfigs/OldExperiments/MotionControl/`, `Bin/Configs/!OldConfigs/OldExperiments/SimplestMotionControl/`
+
+В конфигурациях для управления движением используются:
+
+- **Моторные нейроны** (`NMotoneuron`): преобразуют сигналы от других нейронов в команды для мышц
+- **Мышцы** (`NMuscle`, `NEyeMuscle`): эффекторы, выполняющие движение
+- **Афферентные нейроны** (`NAfferentNeuron`): получают сенсорную информацию
+
+Пример структуры:
+```xml
+<ControlNeuron Class="NPulseNeuronIzhikevich">
+    <!-- Параметры управляющего нейрона -->
+</ControlNeuron>
+
+<Motoneuron1 Class="NMotoneuron">
+    <!-- Параметры моторного нейрона -->
+</Motoneuron1>
+
+<Muscle1 Class="NMuscle">
+    <!-- Параметры мышцы -->
+</Muscle1>
+```
+
+Связи: `ControlNeuron.Output` → `Motoneuron1.Input` → `Muscle1.Input`
+
+#### Когнитивная навигация/пространственная память
+
+##### Пример 5: Классификация паттернов спайков
 
 ```cpp
 // Создание классификатора на основе спайков
@@ -166,6 +277,68 @@ for (const auto& trainingSample : trainingData) {
     }
 }
 ```
+
+**Соответствующая конфигурация:** `Bin/Configs/User/CognitiveNavigation/Ivan_VKR_3-4_13/`
+
+Этот проект демонстрирует сложную сеть для когнитивной навигации с:
+
+- **Логическими операциями**: NOT, AND, OR через комбинации нейронов
+- **Пространственными сигналами**: Forward, Back, Left, Right, LeftDanger, RightDanger
+- **Биоинспирированными компонентами**: `NSPNeuronGen`, `NPMembraneBio`, `NPExcChannelBio`, `NPInhChannelBio`
+- **LT-зонами**: для формирования долгосрочной памяти о пространственных паттернах
+
+Ключевые особенности:
+- Нейроны с иерархической структурой (сома, дендриты, LT-зоны)
+- Обратные связи для поддержания состояния
+- Генераторы входных сигналов (`NPulseGeneratorTransit`) для различных направлений движения
+
+#### Анализ временных рядов/предсказание
+
+**Соответствующая конфигурация:** `Bin/Configs/!OldConfigs/OldExperiments/TimeSeriesTest/`, `Bin/Configs/!OldConfigs/TSNETest/`
+
+Для работы с временными рядами используются:
+
+- **Генераторы из файла** (`NFileGenerator`): загрузка данных из файлов
+- **Предсказатели** (`NPredictor`, `NStatePredictor`): предсказание следующих значений на основе истории
+- **Экстраполяторы движения** (`NMExtrapolator`): предсказание траектории движения
+
+Пример использования предсказателя:
+```cpp
+// Создание предсказателя
+auto predictor = storage->CreateComponent<NPredictor>();
+predictor->InputNeurons = historyNeurons;
+predictor->Build();
+
+// Предсказание следующего состояния
+predictor->Calculate();
+auto predictedValue = predictor->PredictedOutput;
+```
+
+### Сопоставление кода и конфигураций
+
+При работе с конфигурационными проектами важно понимать соответствие между кодом C++ и XML-описаниями:
+
+| C++ код | XML конфигурация |
+|---------|------------------|
+| `neuron->A = 0.02;` | `<A>0.02</A>` в `Parameters_*.xml` |
+| `synapse->Weight = 0.5;` | `<Weight>0.5</Weight>` |
+| `synapse->PreNeuron = preNeuron;` | `<PreNeuron>Neuron1</PreNeuron>` (ссылка по имени) |
+| `classifier->OutputClasses = 5;` | `<OutputClasses>5</OutputClasses>` |
+| `network->AddComponent(neuron);` | Компонент добавляется в `<Components>` секцию `Model_*.xml` |
+| Связь через `ULink` | Элемент в секции `<Links>` с `<Item>` и `<Connector>` |
+
+### Рекомендации по модификации конфигураций
+
+1. **Изменение параметров**: Редактируйте `Parameters_*.xml`, сохраняя структуру `Model_*.xml`
+2. **Добавление компонентов**: Добавьте новый компонент в `<Components>` и создайте связи в `<Links>`
+3. **Эксперименты**: Создавайте новые версии (`Model_01.xml`, `Parameters_01.xml`) для сравнения
+4. **Визуализация**: Настройте графики в `Interface.xml` для наблюдения за интересующими величинами
+
+### См. также
+
+- [Config-Overview.md](Config-Overview.md) - подробное описание структуры конфигураций
+- [Config-Templates.md](Config-Templates.md) - шаблоны типовых экспериментов
+- [API-Overview.md](API-Overview.md) - описание API компонентов
 
 ---
 

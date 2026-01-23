@@ -1,92 +1,245 @@
-## NSPMinNeuron — компонент PulseLib
+# NSPMinNeuron — минимальный мелкий импульсный нейрон
 
-**Класс**: `NSPMinNeuron` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPMinNeuron", ...)`.  
-**Storage**: `ClassName = "NSPMinNeuron"` в `ClDesc`/`Configs`.
+## RU
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+### Назначение
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+**Класс**: `NSPMinNeuron` — конфигурационный вариант минимального мелкого импульсного нейрона с минимальным количеством синапсов.  
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPMinNeuron", ...)` (закомментирован в коде).  
+**Storage-инстансы**: `ClassName = "NSPMinNeuron"` в `Bin/Configs/*/Model_*.xml`.
+
+`NSPMinNeuron` является конфигурационным вариантом базового класса `NPulseNeuron` с минимальной конфигурацией — удаляются дополнительные синапсы, оставляется только один синапс на канал. Создается из `NPulseNeuron` с удалением синапсов Synapse2 и Synapse3 из PosChannel и NegChannel.
+
+**Примечание:** В текущей версии кода регистрация `NSPMinNeuron` закомментирована в `NPulseLibrary.cpp`.
+
+**Использование:** Минимальные нейронные сети, упрощенные модели
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSPMinNeuron
+    NPulseNeuronCommon <|-- NPulseNeuron
+    NPulseNeuron <|.. NSPMinNeuron : configuration variant
+    NSPMinNeuron *-- NPulseMembrane : PulseMembrane
+    NPulseMembrane *-- NPulseChannel : PosChannel
+    NPulseMembrane *-- NPulseChannel : NegChannel
+    NPulseChannel *-- NPulseSynapse : Synapse1 only
+    class NPulseNeuron {
+        +MembraneClassName : string
+        +LTZoneClassName : string
+    }
+    class NSPMinNeuron {
+        +NumSomaMembraneParts : int = 1
+        +NumDendriteMembraneParts : int = 1
+        -Synapse2 : deleted
+        -Synapse3 : deleted
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+**Иерархия наследования:**
+- `NPulseNeuronCommon` — общий импульсный нейрон
+- `NPulseNeuron` — импульсный нейрон с параметрами структурирования
+- `NSPMinNeuron` — конфигурационный вариант с минимальной конфигурацией
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSPMinNeuron
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
-```
+**Особенности:**
+- Удаляются синапсы Synapse2 и Synapse3 из PosChannel
+- Удаляются синапсы Synapse2 и Synapse3 из NegChannel
+- Остается только Synapse1 на каждом канале
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### Свойства
 
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSPMinNeuron]
-    x --> out[Outputs]
-```
+`NSPMinNeuron` использует все свойства базового класса `NPulseNeuron` с минимальной конфигурацией.
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### Методы
 
-### Config snippet
-```ini
-[Component]
-ClassName = NSPMinNeuron
-Name = NSPMinNeuron1
-```
+`NSPMinNeuron` использует все методы базового класса `NPulseNeuron`.
+
+### См. также
+
+- [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
+- [`NSPNeuron`](NSPNeuron.md) — базовый SP-нейрон
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NSPMinNeuron — component PulseLib (EN)
+## EN
 
-**Class**: `NSPMinNeuron` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NSPMinNeuron", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NSPMinNeuron"` in configs.
+**Class**: `NSPMinNeuron` — configuration variant of minimal small spiking neuron with minimal number of synapses.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSPMinNeuron", ...)` (commented out in code).  
+**Instances**: `ClassName = "NSPMinNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NSPMinNeuron` is a configuration variant of the base class `NPulseNeuron` with minimal configuration — additional synapses are removed, leaving only one synapse per channel. Created from `NPulseNeuron` with deletion of synapses Synapse2 and Synapse3 from PosChannel and NegChannel.
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+**Note:** In the current code version, registration of `NSPMinNeuron` is commented out in `NPulseLibrary.cpp`.
+
+**Usage:** Minimal neural networks, simplified models
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSPMinNeuron
+    UNet <|-- NPulseNeuronCommon
+    NPulseNeuronCommon <|-- NPulseNeuron
+    NPulseNeuron <|.. NSPMinNeuron : configuration variant
+    NSPMinNeuron *-- NPulseMembrane : PulseMembrane
+    NPulseMembrane *-- NPulseChannel : PosChannel
+    NPulseMembrane *-- NPulseChannel : NegChannel
+    NPulseChannel *-- NPulseSynapse : Synapse1 only
+    class NPulseNeuron {
+        +MembraneClassName : string
+        +LTZoneClassName : string
+        +NumSomaMembraneParts : int
+    }
+    class NSPMinNeuron {
+        +NumSomaMembraneParts : int = 1
+        +NumDendriteMembraneParts : int = 1
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant X as NSPMinNeuron
-    In-->>X: signals
-    X-->>In: outputs
+    participant Storage
+    participant Neuron as NSPMinNeuron
+    participant Membrane as NPulseMembrane
+    participant PosChannel as NPulseChannel
+    participant NegChannel as NPulseChannel
+    participant Synapse1 as NPulseSynapse
+    participant LTZone as NPulseLTZoneCommon
+    
+    Storage->>Neuron: New() + Default()
+    Storage->>Neuron: Build()
+    Neuron->>Membrane: CreateComponent()
+    Neuron->>PosChannel: CreateComponent()
+    Neuron->>NegChannel: CreateComponent()
+    Note over Neuron: Remove Synapse2, Synapse3<br/>Keep only Synapse1
+    Neuron->>Synapse1: CreateComponent() (only one)
+    Neuron->>LTZone: CreateComponent()
+    loop Each step
+        Synapse1->>PosChannel: Input signal
+        Storage->>Neuron: Calculate()
+        Neuron->>Membrane: ACalculate()
+        Membrane->>PosChannel: ACalculate()
+        Membrane->>NegChannel: ACalculate()
+        PosChannel->>Membrane: Current
+        NegChannel->>Membrane: Current
+        Membrane->>LTZone: Potential
+        LTZone-->>Neuron: Output
+    end
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> x[NSPMinNeuron]
-    x --> out[Outputs]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> CreateMembrane: Create membrane
+    CreateMembrane --> CreateChannels: Create channels
+    CreateChannels --> RemoveSynapses: Remove Synapse2, Synapse3
+    RemoveSynapses --> CreateSynapse1: Create Synapse1 only
+    CreateSynapse1 --> CreateLTZone: Create LT-zone
+    CreateLTZone --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> CalcMembrane: Calculate membrane
+    CalcMembrane --> CalcChannels: Calculate channels
+    CalcChannels --> CalcLTZone: Calculate LT-zone
+    CalcLTZone --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> CalcMembrane[Calculate membrane]
+    CalcMembrane --> CalcPosChannel[Calculate PosChannel<br/>with Synapse1 only]
+    CalcPosChannel --> CalcNegChannel[Calculate NegChannel<br/>with Synapse1 only]
+    CalcNegChannel --> AggregateCurrents[Aggregate currents]
+    AggregateCurrents --> CalcLTZone[Calculate LT-zone]
+    CalcLTZone --> CheckThreshold{Threshold reached?}
+    CheckThreshold -->|Yes| GenerateSpike[Generate spike]
+    CheckThreshold -->|No| UpdateOutput[Update Output]
+    GenerateSpike --> UpdateOutput
+    UpdateOutput --> End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph NPulseNeuron["NPulseNeuron Base"]
+        BaseNeuron[NPulseNeuron]
+    end
+    
+    subgraph NSPMinNeuron["NSPMinNeuron Configuration"]
+        Membrane[NPulseMembrane]
+        PosChannel[NPulseChannel<br/>PosChannel]
+        NegChannel[NPulseChannel<br/>NegChannel]
+        Synapse1[NPulseSynapse<br/>Synapse1 only]
+        LTZone[NPulseLTZoneCommon]
+    end
+    
+    subgraph External["External Components"]
+        PreNeurons[Presynaptic Neurons]
+    end
+    
+    BaseNeuron -->|configured as| NSPMinNeuron
+    NSPMinNeuron -->|creates| Membrane
+    NSPMinNeuron -->|creates| PosChannel
+    NSPMinNeuron -->|creates| NegChannel
+    NSPMinNeuron -->|creates| Synapse1
+    Note over NSPMinNeuron: Synapse2, Synapse3 removed
+    NSPMinNeuron -->|creates| LTZone
+    PreNeurons -->|Input| Synapse1
+    Synapse1 -->|current| PosChannel
+    Synapse1 -->|current| NegChannel
+    PosChannel -->|current| Membrane
+    NegChannel -->|current| Membrane
+    Membrane -->|potential| LTZone
+    LTZone -->|Output| NSPMinNeuron
+```
+
+### Properties
+
+`NSPMinNeuron` uses all properties of base class `NPulseNeuron` with minimal configuration:
+- `NumSomaMembraneParts = 1` — one soma part
+- `NumDendriteMembraneParts = 1` — one dendrite part
+
+**Features:**
+- Minimal synapses: Only Synapse1 per channel (Synapse2 and Synapse3 are removed)
+- Simplified structure: Minimal configuration for simplified models
+
+### Methods
+
+`NSPMinNeuron` uses all methods of base class `NPulseNeuron`.
+
+### Usage in configurations
+
+`NSPMinNeuron` is used in minimal neural network experiments:
+
+- **Minimal networks**: `Bin/Configs/*/Model_*.xml` (where minimal neuron configuration is required)
+- **Simplified models**: Experiments with simplified neuron models
+
+**Note:** Registration of `NSPMinNeuron` is commented out in `NPulseLibrary.cpp` in the current code version.
+
+**Typical parameter values:**
+- **NumSomaMembraneParts**: 1 (one soma part)
+- **NumDendriteMembraneParts**: 1 (one dendrite part)
+
+**Features:**
+- Minimal configuration: Only one synapse per channel
+- Simplified structure: Removes additional synapses for minimal models
+- Note: Currently commented out in code registration
+
+### See Also
+
+- [`NPulseNeuron`](NPulseNeuron.md) — spiking neuron with structuring parameters
+- [`NSPNeuron`](NSPNeuron.md) — base SP-neuron
+- [Architecture.md](../Architecture.md) — library architecture

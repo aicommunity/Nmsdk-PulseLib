@@ -1,92 +1,145 @@
-## NSynapseTrainerStdpTD — компонент PulseLib
+# NSynapseTrainerStdpTD — STDP-тренер, зависящий от времени
 
-**Класс**: `NSynapseTrainerStdpTD` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+## RU
+
+### Назначение
+
+**Класс**: `NSynapseTrainerStdpTD` — STDP-тренер, зависящий от времени напрямую (Time-Dependent).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpTD", ...)`.  
-**Storage**: `ClassName = "NSynapseTrainerStdpTD"` в `ClDesc`/`Configs`.
+**Storage-инстансы**: `ClassName = "NSynapseTrainerStdpTD"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+`NSynapseTrainerStdpTD` реализует STDP-обучение, зависящее от времени напрямую. Наследуется от `NSynapseTrainerStdp` и добавляет параметры для управления временными константами и средними значениями активности (`XAvg`, `YAvg`). Используется как базовый класс для многих вариантов STDP (Lobov, Classic, Triplet, Mirror).
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+**Использование:** Базовый класс для STDP-тренеров, зависящих от времени, управление временными константами
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpTD
+    NSynapseTrainer <|-- NSynapseTrainerStdp
+    NSynapseTrainerStdp <|-- NSynapseTrainerStdpTD
+    NSynapseTrainerStdpTD <|-- NSynapseTrainerStdpLobov
+    NSynapseTrainerStdpTD <|-- NSynapseTrainerStdpClassicDiscrete
+    NSynapseTrainerStdpTD <|-- NSynapseTrainerStdpClassicIntegrated
+    NSynapseTrainerStdpTD <|-- NSynapseTrainerStdpTriplet
+    NSynapseTrainerStdpTD <|-- NSynapseTrainerStdpMirror
+    class NSynapseTrainerStdp {
+        +APlus : double
+        +AMinus : double
+        +WMin : double
+        +WMax : double
+    }
+    class NSynapseTrainerStdpTD {
+        +TauX : double
+        +TauY : double
+        +TauMinus : double
+        +TauPlus : double
+        +XAvg : double
+        +YAvg : double
+        +WRange : double
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+**Иерархия наследования:**
+- `NSynapseTrainer` — базовый тренер синапсов
+- `NSynapseTrainerStdp` — базовый STDP-тренер
+- `NSynapseTrainerStdpTD` — STDP, зависящий от времени
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpTD
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
+### Свойства
+
+#### Параметры (ptPubParameter)
+
+- **`TauX`** (double) — постоянная времени для переменной X (постсинаптическая активность). Значение по умолчанию: зависит от производного класса
+
+- **`TauY`** (double) — постоянная времени для переменной Y (пресинаптическая активность). Значение по умолчанию: зависит от производного класса
+
+- **`TauMinus`** (double) — постоянная времени для LTD (Long-Term Depression). Значение по умолчанию: зависит от производного класса
+
+- **`TauPlus`** (double) — постоянная времени для LTP (Long-Term Potentiation). Значение по умолчанию: зависит от производного класса
+
+- **`XAvg`** (double) — среднее значение переменной X (постсинаптическая активность). Значение по умолчанию: 0.0
+
+- **`YAvg`** (double) — среднее значение переменной Y (пресинаптическая активность). Значение по умолчанию: 0.0
+
+#### Состояния (ptPubState)
+
+- **`WRange`** (double) — диапазон весов (`WMax - WMin`). Вычисляется автоматически в `ADefault()`
+
+### Методы
+
+`NSynapseTrainerStdpTD` использует все методы базового класса `NSynapseTrainerStdp` и переопределяет:
+
+- **`ADefault()`** → `bool` — инициализирует параметры по умолчанию. Вызывает `NSynapseTrainerStdp::ADefault()`, устанавливает `XAvg = 0.0`, `YAvg = 0.0`, вычисляет `WRange = WMax - WMin`.
+
+- **`AReset()`** → `bool` — сбрасывает состояния. Вызывает `NSynapseTrainerStdp::AReset()`, устанавливает `XAvg = 0.0`, `YAvg = 0.0`.
+
+- **`ACalculate()`** → `bool` — выполняет расчет. Вызывает `NSynapseTrainerStdp::ACalculate()` для отслеживания спайков. Конкретное правило изменения весов реализуется в производных классах.
+
+### Примеры использования
+
+#### Пример 1: Создание тренера в коде C++
+
+```cpp
+// Создание STDP-тренера TD
+auto trainer = storage->CreateComponent<NSynapseTrainerStdpTD>();
+trainer->SetName("STDPTrainerTD");
+
+// Инициализация
+trainer->Default();
+
+// Настройка параметров
+trainer->APlus = 0.01;
+trainer->AMinus = 0.01;
+trainer->TauX = 0.01;
+trainer->TauY = 0.005;
+trainer->TauPlus = 0.01;
+trainer->TauMinus = 0.02;
+trainer->WMin = 0.0;
+trainer->WMax = 1.0;
+
+// Сборка
+trainer->Build();
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### См. также
 
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpTD]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
-
-### Config snippet
-```ini
-[Component]
-ClassName = NSynapseTrainerStdpTD
-Name = NSynapseTrainerStdpTD1
-```
+- [`NSynapseTrainerStdp`](NSynapseTrainerStdp.md) — базовый STDP-тренер
+- [`NSynapseTrainerStdpLobov`](NSynapseTrainerStdpLobov.md) — STDP по Лобову
+- [`NSynapseTrainerStdpClassicDiscrete`](NSynapseTrainerStdpClassicDiscrete.md) — классический STDP (дискретный)
+- [`NSynapseTrainerStdpTriplet`](NSynapseTrainerStdpTriplet.md) — STDP Triplet
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NSynapseTrainerStdpTD — component PulseLib (EN)
+## EN
 
-**Class**: `NSynapseTrainerStdpTD` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NSynapseTrainerStdpTD", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NSynapseTrainerStdpTD"` in configs.
+**Class**: `NSynapseTrainerStdpTD` — time-dependent STDP trainer.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpTD", ...)`.  
+**Instances**: `ClassName = "NSynapseTrainerStdpTD"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NSynapseTrainerStdpTD` implements time-dependent STDP learning. Inherits from `NSynapseTrainerStdp` and adds parameters for managing time constants and average activity values (`XAvg`, `YAvg`).
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+**Usage:** Base class for time-dependent STDP trainers, time constant management
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpTD
+    NSynapseTrainerStdp <|-- NSynapseTrainerStdpTD
+    class NSynapseTrainerStdpTD {
+        +TauX : double
+        +TauY : double
+        +TauPlus : double
+        +TauMinus : double
+        +XAvg : double
+        +YAvg : double
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### See Also
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpTD
-    In-->>X: signals
-    X-->>In: outputs
-```
-
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
-
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpTD]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+- [`NSynapseTrainerStdp`](NSynapseTrainerStdp.md) — base STDP trainer
+- [`NSynapseTrainerStdpLobov`](NSynapseTrainerStdpLobov.md) — Lobov STDP
+- [Architecture.md](../Architecture.md) — library architecture

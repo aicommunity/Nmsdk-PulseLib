@@ -1,79 +1,203 @@
-## NContinuesSynSPNeuron — непрерывный SP-нейрон (syn)
+# NContinuesSynSPNeuron — непрерывный син-SP-нейрон
 
-**Класс**: `NContinuesSynSPNeuron` — непрерывный вариант SP-нейрона в син. семействе.  
-**Регистрация**: `UploadClass("NContinuesSynSPNeuron", ...)`.  
-**Storage**: `ClassName = "NContinuesSynSPNeuron"`.
+## RU
 
-### Lifecycle
-- **ADefault**: параметры SP.
-- **ABuild**: подключение входов/синапсов.
-- **AReset**: сброс.
-- **ACalculate**: расчёт активности по SP-модели.
+### Назначение
 
-### I/O
-- Вход: сигналы/токи.
-- Выход: активность/спайк.
+**Класс**: `NContinuesSynSPNeuron` — конфигурационный вариант мелкого непрерывного импульсного нейрона с оптимизированными синапсами.  
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NContinuesSynSPNeuron", ...)`.  
+**Storage-инстансы**: `ClassName = "NContinuesSynSPNeuron"` в `Bin/Configs/*/Model_*.xml`.
+
+`NContinuesSynSPNeuron` является конфигурационным вариантом базового класса `NPulseNeuron` с непрерывной обработкой и оптимизированными синапсами. Создается из `NCNeuron` с настройками:
+- `NumSomaMembraneParts = 1` — одна часть сомы
+- `MembraneClassName = "NCSynNeuronMembrane"` — классическая мембрана, оптимизированная для синапсов
+- `LTZoneClassName = "NCLTZone"` — классическая LT-зона
+
+Непрерывные нейроны используют классическую модель с непрерывным выходом вместо импульсного.
+
+**Использование:** Эксперименты с непрерывными моделями и оптимизированными синапсами
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    NNeuron <|-- NContinuesSynSPNeuron
+    NPulseNeuron <|.. NContinuesSynSPNeuron : configuration variant
+    NContinuesSynSPNeuron *-- NCSynNeuronMembrane : PulseMembrane
+    NContinuesSynSPNeuron *-- NCLTZone : LTZone
+    class NContinuesSynSPNeuron {
+        +MembraneClassName : string = "NCSynNeuronMembrane"
+        +LTZoneClassName : string = "NCLTZone"
+        +NumSomaMembraneParts : int = 1
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### Свойства
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant N as NContinuesSynSPNeuron
-    In-->>N: signals
-    N-->>In: activity
-```
+`NContinuesSynSPNeuron` использует все свойства базового класса `NPulseNeuron` с параметрами:
+- `MembraneClassName = "NCSynNeuronMembrane"`
+- `LTZoneClassName = "NCLTZone"`
+- `NumSomaMembraneParts = 1`
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### Методы
 
-```mermaid
-flowchart LR
-    sig[Signals] --> n[NContinuesSynSPNeuron]
-    n --> act[Activity]
-```
+`NContinuesSynSPNeuron` использует все методы базового класса `NPulseNeuron`.
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### См. также
 
-### Config snippet
-
-```ini
-[Component]
-ClassName = NContinuesSynSPNeuron
-Name = CSSP1
-```
+- [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
+- [`NSynSPNeuron`](NSynSPNeuron.md) — син-SP-нейрон
+- [`NCSynNeuronMembrane`](NCSynNeuronMembrane.md) — классическая мембрана, оптимизированная для синапсов
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NContinuesSynSPNeuron — continuous SP neuron (EN)
+## EN
 
-Continuous SP neuron variant (synaptic family).
+### Purpose
+
+**Class**: `NContinuesSynSPNeuron` — configuration variant of small continuous spiking neuron with optimized synapses.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NContinuesSynSPNeuron", ...)`.  
+**Instances**: `ClassName = "NContinuesSynSPNeuron"` in `Bin/Configs/*/Model_*.xml`.
+
+`NContinuesSynSPNeuron` is a configuration variant of the base class `NPulseNeuron` with continuous processing and optimized synapses. Created from `NCNeuron` with settings:
+- `NumSomaMembraneParts = 1` — one soma part
+- `MembraneClassName = "NCSynNeuronMembrane"` — classic membrane optimized for synapses
+- `LTZoneClassName = "NCLTZone"` — classic LT-zone
+
+Continuous neurons use classic model with continuous output instead of spiking.
+
+**Usage:** Experiments with continuous models and optimized synapses
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    NNeuron <|-- NContinuesSynSPNeuron
+    NPulseNeuron <|.. NContinuesSynSPNeuron : configuration variant
+    NContinuesSynSPNeuron *-- NCSynNeuronMembrane : PulseMembrane
+    NContinuesSynSPNeuron *-- NCLTZone : LTZone
+    class NContinuesSynSPNeuron {
+        +MembraneClassName : string = "NCSynNeuronMembrane"
+        +LTZoneClassName : string = "NCLTZone"
+        +NumSomaMembraneParts : int = 1
+    }
 ```
 
-Description: this class diagram shows the component position in the type hierarchy and key relations.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant N as NContinuesSynSPNeuron
-    In-->>N: signals
-    N-->>In: activity
+    participant Storage
+    participant Neuron as NContinuesSynSPNeuron
+    participant Membrane as NCSynNeuronMembrane
+    participant LTZone as NCLTZone
+    participant Inputs as Input Signals
+    
+    Storage->>Neuron: New() + Default()
+    Storage->>Neuron: Build()
+    Neuron->>Neuron: Set MembraneClassName = "NCSynNeuronMembrane"
+    Neuron->>Neuron: Set LTZoneClassName = "NCLTZone"
+    Neuron->>Membrane: Create membrane
+    Neuron->>LTZone: Create LT-zone
+    loop Each step
+        Inputs->>Membrane: Input signals
+        Storage->>Neuron: Calculate()
+        Neuron->>Membrane: Calculate()
+        Membrane->>LTZone: Membrane potential
+        LTZone->>Neuron: Continuous output
+        Neuron-->>Inputs: Output
+    end
 ```
 
-Description: this sequence diagram shows a typical runtime interaction and call order.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> n[NContinuesSynSPNeuron]
-    n --> act[Activity]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> SetConfig: Set configuration parameters
+    SetConfig --> Building: Build()
+    Building --> CreateMembrane: Create NCSynNeuronMembrane
+    CreateMembrane --> CreateLTZone: Create NCLTZone
+    CreateLTZone --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> ProcessMembrane: Process membrane
+    ProcessMembrane --> ProcessLTZone: Process LT-zone
+    ProcessLTZone --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Description: this flowchart shows the data/signal flow (inputs → component → outputs).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> ProcessMembrane[Process NCSynNeuronMembrane<br/>continuous processing]
+    ProcessMembrane --> CalculatePotential[Calculate membrane potential]
+    CalculatePotential --> ProcessLTZone[Process NCLTZone<br/>classic LT-zone]
+    ProcessLTZone --> CheckThreshold[Check threshold]
+    CheckThreshold --> GenerateOutput[Generate continuous output]
+    GenerateOutput --> End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph NPulseNeuron["NPulseNeuron Base"]
+        BaseNeuron[NPulseNeuron]
+    end
+    
+    subgraph NContinuesSynSPNeuron["NContinuesSynSPNeuron Configuration"]
+        Membrane[NCSynNeuronMembrane<br/>Classic Membrane]
+        LTZone[NCLTZone<br/>Classic LT-Zone]
+    end
+    
+    subgraph External["External Components"]
+        InputSignals[Input Signals]
+        ClassicNeurons[Classic Neurons]
+    end
+    
+    BaseNeuron -->|configured as| NContinuesSynSPNeuron
+    NContinuesSynSPNeuron -->|creates| Membrane
+    NContinuesSynSPNeuron -->|creates| LTZone
+    InputSignals -->|signals| Membrane
+    Membrane -->|potential| LTZone
+    LTZone -->|continuous output| NContinuesSynSPNeuron
+    NContinuesSynSPNeuron -->|Output| ClassicNeurons
+```
+
+### Properties
+
+`NContinuesSynSPNeuron` uses all properties of base class `NPulseNeuron` with parameters:
+- `MembraneClassName = "NCSynNeuronMembrane"` — classic membrane optimized for synapses
+- `LTZoneClassName = "NCLTZone"` — classic LT-zone
+- `NumSomaMembraneParts = 1` — one soma part
+
+### Methods
+
+`NContinuesSynSPNeuron` uses all methods of base class `NPulseNeuron`.
+
+### Usage in configurations
+
+`NContinuesSynSPNeuron` is used in experiments with continuous models and optimized synapses:
+
+- **Continuous models**: Experiments with continuous (non-spiking) neuron models
+- **Optimized synapses**: Uses classic membrane and LT-zone optimized for synapses
+
+**Features:**
+- Continuous output: Uses classic model with continuous output instead of spiking
+- Optimized synapses: Membrane and LT-zone are optimized for synaptic processing
+- Single soma: Uses one soma membrane part
+
+**Typical parameter values:**
+- **MembraneClassName**: "NCSynNeuronMembrane" (classic membrane optimized for synapses)
+- **LTZoneClassName**: "NCLTZone" (classic LT-zone)
+- **NumSomaMembraneParts**: 1 (one soma part)
+
+### See Also
+
+- [`NPulseNeuron`](NPulseNeuron.md) — spiking neuron
+- [`NSynSPNeuron`](NSynSPNeuron.md) — synaptic SP-neuron
+- [`NCSynNeuronMembrane`](NCSynNeuronMembrane.md) — classic membrane optimized for synapses
+- [Architecture.md](../Architecture.md) — library architecture

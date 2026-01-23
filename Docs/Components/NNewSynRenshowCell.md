@@ -1,79 +1,192 @@
-## NNewSynRenshowCell — новая син. клетка Реншоу
+# NNewSynRenshowCell — новая син-клетка Реншоу
 
-**Класс**: `NNewSynRenshowCell` — новая клетка Реншоу в син. семействе.  
+## RU
+
+### Назначение
+
+**Класс**: `NNewSynRenshowCell` — конфигурационный вариант новой клетки Реншоу с оптимизированными синапсами.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNewSynRenshowCell", ...)`.  
-**Storage**: `ClassName = "NNewSynRenshowCell"`.
+**Storage-инстансы**: `ClassName = "NNewSynRenshowCell"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: параметры клетки Реншоу.
-- **ABuild**: подключение входов/синапсов.
-- **AReset**: сброс.
-- **ACalculate**: расчёт тормозного ответа.
+`NNewSynRenshowCell` является конфигурационным вариантом базового класса `NPulseNeuron` для моделирования клеток Реншоу с оптимизированными синапсами. Создается из `NPulseNeuron` с настройками:
+- `NumSomaMembraneParts = 1` — одна часть сомы
+- `MembraneClassName = "NPSynNeuronMembrane"` — мембрана, оптимизированная для синапсов
 
-### I/O
-- Вход: сигналы/токи.
-- Выход: ингибирующая активность.
+**Использование:** Моделирование реципрокного торможения с оптимизированными синапсами
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    NNeuron <|-- NNewSynRenshowCell
+    NPulseNeuron <|.. NNewSynRenshowCell : configuration variant
+    NNewSynRenshowCell *-- NPSynNeuronMembrane : PulseMembrane
+    class NNewSynRenshowCell {
+        +NumSomaMembraneParts : int = 1
+        +MembraneClassName : string = "NPSynNeuronMembrane"
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### Свойства
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant N as NNewSynRenshowCell
-    In-->>N: signals
-    N-->>In: inhibitory output
-```
+`NNewSynRenshowCell` использует все свойства базового класса `NPulseNeuron` с параметрами:
+- `NumSomaMembraneParts = 1`
+- `MembraneClassName = "NPSynNeuronMembrane"`
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### Методы
 
-```mermaid
-flowchart LR
-    sig[Signals] --> n[NNewSynRenshowCell]
-    n --> inh[Inhibitory output]
-```
+`NNewSynRenshowCell` использует все методы базового класса `NPulseNeuron`.
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### См. также
 
-### Config snippet
-
-```ini
-[Component]
-ClassName = NNewSynRenshowCell
-Name = NewSynRenshow1
-```
+- [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
+- [`NNewRenshowCell`](NNewRenshowCell.md) — новая клетка Реншоу
+- [`NPSynNeuronMembrane`](NPSynNeuronMembrane.md) — мембрана, оптимизированная для синапсов
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NNewSynRenshowCell — new synaptic Renshaw cell (EN)
+## EN
 
-New Renshaw cell variant in synaptic family.
+### Purpose
+
+**Class**: `NNewSynRenshowCell` — configuration variant of new Renshaw cell with optimized synapses.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNewSynRenshowCell", ...)`.  
+**Instances**: `ClassName = "NNewSynRenshowCell"` in `Bin/Configs/*/Model_*.xml`.
+
+`NNewSynRenshowCell` is a configuration variant of the base class `NPulseNeuron` for modeling Renshaw cells with optimized synapses. Created from `NPulseNeuron` with settings:
+- `NumSomaMembraneParts = 1` — one soma part
+- `MembraneClassName = "NPSynNeuronMembrane"` — membrane optimized for synapses
+
+**Usage:** Modeling reciprocal inhibition with optimized synapses
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    NNeuron <|-- NNewSynRenshowCell
+    NPulseNeuron <|.. NNewSynRenshowCell : configuration variant
+    NNewSynRenshowCell *-- NPSynNeuronMembrane : PulseMembrane
+    class NNewSynRenshowCell {
+        +NumSomaMembraneParts : int = 1
+        +MembraneClassName : string = "NPSynNeuronMembrane"
+    }
 ```
 
-Description: this class diagram shows the component position in the type hierarchy and key relations.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant N as NNewSynRenshowCell
-    In-->>N: signals
-    N-->>In: inhibitory output
+    participant Storage
+    participant Cell as NNewSynRenshowCell
+    participant Membrane as NPSynNeuronMembrane
+    participant LTZone as NPulseLTZoneCommon
+    participant Motoneuron as NMotoneuron
+    
+    Storage->>Cell: New() + Default()
+    Storage->>Cell: Build()
+    Cell->>Membrane: CreateComponent()
+    Cell->>LTZone: CreateComponent()
+    loop Each step
+        Motoneuron->>Cell: Excitatory input
+        Storage->>Cell: Calculate()
+        Cell->>Membrane: ACalculate()
+        Cell->>LTZone: ACalculate()
+        Cell-->>Motoneuron: Inhibitory feedback
+    end
 ```
 
-Description: this sequence diagram shows a typical runtime interaction and call order.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> n[NNewSynRenshowCell]
-    n --> inh[Inhibitory output]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> CreateMembrane: Create NPSynNeuronMembrane
+    CreateMembrane --> CreateLTZone: Create LT-zone
+    CreateLTZone --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> MembraneCalc: Calculate membrane
+    MembraneCalc --> LTZoneCalc: Calculate LT-zone
+    LTZoneCalc --> CheckThreshold: Check threshold
+    CheckThreshold -->|Reached| InhibitorySpike: Generate inhibitory spike
+    CheckThreshold -->|Not reached| Ready: Step completed
+    InhibitorySpike --> Ready
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Description: this flowchart shows the data/signal flow (inputs → component → outputs).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> ReceiveInput[Receive excitatory input<br/>from motoneuron]
+    ReceiveInput --> CalcMembrane[Calculate NPSynNeuronMembrane]
+    CalcMembrane --> CalcSynapses[Calculate optimized synapses]
+    CalcSynapses --> CalcLTZone[Calculate LT-zone]
+    CalcLTZone --> CheckThreshold{Threshold reached?}
+    CheckThreshold -->|Yes| GenerateInhibitorySpike[Generate inhibitory spike]
+    CheckThreshold -->|No| NoSpike[No spike]
+    GenerateInhibitorySpike --> SendFeedback[Send inhibitory feedback<br/>to motoneuron]
+    NoSpike --> SendFeedback
+    SendFeedback --> End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph NPulseNeuron["NPulseNeuron Base"]
+        BaseNeuron[NPulseNeuron]
+    end
+    
+    subgraph NNewSynRenshowCell["NNewSynRenshowCell Configuration"]
+        Membrane[NPSynNeuronMembrane<br/>optimized for synapses]
+        LTZone[NPulseLTZoneCommon]
+    end
+    
+    subgraph External["External Components"]
+        Synapses[Synapses<br/>optimized]
+        Motoneuron[NMotoneuron]
+    end
+    
+    BaseNeuron -->|configured as| NNewSynRenshowCell
+    NNewSynRenshowCell -->|creates| Membrane
+    NNewSynRenshowCell -->|creates| LTZone
+    Motoneuron -->|excitatory input| Synapses
+    Synapses -->|current| Membrane
+    Membrane -->|potential| LTZone
+    LTZone -->|inhibitory feedback| Motoneuron
+```
+
+### Properties
+
+`NNewSynRenshowCell` uses all properties of base class `NPulseNeuron` with parameters:
+- `NumSomaMembraneParts = 1` — one soma part
+- `MembraneClassName = "NPSynNeuronMembrane"` — membrane optimized for synapses
+
+### Methods
+
+`NNewSynRenshowCell` uses all methods of base class `NPulseNeuron`.
+
+### Usage in configurations
+
+`NNewSynRenshowCell` is used in reciprocal inhibition experiments:
+
+- **Reciprocal inhibition**: `Bin/Configs/!OldConfigs/*/Model_*.xml` (where Renshaw cells with optimized synapses are required)
+
+**Typical parameter values:**
+- **NumSomaMembraneParts**: 1 (one soma part)
+- **MembraneClassName**: "NPSynNeuronMembrane" (membrane optimized for synapses)
+
+**Features:**
+- Reciprocal inhibition: provides inhibitory feedback to motor neurons
+- Synapse optimization: membrane optimized for efficient synapse processing
+- Interneuron: acts as inhibitory interneuron in motor circuits
+
+### See Also
+
+- [`NPulseNeuron`](NPulseNeuron.md) — spiking neuron
+- [`NNewRenshowCell`](NNewRenshowCell.md) — new Renshaw cell
+- [`NPSynNeuronMembrane`](NPSynNeuronMembrane.md) — membrane optimized for synapses
+- [Architecture.md](../Architecture.md) — library architecture

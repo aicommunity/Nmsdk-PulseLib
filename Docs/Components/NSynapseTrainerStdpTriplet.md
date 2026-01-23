@@ -1,92 +1,79 @@
-## NSynapseTrainerStdpTriplet — компонент PulseLib
+# NSynapseTrainerStdpTriplet — STDP Triplet
 
-**Класс**: `NSynapseTrainerStdpTriplet` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+## RU
+
+### Назначение
+
+**Класс**: `NSynapseTrainerStdpTriplet` — STDP-тренер с триплетным правилом.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpTriplet", ...)`.  
-**Storage**: `ClassName = "NSynapseTrainerStdpTriplet"` в `ClDesc`/`Configs`.
+**Storage-инстансы**: `ClassName = "NSynapseTrainerStdpTriplet"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+`NSynapseTrainerStdpTriplet` реализует STDP с триплетным правилом, которое учитывает не только пары спайков (pre-post), но и триплеты спайков. Наследуется от `NSynapseTrainerStdpTD` и добавляет параметры `APlus3` и `AMinus3` для управления триплетными эффектами.
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+**Использование:** STDP с триплетным правилом, учет триплетов спайков
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpTriplet
+    NSynapseTrainerStdpTD <|-- NSynapseTrainerStdpTriplet
+    class NSynapseTrainerStdpTriplet {
+        +APlus3 : double
+        +AMinus3 : double
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### Свойства
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpTriplet
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
-```
+#### Параметры (ptPubParameter)
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+- **`APlus3`** (double) — коэффициент усиления для триплетного LTP. Значение по умолчанию: 0.01
 
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpTriplet]
-    x --> out[Outputs]
-```
+- **`AMinus3`** (double) — коэффициент ослабления для триплетного LTD. Значение по умолчанию: 0.01
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+**Наследуемые параметры:**
+- `APlus = 0.01`, `AMinus = 0.01`, `TauPlus = 0.01`, `TauMinus = 0.01`, `TauX = 0.01`, `TauY = 0.01`
 
-### Config snippet
-```ini
-[Component]
-ClassName = NSynapseTrainerStdpTriplet
-Name = NSynapseTrainerStdpTriplet1
-```
+### Методы
+
+- **`ACalculate()`** → `bool` — выполняет расчет триплетного STDP:
+  - Для постсинаптического спайка: `WeightOutput += exp(-delta_t1/TauPlus) * (APlus + APlus3 * exp(-delta_t2/TauY))`
+  - Для пресинаптического спайка: `WeightOutput -= exp(delta_t1/TauMinus) * (AMinus + AMinus3 * exp(-delta_t3/TauX))`
+  - Где `delta_t1 = TPost - TPre`, `delta_t2 = TPost - TPostOld`, `delta_t3 = TPre - TPreOld`
+
+### См. также
+
+- [`NSynapseTrainerStdpTD`](NSynapseTrainerStdpTD.md) — STDP, зависящий от времени
+- [`NSynapseTrainerStdpMirror`](NSynapseTrainerStdpMirror.md) — STDP Mirror
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NSynapseTrainerStdpTriplet — component PulseLib (EN)
+## EN
 
-**Class**: `NSynapseTrainerStdpTriplet` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NSynapseTrainerStdpTriplet", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NSynapseTrainerStdpTriplet"` in configs.
+**Class**: `NSynapseTrainerStdpTriplet` — STDP trainer with triplet rule.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpTriplet", ...)`.  
+**Instances**: `ClassName = "NSynapseTrainerStdpTriplet"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NSynapseTrainerStdpTriplet` implements STDP with triplet rule, which considers not only spike pairs (pre-post) but also spike triplets. Inherits from `NSynapseTrainerStdpTD` and adds parameters `APlus3` and `AMinus3` for triplet effects.
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+**Usage:** STDP with triplet rule, spike triplet consideration
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpTriplet
+    NSynapseTrainerStdpTD <|-- NSynapseTrainerStdpTriplet
+    class NSynapseTrainerStdpTriplet {
+        +APlus3 : double
+        +AMinus3 : double
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### See Also
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpTriplet
-    In-->>X: signals
-    X-->>In: outputs
-```
-
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
-
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpTriplet]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+- [`NSynapseTrainerStdpTD`](NSynapseTrainerStdpTD.md) — time-dependent STDP
+- [`NSynapseTrainerStdpMirror`](NSynapseTrainerStdpMirror.md) — STDP Mirror
+- [Architecture.md](../Architecture.md) — library architecture

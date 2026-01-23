@@ -77,3 +77,68 @@ flowchart LR
 ```
 
 Description: this flowchart shows the data/signal flow (inputs → component → outputs).
+
+### UML State Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> ReceiveInputs: Receive input signals
+    ReceiveInputs --> ProcessMotor: Process motor neuron calculation
+    ProcessMotor --> GenerateActivity: Generate motor activity
+    GenerateActivity --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph NNeuron["NNeuron Base"]
+        BaseNeuron[NNeuron]
+    end
+    
+    subgraph NContinuesSynMotoneuron["NContinuesSynMotoneuron"]
+        MotorProcessing[Motor Processing<br/>Continuous]
+    end
+    
+    subgraph External["External Components"]
+        InputSignals[Input Signals]
+        Muscles[Muscles]
+    end
+    
+    BaseNeuron -->|inherits| NContinuesSynMotoneuron
+    InputSignals -->|signals| NContinuesSynMotoneuron
+    NContinuesSynMotoneuron -->|motor activity| Muscles
+    NContinuesSynMotoneuron -->|Output| External
+```
+
+### Properties
+
+`NContinuesSynMotoneuron` uses all properties of base class `NNeuron`.
+
+### Methods
+
+`NContinuesSynMotoneuron` uses all methods of base class `NNeuron`:
+- `ADefault()` → `bool` — sets motoneuron parameters
+- `ABuild()` → `bool` — connects inputs/synapses
+- `AReset()` → `bool` — resets states
+- `ACalculate()` → `bool` — calculates motor activity
+
+### Usage in configurations
+
+`NContinuesSynMotoneuron` is used in continuous motoneuron experiments:
+
+- **Continuous motoneurons**: Continuous motoneuron variant in synaptic family
+- **Motor control**: Used in motor control experiments with continuous models
+
+**Features:**
+- Continuous processing: Performs continuous motor neuron calculation
+- Synaptic family: Part of synaptic neuron family
+- Motor activity: Generates motor activity for muscle control

@@ -1,92 +1,114 @@
-## NSynapseTrainerStdpWD — компонент PulseLib
+# NSynapseTrainerStdpWD — STDP-тренер, зависящий от веса
 
-**Класс**: `NSynapseTrainerStdpWD` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+## RU
+
+### Назначение
+
+**Класс**: `NSynapseTrainerStdpWD` — STDP-тренер, зависящий от веса напрямую (Weight-Dependent).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpWD", ...)`.  
-**Storage**: `ClassName = "NSynapseTrainerStdpWD"` в `ClDesc`/`Configs`.
+**Storage-инстансы**: `ClassName = "NSynapseTrainerStdpWD"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+`NSynapseTrainerStdpWD` реализует STDP-обучение, зависящее от веса напрямую. Наследуется от `NSynapseTrainerStdp` и используется как базовый класс для вероятностных и стабильных вариантов STDP. В отличие от `NSynapseTrainerStdpTD`, не использует временные константы для средних значений активности.
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+**Использование:** Базовый класс для STDP-тренеров, зависящих от веса, вероятностные и стабильные варианты STDP
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpWD
+    NSynapseTrainer <|-- NSynapseTrainerStdp
+    NSynapseTrainerStdp <|-- NSynapseTrainerStdpWD
+    NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpProbabilistic
+    NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpStable
+    class NSynapseTrainerStdp {
+        +APlus : double
+        +AMinus : double
+        +WMin : double
+        +WMax : double
+    }
+    class NSynapseTrainerStdpWD {
+        +New() NSynapseTrainerStdpWD*
+        +ADefault() bool
+        +ABuild() bool
+        +AReset() bool
+        +ACalculate() bool
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+**Иерархия наследования:**
+- `NSynapseTrainer` — базовый тренер синапсов
+- `NSynapseTrainerStdp` — базовый STDP-тренер
+- `NSynapseTrainerStdpWD` — STDP, зависящий от веса
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpWD
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
+### Свойства
+
+`NSynapseTrainerStdpWD` использует все свойства базового класса `NSynapseTrainerStdp` без дополнительных параметров.
+
+### Методы
+
+`NSynapseTrainerStdpWD` использует все методы базового класса `NSynapseTrainerStdp`:
+
+- **`ADefault()`** → `bool` — инициализирует параметры по умолчанию. Вызывает `NSynapseTrainerStdp::ADefault()`.
+
+- **`AReset()`** → `bool` — сбрасывает состояния. Вызывает `NSynapseTrainerStdp::AReset()`.
+
+- **`ACalculate()`** → `bool` — выполняет расчет. Вызывает `NSynapseTrainerStdp::ACalculate()` для отслеживания спайков. Конкретное правило изменения весов реализуется в производных классах.
+
+### Примеры использования
+
+#### Пример 1: Создание тренера в коде C++
+
+```cpp
+// Создание STDP-тренера WD
+auto trainer = storage->CreateComponent<NSynapseTrainerStdpWD>();
+trainer->SetName("STDPTrainerWD");
+
+// Инициализация
+trainer->Default();
+
+// Настройка параметров
+trainer->APlus = 0.01;
+trainer->AMinus = 0.01;
+trainer->WMin = 0.0;
+trainer->WMax = 1.0;
+
+// Сборка
+trainer->Build();
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### См. также
 
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpWD]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
-
-### Config snippet
-```ini
-[Component]
-ClassName = NSynapseTrainerStdpWD
-Name = NSynapseTrainerStdpWD1
-```
+- [`NSynapseTrainerStdp`](NSynapseTrainerStdp.md) — базовый STDP-тренер
+- [`NSynapseTrainerStdpProbabilistic`](NSynapseTrainerStdpProbabilistic.md) — вероятностный STDP
+- [`NSynapseTrainerStdpStable`](NSynapseTrainerStdpStable.md) — стабильный STDP
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NSynapseTrainerStdpWD — component PulseLib (EN)
+## EN
 
-**Class**: `NSynapseTrainerStdpWD` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NSynapseTrainerStdpWD", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NSynapseTrainerStdpWD"` in configs.
+**Class**: `NSynapseTrainerStdpWD` — weight-dependent STDP trainer.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpWD", ...)`.  
+**Instances**: `ClassName = "NSynapseTrainerStdpWD"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NSynapseTrainerStdpWD` implements weight-dependent STDP learning. Inherits from `NSynapseTrainerStdp` and is used as base class for probabilistic and stable STDP variants.
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+**Usage:** Base class for weight-dependent STDP trainers, probabilistic and stable STDP variants
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpWD
+    NSynapseTrainerStdp <|-- NSynapseTrainerStdpWD
+    NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpProbabilistic
+    NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpStable
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### See Also
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpWD
-    In-->>X: signals
-    X-->>In: outputs
-```
-
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
-
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpWD]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+- [`NSynapseTrainerStdp`](NSynapseTrainerStdp.md) — base STDP trainer
+- [`NSynapseTrainerStdpProbabilistic`](NSynapseTrainerStdpProbabilistic.md) — probabilistic STDP
+- [`NSynapseTrainerStdpStable`](NSynapseTrainerStdpStable.md) — stable STDP
+- [Architecture.md](../Architecture.md) — library architecture

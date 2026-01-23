@@ -1,92 +1,79 @@
-## NSynapseTrainerStdpClassicIntegrated — компонент PulseLib
+# NSynapseTrainerStdpClassicIntegrated — классический STDP (интегрированный)
 
-**Класс**: `NSynapseTrainerStdpClassicIntegrated` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+## RU
+
+### Назначение
+
+**Класс**: `NSynapseTrainerStdpClassicIntegrated` — классический STDP с интегрированной реализацией.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpClassicIntegrated", ...)`.  
-**Storage**: `ClassName = "NSynapseTrainerStdpClassicIntegrated"` в `ClDesc`/`Configs`.
+**Storage-инстансы**: `ClassName = "NSynapseTrainerStdpClassicIntegrated"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+`NSynapseTrainerStdpClassicIntegrated` реализует классический STDP с интегрированной реализацией. Наследуется от `NSynapseTrainerStdpTD` и использует параметры `MuPlus` и `MuMinus` для управления зависимостью изменения веса. Интегрирует средние значения активности (`XAvg`, `YAvg`) для расчета изменения веса на каждом шаге.
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+**Использование:** Классический STDP с интегрированной реализацией, непрерывное интегрирование
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpClassicIntegrated
+    NSynapseTrainerStdpTD <|-- NSynapseTrainerStdpClassicIntegrated
+    class NSynapseTrainerStdpClassicIntegrated {
+        +MuPlus : double
+        +MuMinus : double
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### Свойства
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpClassicIntegrated
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
-```
+#### Параметры (ptPubParameter)
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+- **`MuPlus`** (double) — параметр зависимости для LTP. Используется в формуле: `pow(1-(Weight-WMin)/WRange, MuPlus)`. Значение по умолчанию: 0.5
 
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpClassicIntegrated]
-    x --> out[Outputs]
-```
+- **`MuMinus`** (double) — параметр зависимости для LTD. Используется в формуле: `pow((Weight-WMin+0.0001)/WRange, MuMinus)`. Значение по умолчанию: -4.0
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+**Наследуемые параметры:**
+- `TauX = 1e-2`, `TauY = 5e-3`, `APlus = 5.0`, `AMinus = 1.0`
 
-### Config snippet
-```ini
-[Component]
-ClassName = NSynapseTrainerStdpClassicIntegrated
-Name = NSynapseTrainerStdpClassicIntegrated1
-```
+### Методы
+
+- **`ACalculate()`** → `bool` — выполняет расчет классического STDP с интегрированием:
+  1. Обновляет `XAvg` и `YAvg` на основе активности спайков
+  2. Вычисляет изменение веса: `WeightOutput += (APlus * pow(...) * XAvg * IsOutputPulseActive - AMinus * pow(...) * YAvg * IsInputPulseActive) / TimeStep`
+  3. Ограничивает вес в диапазоне `[WMin, WMax]`
+
+### См. также
+
+- [`NSynapseTrainerStdpTD`](NSynapseTrainerStdpTD.md) — STDP, зависящий от времени
+- [`NSynapseTrainerStdpClassicDiscrete`](NSynapseTrainerStdpClassicDiscrete.md) — классический STDP (дискретный)
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NSynapseTrainerStdpClassicIntegrated — component PulseLib (EN)
+## EN
 
-**Class**: `NSynapseTrainerStdpClassicIntegrated` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NSynapseTrainerStdpClassicIntegrated", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NSynapseTrainerStdpClassicIntegrated"` in configs.
+**Class**: `NSynapseTrainerStdpClassicIntegrated` — classic STDP with integrated implementation.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpClassicIntegrated", ...)`.  
+**Instances**: `ClassName = "NSynapseTrainerStdpClassicIntegrated"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NSynapseTrainerStdpClassicIntegrated` implements classic STDP with integrated implementation. Inherits from `NSynapseTrainerStdpTD` and uses parameters `MuPlus` and `MuMinus` to control weight dependence.
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+**Usage:** Classic STDP with integrated implementation, continuous integration
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpClassicIntegrated
+    NSynapseTrainerStdpTD <|-- NSynapseTrainerStdpClassicIntegrated
+    class NSynapseTrainerStdpClassicIntegrated {
+        +MuPlus : double
+        +MuMinus : double
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### See Also
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpClassicIntegrated
-    In-->>X: signals
-    X-->>In: outputs
-```
-
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
-
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpClassicIntegrated]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+- [`NSynapseTrainerStdpTD`](NSynapseTrainerStdpTD.md) — time-dependent STDP
+- [`NSynapseTrainerStdpClassicDiscrete`](NSynapseTrainerStdpClassicDiscrete.md) — classic STDP (discrete)
+- [Architecture.md](../Architecture.md) — library architecture

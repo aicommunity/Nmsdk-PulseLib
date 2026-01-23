@@ -1,92 +1,80 @@
-## NSynapseTrainerStdpStable — компонент PulseLib
+# NSynapseTrainerStdpStable — стабильный STDP
 
-**Класс**: `NSynapseTrainerStdpStable` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+## RU
+
+### Назначение
+
+**Класс**: `NSynapseTrainerStdpStable` — стабильный STDP-тренер.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpStable", ...)`.  
-**Storage**: `ClassName = "NSynapseTrainerStdpStable"` в `ClDesc`/`Configs`.
+**Storage-инстансы**: `ClassName = "NSynapseTrainerStdpStable"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+`NSynapseTrainerStdpStable` реализует стабильный STDP, который использует временные окна (`TauLTP`, `TauLTD`) для определения, когда применять LTP или LTD. Наследуется от `NSynapseTrainerStdpWD` и добавляет параметры для управления временными окнами пластичности.
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+**Использование:** Стабильный STDP, временные окна пластичности
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpStable
+    NSynapseTrainerStdp <|-- NSynapseTrainerStdpWD
+    NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpStable
+    class NSynapseTrainerStdpStable {
+        +TauLTP : double
+        +TauLTD : double
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### Свойства
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpStable
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
-```
+#### Параметры (ptPubParameter)
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+- **`TauLTP`** (double) — временное окно для LTP. Если `TPost - TPre < TauLTP`, применяется LTP. Значение по умолчанию: 0.02
 
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpStable]
-    x --> out[Outputs]
-```
+- **`TauLTD`** (double) — временное окно для LTD. Если `TPre - TPost < TauLTD`, применяется LTD. Значение по умолчанию: 0.0
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+**Наследуемые параметры:**
+- `APlus = 0.01`, `AMinus = 0.01`
 
-### Config snippet
-```ini
-[Component]
-ClassName = NSynapseTrainerStdpStable
-Name = NSynapseTrainerStdpStable1
-```
+### Методы
+
+- **`ACalculate()`** → `bool` — выполняет расчет стабильного STDP:
+  - Если `TPost - TPre < TauLTP` и `TPost - TPre > TauLTD` (LTP): `WeightOutput += APlus * exp(-WeightOutput)`
+  - Если `TPost - TPre > TauLTP` или `TPre - TPost < TauLTD` (LTD): `WeightOutput -= AMinus * exp(WeightOutput)`
+  - Ограничивает вес в диапазоне `[WMin, WMax]`
+
+### См. также
+
+- [`NSynapseTrainerStdpWD`](NSynapseTrainerStdpWD.md) — STDP, зависящий от веса
+- [`NSynapseTrainerStdpProbabilistic`](NSynapseTrainerStdpProbabilistic.md) — вероятностный STDP
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NSynapseTrainerStdpStable — component PulseLib (EN)
+## EN
 
-**Class**: `NSynapseTrainerStdpStable` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NSynapseTrainerStdpStable", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NSynapseTrainerStdpStable"` in configs.
+**Class**: `NSynapseTrainerStdpStable` — stable STDP trainer.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpStable", ...)`.  
+**Instances**: `ClassName = "NSynapseTrainerStdpStable"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NSynapseTrainerStdpStable` implements stable STDP, which uses time windows (`TauLTP`, `TauLTD`) to determine when to apply LTP or LTD. Inherits from `NSynapseTrainerStdpWD` and adds parameters for managing plasticity time windows.
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+**Usage:** Stable STDP, plasticity time windows
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpStable
+    NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpStable
+    class NSynapseTrainerStdpStable {
+        +TauLTP : double
+        +TauLTD : double
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### See Also
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpStable
-    In-->>X: signals
-    X-->>In: outputs
-```
-
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
-
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpStable]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+- [`NSynapseTrainerStdpWD`](NSynapseTrainerStdpWD.md) — weight-dependent STDP
+- [`NSynapseTrainerStdpProbabilistic`](NSynapseTrainerStdpProbabilistic.md) — probabilistic STDP
+- [Architecture.md](../Architecture.md) — library architecture

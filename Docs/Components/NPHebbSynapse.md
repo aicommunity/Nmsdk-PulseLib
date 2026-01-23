@@ -1,86 +1,136 @@
-## NPHebbSynapse — Hebb синапс
+# NPHebbSynapse — синапс Хебба (алиас)
 
-**Класс**: `NPHebbSynapse` — синапс с Hebb-пластичностью.  
+## RU
+
+### Назначение
+
+**Класс**: `NPHebbSynapse` — алиас для класса `NPulseHebbSynapse`.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPHebbSynapse", ...)`.  
-**Storage**: `ClassName = "NPHebbSynapse"`.
+**Storage-инстансы**: `ClassName = "NPHebbSynapse"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: параметры Hebb.
-- **ABuild**: подключение pre/post.
-- **AReset**: сброс веса.
-- **ACalculate**: передача + Hebb-обновление веса.
+`NPHebbSynapse` является алиасом (синонимом) для класса `NPulseHebbSynapse`. При создании компонента с `ClassName = "NPHebbSynapse"` фактически создается экземпляр класса `NPulseHebbSynapse` с параметрами по умолчанию.
 
-### I/O
-- Вход: спайки pre/post.
-- Выход: взвешенный импульс + обновлённый вес.
+**Использование:** Упрощенное именование при конфигурации, обратная совместимость
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    NPSynapse <|-- NPHebbSynapse
+    NPulseSynapseCommon <|-- NPulseSynapse
+    NPulseSynapse <|-- NPulseHebbSynapse
+    NPulseHebbSynapse <|.. NPHebbSynapse : alias
+    class NPulseHebbSynapse {
+        +Min : double
+        +Mout : double
+        +Md : double
+        +Kin : double
+        +Kout : double
+        +GdGain : double
+        +GsGain : double
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+**Иерархия наследования:**
+- `NPulseSynapseCommon` — общий импульсный синапс
+- `NPulseSynapse` — импульсный синапс с моделью медиатора
+- `NPulseHebbSynapse` — импульсный синапс с механизмом Хебба
+- `NPHebbSynapse` — алиас для `NPulseHebbSynapse`
 
-```mermaid
-sequenceDiagram
-    participant Pre as Pre
-    participant Syn as NPHebbSynapse
-    participant Post as Post
-    Pre-->>Syn: spike
-    Post-->>Syn: spike
-    Syn->>Syn: Hebb update
-    Syn-->>Post: weighted spike
+### Свойства
+
+`NPHebbSynapse` использует все свойства класса `NPulseHebbSynapse` с параметрами по умолчанию.
+
+**Параметры по умолчанию:**
+- `Min = 10.0`
+- `Mout = 10.0`
+- `Md = 0.001`
+- `Kin = 100.0`
+- `Kout = 100.0`
+- `GdGain = 1.0`
+- `GsGain = 10.0`
+- `Resistance = 1.0e10`
+
+### Методы
+
+`NPHebbSynapse` использует все методы класса `NPulseHebbSynapse`.
+
+### Примеры использования
+
+#### Пример 1: Создание синапса в коде C++
+
+```cpp
+// Создание синапса Хебба через алиас
+auto synapse = storage->CreateComponent("NPHebbSynapse");
+synapse->SetName("HebbSynapse");
+
+// Инициализация (использует параметры по умолчанию)
+synapse->Default();
+
+// Использование
+synapse->Build();
+for (int step = 0; step < 10000; step++) {
+    synapse->Calculate();
+}
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+#### Пример 2: Конфигурация XML
 
-```mermaid
-flowchart LR
-    pre[Pre spike] --> syn[NPHebbSynapse]
-    post[Post spike] --> syn
-    syn --> out[Weighted spike]
+```xml
+<Synapse1 Class="NPHebbSynapse">
+    <Parameters>
+        <Type>1</Type>
+        <PulseAmplitude>1.0</PulseAmplitude>
+        <Resistance>1.0e10</Resistance>
+        <Weight>1.0</Weight>
+        <Min>10</Min>
+        <Mout>10</Mout>
+        <Md>0.001</Md>
+        <Kin>100</Kin>
+        <Kout>100</Kout>
+    </Parameters>
+</Synapse1>
 ```
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### Использование в конфигурациях
 
-### Config snippet
+`NPHebbSynapse` используется как упрощенное имя для `NPulseHebbSynapse`:
 
-```ini
-[Component]
-ClassName = NPHebbSynapse
-Name = HebbSyn1
-```
+- Упрощенное именование в конфигурациях
+- Обратная совместимость со старыми конфигурациями
+- Стандартные параметры по умолчанию
+
+### См. также
+
+- [`NPulseHebbSynapse`](NPulseHebbSynapse.md) — импульсный синапс с механизмом Хебба
+- [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора
+- [`NPHebbLifeSynapse`](NPHebbLifeSynapse.md) — синапс Хебба с поддержкой жизнеобеспечения
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NPHebbSynapse — Hebbian synapse (EN)
+## EN
 
-Synapse with Hebbian plasticity updating weight.
+### Purpose
+
+**Class**: `NPHebbSynapse` — alias for `NPulseHebbSynapse` class.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPHebbSynapse", ...)`.  
+**Instances**: `ClassName = "NPHebbSynapse"` in `Bin/Configs/*/Model_*.xml`.
+
+`NPHebbSynapse` is an alias (synonym) for the `NPulseHebbSynapse` class. When creating a component with `ClassName = "NPHebbSynapse"`, an instance of `NPulseHebbSynapse` with default parameters is actually created.
+
+**Usage:** Simplified naming in configurations, backward compatibility
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    NPSynapse <|-- NPHebbSynapse
+    NPulseHebbSynapse <|.. NPHebbSynapse : alias
 ```
 
-Description: this class diagram shows the component position in the type hierarchy and key relations.
+### See Also
 
-```mermaid
-sequenceDiagram
-    participant Pre as Pre
-    participant Syn as NPHebbSynapse
-    participant Post as Post
-    Pre-->>Syn: spike
-    Post-->>Syn: spike
-    Syn-->>Post: weighted spike
-```
+- [`NPulseHebbSynapse`](NPulseHebbSynapse.md) — spiking synapse with Hebbian mechanism
+- [`NPulseSynapse`](NPulseSynapse.md) — spiking synapse with neurotransmitter model
+- [`NPHebbLifeSynapse`](NPHebbLifeSynapse.md) — Hebbian synapse with life support
+- [Architecture.md](../Architecture.md) — library architecture
 
-Description: this sequence diagram shows a typical runtime interaction and call order.
-
-```mermaid
-flowchart LR
-    pre[Pre spike] --> syn[NPHebbSynapse]
-    post[Post spike] --> syn
-    syn --> out[Weighted spike]
-```
-
-Description: this flowchart shows the data/signal flow (inputs → component → outputs).

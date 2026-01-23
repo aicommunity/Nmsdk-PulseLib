@@ -6,56 +6,215 @@
 
 #### PulseLibrary
 
-Главный класс библиотеки, наследник `ULibrary`.
+Главный класс библиотеки, наследник `ULibrary`. Автоматически регистрирует все компоненты библиотеки при инициализации.
 
-#### NPulseNeuron
+### Нейроны
 
-Базовый импульсный нейрон.
+#### NPulseNeuronIzhikevich
+
+Нейрон по модели Ижикевича — одна из наиболее часто используемых моделей для имитации различных типов нейронов.
+
+**Основные свойства (часто настраиваются в конфигурациях):**
+- `A` (double) - параметр восстановления мембраны (обычно 0.02)
+- `B` (double) - чувствительность переменной восстановления (обычно 0.2)
+- `C` (double) - значение потенциала после спайка (обычно -65.0)
+- `D` (double) - приращение переменной восстановления после спайка (обычно 8.0)
+- `V` (double) - мембранный потенциал
+- `U` (double) - переменная восстановления
+
+**Использование:** `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`, `Bin/Configs/User/CognitiveNavigation/`
+
+**См. также:** [NPulseNeuronIzhikevich](Components/NPulseNeuronIzhikevich.md)
+
+#### NIntegrateAndFireNeuron
+
+Классическая модель импульсного нейрона "интегрировать и стрелять".
 
 **Основные свойства:**
 - `MembranePotential` - мембранный потенциал
 - `Threshold` - порог срабатывания
-- `OutputSpike` - выходной спайк
+- `ResetPotential` - потенциал после сброса
+- `MembraneTimeConstant` - временная константа мембраны
 
-#### NPulseNeuronIzhikevich
+**См. также:** [NIntegrateAndFireNeuron](Components/NIntegrateAndFireNeuron.md)
 
-Нейрон по модели Ижикевича.
+#### NSPNeuronGen
 
-**Основные свойства:**
-- `A`, `B`, `C`, `D` - параметры модели
-- `V` - мембранный потенциал
-- `U` - переменная восстановления
+Генерируемый нейрон с настраиваемой структурой (сома, дендриты, LT-зоны).
 
-#### NPulseSynapse
+**Основные свойства (из конфигураций):**
+- `MembraneClassName` - класс мембраны (например, "NPMembraneBio")
+- `LTZoneClassName` - класс LT-зоны (например, "NPulseLTZoneThreshold")
+- `ExcGeneratorClassName` - класс генератора возбуждающих токов
+- `InhGeneratorClassName` - класс генератора тормозных токов
+- `NumSomaMembraneParts` - количество частей сомы
+- `NumDendriteMembranePartsVec` - вектор количества частей дендритов
 
-Базовый синапс.
+**Использование:** `Bin/Configs/User/CognitiveNavigation/` (используется как `NSPNeuronGen`)
+
+**См. также:** [NSPNeuron](Components/NSPNeuron.md)
+
+### Синапсы
+
+#### NSynapseStdp
+
+Синапс с обучением STDP (Spike-Timing Dependent Plasticity) — наиболее распространенный механизм пластичности.
 
 **Основные свойства:**
 - `PreNeuron` - пресинаптический нейрон
 - `PostNeuron` - постсинаптический нейрон
+- `Weight` - вес синапса (начальное значение)
+- `LearningRate` - скорость обучения (обычно 0.01-0.1)
+- `TauPlus` - временная константа для LTP (Long-Term Potentiation)
+- `TauMinus` - временная константа для LTD (Long-Term Depression)
+
+**Использование:** `Bin/Configs/!OldConfigs/STDP-Simple-01/`, эксперименты по обучению
+
+**См. также:** [NSynapseStdp](Components/NSynapseStdp.md), [NSynapseTrainerStdp](Components/NSynapseTrainerStdp.md)
+
+#### NPSynapseBio
+
+Биоинспирированный синапс с моделированием секреции и диссоциации нейромедиатора.
+
+**Основные свойства (из конфигураций):**
 - `Weight` - вес синапса
+- `PulseAmplitude` - амплитуда импульса (обычно 1.0)
+- `SecretionTC` - временная константа секреции (обычно 0.001)
+- `DissociationTC` - временная константа диссоциации (обычно 0.005)
+- `Resistance` - сопротивление синапса (обычно 86000000)
+- `Type` - тип синапса (-1 для возбуждающего, 1 для тормозного)
 
-#### NSynapseStdp
+**Использование:** `Bin/Configs/User/CognitiveNavigation/`, `Bin/Configs/!OldConfigs/NM-Neurons/`
 
-Синапс с STDP обучением.
+**См. также:** [NPSynapseBio](Components/NPSynapseBio.md)
+
+### Каналы и мембраны
+
+#### NPExcChannelBio / NPInhChannelBio
+
+Биоинспирированные каналы для возбуждающих и тормозных токов.
 
 **Основные свойства:**
-- `LearningRate` - скорость обучения
-- `TauPlus` - временная константа для LTP
-- `TauMinus` - временная константа для LTD
+- `Resistance` - сопротивление канала (обычно 10000000)
+- `RestingResistance` - сопротивление в покое
+- `FBResistance` - сопротивление обратной связи
+- `Capacity` - емкость (обычно 1e-9)
+- `Type` - тип канала (-1 для возбуждающего, 1 для тормозного)
+
+**Использование:** `Bin/Configs/User/CognitiveNavigation/`, `Bin/Configs/!OldConfigs/NM-Neurons/`
+
+**См. также:** [NPExcChannelBio](Components/NPExcChannelBio.md), [NPInhChannelBio](Components/NPInhChannelBio.md)
+
+#### NPMembraneBio
+
+Биоинспирированная мембрана с возбуждающими и тормозными каналами.
+
+**Основные свойства:**
+- `ExcChannelClassName` - класс возбуждающего канала
+- `InhChannelClassName` - класс тормозного канала
+- `SynapseClassName` - класс синапса
+- `NumExcitatorySynapses` - количество возбуждающих синапсов
+- `NumInhibitorySynapses` - количество тормозных синапсов
+- `FeedbackGain` - коэффициент обратной связи
+
+**Использование:** `Bin/Configs/User/CognitiveNavigation/`
+
+**См. также:** [NPMembraneBio](Components/NPMembraneBio.md)
+
+### LT-зоны (Long-Term пластичность)
+
+#### NPulseLTZoneThreshold
+
+LT-зона с пороговым механизмом для долгосрочной потенциации.
+
+**Основные свойства:**
+- `Threshold` - порог активации (обычно 1e-5)
+- `TimeConstant` - временная константа (обычно 0.005)
+- `PulseAmplitude` - амплитуда импульса
+- `PulseLength` - длительность импульса
+
+**Использование:** `Bin/Configs/User/CognitiveNavigation/`, `Bin/Configs/!OldConfigs/NM-Neurons/`
+
+**См. также:** [NPulseLTZoneThreshold](Components/NPulseLTZoneThreshold.md), [NPLTZone](Components/NPLTZone.md)
+
+### Генераторы
+
+#### NPulseGeneratorTransit
+
+Генератор импульсов с транзитным режимом (часто используется как входной сигнал).
+
+**Основные свойства:**
+- `Frequency` - частота генерации импульсов
+- `Amplitude` - амплитуда импульса
+- `PulseLength` - длительность импульса
+
+**Использование:** `Bin/Configs/User/CognitiveNavigation/` (используется для входных сигналов Forward, Back, Left, Right и т.д.)
+
+**См. также:** [NPulseGeneratorTransit](Components/NPulseGeneratorTransit.md), [NPulseGenerator](Components/NPulseGenerator.md)
+
+#### NPGenerator
+
+Базовый генератор импульсов.
+
+**Основные свойства:**
+- `Frequency` - частота генерации
+- `Amplitude` - амплитуда
+- `PulseLength` - длительность импульса
+- `AvgInterval` - средний интервал между импульсами
+
+**Использование:** `Bin/Configs/!OldConfigs/NM-Neurons/`
+
+**См. также:** [NPGenerator](Components/NPGenerator.md)
+
+### Классификаторы
 
 #### NSpikeClassifier
 
-Классификатор на основе спайков.
+Классификатор на основе паттернов спайков.
+
+**Основные свойства:**
+- `InputNeurons` - вектор входных нейронов
+- `OutputClasses` - количество классов для классификации
+- `ClassLabel` - текущая метка класса (результат классификации)
+
+**Использование:** `Bin/Configs/!OldConfigs/SpikeClassifier/`, `Bin/Configs/!OldConfigs/SpikeANPA3/`
+
+**См. также:** [NSpikeClassifier](Components/NSpikeClassifier.md)
+
+#### NClassifier
+
+Базовый классификатор на основе импульсных нейросетей.
 
 **Основные свойства:**
 - `InputNeurons` - входные нейроны
 - `OutputClasses` - количество классов
-- `ClassLabel` - метка класса
+
+**См. также:** [NClassifier](Components/NClassifier.md)
+
+### Сети и модели
+
+#### NNet
+
+Базовый контейнер для организации нейронов и синапсов в сеть.
+
+**Использование:** Корневой компонент в некоторых конфигурационных проектах.
+
+**См. также:** [NNet](Components/NNet.md)
+
+#### NModel
+
+Расширенная модель импульсной нейронной сети с дополнительными возможностями.
+
+**Использование:** Корневой компонент в большинстве конфигурационных проектов (`Model_*.xml`).
+
+**См. также:** [NModel](Components/NModel.md)
 
 ### См. также
 
 - Исходный код: `Libraries/Nmsdk-PulseLib/Core/`
+- [Component-Catalog.md](Component-Catalog.md) - полный каталог компонентов
+- [Config-Overview.md](Config-Overview.md) - описание конфигурационных проектов
+- [Scientific-Background.md](Scientific-Background.md) - научный фон и связанные публикации
 
 ---
 

@@ -1,92 +1,445 @@
-## NStatePredictor — компонент PulseLib
+# NStatePredictor — предсказатель состояний
 
-**Класс**: `NStatePredictor` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+## RU
+
+### Назначение
+
+**Класс**: `NStatePredictor` — предсказатель состояний на основе временных рядов с использованием нейронных сетей.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NStatePredictor", ...)`.  
-**Storage**: `ClassName = "NStatePredictor"` в `ClDesc`/`Configs`.
+**Storage-инстансы**: `ClassName = "NStatePredictor"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+`NStatePredictor` реализует предсказатель состояний, который использует нейронные сети для предсказания будущих состояний на основе истории входных сигналов. Компонент интегрирует `NPredictor` (предсказатель), `NNeuronLearner` (обучатель нейронов), и `NLogicalNot` (логическое НЕ) для создания системы предсказания.
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+**Использование:** Предсказание состояний, анализ временных рядов с нейронными сетями
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NStatePredictor
+    UNet <|-- NStatePredictor
+    NStatePredictor *-- NPredictor : Predictor
+    NStatePredictor *-- NNeuronLearner : NeuronLearner
+    NStatePredictor *-- NLogicalNot : LogicalNot
+    NStatePredictor *-- NPulseNeuron : Neurons
+    class NStatePredictor {
+        +StructureBuildMode : int
+        +NeuronClassName : string
+        +SynapseClassName : string
+        +PredictorClassName : string
+        +NeuronLearnerClassName : string
+        +LogicalNotClassName : string
+        +InputMode : int
+        +IsNeedToTrain : bool
+        +InputPattern : MDMatrix~double~
+        +InputMatrix : MDMatrix~double~
+        +StatesNumber : int
+        +FeaturesNumber : int
+        +MeasurementPeriod : double
+        +Input : MDMatrix~double~
+        +Output : MDMatrix~double~
+        +New() NStatePredictor*
+        +BuildStructure() bool
+        +ADefault() bool
+        +ABuild() bool
+        +ACalculate() bool
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+**Иерархия наследования:**
+- `UNet` — базовая сеть Rdk Framework
+- `NStatePredictor` — предсказатель состояний
+
+**Связи:**
+- Использует `NPredictor` для предсказания
+- Использует `NNeuronLearner` для обучения нейронов
+- Использует `NLogicalNot` для логических операций
+
+**Внутренняя структура:**
+- **Predictor** (`NPredictor`) — предсказатель состояний
+- **NeuronLearner** (`NNeuronLearner`) — обучатель нейронов
+- **LogicalNot** (`NLogicalNot`) — логическое НЕ
+
+### UML-диаграмма последовательности
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant X as NStatePredictor
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
+    participant Storage as UStorage
+    participant Predictor as NStatePredictor
+    participant NPredictor as NPredictor
+    participant Learner as NNeuronLearner
+    participant LogicalNot as NLogicalNot
+    participant InputSource as Источник входных данных
+    
+    Storage->>Predictor: New()
+    Storage->>Predictor: Default()
+    Storage->>Predictor: SetStatesNumber(...)
+    Storage->>Predictor: SetFeaturesNumber(...)
+    Storage->>Predictor: SetIsNeedToTrain(true)
+    Storage->>Predictor: Build()
+    Predictor->>Predictor: ABuild()
+    Predictor->>Predictor: BuildStructure()
+    Predictor->>NPredictor: CreateComponent("Predictor")
+    Predictor->>Learner: CreateComponent("NeuronLearner")
+    Predictor->>LogicalNot: CreateComponent("LogicalNot")
+    Predictor->>Predictor: CreateLinks()
+    Predictor-->>Storage: Ready = true
+    
+    loop Каждый шаг симуляции
+        InputSource->>Predictor: Input (входные данные)
+        Storage->>Predictor: Calculate()
+        Predictor->>Predictor: ACalculate()
+        alt InputMode == 0 (ручной режим)
+            Predictor->>NPredictor: SetInputMatrix(InputMatrix)
+        else InputMode == 1 (внешний источник)
+            Predictor->>NPredictor: Input (из внешнего источника)
+        end
+        Predictor->>NPredictor: ACalculate()
+        NPredictor-->>Predictor: Output (предсказание)
+        alt IsNeedToTrain == true
+            Predictor->>Learner: ACalculate()
+            Note over Learner: Обучение нейронов на основе предсказания
+        end
+        Predictor->>LogicalNot: ACalculate()
+        LogicalNot-->>Predictor: Output (логическое НЕ)
+        Predictor-->>Storage: Output (результат предсказания)
+    end
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+**Жизненный цикл:**
+1. **Инициализация**: Установка параметров предсказателя состояний
+2. **Сборка структуры**: Создание предсказателя, обучателя нейронов, логического НЕ
+3. **Расчет**: Обработка входных данных, предсказание состояний, обучение (если включено)
+
+### UML-диаграмма состояний
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> x[NStatePredictor]
-    x --> out[Outputs]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> CreatingPredictor: Создание NPredictor
+    CreatingPredictor --> CreatingLearner: Создание NNeuronLearner
+    CreatingLearner --> CreatingLogicalNot: Создание NLogicalNot
+    CreatingLogicalNot --> Linking: Создание связей
+    Linking --> Built: Структура построена
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> CheckInputMode{InputMode?}
+    CheckInputMode -->|0| SetInputMatrix: Установка InputMatrix
+    CheckInputMode -->|1| ProcessExternalInput: Обработка внешнего входа
+    SetInputMatrix --> CalcPredictor: Расчет NPredictor
+    ProcessExternalInput --> CalcPredictor
+    CalcPredictor --> CheckTrain{IsNeedToTrain?}
+    CheckTrain -->|Да| TrainNeurons: Обучение NNeuronLearner
+    CheckTrain -->|Нет| CalcLogicalNot: Расчет NLogicalNot
+    TrainNeurons --> CalcLogicalNot
+    CalcLogicalNot --> Ready: Шаг завершен
+    Ready --> Resetting: Reset()
+    Resetting --> Ready: Состояния сброшены
 ```
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+**Состояния:**
+- **Uninitialized** — создан, но не инициализирован
+- **Defaulted** — параметры установлены по умолчанию
+- **Building** — выполняется сборка структуры
+- **CreatingPredictor** — создание предсказателя
+- **CreatingLearner** — создание обучателя нейронов
+- **CreatingLogicalNot** — создание логического НЕ
+- **Linking** — создание связей между компонентами
+- **Built** — структура предсказателя построена
+- **Ready** — готов к выполнению расчетов
+- **Calculating** — выполняется расчет предсказателя
+- **CheckInputMode** — проверка режима ввода
+- **SetInputMatrix** — установка входной матрицы
+- **ProcessExternalInput** — обработка внешнего входа
+- **CalcPredictor** — расчет предсказателя
+- **CheckTrain** — проверка необходимости обучения
+- **TrainNeurons** — обучение нейронов
+- **CalcLogicalNot** — расчет логического НЕ
+- **Resetting** — выполняется сброс состояний
 
-### Config snippet
-```ini
-[Component]
-ClassName = NStatePredictor
-Name = NStatePredictor1
+### UML-диаграмма активности
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> CheckInputMode{InputMode?}
+    CheckInputMode -->|0| SetInputMatrix[Установка InputMatrix в NPredictor]
+    CheckInputMode -->|1| ProcessExternalInput[Обработка внешнего входа]
+    SetInputMatrix --> CalcPredictor[Расчет NPredictor]
+    ProcessExternalInput --> CalcPredictor
+    CalcPredictor --> CollectHistory[Сбор истории входных сигналов]
+    CollectHistory --> PredictState[Предсказание следующего состояния]
+    PredictState --> CheckTrain{IsNeedToTrain?}
+    CheckTrain -->|Да| TrainNeurons[Обучение NNeuronLearner]
+    CheckTrain -->|Нет| CalcLogicalNot[Расчет NLogicalNot]
+    TrainNeurons --> CalcLogicalNot
+    CalcLogicalNot --> SetOutput[Установка Output]
+    SetOutput --> End([End])
 ```
+
+**Алгоритм расчета:**
+1. Проверка режима ввода: ручной (InputMatrix) или внешний источник
+2. Расчет предсказателя: сбор истории входных сигналов, предсказание следующего состояния
+3. Обучение нейронов (если `IsNeedToTrain = true`): обновление весов на основе предсказания
+4. Расчет логического НЕ: обработка результата предсказания
+5. Генерация выходного сигнала
+
+### UML-диаграмма компонентов
+
+```mermaid
+graph TB
+    subgraph UNet["UNet Base"]
+        BaseNet[UNet]
+    end
+    
+    subgraph NStatePredictor["NStatePredictor"]
+        Predictor[NPredictor]
+        Learner[NNeuronLearner]
+        LogicalNot[NLogicalNot]
+    end
+    
+    subgraph External["Внешние компоненты"]
+        InputSource[Источник входных данных]
+        OutputTarget[Целевой компонент]
+    end
+    
+    BaseNet -->|наследуется| NStatePredictor
+    NStatePredictor -->|создает| Predictor
+    NStatePredictor -->|создает| Learner
+    NStatePredictor -->|создает| LogicalNot
+    InputSource -->|Input| NStatePredictor
+    NStatePredictor -->|InputMatrix| Predictor
+    Predictor -->|Output| Learner
+    Predictor -->|Output| LogicalNot
+    LogicalNot -->|Output| NStatePredictor
+    NStatePredictor -->|Output| OutputTarget
+```
+
+**Зависимости:**
+- **Базовый класс**: `UNet`
+- **Внутренние компоненты**: `NPredictor` (предсказатель), `NNeuronLearner` (обучатель), `NLogicalNot` (логическое НЕ)
+- **Внешние компоненты**: источник входных данных (источник `Input`), целевой компонент (получатель `Output`)
+
+### Свойства
+
+#### Параметры (ptPubParameter)
+
+- **`StatesNumber`** (int) — количество состояний для предсказания. Значение по умолчанию: зависит от реализации
+
+- **`FeaturesNumber`** (int) — количество признаков (измерений). Значение по умолчанию: зависит от реализации
+
+**Остальные параметры аналогичны `NPredictor`.**
+
+### Методы
+
+- **`BuildStructure()`** → `bool` — строит структуру предсказателя состояний:
+  1. Создает предсказатель (`NPredictor`)
+  2. Создает обучатель нейронов (`NNeuronLearner`)
+  3. Создает логическое НЕ (`NLogicalNot`)
+  4. Настраивает связи между компонентами
+
+- **`ACalculate()`** → `bool` — выполняет расчет предсказателя состояний:
+  1. Собирает историю входных сигналов
+  2. Использует предсказатель для предсказания следующего состояния
+  3. Обновляет обучатель нейронов (если `IsNeedToTrain = true`)
+  4. Выдает предсказание как выходной сигнал
+
+### Использование в конфигурациях
+
+`NStatePredictor` используется в экспериментах с предсказанием состояний:
+
+- **Предсказание состояний**: `Bin/Configs/!OldConfigs/*/Model_*.xml` (где требуется предсказание будущих состояний)
+
+**Типичные значения параметров:**
+- **StructureBuildMode**: 1 (классическая структура)
+- **NeuronClassName**: "NPulseNeuron" (импульсный нейрон)
+- **SynapseClassName**: "NPulseSynapse" (импульсный синапс)
+- **PredictorClassName**: "NPredictor" (предсказатель)
+- **NeuronLearnerClassName**: "NNeuronLearner" (обучатель нейронов)
+- **LogicalNotClassName**: "NLogicalNot" (логическое НЕ)
+- **InputMode**: 0 (ручной режим), 1 (внешний источник)
+- **IsNeedToTrain**: true (режим обучения), false (режим проверки)
+- **StatesNumber**: количество состояний для предсказания
+- **FeaturesNumber**: количество признаков (измерений)
+
+### См. также
+
+- [`NPredictor`](NPredictor.md) — предсказатель
+- [`NNeuronLearner`](NNeuronLearner.md) — обучатель нейронов
+- [`NLogicalNot`](NLogicalNot.md) — логическое НЕ
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NStatePredictor — component PulseLib (EN)
+## EN
 
-**Class**: `NStatePredictor` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NStatePredictor", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NStatePredictor"` in configs.
+**Class**: `NStatePredictor` — state predictor based on time series using neural networks.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NStatePredictor", ...)`.  
+**Instances**: `ClassName = "NStatePredictor"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NStatePredictor` implements state predictor that uses neural networks to predict future states based on input signal history. Component integrates `NPredictor`, `NNeuronLearner`, and `NLogicalNot` to create prediction system.
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+**Usage:** State prediction, time series analysis with neural networks
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NStatePredictor
+    UNet <|-- NStatePredictor
+    NStatePredictor *-- NPredictor : Predictor
+    NStatePredictor *-- NNeuronLearner : NeuronLearner
+    NStatePredictor *-- NLogicalNot : LogicalNot
+    class NStatePredictor {
+        +StatesNumber : int
+        +FeaturesNumber : int
+        +InputMatrix : MDMatrix~double~
+        +MeasurementPeriod : double
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant X as NStatePredictor
-    In-->>X: signals
-    X-->>In: outputs
+    participant Storage
+    participant Predictor as NStatePredictor
+    participant NPredictor as NPredictor
+    participant Learner as NNeuronLearner
+    participant InputSource
+    
+    Storage->>Predictor: New() + Default()
+    Storage->>Predictor: Build()
+    Predictor->>NPredictor: CreateComponent()
+    Predictor->>Learner: CreateComponent()
+    loop Each step
+        InputSource->>Predictor: Input
+        Storage->>Predictor: Calculate()
+        Predictor->>NPredictor: ACalculate()
+        Predictor->>Learner: ACalculate()
+        Predictor-->>Storage: Output
+    end
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> x[NStatePredictor]
-    x --> out[Outputs]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> CalcPredictor: Calculate predictor
+    CalcPredictor --> CheckTrain{Need to train?}
+    CheckTrain -->|Yes| TrainNeurons: Train neurons
+    CheckTrain -->|No| Ready: Step completed
+    TrainNeurons --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> CheckInputMode{InputMode?}
+    CheckInputMode -->|0| SetInputMatrix[Set InputMatrix]
+    CheckInputMode -->|1| ProcessExternalInput[Process external input]
+    SetInputMatrix --> CalcPredictor[Calculate predictor]
+    ProcessExternalInput --> CalcPredictor
+    CalcPredictor --> CheckTrain{Need to train?}
+    CheckTrain -->|Yes| TrainNeurons[Train neurons]
+    CheckTrain -->|No| SetOutput[Set Output]
+    TrainNeurons --> SetOutput
+    SetOutput --> End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph UNet["UNet Base"]
+        BaseNet[UNet]
+    end
+    
+    subgraph NStatePredictor["NStatePredictor"]
+        StatePredictor[State Predictor]
+        Predictor[NPredictor<br/>Predictor]
+        Learner[NNeuronLearner<br/>NeuronLearner]
+        LogicalNot[NLogicalNot<br/>LogicalNot]
+        Neurons[NPulseNeuron<br/>Neurons]
+    end
+    
+    subgraph External["External Components"]
+        InputSource[Input Source]
+        InputMatrix[Input Matrix]
+        OutputTarget[Output Target]
+    end
+    
+    BaseNet -->|inherits| NStatePredictor
+    NStatePredictor -->|creates| Predictor
+    NStatePredictor -->|creates| Learner
+    NStatePredictor -->|creates| LogicalNot
+    NStatePredictor -->|creates| Neurons
+    InputSource -->|Input| NStatePredictor
+    InputMatrix -->|InputMatrix| NStatePredictor
+    Predictor -->|prediction| NStatePredictor
+    Learner -->|training| Neurons
+    LogicalNot -->|logic operations| NStatePredictor
+    NStatePredictor -->|Output| OutputTarget
+```
+
+### Properties
+
+- `StructureBuildMode` — режим пересборки структуры
+- `NeuronClassName` — имя класса нейрона
+- `SynapseClassName` — имя класса синапса
+- `PredictorClassName` — имя класса предсказателя
+- `NeuronLearnerClassName` — имя класса обучателя нейронов
+- `LogicalNotClassName` — имя класса логического НЕ
+- `InputMode` — режим ввода (0 — ручной, 1 — внешний источник)
+- `IsNeedToTrain` — необходимость обучения
+- `InputPattern` — входной паттерн
+- `InputMatrix` — входная матрица данных
+- `StatesNumber` — количество состояний
+- `FeaturesNumber` — количество признаков
+- `MeasurementPeriod` — период измерений
+- `Input` — входной сигнал
+- `Output` — выходной сигнал (предсказание состояний)
+
+### Methods
+
+- `ADefault()` — установка параметров по умолчанию
+- `ABuild()` — сборка структуры предсказателя состояний
+- `ACalculate()` — выполнение шага предсказания или обучения
+- `BuildStructure()` — построение структуры компонентов
+
+### Usage in configurations
+
+`NStatePredictor` is used for state prediction:
+
+- **State prediction**: `Bin/Configs/*/Model_*.xml` (where state prediction is required)
+- **Time series analysis**: experiments with time series state prediction
+- **Neural prediction**: prediction using neural networks
+
+**Features:**
+- Automatic structure building: creates predictor, learner, and logical components
+- Training mode: trains neurons on state patterns
+- Prediction mode: predicts future states based on history
+- Flexible configuration: supports various neuron and synapse types
+
+**Typical parameter values:**
+- **NeuronClassName**: "NPulseNeuron" (spiking neuron)
+- **PredictorClassName**: "NPredictor" (predictor)
+- **NeuronLearnerClassName**: "NNeuronLearner" (neuron learner)
+- **LogicalNotClassName**: "NLogicalNot" (logical NOT)
+
+### See Also
+
+- [`NPredictor`](NPredictor.md) — predictor
+- [`NNeuronLearner`](NNeuronLearner.md) — neuron learner
+- [`NLogicalNot`](NLogicalNot.md) — logical NOT
+- [Architecture.md](../Architecture.md) — library architecture

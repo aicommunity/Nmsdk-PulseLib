@@ -68,25 +68,124 @@ Name = NSynTCNNeuron1
 
 ```mermaid
 classDiagram
+    UNet <|-- UComponent
     UComponent <|-- NSynTCNNeuron
+    class UComponent {
+        +New() UComponent*
+        +ADefault() bool
+        +ABuild() bool
+        +AReset() bool
+        +ACalculate() bool
+    }
+    class NSynTCNNeuron {
+        +New() NSynTCNNeuron*
+        +ADefault() bool
+        +ABuild() bool
+        +AReset() bool
+        +ACalculate() bool
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant X as NSynTCNNeuron
-    In-->>X: signals
-    X-->>In: outputs
+    participant Storage
+    participant Neuron as NSynTCNNeuron
+    participant Inputs as Input Signals
+    participant Outputs as Output Signals
+    
+    Storage->>Neuron: New() + Default()
+    Storage->>Neuron: Build()
+    Neuron->>Neuron: ABuild()
+    loop Each step
+        Inputs->>Neuron: Input signals
+        Storage->>Neuron: Calculate()
+        Neuron->>Neuron: ACalculate()
+        Neuron->>Neuron: Process signals
+        Neuron->>Neuron: Update state
+        Neuron-->>Outputs: Output signals
+    end
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynTCNNeuron]
-    x --> out[Outputs]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> ProcessInputs: Process input signals
+    ProcessInputs --> UpdateState: Update internal state
+    UpdateState --> GenerateOutput: Generate output signals
+    GenerateOutput --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> ReceiveInputs[Receive input signals]
+    ReceiveInputs --> ProcessSignals[Process signals]
+    ProcessSignals --> UpdateState[Update internal state]
+    UpdateState --> CalculateOutput[Calculate output signals]
+    CalculateOutput --> SetOutput[Set Output]
+    SetOutput --> End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph UComponent["UComponent Base"]
+        BaseComponent[UComponent]
+    end
+    
+    subgraph NSynTCNNeuron["NSynTCNNeuron"]
+        NeuronCore[Neuron Core]
+    end
+    
+    subgraph External["External Components"]
+        InputSignals[Input Signals]
+        OutputTargets[Output Targets]
+    end
+    
+    BaseComponent -->|inherits| NSynTCNNeuron
+    InputSignals -->|Input| NSynTCNNeuron
+    NSynTCNNeuron -->|Output| OutputTargets
+```
+
+### Properties
+
+`NSynTCNNeuron` uses properties from base class `UComponent`:
+
+**Inherited properties:**
+- Standard component properties from `UComponent`
+
+### Methods
+
+`NSynTCNNeuron` uses all methods of base class `UComponent`:
+- `ADefault()` → `bool` — set default parameters
+- `ABuild()` → `bool` — build component structure
+- `AReset()` → `bool` — reset component state
+- `ACalculate()` → `bool` — perform calculation step
+
+### Usage in configurations
+
+`NSynTCNNeuron` is used in TCN (Thalamocortical Network) neuron experiments:
+
+- **TCN networks**: `Bin/Configs/*/Model_*.xml` (where TCN neurons are required)
+- **Thalamocortical modeling**: Experiments with thalamocortical network neurons
+
+**Typical parameter values:**
+- Standard default parameters from `UComponent`
+
+**Features:**
+- TCN neuron: Specialized neuron for thalamocortical networks
+- Signal processing: Processes input signals and generates output signals
+- Network integration: Integrates with TCN network structures

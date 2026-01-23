@@ -39,6 +39,73 @@ flowchart LR
 
 Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
 
+### UML-диаграмма состояний
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> CreatingGroups: Создание частотных групп
+    CreatingGroups --> LinkingGroups: Связывание групп
+    LinkingGroups --> Built: Структура создана
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> LoopGroups: Цикл по группам
+    LoopGroups --> CalcGroup: Расчет группы
+    CalcGroup --> AggregateGroups: Агрегация активности групп
+    AggregateGroups --> CheckMoreGroups: Есть еще группы?
+    CheckMoreGroups -->|Да| LoopGroups
+    CheckMoreGroups -->|Нет| Ready: Шаг завершен
+    Ready --> Resetting: Reset()
+    Resetting --> Ready: Состояния сброшены
+```
+
+**Состояния:**
+- **Uninitialized** — создан, но не инициализирован
+- **Defaulted** — параметры установлены по умолчанию
+- **Building** — выполняется сборка структуры
+- **CreatingGroups** — создание частотных групп
+- **LinkingGroups** — связывание групп
+- **Built** — структура слоя построена
+- **Ready** — готов к выполнению расчетов
+- **Calculating** — выполняется расчет слоя
+- **LoopGroups** — цикл по группам
+- **CalcGroup** — расчет группы
+- **AggregateGroups** — агрегация активности групп
+- **CheckMoreGroups** — проверка наличия еще групп
+- **Resetting** — выполняется сброс состояний
+
+### UML-диаграмма компонентов
+
+```mermaid
+graph TB
+    subgraph UComponent["UComponent Base"]
+        BaseComponent[UComponent]
+    end
+    
+    subgraph NNeuronFreqGroupLayer["NNeuronFreqGroupLayer"]
+        Layer[Слой частотных групп]
+        FreqGroups[Частотные группы<br/>NNeuronFreqGroup]
+    end
+    
+    subgraph External["Внешние компоненты"]
+        InputSource[Источник входных сигналов]
+        OutputTarget[Целевой компонент]
+    end
+    
+    BaseComponent -->|наследуется| NNeuronFreqGroupLayer
+    NNeuronFreqGroupLayer -->|создает| FreqGroups
+    NNeuronFreqGroupLayer -->|управляет| Layer
+    InputSource -->|сигналы| NNeuronFreqGroupLayer
+    NNeuronFreqGroupLayer -->|совокупная активность| OutputTarget
+```
+
+**Зависимости:**
+- **Базовый класс**: `UComponent`
+- **Внутренние компоненты**: частотные группы (`NNeuronFreqGroup`, создаются автоматически)
+- **Внешние компоненты**: источник входных сигналов (источник данных), целевой компонент (получатель совокупной активности)
+
 ### Config snippet
 
 ```ini
@@ -77,3 +144,104 @@ flowchart LR
 ```
 
 Description: this flowchart shows the data/signal flow (inputs → component → outputs).
+
+### UML State Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> CreatingGroups: Create frequency groups
+    CreatingGroups --> LinkingGroups: Link groups
+    LinkingGroups --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> LoopGroups: Loop through groups
+    LoopGroups --> CalcGroup: Calculate group
+    CalcGroup --> AggregateGroups: Aggregate activity
+    AggregateGroups --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
+```
+
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> CheckMode{StructureBuildMode > 0?}
+    CheckMode -->|Yes| BuildStructure[BuildStructure]
+    CheckMode -->|No| LoopGroups[Loop through groups]
+    BuildStructure --> CreateGroups[Create frequency groups]
+    CreateGroups --> LinkGroups[Link groups]
+    LinkGroups --> LoopGroups
+    LoopGroups --> CalcGroup[Calculate group]
+    CalcGroup --> AggregateActivity[Aggregate activity]
+    AggregateActivity --> CheckMore{More groups?}
+    CheckMore -->|Yes| LoopGroups
+    CheckMore -->|No| End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph UNet["UNet Base"]
+        BaseNet[UNet]
+    end
+    
+    subgraph NNeuronFreqGroupLayer["NNeuronFreqGroupLayer"]
+        Layer[Frequency group layer]
+        FreqGroups[NNeuronFreqGroup<br/>Groups grid<br/>Height x Width]
+    end
+    
+    subgraph External["External Components"]
+        InputSource[Input source]
+        OutputTarget[Output target]
+    end
+    
+    BaseNet -->|inherits| NNeuronFreqGroupLayer
+    NNeuronFreqGroupLayer -->|creates| FreqGroups
+    NNeuronFreqGroupLayer -->|manages| Layer
+    InputSource -->|signals| NNeuronFreqGroupLayer
+    NNeuronFreqGroupLayer -->|aggregated activity| OutputTarget
+```
+
+### Properties
+
+- `StructureBuildMode` — режим пересборки структуры (0 — не пересобирать, 1 — пересобрать)
+- `AffNeuronGroupClassName` — имя класса группы афферентных нейронов (по умолчанию "NNeuronFreqGroup")
+- `AffNeuronsGroupHeight` — высота слоя групп (количество строк)
+- `AffNeuronsGroupWidth` — ширина слоя групп (количество столбцов)
+- `NumAffNeuronsInGroup` — количество афферентных нейронов в группе
+
+### Methods
+
+- `SetStructureBuildMode(value)` — установка режима пересборки структуры
+- `SetAffNeuronGroupClassName(value)` — установка имени класса группы
+- `SetAffNeuronsGroupHeight(value)` — установка высоты слоя групп
+- `SetAffNeuronsGroupWidth(value)` — установка ширины слоя групп
+- `SetNumAffNeuronsInGroup(value)` — установка количества нейронов в группе
+- `ADefault()` — установка параметров по умолчанию
+- `ABuild()` — сборка структуры слоя групп
+- `ACalculate()` — выполнение шага расчета всех групп
+- `BuildStructure()` — построение сетки частотных групп
+
+### Usage in configurations
+
+`NNeuronFreqGroupLayer` is used for creating layers of frequency groups:
+
+- **Frequency group layers**: `Bin/Configs/*/Model_*.xml` (where frequency group layers are required)
+- **Multi-layer frequency analysis**: experiments with multi-layer frequency-based analysis
+- **Frequency processing**: processing signals with frequency characteristics in layers
+
+**Features:**
+- Automatic structure building: creates frequency groups in a grid (Height × Width)
+- Flexible configuration: supports various group types
+- Activity aggregation: aggregates activity from all groups in the layer
+
+**Typical parameter values:**
+- **AffNeuronGroupClassName**: "NNeuronFreqGroup" (frequency neuron group)
+- **AffNeuronsGroupHeight**: 1-5 (number of rows)
+- **AffNeuronsGroupWidth**: 1-10 (number of columns)
+- **NumAffNeuronsInGroup**: 5-20 (number of afferent neurons per group)

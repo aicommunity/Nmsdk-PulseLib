@@ -1,92 +1,73 @@
-## NSynapseTrainerStdpProbabilistic — компонент PulseLib
+# NSynapseTrainerStdpProbabilistic — вероятностный STDP
 
-**Класс**: `NSynapseTrainerStdpProbabilistic` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+## RU
+
+### Назначение
+
+**Класс**: `NSynapseTrainerStdpProbabilistic` — вероятностный STDP-тренер.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpProbabilistic", ...)`.  
-**Storage**: `ClassName = "NSynapseTrainerStdpProbabilistic"` в `ClDesc`/`Configs`.
+**Storage-инстансы**: `ClassName = "NSynapseTrainerStdpProbabilistic"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+`NSynapseTrainerStdpProbabilistic` реализует вероятностный STDP, где изменение веса зависит от текущего веса синапса. Наследуется от `NSynapseTrainerStdpWD` и использует экспоненциальную зависимость от веса для LTP: `XYDiff = APlus * exp(-WeightOutput)`.
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+**Использование:** Вероятностный STDP, зависимость от веса
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpProbabilistic
+    NSynapseTrainerStdp <|-- NSynapseTrainerStdpWD
+    NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpProbabilistic
+    class NSynapseTrainerStdpProbabilistic {
+        +New() NSynapseTrainerStdpProbabilistic*
+        +ADefault() bool
+        +ACalculate() bool
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### Свойства
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpProbabilistic
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
-```
+`NSynapseTrainerStdpProbabilistic` использует все свойства базового класса `NSynapseTrainerStdpWD` с параметрами по умолчанию:
+- `APlus = 0.01`, `AMinus = 0.01`
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### Методы
 
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpProbabilistic]
-    x --> out[Outputs]
-```
+- **`ACalculate()`** → `bool` — выполняет расчет вероятностного STDP:
+  - Если `TDiff > 0` (LTP): `XYDiff = APlus * exp(-WeightOutput)`
+  - Если `TDiff < 0` (LTD): `XYDiff = -AMinus`
+  - Обновляет вес: `WeightOutput += XYDiff`
+  - Ограничивает вес в диапазоне `[WMin, WMax]`
+  - Игнорирует изменения, если `abs(TDiff) >= 0.1`
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### См. также
 
-### Config snippet
-```ini
-[Component]
-ClassName = NSynapseTrainerStdpProbabilistic
-Name = NSynapseTrainerStdpProbabilistic1
-```
+- [`NSynapseTrainerStdpWD`](NSynapseTrainerStdpWD.md) — STDP, зависящий от веса
+- [`NSynapseTrainerStdpStable`](NSynapseTrainerStdpStable.md) — стабильный STDP
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NSynapseTrainerStdpProbabilistic — component PulseLib (EN)
+## EN
 
-**Class**: `NSynapseTrainerStdpProbabilistic` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NSynapseTrainerStdpProbabilistic", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NSynapseTrainerStdpProbabilistic"` in configs.
+**Class**: `NSynapseTrainerStdpProbabilistic` — probabilistic STDP trainer.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpProbabilistic", ...)`.  
+**Instances**: `ClassName = "NSynapseTrainerStdpProbabilistic"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NSynapseTrainerStdpProbabilistic` implements probabilistic STDP, where weight change depends on current synapse weight. Inherits from `NSynapseTrainerStdpWD` and uses exponential weight dependence for LTP.
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+**Usage:** Probabilistic STDP, weight dependence
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSynapseTrainerStdpProbabilistic
+    NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpProbabilistic
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### See Also
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSynapseTrainerStdpProbabilistic
-    In-->>X: signals
-    X-->>In: outputs
-```
-
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
-
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSynapseTrainerStdpProbabilistic]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+- [`NSynapseTrainerStdpWD`](NSynapseTrainerStdpWD.md) — weight-dependent STDP
+- [`NSynapseTrainerStdpStable`](NSynapseTrainerStdpStable.md) — stable STDP
+- [Architecture.md](../Architecture.md) — library architecture

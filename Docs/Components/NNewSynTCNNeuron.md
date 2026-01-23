@@ -1,79 +1,217 @@
-## NNewSynTCNNeuron — новая син. TCN модель
+# NNewSynTCNNeuron — новый син-TCN-нейрон
 
-**Класс**: `NNewSynTCNNeuron` — новая TCN-нейрон в син. семействе.  
+## RU
+
+### Назначение
+
+**Класс**: `NNewSynTCNNeuron` — конфигурационный вариант нового TCN-нейрона (Thalamocortical Neuron) с оптимизированными синапсами.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNewSynTCNNeuron", ...)`.  
-**Storage**: `ClassName = "NNewSynTCNNeuron"`.
+**Storage-инстансы**: `ClassName = "NNewSynTCNNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: параметры TCN.
-- **ABuild**: подключение входов/синапсов.
-- **AReset**: сброс.
-- **ACalculate**: TCN-активация.
+`NNewSynTCNNeuron` является конфигурационным вариантом базового класса `NPulseNeuron` для моделирования таламо-кортикальных нейронов с оптимизированными синапсами. Создается из `NPulseNeuron` с настройками:
+- `MembraneClassName = "NPNewSynNeuronMembrane"` — новая мембрана, оптимизированная для синапсов
+- `LTMembraneClassName = "NPLTZoneSynNeuronMembrane"` — новая LT-мембрана, оптимизированная для синапсов
+- `LTZoneClassName = "NPLTZone"` — стандартная LT-зона
+- Дендритная структура с параметрами `dendrite_length = {4,1,1,1}`
 
-### I/O
-- Вход: сигналы/токи.
-- Выход: активность/спайк.
+TCN-нейроны моделируют таламо-кортикальные связи в нейронных сетях.
+
+**Использование:** Моделирование таламо-кортикальных систем, эксперименты с TCN-нейронами
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    NNeuron <|-- NNewSynTCNNeuron
+    NPulseNeuron <|.. NNewSynTCNNeuron : configuration variant
+    NNewSynTCNNeuron *-- NPNewSynNeuronMembrane : PulseMembrane
+    NNewSynTCNNeuron *-- NPLTZoneSynNeuronMembrane : LTMembrane
+    class NNewSynTCNNeuron {
+        +MembraneClassName : string = "NPNewSynNeuronMembrane"
+        +LTMembraneClassName : string = "NPLTZoneSynNeuronMembrane"
+        +LTZoneClassName : string = "NPLTZone"
+        +NumDendriteMembranePartsVec : vector~int~ = {4,1,1,1}
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### Свойства
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant N as NNewSynTCNNeuron
-    In-->>N: signals
-    N-->>In: activity
-```
+`NNewSynTCNNeuron` использует все свойства базового класса `NPulseNeuron` с параметрами:
+- `MembraneClassName = "NPNewSynNeuronMembrane"`
+- `LTMembraneClassName = "NPLTZoneSynNeuronMembrane"`
+- `LTZoneClassName = "NPLTZone"`
+- `NumDendriteMembranePartsVec = {4,1,1,1}`
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### Методы
 
-```mermaid
-flowchart LR
-    sig[Signals] --> n[NNewSynTCNNeuron]
-    n --> act[Activity]
-```
+`NNewSynTCNNeuron` использует все методы базового класса `NPulseNeuron`.
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### См. также
 
-### Config snippet
-
-```ini
-[Component]
-ClassName = NNewSynTCNNeuron
-Name = NewSynTCN1
-```
+- [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
+- [`NNewSynSPNeuron`](NNewSynSPNeuron.md) — новый син-SP-нейрон
+- [`NPNewSynNeuronMembrane`](NPNewSynNeuronMembrane.md) — новая мембрана, оптимизированная для синапсов
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NNewSynTCNNeuron — new synaptic TCN neuron (EN)
+## EN
 
-New TCN neuron variant in synaptic family.
+### Purpose
+
+**Class**: `NNewSynTCNNeuron` — configuration variant of new TCN neuron (Thalamocortical Neuron) with optimized synapses.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNewSynTCNNeuron", ...)`.  
+**Instances**: `ClassName = "NNewSynTCNNeuron"` in `Bin/Configs/*/Model_*.xml`.
+
+`NNewSynTCNNeuron` is a configuration variant of the base class `NPulseNeuron` for modeling thalamocortical neurons with optimized synapses. Created from `NPulseNeuron` with settings:
+- `MembraneClassName = "NPNewSynNeuronMembrane"` — new membrane optimized for synapses
+- `LTMembraneClassName = "NPLTZoneSynNeuronMembrane"` — new LT-membrane optimized for synapses
+- `LTZoneClassName = "NPLTZone"` — standard LT-zone
+- Dendritic structure with parameters `dendrite_length = {4,1,1,1}`
+
+TCN neurons model thalamocortical connections in neural networks.
+
+**Usage:** Modeling thalamocortical systems, experiments with TCN neurons
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    NNeuron <|-- NNewSynTCNNeuron
+    NPulseNeuron <|.. NNewSynTCNNeuron : configuration variant
+    NNewSynTCNNeuron *-- NPNewSynNeuronMembrane : PulseMembrane
+    NNewSynTCNNeuron *-- NPLTZoneSynNeuronMembrane : LTMembrane
+    NNewSynTCNNeuron *-- NPLTZone : LTZone
+    class NNewSynTCNNeuron {
+        +MembraneClassName : string = "NPNewSynNeuronMembrane"
+        +LTMembraneClassName : string = "NPLTZoneSynNeuronMembrane"
+        +LTZoneClassName : string = "NPLTZone"
+        +NumDendriteMembranePartsVec : vector~int~ = {4,1,1,1}
+    }
 ```
 
-Description: this class diagram shows the component position in the type hierarchy and key relations.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant N as NNewSynTCNNeuron
-    In-->>N: signals
-    N-->>In: activity
+    participant Storage
+    participant Neuron as NNewSynTCNNeuron
+    participant Membrane as NPNewSynNeuronMembrane
+    participant LTMembrane as NPLTZoneSynNeuronMembrane
+    participant LTZone as NPLTZone
+    
+    Storage->>Neuron: New() + Default()
+    Storage->>Neuron: Build()
+    Neuron->>Membrane: CreateComponent()<br/>dendrite_length = {4,1,1,1}
+    Neuron->>LTMembrane: CreateComponent()
+    Neuron->>LTZone: CreateComponent()
+    loop Each step
+        Storage->>Neuron: Calculate()
+        Neuron->>Membrane: ACalculate()<br/>dendritic structure
+        Neuron->>LTMembrane: ACalculate()
+        Neuron->>LTZone: ACalculate()
+        Neuron-->>Storage: Output
+    end
 ```
 
-Description: this sequence diagram shows a typical runtime interaction and call order.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> n[NNewSynTCNNeuron]
-    n --> act[Activity]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> CreateMembrane: Create NPNewSynNeuronMembrane<br/>dendrite_length = {4,1,1,1}
+    CreateMembrane --> CreateLTMembrane: Create NPLTZoneSynNeuronMembrane
+    CreateLTMembrane --> CreateLTZone: Create NPLTZone
+    CreateLTZone --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> MembraneCalc: Calculate membrane<br/>dendritic structure
+    MembraneCalc --> LTMembraneCalc: Calculate LT-membrane
+    LTMembraneCalc --> LTZoneCalc: Calculate LT-zone
+    LTZoneCalc --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Description: this flowchart shows the data/signal flow (inputs → component → outputs).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> CalcMembrane[Calculate NPNewSynNeuronMembrane<br/>dendritic structure]
+    CalcMembrane --> CalcDendrites[Calculate dendrites<br/>length = {4,1,1,1}]
+    CalcDendrites --> CalcSynapses[Calculate optimized synapses]
+    CalcSynapses --> CalcLTMembrane[Calculate NPLTZoneSynNeuronMembrane]
+    CalcLTMembrane --> CalcLTZone[Calculate NPLTZone]
+    CalcLTZone --> CheckThreshold{Threshold reached?}
+    CheckThreshold -->|Yes| GenerateSpike[Generate spike]
+    CheckThreshold -->|No| UpdateOutput[Update Output]
+    GenerateSpike --> UpdateOutput
+    UpdateOutput --> End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph NPulseNeuron["NPulseNeuron Base"]
+        BaseNeuron[NPulseNeuron]
+    end
+    
+    subgraph NNewSynTCNNeuron["NNewSynTCNNeuron Configuration"]
+        Membrane[NPNewSynNeuronMembrane<br/>dendrite_length = {4,1,1,1}]
+        LTMembrane[NPLTZoneSynNeuronMembrane]
+        LTZone[NPLTZone]
+    end
+    
+    subgraph External["External Components"]
+        Synapses[Synapses<br/>optimized]
+        PreNeurons[Presynaptic neurons<br/>thalamic/cortical]
+    end
+    
+    BaseNeuron -->|configured as| NNewSynTCNNeuron
+    NNewSynTCNNeuron -->|creates| Membrane
+    NNewSynTCNNeuron -->|creates| LTMembrane
+    NNewSynTCNNeuron -->|creates| LTZone
+    PreNeurons -->|Input| Synapses
+    Synapses -->|current| Membrane
+    Membrane -->|potential| LTMembrane
+    LTMembrane -->|potential| LTZone
+    LTZone -->|Output| NNewSynTCNNeuron
+```
+
+### Properties
+
+`NNewSynTCNNeuron` uses all properties of base class `NPulseNeuron` with parameters:
+- `MembraneClassName = "NPNewSynNeuronMembrane"` — new membrane optimized for synapses
+- `LTMembraneClassName = "NPLTZoneSynNeuronMembrane"` — new LT-membrane optimized for synapses
+- `LTZoneClassName = "NPLTZone"` — standard LT-zone
+- `NumDendriteMembranePartsVec = {4,1,1,1}` — dendritic structure with specified lengths
+
+### Methods
+
+`NNewSynTCNNeuron` uses all methods of base class `NPulseNeuron`.
+
+### Usage in configurations
+
+`NNewSynTCNNeuron` is used in thalamocortical system experiments:
+
+- **Thalamocortical systems**: `Bin/Configs/!OldConfigs/*/Model_*.xml` (where TCN neurons are required)
+
+**Typical parameter values:**
+- **MembraneClassName**: "NPNewSynNeuronMembrane" (new membrane optimized for synapses)
+- **LTMembraneClassName**: "NPLTZoneSynNeuronMembrane" (new LT-membrane optimized for synapses)
+- **LTZoneClassName**: "NPLTZone" (standard LT-zone)
+- **NumDendriteMembranePartsVec**: {4,1,1,1} (dendritic structure)
+
+**Features:**
+- Thalamocortical modeling: specifically designed for thalamocortical connections
+- Dendritic structure: includes dendritic compartments with specified lengths
+- Synapse optimization: membranes optimized for efficient synapse processing
+- New architecture: uses improved membranes for more accurate modeling
+
+### See Also
+
+- [`NPulseNeuron`](NPulseNeuron.md) — spiking neuron
+- [`NNewSynSPNeuron`](NNewSynSPNeuron.md) — new synaptic SP-neuron
+- [`NPNewSynNeuronMembrane`](NPNewSynNeuronMembrane.md) — new membrane optimized for synapses
+- [Architecture.md](../Architecture.md) — library architecture

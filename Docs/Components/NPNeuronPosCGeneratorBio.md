@@ -1,78 +1,64 @@
-## NPNeuronPosCGeneratorBio — био генератор положительных токов
+# NPNeuronPosCGeneratorBio — генератор положительных токов для биоинспирированных моделей
 
-**Класс**: `NPNeuronPosCGeneratorBio` — Био-вариант генератора положительных токов.
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPNeuronPosCGeneratorBio", ...)`.
-**Storage**: `ClassName = "NPNeuronPosCGeneratorBio"`.
+## RU
 
-### Lifecycle
-- **ADefault**: параметры по умолчанию.
-- **ABuild**: подключение входов/синапсов/каналов.
-- **AReset**: сброс состояния/потенциалов.
-- **ACalculate**: шаг расчёта (интеграция/передача/модуляция).
+### Назначение
 
-### I/O
-- Вход: сигналы/токи/спайки (по назначению класса).
-- Выход: потенциал/спайк/модулированный сигнал.
+**Класс**: `NPNeuronPosCGeneratorBio` — конфигурационный вариант генератора постоянного тока с положительной амплитудой для биоинспирированных импульсных нейронов.  
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPNeuronPosCGeneratorBio", ...)`.  
+**Storage-инстансы**: `ClassName = "NPNeuronPosCGeneratorBio"` в `Bin/Configs/*/Model_*.xml`.
+
+`NPNeuronPosCGeneratorBio` является конфигурационным вариантом класса `NConstGenerator` с параметром `Amplitude = 0.93`. При создании компонента с `ClassName = "NPNeuronPosCGeneratorBio"` создается экземпляр генератора постоянного тока с положительной амплитудой, оптимизированной для биоинспирированных моделей.
+
+**Использование:** Генератор положительных токов для биоинспирированных импульсных нейронов
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NPNeuronPosCGeneratorBio
+    UNet <|-- NSource
+    NSource <|-- NConstGenerator
+    NConstGenerator <|.. NPNeuronPosCGeneratorBio : configuration variant
+    class NPNeuronPosCGeneratorBio {
+        +Amplitude : double = 0.93
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+**Параметры конфигурации:**
+- `Amplitude = 0.93` — положительная амплитуда для биоинспирированных моделей
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NPNeuronPosCGeneratorBio
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
-```
+### См. также
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
-
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NPNeuronPosCGeneratorBio]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
-
-### Config snippet
-```ini
-[Component]
-ClassName = NPNeuronPosCGeneratorBio
-Name = NPNeuronPosCGeneratorBio1
-```
+- [`NConstGenerator`](NConstGenerator.md) — генератор постоянного тока (базовый класс)
+- [`NPNeuronPosCGenerator`](NPNeuronPosCGenerator.md) — генератор для импульсных нейронов
+- [`NPNeuronNegCGeneratorBio`](NPNeuronNegCGeneratorBio.md) — генератор отрицательных токов для биоинспирированных моделей
 
 ---
 
-## NPNeuronPosCGeneratorBio — EN
-Class `NPNeuronPosCGeneratorBio` — Био-вариант генератора положительных токов.
+## EN
+
+### Purpose
+
+**Class**: `NPNeuronPosCGeneratorBio` — configuration variant of constant current generator with positive amplitude for bio-inspired spiking neurons.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPNeuronPosCGeneratorBio", ...)`.  
+**Instances**: `ClassName = "NPNeuronPosCGeneratorBio"` in `Bin/Configs/*/Model_*.xml`.
+
+`NPNeuronPosCGeneratorBio` is a configuration variant of `NConstGenerator` class with parameter `Amplitude = 0.93`. When creating a component with `ClassName = "NPNeuronPosCGeneratorBio"`, an instance of constant current generator with positive amplitude optimized for bio-inspired models is created.
+
+**Usage:** Positive current generator for bio-inspired spiking neurons
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NPNeuronPosCGeneratorBio
+    NConstGenerator <|.. NPNeuronPosCGeneratorBio : configuration variant
+    class NPNeuronPosCGeneratorBio {
+        +Amplitude : double = 0.93
+    }
 ```
 
-Description: this class diagram shows the component position in the type hierarchy and key relations.
+### See Also
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NPNeuronPosCGeneratorBio
-    In-->>X: signals
-    X-->>In: outputs
-```
-
-Description: this sequence diagram shows a typical runtime interaction and call order.
-
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NPNeuronPosCGeneratorBio]
-    x --> out[Outputs]
-```
-
-Description: this flowchart shows the data/signal flow (inputs → component → outputs).
+- [`NConstGenerator`](NConstGenerator.md) — constant current generator (base class)
+- [`NPNeuronPosCGenerator`](NPNeuronPosCGenerator.md) — generator for spiking neurons
+- [`NPNeuronNegCGeneratorBio`](NPNeuronNegCGeneratorBio.md) — negative current generator for bio-inspired models

@@ -1,92 +1,233 @@
-## NSPLifeHebbNeuron — компонент PulseLib
+# NSPLifeHebbNeuron — мелкий живой импульсный нейрон с синапсами Хебба
 
-**Класс**: `NSPLifeHebbNeuron` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+## RU
+
+### Назначение
+
+**Класс**: `NSPLifeHebbNeuron` — конфигурационный вариант мелкого живого импульсного нейрона с синапсами Хебба и поддержкой жизнеобеспечения.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeHebbNeuron", ...)`.  
-**Storage**: `ClassName = "NSPLifeHebbNeuron"` в `ClDesc`/`Configs`.
+**Storage-инстансы**: `ClassName = "NSPLifeHebbNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+`NSPLifeHebbNeuron` является конфигурационным вариантом базового класса `NPulseLifeNeuron` с мембраной, поддерживающей синапсы Хебба. Создается из `NPulseLifeNeuron` с настройками:
+- `LTMembraneClassName = ""` — без LT-мембраны
+- `MembraneClassName = "NPNeuronHebbMembrane"` — мембрана с поддержкой синапсов Хебба
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+Комбинирует возможности живых нейронов (жизнеобеспечение) и синапсов Хебба (обучение).
+
+**Использование:** Моделирование живых нейронов с обучением Хебба, эксперименты с пластичностью и жизнеобеспечением
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSPLifeHebbNeuron
+    NPulseNeuron <|-- NPulseLifeNeuron
+    NPulseLifeNeuron <|.. NSPLifeHebbNeuron : configuration variant
+    NSPLifeHebbNeuron *-- NPNeuronHebbMembrane : PulseMembrane
+    NSPLifeHebbNeuron *-- NNeuronLife : NeuronLife
+    NSPLifeHebbNeuron *-- NPulseHebbSynapse : Synapses
+    class NPulseLifeNeuron {
+        +SummaryPosGd : double
+        +SummaryPosGs : double
+        +SummaryPosG : double
+        +GetNeuronLife() NNeuronLife*
+    }
+    class NSPLifeHebbNeuron {
+        +MembraneClassName : string = "NPNeuronHebbMembrane"
+        +LTMembraneClassName : string = ""
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+**Иерархия наследования:**
+- `NPulseNeuron` — импульсный нейрон
+- `NPulseLifeNeuron` — живой импульсный нейрон
+- `NSPLifeHebbNeuron` — конфигурационный вариант с синапсами Хебба
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NSPLifeHebbNeuron
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
-```
+### Свойства
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+`NSPLifeHebbNeuron` использует все свойства базового класса `NPulseLifeNeuron` с поддержкой синапсов Хебба.
 
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NSPLifeHebbNeuron]
-    x --> out[Outputs]
-```
+### Методы
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+`NSPLifeHebbNeuron` использует все методы базового класса `NPulseLifeNeuron`.
 
-### Config snippet
-```ini
-[Component]
-ClassName = NSPLifeHebbNeuron
-Name = NSPLifeHebbNeuron1
-```
+### См. также
+
+- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон
+- [`NSPLifeNeuron`](NSPLifeNeuron.md) — мелкий живой нейрон
+- [`NSPHebbNeuron`](NSPHebbNeuron.md) — мелкий нейрон с синапсами Хебба
+- [`NPulseHebbSynapse`](NPulseHebbSynapse.md) — синапс Хебба
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NSPLifeHebbNeuron — component PulseLib (EN)
+## EN
 
-**Class**: `NSPLifeHebbNeuron` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NSPLifeHebbNeuron", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NSPLifeHebbNeuron"` in configs.
+**Class**: `NSPLifeHebbNeuron` — configuration variant of small living spiking neuron with Hebbian synapses and life support.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeHebbNeuron", ...)`.  
+**Instances**: `ClassName = "NSPLifeHebbNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NSPLifeHebbNeuron` is a configuration variant of the base class `NPulseLifeNeuron` with membrane supporting Hebbian synapses. Created from `NPulseLifeNeuron` with settings:
+- `LTMembraneClassName = ""` — without LT-membrane
+- `MembraneClassName = "NPNeuronHebbMembrane"` — membrane with Hebbian synapse support
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+Combines capabilities of living neurons (life support) and Hebbian synapses (learning).
+
+**Usage:** Modeling living neurons with Hebbian learning, experiments with plasticity and life support
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NSPLifeHebbNeuron
+    NPulseLifeNeuron <|.. NSPLifeHebbNeuron : configuration variant
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant X as NSPLifeHebbNeuron
-    In-->>X: signals
-    X-->>In: outputs
+    participant Storage
+    participant Neuron as NSPLifeHebbNeuron
+    participant Membrane as NPNeuronHebbMembrane
+    participant NeuronLife as NNeuronLife
+    participant Synapse as NPulseHebbSynapse
+    
+    Storage->>Neuron: New() (from NPulseLifeNeuron)
+    Storage->>Neuron: SetMembraneClassName("NPNeuronHebbMembrane")
+    Storage->>Neuron: Build()
+    Neuron->>Membrane: CreateComponent()
+    Neuron->>NeuronLife: AddMissingComponent()
+    Membrane->>Synapse: CreateComponent()
+    loop Each step
+        Storage->>Neuron: Calculate()
+        Neuron->>Membrane: ACalculate()
+        Membrane->>Synapse: ACalculate()
+        Synapse->>Synapse: Hebbian learning
+        Neuron->>NeuronLife: ACalculate()
+        NeuronLife-->>Neuron: Life metrics
+    end
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> x[NSPLifeHebbNeuron]
-    x --> out[Outputs]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Configuring: Set Hebb + Life params
+    Configuring --> Building: Build()
+    Building --> CreatingMembrane: Create NPNeuronHebbMembrane
+    CreatingMembrane --> CreatingLife: Create NNeuronLife
+    CreatingLife --> CreatingSynapses: Create NPulseHebbSynapse
+    CreatingSynapses --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> MembraneCalc: Calculate membrane
+    MembraneCalc --> SynapseCalc: Calculate synapses
+    SynapseCalc --> HebbUpdate: Update weights (Hebbian)
+    HebbUpdate --> LifeCalc: Calculate life support
+    LifeCalc --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> CallBase[Call NPulseLifeNeuron::ACalculate]
+    CallBase --> CalcMembrane[Calculate NPNeuronHebbMembrane]
+    CalcMembrane --> CalcSynapses[Calculate NPulseHebbSynapse]
+    CalcSynapses --> CalcHebb[Calculate Hebbian learning]
+    CalcHebb --> UpdateWeights[Update synapse weights]
+    UpdateWeights --> CalcLife[Calculate NNeuronLife]
+    CalcLife --> UpdateSummary[Update summary weights]
+    UpdateSummary --> End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph NPulseLifeNeuron["NPulseLifeNeuron Base"]
+        BaseNeuron[NPulseLifeNeuron]
+    end
+    
+    subgraph NSPLifeHebbNeuron["NSPLifeHebbNeuron Configuration"]
+        Membrane[NPNeuronHebbMembrane]
+        NeuronLife[NNeuronLife]
+        HebbSynapses[NPulseHebbSynapse[]]
+    end
+    
+    subgraph External["External Components"]
+        PreNeurons[Presynaptic neurons]
+        EnergySource[Energy Source]
+        MotivationalSignals[Motivational signals]
+    end
+    
+    BaseNeuron -->|configured as| NSPLifeHebbNeuron
+    NSPLifeHebbNeuron -->|creates| Membrane
+    NSPLifeHebbNeuron -->|creates| NeuronLife
+    NSPLifeHebbNeuron -->|creates| HebbSynapses
+    PreNeurons -->|Input| HebbSynapses
+    MotivationalSignals -->|Mout| HebbSynapses
+    EnergySource -->|energy| NeuronLife
+    HebbSynapses -->|current| Membrane
+    Membrane -->|Output| NSPLifeHebbNeuron
+    NeuronLife -->|metrics| NSPLifeHebbNeuron
+```
+
+### Properties
+
+`NSPLifeHebbNeuron` uses all properties of base class `NPulseLifeNeuron` with parameters:
+- `MembraneClassName = "NPNeuronHebbMembrane"` — membrane with Hebbian synapse support
+- `LTMembraneClassName = ""` — without LT-membrane
+
+**Inherited properties from NPulseLifeNeuron:**
+- `SummaryPosGd`, `SummaryPosGs`, `SummaryPosG` (double) — summary positive weights
+- `SummaryNegGd`, `SummaryNegGs`, `SummaryNegG` (double) — summary negative weights
+- `OutputSummaryPosGd`, `OutputSummaryPosGs`, `OutputSummaryPosG` (MDMatrix<double>) — output signals of positive weights
+- `OutputSummaryNegGd`, `OutputSummaryNegGs`, `OutputSummaryNegG` (MDMatrix<double>) — output signals of negative weights
+- All normalized outputs (`*Norm`)
+
+**Life support parameters (in NeuronLife):**
+- `Energy` (double) — current neuron energy
+- `Threshold` (double) — life threshold
+- `CriticalEnergy` (double) — critical energy level
+- `WearOut` (double) — neuron wear out
+- `Feel` (double) — neuron feel
+
+**Hebb synapse parameters (in NPulseHebbSynapse):**
+- `Min`, `Mout`, `Md` (double) — forgetting constants
+- `Kin`, `Kout` (double) — activity coefficients
+
+### Methods
+
+`NSPLifeHebbNeuron` uses all methods of base class `NPulseLifeNeuron`:
+- `GetNeuronLife()` → `NNeuronLife*` — get life support model
+
+### Usage in configurations
+
+`NSPLifeHebbNeuron` is used in living neuron experiments with Hebbian learning:
+
+- **Living neurons with Hebbian learning**: `Bin/Configs/!OldConfigs/*/Model_*.xml` (where living neurons with Hebbian synapses are required)
+- **Plasticity and life support**: experiments combining Hebbian learning with life support
+
+**Typical parameter values:**
+- **MembraneClassName**: "NPNeuronHebbMembrane" (membrane with Hebbian support)
+- **LTMembraneClassName**: "" (without LT-membrane)
+
+**Features:**
+- Combines life support and Hebbian learning
+- Life metrics: tracks energy, wear out, and other life parameters
+- Hebbian adaptation: automatic weight updates based on activity
+- Dual adaptation: both life support and synaptic plasticity mechanisms
+
+### See Also
+
+- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — living spiking neuron
+- [`NSPLifeNeuron`](NSPLifeNeuron.md) — small living neuron
+- [`NSPHebbNeuron`](NSPHebbNeuron.md) — small neuron with Hebbian synapses
+- [`NPulseHebbSynapse`](NPulseHebbSynapse.md) — Hebbian synapse
+- [Architecture.md](../Architecture.md) — library architecture

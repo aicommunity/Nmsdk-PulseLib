@@ -1,79 +1,185 @@
-## NNewSynLPNeuron — новая син. LP модель
+# NNewSynLPNeuron — новый крупный син-нейрон
 
-**Класс**: `NNewSynLPNeuron` — новая LP-нейрон в син. семействе.  
+## RU
+
+### Назначение
+
+**Класс**: `NNewSynLPNeuron` — конфигурационный вариант нового крупного импульсного нейрона с оптимизированными синапсами.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNewSynLPNeuron", ...)`.  
-**Storage**: `ClassName = "NNewSynLPNeuron"`.
+**Storage-инстансы**: `ClassName = "NNewSynLPNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: параметры LP.
-- **ABuild**: подключение входов/синапсов.
-+- **AReset**: сброс.
-- **ACalculate**: LP-активация (новая реализация).
+`NNewSynLPNeuron` является конфигурационным вариантом базового класса `NPulseNeuron` с мембраной, оптимизированной для синапсов. Создается из `NPulseNeuron` с настройками:
+- `NumSomaMembraneParts = 3` — три части сомы
+- `MembraneClassName = "NPSynNeuronMembrane"` — мембрана, оптимизированная для синапсов
 
-### I/O
-- Вход: сигналы/токи.
-- Выход: активность/спайк.
+**Использование:** Эксперименты с оптимизированными синапсами для крупных нейронов
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    NNeuron <|-- NNewSynLPNeuron
+    NPulseNeuron <|.. NNewSynLPNeuron : configuration variant
+    NNewSynLPNeuron *-- NPSynNeuronMembrane : PulseMembrane
+    class NNewSynLPNeuron {
+        +NumSomaMembraneParts : int = 3
+        +MembraneClassName : string = "NPSynNeuronMembrane"
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### Свойства
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant N as NNewSynLPNeuron
-    In-->>N: signals
-    N-->>In: activity
-```
+`NNewSynLPNeuron` использует все свойства базового класса `NPulseNeuron` с параметрами:
+- `NumSomaMembraneParts = 3`
+- `MembraneClassName = "NPSynNeuronMembrane"`
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### Методы
 
-```mermaid
-flowchart LR
-    sig[Signals] --> n[NNewSynLPNeuron]
-    n --> act[Activity]
-```
+`NNewSynLPNeuron` использует все методы базового класса `NPulseNeuron`.
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### См. также
 
-### Config snippet
-
-```ini
-[Component]
-ClassName = NNewSynLPNeuron
-Name = NewSynLP1
-```
+- [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
+- [`NNewLPNeuron`](NNewLPNeuron.md) — новый крупный нейрон
+- [`NPSynNeuronMembrane`](NPSynNeuronMembrane.md) — мембрана, оптимизированная для синапсов
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NNewSynLPNeuron — new synaptic LP neuron (EN)
+## EN
 
-New LP neuron variant in synaptic family.
+### Purpose
+
+**Class**: `NNewSynLPNeuron` — configuration variant of new large spiking neuron with optimized synapses.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNewSynLPNeuron", ...)`.  
+**Instances**: `ClassName = "NNewSynLPNeuron"` in `Bin/Configs/*/Model_*.xml`.
+
+`NNewSynLPNeuron` is a configuration variant of the base class `NPulseNeuron` with membrane optimized for synapses. Created from `NPulseNeuron` with settings:
+- `NumSomaMembraneParts = 3` — three soma parts
+- `MembraneClassName = "NPSynNeuronMembrane"` — membrane optimized for synapses
+
+**Usage:** Experiments with optimized synapses for large neurons
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    NNeuron <|-- NNewSynLPNeuron
+    NPulseNeuron <|.. NNewSynLPNeuron : configuration variant
+    NNewSynLPNeuron *-- NPSynNeuronMembrane : PulseMembrane
+    class NNewSynLPNeuron {
+        +NumSomaMembraneParts : int = 3
+        +MembraneClassName : string = "NPSynNeuronMembrane"
+    }
 ```
 
-Description: this class diagram shows the component position in the type hierarchy and key relations.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant N as NNewSynLPNeuron
-    In-->>N: signals
-    N-->>In: activity
+    participant Storage
+    participant Neuron as NNewSynLPNeuron
+    participant Membrane as NPSynNeuronMembrane
+    participant LTZone as NPulseLTZoneCommon
+    
+    Storage->>Neuron: New() + Default()
+    Storage->>Neuron: Build()
+    Neuron->>Membrane: CreateComponent() (3 soma parts)
+    Neuron->>LTZone: CreateComponent()
+    loop Each step
+        Storage->>Neuron: Calculate()
+        Neuron->>Membrane: ACalculate() (3 parts)
+        Neuron->>LTZone: ACalculate()
+        Neuron-->>Storage: Output
+    end
 ```
 
-Description: this sequence diagram shows a typical runtime interaction and call order.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> n[NNewSynLPNeuron]
-    n --> act[Activity]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> CreateMembrane: Create NPSynNeuronMembrane (3 parts)
+    CreateMembrane --> CreateLTZone: Create LT-zone
+    CreateLTZone --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> MembraneCalc: Calculate membrane (3 parts)
+    MembraneCalc --> LTZoneCalc: Calculate LT-zone
+    LTZoneCalc --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Description: this flowchart shows the data/signal flow (inputs → component → outputs).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> CalcMembrane[Calculate NPSynNeuronMembrane<br/>3 soma parts]
+    CalcMembrane --> CalcSynapses[Calculate optimized synapses]
+    CalcSynapses --> CalcLTZone[Calculate LT-zone]
+    CalcLTZone --> CheckThreshold{Threshold reached?}
+    CheckThreshold -->|Yes| GenerateSpike[Generate spike]
+    CheckThreshold -->|No| UpdateOutput[Update Output]
+    GenerateSpike --> UpdateOutput
+    UpdateOutput --> End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph NPulseNeuron["NPulseNeuron Base"]
+        BaseNeuron[NPulseNeuron]
+    end
+    
+    subgraph NNewSynLPNeuron["NNewSynLPNeuron Configuration"]
+        Membrane[NPSynNeuronMembrane<br/>3 soma parts<br/>optimized for synapses]
+        LTZone[NPulseLTZoneCommon]
+    end
+    
+    subgraph External["External Components"]
+        Synapses[Synapses<br/>optimized]
+        PreNeurons[Presynaptic neurons]
+    end
+    
+    BaseNeuron -->|configured as| NNewSynLPNeuron
+    NNewSynLPNeuron -->|creates| Membrane
+    NNewSynLPNeuron -->|creates| LTZone
+    PreNeurons -->|Input| Synapses
+    Synapses -->|current| Membrane
+    Membrane -->|potential| LTZone
+    LTZone -->|Output| NNewSynLPNeuron
+```
+
+### Properties
+
+`NNewSynLPNeuron` uses all properties of base class `NPulseNeuron` with parameters:
+- `NumSomaMembraneParts = 3` — three soma parts
+- `MembraneClassName = "NPSynNeuronMembrane"` — membrane optimized for synapses
+
+### Methods
+
+`NNewSynLPNeuron` uses all methods of base class `NPulseNeuron`.
+
+### Usage in configurations
+
+`NNewSynLPNeuron` is used in experiments with optimized synapses for large neurons:
+
+- **Optimized synapses for large neurons**: `Bin/Configs/!OldConfigs/*/Model_*.xml` (where synapse-optimized large neurons are required)
+
+**Typical parameter values:**
+- **NumSomaMembraneParts**: 3 (three soma parts for large neurons)
+- **MembraneClassName**: "NPSynNeuronMembrane" (membrane optimized for synapses)
+
+**Features:**
+- Synapse optimization: membrane is specifically optimized for efficient synapse processing
+- Large neuron: uses three soma parts for extended structure
+- Efficient processing: optimized membrane provides better performance for synaptic inputs in large neurons
+
+### See Also
+
+- [`NPulseNeuron`](NPulseNeuron.md) — spiking neuron
+- [`NNewLPNeuron`](NNewLPNeuron.md) — new large neuron
+- [`NPSynNeuronMembrane`](NPSynNeuronMembrane.md) — membrane optimized for synapses
+- [Architecture.md](../Architecture.md) — library architecture

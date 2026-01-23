@@ -1,92 +1,220 @@
-## NPulseLTZoneCable — компонент PulseLib
+# NPulseLTZoneCable — кабельная импульсная LT-зона
 
-**Класс**: `NPulseLTZoneCable` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+## RU
+
+### Назначение
+
+**Класс**: `NPulseLTZoneCable` — конфигурационный вариант импульсной LT-зоны для кабельных моделей.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneCable", ...)`.  
-**Storage**: `ClassName = "NPulseLTZoneCable"` в `ClDesc`/`Configs`.
+**Storage-инстансы**: `ClassName = "NPulseLTZoneCable"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+`NPulseLTZoneCable` является конфигурационным вариантом класса `NPulseLTZoneThreshold` с параметрами для кабельных моделей. При создании компонента с `ClassName = "NPulseLTZoneCable"` создается экземпляр `NPulseLTZoneThreshold` с параметрами:
+- `Threshold = -0.055` (-55 мВ) — порог генерации спайка
+- `ThresholdOff = -0.07` (-70 мВ) — порог окончания спайка
+- `NumChannelsInGroup = 1` — количество каналов в группе
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+**Использование:** Кабельная LT-зона, моделирование дендритов с кабельной моделью
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NPulseLTZoneCable
+    UNet <|-- NLTZone
+    NLTZone <|-- NPulseLTZoneCommon
+    NPulseLTZoneCommon <|-- NPulseLTZoneThreshold
+    NPulseLTZoneThreshold <|.. NPulseLTZoneCable : configuration variant
+    class NPulseLTZoneThreshold {
+        +Threshold : double
+        +ThresholdOff : double
+        +NumChannelsInGroup : int
+        +CheckPulseOn() bool
+        +CheckPulseOff() bool
+    }
+    class NPulseLTZoneCable {
+        +Threshold : double = -0.055
+        +ThresholdOff : double = -0.07
+        +NumChannelsInGroup : int = 1
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+**Иерархия наследования:**
+- `UNet` — базовая сеть Rdk Framework
+- `NLTZone` — базовая LT-зона
+- `NPulseLTZoneCommon` — общая импульсная LT-зона
+- `NPulseLTZoneThreshold` — базовая импульсная LT-зона с порогом
+- `NPulseLTZoneCable` — конфигурационный вариант для кабельных моделей
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NPulseLTZoneCable
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
+**Параметры конфигурации:**
+- `Threshold = -0.055` (-55 мВ) — порог генерации спайка
+- `ThresholdOff = -0.07` (-70 мВ) — порог окончания спайка
+- `NumChannelsInGroup = 1` — количество каналов в группе
+
+### Свойства
+
+`NPulseLTZoneCable` использует все свойства базового класса `NPulseLTZoneThreshold` с параметрами:
+- `Threshold = -0.055` (-55 мВ)
+- `ThresholdOff = -0.07` (-70 мВ)
+- `NumChannelsInGroup = 1`
+
+### Методы
+
+`NPulseLTZoneCable` использует все методы базового класса `NPulseLTZoneThreshold`.
+
+### Примеры использования
+
+#### Пример 1: Создание кабельной LT-зоны в коде C++
+
+```cpp
+// Создание кабельной LT-зоны
+auto ltZone = storage->CreateComponent("NPulseLTZoneCable");
+ltZone->SetName("CableLTZone");
+
+// Инициализация (использует параметры по умолчанию)
+ltZone->Default();
+
+// Использование
+ltZone->Build();
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### См. также
 
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NPulseLTZoneCable]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
-
-### Config snippet
-```ini
-[Component]
-ClassName = NPulseLTZoneCable
-Name = NPulseLTZoneCable1
-```
+- [`NPulseLTZoneThreshold`](NPulseLTZoneThreshold.md) — базовая LT-зона с порогом (базовый класс)
+- [`NPulseChannelCable`](NPulseChannelCable.md) — кабельный импульсный канал
+- [`NPulseMembraneCable`](NPulseMembraneCable.md) — кабельная импульсная мембрана
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NPulseLTZoneCable — component PulseLib (EN)
+## EN
 
-**Class**: `NPulseLTZoneCable` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NPulseLTZoneCable", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NPulseLTZoneCable"` in configs.
+**Class**: `NPulseLTZoneCable` — configuration variant of spiking LT-zone for cable models.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneCable", ...)`.  
+**Instances**: `ClassName = "NPulseLTZoneCable"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NPulseLTZoneCable` is a configuration variant of `NPulseLTZoneThreshold` class with parameters for cable models. When creating a component with `ClassName = "NPulseLTZoneCable"`, an instance of `NPulseLTZoneThreshold` is created with parameters:
+- `Threshold = -0.055` (-55 mV) — spike generation threshold
+- `ThresholdOff = -0.07` (-70 mV) — spike termination threshold
+- `NumChannelsInGroup = 1` — number of channels in group
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+**Usage:** Cable LT-zone, dendrite modeling with cable model
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NPulseLTZoneCable
+    NPulseLTZoneThreshold <|.. NPulseLTZoneCable : configuration variant
+    class NPulseLTZoneCable {
+        +Threshold : double = -0.055
+        +ThresholdOff : double = -0.07
+        +NumChannelsInGroup : int = 1
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant X as NPulseLTZoneCable
-    In-->>X: signals
-    X-->>In: outputs
+    participant Storage
+    participant LTZone as NPulseLTZoneCable
+    participant Channel as NPulseChannelCable
+    participant Neuron
+    
+    Storage->>LTZone: New() (creates NPulseLTZoneThreshold)
+    Storage->>LTZone: Default()
+    Storage->>LTZone: Build()
+    loop Each step
+        Channel->>LTZone: Inputs (potential)
+        Storage->>LTZone: Calculate()
+        LTZone->>LTZone: CheckPulseOn()
+        LTZone->>LTZone: Check threshold
+        LTZone-->>Neuron: Output (spike or potential)
+    end
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> x[NPulseLTZoneCable]
-    x --> out[Outputs]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Built: Build()
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> GetPotential: Get input potential
+    GetPotential --> CheckPulseOn: CheckPulseOn()
+    CheckPulseOn -->|Potential >= Threshold| GenerateSpike: Generate spike
+    CheckPulseOn -->|Potential < Threshold| CheckPulseOff: CheckPulseOff()
+    GenerateSpike --> Ready: Step completed
+    CheckPulseOff --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> GetPotential[Get input potential from channel]
+    GetPotential --> CheckThreshold{Potential >= Threshold?}
+    CheckThreshold -->|Yes| GenerateSpike[Generate spike]
+    CheckThreshold -->|No| CheckPulseOff{CheckPulseOff()}
+    GenerateSpike --> SetOutput[Output = PulseAmplitude]
+    CheckPulseOff -->|PulseFlag| ClearPulse[Clear pulse flag]
+    CheckPulseOff -->|!PulseFlag| SetOutputZero[Output = 0]
+    ClearPulse --> SetOutputZero
+    SetOutput --> End([End])
+    SetOutputZero --> End
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph NPulseLTZoneThreshold["NPulseLTZoneThreshold Base"]
+        BaseLTZone[NPulseLTZoneThreshold]
+    end
+    
+    subgraph NPulseLTZoneCable["NPulseLTZoneCable Configuration"]
+        ThresholdLogic[Threshold Logic]
+        Properties[LT-zone Properties]
+    end
+    
+    subgraph External["External Components"]
+        Channel[NPulseChannelCable]
+        Membrane[NPulseMembraneCable]
+        Neuron[NPulseNeuronCable]
+    end
+    
+    BaseLTZone -->|configured as| NPulseLTZoneCable
+    NPulseLTZoneCable -->|implements| ThresholdLogic
+    NPulseLTZoneCable -->|calculates| Properties
+    Channel -->|Inputs| NPulseLTZoneCable
+    NPulseLTZoneCable -->|Output| Neuron
+    NPulseLTZoneCable -->|Output| Membrane
+```
+
+### Usage in configurations
+
+`NPulseLTZoneCable` is used in cable model experiments:
+
+- **Cable models**: `Bin/Configs/!OldConfigs/*/Model_*.xml` (where cable LT-zone is required)
+- **Dendrite modeling**: Used with `NPulseChannelCable` and `NPulseMembraneCable`
+
+**Typical parameter values:**
+- **Threshold**: -0.055 (-55 mV) — spike generation threshold
+- **ThresholdOff**: -0.07 (-70 mV) — spike termination threshold
+- **NumChannelsInGroup**: 1 — number of channels in group
+
+**Features:**
+- Configuration variant of `NPulseLTZoneThreshold` with cable-optimized parameters
+- Compatible with cable channels and membranes
+- Optimized thresholds for cable model neurons
+
+### See Also
+
+- [`NPulseLTZoneThreshold`](NPulseLTZoneThreshold.md) — base LT-zone with threshold (base class)
+- [`NPulseChannelCable`](NPulseChannelCable.md) — cable spiking channel
+- [`NPulseMembraneCable`](NPulseMembraneCable.md) — cable spiking membrane
+- [Architecture.md](../Architecture.md) — library architecture

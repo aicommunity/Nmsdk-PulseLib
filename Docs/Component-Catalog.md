@@ -3,31 +3,72 @@
 Полный список регистраций (`Core/NPulseLibrary.cpp`) очень велик. Ниже — группировка с кратким назначением и типами сигналов. Для полного набора см. исходник `NPulseLibrary.cpp`.
 
 ## Базовые сети/структуры
-- **NNet** — см. [`NNet`](Components/NNet.md)
-- **NModel** — см. [`NModel`](Components/NModel.md)
+- **NNet** — см. [`NNet`](Components/NNet.md)  
+  *Использование:* Корневой компонент в некоторых конфигурационных проектах
+- **NModel** — см. [`NModel`](Components/NModel.md)  
+  *Использование:* Корневой компонент в большинстве проектов (`Bin/Configs/*/Model_*.xml`)
 - **NLifeNet** — см. [`NLifeNet`](Components/NLifeNet.md)
-- **NNeuronsLayer** — см. [`NNeuronsLayer`](Components/NNeuronsLayer.md)
+- **NNeuronsLayer** — см. [`NNeuronsLayer`](Components/NNeuronsLayer.md)  
+  *Использование:* Создание слоев нейронов для классификации (`Bin/Configs/!OldConfigs/SpikeClassifier/`)
 - **NNeuronsLayerIaF** — см. [`NNeuronsLayerIaF`](Components/NNeuronsLayerIaF.md)
 - **NNeuronFreqGroup** — см. [`NNeuronFreqGroup`](Components/NNeuronFreqGroup.md)
 - **NNeuronFreqGroupLayer** — см. [`NNeuronFreqGroupLayer`](Components/NNeuronFreqGroupLayer.md)
 - **NNeuronLife** — см. [`NNeuronLife`](Components/NNeuronLife.md)
 
 ## Нейроны
-- Обзор: [`Neurons`](Components/Neurons.md)
-- Детальные: [`NPulseNeuronIzhikevich`](Components/NPulseNeuronIzhikevich.md), [`NIntegrateAndFireNeuron`](Components/NIntegrateAndFireNeuron.md), [`NLPNeuron`](Components/NLPNeuron.md), [`NNeuron`](Components/NNeuron.md), афферентный [`NAfferentNeuron`](Components/NAfferentNeuron.md)
+- Обзор: [`Neurons`](Components/Neurons.md)  
+  *Типичные конфигурации:* `Bin/Configs/!OldConfigs/NM-Neurons/`, `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`
+- Детальные:
+  - [`NPulseNeuronIzhikevich`](Components/NPulseNeuronIzhikevich.md) — *Часто используется в:* `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`, `Bin/Configs/!OldConfigs/STDP-Simple-01/`
+  - [`NIntegrateAndFireNeuron`](Components/NIntegrateAndFireNeuron.md) — *Используется в:* экспериментах с IaF-моделью
+  - [`NSPNeuronGen`](Components/NSPNeuronGen.md) — *Используется в когнитивной навигации:* `Bin/Configs/User/CognitiveNavigation/`
+  - [`NLPNeuron`](Components/NLPNeuron.md)
+  - [`NNeuron`](Components/NNeuron.md)
+  - [`NAfferentNeuron`](Components/NAfferentNeuron.md) — *Используется в:* `Bin/Configs/!OldConfigs/NM-AfferentNeurons/`, `Bin/Configs/!OldConfigs/OldExperiments/SimplestMotionControlSAfferent/`
 
 ## Синапсы / Тренеры / Каналы / Мембраны / LT-зоны
-- Обзор: [`Synapses & Trainers`](Components/SynapsesAndTrainers.md), [`Channels, Membranes & LT zones`](Components/ChannelsMembranesLT.md)
-- Детальные: [`NSynapseStdp`](Components/NSynapseStdp.md), [`NSynapseTrainerStdp`](Components/NSynapseTrainerStdp.md), [`NPulseChannelIaF`](Components/NPulseChannelIaF.md), [`NPulseMembraneIzhikevich`](Components/NPulseMembraneIzhikevich.md), [`NPulseLTZoneIzhikevich`](Components/NPulseLTZoneIzhikevich.md), [`NCLTZone`](Components/NCLTZone.md)
+- Обзор:
+  - [`Synapses & Trainers`](Components/SynapsesAndTrainers.md) — *Типичные конфигурации:* `Bin/Configs/!OldConfigs/STDP-Simple-01/`, `Bin/Configs/!OldConfigs/SpikeAnsTrainer/`
+  - [`Channels, Membranes & LT zones`](Components/ChannelsMembranesLT.md) — *Типичные конфигурации:* `Bin/Configs/User/CognitiveNavigation/`, `Bin/Configs/!OldConfigs/NM-Neurons/`
+- Детальные:
+  - [`NSynapseStdp`](Components/NSynapseStdp.md) — *Часто используется в:* `Bin/Configs/!OldConfigs/STDP-Simple-01/`
+  - [`NPSynapseBio`](Components/NPSynapseBio.md) — *Используется в когнитивной навигации:* `Bin/Configs/User/CognitiveNavigation/`
+  - [`NSynapseTrainerStdp`](Components/NSynapseTrainerStdp.md) — *Используется в:* экспериментах по обучению
+  - [`NPExcChannelBio`](Components/NPExcChannelBio.md), [`NPInhChannelBio`](Components/NPInhChannelBio.md) — *Используются в:* `Bin/Configs/User/CognitiveNavigation/`
+  - [`NPMembraneBio`](Components/NPMembraneBio.md) — *Используется в:* `Bin/Configs/User/CognitiveNavigation/`
+  - [`NPulseLTZoneThreshold`](Components/NPulseLTZoneThreshold.md) — *Часто используется в:* `Bin/Configs/User/CognitiveNavigation/`, `Bin/Configs/!OldConfigs/NM-Neurons/`
+  - [`NPulseChannelIaF`](Components/NPulseChannelIaF.md)
+  - [`NPulseMembraneIzhikevich`](Components/NPulseMembraneIzhikevich.md)
+  - [`NPulseLTZoneIzhikevich`](Components/NPulseLTZoneIzhikevich.md)
+  - [`NCLTZone`](Components/NCLTZone.md)
 
 ## Генераторы / Источники / Задержки и IO
-- Обзор: [`Generators, IO, Classifiers & Others`](Components/GeneratorsIOClassifiers.md)
-- Детальные: [`NPulseGenerator`](Components/NPulseGenerator.md), [`NCGenerator`](Components/NCGenerator.md), [`NPDelay`](Components/NPDelay.md), источники [`NSource`](Components/NSource.md)
+- Обзор: [`Generators, IO, Classifiers & Others`](Components/GeneratorsIOClassifiers.md)  
+  *Типичные конфигурации:* `Bin/Configs/!OldConfigs/NM-Neurons/`, `Bin/Configs/User/CognitiveNavigation/`
+- Детальные:
+  - [`NPulseGenerator`](Components/NPulseGenerator.md) — *Используется в:* `Bin/Configs/!OldConfigs/NM-Neurons/`
+  - [`NPulseGeneratorTransit`](Components/NPulseGeneratorTransit.md) — *Используется в когнитивной навигации:* `Bin/Configs/User/CognitiveNavigation/` (входные сигналы Forward, Back, Left, Right)
+  - [`NPGenerator`](Components/NPGenerator.md) — *Используется в:* `Bin/Configs/!OldConfigs/NM-Neurons/`
+  - [`NCGenerator`](Components/NCGenerator.md)
+  - [`NPDelay`](Components/NPDelay.md)
+  - [`NSource`](Components/NSource.md)
+  - [`NReceptor`](Components/NReceptor.md) — *Используется в:* `Bin/Configs/!OldConfigs/NReceptor/`
 
 ## Классификаторы / Рефлексы / Предсказатели / Эффекторы / Логика / Решатель
-- Классификаторы: [`NClassifier`](Components/NClassifier.md), [`NSpikeClassifier`](Components/NSpikeClassifier.md)
-- Рефлексы/ассоциации: [`NConditionedReflex`](Components/NConditionedReflex.md), [`NAssociationFormer`](Components/NAssociationFormer.md)
-- Эффекторы/логика/решатель: [`NMuscle`](Components/NMuscle.md), [`NCPac`](Components/NCPac.md), [`NOdeSolver`](Components/NOdeSolver.md)
+- Классификаторы:
+  - [`NClassifier`](Components/NClassifier.md)
+  - [`NSpikeClassifier`](Components/NSpikeClassifier.md) — *Используется в:* `Bin/Configs/!OldConfigs/SpikeClassifier/`, `Bin/Configs/!OldConfigs/SpikeANPA3/`
+  - [`NPCAClassifier`](Components/NPCAClassifier.md) — *Используется в:* `Bin/Configs/!OldConfigs/PCATest/`
+- Рефлексы/ассоциации:
+  - [`NConditionedReflex`](Components/NConditionedReflex.md) — *Используется в:* `Bin/Configs/!OldConfigs/SpikeConditionalReflex/`
+  - [`NAssociationFormer`](Components/NAssociationFormer.md) — *Используется в:* `Bin/Configs/!OldConfigs/SpikeAssociationPlus/`
+- Эффекторы/логика/решатель:
+  - [`NMuscle`](Components/NMuscle.md) — *Используется в:* `Bin/Configs/!OldConfigs/OldExperiments/MotionControl/`, `Bin/Configs/!OldConfigs/MC-Muscles/`
+  - [`NEyeMuscle`](Components/NEyeMuscle.md) — *Используется в:* `Bin/Configs/!OldConfigs/EyeRetina/`
+  - [`NMotoneuron`](Components/NMotoneuron.md) — *Используется в:* `Bin/Configs/!OldConfigs/OldExperiments/Motoneuron/`
+  - [`NLogicalNot`](Components/NLogicalNot.md)
+  - [`NCPac`](Components/NCPac.md)
+  - [`NOdeSolver`](Components/NOdeSolver.md)
 
 ## Полный список компонентов (UploadClass)
 Ниже — полный список имён регистрации из `Core/NPulseLibrary.cpp` со ссылками на per-component файлы в `Docs/Components/`.
@@ -210,3 +251,15 @@
 - **NSynapseTrainerStdpWD** — [`NSynapseTrainerStdpWD`](Components/NSynapseTrainerStdpWD.md)
 
 **Приоритет описания** (по встречаемости в `Bin/Configs`): базовые нейроны/синапсы/каналы, LT-зоны, STDP-тренеры, классификаторы, генераторы, `NNet/NModel`, простые рефлексы/предсказатели.
+
+### Использование компонентов в конфигурационных проектах
+
+Компоненты библиотеки активно используются в конфигурационных проектах в `Bin/Configs`. Ниже указаны основные области применения для наиболее часто используемых компонентов:
+
+- **Эксперименты с нейронами**: `Bin/Configs/!OldConfigs/NM-Neurons/`, `Bin/Configs/!OldConfigs/NM-AfferentNeurons/`
+- **STDP-обучение**: `Bin/Configs/!OldConfigs/STDP-Simple-01/`, `Bin/Configs/!OldConfigs/SpikeAnsTrainer/`
+- **Классификация**: `Bin/Configs/!OldConfigs/SpikeClassifier/`, `Bin/Configs/!OldConfigs/SpikeANPA3/`
+- **Когнитивная навигация**: `Bin/Configs/User/CognitiveNavigation/`
+- **Управление движением**: `Bin/Configs/!OldConfigs/OldExperiments/MotionControl/`, `Bin/Configs/!OldConfigs/MC-Muscles/`
+
+Подробнее о структуре конфигураций см. [Config-Overview.md](Config-Overview.md) и [Config-Templates.md](Config-Templates.md).

@@ -1,80 +1,168 @@
-## NCNeuronPosCGenerator — генератор положительных токов (Nmsdk-PulseLib)
+# NCNeuronPosCGenerator — генератор положительных токов для классических нейронов
 
-**Класс**: `NCNeuronPosCGenerator` — генерирует положительные токи/сигналы для классических нейронов.  
+## RU
+
+### Назначение
+
+**Класс**: `NCNeuronPosCGenerator` — конфигурационный вариант генератора постоянного тока с положительной амплитудой для классических нейронов.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NCNeuronPosCGenerator", ...)`.  
-**Storage**: `ClassName = "NCNeuronPosCGenerator"`.
+**Storage-инстансы**: `ClassName = "NCNeuronPosCGenerator"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: параметры амплитуды/частоты.
-- **ABuild**: подготовка выходов.
-- **AReset**: сброс.
-- **ACalculate**: формирование положительного тока на шаге.
+`NCNeuronPosCGenerator` является конфигурационным вариантом класса `NConstGenerator` с параметром `Amplitude = 2.0`. При создании компонента с `ClassName = "NCNeuronPosCGenerator"` создается экземпляр генератора постоянного тока с положительной амплитудой для классических нейронов.
 
-### I/O
-- Вход: (опционально) управление.
-- Выход: положительный ток/сигнал.
+**Использование:** Генератор положительных токов для классических нейронов
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NCNeuronPosCGenerator
+    UNet <|-- NSource
+    NSource <|-- NConstGenerator
+    NConstGenerator <|.. NCNeuronPosCGenerator : configuration variant
+    class NCNeuronPosCGenerator {
+        +Amplitude : double = 2.0
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+**Параметры конфигурации:**
+- `Amplitude = 2.0` — положительная амплитуда для классических нейронов
 
-```mermaid
-sequenceDiagram
-    participant Ctrl as Control
-    participant G as NCNeuronPosCGenerator
-    Ctrl-->>G: params
-    G->>G: ACalculate()
-    G-->>Ctrl: positive current
-```
+### См. также
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
-
-```mermaid
-flowchart LR
-    ctrl[Params] --> gen[NCNeuronPosCGenerator]
-    gen --> out[Positive current]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
-
-### Config snippet
-
-```ini
-[Component]
-ClassName = NCNeuronPosCGenerator
-Name = PosCGen1
-```
+- [`NConstGenerator`](NConstGenerator.md) — генератор постоянного тока (базовый класс)
+- [`NCNeuronNegCGenerator`](NCNeuronNegCGenerator.md) — генератор отрицательных токов для классических нейронов
+- [`NPNeuronPosCGenerator`](NPNeuronPosCGenerator.md) — генератор для импульсных нейронов
 
 ---
 
-## NCNeuronPosCGenerator — positive current generator (EN)
+## EN
 
-Produces positive currents for classic neurons.
+### Purpose
+
+**Class**: `NCNeuronPosCGenerator` — configuration variant of constant current generator with positive amplitude for classic neurons.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NCNeuronPosCGenerator", ...)`.  
+**Instances**: `ClassName = "NCNeuronPosCGenerator"` in `Bin/Configs/*/Model_*.xml`.
+
+`NCNeuronPosCGenerator` is a configuration variant of `NConstGenerator` class with parameter `Amplitude = 2.0`. When creating a component with `ClassName = "NCNeuronPosCGenerator"`, an instance of constant current generator with positive amplitude for classic neurons is created.
+
+**Usage:** Positive current generator for classic neurons
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NCNeuronPosCGenerator
+    UNet <|-- NSource
+    NSource <|-- NConstGenerator
+    NConstGenerator <|.. NCNeuronPosCGenerator : configuration variant
+    class NConstGenerator {
+        +Amplitude : double
+        +Output : MDMatrix~double~
+    }
+    class NCNeuronPosCGenerator {
+        +Amplitude : double = 2.0
+    }
 ```
 
-Description: this class diagram shows the component position in the type hierarchy and key relations.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant Ctrl as Control
-    participant G as NCNeuronPosCGenerator
-    Ctrl-->>G: params
-    G-->>Ctrl: positive current
+    participant Storage
+    participant Generator as NCNeuronPosCGenerator
+    participant Neuron as Classic Neuron
+    
+    Storage->>Generator: New() + Default()
+    Storage->>Generator: Build()
+    Generator->>Generator: Set Amplitude = 2.0
+    loop Each step
+        Storage->>Generator: Calculate()
+        Generator->>Generator: Generate constant current
+        Generator->>Generator: Output = Amplitude (2.0)
+        Generator-->>Neuron: Output (positive current)
+    end
 ```
 
-Description: this sequence diagram shows a typical runtime interaction and call order.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    ctrl[Params] --> gen[NCNeuronPosCGenerator]
-    gen --> out[Positive current]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> SetAmplitude: Set Amplitude = 2.0
+    SetAmplitude --> Building: Build()
+    Building --> Built: Structure built
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> GenerateCurrent: Generate constant current
+    GenerateCurrent --> SetOutput: Set Output = 2.0
+    SetOutput --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Description: this flowchart shows the data/signal flow (inputs → component → outputs).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> GetAmplitude[Get Amplitude = 2.0]
+    GetAmplitude --> GenerateCurrent[Generate constant current<br/>Output = Amplitude]
+    GenerateCurrent --> SetOutput[Set Output = 2.0<br/>positive current]
+    SetOutput --> End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph NConstGenerator["NConstGenerator Base"]
+        BaseGenerator[NConstGenerator]
+    end
+    
+    subgraph NCNeuronPosCGenerator["NCNeuronPosCGenerator Configuration"]
+        PositiveAmplitude[Positive Amplitude<br/>Amplitude = 2.0]
+    end
+    
+    subgraph External["External Components"]
+        ClassicNeurons[Classic Neurons]
+    end
+    
+    BaseGenerator -->|configured as| NCNeuronPosCGenerator
+    NCNeuronPosCGenerator -->|Output<br/>positive current| ClassicNeurons
+    NCNeuronPosCGenerator -->|Output| External
+```
+
+### Properties
+
+`NCNeuronPosCGenerator` uses all properties of base class `NConstGenerator` with preset value:
+
+**Configuration parameters:**
+- `Amplitude = 2.0` — positive amplitude for classic neurons
+
+**Inherited properties:**
+- `Amplitude` (double) — current amplitude (preset to 2.0)
+- `Output` (MDMatrix<double>) — output current signal
+
+### Methods
+
+`NCNeuronPosCGenerator` uses all methods of base class `NConstGenerator`.
+
+### Usage in configurations
+
+`NCNeuronPosCGenerator` is used in classic neuron experiments:
+
+- **Classic neurons**: Generates positive constant current for classic neurons
+- **Positive current**: Provides positive amplitude (2.0) for excitation
+
+**Features:**
+- Automatically configured with positive amplitude (`Amplitude = 2.0`)
+- Constant current: Generates constant positive current
+- Classic model: Optimized for classic (non-spiking) neuron models
+
+**Typical parameter values:**
+- **Amplitude**: 2.0 (positive amplitude for classic neurons)
+
+### See Also
+
+- [`NConstGenerator`](NConstGenerator.md) — constant current generator (base class)
+- [`NCNeuronNegCGenerator`](NCNeuronNegCGenerator.md) — negative current generator for classic neurons
+- [`NPNeuronPosCGenerator`](NPNeuronPosCGenerator.md) — generator for spiking neurons

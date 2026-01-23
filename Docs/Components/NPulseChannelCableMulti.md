@@ -1,92 +1,187 @@
-## NPulseChannelCableMulti — компонент PulseLib
+# NPulseChannelCableMulti — многоканальный кабельный импульсный канал
 
-**Класс**: `NPulseChannelCableMulti` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+## RU
+
+### Назначение
+
+**Класс**: `NPulseChannelCableMulti` — алиас для класса `NPulseChannelCable`.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelCableMulti", ...)`.  
-**Storage**: `ClassName = "NPulseChannelCableMulti"` в `ClDesc`/`Configs`.
+**Storage-инстансы**: `ClassName = "NPulseChannelCableMulti"` в `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: установка параметров по умолчанию.
-- **ABuild**: подключение входов/выходов, подготовка внутренних структур.
-- **AReset**: сброс внутренних состояний/счётчиков.
-- **ACalculate**: выполнение шага расчёта (интеграция/передача/обновление).
+`NPulseChannelCableMulti` является алиасом (синонимом) для класса `NPulseChannelCable`. При создании компонента с `ClassName = "NPulseChannelCableMulti"` фактически создается экземпляр класса `NPulseChannelCable` с параметрами по умолчанию.
 
-### I/O (UProperty)
-- **Входы**: сигналы/токи/спайки или данные (зависят от роли компонента).
-- **Выходы**: потенциалы/спайки/активности или преобразованные данные.
+`NPulseChannelCable` реализует кабельный импульсный канал, который использует кабельную модель для расчета распространения потенциала вдоль кабеля.
+
+**Использование:** Упрощенное именование при конфигурации, многоканальные кабельные модели
+
+### UML-диаграмма классов
 
 ```mermaid
 classDiagram
-    UComponent <|-- NPulseChannelCableMulti
+    UNet <|-- NPulseChannelCommon
+    NPulseChannelCommon <|-- NPulseChannelClassic
+    NPulseChannelClassic <|-- NPulseChannelCable
+    NPulseChannelCable <|.. NPulseChannelCableMulti : alias
+    class NPulseChannelCable {
+        +EL : double
+        +Ri : double
+        +CableMembraneResistance : double
+        +D : double
+        +Rm : double
+        +Cm : double
+        +ModelMaxLength : double
+        +dx : double
+        +dt : double
+    }
+    class NPulseChannelCableMulti {
+        +Type : string = "NPulseChannelCable"
+    }
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+**Иерархия наследования:**
+- `UNet` — базовая сеть Rdk Framework
+- `NPulseChannelCommon` — общий импульсный канал
+- `NPulseChannelClassic` — классический импульсный канал
+- `NPulseChannelCable` — кабельный импульсный канал
+- `NPulseChannelCableMulti` — алиас для `NPulseChannelCable`
 
-```mermaid
-sequenceDiagram
-    participant In as Inputs
-    participant X as NPulseChannelCableMulti
-    In-->>X: signals
-    X->>X: ACalculate()
-    X-->>In: outputs
+### Свойства
+
+`NPulseChannelCableMulti` использует все свойства базового класса `NPulseChannelCable` с параметрами по умолчанию.
+
+### Методы
+
+`NPulseChannelCableMulti` использует все методы базового класса `NPulseChannelCable`.
+
+### Примеры использования
+
+#### Пример 1: Создание канала в коде C++
+
+```cpp
+// Создание многоканального кабельного канала
+auto channel = storage->CreateComponent("NPulseChannelCableMulti");
+channel->SetName("CableChannelMulti");
+
+// Инициализация (использует параметры по умолчанию)
+channel->Default();
+
+// Использование
+channel->Build();
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### См. также
 
-```mermaid
-flowchart LR
-    sig[Signals] --> x[NPulseChannelCableMulti]
-    x --> out[Outputs]
-```
-
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
-
-### Config snippet
-```ini
-[Component]
-ClassName = NPulseChannelCableMulti
-Name = NPulseChannelCableMulti1
-```
+- [`NPulseChannelCable`](NPulseChannelCable.md) — кабельный импульсный канал (базовый класс)
+- [`NPulseMembraneCableMulti`](NPulseMembraneCableMulti.md) — многоканальная кабельная мембрана
+- [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
 
-## NPulseChannelCableMulti — component PulseLib (EN)
+## EN
 
-**Class**: `NPulseChannelCableMulti` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
+### Purpose
 
-- **Registration**: `UploadClass("NPulseChannelCableMulti", ...)` in `NPulseLibrary.cpp`.  
-- **Storage**: `ClassName = "NPulseChannelCableMulti"` in configs.
+**Class**: `NPulseChannelCableMulti` — alias for `NPulseChannelCable` class.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelCableMulti", ...)`.  
+**Instances**: `ClassName = "NPulseChannelCableMulti"` in `Bin/Configs/*/Model_*.xml`.
 
-### Lifecycle
-- **ADefault**: set default parameters.
-- **ABuild**: wire inputs/outputs and internal state.
-- **AReset**: reset internal state/counters.
-- **ACalculate**: perform one calculation step.
+`NPulseChannelCableMulti` is an alias (synonym) for the `NPulseChannelCable` class. When creating a component with `ClassName = "NPulseChannelCableMulti"`, an instance of `NPulseChannelCable` with default parameters is actually created.
 
-### I/O (UProperty)
-- **Inputs**: signals/currents/spikes or data (depends on role).
-- **Outputs**: potentials/spikes/activities or transformed data.
+**Usage:** Simplified naming in configurations, multi-channel cable models
+
+### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NPulseChannelCableMulti
+    NPulseChannelCable <|.. NPulseChannelCableMulti : alias
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant In as Inputs
-    participant X as NPulseChannelCableMulti
-    In-->>X: signals
-    X-->>In: outputs
+    participant Storage
+    participant Channel as NPulseChannelCableMulti
+    participant Synapses
+    participant Membrane
+    
+    Storage->>Channel: New() (creates NPulseChannelCable)
+    Storage->>Channel: Default()
+    Storage->>Channel: Build()
+    loop Each step
+        Synapses->>Channel: SumSynapticInput
+        Storage->>Channel: Calculate()
+        Channel->>Channel: Solve cable equation
+        Channel->>Channel: Spatial propagation
+        Channel-->>Membrane: Output
+    end
 ```
 
-Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
+### UML State Diagram
 
 ```mermaid
-flowchart LR
-    sig[Signals] --> x[NPulseChannelCableMulti]
-    x --> out[Outputs]
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Built: Build()
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> FormingInput: Form input data
+    FormingInput --> SolvingCable: Solve cable equation
+    SolvingCable --> UpdatingVm: Update Vm
+    UpdatingVm --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> Ready
 ```
 
-Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+### UML Activity Diagram
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> FormingInput[Form input data]
+    FormingInput --> SolveCable[Solve cable equation]
+    Note over SolveCable: dV/dt = D * d²V/dx² - (V - EL) / TauM + I/Cm
+    SolveCable --> UpdateVm[Update Vm for all spatial points]
+    UpdateVm --> End([End])
+```
+
+### UML Component Diagram
+
+```mermaid
+graph TB
+    subgraph NPulseChannelCable["NPulseChannelCable Base"]
+        BaseChannel[NPulseChannelCable]
+    end
+    
+    subgraph NPulseChannelCableMulti["NPulseChannelCableMulti Alias"]
+        Alias[NPulseChannelCableMulti]
+    end
+    
+    subgraph External["External Components"]
+        Synapses[Synapses]
+        Membrane[Membrane]
+    end
+    
+    BaseChannel -->|created via| Alias
+    Alias -->|alias for| BaseChannel
+    Synapses -->|SumSynapticInput| Alias
+    Alias -->|Output| Membrane
+```
+
+### Usage in configurations
+
+`NPulseChannelCableMulti` is used as an alias for `NPulseChannelCable`:
+
+- **Multi-channel cable models**: `Bin/Configs/!OldConfigs/*/Model_*.xml` (where multi-channel cable channels are required)
+- **Simplified naming**: Provides clearer naming in configurations for multi-channel setups
+
+**Features:**
+- Alias: creates `NPulseChannelCable` instance with default parameters
+- Same functionality as `NPulseChannelCable`
+- Used in multi-channel cable membrane configurations
+
+### See Also
+
+- [`NPulseChannelCable`](NPulseChannelCable.md) — cable spiking channel (base class)
+- [`NPulseMembraneCableMulti`](NPulseMembraneCableMulti.md) — multi-channel cable membrane
+- [Architecture.md](../Architecture.md) — library architecture
