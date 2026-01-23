@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPulseChannelIaF` — канал модели Integrate-and-Fire для импульсных нейронов.  
+**Аббревиатура**: `IaF` — **I**ntegrate and **F**ire (интегрировать и стрелять).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelIaF", ...)`.  
 **Storage-инстансы**: `ClassName = "NPulseChannelIaF"` в `Bin/Configs/*/Model_*.xml`.
 

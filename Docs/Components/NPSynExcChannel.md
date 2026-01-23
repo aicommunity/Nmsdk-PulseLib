@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPSynExcChannel` — конфигурационный вариант синаптического импульсного канала с типом возбуждающего канала.  
+**Аббревиатуры**: `Syn` — **Syn**apse (синапс); `Exc` — **Exc**itatory (возбуждающий).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPSynExcChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPSynExcChannel"` в `Bin/Configs/*/Model_*.xml`.
 

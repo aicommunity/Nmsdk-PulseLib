@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPNeuronNegCGeneratorBio` — конфигурационный вариант генератора постоянного тока с отрицательной амплитудой для биоинспирированных импульсных нейронов.  
+**Аббревиатура**: `Bio` — **Bio**logical (биологическая модель).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPNeuronNegCGeneratorBio", ...)`.  
 **Storage-инстансы**: `ClassName = "NPNeuronNegCGeneratorBio"` в `Bin/Configs/*/Model_*.xml`.
 

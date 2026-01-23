@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSPLifeHebbNeuron` — конфигурационный вариант мелкого живого импульсного нейрона с синапсами Хебба и поддержкой жизнеобеспечения.  
+**Префикс**: `NSP` — **S**imple **P**ulse (простой импульсный); `Hebb` — **Hebb**ian (геббовская пластичность).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeHebbNeuron", ...)`.  
 **Storage-инстансы**: `ClassName = "NSPLifeHebbNeuron"` в `Bin/Configs/*/Model_*.xml`.
 

@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NCNeuronPosCGenerator` — конфигурационный вариант генератора постоянного тока с положительной амплитудой для классических нейронов.  
+**Префикс**: `NC` — **C**ontinuous (непрерывный, классический), компонент с непрерывными входами/выходами.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NCNeuronPosCGenerator", ...)`.  
 **Storage-инстансы**: `ClassName = "NCNeuronPosCGenerator"` в `Bin/Configs/*/Model_*.xml`.
 

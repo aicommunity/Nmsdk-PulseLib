@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPExcChannelBio` — конфигурационный вариант возбуждающего канала с биологическими параметрами.  
+**Аббревиатуры**: `Exc` — **Exc**itatory (возбуждающий); `Bio` — **Bio**logical (биологическая модель).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPExcChannelBio", ...)`.  
 **Storage-инстансы**: `ClassName = "NPExcChannelBio"` в `Bin/Configs/*/Model_*.xml`.
 

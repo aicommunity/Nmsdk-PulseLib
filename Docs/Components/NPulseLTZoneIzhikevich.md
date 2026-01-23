@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPulseLTZoneIzhikevich` — LT-зона (Low-Threshold Zone) для нейронов модели Ижикевича.  
+**Аббревиатура**: `LT` — **L**ow **T**hreshold (низкопороговая зона).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneIzhikevich", ...)`.  
 **Storage-инстансы**: `ClassName = "NPulseLTZoneIzhikevich"` в `Bin/Configs/*/Model_*.xml`.
 

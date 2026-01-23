@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NCSynInhChannel` — конфигурационный вариант непрерывного синаптического канала с типом тормозного канала.  
+**Префикс**: `NC` — **C**ontinuous (непрерывный, классический), компонент с непрерывными входами/выходами; `Syn` — **Syn**apse (синапс); `Inh` — **Inh**ibitory (тормозной).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NCSynInhChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NCSynInhChannel"` в `Bin/Configs/*/Model_*.xml`.
 

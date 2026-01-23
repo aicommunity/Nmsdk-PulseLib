@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPExcChannel` — конфигурационный вариант возбуждающего канала.  
+**Аббревиатура**: `Exc` — **Exc**itatory (возбуждающий).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPExcChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPExcChannel"` в `Bin/Configs/*/Model_*.xml`.
 

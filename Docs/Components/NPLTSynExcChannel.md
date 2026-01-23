@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPLTSynExcChannel` — конфигурационный вариант LT-синаптического канала с типом возбуждающего канала.  
+**Аббревиатуры**: `LT` — **L**ow **T**hreshold (низкопороговая зона); `Syn` — **Syn**apse (синапс); `Exc` — **Exc**itatory (возбуждающий).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPLTSynExcChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPLTSynExcChannel"` в `Bin/Configs/*/Model_*.xml`.
 

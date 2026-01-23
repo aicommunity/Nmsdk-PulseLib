@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NNewLPHebbNeuron` — конфигурационный вариант нового крупного импульсного нейрона с синапсами Хебба и улучшенной архитектурой.  
+**Аббревиатура**: `Hebb` — **Hebb**ian (геббовская пластичность, обучение по правилу Хебба).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNewLPHebbNeuron", ...)`.  
 **Storage-инстансы**: `ClassName = "NNewLPHebbNeuron"` в `Bin/Configs/*/Model_*.xml`.
 

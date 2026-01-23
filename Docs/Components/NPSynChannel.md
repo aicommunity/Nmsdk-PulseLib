@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPSynChannel` — алиас для класса `NPulseSynChannel`.  
+**Аббревиатура**: `Syn` — **Syn**apse (синапс).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPSynChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPSynChannel"` в `Bin/Configs/*/Model_*.xml`.
 

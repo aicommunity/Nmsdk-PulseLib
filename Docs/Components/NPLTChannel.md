@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPLTChannel` — конфигурационный вариант импульсного канала с параметрами для низкопороговой зоны (LT-зоны).  
+**Аббревиатура**: `LT` — **L**ow **T**hreshold (низкопороговая зона).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPLTChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPLTChannel"` в `Bin/Configs/*/Model_*.xml`.
 

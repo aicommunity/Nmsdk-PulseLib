@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NCSynExcChannel` — конфигурационный вариант непрерывного синаптического канала с типом возбуждающего канала.  
+**Префикс**: `NC` — **C**ontinuous (непрерывный, классический), компонент с непрерывными входами/выходами; `Syn` — **Syn**apse (синапс); `Exc` — **Exc**itatory (возбуждающий).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NCSynExcChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NCSynExcChannel"` в `Bin/Configs/*/Model_*.xml`.
 

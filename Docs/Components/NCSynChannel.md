@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NCSynChannel` — алиас для класса `NContinuesSynChannel`.  
+**Префикс**: `NC` — **C**ontinuous (непрерывный, классический), компонент с непрерывными входами/выходами; `Syn` — **Syn**apse (синапс).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NCSynChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NCSynChannel"` в `Bin/Configs/*/Model_*.xml`.
 

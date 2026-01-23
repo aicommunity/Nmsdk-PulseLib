@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSynLPNeuron` — конфигурационный вариант крупного импульсного нейрона с оптимизированными синапсами.  
+**Аббревиатуры**: `Syn` — **Syn**apse (синапс); `LP` — **L**ong **P**attern (длинный паттерн).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynLPNeuron", ...)`.  
 **Storage-инстансы**: `ClassName = "NSynLPNeuron"` в `Bin/Configs/*/Model_*.xml`.
 

@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NContinuesSAfferentNeuron` — конфигурационный вариант классического афферентного нейрона с непрерывным выходом.  
+**Префикс**: `NContinues` — **Continues** (Continuous, непрерывный вариант компонента).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NContinuesSAfferentNeuron", ...)`.  
 **Storage-инстансы**: `ClassName = "NContinuesSAfferentNeuron"` в `Bin/Configs/*/Model_*.xml`.
 

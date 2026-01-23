@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPLTZone` — алиас для класса `NPulseLTZoneCommon`.  
+**Префикс**: `NP` — **P**ulse (импульсный), компонент с импульсными входами/выходами; `LT` — **L**ow **T**hreshold (низкопороговая зона).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPLTZone", ...)`.  
 **Storage-инстансы**: `ClassName = "NPLTZone"` в `Bin/Configs/*/Model_*.xml`.
 

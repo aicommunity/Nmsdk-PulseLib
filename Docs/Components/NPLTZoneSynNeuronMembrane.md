@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPLTZoneSynNeuronMembrane` — конфигурационный вариант импульсной мембраны для syn-нейронов с низкопороговой зоной (LT-зоной).  
+**Аббревиатуры**: `LT` — **L**ow **T**hreshold (низкопороговая зона); `Syn` — **Syn**apse (синапс).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPLTZoneSynNeuronMembrane", ...)`.  
 **Storage-инстансы**: `ClassName = "NPLTZoneSynNeuronMembrane"` в `Bin/Configs/*/Model_*.xml`.
 

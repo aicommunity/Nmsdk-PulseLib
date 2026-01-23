@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPInhChannelBio2` — конфигурационный вариант тормозного канала с биологическими параметрами (версия 2).  
+**Аббревиатуры**: `Inh` — **Inh**ibitory (тормозной); `Bio` — **Bio**logical (биологическая модель).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPInhChannelBio2", ...)`.  
 **Storage-инстансы**: `ClassName = "NPInhChannelBio2"` в `Bin/Configs/*/Model_*.xml`.
 

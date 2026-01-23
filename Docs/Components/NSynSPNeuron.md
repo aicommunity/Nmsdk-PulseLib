@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSynSPNeuron` — конфигурационный вариант мелкого импульсного нейрона с оптимизированными синапсами.  
+**Аббревиатуры**: `Syn` — **Syn**apse (синапс); `SP` — **S**pike **P**attern (паттерн спайков).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynSPNeuron", ...)`.  
 **Storage-инстансы**: `ClassName = "NSynSPNeuron"` в `Bin/Configs/*/Model_*.xml`.
 

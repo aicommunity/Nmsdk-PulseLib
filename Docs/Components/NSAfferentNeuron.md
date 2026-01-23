@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSAfferentNeuron` — конфигурационный вариант классического афферентного нейрона с полной структурой.  
+**Префикс**: `NS` — **S**imple (простой) или **S**tandard (стандартный/классический).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSAfferentNeuron", ...)`.  
 **Storage-инстансы**: `ClassName = "NSAfferentNeuron"` в `Bin/Configs/*/Model_*.xml`.
 

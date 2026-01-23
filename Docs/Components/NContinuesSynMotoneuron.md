@@ -1,6 +1,7 @@
 ## NContinuesSynMotoneuron — непрерывный мотонейрон (syn)
 
 **Класс**: `NContinuesSynMotoneuron` — вариант мотонейрона с непрерывной обработкой, син. семейство.  
+**Префикс**: `NContinues` — **Continues** (Continuous, непрерывный вариант компонента); **Аббревиатура**: `Syn` — **Syn**apse (синапс).  
 **Регистрация**: `UploadClass("NContinuesSynMotoneuron", ...)`.  
 **Storage**: `ClassName = "NContinuesSynMotoneuron"`.
 

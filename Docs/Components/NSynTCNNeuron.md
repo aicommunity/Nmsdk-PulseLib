@@ -1,6 +1,7 @@
 ## NSynTCNNeuron — компонент PulseLib
 
 **Класс**: `NSynTCNNeuron` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
+**Аббревиатуры**: `Syn` — **Syn**apse (синапс); `TCN` — **T**emporal **C**onvolutional **N**etwork (временная сверточная сеть).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynTCNNeuron", ...)`.  
 **Storage**: `ClassName = "NSynTCNNeuron"` в `ClDesc`/`Configs`.
 

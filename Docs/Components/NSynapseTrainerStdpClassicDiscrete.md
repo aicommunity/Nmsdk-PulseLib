@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSynapseTrainerStdpClassicDiscrete` — классический STDP с дискретной реализацией.  
+**Аббревиатура**: `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpClassicDiscrete", ...)`.  
 **Storage-инстансы**: `ClassName = "NSynapseTrainerStdpClassicDiscrete"` в `Bin/Configs/*/Model_*.xml`.
 

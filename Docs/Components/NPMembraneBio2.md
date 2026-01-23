@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPMembraneBio2` — конфигурационный вариант импульсной мембраны с биологическими параметрами (версия 2).  
+**Аббревиатура**: `Bio` — **Bio**logical (биологическая модель).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPMembraneBio2", ...)`.  
 **Storage-инстансы**: `ClassName = "NPMembraneBio2"` в `Bin/Configs/*/Model_*.xml`.
 

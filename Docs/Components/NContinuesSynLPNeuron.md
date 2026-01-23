@@ -1,6 +1,7 @@
 ## NContinuesSynLPNeuron — непрерывный LP нейрон (syn)
 
 **Класс**: `NContinuesSynLPNeuron` — непрерывный LP-нейрон в син. семействе.  
+**Префикс**: `NContinues` — **Continues** (Continuous, непрерывный вариант компонента); **Аббревиатуры**: `Syn` — **Syn**apse (синапс); `LP` — **L**ong **P**attern (длинный паттерн).  
 **Регистрация**: `UploadClass("NContinuesSynLPNeuron", ...)` в `NPulseLibrary.cpp`.  
 **Storage**: `ClassName = "NContinuesSynLPNeuron"`.
 

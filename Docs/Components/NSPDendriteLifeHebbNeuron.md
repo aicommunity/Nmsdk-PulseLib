@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSPDendriteLifeHebbNeuron` — конфигурационный вариант мелкого живого импульсного нейрона с синапсами Хебба и дендритной структурой.  
+**Аббревиатура**: `Hebb` — **Hebb**ian (геббовская пластичность, обучение по правилу Хебба).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPDendriteLifeHebbNeuron", ...)`.  
 **Storage-инстансы**: `ClassName = "NSPDendriteLifeHebbNeuron"` в `Bin/Configs/*/Model_*.xml`.
 

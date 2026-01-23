@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPSynNeuronMembrane` — конфигурационный вариант импульсной мембраны для syn-нейронов (импульсных нейронов с синаптическими каналами).  
+**Аббревиатура**: `Syn` — **Syn**apse (синапс).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPSynNeuronMembrane", ...)`.  
 **Storage-инстансы**: `ClassName = "NPSynNeuronMembrane"` в `Bin/Configs/*/Model_*.xml`.
 

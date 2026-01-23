@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPLTSynChannel` — конфигурационный вариант синаптического импульсного канала с параметрами для LT-зоны.  
+**Аббревиатуры**: `LT` — **L**ow **T**hreshold (низкопороговая зона); `Syn` — **Syn**apse (синапс).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPLTSynChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPLTSynChannel"` в `Bin/Configs/*/Model_*.xml`.
 

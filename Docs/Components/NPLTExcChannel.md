@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPLTExcChannel` — конфигурационный вариант LT-канала с типом возбуждающего канала.  
+**Аббревиатуры**: `LT` — **L**ow **T**hreshold (низкопороговая зона); `Exc` — **Exc**itatory (возбуждающий).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPLTExcChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPLTExcChannel"` в `Bin/Configs/*/Model_*.xml`.
 

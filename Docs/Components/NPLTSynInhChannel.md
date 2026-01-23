@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPLTSynInhChannel` — конфигурационный вариант LT-синаптического канала с типом тормозного канала.  
+**Аббревиатуры**: `LT` — **L**ow **T**hreshold (низкопороговая зона); `Syn` — **Syn**apse (синапс); `Inh` — **Inh**ibitory (тормозной).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPLTSynInhChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPLTSynInhChannel"` в `Bin/Configs/*/Model_*.xml`.
 

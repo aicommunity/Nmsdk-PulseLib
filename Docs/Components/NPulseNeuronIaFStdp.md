@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPulseNeuronIaFStdp` — импульсный нейрон модели Integrate-and-Fire с поддержкой STDP-обучения.  
+**Аббревиатуры**: `IaF` — **I**ntegrate and **F**ire (интегрировать и стрелять); `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronIaFStdp", ...)`.  
 **Storage-инстансы**: `ClassName = "NPulseNeuronIaFStdp"` в `Bin/Configs/*/Model_*.xml`.
 

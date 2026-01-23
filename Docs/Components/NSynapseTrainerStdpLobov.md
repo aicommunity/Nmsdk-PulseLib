@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSynapseTrainerStdpLobov` — STDP-тренер по методу Лобова (изначальный вариант, не работает).  
+**Аббревиатура**: `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpLobov", ...)`.  
 **Storage-инстансы**: `ClassName = "NSynapseTrainerStdpLobov"` в `Bin/Configs/*/Model_*.xml`.
 

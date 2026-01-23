@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPulseLTZoneCommon` — базовая LT-зона (Low-Threshold Zone) для импульсных нейронов с общей функциональностью.  
+**Аббревиатура**: `LT` — **L**ow **T**hreshold (низкопороговая зона).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneCommon", ...)`.  
 **Storage-инстансы**: `ClassName = "NPulseLTZoneCommon"` (обычно используется через наследников).
 

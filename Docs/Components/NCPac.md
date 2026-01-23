@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NCPac` — классический PAC (Pulse Activity Counter) для классических моделей.  
+**Префикс**: `NC` — **C**ontinuous (непрерывный, классический), компонент с непрерывными входами/выходами; `PAC` — **P**ulse **A**ctivity **C**ounter (счетчик активности импульсов).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NCPac", ...)`.  
 **Storage-инстансы**: `ClassName = "NCPac"` в `Bin/Configs/*/Model_*.xml`.
 

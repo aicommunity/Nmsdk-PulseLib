@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPulseLTZoneThreshold` — базовая импульсная LT-зона с пороговой логикой генерации спайков.  
+**Аббревиатура**: `LT` — **L**ow **T**hreshold (низкопороговая зона).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneThreshold", ...)`.  
 **Storage-инстансы**: `ClassName = "NPulseLTZoneThreshold"` в `Bin/Configs/*/Model_*.xml`.
 

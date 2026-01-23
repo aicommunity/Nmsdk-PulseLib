@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPSimpleLTZone` — простая импульсная LT-зона с встроенным генератором импульсов.  
+**Аббревиатура**: `LT` — **L**ow **T**hreshold (низкопороговая зона).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPSimpleLTZone", ...)`.  
 **Storage-инстансы**: `ClassName = "NPSimpleLTZone"` в `Bin/Configs/*/Model_*.xml`.
 

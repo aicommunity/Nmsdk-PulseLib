@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPulseLTZoneThresholdBio` — конфигурационный вариант импульсной LT-зоны с порогом для биологических моделей.  
+**Аббревиатуры**: `LT` — **L**ow **T**hreshold (низкопороговая зона); `Bio` — **Bio**logical (биологическая модель).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneThresholdBio", ...)`.  
 **Storage-инстансы**: `ClassName = "NPulseLTZoneThresholdBio"` в `Bin/Configs/*/Model_*.xml`.
 

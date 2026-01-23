@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPInhChannel` — конфигурационный вариант тормозного канала.  
+**Аббревиатура**: `Inh` — **Inh**ibitory (тормозной).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPInhChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPInhChannel"` в `Bin/Configs/*/Model_*.xml`.
 

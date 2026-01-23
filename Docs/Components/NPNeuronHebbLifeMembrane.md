@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPNeuronHebbLifeMembrane` — конфигурационный вариант импульсной мембраны для Life-нейронов с синапсами Хебба.  
+**Аббревиатура**: `Hebb` — **Hebb**ian (геббовская пластичность, обучение по правилу Хебба).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPNeuronHebbLifeMembrane", ...)`.  
 **Storage-инстансы**: `ClassName = "NPNeuronHebbLifeMembrane"` в `Bin/Configs/*/Model_*.xml`.
 

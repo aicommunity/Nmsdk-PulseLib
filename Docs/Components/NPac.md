@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPac` — компонент PAC (Pulse Activity Counter) для подсчета и активации на основе импульсов.  
+**Аббревиатура**: `PAC` — **P**ulse **A**ctivity **C**ounter (счетчик активности импульсов).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPac", ...)`.  
 **Storage-инстансы**: `ClassName = "NPac"` в `Bin/Configs/*/Model_*.xml`.
 

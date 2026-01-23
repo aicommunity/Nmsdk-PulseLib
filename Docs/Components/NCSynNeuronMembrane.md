@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NCSynNeuronMembrane` — конфигурационный вариант импульсной мембраны для непрерывных syn-нейронов (классических нейронов с синаптическими каналами).  
+**Префикс**: `NC` — **C**ontinuous (непрерывный, классический), компонент с непрерывными входами/выходами; `Syn` — **Syn**apse (синапс).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NCSynNeuronMembrane", ...)`.  
 **Storage-инстансы**: `ClassName = "NCSynNeuronMembrane"` в `Bin/Configs/*/Model_*.xml`.
 

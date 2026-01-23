@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSynapseTrainerStdp` — базовый класс тренера для обучения синапсов по правилу STDP (Spike-Timing Dependent Plasticity).  
+**Аббревиатура**: `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdp", ...)`.  
 **Storage-инстансы**: `ClassName = "NSynapseTrainerStdp"` в `Bin/Configs/*/Model_*.xml`.
 

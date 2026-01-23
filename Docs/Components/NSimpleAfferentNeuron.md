@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSimpleAfferentNeuron` — конфигурационный вариант простого афферентного нейрона с упрощенной структурой.  
+**Префикс**: `NSimple` — **Simple** (простой вариант компонента).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSimpleAfferentNeuron", ...)`.  
 **Storage-инстансы**: `ClassName = "NSimpleAfferentNeuron"` в `Bin/Configs/*/Model_*.xml`.
 

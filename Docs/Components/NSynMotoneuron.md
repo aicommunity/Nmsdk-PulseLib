@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSynMotoneuron` — конфигурационный вариант мотонейрона с оптимизированными синапсами.  
+**Аббревиатура**: `Syn` — **Syn**apse (синапс).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynMotoneuron", ...)`.  
 **Storage-инстансы**: `ClassName = "NSynMotoneuron"` в `Bin/Configs/*/Model_*.xml`.
 

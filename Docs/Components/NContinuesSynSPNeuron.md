@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NContinuesSynSPNeuron` — конфигурационный вариант мелкого непрерывного импульсного нейрона с оптимизированными синапсами.  
+**Префикс**: `NContinues` — **Continues** (Continuous, непрерывный вариант компонента); **Аббревиатуры**: `Syn` — **Syn**apse (синапс); `SP` — **S**pike **P**attern (паттерн спайков).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NContinuesSynSPNeuron", ...)`.  
 **Storage-инстансы**: `ClassName = "NContinuesSynSPNeuron"` в `Bin/Configs/*/Model_*.xml`.
 

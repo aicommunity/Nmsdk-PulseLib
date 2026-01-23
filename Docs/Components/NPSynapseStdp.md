@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPSynapseStdp` — алиас для класса `NPulseSynapseStdp`.  
+**Аббревиатура**: `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPSynapseStdp", ...)`.  
 **Storage-инстансы**: `ClassName = "NPSynapseStdp"` в `Bin/Configs/*/Model_*.xml`.
 

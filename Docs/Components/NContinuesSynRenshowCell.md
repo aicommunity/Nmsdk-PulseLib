@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NContinuesSynRenshowCell` — конфигурационный вариант клетки Реншоу с непрерывной обработкой и оптимизированными синапсами.  
+**Префикс**: `NContinues` — **Continues** (Continuous, непрерывный вариант компонента); **Аббревиатура**: `Syn` — **Syn**apse (синапс).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NContinuesSynRenshowCell", ...)`.  
 **Storage-инстансы**: `ClassName = "NContinuesSynRenshowCell"` в `Bin/Configs/*/Model_*.xml`.
 

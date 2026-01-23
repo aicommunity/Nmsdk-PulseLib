@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPulseLTZoneIaF` — конфигурационный вариант LT-зоны для нейронов модели Integrate-and-Fire.  
+**Аббревиатуры**: `LT` — **L**ow **T**hreshold (низкопороговая зона); `IaF` — **I**ntegrate and **F**ire (интегрировать и стрелять).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneIaF", ...)`.  
 **Storage-инстансы**: `ClassName = "NPulseLTZoneIaF"` в `Bin/Configs/*/Model_*.xml`.
 

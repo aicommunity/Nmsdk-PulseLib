@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPulseNeuronIaF` — импульсный нейрон модели Integrate-and-Fire (IaF).  
+**Аббревиатура**: `IaF` — **I**ntegrate and **F**ire (интегрировать и стрелять).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronIaF", ...)`.  
 **Storage-инстансы**: `ClassName = "NPulseNeuronIaF"` в `Bin/Configs/*/Model_*.xml`.
 

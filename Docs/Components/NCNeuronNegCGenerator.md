@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NCNeuronNegCGenerator` — конфигурационный вариант генератора постоянного тока с отрицательной амплитудой для классических нейронов.  
+**Префикс**: `NC` — **C**ontinuous (непрерывный, классический), компонент с непрерывными входами/выходами.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NCNeuronNegCGenerator", ...)`.  
 **Storage-инстансы**: `ClassName = "NCNeuronNegCGenerator"` в `Bin/Configs/*/Model_*.xml`.
 

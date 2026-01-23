@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPSynapseBio2` — конфигурационный вариант импульсного синапса с альтернативными биоинспирированными параметрами.  
+**Аббревиатура**: `Bio` — **Bio**logical (биологическая модель).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPSynapseBio2", ...)`.  
 **Storage-инстансы**: `ClassName = "NPSynapseBio2"` в `Bin/Configs/*/Model_*.xml`.
 

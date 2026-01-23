@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSynapseIaF` — конфигурационный вариант импульсного синапса с параметрами для модели Integrate-and-Fire (IaF).  
+**Аббревиатура**: `IaF` — **I**ntegrate and **F**ire (интегрировать и стрелять).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseIaF", ...)`.  
 **Storage-инстансы**: `ClassName = "NSynapseIaF"` в `Bin/Configs/*/Model_*.xml`.
 

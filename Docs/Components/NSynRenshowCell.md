@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSynRenshowCell` — конфигурационный вариант клетки Реншоу (ингибирующий интернейрон) с оптимизированными синапсами.  
+**Аббревиатура**: `Syn` — **Syn**apse (синапс).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynRenshowCell", ...)`.  
 **Storage-инстансы**: `ClassName = "NSynRenshowCell"` в `Bin/Configs/*/Model_*.xml`.
 

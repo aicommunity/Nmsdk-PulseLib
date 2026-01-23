@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NCSimpleLTZone` — простая классическая LT-зона для непрерывных нейронов.  
+**Префикс**: `NC` — **C**ontinuous (непрерывный, классический), компонент с непрерывными входами/выходами; **Аббревиатура**: `LT` — **L**ow **T**hreshold (низкопороговая зона).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NCSimpleLTZone", ...)`.  
 **Storage-инстансы**: `ClassName = "NCSimpleLTZone"` в `Bin/Configs/*/Model_*.xml`.
 

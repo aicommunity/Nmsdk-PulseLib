@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPGenerator` — алиас для класса `NPulseGenerator`.  
+**Префикс**: `NP` — **P**ulse (импульсный), компонент с импульсными входами/выходами.  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPGenerator", ...)`.  
 **Storage-инстансы**: `ClassName = "NPGenerator"` в `Bin/Configs/*/Model_*.xml`.
 

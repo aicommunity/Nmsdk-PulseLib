@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPulseSynapseStdp` — импульсный синапс с поддержкой STDP-обучения и моделью медиатора.  
+**Аббревиатура**: `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseSynapseStdp", ...)`.  
 **Storage-инстансы**: `ClassName = "NPulseSynapseStdp"` в `Bin/Configs/*/Model_*.xml`.
 

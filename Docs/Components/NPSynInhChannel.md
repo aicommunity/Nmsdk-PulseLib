@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPSynInhChannel` — конфигурационный вариант синаптического импульсного канала с типом тормозного канала.  
+**Аббревиатуры**: `Syn` — **Syn**apse (синапс); `Inh` — **Inh**ibitory (тормозной).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPSynInhChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPSynInhChannel"` в `Bin/Configs/*/Model_*.xml`.
 

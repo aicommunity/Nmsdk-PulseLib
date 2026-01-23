@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPLTInhChannel` — конфигурационный вариант LT-канала с типом тормозного канала.  
+**Аббревиатуры**: `LT` — **L**ow **T**hreshold (низкопороговая зона); `Inh` — **Inh**ibitory (тормозной).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPLTInhChannel", ...)`.  
 **Storage-инстансы**: `ClassName = "NPLTInhChannel"` в `Bin/Configs/*/Model_*.xml`.
 

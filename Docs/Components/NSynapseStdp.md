@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NSynapseStdp` — базовый импульсный синапс с поддержкой STDP-обучения (Spike-Timing Dependent Plasticity).  
+**Аббревиатура**: `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseStdp", ...)`.  
 **Storage-инстансы**: `ClassName = "NSynapseStdp"` в `Bin/Configs/*/Model_*.xml`.
 

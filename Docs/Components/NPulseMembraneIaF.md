@@ -5,6 +5,7 @@
 ### Назначение
 
 **Класс**: `NPulseMembraneIaF` — конфигурационный вариант мембраны для нейронов модели Integrate-and-Fire.  
+**Аббревиатура**: `IaF` — **I**ntegrate and **F**ire (интегрировать и стрелять).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseMembraneIaF", ...)`.  
 **Storage-инстансы**: `ClassName = "NPulseMembraneIaF"` в `Bin/Configs/*/Model_*.xml`.
 
