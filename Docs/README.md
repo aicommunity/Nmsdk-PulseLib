@@ -56,6 +56,50 @@
 - Классификации на основе импульсных сетей
 - Обучения нейронных сетей
 
+### Быстрый старт
+
+#### Создание простой импульсной сети
+
+1. **Создайте источник импульсов:**
+   ```xml
+   <Component Name="Generator" Class="NPulseGenerator">
+       <Properties>
+           <Property Name="Frequency" Type="double">10.0</Property>
+       </Properties>
+   </Component>
+   ```
+
+2. **Создайте нейрон:**
+   ```xml
+   <Component Name="Neuron" Class="NPulseNeuron">
+       <Properties>
+           <Property Name="InputPulses" Type="link">Generator.Output</Property>
+       </Properties>
+   </Component>
+   ```
+
+3. **См. [Config-Templates.md](Config-Templates.md)** для готовых шаблонов экспериментов
+
+#### Программное создание
+
+```cpp
+// Создание генератора импульсов
+auto generator = storage->CreateComponent<NPulseGenerator>("Generator");
+generator->Frequency = 10.0;
+generator->Build();
+
+// Создание нейрона
+auto neuron = storage->CreateComponent<NPulseNeuron>("Neuron");
+neuron->InputPulses.AttachTo(&generator->Output);
+neuron->Build();
+
+// Выполнение
+for (int i = 0; i < 100; i++) {
+    generator->Calculate();
+    neuron->Calculate();
+}
+```
+
 ### Связь с корневой документацией
 
 Для обзорной информации см. корневую документацию проекта:
@@ -70,6 +114,7 @@
 - [Config-Overview.md](Config-Overview.md) - обзор конфигурационных проектов
 - [Config-Templates.md](Config-Templates.md) - шаблоны типовых экспериментов
 - [Scientific-Background.md](Scientific-Background.md) - научный фон и связанные публикации
+- [FAQ.md](FAQ.md) - часто задаваемые вопросы
 - [CONTRIBUTING-docs.md](CONTRIBUTING-docs.md) - руководство по расширению документации
 
 ---
@@ -90,6 +135,50 @@ The library includes components for:
 - Classification based on spiking networks
 - Neural network training
 
+### Quick Start
+
+#### Creating a Simple Spiking Network
+
+1. **Create a pulse generator:**
+   ```xml
+   <Component Name="Generator" Class="NPulseGenerator">
+       <Properties>
+           <Property Name="Frequency" Type="double">10.0</Property>
+       </Properties>
+   </Component>
+   ```
+
+2. **Create a neuron:**
+   ```xml
+   <Component Name="Neuron" Class="NPulseNeuron">
+       <Properties>
+           <Property Name="InputPulses" Type="link">Generator.Output</Property>
+       </Properties>
+   </Component>
+   ```
+
+3. **See [Config-Templates.md](Config-Templates.md)** for ready experiment templates
+
+#### Programmatic Creation
+
+```cpp
+// Create pulse generator
+auto generator = storage->CreateComponent<NPulseGenerator>("Generator");
+generator->Frequency = 10.0;
+generator->Build();
+
+// Create neuron
+auto neuron = storage->CreateComponent<NPulseNeuron>("Neuron");
+neuron->InputPulses.AttachTo(&generator->Output);
+neuron->Build();
+
+// Execute
+for (int i = 0; i < 100; i++) {
+    generator->Calculate();
+    neuron->Calculate();
+}
+```
+
 ### Link to Root Documentation
 
 For overview information see root project documentation:
@@ -100,3 +189,9 @@ For overview information see root project documentation:
 - [Architecture.md](Architecture.md) - library architecture
 - [Usage-Examples.md](Usage-Examples.md) - usage examples
 - [API-Overview.md](API-Overview.md) - API overview
+- [Component-Catalog.md](Component-Catalog.md) - component catalog
+- [Config-Overview.md](Config-Overview.md) - configuration projects overview
+- [Config-Templates.md](Config-Templates.md) - typical experiment templates
+- [Scientific-Background.md](Scientific-Background.md) - scientific background and related publications
+- [FAQ.md](FAQ.md) - frequently asked questions
+- [CONTRIBUTING-docs.md](CONTRIBUTING-docs.md) - documentation extension guide
