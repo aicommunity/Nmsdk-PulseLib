@@ -274,6 +274,12 @@ bool NStatePredictor::BuildStructure()
     {
         //Создаем предиктор
         Predictor = AddMissingComponent<NPredictor>(std::string("Predictor"), PredictorClassName);
+        if(!Predictor)
+        {
+         LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+           std::string("Failed to create Predictor with class: ")+PredictorClassName.GetData());
+         return false;
+        }
         Predictor->SetCoord(MVector<double,3>(5, 2, 0));
         Predictor->InputCols = StatesNumber;
         Predictor->InputRows = FeaturesNumber;
@@ -284,6 +290,12 @@ bool NStatePredictor::BuildStructure()
 
         //Создаем блок болевых ощущений
         LogicalNot = AddMissingComponent<NLogicalNot>(std::string("LogicalNot"), LogicalNotClassName);
+        if(!LogicalNot)
+        {
+         LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+           std::string("Failed to create LogicalNot with class: ")+LogicalNotClassName.GetData());
+         return false;
+        }
         LogicalNot->SetCoord(MVector<double,3>(5, 5, 0));
         LogicalNot->InputPattern.Resize(FeaturesNumber, 1);
         LogicalNot->NeuronTrainer->NumInputDendrite = FeaturesNumber;

@@ -154,11 +154,23 @@ bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const
   return false;
 
  ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);
+ if(!ltzone)
+ {
+  LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+    std::string("Failed to create LTZone with class: ")+ltzone_class);
+  return false;
+ }
  ltzone->Threshold=0;
  ltzone->SetCoord(MVector<double,3>(20,3,0));
 
  UEPtr<NConstGenerator> gen_neg;
  gen_neg=AddMissingComponent<NConstGenerator>("NegGenerator", neg_gen_class);
+ if(!gen_neg)
+ {
+  LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+    std::string("Failed to create NegGenerator with class: ")+neg_gen_class);
+  return false;
+ }
  gen_neg->SetCoord(MVector<double,3>(12,6.33,0));
  //gen_neg=dynamic_pointer_cast<NConstGenerator>(Storage->TakeObject(neg_gen_class));
  //res&=AddComponent(gen_neg);
@@ -166,9 +178,21 @@ bool NAfferentNeuron::BuildClassicalStructure(const string &membraneclass, const
  for(int i=0;i<num_membranes;i++)
  {
   membr=AddMissingComponent<NPulseMembrane>("PMembrane", membraneclass);
+  if(!membr)
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+     std::string("Failed to create PMembrane with class: ")+membraneclass);
+   return false;
+  }
   membr->SetCoord(MVector<double,3>(12,3,0));
 
   receptor=AddMissingComponent<NReceptor>("Receptor", receptorclass);
+  if(!receptor)
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+     std::string("Failed to create Receptor with class: ")+receptorclass);
+   return false;
+  }
   receptor->ExpCoeff=0.1;
   receptor->Gain=1;
   receptor->MinOutputRange=0;
@@ -217,6 +241,12 @@ bool NAfferentNeuron::BuildSimpleStructure(const string &ltzone_class,
  DelComponent("PosGenerator");
 
  receptor=AddMissingComponent<NReceptor>("Receptor", receptorclass);
+ if(!receptor)
+ {
+  LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+    std::string("Failed to create Receptor with class: ")+receptorclass);
+  return false;
+ }
  receptor->Gain=1;
  receptor->OutputAdaptationMode=0;
  receptor->InputAdaptationMode=0;
@@ -226,6 +256,12 @@ bool NAfferentNeuron::BuildSimpleStructure(const string &ltzone_class,
  receptor->SetCoord(MVector<double,3>(5,3,0));
 
  ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);
+ if(!ltzone)
+ {
+  LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+    std::string("Failed to create LTZone with class: ")+ltzone_class);
+  return false;
+ }
  ltzone->Threshold=0;
  ltzone->SetCoord(MVector<double,3>(13,3,0));
 

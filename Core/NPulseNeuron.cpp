@@ -460,12 +460,24 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  }
 
  ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);//dynamic_pointer_cast<NLTZone>(Storage->TakeObject(ltzone_class));
+ if(!ltzone)
+ {
+  LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+    std::string("Failed to create LTZone with class: ")+ltzone_class);
+  return false;
+ }
  ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*8,4.67,0));
 
  UEPtr<UNet> gen_pos,gen_neg;
  if(!ExcGeneratorClassName->empty())
  {
   gen_pos=AddMissingComponent<UNet>("PosGenerator", pos_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(pos_gen_class));
+  if(!gen_pos)
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+     std::string("Failed to create PosGenerator with class: ")+pos_gen_class);
+   return false;
+  }
   gen_pos->SetCoord(MVector<double,3>(4,2,0));
   gen_pos->DisconnectAll("Output");
  }
@@ -475,6 +487,12 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  if(!InhGeneratorClassName->empty())
  {
   gen_neg=AddMissingComponent<UNet>("NegGenerator", neg_gen_class);//dynamic_pointer_cast<UNet>(Storage->TakeObject(neg_gen_class));
+  if(!gen_neg)
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+     std::string("Failed to create NegGenerator with class: ")+neg_gen_class);
+   return false;
+  }
   gen_neg->SetCoord(MVector<double,3>(4,7.3+(num_soma_membranes-1)*2,0));
   gen_neg->DisconnectAll("Output");
  }
@@ -556,6 +574,12 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  if(!ltzonemembraneclass.empty())
  {
   ltmembr=AddMissingComponent<NPulseMembrane>("LTMembrane", ltzonemembraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(ltzonemembraneclass));
+  if(!ltmembr)
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+     std::string("Failed to create LTMembrane with class: ")+ltzonemembraneclass);
+   return false;
+  }
   ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*8,4.67,0));
 
   ltchannel1=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("ExcChannel",true));
@@ -577,6 +601,12 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  for(int i=0;i<num_soma_membranes;i++)
  {
   membr=AddMissingComponent<NPulseMembrane>(std::string("Soma")+sntoa(i+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
+  if(!membr)
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+     std::string("Failed to create Soma")+sntoa(i+1)+std::string(" with class: ")+membraneclass);
+   return false;
+  }
   membr->SetCoord(MVector<double,3>(12.7+dendrite_length*8,4.67+i*2,0));
   Soma[i]=membr;
 
@@ -613,6 +643,12 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
   for(int j=0;j<current_dendrite_length;j++)
   {
    membr=AddMissingComponent<NPulseMembrane>(std::string("Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1), membraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
+   if(!membr)
+   {
+    LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+      std::string("Failed to create Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1)+std::string(" with class: ")+membraneclass);
+    return false;
+   }
    membr->SetCoord(MVector<double,3>(12.7+(dendrite_length-j-1)*8,4.67+i*2,0));
 
    channel1temp=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));

@@ -331,6 +331,12 @@ bool NPulseMembrane::ABuild(void)
  if(!ExcChannelClassName->empty())
  {
   exc_channel=AddMissingComponent<NPulseChannelCommon>("ExcChannel", ExcChannelClassName);
+  if(!exc_channel)
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+     std::string("Failed to create ExcChannel with class: ")+ExcChannelClassName.GetData());
+   return false;
+  }
 //  ExcitatoryChannels.resize(1);
 //  ExcitatoryChannels[0]=exc_channel;
   exc_channel->SetCoord(MVector<double,3>(5,4,0));
@@ -349,6 +355,12 @@ bool NPulseMembrane::ABuild(void)
   for(int i=0;i<NumExcitatorySynapses;i++)
   {
    UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("ExcSynapse")+sntoa(i+1), SynapseClassName);
+   if(!synapse)
+   {
+    LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+      std::string("Failed to create ExcSynapse")+sntoa(i+1)+std::string(" with class: ")+SynapseClassName.GetData());
+    return false;
+   }
    synapse->Type = -1;
 //   ExcitatorySynapses.push_back(synapse);
    res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
@@ -360,6 +372,12 @@ bool NPulseMembrane::ABuild(void)
  if(!InhChannelClassName->empty())
  {
   inh_channel=AddMissingComponent<NPulseChannelCommon>("InhChannel", InhChannelClassName);
+  if(!inh_channel)
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+     std::string("Failed to create InhChannel with class: ")+InhChannelClassName.GetData());
+   return false;
+  }
 
 //  InhibitoryChannels.resize(1);
 //  InhibitoryChannels[0]=inh_channel;
@@ -379,6 +397,12 @@ bool NPulseMembrane::ABuild(void)
   for(int i=0;i<NumInhibitorySynapses;i++)
   {
    UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("InhSynapse")+sntoa(i+1), SynapseClassName);
+   if(!synapse)
+   {
+    LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+      std::string("Failed to create InhSynapse")+sntoa(i+1)+std::string(" with class: ")+SynapseClassName.GetData());
+    return false;
+   }
    synapse->Type = 1;
 
  //  InhibitorySynapses.push_back(synapse);
