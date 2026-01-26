@@ -230,6 +230,16 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPHebbSynapse",cont);
 
  UEPtr<NPulseChannel> ch, ch_pos, ch_neg;
+ 
+ // Регистрация NPNeuronChannel как конфигурационного варианта NPChannel
+ // для использования в LT-мембранах новых нейронов
+ ch=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
+ ch->SetName("PChannel");
+ ch->Default();
+ // Параметры идентичны NPChannel, но зарегистрирован как отдельный класс
+ // для использования в PosChannel и NegChannel новых нейронов
+ UploadClass("NPNeuronChannel",ch);
+ 
  // Модели ионного механизма обычных участков мембраны
  ch_pos=dynamic_pointer_cast<NPulseChannel>(dynamic_cast<UStorage*>(storage)->TakeObject("NPChannel"));
  ch_pos->SetName("ExcChannel");
@@ -332,6 +342,24 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->SetName("PMembrane");
  cont->Default();
  UploadClass("NPMembrane",cont);
+
+ // Регистрация NPNeuronMembrane как конфигурационного варианта NPMembrane
+ // для стандартных нейронов (обратная совместимость со старыми конфигурациями)
+ membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ membr->SetName("PMembrane");
+ membr->Default();
+ // Используем стандартные каналы по умолчанию (NPExcChannel, NPInhChannel)
+ // Параметры идентичны NPMembrane, но зарегистрирован как отдельный класс
+ UploadClass("NPNeuronMembrane",membr);
+
+ // Регистрация NPNewNeuronMembrane как конфигурационного варианта NPMembrane
+ // для новых нейронов (NNewSPNeuron, NNewLPNeuron и др.)
+ membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
+ membr->SetName("PMembrane");
+ membr->Default();
+ // Параметры идентичны NPMembrane, но зарегистрирован как отдельный класс
+ // для использования в новых нейронах
+ UploadClass("NPNewNeuronMembrane",membr);
 
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
  membr->SetName("PMembrane");
