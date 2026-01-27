@@ -24,7 +24,8 @@ classDiagram
     NPulseNeuron <|.. NSPNeuron : configuration variant
     NSPNeuron *-- NPulseMembrane : PulseMembrane
     NSPNeuron *-- NPulseLTZoneCommon : LTZone
-    NPulseMembrane *-- NPulseChannel : PosChannel
+    NPulseMembrane *-- NPulseChannel : InhChannel
+    NPulseMembrane *-- NPulseChannel : ExcChannel
     NPulseMembrane *-- NPulseSynapse : Synapses
     class NPulseNeuron {
         +MembraneClassName : string

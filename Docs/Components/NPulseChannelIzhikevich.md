@@ -259,7 +259,7 @@ for (int step = 0; step < 1000; step++) {
 #### Пример 2: Конфигурация XML
 
 ```xml
-<PosChannel Class="NPulseChannelIzhikevich">
+<InhChannel Class="NPulseChannelIzhikevich">
     <Parameters>
         <Type>1</Type>
         <UseAveragePotential>0</UseAveragePotential>
@@ -274,7 +274,7 @@ for (int step = 0; step < 1000; step++) {
             <!-- Параметры синапса -->
         </Synapse1>
     </Components>
-</PosChannel>
+</InhChannel>
 ```
 
 ### Использование в конфигурациях

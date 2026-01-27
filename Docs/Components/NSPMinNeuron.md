@@ -8,7 +8,7 @@
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPMinNeuron", ...)` (закомментирован в коде).  
 **Storage-инстансы**: `ClassName = "NSPMinNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
-`NSPMinNeuron` является конфигурационным вариантом базового класса `NPulseNeuron` с минимальной конфигурацией — удаляются дополнительные синапсы, оставляется только один синапс на канал. Создается из `NPulseNeuron` с удалением синапсов Synapse2 и Synapse3 из PosChannel и NegChannel.
+`NSPMinNeuron` является конфигурационным вариантом базового класса `NPulseNeuron` с минимальной конфигурацией — удаляются дополнительные синапсы, оставляется только один синапс на канал. Создается из `NPulseNeuron` с удалением синапсов Synapse2 и Synapse3 из InhChannel и ExcChannel.
 
 **Примечание:** В текущей версии кода регистрация `NSPMinNeuron` закомментирована в `NPulseLibrary.cpp`.
 
@@ -21,8 +21,8 @@ classDiagram
     NPulseNeuronCommon <|-- NPulseNeuron
     NPulseNeuron <|.. NSPMinNeuron : configuration variant
     NSPMinNeuron *-- NPulseMembrane : PulseMembrane
-    NPulseMembrane *-- NPulseChannel : PosChannel
-    NPulseMembrane *-- NPulseChannel : NegChannel
+    NPulseMembrane *-- NPulseChannel : InhChannel
+    NPulseMembrane *-- NPulseChannel : ExcChannel
     NPulseChannel *-- NPulseSynapse : Synapse1 only
     class NPulseNeuron {
         +MembraneClassName : string
@@ -42,9 +42,10 @@ classDiagram
 - `NSPMinNeuron` — конфигурационный вариант с минимальной конфигурацией
 
 **Особенности:**
-- Удаляются синапсы Synapse2 и Synapse3 из PosChannel
-- Удаляются синапсы Synapse2 и Synapse3 из NegChannel
+- Удаляются синапсы Synapse2 и Synapse3 из InhChannel
+- Удаляются синапсы Synapse2 и Synapse3 из ExcChannel
 - Остается только Synapse1 на каждом канале
+- **Примечание:** Методы `GetPosChannel()` и `GetNegChannel()` возвращают каналы с фактическими именами "ExcChannel" (Type=-1) и "InhChannel" (Type=1) соответственно
 
 ### Свойства
 
@@ -70,7 +71,7 @@ classDiagram
 **Registration**: `NPulseLibrary.cpp` → `UploadClass("NSPMinNeuron", ...)` (commented out in code).  
 **Instances**: `ClassName = "NSPMinNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
-`NSPMinNeuron` is a configuration variant of the base class `NPulseNeuron` with minimal configuration — additional synapses are removed, leaving only one synapse per channel. Created from `NPulseNeuron` with deletion of synapses Synapse2 and Synapse3 from PosChannel and NegChannel.
+`NSPMinNeuron` is a configuration variant of the base class `NPulseNeuron` with minimal configuration — additional synapses are removed, leaving only one synapse per channel. Created from `NPulseNeuron` with deletion of synapses Synapse2 and Synapse3 from InhChannel and ExcChannel.
 
 **Note:** In the current code version, registration of `NSPMinNeuron` is commented out in `NPulseLibrary.cpp`.
 
@@ -84,8 +85,8 @@ classDiagram
     NPulseNeuronCommon <|-- NPulseNeuron
     NPulseNeuron <|.. NSPMinNeuron : configuration variant
     NSPMinNeuron *-- NPulseMembrane : PulseMembrane
-    NPulseMembrane *-- NPulseChannel : PosChannel
-    NPulseMembrane *-- NPulseChannel : NegChannel
+    NPulseMembrane *-- NPulseChannel : InhChannel
+    NPulseMembrane *-- NPulseChannel : ExcChannel
     NPulseChannel *-- NPulseSynapse : Synapse1 only
     class NPulseNeuron {
         +MembraneClassName : string
@@ -105,27 +106,27 @@ sequenceDiagram
     participant Storage
     participant Neuron as NSPMinNeuron
     participant Membrane as NPulseMembrane
-    participant PosChannel as NPulseChannel
-    participant NegChannel as NPulseChannel
+    participant InhChannel as NPulseChannel
+    participant ExcChannel as NPulseChannel
     participant Synapse1 as NPulseSynapse
     participant LTZone as NPulseLTZoneCommon
     
     Storage->>Neuron: New() + Default()
     Storage->>Neuron: Build()
     Neuron->>Membrane: CreateComponent()
-    Neuron->>PosChannel: CreateComponent()
-    Neuron->>NegChannel: CreateComponent()
+    Neuron->>InhChannel: CreateComponent()
+    Neuron->>ExcChannel: CreateComponent()
     Note over Neuron: Remove Synapse2, Synapse3<br/>Keep only Synapse1
     Neuron->>Synapse1: CreateComponent() (only one)
     Neuron->>LTZone: CreateComponent()
     loop Each step
-        Synapse1->>PosChannel: Input signal
+        Synapse1->>InhChannel: Input signal
         Storage->>Neuron: Calculate()
         Neuron->>Membrane: ACalculate()
-        Membrane->>PosChannel: ACalculate()
-        Membrane->>NegChannel: ACalculate()
-        PosChannel->>Membrane: Current
-        NegChannel->>Membrane: Current
+        Membrane->>InhChannel: ACalculate()
+        Membrane->>ExcChannel: ACalculate()
+        InhChannel->>Membrane: Current
+        ExcChannel->>Membrane: Current
         Membrane->>LTZone: Potential
         LTZone-->>Neuron: Output
     end
@@ -159,9 +160,9 @@ stateDiagram-v2
 ```mermaid
 flowchart TD
     Start([Start Calculate]) --> CalcMembrane[Calculate membrane]
-    CalcMembrane --> CalcPosChannel[Calculate PosChannel<br/>with Synapse1 only]
-    CalcPosChannel --> CalcNegChannel[Calculate NegChannel<br/>with Synapse1 only]
-    CalcNegChannel --> AggregateCurrents[Aggregate currents]
+    CalcMembrane --> CalcInhChannel[Calculate InhChannel<br/>with Synapse1 only]
+    CalcInhChannel --> CalcExcChannel[Calculate ExcChannel<br/>with Synapse1 only]
+    CalcExcChannel --> AggregateCurrents[Aggregate currents]
     AggregateCurrents --> CalcLTZone[Calculate LT-zone]
     CalcLTZone --> CheckThreshold{Threshold reached?}
     CheckThreshold -->|Yes| GenerateSpike[Generate spike]
@@ -180,8 +181,8 @@ graph TB
     
     subgraph NSPMinNeuron["NSPMinNeuron Configuration"]
         Membrane[NPulseMembrane]
-        PosChannel[NPulseChannel<br/>PosChannel]
-        NegChannel[NPulseChannel<br/>NegChannel]
+        InhChannel[NPulseChannel<br/>InhChannel]
+        ExcChannel[NPulseChannel<br/>ExcChannel]
         Synapse1[NPulseSynapse<br/>Synapse1 only]
         LTZone[NPulseLTZoneCommon]
     end
@@ -192,16 +193,16 @@ graph TB
     
     BaseNeuron -->|configured as| NSPMinNeuron
     NSPMinNeuron -->|creates| Membrane
-    NSPMinNeuron -->|creates| PosChannel
-    NSPMinNeuron -->|creates| NegChannel
+    NSPMinNeuron -->|creates| InhChannel
+    NSPMinNeuron -->|creates| ExcChannel
     NSPMinNeuron -->|creates| Synapse1
     Note over NSPMinNeuron: Synapse2, Synapse3 removed
     NSPMinNeuron -->|creates| LTZone
     PreNeurons -->|Input| Synapse1
-    Synapse1 -->|current| PosChannel
-    Synapse1 -->|current| NegChannel
-    PosChannel -->|current| Membrane
-    NegChannel -->|current| Membrane
+    Synapse1 -->|current| InhChannel
+    Synapse1 -->|current| ExcChannel
+    InhChannel -->|current| Membrane
+    ExcChannel -->|current| Membrane
     Membrane -->|potential| LTZone
     LTZone -->|Output| NSPMinNeuron
 ```

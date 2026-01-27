@@ -19,7 +19,7 @@ classDiagram
     NPulseNeuronCommon <|-- NPulseNeuronIzhikevich
     NPulseNeuronIzhikevich *-- NPulseMembraneIzhikevich : PulseMembrane
     NPulseNeuronIzhikevich *-- NPulseLTZoneIzhikevich : LTZone
-    NPulseMembraneIzhikevich *-- NPulseChannelIzhikevich : PosChannel
+    NPulseMembraneIzhikevich *-- NPulseChannelIzhikevich : InhChannel
     class NPulseNeuronIzhikevich {
         +New() NPulseNeuronIzhikevich*
         +CreateSimpleNeuron() void
@@ -81,7 +81,7 @@ sequenceDiagram
     Neuron->>Membrane: AddMissingComponent("PulseMembrane")
     Neuron->>LTZone: AddMissingComponent("LTZone")
     Neuron->>Neuron: CreateLink(LTZone.Output -> PulseMembrane.InputFeedbackSignal)
-    Neuron->>Channel: CreateLink(PulseMembrane.PosChannel.Output -> LTZone.InputChannels)
+    Neuron->>Channel: CreateLink(PulseMembrane.InhChannel.Output -> LTZone.InputChannels)
     Neuron-->>Storage: Ready = true
     
     loop Каждый шаг симуляции
@@ -188,11 +188,11 @@ graph TB
     BaseNeuron -->|наследуется| NPulseNeuronIzhikevich
     NPulseNeuronIzhikevich -->|создает| Membrane
     NPulseNeuronIzhikevich -->|создает| LTZone
-    Membrane -->|содержит| PosChannel
-    PosChannel -->|подключается к| Synapses
-    Synapses -->|входные сигналы| PosChannel
+    Membrane -->|содержит| InhChannel
+    InhChannel -->|подключается к| Synapses
+    Synapses -->|входные сигналы| InhChannel
     LTZone -->|обратная связь| Membrane
-    PosChannel -->|выходной сигнал| LTZone
+    InhChannel -->|выходной сигнал| LTZone
 ```
 
 **Зависимости:**
@@ -227,7 +227,7 @@ graph TB
 
 - **`CreateSimpleNeuron()`** → `void` — создает структуру простого нейрона. Автоматически добавляет мембрану Ижикевича (`NPulseMembraneIzhikevich`) и LT-зону Ижикевича (`NPulseLTZoneIzhikevich`), создает связи между ними:
   - `LTZone.Output` → `PulseMembrane.InputFeedbackSignal` (обратная связь)
-  - `PulseMembrane.PosChannel.Output` → `LTZone.InputChannels` (входной сигнал для LT-зоны)
+  - `PulseMembrane.InhChannel.Output` → `LTZone.InputChannels` (входной сигнал для LT-зоны)
 
 #### Защищенные методы жизненного цикла
 
@@ -298,9 +298,9 @@ for (int step = 0; step < 1000; step++) {
                 <U>0.0</U>
             </Parameters>
             <Components>
-                <PosChannel Class="NPulseChannelIzhikevich">
-                    <!-- Параметры канала -->
-                </PosChannel>
+                <InhChannel Class="NPulseChannelIzhikevich">
+                    <!-- Параметры канала (Type=1, тормозной) -->
+                </InhChannel>
             </Components>
         </PulseMembrane>
         <LTZone Class="NPulseLTZoneIzhikevich">
@@ -443,7 +443,7 @@ graph TB
     subgraph NPulseNeuronIzhikevich["NPulseNeuronIzhikevich"]
         Membrane[NPulseMembraneIzhikevich]
         LTZone[NPulseLTZoneIzhikevich]
-        PosChannel[NPulseChannelIzhikevich]
+        InhChannel[NPulseChannelIzhikevich]
     end
     
     subgraph External["External Components"]
@@ -454,10 +454,10 @@ graph TB
     BaseNeuron -->|inherits| NPulseNeuronIzhikevich
     NPulseNeuronIzhikevich -->|creates| Membrane
     NPulseNeuronIzhikevich -->|creates| LTZone
-    Membrane -->|contains| PosChannel
+    Membrane -->|contains| InhChannel
     PreNeurons -->|Input| Synapses
-    Synapses -->|current| PosChannel
-    PosChannel -->|output| LTZone
+    Synapses -->|current| InhChannel
+    InhChannel -->|output| LTZone
     LTZone -->|feedback| Membrane
     LTZone -->|Output| NPulseNeuronIzhikevich
 ```

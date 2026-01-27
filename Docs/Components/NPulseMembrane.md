@@ -77,11 +77,11 @@ classDiagram
 
 - **`GetNumPosChannels()`** → `size_t` — возвращает количество возбуждающих каналов.
 
-- **`GetPosChannel(size_t i)`** → `NPulseChannelCommon*` — возвращает возбуждающий канал по индексу.
+- **`GetPosChannel(size_t i)`** → `NPulseChannelCommon*` — возвращает возбуждающий канал по индексу. **Примечание:** Фактическое имя компонента канала — `"ExcChannel"` (Type=-1).
 
 - **`GetNumNegChannels()`** → `size_t` — возвращает количество тормозных каналов.
 
-- **`GetNegChannel(size_t i)`** → `NPulseChannelCommon*` — возвращает тормозной канал по индексу.
+- **`GetNegChannel(size_t i)`** → `NPulseChannelCommon*` — возвращает тормозной канал по индексу. **Примечание:** Фактическое имя компонента канала — `"InhChannel"` (Type=1).
 
 - **`GetNumExcitatorySynapses()`** → `size_t` — возвращает количество возбуждающих синапсов.
 

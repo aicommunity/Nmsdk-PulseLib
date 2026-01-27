@@ -20,7 +20,8 @@ classDiagram
     NPulseNeuron <|-- NPulseNeuronIaF
     NPulseNeuronIaF *-- NPulseMembraneIaF : PulseMembrane
     NPulseNeuronIaF *-- NPulseLTZoneIaF : LTZone
-    NPulseMembraneIaF *-- NPulseChannelIaF : PosChannel
+    NPulseMembraneIaF *-- NPulseChannelIaF : InhChannel
+    NPulseMembraneIaF *-- NPulseChannelIaF : ExcChannel
     class NPulseNeuronIaF {
         +New() NPulseNeuronIaF*
         +ADefault() bool
@@ -187,11 +188,15 @@ graph TB
     BaseNeuron -->|наследуется| NPulseNeuronIaF
     NPulseNeuronIaF -->|создает| Membrane
     NPulseNeuronIaF -->|создает| LTZone
-    Membrane -->|содержит| PosChannel
-    PosChannel -->|подключается к| Synapses
-    Synapses -->|входные сигналы| PosChannel
+    Membrane -->|содержит| InhChannel
+    Membrane -->|содержит| ExcChannel
+    InhChannel -->|подключается к| Synapses
+    ExcChannel -->|подключается к| Synapses
+    Synapses -->|входные сигналы| InhChannel
+    Synapses -->|входные сигналы| ExcChannel
     LTZone -->|обратная связь| Membrane
-    PosChannel -->|выходной сигнал| LTZone
+    InhChannel -->|выходной сигнал| LTZone
+    ExcChannel -->|выходной сигнал| LTZone
 ```
 
 **Зависимости:**
@@ -302,7 +307,7 @@ for (int step = 0; step < 1000; step++) {
                 <!-- Параметры мембраны -->
             </Parameters>
             <Components>
-                <PosChannel Class="NPulseChannelIaF">
+                <InhChannel Class="NPulseChannelIaF">
                     <Parameters>
                         <Cm>1.0</Cm>
                         <EL>-70.0</EL>
@@ -311,7 +316,17 @@ for (int step = 0; step < 1000; step++) {
                         <VThreshold>-55.0</VThreshold>
                         <TRef>2.0</TRef>
                     </Parameters>
-                </PosChannel>
+                </InhChannel>
+                <ExcChannel Class="NPulseChannelIaF">
+                    <Parameters>
+                        <Cm>1.0</Cm>
+                        <EL>-70.0</EL>
+                        <TauM>20.0</TauM>
+                        <VReset>-65.0</VReset>
+                        <VThreshold>-55.0</VThreshold>
+                        <TRef>2.0</TRef>
+                    </Parameters>
+                </ExcChannel>
             </Components>
         </PulseMembrane>
         <LTZone Class="NPulseLTZoneIaF">
@@ -453,7 +468,8 @@ graph TB
     subgraph NPulseNeuronIaF["NPulseNeuronIaF"]
         Membrane[NPulseMembraneIaF]
         LTZone[NPulseLTZoneIaF]
-        PosChannel[NPulseChannelIaF]
+        InhChannel[NPulseChannelIaF]
+        ExcChannel[NPulseChannelIaF]
     end
     
     subgraph External["External Components"]
@@ -464,9 +480,12 @@ graph TB
     BaseNeuron -->|configured as| NPulseNeuronIaF
     NPulseNeuronIaF -->|creates| Membrane
     NPulseNeuronIaF -->|creates| LTZone
-    Membrane -->|contains| PosChannel
-    Synapses -->|input| PosChannel
-    PosChannel -->|current| LTZone
+    Membrane -->|contains| InhChannel
+    Membrane -->|contains| ExcChannel
+    Synapses -->|input| InhChannel
+    Synapses -->|input| ExcChannel
+    InhChannel -->|current| LTZone
+    ExcChannel -->|current| LTZone
     LTZone -->|Output| NPulseNeuronIaF
 ```
 

@@ -150,12 +150,12 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
 
  cont=new NPulseLTZoneThreshold;
- cont->SetName("PLTZone");
+ cont->SetName("LTZone");
  cont->Default();
  UploadClass("NPulseLTZoneThreshold",cont);
 
  cont=new NPulseLTZoneThreshold;
- cont->SetName("PLTZone");
+ cont->SetName("LTZone");
  cont->Default();
  {
   NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont);
@@ -165,7 +165,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPulseLTZoneThresholdBio",cont);
 
  cont=new NPulseLTZoneThreshold;
- cont->SetName("PLTZone");
+ cont->SetName("LTZone");
  cont->Default();
  {
   NPulseLTZoneThreshold *ltzonet=dynamic_cast<NPulseLTZoneThreshold *>(cont);
@@ -175,7 +175,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NPulseLTZoneThresholdBio2",cont);
 
  cont=new NPulseLTZone;
- cont->SetName("PLTZone");
+ cont->SetName("LTZone");
  cont->Default();
  UploadClass("NPLTZone",cont);
 
@@ -185,7 +185,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  UploadClass("NCLTZone",cont);
 
  cont=new NPulseSimpleLTZone;
- cont->SetName("PLTZone");
+ cont->SetName("LTZone");
  cont->Default();
  UploadClass("NPSimpleLTZone",cont);
 
@@ -237,7 +237,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  ch->SetName("PChannel");
  ch->Default();
  // Параметры идентичны NPChannel, но зарегистрирован как отдельный класс
- // для использования в PosChannel и NegChannel новых нейронов
+ // для использования в InhChannel и ExcChannel новых нейронов
  UploadClass("NPNeuronChannel",ch);
  
  // Модели ионного механизма обычных участков мембраны
@@ -1094,7 +1094,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  // ============================================================================
  // Нейроны как в статьях
  // ============================================================================
- /*
  {
   int paper_neurons_dl[] = {4,1,1,1};
   std::vector<int> papers_dendrit_length (paper_neurons_dl, paper_neurons_dl + sizeof(paper_neurons_dl) / sizeof(int) );
@@ -1102,7 +1101,7 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   "NPNeuronPosCGenerator","NPNeuronNegCGenerator",4,1,1,papers_dendrit_length);
   n->SetName("Neuron");
   UploadClass("NPNeuron4x1",n);
- }               */
+ }
 
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
@@ -1309,10 +1308,10 @@ UploadClass("NOdeSolver",cont);
  UEPtr<NPulseNeuron> n=CreateSimplePulseNeuron(dynamic_cast<UStorage*>(storage),"NPNeuron","NPNeuronMembrane","NPLTZone",
  "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,1,1);
  n->SetName("SPNeuron");
- n->DelComponent("PNeuronMembrane.PosChannel.Synapse2");
- n->DelComponent("PNeuronMembrane.PosChannel.Synapse3");
- n->DelComponent("PNeuronMembrane.NegChannel.Synapse2");
- n->DelComponent("PNeuronMembrane.NegChannel.Synapse3");
+ n->DelComponent("PNeuronMembrane.InhChannel.Synapse2");
+ n->DelComponent("PNeuronMembrane.InhChannel.Synapse3");
+ n->DelComponent("PNeuronMembrane.ExcChannel.Synapse2");
+ n->DelComponent("PNeuronMembrane.ExcChannel.Synapse3");
  UploadClass("NSPMinNeuron",n);
           */
  // Создаем мелкий нейрон
@@ -1533,10 +1532,10 @@ UploadClass("NOdeSolver",cont);
  // Конец нейронов с оптимизирванными синапсами
  // ============================================================================
 */
+
  // ============================================================================
  // Нейроны как в статьях
  // ============================================================================
-/*
  {
   int paper_neurons_dl[] = {4,1,1,1};
   std::vector<int> papers_dendrit_length (paper_neurons_dl, paper_neurons_dl + sizeof(paper_neurons_dl) / sizeof(int) );
@@ -1562,7 +1561,7 @@ UploadClass("NOdeSolver",cont);
   "NPNeuronPosCGenerator","NPNeuronNegCGenerator",1,1,1,papers_dendrit_length);
   n->SetName("Neuron");
   UploadClass("NPNeuron1x4",n);
- }                                 */
+ }
  // ============================================================================
           /*
  // Создаем афферентный нейрон
@@ -1643,8 +1642,8 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
 
 
  ltzone=static_pointer_cast<NNet>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
+ n->AddComponent(ltzone);//,&n->LTZone);
 
  UEPtr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
@@ -1656,8 +1655,8 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
  ltmembr->SetName("LTMembrane");
  res=n->AddComponent(ltmembr);
 
- ltchannel1=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("PosChannel"));
- ltchannel2=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("NegChannel"));
+ ltchannel1=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("InhChannel"));
+ ltchannel2=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("ExcChannel"));
  item.Index=0;
  conn.Index=-1;
 
@@ -1680,7 +1679,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
   res=n->AddComponent(membr);
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
   for(int j=0;j<channel1->GetNumComponents();j++)
   {
    UEPtr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j));
@@ -1688,7 +1687,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
 	synapse_list.push_back(hebb_syn);
   }
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
   for(int j=0;j<channel2->GetNumComponents();j++)
   {
    UEPtr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j));
@@ -1722,7 +1721,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
   res=n->AddComponent(membr);
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
   for(int j=0;j<channel1->GetNumComponents();j++)
   {
    UEPtr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j));
@@ -1730,7 +1729,7 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateNewSimplePulseNeuron(UStorage *storage,
 	synapse_list.push_back(hebb_syn);
   }
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
   for(int j=0;j<channel2->GetNumComponents();j++)
   {
    UEPtr<NPulseHebbSynapse> hebb_syn=dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j));
@@ -1799,8 +1798,8 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
 
 
  ltzone=static_pointer_cast<NNet>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
+ n->AddComponent(ltzone);//,&n->LTZone);
 
  UEPtr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
@@ -1812,8 +1811,8 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
  ltmembr->SetName("LTMembrane");
  res=n->AddComponent(ltmembr);
 
- ltchannel1=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("PosChannel"));
- ltchannel2=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("NegChannel"));
+ ltchannel1=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("InhChannel"));
+ ltchannel2=static_pointer_cast<NPulseChannel>(ltmembr->GetComponent("ExcChannel"));
  item.Index=0;
  conn.Index=-1;
 
@@ -1836,9 +1835,9 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
   res=n->AddComponent(membr);
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
 
   item.Index=0;
   conn.Index=-1;
@@ -1856,8 +1855,8 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomNewSimplePulseNeuron(UStorage *st
    membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
    res=n->AddComponent(membr);
 
-   channel1temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
-   channel2temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+   channel1temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
+   channel2temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
 
    item.Id=channel1temp->GetLongId(n);
    conn.Id=channel1->GetLongId(n);
@@ -1922,8 +1921,8 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, co
 
 
  ltzone=static_pointer_cast<NNet>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
+ n->AddComponent(ltzone);//,&n->LTZone);
 
  UEPtr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
@@ -1936,9 +1935,9 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, co
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
   res=n->AddComponent(membr);
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
 
   item.Index=0;
   conn.Index=-1;
@@ -1970,9 +1969,9 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseNeuron(UStorage *storage, co
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
   res=n->AddComponent(membr);
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
 
  }
 /*
@@ -2016,8 +2015,8 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
 
 
  ltzone=static_pointer_cast<NNet>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
+ n->AddComponent(ltzone);//,&n->LTZone);
 
  UEPtr<NConstGenerator> gen_pos,gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
@@ -2030,9 +2029,9 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
   res=n->AddComponent(membr);
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
 
   item.Index=0;
   conn.Index=-1;
@@ -2054,8 +2053,8 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateCustomSimplePulseNeuron(UStorage *stora
    membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject(membraneclass/*"NPNeuronMembrane"*/));
    res=n->AddComponent(membr);
 
-   channel1temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
-   channel2temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+   channel1temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
+   channel2temp=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
 
    item.Id=channel1temp->GetLongId(n);
    conn.Id=channel1->GetLongId(n);
@@ -2122,8 +2121,8 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
 
 
  ltzone=static_pointer_cast<NPulseLTZone>(storage->TakeObject("NPLTZone"));
- n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
+ n->AddComponent(ltzone);//,&n->LTZone);
 
  NConstGenerator *gen_pos,*gen_neg;
  gen_pos=static_pointer_cast<NConstGenerator>(storage->TakeObject(pos_gen_class));
@@ -2137,12 +2136,12 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject("NPNeuronHebbMembrane"));
   res=n->AddComponent(membr);
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
 
   for(int j=0;j<channel1->GetNumComponents();j++)
    synapse_list.push_back(dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j)));
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
 
   for(int j=0;j<channel2->GetNumComponents();j++)
    synapse_list.push_back(dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j)));
@@ -2187,13 +2186,13 @@ UEPtr<NPulseNeuron> NPulseLibrary::CreateSimplePulseHebbNeuron(UStorage *storage
   membr=static_pointer_cast<NPulseMembrane>(storage->TakeObject("NPNeuronHebbMembrane"));
   res=n->AddComponent(membr);
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));
+  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));
 
   for(int j=0;j<channel1->GetNumComponents();j++)
    synapse_list.push_back(dynamic_pointer_cast<NPulseHebbSynapse>(channel1->GetComponentByIndex(j)));
 
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));
+  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));
 
   for(int j=0;j<channel2->GetNumComponents();j++)
    synapse_list.push_back(dynamic_pointer_cast<NPulseHebbSynapse>(channel2->GetComponentByIndex(j)));
@@ -2275,8 +2274,8 @@ UEPtr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *storage, co
   return 0;
 
  ltzone=static_pointer_cast<NLTZone>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
+ n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->Threshold=0;
 
  UEPtr<NConstGenerator> gen_pos,gen_neg;
@@ -2296,10 +2295,10 @@ UEPtr<NAfferentNeuron> NPulseLibrary::CreateAfferentNeuron(UStorage *storage, co
   receptor->Gain=1;
   res=n->AddComponent(receptor);
 
-  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("PosChannel"));//(storage->TakeObject("NPChannel"));
+  channel1=static_pointer_cast<NPulseChannel>(membr->GetComponent("InhChannel"));//(storage->TakeObject("NPChannel"));
 //  channel1->SetNumInputs(2);
 
-  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("NegChannel"));//(storage->TakeObject("NPChannel"));
+  channel2=static_pointer_cast<NPulseChannel>(membr->GetComponent("ExcChannel"));//(storage->TakeObject("NPChannel"));
   // Устанавливаем обратную связь
   item.Id=ltzone->GetLongId(n);
   conn.Id=membr->GetLongId(n);
@@ -2362,8 +2361,8 @@ UEPtr<NAfferentNeuron> NPulseLibrary::CreateSimpleAfferentNeuron(UStorage *stora
   return 0;
 
  ltzone=static_pointer_cast<NLTZone>(storage->TakeObject(ltzone_class));
- n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->SetName("LTZone");
+ n->AddComponent(ltzone);//,&n->LTZone);
  ltzone->Threshold=0;
 
  bool linkres=true;

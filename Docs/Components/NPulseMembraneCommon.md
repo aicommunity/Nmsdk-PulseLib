@@ -142,8 +142,8 @@ graph TB
     end
     
     subgraph Channels["Каналы"]
-        PosChannel[NPulseChannelCommon]
-        NegChannel[NPulseChannelCommon]
+        InhChannel[NPulseChannelCommon]
+        ExcChannel[NPulseChannelCommon]
     end
     
     subgraph External["Внешние компоненты"]
@@ -155,8 +155,8 @@ graph TB
     NPulseMembraneCommon -->|содержит| Channels
     NPulseMembraneCommon -->|содержит| Synapses
     NPulseMembraneCommon -->|вычисляет| Properties
-    Channels --> PosChannel
-    Channels --> NegChannel
+    Channels --> InhChannel
+    Channels --> ExcChannel
     InputSynapses -->|подключаются к| Channels
     NPulseMembraneCommon -->|SumPotential| Neuron
     Neuron -->|Feedback| NPulseMembraneCommon
@@ -166,6 +166,12 @@ graph TB
 - **Базовый класс**: `UNet`
 - **Внутренние компоненты**: `NPulseChannelCommon` (каналы), `NPulseSynapseCommon` (синапсы)
 - **Внешние компоненты**: нейрон (получатель `SumPotential`, источник обратной связи), входные синапсы (подключаются к каналам)
+
+**Примечание о именовании каналов:**
+- Фактические имена компонентов каналов: `InhChannel` (Type=1, тормозной) и `ExcChannel` (Type=-1, возбуждающий)
+- Методы `GetPosChannel()` и `GetNegChannel()` в производных классах (например, `NPulseMembrane`) возвращают каналы с фактическими именами:
+  - `GetPosChannel()` → возвращает каналы с именем `"ExcChannel"` (Type=-1, возбуждающие, семантически "положительные" по эффекту на потенциал)
+  - `GetNegChannel()` → возвращает каналы с именем `"InhChannel"` (Type=1, тормозные, семантически "отрицательные" по эффекту на потенциал)
 
 ### Свойства
 
@@ -235,13 +241,14 @@ membrane->Default();
 membrane->UseAveragePotential = false;
 
 // Добавление каналов
-auto posChannel = storage->CreateComponent<NPulseChannelIzhikevich>();
-posChannel->SetName("PosChannel");
-membrane->AddComponent(posChannel);
+// Примечание: Фактические имена компонентов - "InhChannel" (Type=1) и "ExcChannel" (Type=-1)
+auto inhChannel = storage->CreateComponent<NPulseChannelIzhikevich>();
+inhChannel->SetName("InhChannel");
+membrane->AddComponent(inhChannel);
 
-auto negChannel = storage->CreateComponent<NPulseChannelIzhikevich>();
-negChannel->SetName("NegChannel");
-membrane->AddComponent(negChannel);
+auto excChannel = storage->CreateComponent<NPulseChannelIzhikevich>();
+excChannel->SetName("ExcChannel");
+membrane->AddComponent(excChannel);
 
 // Сборка
 membrane->Build();
@@ -262,12 +269,12 @@ for (int step = 0; step < 1000; step++) {
         <UseAveragePotential>0</UseAveragePotential>
     </Parameters>
     <Components>
-        <PosChannel Class="NPulseChannelIzhikevich">
-            <!-- Параметры канала -->
-        </PosChannel>
-        <NegChannel Class="NPulseChannelIzhikevich">
-            <!-- Параметры канала -->
-        </NegChannel>
+        <InhChannel Class="NPulseChannelIzhikevich">
+            <!-- Параметры канала (Type=1, тормозной) -->
+        </InhChannel>
+        <ExcChannel Class="NPulseChannelIzhikevich">
+            <!-- Параметры канала (Type=-1, возбуждающий) -->
+        </ExcChannel>
     </Components>
 </Membrane1>
 ```
@@ -380,8 +387,8 @@ graph TB
     end
     
     subgraph Channels["Channels"]
-        PosChannel[NPulseChannelCommon]
-        NegChannel[NPulseChannelCommon]
+        InhChannel[NPulseChannelCommon]
+        ExcChannel[NPulseChannelCommon]
     end
     
     subgraph External["External Components"]
@@ -393,8 +400,8 @@ graph TB
     NPulseMembraneCommon -->|contains| Channels
     NPulseMembraneCommon -->|contains| Synapses
     NPulseMembraneCommon -->|calculates| Properties
-    Channels --> PosChannel
-    Channels --> NegChannel
+    Channels --> InhChannel
+    Channels --> ExcChannel
     InputSynapses -->|connect to| Channels
     NPulseMembraneCommon -->|SumPotential| Neuron
     Neuron -->|Feedback| NPulseMembraneCommon
@@ -443,6 +450,12 @@ graph TB
 - Synapse management: manages synapses connected to channels
 - Potential aggregation: aggregates potentials from all channels
 - Feedback support: supports feedback from neuron
+
+**Note on channel naming:**
+- Actual component names of channels: `InhChannel` (Type=1, inhibitory) and `ExcChannel` (Type=-1, excitatory)
+- Methods `GetPosChannel()` and `GetNegChannel()` in derived classes (e.g., `NPulseMembrane`) return channels with actual names:
+  - `GetPosChannel()` → returns channels with name `"ExcChannel"` (Type=-1, excitatory, semantically "positive" effect on potential)
+  - `GetNegChannel()` → returns channels with name `"InhChannel"` (Type=1, inhibitory, semantically "negative" effect on potential)
 
 **Typical parameter values:**
 - **UseAveragePotential**: false (do not use averaging)

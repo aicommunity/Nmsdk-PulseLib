@@ -284,7 +284,7 @@ for (int step = 0; step < 1000; step++) {
         <NumInhibitorySynapses>0</NumInhibitorySynapses>
     </Parameters>
     <Components>
-        <PosChannel Class="NPulseChannelIaF">
+        <InhChannel Class="NPulseChannelIaF">
             <Parameters>
                 <Cm>1.0</Cm>
                 <EL>-70.0</EL>
@@ -313,7 +313,22 @@ for (int step = 0; step < 1000; step++) {
                     </Components>
                 </Synapse1>
             </Components>
-        </PosChannel>
+        </InhChannel>
+        <ExcChannel Class="NPulseChannelIaF">
+            <Parameters>
+                <Cm>1.0</Cm>
+                <EL>-70.0</EL>
+                <TauM>20.0</TauM>
+                <VReset>-65.0</VReset>
+                <VThreshold>-55.0</VThreshold>
+                <TRef>2.0</TRef>
+            </Parameters>
+            <Components>
+                <Synapse1 Class="NSynapseStdp">
+                    <!-- Параметры синапса -->
+                </Synapse1>
+            </Components>
+        </ExcChannel>
     </Components>
 </PulseMembrane>
 ```

@@ -47,6 +47,8 @@ NPulseMembrane::~NPulseMembrane(void)
 // Методы управления временными перменными
 // --------------------------
 // Ионные механизмы деполяризации
+// GetPosChannel возвращает каналы с именем "ExcChannel" (Type=-1, возбуждающие)
+// Семантически "положительные" по эффекту на потенциал мембраны (деполяризация)
 size_t NPulseMembrane::GetNumPosChannels(void) const
 {
  return ExcitatoryChannels.size();
@@ -58,6 +60,8 @@ NPulseChannelCommon* NPulseMembrane::GetPosChannel(size_t i)
 }
 
 // Ионные механизмы гиперполяризации
+// GetNegChannel возвращает каналы с именем "InhChannel" (Type=1, тормозные)
+// Семантически "отрицательные" по эффекту на потенциал мембраны (гиперполяризация)
 size_t NPulseMembrane::GetNumNegChannels(void) const
 {
  return InhibitoryChannels.size();

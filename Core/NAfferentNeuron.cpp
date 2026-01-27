@@ -240,12 +240,21 @@ bool NAfferentNeuron::BuildSimpleStructure(const string &ltzone_class,
  DelComponent("PMembrane");
  DelComponent("PosGenerator");
 
- receptor=AddMissingComponent<NReceptor>("Receptor", receptorclass);
- if(!receptor)
+ // Проверяем, существует ли компонент с правильным типом
+ UEPtr<NReceptor> existing_receptor = GetComponentL<NReceptor>("Receptor", true);
+ if(existing_receptor && existing_receptor->GetCompClassName() == receptorclass)
  {
-  LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
-    std::string("Failed to create Receptor with class: ")+receptorclass);
-  return false;
+  receptor = existing_receptor;
+ }
+ else
+ {
+  receptor=AddMissingComponent<NReceptor>("Receptor", receptorclass);
+  if(!receptor)
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+     std::string("Failed to create Receptor with class: ")+receptorclass);
+   return false;
+  }
  }
  receptor->Gain=1;
  receptor->OutputAdaptationMode=0;
@@ -255,12 +264,21 @@ bool NAfferentNeuron::BuildSimpleStructure(const string &ltzone_class,
  receptor->MaxOutputRange=max_output;
  receptor->SetCoord(MVector<double,3>(5,3,0));
 
- ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);
- if(!ltzone)
+ // Проверяем, существует ли компонент с правильным типом
+ UEPtr<NLTZone> existing_ltzone = GetComponentL<NLTZone>("LTZone", true);
+ if(existing_ltzone && existing_ltzone->GetCompClassName() == ltzone_class)
  {
-  LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
-    std::string("Failed to create LTZone with class: ")+ltzone_class);
-  return false;
+  ltzone = existing_ltzone;
+ }
+ else
+ {
+  ltzone=AddMissingComponent<NLTZone>("LTZone", ltzone_class);
+  if(!ltzone)
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+     std::string("Failed to create LTZone with class: ")+ltzone_class);
+   return false;
+  }
  }
  ltzone->Threshold=0;
  ltzone->SetCoord(MVector<double,3>(13,3,0));
