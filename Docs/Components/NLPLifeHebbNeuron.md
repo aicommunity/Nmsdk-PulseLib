@@ -4,8 +4,8 @@
 
 ### Назначение
 
-**Класс**: `NLPLifeHebbNeuron` — конфигурационный вариант крупного живого импульсного нейрона с синапсами Хебба и поддержкой жизнеобеспечения.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NLPLifeHebbNeuron", ...)`.  
+**Класс**: `NLPLifeHebbNeuron` — конфигурационный вариант крупного живого импульсного нейрона с синапсами Хебба и поддержкой жизнеобеспечения.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NLPLifeHebbNeuron", ...)`.
 **Storage-инстансы**: `ClassName = "NLPLifeHebbNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
 `NLPLifeHebbNeuron` является конфигурационным вариантом базового класса `NPulseLifeNeuron` с мембраной, поддерживающей синапсы Хебба. Создается из `NPulseLifeNeuron` с настройками:
@@ -66,7 +66,7 @@ sequenceDiagram
     participant NeuronLife as NNeuronLife
     participant Synapse as NPulseHebbSynapse
     participant LTZone as NPulseLTZoneCommon
-    
+
     Storage->>Neuron: New() (из NPulseLifeNeuron)
     Storage->>Neuron: SetMembraneClassName("NPNeuronHebbMembrane")
     Storage->>Neuron: SetNumSomaMembraneParts(3)
@@ -80,7 +80,7 @@ sequenceDiagram
     Neuron->>Neuron: CreateLink(LTZone->Output, NeuronLife->Input1)
     Membrane->>Synapse: CreateComponent("ExcSynapse1", "NPulseHebbSynapse")
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Storage->>Neuron: Calculate()
         Neuron->>Neuron: NPulseLifeNeuron::ACalculate()
@@ -207,20 +207,20 @@ graph TB
     subgraph NPulseLifeNeuron["NPulseLifeNeuron Base"]
         BaseNeuron[NPulseLifeNeuron]
     end
-    
+
     subgraph NLPLifeHebbNeuron["NLPLifeHebbNeuron Configuration"]
         Membrane[NPNeuronHebbMembrane<br/>PulseMembrane<br/>3 части сомы]
         LTZone[NPulseLTZoneCommon<br/>LTZone]
         NeuronLife[NNeuronLife<br/>NeuronLife]
         Synapses[NPulseHebbSynapse<br/>ExcSynapse1..N]
     end
-    
+
     subgraph External["Внешние компоненты"]
         PreNeurons[Пресинаптические нейроны]
         MotivationSource[Источник мотивации]
         EnergySource[Источник энергии]
     end
-    
+
     BaseNeuron -->|конфигурируется как| NLPLifeHebbNeuron
     NLPLifeHebbNeuron -->|создает| Membrane
     NLPLifeHebbNeuron -->|создает| LTZone
@@ -331,6 +331,10 @@ for (int step = 0; step < 1000; step++) {
 - Модель жизнеобеспечения: автоматически создается и связывается с LT-зоной
 - Комбинированная функциональность: объединяет возможности обучения Хебба и жизнеобеспечения
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (жизнеобеспечение), **15**.
+
 ### См. также
 
 - [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон (базовый класс)
@@ -348,8 +352,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NLPLifeHebbNeuron` — configuration variant of large living spiking neuron with Hebbian synapses and life support.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NLPLifeHebbNeuron", ...)`.  
+**Class**: `NLPLifeHebbNeuron` — configuration variant of large living spiking neuron with Hebbian synapses and life support.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NLPLifeHebbNeuron", ...)`.
 **Instances**: `ClassName = "NLPLifeHebbNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
 `NLPLifeHebbNeuron` is a configuration variant of the base class `NPulseLifeNeuron` with membrane supporting Hebbian synapses. Created from `NPulseLifeNeuron` with settings:
@@ -387,7 +391,7 @@ sequenceDiagram
     participant NeuronLife as NNeuronLife
     participant Synapse as NPulseHebbSynapse
     participant LTZone as NPulseLTZoneCommon
-    
+
     Storage->>Neuron: New() + Default()
     Storage->>Neuron: Build()
     Neuron->>Membrane: CreateComponent() (3 soma parts)
@@ -444,20 +448,20 @@ graph TB
     subgraph NPulseLifeNeuron["NPulseLifeNeuron Base"]
         BaseNeuron[NPulseLifeNeuron]
     end
-    
+
     subgraph NLPLifeHebbNeuron["NLPLifeHebbNeuron Configuration"]
         Membrane[NPNeuronHebbMembrane<br/>3 soma parts]
         LTZone[NPulseLTZoneCommon]
         NeuronLife[NNeuronLife]
         Synapses[NPulseHebbSynapse]
     end
-    
+
     subgraph External["External Components"]
         PreNeurons[Presynaptic Neurons]
         MotivationSource[Motivation Source]
         EnergySource[Energy Source]
     end
-    
+
     BaseNeuron -->|configured as| NLPLifeHebbNeuron
     NLPLifeHebbNeuron -->|creates| Membrane
     NLPLifeHebbNeuron -->|creates| LTZone
@@ -501,6 +505,10 @@ graph TB
 - Hebbian learning: synapses automatically update weights based on pre- and postsynaptic activity correlation
 - Life support model: automatically created and linked with LT-zone
 - Combined functionality: combines capabilities of Hebbian learning and life support
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (life support), **15**.
 
 ### See Also
 

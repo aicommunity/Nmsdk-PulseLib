@@ -4,8 +4,8 @@
 
 ### Назначение
 
-**Класс**: `NNewSPLifeNeuron` — конфигурационный вариант нового мелкого живого импульсного нейрона с улучшенной архитектурой и поддержкой жизнеобеспечения.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNewSPLifeNeuron", ...)`.  
+**Класс**: `NNewSPLifeNeuron` — конфигурационный вариант нового мелкого живого импульсного нейрона с улучшенной архитектурой и поддержкой жизнеобеспечения.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNewSPLifeNeuron", ...)`.
 **Storage-инстансы**: `ClassName = "NNewSPLifeNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
 `NNewSPLifeNeuron` является конфигурационным вариантом базового класса `NPulseLifeNeuron` с новой архитектурой мембраны и LT-зоны. Создается из `NPulseLifeNeuron` с настройками:
@@ -70,7 +70,7 @@ sequenceDiagram
     participant LTMembrane as NPLTZoneNeuronMembrane
     participant LTZone as NPLTZone
     participant NeuronLife as NNeuronLife
-    
+
     Storage->>Neuron: New() (из NPulseLifeNeuron)
     Storage->>Neuron: SetMembraneClassName("NPNewNeuronMembrane")
     Storage->>Neuron: SetLTMembraneClassName("NPLTZoneNeuronMembrane")
@@ -85,7 +85,7 @@ sequenceDiagram
     Neuron->>NeuronLife: AddMissingComponent("NeuronLife", "NNeuronLife")
     Neuron->>Neuron: CreateLink(LTZone->Output, NeuronLife->Input1)
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Storage->>Neuron: Calculate()
         Neuron->>Neuron: NPulseLifeNeuron::ACalculate()
@@ -201,20 +201,20 @@ graph TB
     subgraph NPulseLifeNeuron["NPulseLifeNeuron Base"]
         BaseNeuron[NPulseLifeNeuron]
     end
-    
+
     subgraph NNewSPLifeNeuron["NNewSPLifeNeuron Configuration"]
         Membrane[NPNewNeuronMembrane<br/>PulseMembrane]
         LTMembrane[NPLTZoneNeuronMembrane<br/>LTMembrane]
         LTZone[NPLTZone<br/>LTZone]
         NeuronLife[NNeuronLife<br/>NeuronLife]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Synapses[Синапсы]
         PreNeurons[Пресинаптические нейроны]
         EnergySource[Источник энергии]
     end
-    
+
     BaseNeuron -->|конфигурируется как| NNewSPLifeNeuron
     NNewSPLifeNeuron -->|создает| Membrane
     NNewSPLifeNeuron -->|создает| LTMembrane
@@ -322,6 +322,10 @@ for (int step = 0; step < 1000; step++) {
 - Модель жизнеобеспечения: автоматически создается и связывается с LT-зоной
 - Комбинированная функциональность: объединяет возможности новой архитектуры и жизнеобеспечения
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (жизнеобеспечение), **15**, **4**.
+
 ### См. также
 
 - [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон (базовый класс)
@@ -338,8 +342,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NNewSPLifeNeuron` — configuration variant of new small living spiking neuron with improved architecture and life support.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNewSPLifeNeuron", ...)`.  
+**Class**: `NNewSPLifeNeuron` — configuration variant of new small living spiking neuron with improved architecture and life support.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNewSPLifeNeuron", ...)`.
 **Instances**: `ClassName = "NNewSPLifeNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
 `NNewSPLifeNeuron` is a configuration variant of the base class `NPulseLifeNeuron` with new membrane and LT-zone architecture. Created from `NPulseLifeNeuron` with settings:
@@ -380,7 +384,7 @@ sequenceDiagram
     participant LTMembrane as NPLTZoneNeuronMembrane
     participant LTZone as NPLTZone
     participant NeuronLife as NNeuronLife
-    
+
     Storage->>Neuron: New() + Default()
     Storage->>Neuron: Build()
     Neuron->>Membrane: CreateComponent()
@@ -438,19 +442,19 @@ graph TB
     subgraph NPulseLifeNeuron["NPulseLifeNeuron Base"]
         BaseNeuron[NPulseLifeNeuron]
     end
-    
+
     subgraph NNewSPLifeNeuron["NNewSPLifeNeuron Configuration"]
         Membrane[NPNewNeuronMembrane]
         LTMembrane[NPLTZoneNeuronMembrane]
         LTZone[NPLTZone]
         NeuronLife[NNeuronLife]
     end
-    
+
     subgraph External["External Components"]
         Synapses[Synapses]
         EnergySource[Energy Source]
     end
-    
+
     BaseNeuron -->|configured as| NNewSPLifeNeuron
     NNewSPLifeNeuron -->|creates| Membrane
     NNewSPLifeNeuron -->|creates| LTMembrane
@@ -500,6 +504,10 @@ graph TB
 - LT-membrane: separate membrane for LT-zone with optimized channels
 - Life support model: automatically created and linked with LT-zone
 - Combined functionality: combines capabilities of new architecture and life support
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (life support), **15**, **4**.
 
 ### See Also
 

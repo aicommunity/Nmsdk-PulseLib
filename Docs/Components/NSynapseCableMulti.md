@@ -4,11 +4,11 @@
 
 ### Назначение
 
-**Класс**: `NSynapseCableMulti` — конфигурационный вариант импульсного синапса для мульти-кабельных моделей.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseCableMulti", ...)`.  
+**Класс**: `NSynapseCableMulti` — конфигурационный вариант импульсного синапса для мульти-кабельных моделей.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseCableMulti", ...)`.
 **Storage-инстансы**: `ClassName = "NSynapseCableMulti"` в `Bin/Configs/*/Model_*.xml`.
 
-`NSynapseCableMulti` является конфигурационным вариантом базового класса `NPulseSynapse` с предустановленными параметрами для мульти-кабельных моделей. Создается из `NPulseSynapse` с теми же параметрами, что и `NSynapseCable`, но используется в контексте мульти-кабельных мембран (`NPulseMembraneCableMulti`).
+`NSynapseCableMulti` является конфигурационным вариантом базового класса `NPulseSynapse` с предустановленными параметрами для мульти-кабельных моделей. Создается из `NPulseSynapse` с теми же параметрами, что и `NSynapseCable`, но используется в контексте мульти-кабельных мембран (`NPulseMembraneCableMulti`). Модель синаптического тока в сегментной модели (формула типа (1.3) по [C]) описывает вклад синапса в кабельное уравнение CSNM.
 
 **Использование:** Моделирование синаптической передачи в мульти-кабельных моделях, эксперименты с сложными дендритными структурами
 
@@ -72,6 +72,10 @@ synapse->Default();
 synapse->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6** (кабельная модель, CSNM); **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора (базовый класс)
@@ -86,11 +90,11 @@ synapse->Build();
 
 ### Purpose
 
-**Class**: `NSynapseCableMulti` — configuration variant of spiking synapse for multi-cable models.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseCableMulti", ...)`.  
+**Class**: `NSynapseCableMulti` — configuration variant of spiking synapse for multi-cable models.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseCableMulti", ...)`.
 **Instances**: `ClassName = "NSynapseCableMulti"` in `Bin/Configs/*/Model_*.xml`.
 
-`NSynapseCableMulti` is a configuration variant of the base class `NPulseSynapse` with preset parameters for multi-cable models. Created from `NPulseSynapse` with the same parameters as `NSynapseCable`, but used in the context of multi-cable membranes (`NPulseMembraneCableMulti`).
+`NSynapseCableMulti` is a configuration variant of the base class `NPulseSynapse` with preset parameters for multi-cable models. Created from `NPulseSynapse` with the same parameters as `NSynapseCable`, but used in the context of multi-cable membranes (`NPulseMembraneCableMulti`). The synaptic current model in the segment model (formula type (1.3) in [C]) describes the synapse contribution to the CSNM cable equation.
 
 **Usage:** Modeling synaptic transmission in multi-cable models, experiments with complex dendritic structures
 
@@ -113,7 +117,7 @@ sequenceDiagram
     participant PreNeuron
     participant Synapse as NSynapseCableMulti
     participant Channel as NPulseChannelCableMulti
-    
+
     PreNeuron->>Synapse: Input
     Synapse->>Synapse: Calculate mediator dynamics
     Synapse->>Synapse: Output = PreOutput / Resistance
@@ -153,17 +157,17 @@ graph TB
     subgraph NPulseSynapse["NPulseSynapse Base"]
         BaseSynapse[NPulseSynapse]
     end
-    
+
     subgraph NSynapseCableMulti["NSynapseCableMulti Configuration"]
         MediatorModel[Mediator Dynamics Model]
         Properties[Synapse Properties]
     end
-    
+
     subgraph External["External Components"]
         PreNeuron[Presynaptic neuron]
         Channel[NPulseChannelCableMulti]
     end
-    
+
     BaseSynapse -->|configured as| NSynapseCableMulti
     NSynapseCableMulti -->|implements| MediatorModel
     NSynapseCableMulti -->|calculates| Properties
@@ -189,6 +193,10 @@ graph TB
 - Same parameters as `NSynapseCable`, but used in multi-cable context
 - Compatible with `NPulseChannelCableMulti` and `NPulseMembraneCableMulti`
 - Optimized for multi-channel cable models
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6** (cable model, CSNM); **4**, **25**, **29**.
 
 ### See Also
 

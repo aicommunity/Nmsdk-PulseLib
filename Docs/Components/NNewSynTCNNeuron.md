@@ -45,6 +45,10 @@ classDiagram
 
 `NNewSynTCNNeuron` использует все методы базового класса `NPulseNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
@@ -208,6 +212,10 @@ graph TB
 - Dendritic structure: includes dendritic compartments with specified lengths
 - Synapse optimization: membranes optimized for efficient synapse processing
 - New architecture: uses improved membranes for more accurate modeling
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

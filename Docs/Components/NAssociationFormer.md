@@ -298,6 +298,10 @@ graph TB
 - **NumConditionalStimulDendrite**: 1 (количество дендритов для условного раздражителя)
 - **LTZThreshold**: 0.0115 (порог LT-зоны)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
+
 ### См. также
 
 - [`NConditionedReflex`](NConditionedReflex.md) — условный рефлекс
@@ -476,6 +480,10 @@ graph TB
 - **NeuronTrainerClassName**: "NNeuronTrainer" (neuron trainer)
 - **PulseGeneratorClassName**: "NPulseGeneratorTransit" (transit pulse generator)
 - **SynapseClassName**: "NPSynapseBio" (bio synapse)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
 
 ### See Also
 

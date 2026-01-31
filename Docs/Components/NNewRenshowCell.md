@@ -44,6 +44,10 @@ classDiagram
 
 `NNewRenshowCell` использует все методы базового класса `NPulseNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
@@ -212,6 +216,10 @@ graph TB
 - New architecture: uses improved membranes for more accurate modeling
 - Interneuron: acts as inhibitory interneuron in motor circuits
 - LT-membrane: separate membrane for LT-zone with optimized channels
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

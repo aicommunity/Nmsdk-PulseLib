@@ -1,8 +1,8 @@
 ## NContinuesSynLPNeuron — непрерывный LP нейрон (syn)
 
-**Класс**: `NContinuesSynLPNeuron` — непрерывный LP-нейрон в син. семействе.  
-**Префикс**: `NContinues` — **Continues** (Continuous, непрерывный вариант компонента); **Аббревиатуры**: `Syn` — **Syn**apse (синапс); `LP` — **L**ong **P**attern (длинный паттерн).  
-**Регистрация**: `UploadClass("NContinuesSynLPNeuron", ...)` в `NPulseLibrary.cpp`.  
+**Класс**: `NContinuesSynLPNeuron` — непрерывный LP-нейрон в син. семействе.
+**Префикс**: `NContinues` — **Continues** (Continuous, непрерывный вариант компонента); **Аббревиатуры**: `Syn` — **Syn**apse (синапс); `LP` — **L**ong **P**attern (длинный паттерн).
+**Регистрация**: `UploadClass("NContinuesSynLPNeuron", ...)` в `NPulseLibrary.cpp`.
 **Storage**: `ClassName = "NContinuesSynLPNeuron"`.
 
 ### Lifecycle
@@ -47,6 +47,10 @@ flowchart LR
 ClassName = NContinuesSynLPNeuron
 Name = CSLP1
 ```
+
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **25**, **29**.
 
 ---
 
@@ -104,16 +108,16 @@ graph TB
     subgraph NNeuron["NNeuron Base"]
         BaseNeuron[NNeuron]
     end
-    
+
     subgraph NContinuesSynLPNeuron["NContinuesSynLPNeuron"]
         LPProcessing[LP Processing<br/>Continuous]
     end
-    
+
     subgraph External["External Components"]
         InputSignals[Input Signals]
         ClassicNeurons[Classic Neurons]
     end
-    
+
     BaseNeuron -->|inherits| NContinuesSynLPNeuron
     InputSignals -->|signals| NContinuesSynLPNeuron
     NContinuesSynLPNeuron -->|activity| ClassicNeurons
@@ -143,3 +147,7 @@ graph TB
 - Continuous processing: Performs continuous LP calculation
 - Synaptic family: Part of synaptic neuron family
 - Classic model: Optimized for classic (non-spiking) models
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **25**, **29**.

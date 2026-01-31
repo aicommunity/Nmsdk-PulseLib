@@ -228,6 +228,10 @@ for (int step = 0; step < 1000; step++) {
 - Подходит для использования как базового класса
 - Параметры `TauS` и `Current` могут использоваться производными классами
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseSynapseCommon`](NPulseSynapseCommon.md) — общий импульсный синапс
@@ -275,6 +279,10 @@ sequenceDiagram
     Storage->>Synapse: Calculate()
     Synapse->>Synapse: ACalculate2() returns true
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

@@ -61,6 +61,10 @@ pac->Default();
 pac->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NPac`](NPac.md) — PAC компонент (базовый класс)
@@ -205,6 +209,10 @@ graph TB
 - **SecretionTC**: Matrix of secretion time constants
 - **DissociationTC**: Matrix of dissociation time constants
 - **Gain**: Matrix of gain values
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

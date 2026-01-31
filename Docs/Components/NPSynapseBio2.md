@@ -104,6 +104,10 @@ for (int step = 0; step < 1000; step++) {
 - Использует биологически реалистичные значения сопротивления и постоянной времени распада
 - Альтернативный вариант `NPSynapseBio` с теми же параметрами, но другим способом задания
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора
@@ -273,6 +277,10 @@ graph TB
 - **Resistance**: 86000000 (86 MΩ for bio-inspired models)
 - **DissociationTC**: 0.005 (5 ms time constant)
 - **SecretionTC**: 0.001 (1 ms time constant)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

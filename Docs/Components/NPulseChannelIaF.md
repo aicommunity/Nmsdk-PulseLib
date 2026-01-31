@@ -306,6 +306,10 @@ for (int step = 0; step < 1000; step++) {
 2. **Медленный нейрон**: Cm=200e-12, EL=-70e-3, TauM=50e-3, VReset=-65e-3
 3. **Высокочувствительный нейрон**: Cm=50e-12, EL=-70e-3, TauM=5e-3, VReset=-60e-3
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseChannelCommon`](NPulseChannelCommon.md) — общий импульсный канал
@@ -458,6 +462,10 @@ graph TB
 - **TauM**: 5e-3 - 50e-3 (5-50 ms)
 - **VReset**: -65e-3 - -60e-3 (-65 to -60 mV)
 - **TRef**: 0.0 - 5e-3 (0-5 ms)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### See Also
 

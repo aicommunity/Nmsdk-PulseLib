@@ -1,17 +1,19 @@
 # NSynapseStdp — базовый STDP-синапс
 
+**Каталог компонентов:** [Component-Catalog.md](../Component-Catalog.md).
+
 ## RU
 
 ### Назначение
 
-**Класс**: `NSynapseStdp` — базовый импульсный синапс с поддержкой STDP-обучения (Spike-Timing Dependent Plasticity).  
-**Аббревиатура**: `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseStdp", ...)`.  
+**Класс**: `NSynapseStdp` — базовый импульсный синапс с поддержкой STDP-обучения (Spike-Timing Dependent Plasticity).
+**Аббревиатура**: `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseStdp", ...)`.
 **Storage-инстансы**: `ClassName = "NSynapseStdp"` в `Bin/Configs/*/Model_*.xml`.
 
 `NSynapseStdp` реализует базовый импульсный синапс с механизмом STDP-обучения. Наследуется от `NPulseSynapseCommon` и добавляет отслеживание активности пресинаптического и постсинаптического нейронов, расчет влияния STDP на вес синапса. В отличие от `NPulseSynapseStdp`, не включает модель динамики медиатора.
 
-**Использование:** Моделирование синаптической пластичности с STDP, изучение механизмов обучения
+**Использование:** `Bin/Configs/SpikeSamples/STDP/STDP-Simple-01/`, `Bin/Configs/SpikeSamples/StructTrain/`; моделирование синаптической пластичности с STDP, изучение механизмов обучения
 
 ### UML-диаграмма классов
 
@@ -74,7 +76,7 @@ sequenceDiagram
     participant PostNeuron as Постсинаптический нейрон
     participant LTZone as LT-зона
     participant Channel as Канал
-    
+
     PreNeuron->>Synapse: Входной сигнал (Input)
     PostNeuron->>LTZone: Генерация спайка
     LTZone->>Synapse: PsActivityInput (или через MainOwner)
@@ -171,18 +173,18 @@ graph TB
     subgraph NPulseSynapseCommon["NPulseSynapseCommon Base"]
         BaseSynapse[NPulseSynapseCommon]
     end
-    
+
     subgraph NSynapseStdp["NSynapseStdp"]
         STDPModel[Модель STDP]
     end
-    
+
     subgraph External["Внешние компоненты"]
         PreNeuron[Пресинаптический нейрон]
         PostNeuron[Постсинаптический нейрон]
         LTZone[LT-зона]
         Channel[Канал]
     end
-    
+
     BaseSynapse -->|наследуется| NSynapseStdp
     NSynapseStdp -->|вычисляет| STDPModel
     PreNeuron -->|Input| NSynapseStdp
@@ -302,9 +304,9 @@ for (int step = 0; step < 10000; step++) {
     double stdpInfluence = synapse->StdpInfluence(0, 0);
     double xAvg = synapse->XAvg;
     double yAvg = synapse->YAvg;
-    
+
     if (step % 1000 == 0) {
-        std::cout << "Step " << step << ": Output = " << output 
+        std::cout << "Step " << step << ": Output = " << output
                   << ", STDP Influence = " << stdpInfluence
                   << ", XAvg = " << xAvg << ", YAvg = " << yAvg << std::endl;
     }
@@ -334,6 +336,7 @@ for (int step = 0; step < 10000; step++) {
 
 `NSynapseStdp` используется в экспериментах по STDP-обучению:
 
+- **SpikeSamples:** `Bin/Configs/SpikeSamples/STDP/STDP-Simple-01/`, `Bin/Configs/SpikeSamples/StructTrain/`
 - Моделирование синаптической пластичности
 - Изучение механизмов STDP
 - Обучение нейросетей с помощью STDP
@@ -343,6 +346,10 @@ for (int step = 0; step < 10000; step++) {
 1. **Стандартный STDP**: APlus=0.01, AMinus=0.012, XTau=0.02, YTau=0.01
 2. **Асимметричный STDP**: APlus=0.015, AMinus=0.01, XTau=0.03, YTau=0.01
 3. **Симметричный STDP**: APlus=0.01, AMinus=0.01, XTau=0.02, YTau=0.02
+
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### См. также
 
@@ -359,8 +366,8 @@ for (int step = 0; step < 10000; step++) {
 
 ### Purpose
 
-**Class**: `NSynapseStdp` — base spiking synapse with STDP learning (Spike-Timing Dependent Plasticity).  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseStdp", ...)`.  
+**Class**: `NSynapseStdp` — base spiking synapse with STDP learning (Spike-Timing Dependent Plasticity).
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseStdp", ...)`.
 **Instances**: `ClassName = "NSynapseStdp"` in `Bin/Configs/*/Model_*.xml`.
 
 `NSynapseStdp` implements a base spiking synapse with STDP learning mechanism. Inherits from `NPulseSynapseCommon` and adds tracking of presynaptic and postsynaptic neuron activity, calculation of STDP influence on synapse weight. Unlike `NPulseSynapseStdp`, it does not include neurotransmitter dynamics model.
@@ -395,7 +402,7 @@ sequenceDiagram
     participant Synapse as NSynapseStdp
     participant PostNeuron
     participant LTZone
-    
+
     PreNeuron->>Synapse: Input
     PostNeuron->>LTZone: Spike
     LTZone->>Synapse: PsActivityInput
@@ -467,18 +474,18 @@ graph TB
     subgraph NPulseSynapseCommon["NPulseSynapseCommon Base"]
         BaseSynapse[NPulseSynapseCommon]
     end
-    
+
     subgraph NSynapseStdp["NSynapseStdp"]
         STDPModel[STDP Model]
     end
-    
+
     subgraph External["External Components"]
         PreNeuron[Presynaptic neuron]
         PostNeuron[Postsynaptic neuron]
         LTZone[LT-zone]
         Channel[Channel]
     end
-    
+
     BaseSynapse -->|inherits| NSynapseStdp
     NSynapseStdp -->|implements| STDPModel
     PreNeuron -->|Input| NSynapseStdp
@@ -501,6 +508,10 @@ graph TB
 1. **Standard STDP**: APlus=0.01, AMinus=0.012, XTau=0.02, YTau=0.01
 2. **Asymmetric STDP**: APlus=0.015, AMinus=0.01, XTau=0.03, YTau=0.01
 3. **Symmetric STDP**: APlus=0.01, AMinus=0.01, XTau=0.02, YTau=0.02
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

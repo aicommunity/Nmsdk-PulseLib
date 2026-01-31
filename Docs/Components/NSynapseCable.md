@@ -80,6 +80,10 @@ synapse->Default();
 synapse->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора (базовый класс)
@@ -203,6 +207,10 @@ graph TB
 - Optimized parameters for cable model neurons
 - Uses mediator dynamics model from base class
 - Compatible with `NPulseChannelCable` and `NPulseMembraneCable`
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

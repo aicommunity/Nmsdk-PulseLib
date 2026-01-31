@@ -68,6 +68,10 @@ generator->Default();
 generator->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NConstGenerator`](NConstGenerator.md) — генератор постоянного тока (базовый класс)
@@ -100,6 +104,10 @@ classDiagram
         +Amplitude : double = 1.0
     }
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

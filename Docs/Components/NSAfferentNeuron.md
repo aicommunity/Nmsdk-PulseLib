@@ -222,6 +222,10 @@ graph TB
 - **MembraneClassName**: "NPulseMembrane" (мембрана)
 - **LTZoneClassName**: "NPulseLTZone" (LT-зона)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NAfferentNeuron`](NAfferentNeuron.md) — базовый афферентный нейрон
@@ -379,6 +383,10 @@ graph TB
 - Classical structure: full structure with membrane, LT-zone, receptor, and generator
 - External stimulus reception: receptor receives and transforms external stimuli
 - Complete signal processing: stimulus → receptor → membrane → LT-zone → spike
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

@@ -4,13 +4,13 @@
 
 ### Назначение
 
-**Класс**: `NPulseChannelCableMulti` — алиас для класса `NPulseChannelCable`.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelCableMulti", ...)`.  
+**Класс**: `NPulseChannelCableMulti` — алиас для класса `NPulseChannelCable`.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelCableMulti", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseChannelCableMulti"` в `Bin/Configs/*/Model_*.xml`.
 
 `NPulseChannelCableMulti` является алиасом (синонимом) для класса `NPulseChannelCable`. При создании компонента с `ClassName = "NPulseChannelCableMulti"` фактически создается экземпляр класса `NPulseChannelCable` с параметрами по умолчанию.
 
-`NPulseChannelCable` реализует кабельный импульсный канал, который использует кабельную модель для расчета распространения потенциала вдоль кабеля.
+`NPulseChannelCable` реализует кабельный импульсный канал, который использует кабельную модель для расчета распространения потенциала вдоль кабеля. Связь с кабельной теорией и параметрами сегмента (200 мкм / 20 мкм) — см. [C].
 
 **Использование:** Упрощенное именование при конфигурации, многоканальные кабельные модели
 
@@ -69,6 +69,10 @@ channel->Default();
 channel->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
+
 ### См. также
 
 - [`NPulseChannelCable`](NPulseChannelCable.md) — кабельный импульсный канал (базовый класс)
@@ -81,8 +85,8 @@ channel->Build();
 
 ### Purpose
 
-**Class**: `NPulseChannelCableMulti` — alias for `NPulseChannelCable` class.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelCableMulti", ...)`.  
+**Class**: `NPulseChannelCableMulti` — alias for `NPulseChannelCable` class.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelCableMulti", ...)`.
 **Instances**: `ClassName = "NPulseChannelCableMulti"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseChannelCableMulti` is an alias (synonym) for the `NPulseChannelCable` class. When creating a component with `ClassName = "NPulseChannelCableMulti"`, an instance of `NPulseChannelCable` with default parameters is actually created.
@@ -104,7 +108,7 @@ sequenceDiagram
     participant Channel as NPulseChannelCableMulti
     participant Synapses
     participant Membrane
-    
+
     Storage->>Channel: New() (creates NPulseChannelCable)
     Storage->>Channel: Default()
     Storage->>Channel: Build()
@@ -152,16 +156,16 @@ graph TB
     subgraph NPulseChannelCable["NPulseChannelCable Base"]
         BaseChannel[NPulseChannelCable]
     end
-    
+
     subgraph NPulseChannelCableMulti["NPulseChannelCableMulti Alias"]
         Alias[NPulseChannelCableMulti]
     end
-    
+
     subgraph External["External Components"]
         Synapses[Synapses]
         Membrane[Membrane]
     end
-    
+
     BaseChannel -->|created via| Alias
     Alias -->|alias for| BaseChannel
     Synapses -->|SumSynapticInput| Alias
@@ -179,6 +183,10 @@ graph TB
 - Alias: creates `NPulseChannelCable` instance with default parameters
 - Same functionality as `NPulseChannelCable`
 - Used in multi-channel cable membrane configurations
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
 
 ### See Also
 

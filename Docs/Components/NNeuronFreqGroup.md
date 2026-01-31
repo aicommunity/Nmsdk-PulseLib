@@ -1,7 +1,7 @@
 ## NNeuronFreqGroup — группа частотных нейронов
 
-**Класс**: `NNeuronFreqGroup` — группирует нейроны по частотным признакам.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronFreqGroup", ...)`.  
+**Класс**: `NNeuronFreqGroup` — группирует нейроны по частотным признакам.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronFreqGroup", ...)`.
 **Storage**: `ClassName = "NNeuronFreqGroup"`.
 
 ### Lifecycle
@@ -80,17 +80,17 @@ graph TB
     subgraph UComponent["UComponent Base"]
         BaseComponent[UComponent]
     end
-    
+
     subgraph NNeuronFreqGroup["NNeuronFreqGroup"]
         FreqGroup[Группа частотных нейронов]
         AffNeurons[Афферентные нейроны]
     end
-    
+
     subgraph External["Внешние компоненты"]
         InputSource[Источник входных сигналов]
         OutputTarget[Целевой компонент]
     end
-    
+
     BaseComponent -->|наследуется| NNeuronFreqGroup
     NNeuronFreqGroup -->|создает| AffNeurons
     NNeuronFreqGroup -->|управляет| FreqGroup
@@ -184,23 +184,27 @@ graph TB
     subgraph UNet["UNet Base"]
         BaseNet[UNet]
     end
-    
+
     subgraph NNeuronFreqGroup["NNeuronFreqGroup"]
         FreqGroup[Frequency neuron group]
         AffNeurons[Afferent Neurons<br/>NumAffNeurons]
     end
-    
+
     subgraph External["External Components"]
         InputSource[Input source]
         OutputTarget[Output target]
     end
-    
+
     BaseNet -->|inherits| NNeuronFreqGroup
     NNeuronFreqGroup -->|creates| AffNeurons
     NNeuronFreqGroup -->|manages| FreqGroup
     InputSource -->|signals| NNeuronFreqGroup
     NNeuronFreqGroup -->|frequency activity| OutputTarget
 ```
+
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru**, **15**, **[A]**.
 
 ### Properties
 
@@ -240,3 +244,7 @@ graph TB
 - **NumAffNeurons**: 5-20 (number of afferent neurons)
 - **MinInputFreq**: 1-10 (minimum input frequency)
 - **MaxInputFreq**: 10-100 (maximum input frequency)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **neuromodeler.ru**, **15**, **[A]**.

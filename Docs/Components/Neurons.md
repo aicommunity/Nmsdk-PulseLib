@@ -29,12 +29,20 @@ classDiagram
 
 ### Storage-инстансы
 
-Во всех случаях класс регистрируется в `NPulseLibrary.cpp` через `UploadClass("ИмяКласса", ...)`.  
+Во всех случаях класс регистрируется в `NPulseLibrary.cpp` через `UploadClass("ИмяКласса", ...)`.
 Экземпляры в `UStorage` конфигурируются через `ClassName` и параметры модели (ёмкость мембраны, токи, веса, пороги и т.п.).
+
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ---
 
 ## Neurons — families overview (Nmsdk-PulseLib)
 
 Describes base neuron types, spike models and specialised neuron classes used in SNN networks.
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 

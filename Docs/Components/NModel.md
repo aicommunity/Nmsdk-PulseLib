@@ -265,6 +265,10 @@ for (int step = 0; step < 1000; step++) {
 - Гибкость — полный контроль над структурой сети через XML
 - Совместимость — работает со всеми компонентами PulseLib
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NNet`](NNet.md) — базовая сеть с параметрами структурирования
@@ -431,6 +435,10 @@ for (int step = 0; step < 1000; step++) {
 - **Cognitive navigation**: `Bin/Configs/User/CognitiveNavigation/*/Model_*.xml`
 - **Neuron experiments**: `Bin/Configs/!OldConfigs/NM-Neurons/*/Model.xml`
 - **STDP learning**: `Bin/Configs/!OldConfigs/STDP-Simple-01/Model_*.xml`
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

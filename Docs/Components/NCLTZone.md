@@ -70,6 +70,10 @@ ltZone->Default();
 ltZone->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NLTZone`](NLTZone.md) — базовая LT-зона (базовый класс)
@@ -223,6 +227,10 @@ graph TB
 - Classic model: optimized for classic (non-spiking) neurons
 - Threshold logic: uses threshold values for signal generation
 - Potential averaging: can use averaged potential for more stable behavior
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

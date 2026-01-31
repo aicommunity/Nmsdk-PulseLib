@@ -190,6 +190,10 @@ generator->Build();
 - **Frequency**: 0.1-10.0 Гц (частота синусоиды)
 - **TimeCounter**: 0.0 (начальное значение счетчика времени)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NSource`](NSource.md) — базовый источник сигналов
@@ -300,6 +304,10 @@ graph TB
 - **Amplitude**: 0.5-2.0 (signal amplitude)
 - **Frequency**: 0.1-10.0 Hz (sinusoid frequency)
 - **TimeCounter**: 0.0 (initial time counter value)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

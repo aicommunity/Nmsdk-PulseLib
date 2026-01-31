@@ -36,6 +36,10 @@ classDiagram
 
 `NNewSynRenshowCell` использует все методы базового класса `NPulseNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
@@ -183,6 +187,10 @@ graph TB
 - Reciprocal inhibition: provides inhibitory feedback to motor neurons
 - Synapse optimization: membrane optimized for efficient synapse processing
 - Interneuron: acts as inhibitory interneuron in motor circuits
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

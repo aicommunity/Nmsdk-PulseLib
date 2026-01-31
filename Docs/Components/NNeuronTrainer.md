@@ -1,7 +1,7 @@
 ## NNeuronTrainer — тренер нейронов
 
-**Класс**: `NNeuronTrainer` — обучает нейроны по заданному правилу/данным.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronTrainer", ...)`.  
+**Класс**: `NNeuronTrainer` — обучает нейроны по заданному правилу/данным.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronTrainer", ...)`.
 **Storage**: `ClassName = "NNeuronTrainer"`.
 
 ### Lifecycle
@@ -112,18 +112,18 @@ graph TB
     subgraph UComponent["UComponent Base"]
         BaseComponent[UComponent]
     end
-    
+
     subgraph NNeuronTrainer["NNeuronTrainer"]
         Trainer[Тренер нейронов]
         Neuron[NPulseNeuron<br/>Neuron]
         Generators[NPulseGeneratorTransit<br/>Source1..SourceN]
     end
-    
+
     subgraph External["Внешние компоненты"]
         InputPattern[Входной паттерн]
         OutputTarget[Целевой компонент]
     end
-    
+
     BaseComponent -->|наследуется| NNeuronTrainer
     NNeuronTrainer -->|создает| Neuron
     NNeuronTrainer -->|создает| Generators
@@ -146,14 +146,18 @@ ClassName = NNeuronTrainer
 Name = NeuronTrainer1
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **[B]**, **1**, **6**.
+
 ---
 
 ## NNeuronTrainer — neuron trainer (EN)
 
 ### Purpose
 
-**Class**: `NNeuronTrainer` — trains neurons using provided training data/errors.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronTrainer", ...)`.  
+**Class**: `NNeuronTrainer` — trains neurons using provided training data/errors.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronTrainer", ...)`.
 **Instances**: `ClassName = "NNeuronTrainer"` in configs.
 
 `NNeuronTrainer` updates neurons using provided training data/errors and neuron activity. It supports various training modes including amplitude maximization and dendrite growth.
@@ -187,7 +191,7 @@ sequenceDiagram
     participant Trainer as NNeuronTrainer
     participant Neuron as NPulseNeuron
     participant Generators as NPulseGeneratorTransit[]
-    
+
     Storage->>Trainer: New() + Default()
     Storage->>Trainer: Build()
     Trainer->>Neuron: CreateComponent()
@@ -269,18 +273,18 @@ graph TB
     subgraph UComponent["UComponent Base"]
         BaseComponent[UComponent]
     end
-    
+
     subgraph NNeuronTrainer["NNeuronTrainer"]
         Trainer[Neuron trainer]
         Neuron[NPulseNeuron]
         Generators[NPulseGeneratorTransit<br/>Source1..SourceN]
     end
-    
+
     subgraph External["External Components"]
         InputPattern[Input pattern]
         OutputTarget[Output target]
     end
-    
+
     BaseComponent -->|inherits| NNeuronTrainer
     NNeuronTrainer -->|creates| Neuron
     NNeuronTrainer -->|creates| Generators
@@ -316,3 +320,7 @@ graph TB
 - **Neuron training**: `Bin/Configs/*/Model_*.xml` (where neuron training is required)
 - **Amplitude maximization**: experiments with optimizing neuron responses
 - **Dendrite growth**: experiments with structural plasticity
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **[B]**, **1**, **6**.

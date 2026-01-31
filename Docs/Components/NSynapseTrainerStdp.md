@@ -300,6 +300,10 @@ trainer->Build();
 - `NSynapseTrainerStdpProbabilistic` — вероятностный STDP
 - `NSynapseTrainerStdpStable` — стабильный STDP
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NSynapseTrainer`](NSynapseTrainer.md) — базовый тренер синапсов
@@ -424,6 +428,10 @@ graph TB
     PostNeuron -->|PostSynInput| NSynapseTrainerStdp
     NSynapseTrainerStdp -->|WeightOutput| Synapse
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

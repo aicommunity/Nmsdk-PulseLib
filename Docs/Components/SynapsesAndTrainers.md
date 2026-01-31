@@ -31,9 +31,17 @@ classDiagram
 - Регистрация: `NPulseLibrary.cpp` → `UploadClass("NPulseSynapseStdp", ...)`, `UploadClass("NSynapseTrainerStdp", ...)` и др.
 - В конфигурациях задаются параметры обучения (коэффициенты, окна времени, усиления и т.п.).
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**, **25**, **26**, **29**.
+
 ---
 
 ## Synapses & Trainers — overview (Nmsdk-PulseLib)
 
 Comprises all synapse and trainer classes responsible for plasticity and learning rules in SNN networks.
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**, **25**, **26**, **29**.
 

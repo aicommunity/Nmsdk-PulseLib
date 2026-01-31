@@ -186,6 +186,10 @@ for (int step = 0; step < 1000; step++) {
 - Упрощенное именование: алиас позволяет использовать более короткое имя в конфигурациях
 - Классические модели: предназначен для генерации токов для классических (не импульсных) нейронных сетей
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NSource`](NSource.md) — базовый источник сигналов
@@ -295,6 +299,10 @@ graph TB
 
 - **Classic networks**: `Bin/Configs/!OldConfigs/*/Model_*.xml` (where classic neuron models are used)
 - **Current generation**: creating input currents for classic neural models
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

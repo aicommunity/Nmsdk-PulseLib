@@ -251,6 +251,10 @@ neuron->Build();
 - **InhGeneratorClassName**: "NPNeuronNegCGeneratorBio" (тормозной генератор)
 - **LTMembraneClassName**: "" (без LT-мембраны)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -405,6 +409,10 @@ graph TB
 - Biologically plausible: all components use bio-inspired parameters
 - Realistic thresholds: LT-zone uses biological threshold values (-0.055 for spike, -0.1 for stop)
 - Complete bio setup: includes both excitatory and inhibitory generators
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

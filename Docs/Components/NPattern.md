@@ -285,6 +285,10 @@ pattern->Build();
 - Задержки: каждый генератор имеет задержку `Delay + InputPattern(i)`, что создает временной паттерн
 - Суммирование выходов: выходные сигналы всех генераторов суммируются в один паттерн
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NSource`](NSource.md) — базовый источник сигналов
@@ -453,6 +457,10 @@ graph TB
 - Automatic generator creation: creates separate generator for each `InputPattern` element
 - Delays: each generator has delay `Delay + InputPattern(i)`, creating temporal pattern
 - Output summation: output signals from all generators are summed into one pattern
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

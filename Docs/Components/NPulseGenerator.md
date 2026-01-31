@@ -1,16 +1,18 @@
 # NPulseGenerator — генератор импульсов
 
+**Каталог компонентов:** [Component-Catalog.md](../Component-Catalog.md).
+
 ## RU
 
 ### Назначение
 
-**Класс**: `NPulseGenerator` — генератор импульсов (спайков) с заданной частотой, амплитудой и длительностью.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseGenerator", ...)`.  
+**Класс**: `NPulseGenerator` — генератор импульсов (спайков) с заданной частотой, амплитудой и длительностью.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseGenerator", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseGenerator"` в `Bin/Configs/*/Model_*.xml`.
 
 `NPulseGenerator` реализует генератор импульсов для создания входных сигналов в импульсных нейронных сетях. Наследуется от `NSource` и генерирует последовательность импульсов с заданными параметрами: частотой (`Frequency`), длительностью (`PulseLength`), амплитудой (`Amplitude`), задержкой (`Delay`) и отклонением частоты (`FrequencyDeviation`).
 
-**Использование:** Генерация входных импульсов для нейронных сетей, создание тестовых сигналов
+**Использование:** `Bin/Configs/SpikeSamples/STDP/STDP-Simple-01/`, `Bin/Configs/SpikeSamples/NM-Neurons/`, `Bin/Configs/SpikeSamples/StructTrain/`; генерация входных импульсов для нейронных сетей, создание тестовых сигналов
 
 ### UML-диаграмма классов
 
@@ -59,7 +61,7 @@ sequenceDiagram
     participant Env as Environment
     participant Gen as NPulseGenerator
     participant Net as NNet
-    
+
     Env->>Gen: GetTime()
     Gen->>Gen: ACalculate()
     Gen->>Gen: Проверка Delay
@@ -176,18 +178,18 @@ graph TB
     subgraph NSource["NSource Base"]
         BaseSource[NSource]
     end
-    
+
     subgraph NPulseGenerator["NPulseGenerator"]
         FrequencyControl[Управление частотой]
         PulseControl[Управление импульсами]
         TimeTracking[Отслеживание времен]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Environment[Environment]
         Network[NNet]
     end
-    
+
     BaseSource -->|наследуется| NPulseGenerator
     NPulseGenerator -->|обрабатывает| FrequencyControl
     NPulseGenerator -->|обрабатывает| PulseControl
@@ -319,6 +321,10 @@ generator->Build();
 - Отслеживание времен спайков
 - Расчет средней частоты
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NSource`](NSource.md) — базовый источник сигналов
@@ -334,8 +340,8 @@ generator->Build();
 
 ### Purpose
 
-**Class**: `NPulseGenerator` — pulse (spike) generator with specified frequency, amplitude, and duration.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseGenerator", ...)`.  
+**Class**: `NPulseGenerator` — pulse (spike) generator with specified frequency, amplitude, and duration.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseGenerator", ...)`.
 **Instances**: `ClassName = "NPulseGenerator"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseGenerator` implements pulse generator for creating input signals in spiking neural networks. Inherits from `NSource` and generates pulse sequence with specified parameters: frequency (`Frequency`), duration (`PulseLength`), amplitude (`Amplitude`), delay (`Delay`), and frequency deviation (`FrequencyDeviation`).
@@ -365,7 +371,7 @@ sequenceDiagram
     participant Storage
     participant Generator as NPulseGenerator
     participant Environment
-    
+
     Storage->>Generator: New() + Default()
     Storage->>Generator: Build()
     loop Each step
@@ -437,18 +443,18 @@ graph TB
     subgraph NSource["NSource Base"]
         BaseSource[NSource]
     end
-    
+
     subgraph NPulseGenerator["NPulseGenerator"]
         GeneratorModel[Generator Model]
         PulseCounter[Pulse Counter]
         FrequencyController[Frequency Controller]
     end
-    
+
     subgraph External["External Components"]
         Environment[Environment]
         OutputTarget[Target Component]
     end
-    
+
     BaseSource -->|inherits| NPulseGenerator
     NPulseGenerator -->|implements| GeneratorModel
     NPulseGenerator -->|uses| PulseCounter
@@ -495,6 +501,10 @@ graph TB
 - **PulseLength**: 0.001 sec (pulse duration)
 - **Amplitude**: 1.0 (pulse amplitude)
 - **Delay**: 0.0 sec (generation start delay)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

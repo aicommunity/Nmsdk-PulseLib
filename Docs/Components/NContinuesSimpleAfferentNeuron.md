@@ -255,6 +255,10 @@ for (int step = 0; step < 1000; step++) {
 - Непрерывный выход: LT-зона выдает непрерывный сигнал вместо дискретных спайков
 - Упрощенное моделирование: минимальная структура для базовых сенсорных систем
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NAfferentNeuron`](NAfferentNeuron.md) — базовый афферентный нейрон
@@ -412,6 +416,10 @@ graph TB
 - Simple structure: includes only LT-zone and receptor, without membrane
 - Continuous output: LT-zone produces continuous signal instead of discrete spikes
 - Simplified modeling: minimal structure for basic sensory systems
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

@@ -267,6 +267,10 @@ neuron->Build();
 - Совместим с кабельной моделью
 - ThresholdOff = -0.07 (вместо -0.1 в версии 1)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -434,6 +438,10 @@ graph TB
 - Cable model compatibility: version 2 components support cable model integration
 - Bio-inspired parameters: maintains biological realism with improved compatibility
 - Enhanced thresholds: refined threshold values for better spike control
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

@@ -91,6 +91,10 @@ classDiagram
   2. Устанавливает задержки генераторов на основе `MatrixDelay`
   3. Обновляет состояние генерации
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NPattern`](NPattern.md) — паттерн данных
@@ -308,6 +312,10 @@ graph TB
 - **NumFeatures**: 5-50 (number of features in dataset)
 - **NumSamples**: 10-1000 (number of samples in dataset)
 - **Tay**: 0.1-1.0 (parameter for delay calculation)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

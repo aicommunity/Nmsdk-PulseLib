@@ -283,6 +283,10 @@ for (int step = 0; step < 1000; step++) {
 - **SynapseClassName**: "NPHebbSynapse" (синапс Хебба)
 - **Параметры синапсов Хебба**: Min=10.0, Mout=10.0, Md=0.001, Kin=100.0, Kout=100.0, GdGain=1.0, GsGain=10.0
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования (базовый класс)
@@ -466,6 +470,10 @@ graph TB
 - **MembraneClassName**: "NPNeuronHebbMembrane" (membrane with Hebb support)
 - **LTZoneClassName**: "NPulseLTZoneCommon" (standard LT-zone)
 - **NumSomaMembraneParts**: 1 (one soma part)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

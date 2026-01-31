@@ -291,6 +291,10 @@ for (int step = 0; step < 1000; step++) {
 3. **Хаотический спайкующий (CH)**: A=0.02, B=0.2, C=-50, D=2
 4. **Быстро спайкующий (FS)**: A=0.1, B=0.2, C=-65, D=2
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseChannelCommon`](NPulseChannelCommon.md) — общий импульсный канал
@@ -444,6 +448,10 @@ graph TB
 2. **Intrinsically bursting (IB)**: A=0.02, B=0.2, C=-55, D=4
 3. **Chattering (CH)**: A=0.02, B=0.2, C=-50, D=2
 4. **Fast spiking (FS)**: A=0.1, B=0.2, C=-65, D=2
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### See Also
 

@@ -133,6 +133,10 @@ channel->Build();
 - Временная константа: `TimeConstant = Resistance * Capacity`
 - Обратная связь: поддержка обратной связи от мембраны через `FBResistance`
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseChannelCommon`](NPulseChannelCommon.md) — общий импульсный канал
@@ -252,6 +256,10 @@ graph TB
     NPulseChannel -->|Output| Membrane
     Membrane -->|Feedback| NPulseChannel
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

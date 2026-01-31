@@ -4,11 +4,11 @@
 
 ### Назначение
 
-**Класс**: `NPulseChannelCable` — импульсный канал для кабельной модели (cable model).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelCable", ...)`.  
+**Класс**: `NPulseChannelCable` — импульсный канал для кабельной модели (cable model).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelCable", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseChannelCable"` в `Bin/Configs/*/Model_*.xml`.
 
-`NPulseChannelCable` реализует кабельный импульсный канал, который использует кабельную модель для расчета распространения потенциала вдоль кабеля. Наследуется от `NPulseChannelClassic` и добавляет параметры кабельной модели: потенциал покоя (`EL`), внутреннее сопротивление (`Ri`), сопротивление мембраны кабеля (`CableMembraneResistance`), диаметр (`D`), сопротивление мембраны (`Rm`), емкость мембраны (`Cm`), максимальная длина модели (`ModelMaxLength`), шаги сетки (`dx`, `dt`).
+`NPulseChannelCable` реализует кабельный импульсный канал, который использует кабельную модель для расчета распространения потенциала вдоль кабеля. Наследуется от `NPulseChannelClassic` и добавляет параметры кабельной модели: потенциал покоя (`EL`), внутреннее сопротивление (`Ri`), сопротивление мембраны кабеля (`CableMembraneResistance`), диаметр (`D`), сопротивление мембраны (`Rm`), емкость мембраны (`Cm`), максимальная длина модели (`ModelMaxLength`), шаги сетки (`dx`, `dt`). Продольный ток и осевое сопротивление связаны с кабельной теорией (см. [C]); типичные ориентиры длины и диаметра сегмента — 200 мкм и 20 мкм по [C].
 
 **Использование:** Кабельная модель распространения потенциала, моделирование дендритов
 
@@ -67,7 +67,7 @@ sequenceDiagram
     participant Channel as NPulseChannelCable
     participant Synapses as Синапсы
     participant Membrane as Мембрана
-    
+
     Storage->>Channel: New()
     Storage->>Channel: Default()
     Channel->>Channel: ADefault()
@@ -77,7 +77,7 @@ sequenceDiagram
     Channel->>Channel: Инициализация сетки<br/>x_points_number, t_points_number
     Channel->>Channel: Инициализация Vm матрицы
     Channel-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Synapses->>Channel: Входные сигналы
         Storage->>Channel: Calculate()
@@ -185,18 +185,18 @@ graph TB
     subgraph NPulseChannelClassic["NPulseChannelClassic Base"]
         BaseChannel[NPulseChannelClassic]
     end
-    
+
     subgraph NPulseChannelCable["NPulseChannelCable"]
         CableModel[Кабельная модель]
         GridSystem[Система сетки]
         VmMatrix[Матрица потенциалов Vm]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Synapses[Синапсы]
         Membrane[Мембрана]
     end
-    
+
     BaseChannel -->|наследуется| NPulseChannelCable
     NPulseChannelCable -->|реализует| CableModel
     NPulseChannelCable -->|использует| GridSystem
@@ -316,6 +316,10 @@ channel->Build();
 - **dt**: 1.0e-7 (0.1 мкс, шаг по времени)
 - **CalcMode**: false (вычислять D из CableMembraneResistance и Rm)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
+
 ### См. также
 
 - [`NPulseChannelClassic`](NPulseChannelClassic.md) — классический импульсный канал (базовый класс)
@@ -329,8 +333,8 @@ channel->Build();
 
 ### Purpose
 
-**Class**: `NPulseChannelCable` — spiking channel for cable model.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelCable", ...)`.  
+**Class**: `NPulseChannelCable` — spiking channel for cable model.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseChannelCable", ...)`.
 **Instances**: `ClassName = "NPulseChannelCable"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseChannelCable` implements cable spiking channel that uses cable model for calculating potential propagation along cable. Inherits from `NPulseChannelClassic` and adds cable model parameters: resting potential (`EL`), internal resistance (`Ri`), cable membrane resistance (`CableMembraneResistance`), diameter (`D`), membrane resistance (`Rm`), membrane capacitance (`Cm`), model max length (`ModelMaxLength`), grid steps (`dx`, `dt`).
@@ -364,7 +368,7 @@ sequenceDiagram
     participant Channel as NPulseChannelCable
     participant Synapses
     participant Membrane
-    
+
     Storage->>Channel: New() + Default()
     Storage->>Channel: Build()
     Channel->>Channel: Initialize grid
@@ -420,7 +424,7 @@ sequenceDiagram
     participant Channel as NPulseChannelCable
     participant Synapses
     participant Membrane
-    
+
     Storage->>Channel: New() + Default()
     Storage->>Channel: Build()
     Channel->>Channel: Initialize grid
@@ -477,18 +481,18 @@ graph TB
     subgraph NPulseChannelClassic["NPulseChannelClassic Base"]
         BaseChannel[NPulseChannelClassic]
     end
-    
+
     subgraph NPulseChannelCable["NPulseChannelCable"]
         CableModel[Кабельная модель]
         GridSystem[Система сетки]
         VmMatrix[Матрица Vm]
     end
-    
+
     subgraph External["External Components"]
         Synapses[Синапсы]
         Membrane[Мембрана]
     end
-    
+
     BaseChannel -->|inherits| NPulseChannelCable
     NPulseChannelCable -->|implements| CableModel
     NPulseChannelCable -->|uses| GridSystem
@@ -497,6 +501,10 @@ graph TB
     NPulseChannelCable -->|Output| Membrane
     Membrane -->|Feedback| NPulseChannelCable
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
 
 ### See Also
 

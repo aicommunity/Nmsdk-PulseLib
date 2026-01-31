@@ -1,14 +1,16 @@
 # NLifeNet — сетевая модель Life (Nmsdk-PulseLib)
 
+**Каталог компонентов:** [Component-Catalog.md](../Component-Catalog.md).
+
 ## RU
 
 ### Назначение
 
-**Класс**: `NLifeNet` — сеть с жизненным циклом/метриками нейронов.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NLifeNet", ...)`.  
+**Класс**: `NLifeNet` — сеть с жизненным циклом/метриками нейронов.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NLifeNet", ...)`.
 **Storage**: `ClassName = "NLifeNet"`.
 
-`NLifeNet` расширяет `NNet` функциональностью управления жизненным циклом нейронов. Сеть отслеживает энергетический баланс, износ нейронов, формирует ансамбли активных нейронов и управляет делением клеток. Используется для моделирования биологически инспирированных сетей с адаптивной структурой.
+`NLifeNet` расширяет `NNet` функциональностью управления жизненным циклом нейронов. Сеть отслеживает энергетический баланс, износ нейронов, формирует ансамбли активных нейронов и управляет делением клеток. Используется для моделирования биологически инспирированных сетей с адаптивной структурой. В нейроморфных системах [A] такие сети поддерживают структурную адаптацию (деление клеток, ансамбли), параметрическую адаптацию и связаны с механизмами моторной памяти и управления движением по траектории.
 
 ### UML-диаграмма классов
 
@@ -71,7 +73,7 @@ sequenceDiagram
     participant LifeNet as NLifeNet
     participant NeuronLife as NNeuronLife
     participant Ensemble as Ансамбль
-    
+
     Config->>LifeNet: New() + Default()
     LifeNet->>LifeNet: ADefault()
     Note over LifeNet: Инициализация параметров<br/>AvailableEnergy, EnsembleThreshold, etc.
@@ -81,23 +83,23 @@ sequenceDiagram
     LifeNet->>LifeNet: NNet::Build()
     LifeNet->>NeuronLife: Регистрация в NeuronsLife
     LifeNet-->>Config: Ready = true
-    
+
     loop Каждый шаг симуляции
         Config->>LifeNet: Calculate()
         LifeNet->>LifeNet: ACalculate()
         LifeNet->>LifeNet: NNet::ACalculate()
         LifeNet->>LifeNet: Обновление SummaryEnergy, SummaryFeeling
         LifeNet->>LifeNet: Обновление SummaryWearOut, SummaryFrequency
-        
+
         alt EnsembleCalculationStep достигнут
             LifeNet->>LifeNet: CalcEnsembles(EnsembleThreshold)
             LifeNet->>Ensemble: Формирование ансамблей
             LifeNet->>LifeNet: CalcEnsembleLinks(EnsembleLinkThreshold)
         end
-        
+
         LifeNet-->>Config: Output1..Output10, Summary метрики
     end
-    
+
     alt CellDivisionFlag == true и достаточно энергии
         LifeNet->>LifeNet: Деление клеток
     end
@@ -174,19 +176,19 @@ graph TB
     subgraph NNet["NNet Base"]
         BaseNet[NNet]
     end
-    
+
     subgraph NLifeNet["NLifeNet"]
         LifeComponents[Компоненты с жизненным циклом]
         Ensembles[Ансамбли нейронов]
         Metrics[Метрики сети]
     end
-    
+
     subgraph LifeComponents["Life Components"]
         NeuronLife[NNeuronLife]
         LifeNeuron[NPulseLifeNeuron]
         HebbSynapse[NPulseHebbSynapse]
     end
-    
+
     BaseNet -->|наследуется| NLifeNet
     NLifeNet -->|содержит| LifeComponents
     NLifeNet -->|формирует| Ensembles
@@ -305,7 +307,7 @@ lifeNet->Build();
 // Использование
 for (int step = 0; step < 1000; step++) {
     lifeNet->Calculate();
-    
+
     // Периодический вывод метрик
     if (step % 100 == 0) {
         std::cout << "Energy: " << lifeNet->SummaryEnergy << std::endl;
@@ -345,6 +347,10 @@ for (int step = 0; step < 1000; step++) {
 - Моделирование эволюции нейронных ансамблей
 - Исследования энергетического баланса в нейросетях
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]** (структурная адаптация, моторная память); **neuromodeler.ru** (жизнеобеспечение, ансамбли), **15**.
+
 ### См. также
 
 - [`NNet`](NNet.md) — базовая сеть
@@ -358,11 +364,11 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NLifeNet` — network with neuron lifecycle/metrics.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NLifeNet", ...)`.  
+**Class**: `NLifeNet` — network with neuron lifecycle/metrics.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NLifeNet", ...)`.
 **Storage**: `ClassName = "NLifeNet"`.
 
-`NLifeNet` extends `NNet` with neuron lifecycle management functionality. The network tracks energy balance, neuron wear, forms ensembles of active neurons, and manages cell division. Used for modeling biologically inspired networks with adaptive structure.
+`NLifeNet` extends `NNet` with neuron lifecycle management functionality. The network tracks energy balance, neuron wear, forms ensembles of active neurons, and manages cell division. Used for modeling biologically inspired networks with adaptive structure. In neuromorphic systems [A], such networks support structural adaptation (cell division, ensembles), parametric adaptation, and relate to motor memory and trajectory control mechanisms.
 
 ### UML Class Diagram
 
@@ -424,7 +430,7 @@ sequenceDiagram
     participant LifeNet as NLifeNet
     participant NeuronLife as NNeuronLife
     participant Ensemble as Ensemble
-    
+
     Config->>LifeNet: New() + Default()
     LifeNet->>LifeNet: ADefault()
     Note over LifeNet: Initialize parameters<br/>AvailableEnergy, EnsembleThreshold, etc.
@@ -434,20 +440,20 @@ sequenceDiagram
     LifeNet->>LifeNet: NNet::Build()
     LifeNet->>NeuronLife: Register in NeuronsLife
     LifeNet-->>Config: Ready = true
-    
+
     loop Each simulation step
         Config->>LifeNet: Calculate()
         LifeNet->>LifeNet: ACalculate()
         LifeNet->>LifeNet: NNet::ACalculate()
         LifeNet->>LifeNet: Update SummaryEnergy, SummaryFeeling
         LifeNet->>LifeNet: Update SummaryWearOut, SummaryFrequency
-        
+
         alt EnsembleCalculationStep reached
             LifeNet->>LifeNet: CalcEnsembles(EnsembleThreshold)
             LifeNet->>Ensemble: Form ensembles
             LifeNet->>LifeNet: CalcEnsembleLinks(EnsembleLinkThreshold)
         end
-        
+
         LifeNet-->>Config: Output1..Output10, Summary metrics
     end
 ```
@@ -495,20 +501,20 @@ graph TB
     subgraph NNet["NNet Base"]
         BaseNet[NNet]
     end
-    
+
     subgraph NLifeNet["NLifeNet"]
         LifeNet[Life Network]
         NeuronsLife[NNeuronLife<br/>Neurons Life]
         Ensembles[Ensembles<br/>Active Neuron Groups]
         EnsembleLinks[Ensemble Links<br/>Inter-Ensemble Connections]
     end
-    
+
     subgraph External["External Components"]
         LifeNeurons[NPulseLifeNeuron<br/>Life Neurons]
         EnergySource[Energy Source]
         OutputTarget[Output Target]
     end
-    
+
     BaseNet -->|inherits| NLifeNet
     NLifeNet -->|manages| NeuronsLife
     NLifeNet -->|forms| Ensembles
@@ -572,6 +578,10 @@ graph TB
 - **EnsembleThreshold**: 0.1-1.0 (threshold for ensemble formation)
 - **EnsembleLinkThreshold**: 0.1-1.0 (threshold for ensemble link formation)
 - **EnsembleCalculationStep**: 0.0 (calculate every step) or >0 (calculate at intervals)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]** (structural adaptation, motor memory); **neuromodeler.ru** (life support, ensembles), **15**.
 
 ### See Also
 

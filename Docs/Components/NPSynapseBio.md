@@ -249,6 +249,10 @@ for (int step = 0; step < 1000; step++) {
 - **DissociationTC**: 0.005 (5 мс) — постоянная времени распада медиатора
 - **SecretionTC**: 0.001 (1 мс) — постоянная времени секреции медиатора
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора
@@ -331,6 +335,10 @@ flowchart TD
     CalcOutput --> ApplyWeight[Output = Output * Weight]
     ApplyWeight --> End([End])
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

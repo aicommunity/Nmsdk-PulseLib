@@ -346,6 +346,10 @@ generator->Build();
 - **PatternFrequency**: 5.0-20.0 Гц (частота при активации паттерна)
 - **PatternDuration**: 0.5-2.0 сек (длительность паттерна)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NPulseGenerator`](NPulseGenerator.md) — базовый генератор импульсов
@@ -481,6 +485,10 @@ graph TB
 - **UsePatternOutput**: true (for controlled generation)
 - **PatternFrequency**: 5.0-20.0 Hz (frequency when pattern is activated)
 - **PatternDuration**: 0.5-2.0 sec (pattern duration)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

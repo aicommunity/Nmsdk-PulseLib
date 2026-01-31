@@ -114,6 +114,10 @@ classDiagram
 - Управление синапсами: автоматическое создание и управление синапсами
 - Обратная связь: поддержка обратной связи от LT-зоны через `InputFeedbackSignal`
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseMembraneCommon`](NPulseMembraneCommon.md) — общая импульсная мембрана
@@ -230,6 +234,10 @@ graph TB
     LTZone -->|InputFeedbackSignal| NPulseMembrane
     NPulseMembrane -->|SumPotential| Neuron
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

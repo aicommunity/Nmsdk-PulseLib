@@ -470,6 +470,10 @@ for (int step = 0; step < 1000; step++) {
 - **LTZThreshold**: 0.01-0.1 (порог генерации спайков)
 - **TrainingLTZThreshold**: 50-200 (более высокий порог для обучения)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
+
 ### См. также
 
 - [`NClassifier`](NClassifier.md) — базовый классификатор
@@ -659,6 +663,10 @@ graph TB
 - **NeuronTrainerClassName**: "NNeuronTrainer" (neuron trainer)
 - **PulseGeneratorClassName**: "NPulseGeneratorTransit" (transit pulse generator)
 - **SynapseClassName**: "NPulseSynapse" (pulse synapse)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
 
 ### See Also
 

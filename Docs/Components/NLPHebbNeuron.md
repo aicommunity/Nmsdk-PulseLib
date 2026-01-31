@@ -286,6 +286,10 @@ for (int step = 0; step < 1000; step++) {
 - Обучение Хебба: синапсы автоматически обновляют веса на основе корреляции пре- и постсинаптической активности
 - Мотивационные сигналы: поддержка мотивационных входов для модуляции обучения
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -449,6 +453,10 @@ graph TB
 - Three soma parts: large neurons have more complex structure with three soma parts
 - Hebbian learning: synapses automatically update weights based on pre- and postsynaptic activity correlation
 - Motivational signals: support for motivational inputs to modulate learning
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

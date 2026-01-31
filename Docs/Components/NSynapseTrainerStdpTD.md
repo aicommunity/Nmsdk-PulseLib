@@ -101,6 +101,10 @@ trainer->WMax = 1.0;
 trainer->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NSynapseTrainerStdp`](NSynapseTrainerStdp.md) — базовый STDP-тренер
@@ -137,6 +141,10 @@ classDiagram
         +YAvg : double
     }
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

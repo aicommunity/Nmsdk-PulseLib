@@ -109,6 +109,10 @@ for (int step = 0; step < 1000; step++) {
 - Обратная совместимость со старыми конфигурациями
 - Стандартные параметры по умолчанию
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NPulseSynapseStdp`](NPulseSynapseStdp.md) — импульсный STDP-синапс с моделью медиатора
@@ -284,6 +288,10 @@ graph TB
 - STDP model: Uses spike-timing-dependent plasticity for weight adaptation
 - Mediator model: Uses mediator dynamics for synapse processing
 - Standard parameters: Uses standard default parameters
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

@@ -4,11 +4,11 @@
 
 ### Назначение
 
-**Класс**: `NSynapseTrainerStdpWD` — STDP-тренер, зависящий от веса напрямую (Weight-Dependent).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpWD", ...)`.  
+**Класс**: `NSynapseTrainerStdpWD` — STDP-тренер, зависящий от веса напрямую (Weight-Dependent).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpWD", ...)`.
 **Storage-инстансы**: `ClassName = "NSynapseTrainerStdpWD"` в `Bin/Configs/*/Model_*.xml`.
 
-`NSynapseTrainerStdpWD` реализует STDP-обучение, зависящее от веса напрямую. Наследуется от `NSynapseTrainerStdp` и используется как базовый класс для вероятностных и стабильных вариантов STDP. В отличие от `NSynapseTrainerStdpTD`, не использует временные константы для средних значений активности.
+`NSynapseTrainerStdpWD` реализует STDP-обучение, зависящее от веса напрямую. Наследуется от `NSynapseTrainerStdp` и используется как базовый класс для вероятностных и стабильных вариантов STDP. В отличие от `NSynapseTrainerStdpTD`, не использует временные константы для средних значений активности. Интегральная схема изменения веса (уравнения (2.9)–(2.10) в [B]) использует переменные x1, x2, y1, y2 для усреднённой активности.
 
 **Использование:** Базовый класс для STDP-тренеров, зависящих от веса, вероятностные и стабильные варианты STDP
 
@@ -76,6 +76,10 @@ trainer->WMax = 1.0;
 trainer->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NSynapseTrainerStdp`](NSynapseTrainerStdp.md) — базовый STDP-тренер
@@ -89,11 +93,11 @@ trainer->Build();
 
 ### Purpose
 
-**Class**: `NSynapseTrainerStdpWD` — weight-dependent STDP trainer.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpWD", ...)`.  
+**Class**: `NSynapseTrainerStdpWD` — weight-dependent STDP trainer.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpWD", ...)`.
 **Instances**: `ClassName = "NSynapseTrainerStdpWD"` in `Bin/Configs/*/Model_*.xml`.
 
-`NSynapseTrainerStdpWD` implements weight-dependent STDP learning. Inherits from `NSynapseTrainerStdp` and is used as base class for probabilistic and stable STDP variants.
+`NSynapseTrainerStdpWD` implements weight-dependent STDP learning. Inherits from `NSynapseTrainerStdp` and is used as base class for probabilistic and stable STDP variants. Integral weight update (equations (2.9)–(2.10) in [B]) uses variables x1, x2, y1, y2 for averaged activity.
 
 **Usage:** Base class for weight-dependent STDP trainers, probabilistic and stable STDP variants
 
@@ -105,6 +109,10 @@ classDiagram
     NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpProbabilistic
     NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpStable
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

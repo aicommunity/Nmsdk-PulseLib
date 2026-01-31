@@ -79,6 +79,10 @@ membrane->Default();
 membrane->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
+
 ### См. также
 
 - [`NPulseMembrane`](NPulseMembrane.md) — базовая импульсная мембрана (базовый класс)
@@ -212,6 +216,10 @@ graph TB
 - **InhChannelClassName**: "" (inhibitory channel not used)
 - **SynapseClassName**: "NSynapseCableMulti" (multi-channel cable synapse)
 - **FeedbackGain**: 0.7 (feedback gain)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
 
 ### See Also
 

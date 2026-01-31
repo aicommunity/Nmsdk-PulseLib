@@ -1,8 +1,8 @@
 ## NContinuesSynMotoneuron — непрерывный мотонейрон (syn)
 
-**Класс**: `NContinuesSynMotoneuron` — вариант мотонейрона с непрерывной обработкой, син. семейство.  
-**Префикс**: `NContinues` — **Continues** (Continuous, непрерывный вариант компонента); **Аббревиатура**: `Syn` — **Syn**apse (синапс).  
-**Регистрация**: `UploadClass("NContinuesSynMotoneuron", ...)`.  
+**Класс**: `NContinuesSynMotoneuron` — вариант мотонейрона с непрерывной обработкой, син. семейство.
+**Префикс**: `NContinues` — **Continues** (Continuous, непрерывный вариант компонента); **Аббревиатура**: `Syn` — **Syn**apse (синапс).
+**Регистрация**: `UploadClass("NContinuesSynMotoneuron", ...)`.
 **Storage**: `ClassName = "NContinuesSynMotoneuron"`.
 
 ### Lifecycle
@@ -47,6 +47,10 @@ flowchart LR
 ClassName = NContinuesSynMotoneuron
 Name = CSMot1
 ```
+
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **28**, **31**.
 
 ---
 
@@ -104,16 +108,16 @@ graph TB
     subgraph NNeuron["NNeuron Base"]
         BaseNeuron[NNeuron]
     end
-    
+
     subgraph NContinuesSynMotoneuron["NContinuesSynMotoneuron"]
         MotorProcessing[Motor Processing<br/>Continuous]
     end
-    
+
     subgraph External["External Components"]
         InputSignals[Input Signals]
         Muscles[Muscles]
     end
-    
+
     BaseNeuron -->|inherits| NContinuesSynMotoneuron
     InputSignals -->|signals| NContinuesSynMotoneuron
     NContinuesSynMotoneuron -->|motor activity| Muscles
@@ -143,3 +147,7 @@ graph TB
 - Continuous processing: Performs continuous motor neuron calculation
 - Synaptic family: Part of synaptic neuron family
 - Motor activity: Generates motor activity for muscle control
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **28**, **31**.

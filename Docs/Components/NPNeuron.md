@@ -255,6 +255,10 @@ for (int step = 0; step < 1000; step++) {
 - Стандартная структура: включает мембрану, LT-зону и генераторы
 - Гибкость: может быть настроен для различных экспериментов
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования (базовый класс)
@@ -413,6 +417,10 @@ graph TB
 - Base component: used as a basis for creating other neuron types
 - Standard structure: includes membrane, LT-zone and generators
 - Flexibility: can be configured for various experiments
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

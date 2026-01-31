@@ -4,12 +4,12 @@
 
 ### Назначение
 
-**Класс**: `NSynapseTrainerStdpClassicDiscrete` — классический STDP с дискретной реализацией.  
-**Аббревиатура**: `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpClassicDiscrete", ...)`.  
+**Класс**: `NSynapseTrainerStdpClassicDiscrete` — классический STDP с дискретной реализацией.
+**Аббревиатура**: `STDP` — **S**pike-**T**iming **D**ependent **P**lasticity (пластичность, зависящая от времени спайков).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpClassicDiscrete", ...)`.
 **Storage-инстансы**: `ClassName = "NSynapseTrainerStdpClassicDiscrete"` в `Bin/Configs/*/Model_*.xml`.
 
-`NSynapseTrainerStdpClassicDiscrete` реализует классический STDP с дискретной реализацией. Наследуется от `NSynapseTrainerStdpTD` и использует параметр `Mu` для управления зависимостью изменения веса от текущего веса. Формула изменения веса зависит от разности времен спайков (`TDiff`) и текущего веса.
+`NSynapseTrainerStdpClassicDiscrete` реализует классический STDP с дискретной реализацией. Наследуется от `NSynapseTrainerStdpTD` и использует параметр `Mu` для управления зависимостью изменения веса от текущего веса. Формула изменения веса зависит от разности времен спайков (`TDiff`) и текущего веса. Соответствует дискретному изменению веса по ВКР Зарубина: LTP/LTD задаются разностью времён спайков Δt, зависимость от веса — через w/w_max (формула (2.8) в [B]).
 
 **Использование:** Классический STDP с дискретной реализацией, зависимость от веса
 
@@ -51,18 +51,18 @@ sequenceDiagram
     participant PostNeuron as Постсинаптический нейрон
     participant Trainer as NSynapseTrainerStdpClassicDiscrete
     participant Synapse as NPulseSynapse
-    
+
     PreNeuron->>Trainer: PreSynInput (спайк)
     Trainer->>Trainer: ACalculate()
     Trainer->>Trainer: NSynapseTrainerStdpTD::ACalculate()
     Trainer->>Trainer: Обновление TPre
     Note over Trainer: TPre = текущее время<br/>IsInputPulseActive = true
-    
+
     PostNeuron->>Trainer: PostSynInput (спайк)
     Trainer->>Trainer: ACalculate()
     Trainer->>Trainer: Обновление TPost
     Note over Trainer: TPost = текущее время<br/>IsOutputPulseActive = true
-    
+
     Trainer->>Trainer: Вычисление TDiff = TPost - TPre
     Trainer->>Trainer: Проверка TDiff
     alt TDiff > 0 (LTP)
@@ -168,18 +168,18 @@ graph TB
     subgraph NSynapseTrainerStdpTD["NSynapseTrainerStdpTD Base"]
         BaseTrainer[NSynapseTrainerStdpTD]
     end
-    
+
     subgraph NSynapseTrainerStdpClassicDiscrete["NSynapseTrainerStdpClassicDiscrete"]
         ClassicSTDP[Классический STDP]
         WeightDependence[Зависимость от веса]
     end
-    
+
     subgraph External["Внешние компоненты"]
         PreNeuron[Пресинаптический нейрон]
         PostNeuron[Постсинаптический нейрон]
         Synapse[NPulseSynapse]
     end
-    
+
     BaseTrainer -->|наследуется| NSynapseTrainerStdpClassicDiscrete
     NSynapseTrainerStdpClassicDiscrete -->|реализует| ClassicSTDP
     NSynapseTrainerStdpClassicDiscrete -->|использует| WeightDependence
@@ -230,6 +230,10 @@ graph TB
 - Формула LTP: `XYDiff = APlus * pow(1-(Weight-WMin)/WRange, Mu) * exp(-TDiff/TauPlus)`
 - Формула LTD: `XYDiff = AMinus * pow((Weight-WMin)/WRange, Mu) * exp(TDiff/TauMinus)`
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NSynapseTrainerStdpTD`](NSynapseTrainerStdpTD.md) — STDP, зависящий от времени
@@ -243,11 +247,11 @@ graph TB
 
 ### Purpose
 
-**Class**: `NSynapseTrainerStdpClassicDiscrete` — classic STDP with discrete implementation.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpClassicDiscrete", ...)`.  
+**Class**: `NSynapseTrainerStdpClassicDiscrete` — classic STDP with discrete implementation.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpClassicDiscrete", ...)`.
 **Instances**: `ClassName = "NSynapseTrainerStdpClassicDiscrete"` in `Bin/Configs/*/Model_*.xml`.
 
-`NSynapseTrainerStdpClassicDiscrete` implements classic STDP with discrete implementation. Inherits from `NSynapseTrainerStdpTD` and uses parameter `Mu` to control weight dependence.
+`NSynapseTrainerStdpClassicDiscrete` implements classic STDP with discrete implementation. Inherits from `NSynapseTrainerStdpTD` and uses parameter `Mu` to control weight dependence. Corresponds to discrete weight update in Zarubin's thesis: LTP/LTD from spike time difference Δt, dependence on w/w_max (formula (2.8) in [B]).
 
 **Usage:** Classic STDP with discrete implementation, weight dependence
 
@@ -269,7 +273,7 @@ sequenceDiagram
     participant PostNeuron
     participant Trainer as NSynapseTrainerStdpClassicDiscrete
     participant Synapse
-    
+
     PreNeuron->>Trainer: PreSynInput
     PostNeuron->>Trainer: PostSynInput
     Trainer->>Trainer: Calculate TDiff
@@ -313,6 +317,10 @@ flowchart TD
     UpdateWeight --> ClampWeight[Clamp weight]
     ClampWeight --> End
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

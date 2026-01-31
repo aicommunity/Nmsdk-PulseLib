@@ -220,6 +220,10 @@ graph TB
 - Формула веса: `WeightOutput = StartWeight - XYDiff` (относительно начального веса)
 - Обновление XAvg/YAvg: зависит от активности спайков и временных констант
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NSynapseTrainerStdpTD`](NSynapseTrainerStdpTD.md) — STDP, зависящий от времени
@@ -299,6 +303,10 @@ flowchart TD
     UpdateWeight --> ClampWeight[Clamp weight]
     ClampWeight --> End([End])
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

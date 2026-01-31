@@ -271,6 +271,10 @@ graph TB
 - **NumConditionalStimulDendrite**: 1-10 (количество дендритов для условного стимула)
 - **IsNegInfluence**: false (возбуждающее влияние), true (тормозное влияние)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NConditionedReflex`](NConditionedReflex.md) — условный рефлекс
@@ -455,6 +459,10 @@ graph TB
 - **NeuronTrainerClassName**: "NNeuronTrainer" (neuron trainer)
 - **PulseGeneratorClassName**: "NPulseGeneratorTransit" (transit pulse generator)
 - **SynapseClassName**: "NPulseSynapse" (pulse synapse)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

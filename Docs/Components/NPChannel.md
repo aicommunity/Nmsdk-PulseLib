@@ -1,7 +1,7 @@
 ## NPChannel — импульсный канал (Nmsdk-PulseLib)
 
-**Класс**: `NPChannel` — базовый канал передачи импульсов.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPChannel", ...)`.  
+**Класс**: `NPChannel` — базовый канал передачи импульсов.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPChannel", ...)`.
 **Storage**: `ClassName = "NPChannel"`.
 
 ### Lifecycle
@@ -49,6 +49,10 @@ ClassName = NPChannel
 Name = PCh1
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **25**, **29**.
+
 ---
 
 ## NPChannel — pulse channel (EN)
@@ -80,3 +84,7 @@ flowchart LR
 ```
 
 Description: this flowchart shows the data/signal flow (inputs → component → outputs).
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **25**, **29**.

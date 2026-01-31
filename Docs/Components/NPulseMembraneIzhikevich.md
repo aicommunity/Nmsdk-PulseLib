@@ -272,6 +272,10 @@ for (int step = 0; step < 1000; step++) {
 - Параметры модели Ижикевича настраиваются в канале
 - Интегрируется с LT-зоной `NPulseLTZoneIzhikevich` для генерации спайков
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseMembrane`](NPulseMembrane.md) — базовая импульсная мембрана
@@ -418,6 +422,10 @@ graph TB
 - Automatically creates `NPulseChannelIzhikevich` channel on build
 - Izhikevich model parameters are configured in the channel
 - Integrates with `NPulseLTZoneIzhikevich` for spike generation
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### See Also
 

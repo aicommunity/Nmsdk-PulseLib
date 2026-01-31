@@ -249,6 +249,10 @@ for (int step = 0; step < 1000; step++) {
 - **LTZoneClassName**: "NPLTZone" (LT-зона)
 - **NumSomaMembraneParts**: 1 (количество частей сомы)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -398,6 +402,10 @@ graph TB
 - Motor activity: converts neural signals into motor activity
 - Muscle control: output signals control muscles for movement
 - Classical structure: standard neuron structure with membrane and LT-zone
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

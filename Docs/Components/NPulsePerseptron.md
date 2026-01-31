@@ -417,6 +417,10 @@ for (int step = 0; step < 1000; step++) {
 - Гибкая настройка: можно настроить количество слоев, размеры каждого слоя, тип нейронов
 - Опциональный частотный слой: можно добавить слой частотных групп для обработки частотных паттернов
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NPulsePerseptronIaF`](NPulsePerseptronIaF.md) — импульсный персептрон с IaF-нейронами
@@ -605,6 +609,10 @@ graph TB
 - **NeuronsLayerClassName**: "NNeuronsLayer" (standard layer), "NNeuronsLayerIaF" (for IaF model)
 - **NumNeuronsLayer**: 1-5 (number of hidden layers)
 - **NumInputFeatures**: 2-100 (input feature vector size)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

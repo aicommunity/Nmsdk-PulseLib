@@ -263,6 +263,10 @@ for (int step = 0; step < 1000; step++) {
 - Автоматически создает синапсы `NSynapseIaF` при сборке
 - Интегрируется с LT-зоной `NPulseLTZoneIaF` для генерации спайков
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseMembrane`](NPulseMembrane.md) — базовая импульсная мембрана
@@ -426,6 +430,10 @@ graph TB
 - **ExcChannelClassName**: `NPulseChannelIaF`
 - **SynapseClassName**: `NSynapseIaF`
 - **InhChannelClassName**: empty (no inhibitory channel)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### See Also
 

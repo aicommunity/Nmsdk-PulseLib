@@ -320,6 +320,10 @@ classifier->TrainingPatterns = patterns;
 classifier->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
+
 ### См. также
 
 - [`NSpikeClassifier`](NSpikeClassifier.md) — классификатор по спайкам
@@ -496,6 +500,10 @@ graph TB
 - **NeuronTrainerClassName**: "NNeuronTrainer" (neuron trainer)
 - **PulseGeneratorClassName**: "NPulseGeneratorTransit" (transit pulse generator)
 - **SynapseClassName**: "NPulseSynapse" (pulse synapse)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
 
 ### See Also
 

@@ -293,6 +293,10 @@ for (int step = 0; step < 1000; step++) {
 - Комплексная интеграция: множественные дендриты интегрируют сигналы и передают их в множественные сомы
 - Морфология: отражает биологическую структуру нейрона с наиболее сложной морфологией
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -465,6 +469,10 @@ graph TB
 - Most complex structure: allows modeling neurons with multiple somas and dendrites
 - Complex integration: multiple dendrites integrate signals and transmit them to multiple somas
 - Morphology: reflects biological neuron structure with most complex morphology
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

@@ -88,6 +88,10 @@ ltZone->Default();
 ltZone->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — общая импульсная LT-зона (базовый класс)
@@ -262,6 +266,10 @@ graph TB
 - Default parameters: uses default parameters from `NPulseLTZoneCommon`
 - Spike generation: generates spikes when threshold is reached
 - Frequency tracking: tracks spike frequency and pulse times
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

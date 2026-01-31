@@ -72,6 +72,10 @@ membrane->Default();
 membrane->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseMembrane`](NPulseMembrane.md) — базовая импульсная мембрана (базовый класс)
@@ -240,6 +244,10 @@ graph TB
 **Typical parameter values:**
 - **ExcChannelClassName**: "NPLTExcChannel" (excitatory LT channel)
 - **InhChannelClassName**: "NPLTInhChannel" (inhibitory LT channel)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

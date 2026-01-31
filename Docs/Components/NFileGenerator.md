@@ -261,6 +261,10 @@ Data = 1.5 2.5 3.5
 Data = 2.0 3.0 4.0
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NSource`](NSource.md) — базовый источник сигналов
@@ -400,6 +404,10 @@ Data = 2.0 3.0 4.0
 - Loads time series data from file
 - Supports cyclic replay (returns to beginning when data ends)
 - Uses map structure for efficient time-based data lookup
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

@@ -290,6 +290,10 @@ for (int step = 0; step < 1000; step++) {
 - `NPExcChannelBio` — для биоинспирированных возбуждающих каналов
 - `NPInhChannelBio` — для биоинспирированных тормозных каналов
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseChannelIzhikevich`](NPulseChannelIzhikevich.md) — канал модели Ижикевича
@@ -458,6 +462,10 @@ graph TB
 - **Type**: -1 (excitatory) or 1 (inhibitory)
 - **UseAveragePotential**: false (do not use averaging)
 - **UseAverageSynapsis**: false (do not use averaging)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

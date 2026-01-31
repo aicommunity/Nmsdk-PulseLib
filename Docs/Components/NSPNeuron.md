@@ -198,6 +198,10 @@ neuron->Build();
 - Простота использования: подходит для базовых экспериментов
 - Конфигурационный вариант: создается из `NPulseNeuron` с предустановленными параметрами
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования (базовый класс)
@@ -345,6 +349,10 @@ graph TB
 - Minimal structure: without LT-membrane, one soma part
 - Easy to use: suitable for basic experiments
 - Configuration variant: created from `NPulseNeuron` with preset parameters
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

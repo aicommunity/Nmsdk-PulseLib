@@ -1,16 +1,18 @@
 # NEyeMuscle — глазная мышца
 
+**Каталог компонентов:** [Component-Catalog.md](../Component-Catalog.md).
+
 ## RU
 
 ### Назначение
 
-**Класс**: `NEyeMuscle` — компонент для моделирования глазной мышцы.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NEyeMuscle", ...)`.  
+**Класс**: `NEyeMuscle` — компонент для моделирования глазной мышцы.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NEyeMuscle", ...)`.
 **Storage-инстансы**: `ClassName = "NEyeMuscle"` в `Bin/Configs/*/Model_*.xml`.
 
 `NEyeMuscle` реализует модель глазной мышцы, которая обрабатывает входные сигналы и генерирует выходные сигналы для управления движением глаза. Компонент выдает три выходных сигнала: ускорение (`OutputAcceleration`), длина (`OutputLength`), и скорость (`OutputSpeed`).
 
-**Использование:** Моделирование глазных мышц, управление движением глаза
+**Использование:** `Bin/Configs/SpikeSamples/MC-Muscles/MC-M-00-EyeMuscle/`, `Bin/Configs/SpikeSamples/MC-Muscles/MC-M-01-EyeMuscle/`, `Bin/Configs/SpikeSamples/EyeRetina/`; моделирование глазных мышц, управление движением глаза
 
 ### UML-диаграмма классов
 
@@ -50,7 +52,7 @@ sequenceDiagram
     participant Storage as UStorage
     participant Muscle as NEyeMuscle
     participant Motoneuron as NMotoneuron
-    
+
     Storage->>Muscle: New()
     Storage->>Muscle: Default()
     Muscle->>Muscle: ADefault()
@@ -59,7 +61,7 @@ sequenceDiagram
     Muscle->>Muscle: ABuild()
     Muscle->>Muscle: Инициализация P1, P2, P3, L, Threshold
     Muscle-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Motoneuron->>Muscle: Inputs (входные сигналы)
         Storage->>Muscle: Calculate()
@@ -177,17 +179,17 @@ graph TB
     subgraph UNet["UNet Base"]
         BaseNet[UNet]
     end
-    
+
     subgraph NEyeMuscle["NEyeMuscle"]
         MuscleModel[Модель глазной мышцы]
         InternalStates[Внутренние состояния]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Motoneuron[NMotoneuron]
         EyeControl[Система управления глазом]
     end
-    
+
     BaseNet -->|наследуется| NEyeMuscle
     NEyeMuscle -->|реализует| MuscleModel
     NEyeMuscle -->|хранит| InternalStates
@@ -235,6 +237,7 @@ graph TB
 
 `NEyeMuscle` используется в экспериментах с глазными мышцами:
 
+- **SpikeSamples:** `Bin/Configs/SpikeSamples/MC-Muscles/MC-M-00-EyeMuscle/`, `Bin/Configs/SpikeSamples/MC-Muscles/MC-M-01-EyeMuscle/`, `Bin/Configs/SpikeSamples/EyeRetina/`
 - **Управление глазом**: `Bin/Configs/!OldConfigs/OldExperiments/EyeRetina/`
 
 **Типичные значения параметров:**
@@ -246,6 +249,10 @@ graph TB
 - **OutputAcceleration**: ускорение движения глаза
 - **OutputLength**: длина мышцы
 - **OutputSpeed**: скорость движения глаза
+
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### См. также
 
@@ -259,8 +266,8 @@ graph TB
 
 ### Purpose
 
-**Class**: `NEyeMuscle` — component for modeling eye muscle.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NEyeMuscle", ...)`.  
+**Class**: `NEyeMuscle` — component for modeling eye muscle.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NEyeMuscle", ...)`.
 **Instances**: `ClassName = "NEyeMuscle"` in `Bin/Configs/*/Model_*.xml`.
 
 `NEyeMuscle` implements eye muscle model that processes input signals and generates output signals for eye movement control. Component outputs three signals: acceleration (`OutputAcceleration`), length (`OutputLength`), and speed (`OutputSpeed`).
@@ -289,7 +296,7 @@ sequenceDiagram
     participant Storage
     participant Muscle as NEyeMuscle
     participant Motoneuron as NMotoneuron
-    
+
     Storage->>Muscle: New() + Default()
     Storage->>Muscle: Build()
     loop Each step
@@ -347,17 +354,17 @@ graph TB
     subgraph UNet["UNet Base"]
         BaseNet[UNet]
     end
-    
+
     subgraph NEyeMuscle["NEyeMuscle"]
         EyeMuscle[Eye Muscle]
         InternalStates[Internal States<br/>P1, P2, P3, L, Speed, Acceleration]
     end
-    
+
     subgraph External["External Components"]
         Motoneuron[NMotoneuron]
         EyeControl[Eye Control System]
     end
-    
+
     BaseNet -->|inherits| NEyeMuscle
     NEyeMuscle -->|uses| InternalStates
     Motoneuron -->|Inputs| NEyeMuscle
@@ -402,6 +409,10 @@ graph TB
 - **MulCoeffs**: [0.74, 0.75, 0.5] (multiplication coefficients)
 - **K**: 0.2 (length calculation coefficient)
 - **TC**: [0.003, 0.0092, 0.0327] (time constants in seconds)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

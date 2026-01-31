@@ -4,14 +4,16 @@
 
 ### Назначение
 
-**Класс**: `NPulseLTZoneCable` — конфигурационный вариант импульсной LT-зоны для кабельных моделей.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneCable", ...)`.  
+**Класс**: `NPulseLTZoneCable` — конфигурационный вариант импульсной LT-зоны для кабельных моделей.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneCable", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseLTZoneCable"` в `Bin/Configs/*/Model_*.xml`.
 
 `NPulseLTZoneCable` является конфигурационным вариантом класса `NPulseLTZoneThreshold` с параметрами для кабельных моделей. При создании компонента с `ClassName = "NPulseLTZoneCable"` создается экземпляр `NPulseLTZoneThreshold` с параметрами:
 - `Threshold = -0.055` (-55 мВ) — порог генерации спайка
 - `ThresholdOff = -0.07` (-70 мВ) — порог окончания спайка
 - `NumChannelsInGroup = 1` — количество каналов в группе
+
+В сегментной модели CSNM [C] LT-зона задаёт порог генерации потенциала действия (ПД) в соответствующем сегменте.
 
 **Использование:** Кабельная LT-зона, моделирование дендритов с кабельной моделью
 
@@ -76,6 +78,10 @@ ltZone->Default();
 ltZone->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
+
 ### См. также
 
 - [`NPulseLTZoneThreshold`](NPulseLTZoneThreshold.md) — базовая LT-зона с порогом (базовый класс)
@@ -89,8 +95,8 @@ ltZone->Build();
 
 ### Purpose
 
-**Class**: `NPulseLTZoneCable` — configuration variant of spiking LT-zone for cable models.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneCable", ...)`.  
+**Class**: `NPulseLTZoneCable` — configuration variant of spiking LT-zone for cable models.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneCable", ...)`.
 **Instances**: `ClassName = "NPulseLTZoneCable"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseLTZoneCable` is a configuration variant of `NPulseLTZoneThreshold` class with parameters for cable models. When creating a component with `ClassName = "NPulseLTZoneCable"`, an instance of `NPulseLTZoneThreshold` is created with parameters:
@@ -120,7 +126,7 @@ sequenceDiagram
     participant LTZone as NPulseLTZoneCable
     participant Channel as NPulseChannelCable
     participant Neuron
-    
+
     Storage->>LTZone: New() (creates NPulseLTZoneThreshold)
     Storage->>LTZone: Default()
     Storage->>LTZone: Build()
@@ -175,18 +181,18 @@ graph TB
     subgraph NPulseLTZoneThreshold["NPulseLTZoneThreshold Base"]
         BaseLTZone[NPulseLTZoneThreshold]
     end
-    
+
     subgraph NPulseLTZoneCable["NPulseLTZoneCable Configuration"]
         ThresholdLogic[Threshold Logic]
         Properties[LT-zone Properties]
     end
-    
+
     subgraph External["External Components"]
         Channel[NPulseChannelCable]
         Membrane[NPulseMembraneCable]
         Neuron[NPulseNeuronCable]
     end
-    
+
     BaseLTZone -->|configured as| NPulseLTZoneCable
     NPulseLTZoneCable -->|implements| ThresholdLogic
     NPulseLTZoneCable -->|calculates| Properties
@@ -211,6 +217,10 @@ graph TB
 - Configuration variant of `NPulseLTZoneThreshold` with cable-optimized parameters
 - Compatible with cable channels and membranes
 - Optimized thresholds for cable model neurons
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
 
 ### See Also
 

@@ -1,16 +1,18 @@
 # NPulseNeuronIzhikevich — импульсный нейрон (модель Ижикевича)
 
+**Каталог компонентов:** [Component-Catalog.md](../Component-Catalog.md).
+
 ## RU
 
 ### Назначение
 
-**Класс**: `NPulseNeuronIzhikevich` — модель спайкового нейрона по Ижикевичу.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronIzhikevich", ...)`.  
+**Класс**: `NPulseNeuronIzhikevich` — модель спайкового нейрона по Ижикевичу.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronIzhikevich", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseNeuronIzhikevich"` в `Bin/Configs/*/Model_*.xml`.
 
 `NPulseNeuronIzhikevich` реализует модель нейрона Ижикевича — одну из наиболее популярных моделей для имитации различных типов нейронов. Автоматически создает внутреннюю структуру с мембраной Ижикевича (`NPulseMembraneIzhikevich`) и LT-зоной Ижикевича (`NPulseLTZoneIzhikevich`). Параметры модели (a, b, c, d) хранятся в мембране и LT-зоне.
 
-**Использование:** `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`, `Bin/Configs/User/CognitiveNavigation/`
+**Использование:** `Bin/Configs/SpikeSamples/NM-Neurons/`, `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`, `Bin/Configs/User/CognitiveNavigation/`
 
 ### UML-диаграмма классов
 
@@ -69,7 +71,7 @@ sequenceDiagram
     participant Membrane as NPulseMembraneIzhikevich
     participant LTZone as NPulseLTZoneIzhikevich
     participant Channel as NPulseChannelIzhikevich
-    
+
     Storage->>Neuron: New()
     Storage->>Neuron: Default()
     Neuron->>Neuron: ADefault()
@@ -83,7 +85,7 @@ sequenceDiagram
     Neuron->>Neuron: CreateLink(LTZone.Output -> PulseMembrane.InputFeedbackSignal)
     Neuron->>Channel: CreateLink(PulseMembrane.InhChannel.Output -> LTZone.InputChannels)
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Storage->>Neuron: Calculate()
         Neuron->>Neuron: ACalculate()
@@ -173,18 +175,18 @@ graph TB
     subgraph NPulseNeuronCommon["NPulseNeuronCommon Base"]
         BaseNeuron[NPulseNeuronCommon]
     end
-    
+
     subgraph NPulseNeuronIzhikevich["NPulseNeuronIzhikevich"]
         Membrane[NPulseMembraneIzhikevich]
         LTZone[NPulseLTZoneIzhikevich]
         PosChannel[NPulseChannelIzhikevich]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Synapses[Синапсы]
         Generators[Генераторы]
     end
-    
+
     BaseNeuron -->|наследуется| NPulseNeuronIzhikevich
     NPulseNeuronIzhikevich -->|создает| Membrane
     NPulseNeuronIzhikevich -->|создает| LTZone
@@ -321,6 +323,7 @@ for (int step = 0; step < 1000; step++) {
 
 `NPulseNeuronIzhikevich` широко используется в конфигурационных проектах:
 
+- **Модели нейронов (SpikeSamples)**: `Bin/Configs/SpikeSamples/NM-Neurons/` (LIF-Neuron, CableModel, NeuronComparation и др.)
 - **Тесты модели Ижикевича**: `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`
 - **Когнитивная навигация**: `Bin/Configs/User/CognitiveNavigation/*/Model_*.xml`
 - **Эксперименты с нейронами**: `Bin/Configs/!OldConfigs/NM-Neurons/*/Model.xml`
@@ -331,6 +334,10 @@ for (int step = 0; step < 1000; step++) {
 2. **Интегрирующий и спайкующий (IB)**: A=0.02, B=0.2, C=-55, D=4
 3. **Хаотический спайкующий (CH)**: A=0.02, B=0.2, C=-50, D=2
 4. **Быстро спайкующий (FS)**: A=0.1, B=0.2, C=-65, D=2
+
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### См. также
 
@@ -347,8 +354,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NPulseNeuronIzhikevich` — Izhikevich model spiking neuron.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronIzhikevich", ...)`.  
+**Class**: `NPulseNeuronIzhikevich` — Izhikevich model spiking neuron.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronIzhikevich", ...)`.
 **Instances**: `ClassName = "NPulseNeuronIzhikevich"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseNeuronIzhikevich` implements the Izhikevich neuron model — one of the most popular models for simulating various neuron types. Automatically creates internal structure with Izhikevich membrane (`NPulseMembraneIzhikevich`) and Izhikevich LT-zone (`NPulseLTZoneIzhikevich`). Model parameters (a, b, c, d) are stored in the membrane and LT-zone.
@@ -376,7 +383,7 @@ sequenceDiagram
     participant Neuron as NPulseNeuronIzhikevich
     participant Membrane as NPulseMembraneIzhikevich
     participant LTZone as NPulseLTZoneIzhikevich
-    
+
     Storage->>Neuron: New() + Default()
     Storage->>Neuron: Build()
     Neuron->>Neuron: CreateSimpleNeuron()
@@ -439,18 +446,18 @@ graph TB
     subgraph NPulseNeuronCommon["NPulseNeuronCommon Base"]
         BaseNeuron[NPulseNeuronCommon]
     end
-    
+
     subgraph NPulseNeuronIzhikevich["NPulseNeuronIzhikevich"]
         Membrane[NPulseMembraneIzhikevich]
         LTZone[NPulseLTZoneIzhikevich]
         InhChannel[NPulseChannelIzhikevich]
     end
-    
+
     subgraph External["External Components"]
         Synapses[Synapses]
         PreNeurons[Presynaptic neurons]
     end
-    
+
     BaseNeuron -->|inherits| NPulseNeuronIzhikevich
     NPulseNeuronIzhikevich -->|creates| Membrane
     NPulseNeuronIzhikevich -->|creates| LTZone
@@ -461,6 +468,10 @@ graph TB
     LTZone -->|feedback| Membrane
     LTZone -->|Output| NPulseNeuronIzhikevich
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### See Also
 

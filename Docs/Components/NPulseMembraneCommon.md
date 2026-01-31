@@ -288,6 +288,10 @@ for (int step = 0; step < 1000; step++) {
 - `NPMembraneBio` — для биоинспирированных мембран
 - `NPulseMembraneCable` — для кабельных мембран
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseMembraneIzhikevich`](NPulseMembraneIzhikevich.md) — мембрана модели Ижикевича
@@ -460,6 +464,10 @@ graph TB
 **Typical parameter values:**
 - **UseAveragePotential**: false (do not use averaging)
 - **Feedback**: 0.0 (no feedback by default)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

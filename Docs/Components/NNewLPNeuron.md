@@ -258,6 +258,10 @@ for (int step = 0; step < 1000; step++) {
 - Новая архитектура: использует улучшенные мембраны для более точного моделирования
 - LT-мембрана: отдельная мембрана для LT-зоны с оптимизированными каналами
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -416,6 +420,10 @@ graph TB
 - Three soma parts: large neurons have more complex structure with three soma parts
 - New architecture: uses improved membranes for more accurate modeling
 - LT-membrane: separate membrane for LT-zone with optimized channels
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

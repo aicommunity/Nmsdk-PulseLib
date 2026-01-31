@@ -28,6 +28,10 @@ classDiagram
 **Параметры конфигурации:**
 - `Amplitude = -1.0` — отрицательная амплитуда для биоинспирированных моделей
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NConstGenerator`](NConstGenerator.md) — генератор постоянного тока (базовый класс)
@@ -160,6 +164,10 @@ graph TB
 
 **Typical parameter values:**
 - **Amplitude**: -1.0 (negative amplitude for bio-inspired models)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

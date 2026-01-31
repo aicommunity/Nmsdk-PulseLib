@@ -4,11 +4,11 @@
 
 ### Назначение
 
-**Класс**: `NSynapseTrainerStdpStable` — стабильный STDP-тренер.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpStable", ...)`.  
+**Класс**: `NSynapseTrainerStdpStable` — стабильный STDP-тренер.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpStable", ...)`.
 **Storage-инстансы**: `ClassName = "NSynapseTrainerStdpStable"` в `Bin/Configs/*/Model_*.xml`.
 
-`NSynapseTrainerStdpStable` реализует стабильный STDP, который использует временные окна (`TauLTP`, `TauLTD`) для определения, когда применять LTP или LTD. Наследуется от `NSynapseTrainerStdpWD` и добавляет параметры для управления временными окнами пластичности.
+`NSynapseTrainerStdpStable` реализует стабильный STDP, который использует временные окна (`TauLTP`, `TauLTD`) для определения, когда применять LTP или LTD. Наследуется от `NSynapseTrainerStdpWD` и добавляет параметры для управления временными окнами пластичности. Соответствует S-STDP по ВКР Зарубина: формула (2.12) в [B], устойчивое обучение, временные окна τ_LTP, τ_LTD и зависимость от текущего веса.
 
 **Использование:** Стабильный STDP, временные окна пластичности
 
@@ -42,6 +42,10 @@ classDiagram
   - Если `TPost - TPre > TauLTP` или `TPre - TPost < TauLTD` (LTD): `WeightOutput -= AMinus * exp(WeightOutput)`
   - Ограничивает вес в диапазоне `[WMin, WMax]`
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NSynapseTrainerStdpWD`](NSynapseTrainerStdpWD.md) — STDP, зависящий от веса
@@ -54,11 +58,11 @@ classDiagram
 
 ### Purpose
 
-**Class**: `NSynapseTrainerStdpStable` — stable STDP trainer.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpStable", ...)`.  
+**Class**: `NSynapseTrainerStdpStable` — stable STDP trainer.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpStable", ...)`.
 **Instances**: `ClassName = "NSynapseTrainerStdpStable"` in `Bin/Configs/*/Model_*.xml`.
 
-`NSynapseTrainerStdpStable` implements stable STDP, which uses time windows (`TauLTP`, `TauLTD`) to determine when to apply LTP or LTD. Inherits from `NSynapseTrainerStdpWD` and adds parameters for managing plasticity time windows.
+`NSynapseTrainerStdpStable` implements stable STDP, which uses time windows (`TauLTP`, `TauLTD`) to determine when to apply LTP or LTD. Inherits from `NSynapseTrainerStdpWD` and adds parameters for managing plasticity time windows. Corresponds to S-STDP in Zarubin's thesis: formula (2.12) in [B], stable learning, time windows τ_LTP, τ_LTD and weight dependence.
 
 **Usage:** Stable STDP, plasticity time windows
 
@@ -72,6 +76,10 @@ classDiagram
         +TauLTD : double
     }
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

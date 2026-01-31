@@ -252,6 +252,10 @@ for (int step = 0; step < 1000; step++) {
 - Оптимизированная архитектура: более эффективная обработка сигналов
 - Совместимость: наследует функциональность базового `NMotoneuron`
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
+
 ### См. также
 
 - [`NMotoneuron`](NMotoneuron.md) — базовый мотонейрон
@@ -412,6 +416,10 @@ graph TB
 - Updated logic: improved parameter initialization
 - Optimized architecture: more efficient signal processing
 - Compatibility: inherits functionality from base `NMotoneuron`
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

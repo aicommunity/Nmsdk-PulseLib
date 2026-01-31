@@ -314,6 +314,10 @@ graph TB
 - Обучение: выходной нейрон обучается на инвертированных паттернах
 - Инверсия: входной паттерн инвертируется через обученный выходной нейрон
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NSum`](NSum.md) — сумматор
@@ -503,6 +507,10 @@ graph TB
 - Training mode: Trains output neuron on inverted patterns
 - Inversion mode: Processes input patterns and generates inverted output
 - Generator neurons: Uses two generator neurons (direct and inverted signals)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

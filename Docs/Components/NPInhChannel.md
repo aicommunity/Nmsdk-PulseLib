@@ -66,6 +66,10 @@ channel->Default();
 channel->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseChannel`](NPulseChannel.md) — базовый импульсный канал (базовый класс)
@@ -214,6 +218,10 @@ graph TB
 
 **Typical parameter values:**
 - **Type**: 1 (inhibitory channel type)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

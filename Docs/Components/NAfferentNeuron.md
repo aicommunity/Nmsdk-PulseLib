@@ -317,6 +317,10 @@ neuron->Build();
 - **MembraneClassName**: "NPulseMembrane" (для классической структуры)
 - **LTZoneClassName**: "NPulseLTZone" или "NPSimpleLTZone" (в зависимости от режима)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuronCommon`](NPulseNeuronCommon.md) — общий импульсный нейрон
@@ -468,6 +472,10 @@ graph TB
 - Two structure modes: classical (membrane + LT-zone + receptor) or simple (LT-zone + receptor)
 - Receptor: receives and transforms external stimuli
 - Integration: converts external stimuli into neural signals
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

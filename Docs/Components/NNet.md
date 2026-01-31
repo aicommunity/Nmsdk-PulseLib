@@ -353,6 +353,10 @@ for (int step = 0; step < 1000; step++) {
 
 **Примечание**: В большинстве современных проектов используется `NModel` вместо `NNet` как корневой компонент, так как `NModel` предоставляет дополнительные возможности управления.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NModel`](NModel.md) — расширенная модель сети (рекомендуется для большинства случаев)
@@ -613,6 +617,10 @@ graph TB
 - **NumLayers**: 1-10 (number of layers)
 - **LayerWidth/LayerHeight**: 1-100 (layer dimensions)
 - **LinksOrganizationMode**: 0 (no automatic links) to 3 (full radius)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

@@ -99,6 +99,10 @@ channel->Build();
 - Уменьшает потенциал LT-зоны при наличии входных сигналов
 - Использует параметры, оптимизированные для LT-зон
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPLTChannel`](NPLTChannel.md) — LT-канал (базовый класс)
@@ -245,6 +249,10 @@ graph TB
 - **Type**: 1 (inhibitory channel type)
 - **Capacity**: 1e-8 (10 nF) — increased for LT-zone
 - **RestingResistance**: 1e6 (1 MΩ) — decreased for LT-zone
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

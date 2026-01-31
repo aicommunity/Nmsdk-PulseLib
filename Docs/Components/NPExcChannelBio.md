@@ -200,6 +200,10 @@ channel->Build();
 - **Resistance**: зависит от базового класса `NPulseChannel`
 - **Capacity**: зависит от базового класса `NPulseChannel`
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseChannel`](NPulseChannel.md) — базовый импульсный канал (базовый класс)
@@ -277,6 +281,10 @@ flowchart TD
     CheckActivation -->|No| End([End])
     NeuronActivated --> End
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

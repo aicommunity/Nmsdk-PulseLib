@@ -72,6 +72,10 @@ ltZone->Default();
 ltZone->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseLTZoneThreshold`](NPulseLTZoneThreshold.md) — базовая LT-зона с порогом (базовый класс)
@@ -246,6 +250,10 @@ graph TB
 **Typical parameter values:**
 - **Threshold**: -0.055 (-55 mV for bio-inspired models)
 - **ThresholdOff**: -0.1 (-100 mV for bio-inspired models)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

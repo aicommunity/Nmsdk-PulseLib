@@ -258,6 +258,10 @@ for (int step = 0; step < 1000; step++) {
 - Производительность: улучшенная производительность при работе с большим количеством синапсов
 - Крупные нейроны: три части сомы для более сложных экспериментов
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -411,6 +415,10 @@ graph TB
 - Synapse optimization: membrane optimized for efficient synapse processing
 - Performance: improved performance when working with large numbers of synapses
 - Large neurons: three soma parts for more complex experiments
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

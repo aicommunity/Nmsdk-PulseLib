@@ -4,11 +4,11 @@
 
 ### Назначение
 
-**Класс**: `NNeuron` — базовый класс нейрона (абстрактная/общая логика).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuron", ...)`.  
+**Класс**: `NNeuron` — базовый класс нейрона (абстрактная/общая логика).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuron", ...)`.
 **Storage-инстансы**: `ClassName = "NNeuron"` (обычно используется через наследников).
 
-`NNeuron` является базовым классом для всех нейронов в библиотеке PulseLib. Наследуется от `NNet` и служит основой для более специализированных классов нейронов (`NPulseNeuronCommon`, `NPulseNeuronIzhikevich` и т.д.). Сам по себе не имеет дополнительных свойств или методов по сравнению с `NNet`, но определяет концептуальную иерархию для нейронов.
+`NNeuron` является базовым классом для всех нейронов в библиотеке PulseLib. Наследуется от `NNet` и служит основой для более специализированных классов нейронов (`NPulseNeuronCommon`, `NPulseNeuronIzhikevich` и т.д.). Сам по себе не имеет дополнительных свойств или методов по сравнению с `NNet`, но определяет концептуальную иерархию для нейронов. В нейроморфных системах на основе импульсного нейрона со структурной адаптацией [A] модель нейрона может поддерживать структурную и параметрическую адаптацию, а пластичность обеспечивается изменением весов синапсов и параметров мембраны в процессе функционирования.
 
 ### UML-диаграмма классов
 
@@ -44,7 +44,7 @@ sequenceDiagram
     participant Storage as UStorage
     participant Neuron as NNeuron
     participant SubComp as Подкомпоненты
-    
+
     Storage->>Neuron: New()
     Storage->>Neuron: SetName("Neuron1")
     Storage->>Neuron: Default()
@@ -57,7 +57,7 @@ sequenceDiagram
     Neuron->>Neuron: NNet::Build()
     Neuron->>SubComp: Build() для всех подкомпонентов
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Storage->>Neuron: Calculate()
         Neuron->>Neuron: ACalculate()
@@ -122,18 +122,18 @@ graph TB
     subgraph NNet["NNet Base"]
         BaseNet[NNet]
     end
-    
+
     subgraph NNeuron["NNeuron"]
         SubComponents[Подкомпоненты нейрона]
     end
-    
+
     subgraph SubComponents["Подкомпоненты"]
         Membranes[Мембраны]
         Channels[Каналы]
         Synapses[Синапсы]
         LTZones[LT-зоны]
     end
-    
+
     BaseNet -->|наследуется| NNeuron
     NNeuron -->|содержит| SubComponents
     SubComponents --> Membranes
@@ -173,6 +173,10 @@ graph TB
 
 `NNeuron` редко используется напрямую в конфигурациях. Вместо него используются специализированные классы нейронов.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuronCommon`](NPulseNeuronCommon.md) — общий импульсный нейрон
@@ -187,11 +191,11 @@ graph TB
 
 ### Purpose
 
-**Class**: `NNeuron` — base neuron class (abstract/general logic).  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuron", ...)`.  
+**Class**: `NNeuron` — base neuron class (abstract/general logic).
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuron", ...)`.
 **Instances**: `ClassName = "NNeuron"` (typically used via derived classes).
 
-`NNeuron` is the base class for all neurons in the PulseLib library. It inherits from `NNet` and serves as the foundation for more specialized neuron classes (`NPulseNeuronCommon`, `NPulseNeuronIzhikevich`, etc.). It does not add additional properties or methods compared to `NNet`, but defines the conceptual hierarchy for neurons.
+`NNeuron` is the base class for all neurons in the PulseLib library. It inherits from `NNet` and serves as the foundation for more specialized neuron classes (`NPulseNeuronCommon`, `NPulseNeuronIzhikevich`, etc.). It does not add additional properties or methods compared to `NNet`, but defines the conceptual hierarchy for neurons. In neuromorphic systems based on the spiking neuron model with structural adaptation [A], the neuron model can support structural and parametric adaptation, and plasticity is provided by changing synapse weights and membrane parameters during operation.
 
 ### UML Class Diagram
 
@@ -212,7 +216,7 @@ sequenceDiagram
     participant Storage as UStorage
     participant Neuron as NNeuron
     participant SubComp as Subcomponents
-    
+
     Storage->>Neuron: New()
     Storage->>Neuron: Default()
     Storage->>Neuron: AddComponent(membrane)
@@ -261,7 +265,7 @@ graph TB
     subgraph NNet["NNet Base"]
         BaseNet[NNet]
     end
-    
+
     subgraph NNeuron["NNeuron Base"]
         BaseNeuron[NNeuron]
         Membrane[NPulseMembrane<br/>Membrane]
@@ -269,12 +273,12 @@ graph TB
         Synapses[NPulseSynapse<br/>Synapses]
         LTZone[NPulseLTZone<br/>LTZone]
     end
-    
+
     subgraph External["External Components"]
         InputNeurons[Input Neurons]
         OutputTarget[Output Target]
     end
-    
+
     BaseNet -->|inherits| BaseNeuron
     BaseNeuron -->|contains| Membrane
     BaseNeuron -->|contains| Channels
@@ -312,6 +316,10 @@ graph TB
 - Conceptual base: serves as a type marker for neurons
 - No additional properties: inherits all functionality from `NNet`
 - Foundation: provides base for specialized neuron classes
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

@@ -302,6 +302,10 @@ for (int step = 0; step < 10000; step++) {
 - Эффективное обучение синаптических весов
 - Возможность моделирования различных сценариев обучения
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NPulseNeuronIaF`](NPulseNeuronIaF.md) — нейрон модели IaF
@@ -428,6 +432,10 @@ graph TB
     STDPSynapses -->|current| Channel
     LTZone -->|Output| NPulseNeuronIaFStdp
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

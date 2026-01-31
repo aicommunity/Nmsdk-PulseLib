@@ -359,6 +359,10 @@ for (int step = 0; step < 10000; step++) {
 2. **Асимметричный STDP**: APlus=0.015, AMinus=0.01, XTau=0.03, YTau=0.01
 3. **Симметричный STDP**: APlus=0.01, AMinus=0.01, XTau=0.02, YTau=0.02
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора
@@ -521,6 +525,10 @@ graph TB
 1. **Standard STDP**: APlus=0.01, AMinus=0.012, XTau=0.02, YTau=0.01
 2. **Asymmetric STDP**: APlus=0.015, AMinus=0.01, XTau=0.03, YTau=0.01
 3. **Symmetric STDP**: APlus=0.01, AMinus=0.01, XTau=0.02, YTau=0.02
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

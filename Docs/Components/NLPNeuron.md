@@ -198,6 +198,10 @@ graph TB
 - **MembraneClassName**: "NPulseMembrane" (стандартная мембрана)
 - **LTZoneClassName**: "NPulseLTZoneCommon" (стандартная LT-зона)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -344,6 +348,10 @@ graph TB
 - Extended structure: three soma parts for more complex calculations
 - Large neurons: suitable for complex experiments and networks
 - Configuration variant: created from `NPulseNeuron` with preset parameters
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

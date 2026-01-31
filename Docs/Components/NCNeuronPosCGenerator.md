@@ -28,6 +28,10 @@ classDiagram
 **Параметры конфигурации:**
 - `Amplitude = 2.0` — положительная амплитуда для классических нейронов
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NConstGenerator`](NConstGenerator.md) — генератор постоянного тока (базовый класс)
@@ -161,6 +165,10 @@ graph TB
 
 **Typical parameter values:**
 - **Amplitude**: 2.0 (positive amplitude for classic neurons)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

@@ -296,6 +296,10 @@ for (int step = 0; step < 1000; step++) {
 - Мотивационные сигналы: поддержка мотивационных входов для модуляции обучения
 - Множественные выходы: синапсы Хебба имеют 6 выходов для различных компонентов
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -458,6 +462,10 @@ graph TB
 - Hebbian learning: synapses automatically update weights based on pre- and postsynaptic activity correlation
 - Motivational signals: support for motivational inputs to modulate learning
 - Multiple outputs: Hebbian synapses have 6 outputs for various components
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

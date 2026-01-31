@@ -271,6 +271,10 @@ for (int step = 0; step < 1000; step++) {
 - Производительность: улучшенная производительность при работе с большим количеством синапсов
 - Моторная активность: генерирует моторную активность для управления мышцами
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -431,6 +435,10 @@ graph TB
 - Synapse optimization: membrane optimized for efficient synapse processing
 - Performance: improved performance when working with large numbers of synapses
 - Motor activity: generates motor activity for controlling muscles
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

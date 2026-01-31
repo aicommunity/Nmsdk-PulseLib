@@ -295,6 +295,10 @@ graph TB
 - **NumConditionalStimulDendrite**: 1-10 (количество дендритов для условного раздражителя)
 - **IsNegInfluence**: false (возбуждающее влияние), true (тормозное влияние)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
+
 ### См. также
 
 - [`NPainReflexSimple`](NPainReflexSimple.md) — простой болевой рефлекс
@@ -468,6 +472,10 @@ graph TB
 - **NeuronTrainerClassName**: "NNeuronTrainer" (neuron trainer)
 - **PulseGeneratorClassName**: "NPulseGeneratorTransit" (transit pulse generator)
 - **SynapseClassName**: "NPulseSynapse" (pulse synapse)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
 
 ### See Also
 

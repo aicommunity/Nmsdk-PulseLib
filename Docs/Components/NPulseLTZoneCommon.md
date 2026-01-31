@@ -347,6 +347,10 @@ for (int step = 0; step < 1000; step++) {
 - `NPulseLTZoneThreshold` — для LT-зон с порогом
 - `NPLTZone` — для базовых LT-зон
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NLTZone`](NLTZone.md) — базовая LT-зона
@@ -541,6 +545,10 @@ graph TB
 - **PulseAmplitude**: depends on implementation
 - **NumChannelsInGroup**: 2 (default number of channels in group)
 - **UseAveragePotential**: false (do not use averaging by default)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

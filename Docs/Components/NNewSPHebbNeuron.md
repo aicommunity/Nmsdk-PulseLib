@@ -308,6 +308,10 @@ for (int step = 0; step < 1000; step++) {
 - Обучение Хебба: синапсы автоматически обновляют веса на основе корреляции пре- и постсинаптической активности
 - Комбинированная функциональность: объединяет возможности новой архитектуры и обучения Хебба
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -486,6 +490,10 @@ graph TB
 - LT-membrane: separate membrane for LT-zone with optimized channels
 - Hebbian learning: synapses automatically update weights based on pre- and postsynaptic activity correlation
 - Combined functionality: combines capabilities of new architecture and Hebbian learning
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

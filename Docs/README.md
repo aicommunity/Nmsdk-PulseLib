@@ -39,10 +39,14 @@
 
 Практические примеры использования компонентов библиотеки можно найти в конфигурационных проектах в директории `Bin/Configs`:
 
-- **Когнитивная навигация**: `Bin/Configs/User/CognitiveNavigation/` — примеры сетей для пространственной навигации
-- **Модели нейронов**: `Bin/Configs/!OldConfigs/NM-Neurons/` — различные конфигурации нейронов с обучением
-- **Эксперименты по STDP**: `Bin/Configs/!OldConfigs/STDP-Simple-01/` — простые эксперименты по пластичности
-- **Классификация**: `Bin/Configs/!OldConfigs/SpikeClassifier/`, `Bin/Configs/!OldConfigs/SpikeANPA3/` — примеры классификаторов
+- **Актуальные примеры (SpikeSamples):**
+  - **STDP**: `Bin/Configs/SpikeSamples/STDP/STDP-Simple-01/` — простые эксперименты по пластичности
+  - **Нейроны**: `Bin/Configs/SpikeSamples/NM-Neurons/` — различные конфигурации нейронов (LIF, кабельные, сравнение)
+  - **Обучение структур**: `Bin/Configs/SpikeSamples/StructTrain/` — тренеры и обучение (SpikeAnsTrainer и др.)
+  - **Мышцы**: `Bin/Configs/SpikeSamples/MC-Muscles/` — примеры с NEyeMuscle (MC-M-00-EyeMuscle, MC-M-01-EyeMuscle)
+  - **Классификация**: `Bin/Configs/SpikeSamples/Classifier/SpikeIrisClassifier/`
+  - **Память и афференты**: `Bin/Configs/SpikeSamples/Memory/`, `Bin/Configs/SpikeSamples/NM-AfferentNeurons/`
+- **Дополнительно:** `Bin/Configs/User/CognitiveNavigation/`, `Bin/Configs/!OldConfigs/NM-Neurons/`, `Bin/Configs/!OldConfigs/STDP-Simple-01/`, `Bin/Configs/!OldConfigs/SpikeClassifier/`, `Bin/Configs/!OldConfigs/SpikeANPA3/`
 
 Подробное описание структуры конфигураций и примеры использования см. в разделе [Config-Overview.md](Config-Overview.md).
 
@@ -114,6 +118,7 @@ for (int i = 0; i < 100; i++) {
 - [Config-Overview.md](Config-Overview.md) - обзор конфигурационных проектов
 - [Config-Templates.md](Config-Templates.md) - шаблоны типовых экспериментов
 - [Scientific-Background.md](Scientific-Background.md) - научный фон и связанные публикации
+- [Documentation-Status.md](Documentation-Status.md) - статус документации и чеклист синхронизации с кодом
 - [FAQ.md](FAQ.md) - часто задаваемые вопросы
 - [CONTRIBUTING-docs.md](CONTRIBUTING-docs.md) - руководство по расширению документации
 
@@ -193,5 +198,6 @@ For overview information see root project documentation:
 - [Config-Overview.md](Config-Overview.md) - configuration projects overview
 - [Config-Templates.md](Config-Templates.md) - typical experiment templates
 - [Scientific-Background.md](Scientific-Background.md) - scientific background and related publications
+- [Documentation-Status.md](Documentation-Status.md) - documentation status and code sync checklist
 - [FAQ.md](FAQ.md) - frequently asked questions
 - [CONTRIBUTING-docs.md](CONTRIBUTING-docs.md) - documentation extension guide

@@ -272,6 +272,10 @@ for (int step = 0; step < 1000; step++) {
 - Простота настройки: достаточно указать `ClassName = "NPulsePerseptronIaF"`, и компонент автоматически использует IaF-модель
 - Совместимость с IaF-экспериментами: интегрируется с другими компонентами модели IaF
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
+
 ### См. также
 
 - [`NPulsePerseptron`](NPulsePerseptron.md) — импульсный персептрон (базовый класс)
@@ -412,6 +416,10 @@ graph TB
 - **NeuronsLayerClassName**: automatically set to "NNeuronsLayerIaF"
 - **StructureBuildMode**: 1 (automatic build with connections)
 - **NumNeuronsLayer**: 1-5 (number of hidden layers)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### See Also
 

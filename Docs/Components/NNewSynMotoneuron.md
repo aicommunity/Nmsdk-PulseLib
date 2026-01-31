@@ -36,6 +36,10 @@ classDiagram
 
 `NNewSynMotoneuron` использует все методы базового класса `NPulseNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
@@ -182,6 +186,10 @@ graph TB
 - Synapse optimization: membrane is specifically optimized for efficient synapse processing
 - Motor neuron: converts neural signals into motor activity
 - Large structure: uses three soma parts for complex motor control
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

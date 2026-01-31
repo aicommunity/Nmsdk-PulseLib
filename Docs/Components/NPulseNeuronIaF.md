@@ -4,12 +4,12 @@
 
 ### Назначение
 
-**Класс**: `NPulseNeuronIaF` — импульсный нейрон модели Integrate-and-Fire (IaF).  
-**Аббревиатура**: `IaF` — **I**ntegrate and **F**ire (интегрировать и стрелять).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronIaF", ...)`.  
+**Класс**: `NPulseNeuronIaF` — импульсный нейрон модели Integrate-and-Fire (IaF).
+**Аббревиатура**: `IaF` — **I**ntegrate and **F**ire (интегрировать и стрелять).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronIaF", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseNeuronIaF"` в `Bin/Configs/*/Model_*.xml`.
 
-`NPulseNeuronIaF` реализует модель нейрона Integrate-and-Fire — простую модель, которая интегрирует входные токи и генерирует спайк при достижении порога. Создается из `NPulseNeuron` с параметрами для модели IaF: мембрана `NPulseMembraneIaF` и LT-зона `NPulseLTZoneIaF`.
+`NPulseNeuronIaF` реализует модель нейрона Integrate-and-Fire — простую модель, которая интегрирует входные токи и генерирует спайк при достижении порога. Создается из `NPulseNeuron` с параметрами для модели IaF: мембрана `NPulseMembraneIaF` и LT-зона `NPulseLTZoneIaF`. Сравнение кабельной/сегментной модели (CSNM) с IaF приведено в [C].
 
 **Использование:** `Bin/Configs/!OldConfigs/OldExperiments/*/`
 
@@ -66,7 +66,7 @@ sequenceDiagram
     participant Membrane as NPulseMembraneIaF
     participant LTZone as NPulseLTZoneIaF
     participant Channel as NPulseChannelIaF
-    
+
     Storage->>Neuron: New() (из NPulseNeuron)
     Storage->>Neuron: SetMembraneClassName("NPulseMembraneIaF")
     Storage->>Neuron: SetLTZoneClassName("NPulseLTZoneIaF")
@@ -78,7 +78,7 @@ sequenceDiagram
     Neuron->>Channel: Создание каналов в мембране
     Neuron->>Neuron: Создание связей
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Storage->>Neuron: Calculate()
         Neuron->>Neuron: ACalculate()
@@ -173,18 +173,18 @@ graph TB
     subgraph NPulseNeuron["NPulseNeuron Base"]
         BaseNeuron[NPulseNeuron]
     end
-    
+
     subgraph NPulseNeuronIaF["NPulseNeuronIaF"]
         Membrane[NPulseMembraneIaF]
         LTZone[NPulseLTZoneIaF]
         PosChannel[NPulseChannelIaF]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Synapses[Синапсы]
         Generators[Генераторы]
     end
-    
+
     BaseNeuron -->|наследуется| NPulseNeuronIaF
     NPulseNeuronIaF -->|создает| Membrane
     NPulseNeuronIaF -->|создает| LTZone
@@ -355,6 +355,10 @@ for (int step = 0; step < 1000; step++) {
 - **VThreshold**: -55 мВ (порог генерации спайка)
 - **TRef**: 2 мс (рефрактерный период)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[C]** (сравнение с кабельной/сегментной моделью); **25**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -372,8 +376,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NPulseNeuronIaF` — Integrate-and-Fire (IaF) model spiking neuron.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronIaF", ...)`.  
+**Class**: `NPulseNeuronIaF` — Integrate-and-Fire (IaF) model spiking neuron.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronIaF", ...)`.
 **Instances**: `ClassName = "NPulseNeuronIaF"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseNeuronIaF` implements the Integrate-and-Fire neuron model — a simple model that integrates input currents and generates a spike when threshold is reached. Created from `NPulseNeuron` with parameters for IaF model: membrane `NPulseMembraneIaF` and LT-zone `NPulseLTZoneIaF`.
@@ -401,7 +405,7 @@ sequenceDiagram
     participant Membrane as NPulseMembraneIaF
     participant Channel as NPulseChannelIaF
     participant LTZone as NPulseLTZoneIaF
-    
+
     Storage->>Neuron: New() (from NPulseNeuron)
     Storage->>Neuron: SetMembraneClassName("NPulseMembraneIaF")
     Storage->>Neuron: SetLTZoneClassName("NPulseLTZoneIaF")
@@ -464,19 +468,19 @@ graph TB
     subgraph NPulseNeuron["NPulseNeuron Base"]
         BaseNeuron[NPulseNeuron]
     end
-    
+
     subgraph NPulseNeuronIaF["NPulseNeuronIaF"]
         Membrane[NPulseMembraneIaF]
         LTZone[NPulseLTZoneIaF]
         InhChannel[NPulseChannelIaF]
         ExcChannel[NPulseChannelIaF]
     end
-    
+
     subgraph External["External Components"]
         Synapses[Synapses]
         Generators[Generators]
     end
-    
+
     BaseNeuron -->|configured as| NPulseNeuronIaF
     NPulseNeuronIaF -->|creates| Membrane
     NPulseNeuronIaF -->|creates| LTZone
@@ -488,6 +492,10 @@ graph TB
     ExcChannel -->|current| LTZone
     LTZone -->|Output| NPulseNeuronIaF
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[C]** (comparison with cable/segment model); **25**, **29**, **30**.
 
 ### See Also
 

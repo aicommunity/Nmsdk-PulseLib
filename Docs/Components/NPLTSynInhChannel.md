@@ -108,6 +108,10 @@ channel->Build();
 - Уменьшает потенциал LT-зоны при наличии входных сигналов от синапсов
 - Комбинирует обработку синапсов с параметрами LT-зоны
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPLTSynChannel`](NPLTSynChannel.md) — LT-синаптический канал (базовый класс)
@@ -278,6 +282,10 @@ graph TB
 - **Type**: 1 (inhibitory channel type)
 - **Capacity**: 1e-8 (10 nF) — increased for LT-zone
 - **RestingResistance**: 1e6 (1 MΩ) — decreased for LT-zone
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

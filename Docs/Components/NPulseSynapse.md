@@ -337,6 +337,10 @@ for (int step = 0; step < 1000; step++) {
 2. **Медленный синапс**: SecretionTC=0.002, DissociationTC=0.02
 3. **С пресинаптическим торможением**: InhibitionCoeff=0.5, UsePresynapticInhibition=true
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseSynapseCommon`](NPulseSynapseCommon.md) — общий импульсный синапс
@@ -460,6 +464,10 @@ graph TB
     NPulseSynapse -->|Output| Channel
     Trainer -->|trains| NPulseSynapse
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

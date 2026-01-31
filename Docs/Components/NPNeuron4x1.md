@@ -280,6 +280,10 @@ for (int step = 0; step < 1000; step++) {
 - Интеграция сигналов: несколько сомальных частей интегрируют сигналы от дендрита
 - Морфология: отражает биологическую структуру нейрона со сложной сомой
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -445,6 +449,10 @@ graph TB
 - Complex soma: allows modeling neurons with multiple soma parts
 - Signal integration: multiple soma parts integrate signals from dendrite
 - Morphology: reflects biological neuron structure with complex soma
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

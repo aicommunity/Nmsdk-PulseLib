@@ -4,8 +4,8 @@
 
 ### Назначение
 
-**Класс**: `NPHebbLifeSynapse` — импульсный синапс с механизмом Хебба и интеграцией с моделью жизнеобеспечения нейрона.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPHebbLifeSynapse", ...)`.  
+**Класс**: `NPHebbLifeSynapse` — импульсный синапс с механизмом Хебба и интеграцией с моделью жизнеобеспечения нейрона.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPHebbLifeSynapse", ...)`.
 **Storage-инстансы**: `ClassName = "NPHebbLifeSynapse"` в `Bin/Configs/*/Model_*.xml`.
 
 `NPHebbLifeSynapse` является расширением класса `NPulseHebbSynapse` с дополнительной интеграцией с моделью жизнеобеспечения нейрона (`NPulseLifeNeuron`). Наследуется от `NPulseHebbSynapse` и добавляет автоматическое подключение к системе жизнеобеспечения нейрона через метод `InstallLifeConnection()`.
@@ -63,7 +63,7 @@ sequenceDiagram
     participant LTZone as LT-зона
     participant LifeSystem as NNeuronLife
     participant Channel as Канал
-    
+
     PreNeuron->>Synapse: Входной сигнал (Input)
     PostNeuron->>LTZone: Генерация спайка
     LTZone->>Synapse: InputLTZoneFeedbackSignal
@@ -131,12 +131,12 @@ graph TB
     subgraph NPulseHebbSynapse["NPulseHebbSynapse Base"]
         BaseHebbSynapse[NPulseHebbSynapse]
     end
-    
+
     subgraph NPulseHebbLifeSynapse["NPulseHebbLifeSynapse"]
         LifeIntegration[Интеграция с жизнеобеспечением]
         HebbMechanism[Механизм Хебба]
     end
-    
+
     subgraph External["Внешние компоненты"]
         PreNeuron[Пресинаптический нейрон]
         PostNeuron[NPulseLifeNeuron]
@@ -144,7 +144,7 @@ graph TB
         LifeSystem[NNeuronLife]
         Channel[Канал]
     end
-    
+
     BaseHebbSynapse -->|наследуется| NPulseHebbLifeSynapse
     NPulseHebbLifeSynapse -->|вычисляет| LifeIntegration
     NPulseHebbLifeSynapse -->|вычисляет| HebbMechanism
@@ -206,9 +206,9 @@ for (int step = 0; step < 10000; step++) {
     synapse->Calculate();
     double output = synapse->Output(0, 0);
     double g = synapse->Output2(0, 0);
-    
+
     if (step % 1000 == 0) {
-        std::cout << "Step " << step << ": Output = " << output 
+        std::cout << "Step " << step << ": Output = " << output
                   << ", G = " << g << std::endl;
     }
 }
@@ -249,6 +249,10 @@ for (int step = 0; step < 10000; step++) {
 - Интегрируется с `NPulseLifeNeuron` и `NNeuronLife`
 - Использует сигналы жизнеобеспечения для модуляции механизма Хебба
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (жизнеобеспечение), **15**.
+
 ### См. также
 
 - [`NPulseHebbSynapse`](NPulseHebbSynapse.md) — импульсный синапс с механизмом Хебба (базовый класс)
@@ -265,8 +269,8 @@ for (int step = 0; step < 10000; step++) {
 
 ### Purpose
 
-**Class**: `NPHebbLifeSynapse` — spiking synapse with Hebbian mechanism and neuron life support integration.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPHebbLifeSynapse", ...)`.  
+**Class**: `NPHebbLifeSynapse` — spiking synapse with Hebbian mechanism and neuron life support integration.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPHebbLifeSynapse", ...)`.
 **Instances**: `ClassName = "NPHebbLifeSynapse"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPHebbLifeSynapse` is an extension of `NPulseHebbSynapse` class with additional integration with neuron life support model (`NPulseLifeNeuron`). Inherits from `NPulseHebbSynapse` and adds automatic connection to neuron life support system through `InstallLifeConnection()` method.
@@ -293,13 +297,17 @@ sequenceDiagram
     participant Synapse as NPulseHebbLifeSynapse
     participant PostNeuron as NPulseLifeNeuron
     participant LifeSystem as NNeuronLife
-    
+
     PreNeuron->>Synapse: Input
     PostNeuron->>LifeSystem: Life signals
     LifeSystem->>Synapse: Life support signals
     Synapse->>Synapse: Calculate Hebbian mechanism
     Synapse-->>Synapse: Output
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (life support), **15**.
 
 ### See Also
 

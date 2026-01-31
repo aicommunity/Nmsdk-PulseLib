@@ -4,8 +4,8 @@
 
 ### Назначение
 
-**Класс**: `NPulseNeuronCommon` — базовый класс для импульсных нейронов с общей функциональностью.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronCommon", ...)`.  
+**Класс**: `NPulseNeuronCommon` — базовый класс для импульсных нейронов с общей функциональностью.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronCommon", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseNeuronCommon"` (обычно используется через наследников).
 
 `NPulseNeuronCommon` расширяет `NNeuron` функциональностью для работы с импульсными нейронами. Управляет мембранами, LT-зонами, отслеживает активность входов и выходов, агрегирует потенциалы дендритов и сомы.
@@ -60,7 +60,7 @@ sequenceDiagram
     participant Neuron as NPulseNeuronCommon
     participant Membrane as NPulseMembraneCommon
     participant LTZone as NLTZone
-    
+
     Storage->>Neuron: New()
     Storage->>Neuron: Default()
     Neuron->>Neuron: ADefault()
@@ -75,7 +75,7 @@ sequenceDiagram
     Neuron->>LTZone: Поиск LT-зоны
     Neuron->>LTZone: UseAveragePotential = UseAverageLTZonePotential
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Storage->>Neuron: Calculate()
         Neuron->>Neuron: ACalculate()
@@ -155,18 +155,18 @@ graph TB
     subgraph NNeuron["NNeuron Base"]
         BaseNeuron[NNeuron]
     end
-    
+
     subgraph NPulseNeuronCommon["NPulseNeuronCommon"]
         Membranes[Мембраны]
         LTZone[LT-зона]
         Properties[Свойства активности]
     end
-    
+
     subgraph Membranes["Мембраны"]
         Membrane1[NPulseMembraneCommon]
         Membrane2[NPulseMembraneCommon]
     end
-    
+
     BaseNeuron -->|наследуется| NPulseNeuronCommon
     NPulseNeuronCommon -->|содержит| Membranes
     NPulseNeuronCommon -->|содержит| LTZone
@@ -306,6 +306,10 @@ for (int step = 0; step < 1000; step++) {
 - `NPulseNeuron` — для нейронов с параметрами структурирования
 - Другие специализированные нейроны
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **17**, **18**.
+
 ### См. также
 
 - [`NNeuron`](NNeuron.md) — базовый нейрон
@@ -321,8 +325,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NPulseNeuronCommon` — base class for spiking neurons with common functionality.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronCommon", ...)`.  
+**Class**: `NPulseNeuronCommon` — base class for spiking neurons with common functionality.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronCommon", ...)`.
 **Instances**: `ClassName = "NPulseNeuronCommon"` (typically used via derived classes).
 
 `NPulseNeuronCommon` extends `NNeuron` with functionality for working with spiking neurons. Manages membranes, LT-zones, tracks input and output activity, aggregates dendritic and soma potentials.
@@ -353,7 +357,7 @@ sequenceDiagram
     participant Neuron as NPulseNeuronCommon
     participant Membrane as NPulseMembraneCommon
     participant LTZone as NLTZone
-    
+
     Storage->>Neuron: New() + Default()
     Storage->>Neuron: AddComponent(membrane)
     Storage->>Neuron: AddComponent(ltZone)
@@ -407,18 +411,18 @@ graph TB
     subgraph NNeuron["NNeuron Base"]
         BaseNeuron[NNeuron]
     end
-    
+
     subgraph NPulseNeuronCommon["NPulseNeuronCommon"]
         Membranes[NPulseMembraneCommon<br/>Membranes]
         LTZone[NLTZone<br/>LT-zone]
         ActivityProps[Activity Properties]
     end
-    
+
     subgraph External["External Components"]
         Synapses[Synapses]
         PreNeurons[Presynaptic neurons]
     end
-    
+
     BaseNeuron -->|inherits| NPulseNeuronCommon
     NPulseNeuronCommon -->|contains| Membranes
     NPulseNeuronCommon -->|contains| LTZone
@@ -471,6 +475,10 @@ graph TB
 **Typical parameter values:**
 - **UseAverageDendritesPotential**: true (use averaging for dendrites)
 - **UseAverageLTZonePotential**: true (use averaging for LT-zone)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **17**, **18**.
 
 ### See Also
 

@@ -1,7 +1,7 @@
 ## NGenBioNeuron — био-генерирующий нейрон
 
-**Класс**: `NGenBioNeuron` — биологически ориентированный генерирующий нейрон.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NGenBioNeuron", ...)`.  
+**Класс**: `NGenBioNeuron` — биологически ориентированный генерирующий нейрон.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NGenBioNeuron", ...)`.
 **Storage**: `ClassName = "NGenBioNeuron"`.
 
 ### Lifecycle
@@ -38,6 +38,10 @@ flowchart LR
 ```
 
 Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
+
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### Config snippet
 
@@ -77,3 +81,7 @@ flowchart LR
 ```
 
 Description: this flowchart shows the data/signal flow (inputs → component → outputs).
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.

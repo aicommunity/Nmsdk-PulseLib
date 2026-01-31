@@ -4,8 +4,8 @@
 
 ### Назначение
 
-**Класс**: `NSPLifeNeuron` — конфигурационный вариант мелкого живого импульсного нейрона с поддержкой жизнеобеспечения.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeNeuron", ...)`.  
+**Класс**: `NSPLifeNeuron` — конфигурационный вариант мелкого живого импульсного нейрона с поддержкой жизнеобеспечения.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeNeuron", ...)`.
 **Storage-инстансы**: `ClassName = "NSPLifeNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
 `NSPLifeNeuron` является конфигурационным вариантом базового класса `NPulseLifeNeuron` с предустановленными параметрами для мелких живых нейронов. Создается из `NPulseLifeNeuron` с настройками:
@@ -71,7 +71,7 @@ sequenceDiagram
     participant Membrane as NPMembrane
     participant LTZone as NPulseLTZoneCommon
     participant NeuronLife as NNeuronLife
-    
+
     Storage->>Neuron: New() (из NPulseLifeNeuron)
     Storage->>Neuron: SetNumSomaMembraneParts(1)
     Storage->>Neuron: SetMembraneClassName("NPMembrane")
@@ -84,7 +84,7 @@ sequenceDiagram
     Neuron->>NeuronLife: AddMissingComponent("NeuronLife", "NNeuronLife")
     Neuron->>Neuron: CreateLink(LTZone->Output, NeuronLife->Input1)
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Storage->>Neuron: Calculate()
         Neuron->>Neuron: NPulseLifeNeuron::ACalculate()
@@ -194,23 +194,23 @@ graph TB
     subgraph NPulseNeuron["NPulseNeuron Base"]
         BaseNeuron[NPulseNeuron]
     end
-    
+
     subgraph NPulseLifeNeuron["NPulseLifeNeuron"]
         LifeNeuronCore[Ядро живого нейрона]
     end
-    
+
     subgraph NSPLifeNeuron["NSPLifeNeuron Configuration"]
         Membrane[NPMembrane<br/>PulseMembrane]
         LTZone[NPulseLTZoneCommon<br/>LTZone]
         NeuronLife[NNeuronLife<br/>NeuronLife]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Synapses[Синапсы]
         PreNeurons[Пресинаптические нейроны]
         EnergySource[Источник энергии]
     end
-    
+
     BaseNeuron -->|наследуется| NPulseLifeNeuron
     NPulseLifeNeuron -->|конфигурируется как| NSPLifeNeuron
     NSPLifeNeuron -->|создает| Membrane
@@ -323,6 +323,10 @@ for (int step = 0; step < 1000; step++) {
 - Метрики жизнедеятельности: отслеживание энергии, износа, чувства
 - Адаптация: метрики используются для адаптации нейрона к условиям работы
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (жизнеобеспечение), **15**.
+
 ### См. также
 
 - [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон (базовый класс)
@@ -338,8 +342,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NSPLifeNeuron` — configuration variant of small living spiking neuron with life support.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeNeuron", ...)`.  
+**Class**: `NSPLifeNeuron` — configuration variant of small living spiking neuron with life support.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeNeuron", ...)`.
 **Instances**: `ClassName = "NSPLifeNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
 `NSPLifeNeuron` is a configuration variant of the base class `NPulseLifeNeuron` with preset parameters for small living neurons. Created from `NPulseLifeNeuron` with settings:
@@ -376,7 +380,7 @@ sequenceDiagram
     participant Membrane as NPMembrane
     participant LTZone as NPulseLTZoneCommon
     participant NeuronLife as NNeuronLife
-    
+
     Storage->>Neuron: New() + Default()
     Storage->>Neuron: Build()
     Neuron->>Membrane: CreateComponent()
@@ -431,18 +435,18 @@ graph TB
     subgraph NPulseLifeNeuron["NPulseLifeNeuron Base"]
         BaseNeuron[NPulseLifeNeuron]
     end
-    
+
     subgraph NSPLifeNeuron["NSPLifeNeuron Configuration"]
         Membrane[NPMembrane]
         LTZone[NPulseLTZoneCommon]
         NeuronLife[NNeuronLife]
     end
-    
+
     subgraph External["External Components"]
         Synapses[Synapses]
         EnergySource[Energy Source]
     end
-    
+
     BaseNeuron -->|configured as| NSPLifeNeuron
     NSPLifeNeuron -->|creates| Membrane
     NSPLifeNeuron -->|creates| LTZone
@@ -483,6 +487,10 @@ graph TB
 - **NumSomaMembraneParts**: 1 (one soma part for small neurons)
 - **MembraneClassName**: "NPMembrane" (standard membrane)
 - **LTMembraneClassName**: "" (without LT-membrane)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (life support), **15**.
 
 ### See Also
 

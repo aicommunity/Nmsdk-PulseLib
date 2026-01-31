@@ -326,6 +326,10 @@ receptor->Build();
 - Режимы преобразования: линейный, экспоненциальный, линейный с усилением
 - Нормализация: автоматическая нормализация входных сигналов в заданный диапазон
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NSource`](NSource.md) — базовый источник сигналов
@@ -485,6 +489,10 @@ graph TB
 - Input range adaptation: automatic range expansion when input values exceed boundaries
 - Transformation modes: linear, exponential, linear with gain
 - Normalization: automatic normalization of input signals to specified range
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

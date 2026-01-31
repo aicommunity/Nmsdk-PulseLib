@@ -71,6 +71,10 @@ ltZone->Default();
 ltZone->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseLTZoneThreshold`](NPulseLTZoneThreshold.md) — базовая LT-зона с порогом (базовый класс)
@@ -104,6 +108,10 @@ classDiagram
         +ThresholdOff : double = -0.1
     }
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

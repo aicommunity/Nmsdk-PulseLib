@@ -269,6 +269,10 @@ for (int step = 0; step < 1000; step++) {
 - Интернейрон: действует как ингибирующий интернейрон в двигательных цепях
 - Производительность: улучшенная производительность при работе с большим количеством синапсов
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -428,6 +432,10 @@ graph TB
 - Synapse optimization: membrane optimized for efficient synapse processing
 - Interneuron: acts as inhibitory interneuron in motor circuits
 - Performance: improved performance when working with large numbers of synapses
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

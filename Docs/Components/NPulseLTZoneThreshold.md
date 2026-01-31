@@ -252,6 +252,10 @@ ltZone->Build();
 - **PulseAmplitude**: 1.0 (амплитуда импульса)
 - **PulseLength**: 0.001 - 0.01 (длина импульса в секундах)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — общая импульсная LT-зона (базовый класс)
@@ -366,6 +370,10 @@ graph TB
     NPulseLTZoneThreshold -->|Output| Neuron
     NPulseLTZoneThreshold -->|Output| Membrane
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

@@ -224,6 +224,10 @@ ltZone->Build();
   - **PulseAmplitude**: 1.0 (амплитуда спайка)
   - **PulseLength**: 0.001 (1 мс, длительность спайка)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — общая импульсная LT-зона (базовый класс)
@@ -379,6 +383,10 @@ graph TB
 - Alias: provides simplified naming for `NPulseLTZoneCommon`
 - Backward compatibility: maintains compatibility with existing configurations
 - Default parameters: uses default parameters from `NPulseLTZoneCommon`
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

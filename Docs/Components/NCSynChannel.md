@@ -109,6 +109,10 @@ channel->Build();
 - Обратная совместимость со старыми конфигурациями
 - Непрерывная обработка синапсов с упрощенной моделью
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NContinuesSynChannel`](NContinuesSynChannel.md) — непрерывный синаптический канал (базовый класс)
@@ -269,6 +273,10 @@ graph TB
 - Simplified model: Uses simplified output current calculation compared to `NPulseSynChannel`
 - Continuous processing: Processes continuous synapse signals
 - Default inhibition: `InhibitionCoeff = 1.0` by default (unlike `NPulseSynChannel` where it's 0.0)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

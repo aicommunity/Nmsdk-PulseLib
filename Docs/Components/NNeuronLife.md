@@ -1,14 +1,16 @@
 # NNeuronLife — нейрон с метриками жизнеобеспечения
 
+**Каталог компонентов:** [Component-Catalog.md](../Component-Catalog.md).
+
 ## RU
 
 ### Назначение
 
-**Класс**: `NNeuronLife` — компонент модели жизнеобеспечения нейрона с метриками энергии, износа и чувства.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLife", ...)`.  
+**Класс**: `NNeuronLife` — компонент модели жизнеобеспечения нейрона с метриками энергии, износа и чувства.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLife", ...)`.
 **Storage-инстансы**: `ClassName = "NNeuronLife"` в `Bin/Configs/*/Model_*.xml`.
 
-`NNeuronLife` реализует модель жизнеобеспечения нейрона, которая отслеживает метрики энергии, износа (wear out), чувства (feel) и вычисляет пороги активации на основе этих метрик. Компонент используется в составе `NPulseLifeNeuron` для моделирования "живых" нейронов с метриками жизнеобеспечения.
+`NNeuronLife` реализует модель жизнеобеспечения нейрона, которая отслеживает метрики энергии, износа (wear out), чувства (feel) и вычисляет пороги активации на основе этих метрик. Компонент используется в составе `NPulseLifeNeuron` для моделирования "живых" нейронов с метриками жизнеобеспечения. В контексте нейроморфных систем [A] модель жизнеобеспечения поддерживает структурную и параметрическую адаптацию нейрона (ресурсы, износ, пороги) и согласуется с описанием пластичности и моторной памяти в диссертации Бахшиева.
 
 **Использование:** Моделирование жизнеобеспечения нейронов, эксперименты с метриками энергии и износа, моделирование адаптации нейронов
 
@@ -130,7 +132,7 @@ sequenceDiagram
     participant Membrane as NPulseMembrane
     participant ExternalBonus as NSum
     participant Storage as UStorage
-    
+
     Storage->>Life: New()
     Storage->>Life: Default()
     Life->>Life: ADefault()
@@ -139,7 +141,7 @@ sequenceDiagram
     Life->>Life: ABuild()
     Life->>ExternalBonus: AddMissingComponent("ExternalEnergyBonus", "NSum")
     Life-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Neuron->>Membrane: Получение потенциала
         Membrane-->>Neuron: Потенциал
@@ -273,21 +275,21 @@ graph TB
     subgraph UNet["UNet Base"]
         BaseNet[UNet]
     end
-    
+
     subgraph NNeuronLife["NNeuronLife"]
         LifeCore[Ядро жизнеобеспечения]
         ExternalBonus[NSum<br/>ExternalEnergyBonus<br/>опционально]
     end
-    
+
     subgraph NPulseLifeNeuron["NPulseLifeNeuron"]
         Neuron[Нейрон]
         Membrane[Мембрана]
     end
-    
+
     subgraph External["Внешние компоненты"]
         EnergySource[Источник энергии]
     end
-    
+
     BaseNet -->|наследуется| NNeuronLife
     NNeuronLife -->|создает| ExternalBonus
     NPulseLifeNeuron -->|содержит| NNeuronLife
@@ -580,6 +582,10 @@ for (int step = 0; step < 1000; step++) {
 - Множество метрик: компонент вычисляет множество метрик жизнеобеспечения
 - Адаптация: метрики используются для адаптации нейрона к условиям работы
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]** (структурная/параметрическая адаптация, пластичность); **neuromodeler.ru** (жизнеобеспечение), **15**.
+
 ### См. также
 
 - [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон (использует NNeuronLife)
@@ -594,11 +600,11 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NNeuronLife` — component for neuron life support model with energy, wear out, and feel metrics.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLife", ...)`.  
+**Class**: `NNeuronLife` — component for neuron life support model with energy, wear out, and feel metrics.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLife", ...)`.
 **Instances**: `ClassName = "NNeuronLife"` in `Bin/Configs/*/Model_*.xml`.
 
-`NNeuronLife` implements neuron life support model that tracks energy, wear out, and feel metrics and calculates activation thresholds based on these metrics. Component is used within `NPulseLifeNeuron` for modeling "living" neurons with life support metrics.
+`NNeuronLife` implements neuron life support model that tracks energy, wear out, and feel metrics and calculates activation thresholds based on these metrics. Component is used within `NPulseLifeNeuron` for modeling "living" neurons with life support metrics. In neuromorphic systems [A], the life support model supports structural and parametric adaptation of the neuron (resources, wear, thresholds) and aligns with plasticity and motor memory as described in Bakhshiev's thesis.
 
 **Usage:** Modeling neuron life support, experiments with energy and wear out metrics, modeling neuron adaptation
 
@@ -629,7 +635,7 @@ classDiagram
 sequenceDiagram
     participant Neuron as NPulseLifeNeuron
     participant Life as NNeuronLife
-    
+
     Neuron->>Life: Input1, Input2, Input3
     Neuron->>Life: Calculate()
     Life->>Life: ACalcWearOut()
@@ -680,16 +686,16 @@ graph TB
     subgraph UNet["UNet Base"]
         BaseNet[UNet]
     end
-    
+
     subgraph NNeuronLife["NNeuronLife"]
         LifeCore[Life Support Core]
         ExternalBonus[NSum<br/>optional]
     end
-    
+
     subgraph NPulseLifeNeuron["NPulseLifeNeuron"]
         Neuron[Neuron]
     end
-    
+
     BaseNet -->|inherits| NNeuronLife
     NNeuronLife -->|creates| ExternalBonus
     NPulseLifeNeuron -->|contains| NNeuronLife
@@ -734,6 +740,10 @@ graph TB
 - **CriticalEnergy**: 0.5 (critical energy)
 - **WearOutConstPositive**: 100 (wear out increase)
 - **WearOutConstNegative**: 1 (wear out decrease with activity)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]** (structural/parametric adaptation, plasticity); **neuromodeler.ru** (life support), **15**.
 
 ### See Also
 

@@ -331,6 +331,10 @@ for (int step = 0; step < 1000; step++) {
 - Автоматически отслеживает частоту спайков и временные метки
 - Интегрируется с мембраной `NPulseMembraneIzhikevich` для обратной связи
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — общая импульсная LT-зона
@@ -476,6 +480,10 @@ graph TB
 - Requires at least 2 input signals for correct operation
 - Automatically tracks spike frequency and timestamps
 - Integrates with `NPulseMembraneIzhikevich` for feedback
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### See Also
 

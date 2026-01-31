@@ -258,6 +258,10 @@ for (int step = 0; step < 1000; step++) {
 - Поддержка STDP: нейроны поддерживают обучение по правилу STDP
 - Простота настройки: достаточно указать `ClassName = "NNeuronsLayerIaF"`, и компонент автоматически использует IaF-модель
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
+
 ### См. также
 
 - [`NNeuronsLayer`](NNeuronsLayer.md) — базовый слой нейронов (базовый класс)
@@ -393,6 +397,10 @@ graph TB
 - **StructureBuildMode**: 1 (automatic structure rebuild)
 - **NeuronsHeight**: 1-100 (neuron grid height)
 - **NeuronsWidth**: 1-100 (neuron grid width)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### See Also
 

@@ -4,15 +4,17 @@
 
 ### Назначение
 
-**Класс**: `NPulseLTZoneIaF` — конфигурационный вариант LT-зоны для нейронов модели Integrate-and-Fire.  
-**Аббревиатуры**: `LT` — **L**ow **T**hreshold (низкопороговая зона); `IaF` — **I**ntegrate and **F**ire (интегрировать и стрелять).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneIaF", ...)`.  
+**Класс**: `NPulseLTZoneIaF` — конфигурационный вариант LT-зоны для нейронов модели Integrate-and-Fire.
+**Аббревиатуры**: `LT` — **L**ow **T**hreshold (низкопороговая зона); `IaF` — **I**ntegrate and **F**ire (интегрировать и стрелять).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneIaF", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseLTZoneIaF"` в `Bin/Configs/*/Model_*.xml`.
 
 `NPulseLTZoneIaF` является конфигурационным вариантом базового класса `NPulseLTZoneThreshold` с предустановленными параметрами для модели IaF. Создается из `NPulseLTZoneThreshold` с настройками:
 - `Threshold = -0.055` (-55 мВ) — порог генерации спайка
 - `ThresholdOff = -0.07` (-70 мВ) — порог окончания спайка
 - `NumChannelsInGroup = 1` — количество каналов в группе
+
+Сравнение кабельной/сегментной модели (CSNM) с IaF приведено в [C].
 
 **Использование:** Эксперименты с нейронами модели IaF, обучение нейросетей
 
@@ -56,7 +58,7 @@ sequenceDiagram
     participant LTZone as NPulseLTZoneIaF
     participant Membrane as Мембрана
     participant Neuron as Нейрон
-    
+
     Channels->>LTZone: Входные сигналы (Inputs)
     LTZone->>LTZone: ACalculate2()
     LTZone->>LTZone: Получение Potential от каналов
@@ -140,18 +142,18 @@ graph TB
     subgraph NPulseLTZoneThreshold["NPulseLTZoneThreshold Base"]
         BaseLTZone[NPulseLTZoneThreshold]
     end
-    
+
     subgraph NPulseLTZoneIaF["NPulseLTZoneIaF Configuration"]
         Properties[Свойства LT-зоны]
         Counters[Счетчики спайков]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Channels[Входные каналы IaF]
         Membrane[Мембрана]
         Neuron[Нейрон]
     end
-    
+
     BaseLTZone -->|конфигурируется как| NPulseLTZoneIaF
     NPulseLTZoneIaF -->|вычисляет| Properties
     NPulseLTZoneIaF -->|отслеживает| Counters
@@ -237,8 +239,8 @@ for (int step = 0; step < 1000; step++) {
     double output = ltZone->Output(0, 0);
     double frequency = ltZone->OutputFrequency(0, 0);
     double potential = ltZone->OutputPotential(0, 0);
-    std::cout << "Step " << step << ": Output = " << output 
-              << ", Frequency = " << frequency 
+    std::cout << "Step " << step << ": Output = " << output
+              << ", Frequency = " << frequency
               << ", Potential = " << potential << std::endl;
 }
 ```
@@ -272,6 +274,10 @@ for (int step = 0; step < 1000; step++) {
 - Работает с одним каналом в группе (`NumChannelsInGroup=1`)
 - Интегрируется с мембраной `NPulseMembraneIaF` для обратной связи
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[C]** (сравнение с кабельной/сегментной моделью); **25**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseLTZoneThreshold`](NPulseLTZoneThreshold.md) — LT-зона с порогом
@@ -289,8 +295,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NPulseLTZoneIaF` — configuration variant of LT-zone for Integrate-and-Fire model neurons.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneIaF", ...)`.  
+**Class**: `NPulseLTZoneIaF` — configuration variant of LT-zone for Integrate-and-Fire model neurons.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseLTZoneIaF", ...)`.
 **Instances**: `ClassName = "NPulseLTZoneIaF"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseLTZoneIaF` is a configuration variant of the base class `NPulseLTZoneThreshold` with preset parameters for the IaF model. Created from `NPulseLTZoneThreshold` with settings:
@@ -320,7 +326,7 @@ sequenceDiagram
     participant LTZone as NPulseLTZoneIaF
     participant Membrane
     participant Neuron
-    
+
     Channels->>LTZone: Inputs
     LTZone->>LTZone: ACalculate2()
     LTZone->>LTZone: Get Potential
@@ -384,18 +390,18 @@ graph TB
     subgraph NPulseLTZoneThreshold["NPulseLTZoneThreshold Base"]
         BaseLTZone[NPulseLTZoneThreshold]
     end
-    
+
     subgraph NPulseLTZoneIaF["NPulseLTZoneIaF"]
         Properties[LT-zone Properties]
         Counters[Spike Counters]
     end
-    
+
     subgraph External["External Components"]
         Channels[Input IaF Channels]
         Membrane[Membrane]
         Neuron[Neuron]
     end
-    
+
     BaseLTZone -->|configured as| NPulseLTZoneIaF
     NPulseLTZoneIaF -->|calculates| Properties
     NPulseLTZoneIaF -->|tracks| Counters
@@ -416,6 +422,10 @@ graph TB
 - **Threshold**: -0.055 (spike generation threshold)
 - **ThresholdOff**: -0.07 (spike termination threshold)
 - **NumChannelsInGroup**: 1
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[C]** (comparison with cable/segment model); **25**, **29**, **30**.
 
 ### See Also
 

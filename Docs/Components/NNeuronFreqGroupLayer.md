@@ -1,7 +1,7 @@
 ## NNeuronFreqGroupLayer — слой частотных групп
 
-**Класс**: `NNeuronFreqGroupLayer` — слой, состоящий из нескольких `NNeuronFreqGroup`.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronFreqGroupLayer", ...)`.  
+**Класс**: `NNeuronFreqGroupLayer` — слой, состоящий из нескольких `NNeuronFreqGroup`.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronFreqGroupLayer", ...)`.
 **Storage**: `ClassName = "NNeuronFreqGroupLayer"`.
 
 ### Lifecycle
@@ -83,17 +83,17 @@ graph TB
     subgraph UComponent["UComponent Base"]
         BaseComponent[UComponent]
     end
-    
+
     subgraph NNeuronFreqGroupLayer["NNeuronFreqGroupLayer"]
         Layer[Слой частотных групп]
         FreqGroups[Частотные группы<br/>NNeuronFreqGroup]
     end
-    
+
     subgraph External["Внешние компоненты"]
         InputSource[Источник входных сигналов]
         OutputTarget[Целевой компонент]
     end
-    
+
     BaseComponent -->|наследуется| NNeuronFreqGroupLayer
     NNeuronFreqGroupLayer -->|создает| FreqGroups
     NNeuronFreqGroupLayer -->|управляет| Layer
@@ -113,6 +113,10 @@ graph TB
 ClassName = NNeuronFreqGroupLayer
 Name = FreqLayer1
 ```
+
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru**, **15**, **[A]**.
 
 ---
 
@@ -189,17 +193,17 @@ graph TB
     subgraph UNet["UNet Base"]
         BaseNet[UNet]
     end
-    
+
     subgraph NNeuronFreqGroupLayer["NNeuronFreqGroupLayer"]
         Layer[Frequency group layer]
         FreqGroups[NNeuronFreqGroup<br/>Groups grid<br/>Height x Width]
     end
-    
+
     subgraph External["External Components"]
         InputSource[Input source]
         OutputTarget[Output target]
     end
-    
+
     BaseNet -->|inherits| NNeuronFreqGroupLayer
     NNeuronFreqGroupLayer -->|creates| FreqGroups
     NNeuronFreqGroupLayer -->|manages| Layer
@@ -245,3 +249,7 @@ graph TB
 - **AffNeuronsGroupHeight**: 1-5 (number of rows)
 - **AffNeuronsGroupWidth**: 1-10 (number of columns)
 - **NumAffNeuronsInGroup**: 5-20 (number of afferent neurons per group)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **neuromodeler.ru**, **15**, **[A]**.

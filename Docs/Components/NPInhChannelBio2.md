@@ -78,6 +78,10 @@ channel->Default();
 channel->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseChannel`](NPulseChannel.md) — базовый импульсный канал (базовый класс)
@@ -238,6 +242,10 @@ graph TB
 - **Resistance**: 1.6e7 (16 MOhm)
 - **RestingResistance**: 3e6 (3 MOhm)
 - **Capacity**: 2.5e-10 (250 pF)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

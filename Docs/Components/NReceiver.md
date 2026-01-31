@@ -181,6 +181,10 @@ receiver->Build();
 - Прием сигналов: получает выходные сигналы нейронной сети
 - Экспорт данных: экспортирует данные для внешнего использования (логирование, визуализация, управление)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NSource`](NSource.md) — источник сигналов
@@ -317,6 +321,10 @@ graph TB
 - Base class: not used directly, only through derived classes
 - Signal reception: receives network output signals
 - Data export: exports data for external use (logging, visualization, control)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

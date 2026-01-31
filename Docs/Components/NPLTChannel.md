@@ -110,6 +110,10 @@ channel->Build();
 - Увеличенная емкость обеспечивает более медленную динамику
 - Уменьшенное сопротивление покоя обеспечивает более быструю реакцию
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseChannel`](NPulseChannel.md) — базовый импульсный канал
@@ -262,6 +266,10 @@ graph TB
 **Typical parameter values:**
 - **Capacity**: 1e-8 (10 nF) — increased for LT-zone
 - **RestingResistance**: 1e6 (1 MΩ) — decreased for LT-zone
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

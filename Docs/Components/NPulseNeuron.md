@@ -4,8 +4,8 @@
 
 ### Назначение
 
-**Класс**: `NPulseNeuron` — импульсный нейрон с автоматическим построением структуры на основе параметров.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuron", ...)`.  
+**Класс**: `NPulseNeuron` — импульсный нейрон с автоматическим построением структуры на основе параметров.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuron", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
 `NPulseNeuron` расширяет `NPulseNeuronCommon` функциональностью автоматического построения структуры нейрона на основе параметров. Позволяет создавать нейроны с заданным количеством сомальных и дендритных мембран, автоматически создавать LT-зоны и генераторы, управлять структурой через параметры `StructureBuildMode`.
@@ -72,7 +72,7 @@ sequenceDiagram
     participant Membrane as NPulseMembraneCommon
     participant LTZone as NLTZone
     participant Generator as NConstGenerator
-    
+
     Storage->>Neuron: New()
     Storage->>Neuron: Default()
     Neuron->>Neuron: ADefault()
@@ -152,18 +152,18 @@ flowchart TD
     CheckMode -->|0| NoBuild[Нет автоматической сборки]
     CheckMode -->|1| BuildMode1[BuildStructure mode=1]
     CheckMode -->|2| BuildMode2[BuildStructure mode=2]
-    
+
     BuildMode1 --> CreateLTZone[Создание LT-зоны]
     BuildMode2 --> CreateLTZone
     NoBuild --> CallBaseBuild
-    
+
     CreateLTZone --> CheckExcGen{ExcGeneratorClassName?}
     CheckExcGen -->|Указан| CreatePosGen[Создание PosGenerator]
     CheckExcGen -->|Не указан| CheckInhGen
     CreatePosGen --> CheckInhGen{InhGeneratorClassName?}
     CheckInhGen -->|Указан| CreateNegGen[Создание NegGenerator]
     CheckInhGen -->|Не указан| LoopSoma
-    
+
     CreateNegGen --> LoopSoma[Цикл по сомам]
     LoopSoma --> CreateSoma[Создание сомальной мембраны]
     CreateSoma --> LoopDendrites[Цикл по дендритам]
@@ -175,7 +175,7 @@ flowchart TD
     CheckMoreDendrites -->|Нет| CheckMoreSoma{Еще сомы?}
     CheckMoreSoma -->|Да| LoopSoma
     CheckMoreSoma -->|Нет| LinkGenerators[Связывание генераторов]
-    
+
     LinkGenerators --> LinkLTZone[Связывание LT-зоны]
     LinkLTZone --> CallBaseBuild[NPulseNeuronCommon::ABuild]
     CallBaseBuild --> End([End])
@@ -198,7 +198,7 @@ graph TB
     subgraph NPulseNeuronCommon["NPulseNeuronCommon Base"]
         BaseNeuron[NPulseNeuronCommon]
     end
-    
+
     subgraph NPulseNeuron["NPulseNeuron"]
         LTZone[NLTZone]
         PosGen[NConstGenerator]
@@ -206,17 +206,17 @@ graph TB
         SomaMembranes[Сомальные мембраны]
         DendriteMembranes[Дендритные мембраны]
     end
-    
+
     subgraph SomaMembranes["Сомальные мембраны"]
         Soma1[NPulseMembraneCommon]
         Soma2[NPulseMembraneCommon]
     end
-    
+
     subgraph DendriteMembranes["Дендритные мембраны"]
         Dendrite1[NPulseMembraneCommon]
         Dendrite2[NPulseMembraneCommon]
     end
-    
+
     BaseNeuron -->|наследуется| NPulseNeuron
     NPulseNeuron -->|создает| LTZone
     NPulseNeuron -->|создает| PosGen
@@ -394,6 +394,10 @@ for (int step = 0; step < 1000; step++) {
 - **NumSomaMembraneParts**: 1-3 (обычно 1)
 - **NumDendriteMembraneParts**: 0-10 (зависит от типа нейрона)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **17**, **18**.
+
 ### См. также
 
 - [`NPulseNeuronCommon`](NPulseNeuronCommon.md) — общий импульсный нейрон
@@ -409,8 +413,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NPulseNeuron` — spiking neuron with automatic structure building based on parameters.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuron", ...)`.  
+**Class**: `NPulseNeuron` — spiking neuron with automatic structure building based on parameters.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuron", ...)`.
 **Instances**: `ClassName = "NPulseNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseNeuron` extends `NPulseNeuronCommon` with automatic structure building functionality. Allows creating neurons with specified number of soma and dendrite membranes, automatically creates LT-zones and generators, manages structure through `StructureBuildMode` parameter.
@@ -443,7 +447,7 @@ sequenceDiagram
     participant Neuron as NPulseNeuron
     participant Membrane as NPulseMembraneCommon
     participant LTZone as NLTZone
-    
+
     Storage->>Neuron: New() + Default()
     Storage->>Neuron: SetStructureBuildMode(2)
     Storage->>Neuron: SetNumSomaMembraneParts(1)
@@ -507,7 +511,7 @@ graph TB
     subgraph NPulseNeuronCommon["NPulseNeuronCommon Base"]
         BaseNeuron[NPulseNeuronCommon]
     end
-    
+
     subgraph NPulseNeuron["NPulseNeuron"]
         LTZone[NLTZone]
         PosGenerator[NConstGenerator<br/>PosGenerator]
@@ -515,12 +519,12 @@ graph TB
         Soma[NPulseMembraneCommon<br/>Soma membranes]
         Dendrites[NPulseMembraneCommon<br/>Dendrite membranes]
     end
-    
+
     subgraph External["External Components"]
         Synapses[Synapses]
         PreNeurons[Presynaptic neurons]
     end
-    
+
     BaseNeuron -->|inherits| NPulseNeuron
     NPulseNeuron -->|creates| LTZone
     NPulseNeuron -->|creates| PosGenerator
@@ -585,6 +589,10 @@ graph TB
 - **LTZoneClassName**: "NPLTZone" (standard LT-zone)
 - **NumSomaMembraneParts**: 1 (one soma part)
 - **NumDendriteMembraneParts**: 5 (five dendrite parts)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **17**, **18**.
 
 ### See Also
 

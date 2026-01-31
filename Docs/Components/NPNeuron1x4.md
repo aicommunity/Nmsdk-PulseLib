@@ -272,6 +272,10 @@ for (int step = 0; step < 1000; step++) {
 - Интеграция сигналов: дендриты интегрируют сигналы и передают их в сому
 - Морфология: отражает биологическую структуру нейрона с дендритным деревом
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -435,6 +439,10 @@ graph TB
 - Dendritic structure: allows modeling neurons with branched dendrites
 - Signal integration: dendrites integrate signals and transmit them to soma
 - Morphology: reflects biological neuron structure with dendritic tree
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

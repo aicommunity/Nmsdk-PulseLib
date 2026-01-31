@@ -30,11 +30,14 @@
 
 Классическая модель импульсного нейрона "интегрировать и стрелять".
 
-**Основные свойства:**
-- `MembranePotential` - мембранный потенциал
-- `Threshold` - порог срабатывания
-- `ResetPotential` - потенциал после сброса
-- `MembraneTimeConstant` - временная константа мембраны
+**Параметры (ptPubParameter):**
+- `C` (double) — параметр модели (ёмкость/постоянная времени)
+- `U0` (double) — начальный потенциал
+- `Upr` (double) — порог срабатывания
+
+**Входы:** `I` (MDMatrix<double>) — входной ток.
+
+**Выходы:** `U` (MDMatrix<double>) — мембранный потенциал (выход).
 
 **См. также:** [NIntegrateAndFireNeuron](Components/NIntegrateAndFireNeuron.md)
 
@@ -60,15 +63,16 @@
 
 Синапс с обучением STDP (Spike-Timing Dependent Plasticity) — наиболее распространенный механизм пластичности.
 
-**Основные свойства:**
-- `PreNeuron` - пресинаптический нейрон
-- `PostNeuron` - постсинаптический нейрон
-- `Weight` - вес синапса (начальное значение)
-- `LearningRate` - скорость обучения (обычно 0.01-0.1)
-- `TauPlus` - временная константа для LTP (Long-Term Potentiation)
-- `TauMinus` - временная константа для LTD (Long-Term Depression)
+**Параметры STDP (ptPubParameter):**
+- `XModCoeff`, `YModCoeff` — коэффициенты модификации для пост- и пресинаптической активности
+- `APlus`, `AMinus` — амплитуды LTP/LTD (обычно ~0.01–0.1)
+- `XTau`, `YTau` — временные константы для X/Y (обычно ~0.02)
 
-**Использование:** `Bin/Configs/!OldConfigs/STDP-Simple-01/`, эксперименты по обучению
+**Состояние (ptPubState):** `XAvg`, `YAvg` — средние активности; `XYDiff` — разница влияний.
+
+**Входы/выходы:** `PsActivityInput` (MDMatrix<double>) — активность постсинаптического нейрона; `StdpInfluence` (MDMatrix<double>) — влияние STDP на вес. От базового класса: `Weight`, `Input`, `Output`.
+
+**Использование:** `Bin/Configs/!OldConfigs/STDP-Simple-01/`, `Bin/Configs/SpikeSamples/STDP/`, эксперименты по обучению
 
 **См. также:** [NSynapseStdp](Components/NSynapseStdp.md), [NSynapseTrainerStdp](Components/NSynapseTrainerStdp.md)
 
@@ -257,10 +261,7 @@ Base synapse.
 
 Synapse with STDP learning.
 
-**Main Properties:**
-- `LearningRate` - learning rate
-- `TauPlus` - LTP time constant
-- `TauMinus` - LTD time constant
+**Main Properties:** `XModCoeff`, `YModCoeff`, `APlus`, `AMinus`, `XTau`, `YTau` (STDP parameters); `XAvg`, `YAvg`, `XYDiff` (state); `PsActivityInput`, `StdpInfluence` (input/output); inherited `Weight`, `Input`, `Output`.
 
 #### NSpikeClassifier
 

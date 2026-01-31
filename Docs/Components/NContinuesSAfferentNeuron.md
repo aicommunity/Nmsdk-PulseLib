@@ -296,6 +296,10 @@ for (int step = 0; step < 1000; step++) {
 - Непрерывный выход: LT-зона выдает непрерывный сигнал вместо дискретных спайков
 - Классические компоненты: использует классические мембраны и LT-зоны для непрерывного моделирования
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NAfferentNeuron`](NAfferentNeuron.md) — базовый афферентный нейрон
@@ -474,6 +478,10 @@ graph TB
 - Classical structure: includes membrane, LT-zone, and receptor
 - Continuous output: LT-zone produces continuous signal instead of discrete spikes
 - Classic components: uses classic membranes and LT-zones for continuous modeling
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

@@ -321,6 +321,10 @@ solver->InitialCondition = initCond;
 solver->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
@@ -407,6 +411,10 @@ flowchart TD
     Solve --> ExtractOutputs[Extract outputs]
     ExtractOutputs --> End([End])
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

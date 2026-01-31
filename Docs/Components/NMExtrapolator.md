@@ -70,6 +70,10 @@ classDiagram
   2. Использует историю и коэффициенты Паскаля для экстраполяции
   3. Выдает экстраполированные значения как выходной сигнал
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NPredictor`](NPredictor.md) — предсказатель
@@ -234,6 +238,10 @@ graph TB
 - History-based: uses input signal history for extrapolation
 - Forward prediction: predicts values forward in time by `PredictionTime`
 - Pascal coefficients: uses Pascal triangle coefficients for extrapolation
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

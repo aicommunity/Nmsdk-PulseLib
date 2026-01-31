@@ -409,6 +409,10 @@ for (int step = 0; step < 1000; step++) {
 - Суммарный выход: выходной сигнал равен амплитуде, если хотя бы один импульс активен
 - Гибкая настройка: можно задать любое количество импульсов с индивидуальными задержками
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NPulseGenerator`](NPulseGenerator.md) — базовый генератор импульсов
@@ -560,6 +564,10 @@ graph TB
 - **PulseLength**: 0.001-0.01 sec
 - **Amplitude**: 0.1-10.0
 - **PulseCount**: 1-10
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

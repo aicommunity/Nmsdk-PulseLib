@@ -244,6 +244,10 @@ for (int step = 0; step < 1000; step++) {
 - Интернейрон: действует как ингибирующий интернейрон в двигательных цепях
 - Обратная связь: получает возбуждающие входы от мотонейронов и генерирует ингибирующие выходы
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -395,6 +399,10 @@ graph TB
 - Reciprocal inhibition: provides inhibitory feedback to motor neurons
 - Interneuron: acts as inhibitory interneuron in motor circuits
 - Feedback: receives excitatory inputs from motor neurons and generates inhibitory outputs
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

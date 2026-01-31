@@ -6,17 +6,25 @@
 
 Если вы новичок в работе с Nmsdk-PulseLib, рекомендуем начать с следующих готовых экспериментов:
 
-1. **Простой STDP-эксперимент**: `Bin/Configs/!OldConfigs/STDP-Simple-01/`
+**Актуальные примеры (SpikeSamples):**
+
+1. **Простой STDP-эксперимент**: `Bin/Configs/SpikeSamples/STDP/STDP-Simple-01/`
    - Демонстрирует базовый механизм STDP-обучения между двумя нейронами
    - Простая структура для понимания основ
 
-2. **Тест модели Ижикевича**: `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`
-   - Демонстрирует различные типы нейронов по модели Ижикевича
-   - Хорошо для понимания параметров нейронов
+2. **Обучение структур / тренер**: `Bin/Configs/SpikeSamples/StructTrain/SpikeAnsTrainer/`
+   - Примеры обучения с тренерами спайковых ответов
 
-3. **Простой классификатор**: `Bin/Configs/!OldConfigs/SpikeClassifier/`
+3. **Модели нейронов**: `Bin/Configs/SpikeSamples/NM-Neurons/` (LIF-Neuron, CableModel, NeuronComparation и др.)
+   - Различные конфигурации нейронов и сравнение моделей
+
+4. **Мышцы**: `Bin/Configs/SpikeSamples/MC-Muscles/MC-M-01-EyeMuscle/`
+   - Пример с NEyeMuscle и управлением движением
+
+5. **Классификация**: `Bin/Configs/SpikeSamples/Classifier/SpikeIrisClassifier/`
    - Пример классификации паттернов спайков
-   - Демонстрирует работу с входными данными и обучением
+
+**Дополнительно (OldConfigs/User):** `Bin/Configs/!OldConfigs/STDP-Simple-01/`, `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`, `Bin/Configs/!OldConfigs/SpikeClassifier/`
 
 Эти проекты можно запустить напрямую в Nmsdk Engine и модифицировать параметры для экспериментов.
 
@@ -65,7 +73,7 @@ synapse->LearningRate = 0.01;
 synapse->Build();
 ```
 
-**Соответствующая конфигурация:** `Bin/Configs/!OldConfigs/STDP-Simple-01/`
+**Соответствующая конфигурация:** `Bin/Configs/SpikeSamples/STDP/STDP-Simple-01/`, `Bin/Configs/!OldConfigs/STDP-Simple-01/`
 
 В конфигурации STDP-синапс настраивается так:
 
@@ -201,10 +209,10 @@ for (int epoch = 0; epoch < 100; epoch++) {
     for (int i = 0; i < inputLayer.size(); i++) {
         inputLayer[i]->InputCurrent = inputData[i];
     }
-    
+
     // Расчет сети
     network->Calculate();
-    
+
     // Обновление весов через STDP
     network->Update();
 }
@@ -266,10 +274,10 @@ for (const auto& trainingSample : trainingData) {
     for (int i = 0; i < trainingSample.input.size(); i++) {
         classNeurons[trainingSample.label][i]->InputCurrent = trainingSample.input[i];
     }
-    
+
     // Расчет и классификация
     classifier->Calculate();
-    
+
     // Проверка результата
     if (classifier->ClassLabel != trainingSample.label) {
         // Корректировка весов
@@ -459,10 +467,10 @@ for (int epoch = 0; epoch < 100; epoch++) {
     for (int i = 0; i < inputLayer.size(); i++) {
         inputLayer[i]->InputCurrent = inputData[i];
     }
-    
+
     // Network calculation
     network->Calculate();
-    
+
     // Updating weights via STDP
     network->Update();
 }
@@ -497,10 +505,10 @@ for (const auto& trainingSample : trainingData) {
     for (int i = 0; i < trainingSample.input.size(); i++) {
         classNeurons[trainingSample.label][i]->InputCurrent = trainingSample.input[i];
     }
-    
+
     // Calculation and classification
     classifier->Calculate();
-    
+
     // Checking result
     if (classifier->ClassLabel != trainingSample.label) {
         // Adjusting weights

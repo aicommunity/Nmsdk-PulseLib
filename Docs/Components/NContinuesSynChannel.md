@@ -247,6 +247,10 @@ channel->Build();
 - Использует `NPulseSynapseCommon` для определения синапсов
 - Подходит для случаев, когда не требуется сложная модель пресинаптического торможения
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseSynChannel`](NPulseSynChannel.md) — импульсный синаптический канал
@@ -284,6 +288,10 @@ classDiagram
         +PreOutput : vector~double~
     }
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

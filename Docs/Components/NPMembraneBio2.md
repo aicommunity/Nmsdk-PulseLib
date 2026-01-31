@@ -81,6 +81,10 @@ membrane->Default();
 membrane->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseMembrane`](NPulseMembrane.md) — базовая импульсная мембрана (базовый класс)
@@ -278,6 +282,10 @@ graph TB
 - **InhChannelClassName**: "NPInhChannelBio2" (inhibitory bio channel v2)
 - **SynapseClassName**: "NPSynapseBio2" (bio synapse v2)
 - **FeedbackGain**: 0.02 (feedback gain coefficient)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

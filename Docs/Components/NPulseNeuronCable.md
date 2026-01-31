@@ -4,11 +4,11 @@
 
 ### Назначение
 
-**Класс**: `NPulseNeuronCable` — импульсный нейрон с кабельной моделью мембраны для пространственно-распределенного моделирования.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronCable", ...)`.  
+**Класс**: `NPulseNeuronCable` — импульсный нейрон с кабельной моделью мембраны для пространственно-распределенного моделирования.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronCable", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseNeuronCable"` в `Bin/Configs/*/Model_*.xml`.
 
-`NPulseNeuronCable` реализует импульсный нейрон с кабельной моделью мембраны, которая позволяет моделировать пространственное распространение потенциала по дендритам и аксону. Создается из `NPulseNeuron` с параметрами для кабельной модели: мембрана `NPulseMembraneCable`, LT-зона `NPulseLTZoneCable`, генератор `NPNeuronPosCGeneratorCable`.
+`NPulseNeuronCable` реализует импульсный нейрон с кабельной моделью мембраны, которая позволяет моделировать пространственное распространение потенциала по дендритам и аксону. Создается из `NPulseNeuron` с параметрами для кабельной модели: мембрана `NPulseMembraneCable`, LT-зона `NPulseLTZoneCable`, генератор `NPNeuronPosCGeneratorCable`. В архитектуре сегментной спайковой модели нейрона (CSNM) по кабельной теории [C] нейрон представляется цепочкой сегментов; типичные ориентиры для режима точечного нейрона — длина сегмента ~200 мкм, диаметр ~20 мкм (см. [C]). Кабельное уравнение связывает продольный ток с градиентом потенциала (dV/dx = −r_i·i) и входит в интеграцию CSNM.
 
 **Использование:** Моделирование пространственно-распределенных нейронов, эксперименты с дендритными структурами, кабельная теория
 
@@ -85,7 +85,7 @@ sequenceDiagram
     participant Channel as NPulseChannelCable
     participant LTZone as NPulseLTZoneCable
     participant Synapses as NSynapseCable[]
-    
+
     Storage->>Neuron: New() (из NPulseNeuron)
     Storage->>Neuron: SetMembraneClassName("NPulseMembraneCable")
     Storage->>Neuron: SetLTZoneClassName("NPulseLTZoneCable")
@@ -99,7 +99,7 @@ sequenceDiagram
     Neuron->>Synapses: Создание кабельных синапсов
     Neuron->>Neuron: Создание связей
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Storage->>Neuron: Calculate()
         Neuron->>Membrane: ACalculate()
@@ -166,7 +166,7 @@ flowchart TD
     UpdateVm --> CalcLTZone[Расчет LT-зоны]
     CalcLTZone --> UpdateOutput[Обновление Output]
     UpdateOutput --> End([End])
-    
+
     Note1[Кабельная модель: пространственное распространение потенциала]
     Note1 -.-> SolveCable
 ```
@@ -185,19 +185,19 @@ graph TB
     subgraph NPulseNeuron["NPulseNeuron Base"]
         BaseNeuron[NPulseNeuron]
     end
-    
+
     subgraph NPulseNeuronCable["NPulseNeuronCable"]
         Membrane[NPulseMembraneCable]
         LTZone[NPulseLTZoneCable]
         Channel[NPulseChannelCable]
         Generator[NPNeuronPosCGeneratorCable]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Synapses[NSynapseCable[]]
         PreNeurons[Пресинаптические нейроны]
     end
-    
+
     BaseNeuron -->|конфигурируется как| NPulseNeuronCable
     NPulseNeuronCable -->|создает| Membrane
     NPulseNeuronCable -->|создает| LTZone
@@ -374,6 +374,10 @@ for (int step = 0; step < 10000; step++) {
 - Поддерживает пространственную дискретизацию с шагом `dx`
 - Моделирует распространение сигналов по дендритам и аксону
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -391,8 +395,8 @@ for (int step = 0; step < 10000; step++) {
 
 ### Purpose
 
-**Class**: `NPulseNeuronCable` — spiking neuron with cable membrane model for spatially-distributed modeling.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronCable", ...)`.  
+**Class**: `NPulseNeuronCable` — spiking neuron with cable membrane model for spatially-distributed modeling.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseNeuronCable", ...)`.
 **Instances**: `ClassName = "NPulseNeuronCable"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseNeuronCable` implements a spiking neuron with cable membrane model that allows modeling spatial potential propagation along dendrites and axon. Created from `NPulseNeuron` with parameters for cable model: membrane `NPulseMembraneCable`, LT-zone `NPulseLTZoneCable`, generator `NPNeuronPosCGeneratorCable`.
@@ -420,7 +424,7 @@ sequenceDiagram
     participant Neuron as NPulseNeuronCable
     participant Membrane as NPulseMembraneCable
     participant Channel as NPulseChannelCable
-    
+
     Storage->>Neuron: New() (from NPulseNeuron)
     Storage->>Neuron: Set cable parameters
     Storage->>Neuron: Build()
@@ -484,19 +488,19 @@ graph TB
     subgraph NPulseNeuron["NPulseNeuron Base"]
         BaseNeuron[NPulseNeuron]
     end
-    
+
     subgraph NPulseNeuronCable["NPulseNeuronCable"]
         Membrane[NPulseMembraneCable]
         LTZone[NPulseLTZoneCable]
         Channel[NPulseChannelCable]
         Generator[NPNeuronPosCGeneratorCable]
     end
-    
+
     subgraph External["External Components"]
         Synapses[NSynapseCable[]]
         PreNeurons[Presynaptic neurons]
     end
-    
+
     BaseNeuron -->|configured as| NPulseNeuronCable
     NPulseNeuronCable -->|creates| Membrane
     NPulseNeuronCable -->|creates| LTZone
@@ -533,6 +537,10 @@ graph TB
 - Solves cable equation for potential propagation
 - Supports spatial discretization with step `dx`
 - Models signal propagation along dendrites and axon
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
 
 ### See Also
 

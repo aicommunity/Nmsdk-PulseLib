@@ -251,6 +251,10 @@ graph TB
 - Множественные входы и выходы: поддержка матрицы пар вход-выход
 - Коэффициенты усиления: каждый выход может иметь свой коэффициент усиления
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NCPac`](NCPac.md) — классический PAC
@@ -338,6 +342,10 @@ flowchart TD
     UpdateDissociation --> CalcOutput
     CalcOutput --> End([End])
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

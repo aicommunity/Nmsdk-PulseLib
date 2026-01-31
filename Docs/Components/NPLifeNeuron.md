@@ -4,8 +4,8 @@
 
 ### Назначение
 
-**Класс**: `NPLifeNeuron` — пульсовый нейрон с метриками Life.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPLifeNeuron", ...)`.  
+**Класс**: `NPLifeNeuron` — пульсовый нейрон с метриками Life.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPLifeNeuron", ...)`.
 **Storage-инстансы**: `ClassName = "NPLifeNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
 `NPLifeNeuron` является пульсовым нейроном с метриками жизнеобеспечения (Life). Наследуется от `UComponent` и интегрирует модель жизнеобеспечения для отслеживания энергии, износа и других метрик жизнедеятельности нейрона.
@@ -52,7 +52,7 @@ sequenceDiagram
     participant LifeModel as NNeuronLife
     participant InputSource as Источник входных сигналов
     participant OutputTarget as Целевой компонент
-    
+
     Storage->>Neuron: New()
     Storage->>Neuron: Default()
     Neuron->>Neuron: ADefault()
@@ -62,7 +62,7 @@ sequenceDiagram
     Neuron->>LifeModel: CreateComponent("NeuronLife")
     Neuron->>Neuron: Подключение входов/синапсов/каналов
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         InputSource->>Neuron: Входные сигналы/токи/спайки
         Storage->>Neuron: Calculate()
@@ -153,7 +153,7 @@ graph TB
     subgraph UComponent["UComponent Base"]
         BaseComponent[UComponent]
     end
-    
+
     subgraph NPLifeNeuron["NPLifeNeuron"]
         LifeNeuron[Нейрон Life]
         LifeModel[NNeuronLife<br/>Life Model]
@@ -161,13 +161,13 @@ graph TB
         Channels[Каналы]
         Synapses[Синапсы]
     end
-    
+
     subgraph External["Внешние компоненты"]
         InputSource[Источник входных сигналов]
         EnergySource[Источник энергии]
         OutputTarget[Целевой компонент]
     end
-    
+
     BaseComponent -->|наследуется| NPLifeNeuron
     NPLifeNeuron -->|создает| LifeModel
     NPLifeNeuron -->|создает| Membrane
@@ -247,6 +247,10 @@ for (int step = 0; step < 1000; step++) {
 - Энергетическая модель: интеграция модели жизнеобеспечения
 - Корректировка активности: автоматическая корректировка при критических уровнях энергии
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (жизнеобеспечение), **15**.
+
 ### См. также
 
 - [`NNeuronLife`](NNeuronLife.md) — модель жизнеобеспечения нейрона
@@ -260,8 +264,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NPLifeNeuron` — spiking neuron with Life metrics.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPLifeNeuron", ...)`.  
+**Class**: `NPLifeNeuron` — spiking neuron with Life metrics.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPLifeNeuron", ...)`.
 **Instances**: `ClassName = "NPLifeNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPLifeNeuron` is a spiking neuron with life support metrics. It inherits from `UComponent` and integrates a life support model for tracking energy, wear out, and other neuron vitality metrics.
@@ -301,7 +305,7 @@ sequenceDiagram
     participant LifeModel as NNeuronLife
     participant InputSource
     participant OutputTarget
-    
+
     Storage->>Neuron: New()
     Storage->>Neuron: Default()
     Neuron->>Neuron: ADefault()
@@ -311,7 +315,7 @@ sequenceDiagram
     Neuron->>LifeModel: CreateComponent("NeuronLife")
     Neuron->>Neuron: Connect inputs/synapses/channels
     Neuron-->>Storage: Ready = true
-    
+
     loop Each simulation step
         InputSource->>Neuron: Input signals/currents/spikes
         Storage->>Neuron: Calculate()
@@ -370,7 +374,7 @@ graph TB
     subgraph UComponent["UComponent Base"]
         BaseComponent[UComponent]
     end
-    
+
     subgraph NPLifeNeuron["NPLifeNeuron"]
         LifeNeuron[Life Neuron]
         LifeModel[NNeuronLife<br/>Life Model]
@@ -378,13 +382,13 @@ graph TB
         Channels[Channels]
         Synapses[Synapses]
     end
-    
+
     subgraph External["External Components"]
         InputSource[Input source]
         EnergySource[Energy source]
         OutputTarget[Output target]
     end
-    
+
     BaseComponent -->|inherits| NPLifeNeuron
     NPLifeNeuron -->|creates| LifeModel
     NPLifeNeuron -->|creates| Membrane
@@ -429,6 +433,10 @@ graph TB
 - Life support metrics: tracks energy, wear out, and other metrics
 - Energy model: integrates life support model
 - Activity adjustment: automatically adjusts activity at critical energy levels
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (life support), **15**.
 
 ### See Also
 

@@ -1,7 +1,7 @@
 ## NNeuronsLayer — слой нейронов (Nmsdk-PulseLib)
 
-**Класс**: `NNeuronsLayer` — слой нейронов (базовая версия).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronsLayer", ...)`.  
+**Класс**: `NNeuronsLayer` — слой нейронов (базовая версия).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronsLayer", ...)`.
 **Storage**: `ClassName = "NNeuronsLayer"`.
 
 ### Lifecycle
@@ -92,17 +92,17 @@ graph TB
     subgraph UNet["UNet Base"]
         BaseNet[UNet]
     end
-    
+
     subgraph NNeuronsLayer["NNeuronsLayer"]
         Layer[Слой нейронов]
         Neurons[NPulseNeuron<br/>Neuron1..NeuronN]
     end
-    
+
     subgraph External["Внешние компоненты"]
         InputSource[Источник входных сигналов]
         OutputTarget[Целевой компонент]
     end
-    
+
     BaseNet -->|наследуется| NNeuronsLayer
     NNeuronsLayer -->|создает| Neurons
     NNeuronsLayer -->|управляет| Layer
@@ -122,6 +122,10 @@ graph TB
 ClassName = NNeuronsLayer
 Name = Layer1
 ```
+
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **17**.
 
 ---
 
@@ -194,17 +198,17 @@ graph TB
     subgraph UNet["UNet Base"]
         BaseNet[UNet]
     end
-    
+
     subgraph NNeuronsLayer["NNeuronsLayer"]
         Layer[Neuron layer]
         Neurons[NPulseNeuron<br/>Neuron grid<br/>NeuronsHeight x NeuronsWidth]
     end
-    
+
     subgraph External["External Components"]
         InputSource[Input source]
         OutputTarget[Output target]
     end
-    
+
     BaseNet -->|inherits| NNeuronsLayer
     NNeuronsLayer -->|creates| Neurons
     NNeuronsLayer -->|manages| Layer
@@ -247,3 +251,7 @@ graph TB
 - **NeuronsClassName**: "NSPNeuron" (small pulse neuron)
 - **NeuronsHeight**: 1-10 (number of rows)
 - **NeuronsWidth**: 1-20 (number of columns)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **17**.

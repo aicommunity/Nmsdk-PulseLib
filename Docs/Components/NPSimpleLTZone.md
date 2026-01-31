@@ -87,6 +87,10 @@ ltZone->PulseAmplitude = 1.0;
 ltZone->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseLTZone`](NPulseLTZone.md) — импульсная LT-зона (базовый класс)
@@ -260,6 +264,10 @@ graph TB
 - **MaxFrequency**: 100.0 (maximum frequency 100 Hz)
 - **Threshold**: 30.0 (threshold for spike generation)
 - **PulseAmplitude**: 1.0 (pulse amplitude)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

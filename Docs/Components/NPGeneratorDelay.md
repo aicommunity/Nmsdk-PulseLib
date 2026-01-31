@@ -213,6 +213,10 @@ generator->Build();
 - Упрощенное именование: алиас позволяет использовать более короткое имя в конфигурациях
 - Полная совместимость: все свойства и методы идентичны `NPulseGeneratorDelay`
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NPulseGeneratorDelay`](NPulseGeneratorDelay.md) — генератор импульсов с задержкой (базовый класс)
@@ -312,6 +316,10 @@ graph TB
 
 - **Pulse generation with delay**: `Bin/Configs/!OldConfigs/*/Model_*.xml`
 - **Delay modeling**: experiments with variable transmission delays
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

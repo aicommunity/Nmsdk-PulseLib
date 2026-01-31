@@ -76,6 +76,10 @@ ltZone->PulseAmplitude = 1.0;
 ltZone->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NContinuesLTZone`](NContinuesLTZone.md) — непрерывная LT-зона (базовый класс)
@@ -243,6 +247,10 @@ graph TB
 - **Threshold**: 0.0 (default threshold for signal generation)
 - **PulseAmplitude**: 1.0 (default pulse amplitude)
 - **Time constant**: Set via `SetTimeConstant()` method
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

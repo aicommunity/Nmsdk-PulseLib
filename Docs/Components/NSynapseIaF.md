@@ -231,6 +231,10 @@ for (int step = 0; step < 10000; step++) {
 - `DissociationTC = 0.005` (5 мс) — умеренный распад медиатора
 - `Resistance = 86000000` (86 МОм) — биологически реалистичное сопротивление
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора
@@ -362,6 +366,10 @@ graph TB
 - `SecretionTC = 0.001` (1 ms)
 - `DissociationTC = 0.005` (5 ms)
 - `Resistance = 8.6e7` (86 MΩ)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### See Also
 

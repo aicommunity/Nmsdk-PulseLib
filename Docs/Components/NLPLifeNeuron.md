@@ -4,8 +4,8 @@
 
 ### Назначение
 
-**Класс**: `NLPLifeNeuron` — конфигурационный вариант крупного живого импульсного нейрона с поддержкой жизнеобеспечения.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NLPLifeNeuron", ...)`.  
+**Класс**: `NLPLifeNeuron` — конфигурационный вариант крупного живого импульсного нейрона с поддержкой жизнеобеспечения.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NLPLifeNeuron", ...)`.
 **Storage-инстансы**: `ClassName = "NLPLifeNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
 `NLPLifeNeuron` является конфигурационным вариантом базового класса `NPulseLifeNeuron` с предустановленными параметрами для крупных живых нейронов. Создается из `NPulseLifeNeuron` с настройками:
@@ -69,7 +69,7 @@ sequenceDiagram
     participant Membrane as NPMembrane
     participant LTZone as NPulseLTZoneCommon
     participant NeuronLife as NNeuronLife
-    
+
     Storage->>Neuron: New() (из NPulseLifeNeuron)
     Storage->>Neuron: SetNumSomaMembraneParts(3)
     Storage->>Neuron: SetMembraneClassName("NPMembrane")
@@ -83,7 +83,7 @@ sequenceDiagram
     Neuron->>NeuronLife: AddMissingComponent("NeuronLife", "NNeuronLife")
     Neuron->>Neuron: CreateLink(LTZone->Output, NeuronLife->Input1)
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Storage->>Neuron: Calculate()
         Neuron->>Neuron: NPulseLifeNeuron::ACalculate()
@@ -190,23 +190,23 @@ graph TB
     subgraph NPulseNeuron["NPulseNeuron Base"]
         BaseNeuron[NPulseNeuron]
     end
-    
+
     subgraph NPulseLifeNeuron["NPulseLifeNeuron"]
         LifeNeuronCore[Ядро живого нейрона]
     end
-    
+
     subgraph NLPLifeNeuron["NLPLifeNeuron Configuration"]
         Membrane[NPMembrane<br/>PulseMembrane<br/>3 части сомы]
         LTZone[NPulseLTZoneCommon<br/>LTZone]
         NeuronLife[NNeuronLife<br/>NeuronLife]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Synapses[Синапсы]
         PreNeurons[Пресинаптические нейроны]
         EnergySource[Источник энергии]
     end
-    
+
     BaseNeuron -->|наследуется| NPulseLifeNeuron
     NPulseLifeNeuron -->|конфигурируется как| NLPLifeNeuron
     NLPLifeNeuron -->|создает| Membrane
@@ -316,6 +316,10 @@ for (int step = 0; step < 1000; step++) {
 - Модель жизнеобеспечения: автоматически создается и связывается с LT-зоной
 - Метрики жизнедеятельности: отслеживание энергии, износа, чувства для крупных нейронов
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (жизнеобеспечение), **15**.
+
 ### См. также
 
 - [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон (базовый класс)
@@ -331,8 +335,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NLPLifeNeuron` — configuration variant of large living spiking neuron with life support.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NLPLifeNeuron", ...)`.  
+**Class**: `NLPLifeNeuron` — configuration variant of large living spiking neuron with life support.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NLPLifeNeuron", ...)`.
 **Instances**: `ClassName = "NLPLifeNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
 `NLPLifeNeuron` is a configuration variant of the base class `NPulseLifeNeuron` with preset parameters for large living neurons. Created from `NPulseLifeNeuron` with settings:
@@ -369,7 +373,7 @@ sequenceDiagram
     participant Membrane as NPMembrane
     participant LTZone as NPulseLTZoneCommon
     participant NeuronLife as NNeuronLife
-    
+
     Storage->>Neuron: New() + Default()
     Storage->>Neuron: Build()
     Neuron->>Membrane: CreateComponent() (3 soma parts)
@@ -424,18 +428,18 @@ graph TB
     subgraph NPulseLifeNeuron["NPulseLifeNeuron Base"]
         BaseNeuron[NPulseLifeNeuron]
     end
-    
+
     subgraph NLPLifeNeuron["NLPLifeNeuron Configuration"]
         Membrane[NPMembrane<br/>3 soma parts]
         LTZone[NPulseLTZoneCommon]
         NeuronLife[NNeuronLife]
     end
-    
+
     subgraph External["External Components"]
         Synapses[Synapses]
         EnergySource[Energy Source]
     end
-    
+
     BaseNeuron -->|configured as| NLPLifeNeuron
     NLPLifeNeuron -->|creates| Membrane
     NLPLifeNeuron -->|creates| LTZone
@@ -480,6 +484,10 @@ graph TB
 - Three soma parts: large neurons have more complex structure with three soma parts
 - Life support model: automatically created and linked with LT-zone
 - Life metrics: tracking energy, wear out, feel for large neurons
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (life support), **15**.
 
 ### See Also
 

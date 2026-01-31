@@ -320,6 +320,10 @@ for (int step = 0; step < 10000; step++) {
 - Рассчитывает ток на основе экспоненциальной функции времени
 - Поддерживает суммирование токов от нескольких спайков
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NSynapseClassic`](NSynapseClassic.md) — базовый классический синапс
@@ -369,6 +373,10 @@ sequenceDiagram
     Synapse->>Synapse: Calculate currents
     Synapse-->>Synapse: Output = sum of currents
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

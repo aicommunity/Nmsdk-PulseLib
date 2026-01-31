@@ -107,6 +107,10 @@ channel->Build();
 - Увеличивает потенциал мембраны при наличии входных сигналов
 - Использует упрощенную модель медиатора
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NContinuesSynChannel`](NContinuesSynChannel.md) — непрерывный синаптический канал (базовый класс)
@@ -272,6 +276,10 @@ graph TB
 - **Type**: -1 (excitatory channel type)
 - **SecretionTC**: 0.001 (1 ms time constant)
 - **DissociationTC**: 0.01 (10 ms time constant)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

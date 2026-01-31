@@ -40,6 +40,10 @@ classDiagram
 
 `NContinuesSynRenshowCell` использует все методы базового класса `NPulseNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
@@ -195,6 +199,10 @@ graph TB
 - **MembraneClassName**: "NCSynNeuronMembrane" (classic membrane optimized for synapses)
 - **LTZoneClassName**: "NCLTZone" (classic LT-zone)
 - **NumSomaMembraneParts**: 1 (one soma part)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

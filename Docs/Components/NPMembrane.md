@@ -60,6 +60,10 @@ membrane->Default();
 membrane->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseMembrane`](NPulseMembrane.md) — базовая импульсная мембрана (базовый класс)
@@ -175,6 +179,10 @@ graph TB
 - Alias: creates `NPulseMembrane` instance when used
 - Simplified configuration: easier to use in XML configs
 - Backward compatibility: supports legacy configurations
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

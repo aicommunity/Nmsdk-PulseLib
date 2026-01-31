@@ -43,6 +43,10 @@ classDiagram
 
 `NContinuesSynSPNeuron` использует все методы базового класса `NPulseNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
@@ -195,6 +199,10 @@ graph TB
 - **MembraneClassName**: "NCSynNeuronMembrane" (classic membrane optimized for synapses)
 - **LTZoneClassName**: "NCLTZone" (classic LT-zone)
 - **NumSomaMembraneParts**: 1 (one soma part)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

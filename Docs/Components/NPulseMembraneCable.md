@@ -4,8 +4,8 @@
 
 ### Назначение
 
-**Класс**: `NPulseMembraneCable` — конфигурационный вариант импульсной мембраны для кабельных моделей.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseMembraneCable", ...)`.  
+**Класс**: `NPulseMembraneCable` — конфигурационный вариант импульсной мембраны для кабельных моделей.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NPulseMembraneCable", ...)`.
 **Storage-инстансы**: `ClassName = "NPulseMembraneCable"` в `Bin/Configs/*/Model_*.xml`.
 
 `NPulseMembraneCable` является конфигурационным вариантом класса `NPulseMembrane` с параметрами для кабельных моделей. При создании компонента с `ClassName = "NPulseMembraneCable"` создается экземпляр `NPulseMembrane` с параметрами:
@@ -13,6 +13,8 @@
 - `InhChannelClassName = ""` — тормозной канал не используется
 - `SynapseClassName = "NSynapseCable"` — кабельный синапс
 - `FeedbackGain = 0.7` — коэффициент обратной связи
+
+Сегмент мембраны в CSNM описывается кабельным уравнением; параметры r_i (внутреннее сопротивление), r_m (сопротивление мембраны) связаны с уравнениями (1.8)–(1.9) по [C].
 
 **Использование:** Кабельная импульсная мембрана, моделирование дендритов с кабельной моделью
 
@@ -60,7 +62,7 @@ sequenceDiagram
     participant Channel as NPulseChannelCable
     participant Synapse as NSynapseCable
     participant LTZone as LT-зона
-    
+
     Storage->>Membrane: New() (из NPulseMembrane)
     Storage->>Membrane: SetExcChannelClassName("NPulseChannelCable")
     Storage->>Membrane: SetSynapseClassName("NSynapseCable")
@@ -70,7 +72,7 @@ sequenceDiagram
     Membrane->>Channel: CreateComponent("NPulseChannelCable")
     Membrane->>Synapse: CreateComponent("NSynapseCable")
     Membrane-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Synapse->>Membrane: Входные сигналы
         Storage->>Membrane: Calculate()
@@ -156,17 +158,17 @@ graph TB
     subgraph NPulseMembrane["NPulseMembrane Base"]
         BaseMembrane[NPulseMembrane]
     end
-    
+
     subgraph NPulseMembraneCable["NPulseMembraneCable Configuration"]
         Channel[NPulseChannelCable]
         Synapses[NSynapseCable<br/>Multiple synapses]
     end
-    
+
     subgraph External["Внешние компоненты"]
         PreNeurons[Пресинаптические нейроны]
         LTZone[LT-зона]
     end
-    
+
     BaseMembrane -->|конфигурируется как| NPulseMembraneCable
     NPulseMembraneCable -->|создает| Channel
     NPulseMembraneCable -->|создает| Synapses
@@ -233,6 +235,10 @@ membrane->Build();
 - **SynapseClassName**: "NSynapseCable" (кабельный синапс)
 - **FeedbackGain**: 0.7 (коэффициент обратной связи)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
+
 ### См. также
 
 - [`NPulseMembrane`](NPulseMembrane.md) — базовая импульсная мембрана (базовый класс)
@@ -247,8 +253,8 @@ membrane->Build();
 
 ### Purpose
 
-**Class**: `NPulseMembraneCable` — configuration variant of spiking membrane for cable models.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseMembraneCable", ...)`.  
+**Class**: `NPulseMembraneCable` — configuration variant of spiking membrane for cable models.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NPulseMembraneCable", ...)`.
 **Instances**: `ClassName = "NPulseMembraneCable"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseMembraneCable` is a configuration variant of `NPulseMembrane` class with parameters for cable models. When creating a component with `ClassName = "NPulseMembraneCable"`, an instance of `NPulseMembrane` is created with parameters:
@@ -256,6 +262,8 @@ membrane->Build();
 - `InhChannelClassName = ""` — inhibitory channel not used
 - `SynapseClassName = "NSynapseCable"` — cable synapse
 - `FeedbackGain = 0.7` — feedback gain
+
+In CSNM, the membrane segment is described by the cable equation; parameters r_i (axial resistance) and r_m (membrane resistance) correspond to equations (1.8)–(1.9) in [C].
 
 **Usage:** Cable spiking membrane, dendrite modeling with cable model
 
@@ -280,7 +288,7 @@ sequenceDiagram
     participant Membrane as NPulseMembraneCable
     participant Channel as NPulseChannelCable
     participant Synapse as NSynapseCable
-    
+
     Storage->>Membrane: New() + Default()
     Storage->>Membrane: Build()
     Membrane->>Channel: CreateComponent()
@@ -337,17 +345,17 @@ graph TB
     subgraph NPulseMembrane["NPulseMembrane Base"]
         BaseMembrane[NPulseMembrane]
     end
-    
+
     subgraph NPulseMembraneCable["NPulseMembraneCable Configuration"]
         Channel[NPulseChannelCable]
         Synapses[NSynapseCable<br/>Multiple synapses]
     end
-    
+
     subgraph External["External Components"]
         PreNeurons[Presynaptic neurons]
         LTZone[LT-zone]
     end
-    
+
     BaseMembrane -->|configured as| NPulseMembraneCable
     NPulseMembraneCable -->|creates| Channel
     NPulseMembraneCable -->|creates| Synapses
@@ -368,6 +376,10 @@ graph TB
 - **InhChannelClassName**: "" (inhibitory channel not used)
 - **SynapseClassName**: "NSynapseCable" (cable synapse)
 - **FeedbackGain**: 0.7 (feedback gain)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
 
 ### See Also
 

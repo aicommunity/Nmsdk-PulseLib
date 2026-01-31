@@ -55,6 +55,10 @@ classDiagram
 
 `NSPMinNeuron` использует все методы базового класса `NPulseNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -238,6 +242,10 @@ graph TB
 - Minimal configuration: Only one synapse per channel
 - Simplified structure: Removes additional synapses for minimal models
 - Note: Currently commented out in code registration
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

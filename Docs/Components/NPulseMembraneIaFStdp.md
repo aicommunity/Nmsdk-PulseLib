@@ -354,6 +354,10 @@ for (int step = 0; step < 1000; step++) {
 - **XTau**: 0.02 (постоянная времени для постсинаптической активности)
 - **YTau**: 0.01 (постоянная времени для пресинаптической активности)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NPulseMembrane`](NPulseMembrane.md) — базовая импульсная мембрана
@@ -558,6 +562,10 @@ graph TB
 - **AMinus**: 0.012 (depression when postsynaptic spike precedes presynaptic)
 - **XTau**: 0.02 (time constant for postsynaptic activity)
 - **YTau**: 0.01 (time constant for presynaptic activity)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

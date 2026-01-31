@@ -1,16 +1,18 @@
 # NIntegrateAndFireNeuron — нейрон IaF (модель integrate-and-fire)
 
+**Каталог компонентов:** [Component-Catalog.md](../Component-Catalog.md).
+
 ## RU
 
 ### Назначение
 
-**Класс**: `NIntegrateAndFireNeuron` — модель нейрона integrate-and-fire (IaF).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NIntegrateAndFireNeuron", ...)`.  
+**Класс**: `NIntegrateAndFireNeuron` — модель нейрона integrate-and-fire (IaF).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NIntegrateAndFireNeuron", ...)`.
 **Storage-инстансы**: `ClassName = "NIntegrateAndFireNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
 `NIntegrateAndFireNeuron` реализует простую модель нейрона integrate-and-fire, которая интегрирует входной ток и генерирует спайк при достижении порогового потенциала. Наследуется от `UNet` и предоставляет упрощенную модель нейрона без сложной динамики мембраны.
 
-**Использование:** Моделирование простых нейронных сетей, тестирование алгоритмов, базовые эксперименты с импульсными нейронами
+**Использование:** `Bin/Configs/SpikeSamples/NM-Neurons/LIF-Neuron/`, `Bin/Configs/SpikeSamples/STDP/STDP-Simple-01/`; моделирование простых нейронных сетей, тестирование алгоритмов, базовые эксперименты с импульсными нейронами
 
 ### UML-диаграмма классов
 
@@ -49,7 +51,7 @@ sequenceDiagram
     participant Storage as UStorage
     participant Neuron as NIntegrateAndFireNeuron
     participant Input as Входные сигналы
-    
+
     Storage->>Neuron: New()
     Storage->>Neuron: Default()
     Neuron->>Neuron: ADefault()
@@ -58,7 +60,7 @@ sequenceDiagram
     Neuron->>Neuron: ABuild()
     Note over Neuron: Инициализация I и U<br/>I(0,0) = 0.0<br/>U(0,0) = 0.0
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Input->>Neuron: I (входной ток)
         Storage->>Neuron: Calculate()
@@ -70,7 +72,7 @@ sequenceDiagram
         end
         Neuron-->>Storage: U (потенциал)
     end
-    
+
     Storage->>Neuron: Reset()
     Neuron->>Neuron: AReset()
     Note over Neuron: U = U0<br/>I = 0
@@ -122,7 +124,7 @@ flowchart TD
     CheckThreshold -->|Да| ResetPotential[U = U0]
     CheckThreshold -->|Нет| End([End])
     ResetPotential --> End
-    
+
     style CheckThreshold fill:#f9f,stroke:#333,stroke-width:2px
     style ResetPotential fill:#bbf,stroke:#333,stroke-width:2px
 ```
@@ -140,17 +142,17 @@ graph TB
     subgraph UNet["UNet Base"]
         BaseNet[UNet]
     end
-    
+
     subgraph NIntegrateAndFireNeuron["NIntegrateAndFireNeuron"]
         Properties[Свойства модели]
         State[Состояния]
     end
-    
+
     subgraph External["Внешние компоненты"]
         InputSources[Источники тока]
         Receivers[Приемники сигналов]
     end
-    
+
     BaseNet -->|наследуется| NIntegrateAndFireNeuron
     NIntegrateAndFireNeuron -->|вычисляет| Properties
     NIntegrateAndFireNeuron -->|отслеживает| State
@@ -220,7 +222,7 @@ neuron->Build();
 for (int step = 0; step < 1000; step++) {
     // Установка входного тока (например, от другого компонента)
     // neuron->I(0, 0) = inputCurrent;
-    
+
     neuron->Calculate();
     double potential = neuron->U(0, 0);
     std::cout << "Step " << step << ": Potential = " << potential << std::endl;
@@ -252,6 +254,10 @@ for (int step = 0; step < 1000; step++) {
 - **U0**: -70e-3 - -50e-3 (-70 мВ - -50 мВ)
 - **Upr**: -40e-3 - -20e-3 (-40 мВ - -20 мВ)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseNeuronIzhikevich`](NPulseNeuronIzhikevich.md) — нейрон модели Ижикевича (более сложная модель)
@@ -265,8 +271,8 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NIntegrateAndFireNeuron` — integrate-and-fire (IaF) neuron model.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NIntegrateAndFireNeuron", ...)`.  
+**Class**: `NIntegrateAndFireNeuron` — integrate-and-fire (IaF) neuron model.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NIntegrateAndFireNeuron", ...)`.
 **Instances**: `ClassName = "NIntegrateAndFireNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
 `NIntegrateAndFireNeuron` implements a simple integrate-and-fire neuron model that integrates input current and generates a spike when threshold potential is reached. It inherits from `UNet` and provides a simplified neuron model without complex membrane dynamics.
@@ -310,7 +316,7 @@ sequenceDiagram
     participant Storage as UStorage
     participant Neuron as NIntegrateAndFireNeuron
     participant Input as Input Signals
-    
+
     Storage->>Neuron: New()
     Storage->>Neuron: Default()
     Neuron->>Neuron: ADefault()
@@ -319,7 +325,7 @@ sequenceDiagram
     Neuron->>Neuron: ABuild()
     Note over Neuron: Initialize I and U<br/>I(0,0) = 0.0<br/>U(0,0) = 0.0
     Neuron-->>Storage: Ready = true
-    
+
     loop Each simulation step
         Input->>Neuron: I (input current)
         Storage->>Neuron: Calculate()
@@ -371,17 +377,17 @@ graph TB
     subgraph UNet["UNet Base"]
         BaseNet[UNet]
     end
-    
+
     subgraph NIntegrateAndFireNeuron["NIntegrateAndFireNeuron"]
         Properties[Model properties]
         State[States]
     end
-    
+
     subgraph External["External components"]
         InputSources[Current sources]
         Receivers[Signal receivers]
     end
-    
+
     BaseNet -->|inherits| NIntegrateAndFireNeuron
     NIntegrateAndFireNeuron -->|computes| Properties
     NIntegrateAndFireNeuron -->|tracks| State
@@ -450,6 +456,10 @@ for (int step = 0; step < 1000; step++) {
     std::cout << "Step " << step << ": Potential = " << potential << std::endl;
 }
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**, **30**.
 
 ### See Also
 

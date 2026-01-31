@@ -342,6 +342,10 @@ for (int step = 0; step < 1000; step++) {
 
 **Предупреждение:** Использование busy-wait циклов в `ACalculate()` может блокировать выполнение симуляции. Рекомендуется использовать альтернативные компоненты для задержек, если требуется неблокирующая реализация.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NPulseGenerator`](NPulseGenerator.md) — базовый генератор импульсов
@@ -483,6 +487,10 @@ graph TB
 - **Delay modeling**: experiments with variable transmission delays
 
 **Warning:** Use of busy-wait loops in `ACalculate()` may block simulation execution. Consider alternative delay components for non-blocking implementation.
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

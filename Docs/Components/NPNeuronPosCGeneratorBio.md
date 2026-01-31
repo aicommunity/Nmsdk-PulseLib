@@ -27,6 +27,10 @@ classDiagram
 **Параметры конфигурации:**
 - `Amplitude = 0.93` — положительная амплитуда для биоинспирированных моделей
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NConstGenerator`](NConstGenerator.md) — генератор постоянного тока (базовый класс)
@@ -56,6 +60,10 @@ classDiagram
         +Amplitude : double = 0.93
     }
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

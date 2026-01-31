@@ -27,6 +27,10 @@ classDiagram
 **Параметры конфигурации:**
 - `Amplitude = -1.0` — отрицательная амплитуда
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NConstGenerator`](NConstGenerator.md) — генератор постоянного тока (базовый класс)
@@ -160,6 +164,10 @@ graph TB
 
 **Typical parameter values:**
 - **Amplitude**: -1.0 (negative amplitude for spiking neurons)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

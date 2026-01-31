@@ -55,6 +55,10 @@ classDiagram
 
 `NSPDendriteLifeHebbNeuron` использует все методы базового класса `NPulseLifeNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон
@@ -272,6 +276,10 @@ graph TB
 - Life support: Automatically creates and links NeuronLife model
 - Hebbian learning: Uses Hebb synapses for synaptic plasticity
 - Combined functionality: Combines dendritic structure, life support, and Hebbian learning
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

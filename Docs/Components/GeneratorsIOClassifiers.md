@@ -30,9 +30,17 @@ flowchart LR
 
 Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**, **14**, **19**, **31**.
+
 ---
 
 ## Generators, IO, Classifiers & Others — overview (Nmsdk-PulseLib)
 
 Summarises non-neuron, non-synapse building blocks that provide stimuli, IO, classification, reflexes and effectors.
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**, **14**, **19**, **31**.
 

@@ -315,6 +315,10 @@ for (int step = 0; step < 1000; step++) {
 - `NPulseHebbSynapse` — для синапсов Хебба
 - `NSynapseClassic` — для классических синапсов
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NSynapseStdp`](NSynapseStdp.md) — синапс с STDP
@@ -495,6 +499,10 @@ graph TB
 - **PulseAmplitude**: 1.0 (default pulse amplitude)
 - **Resistance**: 10.0 (default resistance)
 - **Weight**: 1.0 (default weight)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

@@ -36,6 +36,10 @@ classDiagram
 
 `NNewSynSPNeuron` использует все методы базового класса `NPulseNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
@@ -176,6 +180,10 @@ graph TB
 - Synapse optimization: membrane is specifically optimized for efficient synapse processing
 - Small neuron: uses one soma part for compact structure
 - Efficient processing: optimized membrane provides better performance for synaptic inputs
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

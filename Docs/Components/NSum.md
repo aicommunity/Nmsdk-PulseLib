@@ -238,6 +238,10 @@ sum->Mode = 0;
 sum->Build();
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+
 ### См. также
 
 - [`NLogicalNot`](NLogicalNot.md) — логическое НЕ
@@ -399,6 +403,10 @@ graph TB
 - Gain coefficients: Each input can have individual gain coefficient
 - Two modes: Normal summation or single element summation
 - Flexible: Automatically handles different input sizes
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ### See Also
 

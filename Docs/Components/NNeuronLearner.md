@@ -1,7 +1,7 @@
 ## NNeuronLearner — обучающийся нейрон
 
-**Класс**: `NNeuronLearner` — нейрон с функциями самообучения.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLearner", ...)`.  
+**Класс**: `NNeuronLearner` — нейрон с функциями самообучения.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLearner", ...)`.
 **Storage**: `ClassName = "NNeuronLearner"`.
 
 ### Lifecycle
@@ -108,18 +108,18 @@ graph TB
     subgraph NNeuron["NNeuron Base"]
         BaseNeuron[NNeuron]
     end
-    
+
     subgraph NNeuronLearner["NNeuronLearner"]
         Learner[Обучающийся нейрон]
         Neuron[NPulseNeuron<br/>Neuron]
         Generators[NPulseGeneratorTransit<br/>Source1..SourceN]
     end
-    
+
     subgraph External["Внешние компоненты"]
         InputPattern[Входной паттерн]
         OutputTarget[Целевой компонент]
     end
-    
+
     BaseNeuron -->|наследуется| NNeuronLearner
     NNeuronLearner -->|создает| Neuron
     NNeuronLearner -->|создает| Generators
@@ -142,14 +142,18 @@ ClassName = NNeuronLearner
 Name = Learner1
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **[B]**, **1**, **6**.
+
 ---
 
 ## NNeuronLearner — learning neuron (EN)
 
 ### Purpose
 
-**Class**: `NNeuronLearner` — self-learning neuron applying its learning rule during calculation.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLearner", ...)`.  
+**Class**: `NNeuronLearner` — self-learning neuron applying its learning rule during calculation.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLearner", ...)`.
 **Instances**: `ClassName = "NNeuronLearner"` in configs.
 
 `NNeuronLearner` is a neuron with self-learning capabilities that applies learning rules during calculation. It supports pattern recognition, incremental learning, and additional pattern learning.
@@ -179,7 +183,7 @@ sequenceDiagram
     participant Learner as NNeuronLearner
     participant Neuron as NPulseNeuron
     participant Generators as NPulseGeneratorTransit[]
-    
+
     Storage->>Learner: New() + Default()
     Storage->>Learner: Build()
     Learner->>Neuron: CreateComponent()
@@ -258,18 +262,18 @@ graph TB
     subgraph NNeuron["NNeuron Base"]
         BaseNeuron[NNeuron]
     end
-    
+
     subgraph NNeuronLearner["NNeuronLearner"]
         Learner[Learning neuron]
         Neuron[NPulseNeuron]
         Generators[NPulseGeneratorTransit<br/>Source1..SourceN]
     end
-    
+
     subgraph External["External Components"]
         InputPattern[Input pattern]
         OutputTarget[Output target]
     end
-    
+
     BaseNeuron -->|inherits| NNeuronLearner
     NNeuronLearner -->|creates| Neuron
     NNeuronLearner -->|creates| Generators
@@ -304,3 +308,7 @@ graph TB
 - **Self-learning**: `Bin/Configs/*/Model_*.xml` (where self-learning neurons are required)
 - **Pattern recognition**: experiments with pattern recognition
 - **Incremental learning**: experiments with incremental learning capabilities
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **[B]**, **1**, **6**.

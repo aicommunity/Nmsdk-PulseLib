@@ -1,8 +1,8 @@
 ## NSynTCNNeuron — компонент PulseLib
 
-**Класс**: `NSynTCNNeuron` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).  
-**Аббревиатуры**: `Syn` — **Syn**apse (синапс); `TCN` — **T**emporal **C**onvolutional **N**etwork (временная сверточная сеть).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynTCNNeuron", ...)`.  
+**Класс**: `NSynTCNNeuron` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).
+**Аббревиатуры**: `Syn` — **Syn**apse (синапс); `TCN` — **T**emporal **C**onvolutional **N**etwork (временная сверточная сеть).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynTCNNeuron", ...)`.
 **Storage**: `ClassName = "NSynTCNNeuron"` в `ClDesc`/`Configs`.
 
 ### Lifecycle
@@ -48,13 +48,17 @@ ClassName = NSynTCNNeuron
 Name = NSynTCNNeuron1
 ```
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **25**, **29**.
+
 ---
 
 ## NSynTCNNeuron — component PulseLib (EN)
 
 **Class**: `NSynTCNNeuron` — PulseLib component (see implementation in `NPulseLibrary.cpp`).
 
-- **Registration**: `UploadClass("NSynTCNNeuron", ...)` in `NPulseLibrary.cpp`.  
+- **Registration**: `UploadClass("NSynTCNNeuron", ...)` in `NPulseLibrary.cpp`.
 - **Storage**: `ClassName = "NSynTCNNeuron"` in configs.
 
 ### Lifecycle
@@ -95,7 +99,7 @@ sequenceDiagram
     participant Neuron as NSynTCNNeuron
     participant Inputs as Input Signals
     participant Outputs as Output Signals
-    
+
     Storage->>Neuron: New() + Default()
     Storage->>Neuron: Build()
     Neuron->>Neuron: ABuild()
@@ -146,16 +150,16 @@ graph TB
     subgraph UComponent["UComponent Base"]
         BaseComponent[UComponent]
     end
-    
+
     subgraph NSynTCNNeuron["NSynTCNNeuron"]
         NeuronCore[Neuron Core]
     end
-    
+
     subgraph External["External Components"]
         InputSignals[Input Signals]
         OutputTargets[Output Targets]
     end
-    
+
     BaseComponent -->|inherits| NSynTCNNeuron
     InputSignals -->|Input| NSynTCNNeuron
     NSynTCNNeuron -->|Output| OutputTargets
@@ -190,3 +194,7 @@ graph TB
 - TCN neuron: Specialized neuron for thalamocortical networks
 - Signal processing: Processes input signals and generates output signals
 - Network integration: Integrates with TCN network structures
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **25**, **29**.

@@ -387,6 +387,10 @@ for (int step = 0; step < 10000; step++) {
 - Поддерживает мотивационные сигналы для модуляции обучения
 - Имеет множественные выходы для мониторинга компонентов механизма Хебба
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора
@@ -448,6 +452,10 @@ sequenceDiagram
     Synapse->>Synapse: Modify Output
     Synapse-->>Channel: Output
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

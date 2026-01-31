@@ -4,9 +4,9 @@
 
 ### Назначение
 
-**Класс**: `NSPLifeHebbNeuron` — конфигурационный вариант мелкого живого импульсного нейрона с синапсами Хебба и поддержкой жизнеобеспечения.  
-**Префикс**: `NSP` — **S**imple **P**ulse (простой импульсный); `Hebb` — **Hebb**ian (геббовская пластичность).  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeHebbNeuron", ...)`.  
+**Класс**: `NSPLifeHebbNeuron` — конфигурационный вариант мелкого живого импульсного нейрона с синапсами Хебба и поддержкой жизнеобеспечения.
+**Префикс**: `NSP` — **S**imple **P**ulse (простой импульсный); `Hebb` — **Hebb**ian (геббовская пластичность).
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeHebbNeuron", ...)`.
 **Storage-инстансы**: `ClassName = "NSPLifeHebbNeuron"` в `Bin/Configs/*/Model_*.xml`.
 
 `NSPLifeHebbNeuron` является конфигурационным вариантом базового класса `NPulseLifeNeuron` с мембраной, поддерживающей синапсы Хебба. Создается из `NPulseLifeNeuron` с настройками:
@@ -51,6 +51,10 @@ classDiagram
 
 `NSPLifeHebbNeuron` использует все методы базового класса `NPulseLifeNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (жизнеобеспечение), **15**.
+
 ### См. также
 
 - [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон
@@ -65,8 +69,8 @@ classDiagram
 
 ### Purpose
 
-**Class**: `NSPLifeHebbNeuron` — configuration variant of small living spiking neuron with Hebbian synapses and life support.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeHebbNeuron", ...)`.  
+**Class**: `NSPLifeHebbNeuron` — configuration variant of small living spiking neuron with Hebbian synapses and life support.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSPLifeHebbNeuron", ...)`.
 **Instances**: `ClassName = "NSPLifeHebbNeuron"` in `Bin/Configs/*/Model_*.xml`.
 
 `NSPLifeHebbNeuron` is a configuration variant of the base class `NPulseLifeNeuron` with membrane supporting Hebbian synapses. Created from `NPulseLifeNeuron` with settings:
@@ -93,7 +97,7 @@ sequenceDiagram
     participant Membrane as NPNeuronHebbMembrane
     participant NeuronLife as NNeuronLife
     participant Synapse as NPulseHebbSynapse
-    
+
     Storage->>Neuron: New() (from NPulseLifeNeuron)
     Storage->>Neuron: SetMembraneClassName("NPNeuronHebbMembrane")
     Storage->>Neuron: Build()
@@ -154,19 +158,19 @@ graph TB
     subgraph NPulseLifeNeuron["NPulseLifeNeuron Base"]
         BaseNeuron[NPulseLifeNeuron]
     end
-    
+
     subgraph NSPLifeHebbNeuron["NSPLifeHebbNeuron Configuration"]
         Membrane[NPNeuronHebbMembrane]
         NeuronLife[NNeuronLife]
         HebbSynapses[NPulseHebbSynapse[]]
     end
-    
+
     subgraph External["External Components"]
         PreNeurons[Presynaptic neurons]
         EnergySource[Energy Source]
         MotivationalSignals[Motivational signals]
     end
-    
+
     BaseNeuron -->|configured as| NSPLifeHebbNeuron
     NSPLifeHebbNeuron -->|creates| Membrane
     NSPLifeHebbNeuron -->|creates| NeuronLife
@@ -224,6 +228,10 @@ graph TB
 - Life metrics: tracks energy, wear out, and other life parameters
 - Hebbian adaptation: automatic weight updates based on activity
 - Dual adaptation: both life support and synaptic plasticity mechanisms
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **neuromodeler.ru** (life support), **15**.
 
 ### See Also
 

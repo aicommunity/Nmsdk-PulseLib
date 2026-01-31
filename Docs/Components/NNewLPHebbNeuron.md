@@ -309,6 +309,10 @@ for (int step = 0; step < 1000; step++) {
 - LT-мембрана: отдельная мембрана для LT-зоны с оптимизированными каналами
 - Обучение Хебба: синапсы автоматически обновляют веса на основе корреляции пре- и постсинаптической активности
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -487,6 +491,10 @@ graph TB
 - New architecture: uses improved membranes for more accurate modeling
 - LT-membrane: separate membrane for LT-zone with optimized channels
 - Hebbian learning: synapses automatically update weights based on pre- and postsynaptic activity correlation
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

@@ -233,6 +233,10 @@ graph TB
 - **Threshold**: 0.2 (порог активации)
 - **G**: 9.8 (ускорение свободного падения)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
+
 ### См. также
 
 - [`NEyeMuscle`](NEyeMuscle.md) — глазная мышца
@@ -386,6 +390,10 @@ graph TB
 - **Mass**: 0.1-10.0 (muscle mass)
 - **Threshold**: 0.0-1.0 (activation threshold)
 - **G**: 1.0-100.0 (gain coefficient)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **19**, **20**, **21**, **22**, **28**, **31**.
 
 ### See Also
 

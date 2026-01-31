@@ -291,6 +291,10 @@ graph TB
 - Классификация по спайкам: использование `NSpikeClassifier` для финальной классификации
 - Запись результатов: автоматическая запись результатов классификации в файл
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
+
 ### См. также
 
 - [`NClassifier`](NClassifier.md) — базовый классификатор
@@ -458,6 +462,10 @@ graph TB
 - **MatrixSourceTimeSeriesClassName**: "UMatrixSourceTimeSeries" (time series source)
 - **PCAClassName**: "UCRPrincipalComponentAnalysis" (PCA component)
 - **SpikeClassifierClassName**: "NSpikeClassifier" (spike classifier)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
 
 ### See Also
 

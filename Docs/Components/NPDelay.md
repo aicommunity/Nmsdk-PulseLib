@@ -242,6 +242,10 @@ delay->Build();
 - Длина буфера: вычисляется как `int(DelayTime / TimeStep)`
 - Без задержки: если `DelayTime < 0.001` или `desired_buffer_length == 0`, сигнал выдается без задержки
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NSource`](NSource.md) — базовый источник сигналов
@@ -389,6 +393,10 @@ graph TB
 - Buffer: stores signal history for delayed output
 - Buffer length: calculated as `int(DelayTime / TimeStep)`
 - No delay: if `DelayTime < 0.001` or `desired_buffer_length == 0`, signal is output without delay
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

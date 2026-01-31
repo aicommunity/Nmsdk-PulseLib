@@ -338,6 +338,10 @@ for (int step = 0; step < 10000; step++) {
 **Типичные значения параметров:**
 Аналогичны `NPulseNeuronCable`, но применяются к каждому каналу независимо.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -492,6 +496,10 @@ graph TB
 
 **Typical parameter values:**
 Similar to `NPulseNeuronCable`, but applied to each channel independently.
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5**, **6**.
 
 ### See Also
 

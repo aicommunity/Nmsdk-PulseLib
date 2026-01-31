@@ -99,6 +99,10 @@ for (int step = 0; step < 10000; step++) {
 - Обратная совместимость со старыми конфигурациями
 - Стандартные параметры по умолчанию
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NPulseHebbSynapse`](NPulseHebbSynapse.md) — импульсный синапс с механизмом Хебба
@@ -126,6 +130,10 @@ for (int step = 0; step < 10000; step++) {
 classDiagram
     NPulseHebbSynapse <|.. NPHebbSynapse : alias
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

@@ -28,9 +28,17 @@ classDiagram
 
 Все классы регистрируются в `NPulseLibrary.cpp` и настраиваются через свойства (ёмкости, пороги, коэффициенты LT и др.).
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **[C]**, **7**, **25**, **26**, **29**.
+
 ---
 
 ## Channels, Membranes & LT zones — overview (Nmsdk-PulseLib)
 
 Defines how spikes travel, how membrane potential is integrated and how long-term plasticity is implemented.
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **[C]**, **7**, **25**, **26**, **29**.
 

@@ -236,6 +236,10 @@ membrane->Build();
 - **InhChannelClassName**: "NPInhChannelBio" (тормозной биоинспирированный канал)
 - **SynapseClassName**: "NPSynapseBio" (биоинспирированный синапс)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseMembrane`](NPulseMembrane.md) — базовая импульсная мембрана (базовый класс)
@@ -326,6 +330,10 @@ flowchart TD
     CheckMore -->|No| ProcessFeedback[Process Feedback]
     ProcessFeedback --> End([End])
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

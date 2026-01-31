@@ -88,6 +88,10 @@ for (int step = 0; step < 1000; step++) {
 - Обратная совместимость со старыми конфигурациями
 - Стандартные параметры по умолчанию
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора
@@ -243,6 +247,10 @@ graph TB
 - Mediator model: Uses mediator dynamics for synapse processing
 - Pulse signal: Supports pulse signal processing
 - Standard parameters: Uses standard default parameters
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

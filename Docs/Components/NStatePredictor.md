@@ -262,6 +262,10 @@ graph TB
 - **StatesNumber**: количество состояний для предсказания
 - **FeaturesNumber**: количество признаков (измерений)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
+
 ### См. также
 
 - [`NPredictor`](NPredictor.md) — предсказатель
@@ -436,6 +440,10 @@ graph TB
 - **PredictorClassName**: "NPredictor" (predictor)
 - **NeuronLearnerClassName**: "NNeuronLearner" (neuron learner)
 - **LogicalNotClassName**: "NLogicalNot" (logical NOT)
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
 
 ### See Also
 

@@ -173,6 +173,10 @@ generator->Build();
   - **Amplitude**: 1.0 (амплитуда импульса)
   - **Delay**: 0.0 сек (задержка начала генерации)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **14**, **25**.
+
 ### См. также
 
 - [`NPulseGenerator`](NPulseGenerator.md) — генератор импульсов (базовый класс)
@@ -305,6 +309,10 @@ graph TB
 - Alias: creates `NPulseGenerator` instance with default parameters
 - Same functionality as `NPulseGenerator`
 - Provides backward compatibility and simplified naming
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 

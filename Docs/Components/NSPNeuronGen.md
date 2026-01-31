@@ -1,11 +1,13 @@
 # NSPNeuronGen — мелкий импульсный нейрон с упрощенным генератором спайков
 
+**Каталог компонентов:** [Component-Catalog.md](../Component-Catalog.md).
+
 ## RU
 
 ### Назначение
 
-**Класс**: `NSPNeuronGen` — конфигурационный вариант мелкого импульсного нейрона с упрощенным генератором спайков.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPNeuronGen", ...)`.  
+**Класс**: `NSPNeuronGen` — конфигурационный вариант мелкого импульсного нейрона с упрощенным генератором спайков.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSPNeuronGen", ...)`.
 **Storage-инстансы**: `ClassName = "NSPNeuronGen"` в `Bin/Configs/*/Model_*.xml`.
 
 `NSPNeuronGen` является конфигурационным вариантом базового класса `NPulseNeuron` с предустановленными параметрами для мелких нейронов с упрощенным генератором спайков. Создается из `NPulseNeuron` с настройками:
@@ -54,7 +56,7 @@ sequenceDiagram
     participant Neuron as NSPNeuronGen
     participant Membrane as NPMembraneBio
     participant LTZone as NPulseLTZoneThreshold
-    
+
     Storage->>Neuron: New()
     Storage->>Neuron: Default()
     Note over Neuron: MembraneClassName = "NPMembraneBio"<br/>LTZoneClassName = "NPulseLTZoneThreshold"<br/>LTMembraneClassName = ""
@@ -66,7 +68,7 @@ sequenceDiagram
     Neuron->>LTZone: Threshold = 0.0117
     Neuron->>Neuron: CreateLinks()
     Neuron-->>Storage: Ready = true
-    
+
     loop Каждый шаг симуляции
         Storage->>Neuron: Calculate()
         Neuron->>Neuron: NPulseNeuronCommon::ACalculate()
@@ -163,18 +165,18 @@ graph TB
     subgraph NPulseNeuron["NPulseNeuron Base"]
         BaseNeuron[NPulseNeuron]
     end
-    
+
     subgraph NSPNeuronGen["NSPNeuronGen"]
         Membrane[NPMembraneBio]
         LTZone[NPulseLTZoneThreshold]
     end
-    
+
     subgraph External["Внешние компоненты"]
         Channels[Каналы]
         Synapses[Синапсы]
         Generators[Генераторы]
     end
-    
+
     BaseNeuron -->|конфигурация| NSPNeuronGen
     NSPNeuronGen -->|создает| Membrane
     NSPNeuronGen -->|создает| LTZone
@@ -241,6 +243,10 @@ if (ltZone) {
 - **MembraneClassName**: "NPMembraneBio" (биоинспирированная мембрана)
 - **LTZoneClassName**: "NPulseLTZoneThreshold" (LT-зона с порогом)
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон с параметрами структурирования
@@ -255,8 +261,8 @@ if (ltZone) {
 
 ### Purpose
 
-**Class**: `NSPNeuronGen` — configuration variant of small spiking neuron with simplified spike generator.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSPNeuronGen", ...)`.  
+**Class**: `NSPNeuronGen` — configuration variant of small spiking neuron with simplified spike generator.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSPNeuronGen", ...)`.
 **Instances**: `ClassName = "NSPNeuronGen"` in `Bin/Configs/*/Model_*.xml`.
 
 `NSPNeuronGen` is a configuration variant of the base class `NPulseNeuron` with preset parameters for small neurons with simplified spike generator. Created from `NPulseNeuron` with settings:
@@ -287,7 +293,7 @@ sequenceDiagram
     participant Neuron as NSPNeuronGen
     participant Membrane as NPMembraneBio
     participant LTZone as NPulseLTZoneThreshold
-    
+
     Storage->>Neuron: New() + Default()
     Storage->>Neuron: Build()
     Neuron->>Membrane: AddMissingComponent()
@@ -337,18 +343,18 @@ graph TB
     subgraph NPulseNeuron["NPulseNeuron Base"]
         BaseNeuron[NPulseNeuron]
     end
-    
+
     subgraph NSPNeuronGen["NSPNeuronGen Configuration"]
         Membrane[NPMembraneBio]
         LTZone[NPulseLTZoneThreshold<br/>Threshold = 0.0117]
     end
-    
+
     subgraph External["External Components"]
         Channels[Channels]
         Synapses[Synapses]
         Generators[Generators]
     end
-    
+
     BaseNeuron -->|configured as| NSPNeuronGen
     NSPNeuronGen -->|creates| Membrane
     NSPNeuronGen -->|creates| LTZone
@@ -387,6 +393,10 @@ graph TB
 - Simplified spike generator: uses threshold-based LT-zone
 - Bio-inspired membrane: uses NPMembraneBio for realistic dynamics
 - Easy configuration: preset parameters for quick setup
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

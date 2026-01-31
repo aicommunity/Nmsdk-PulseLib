@@ -375,6 +375,10 @@ for (int step = 0; step < 10000; step++) {
 - `DissociationTC = 0.01` (10 мс) — умеренный распад медиатора
 - `SynapseResistance = 1.0e8` (100 МОм) — биологически реалистичное сопротивление
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NPulseChannel`](NPulseChannel.md) — базовый импульсный канал
@@ -431,6 +435,10 @@ sequenceDiagram
     Channel->>Channel: Integrate Output
     Channel-->>Membrane: Output
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 

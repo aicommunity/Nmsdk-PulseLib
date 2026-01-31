@@ -197,6 +197,10 @@ channel->Build();
 - **Resistance**: по умолчанию из `NPulseChannel`
 - **Capacity**: по умолчанию из `NPulseChannel`
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
+
 ### См. также
 
 - [`NPulseChannel`](NPulseChannel.md) — базовый импульсный канал (базовый класс)
@@ -278,6 +282,10 @@ flowchart TD
     ApplyType --> SetOutput[Output = -current]
     SetOutput --> End([End])
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **26**, **29**, **30**.
 
 ### See Also
 

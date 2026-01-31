@@ -44,6 +44,10 @@ classDiagram
 
 `NSimpleAfferentNeuron` использует все методы базового класса `NAfferentNeuron`.
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **25**, **29**.
+
 ### См. также
 
 - [`NAfferentNeuron`](NAfferentNeuron.md) — базовый афферентный нейрон
@@ -199,6 +203,10 @@ graph TB
 - Simple structure: only LT-zone and receptor, without membrane
 - Optimized for simple sensory processing
 - Lower computational complexity compared to classical structure
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **25**, **29**.
 
 ### See Also
 

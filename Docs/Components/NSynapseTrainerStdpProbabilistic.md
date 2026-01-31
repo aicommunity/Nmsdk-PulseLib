@@ -4,11 +4,11 @@
 
 ### Назначение
 
-**Класс**: `NSynapseTrainerStdpProbabilistic` — вероятностный STDP-тренер.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpProbabilistic", ...)`.  
+**Класс**: `NSynapseTrainerStdpProbabilistic` — вероятностный STDP-тренер.
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpProbabilistic", ...)`.
 **Storage-инстансы**: `ClassName = "NSynapseTrainerStdpProbabilistic"` в `Bin/Configs/*/Model_*.xml`.
 
-`NSynapseTrainerStdpProbabilistic` реализует вероятностный STDP, где изменение веса зависит от текущего веса синапса. Наследуется от `NSynapseTrainerStdpWD` и использует экспоненциальную зависимость от веса для LTP: `XYDiff = APlus * exp(-WeightOutput)`.
+`NSynapseTrainerStdpProbabilistic` реализует вероятностный STDP, где изменение веса зависит от текущего веса синапса. Наследуется от `NSynapseTrainerStdpWD` и использует экспоненциальную зависимость от веса для LTP: `XYDiff = APlus * exp(-WeightOutput)`. Соответствует P-STDP по ВКР Зарубина: формула (2.11) в [B], вероятностная интерпретация и зависимость от текущего веса.
 
 **Использование:** Вероятностный STDP, зависимость от веса
 
@@ -39,6 +39,10 @@ classDiagram
   - Ограничивает вес в диапазоне `[WMin, WMax]`
   - Игнорирует изменения, если `abs(TDiff) >= 0.1`
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[B]**.
+
 ### См. также
 
 - [`NSynapseTrainerStdpWD`](NSynapseTrainerStdpWD.md) — STDP, зависящий от веса
@@ -51,11 +55,11 @@ classDiagram
 
 ### Purpose
 
-**Class**: `NSynapseTrainerStdpProbabilistic` — probabilistic STDP trainer.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpProbabilistic", ...)`.  
+**Class**: `NSynapseTrainerStdpProbabilistic` — probabilistic STDP trainer.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NSynapseTrainerStdpProbabilistic", ...)`.
 **Instances**: `ClassName = "NSynapseTrainerStdpProbabilistic"` in `Bin/Configs/*/Model_*.xml`.
 
-`NSynapseTrainerStdpProbabilistic` implements probabilistic STDP, where weight change depends on current synapse weight. Inherits from `NSynapseTrainerStdpWD` and uses exponential weight dependence for LTP.
+`NSynapseTrainerStdpProbabilistic` implements probabilistic STDP, where weight change depends on current synapse weight. Inherits from `NSynapseTrainerStdpWD` and uses exponential weight dependence for LTP. Corresponds to P-STDP in Zarubin's thesis: formula (2.11) in [B], probabilistic interpretation and weight dependence.
 
 **Usage:** Probabilistic STDP, weight dependence
 
@@ -65,6 +69,10 @@ classDiagram
 classDiagram
     NSynapseTrainerStdpWD <|-- NSynapseTrainerStdpProbabilistic
 ```
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 

@@ -228,6 +228,10 @@ for (int step = 0; step < 1000; step++) {
 - Классическая модель: подходит для классических нейронных сетей
 - Функция активации: использует параметры ActA и ActB для вычисления активации
 
+## Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
 ### См. также
 
 - [`NNeuron`](NNeuron.md) — базовый нейрон
@@ -375,6 +379,10 @@ graph TB
 - Continuous signals: outputs continuous activation values
 - Classic model: suitable for classic neural networks
 - Activation function: uses ActA and ActB parameters for activation calculation
+
+### References
+
+See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
 
 ### See Also
 
