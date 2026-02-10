@@ -15,14 +15,14 @@ file(GLOB PULSE_SOURCES
   ${CMAKE_SOURCE_DIR}/Libraries/Nmsdk-PulseLib/Core/*.cpp
 )
 
-# Исключаем файлы с ошибками компиляции
+# Exclude files with known compilation errors
 list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/.*Gui.*\\.cpp$")
 list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/NLifeNet\\.cpp$")
 list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/NResultDecoder\\.cpp$")
-# Не исключаем NPCAClassifier.cpp — он требуется для NMSDK::NPCAClassifier
-# Не исключаем NPulseLibrary.cpp — он определяет глобальный объект PulseLibrary
+# Do not exclude NPCAClassifier.cpp — it is required for NMSDK::NPCAClassifier
+# Do not exclude NPulseLibrary.cpp — it defines the global PulseLibrary object
 
-# Исключаем NOdeSolver.cpp, если RDK_USE_ODESOLVER выключен
+# Exclude NOdeSolver.cpp when RDK_USE_ODESOLVER is disabled
 if(NOT RDK_USE_ODESOLVER)
   list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/NOdeSolver\\.cpp$")
 endif()
@@ -31,7 +31,7 @@ target_sources(${TARGET_NAME} PRIVATE ${PULSE_SOURCES})
 
 target_compile_definitions(${TARGET_NAME} PUBLIC RDK_QT RDK_LIB_CVS_REVISION=0)
 
-# Передаём RDK_USE_ODESOLVER в компилятор, если он включён
+# Pass RDK_USE_ODESOLVER to the compiler when it is enabled
 if(RDK_USE_ODESOLVER)
   target_compile_definitions(${TARGET_NAME} PUBLIC RDK_USE_ODESOLVER)
 endif()
