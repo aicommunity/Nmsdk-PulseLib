@@ -40,10 +40,10 @@ RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> GdGain;
 RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> GsGain;
 
 public: //   
-///     
+/// Входной сигнал от низкопороговой зоны
 UProperty<MDMatrix<double>, NPulseHebbSynapse, ptInput | ptPubState> InputLTZoneFeedbackSignal;
 
-///  ""
+/// Сигнал "мотивации"
 UProperty<MDMatrix<double>, NPulseHebbSynapse, ptInput | ptPubState> InputMotivation;
 
 UProperty<MDMatrix<double>, NPulseHebbSynapse, ptOutput | ptPubState> Output1;
@@ -63,7 +63,9 @@ UProperty<double,NPulseHebbSynapse,ptPubState> Wout;
 
 public: // 
 // --------------------------
-//   
+// --------------------------
+// Конструкторы и деструкторы
+// --------------------------
 // --------------------------
 NPulseHebbSynapse(void);
 virtual ~NPulseHebbSynapse(void);
@@ -71,34 +73,39 @@ virtual ~NPulseHebbSynapse(void);
 
 public:
 // --------------------------
-//    
 // --------------------------
-//         
+// Системные методы управления объектом
+// --------------------------
+// Выделяет память для новой чистой копии объекта этого класса
+// --------------------------
 virtual NPulseHebbSynapse* New(void);
 // --------------------------
 
 // --------------------------
-//    
+// --------------------------
+// Скрытые методы управления счетом
+// --------------------------
 // --------------------------
 protected:
 //       -
-//  false      
-//  synapse == 0,     
+// Подключает синапс хебба к низкопороговой зоне нейрона-владельца
+// Возвращает false только если произошла ошибка установки связи
+// Если synapse == 0, то подключает все синапсы хебба
 bool InstallHebbianConnection(void);
 
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//     
-//   
-//    Reset()   Ready  true
-//    
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
 virtual bool ABuild(void);
 
-//   .
+// Сброс процесса счета.
 virtual bool AReset(void);
 
-//    
+// Выполняет расчет этого объекта
 virtual bool ACalculate2(void);
 // --------------------------
 };

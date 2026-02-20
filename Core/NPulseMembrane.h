@@ -27,62 +27,66 @@ class NPulseNeuron;
 class RDK_LIB_TYPE NPulseMembrane: public NPulseMembraneCommon
 {
 public: //  
-///   
+/// Коэффициент обратной связи
 UProperty<double,NPulseMembrane, ptPubParameter> FeedbackGain;
 
-///   
+/// Наличие механизма сброса
 UProperty<bool,NPulseMembrane, ptPubParameter> ResetAvailable;
 
-///   
+/// Имя класса синапса
 UProperty<std::string, NPulseMembrane, ptPubParameter> SynapseClassName;
 
-///    
+/// Имя класса ионного канала
 UProperty<std::string, NPulseMembrane, ptPubParameter> ExcChannelClassName;
 
-///    
+/// Имя класса ионного канала
 UProperty<std::string, NPulseMembrane, ptPubParameter> InhChannelClassName;
 
-///   
+/// Число возбуждающих синапсов
 UProperty<int, NPulseMembrane, ptPubParameter> NumExcitatorySynapses;
 
-///   
+/// Число тормозных синапсов
 UProperty<int, NPulseMembrane, ptPubParameter> NumInhibitorySynapses;
 
 public: //   
-///      
+/// Сигнал обратной связи от низкопороговой зоны
 UProperty<MDMatrix<double>, NPulseMembrane, ptInput | ptPubState> InputFeedbackSignal;
 
 
 protected: //  
-//   
+// Ионные механизмы деполяризации
 vector<NPulseChannelCommon*> ExcitatoryChannels;
 
-//   
+// Ионные механизмы гиперполяризации
 vector<NPulseChannelCommon*> InhibitoryChannels;
 
-//  
+// Возбуждающие синапсы
 vector<NPulseSynapseCommon*> ExcitatorySynapses;
 
-//  
+// Тормозные синапсы
 vector<NPulseSynapseCommon*> InhibitorySynapses;
 
 
 public: // 
 // --------------------------
-//   
+// --------------------------
+// Конструкторы и деструкторы
+// --------------------------
 // --------------------------
 NPulseMembrane(void);
 virtual ~NPulseMembrane(void);
 // --------------------------
 
 // --------------------------
-//    
 // --------------------------
-//   
+// Методы управления временными перменными
+// --------------------------
+// Ионные механизмы деполяризации
+// --------------------------
 size_t GetNumPosChannels(void) const;
 NPulseChannelCommon* GetPosChannel(size_t i);
 
-//   
+// Ионные механизмы гиперполяризации
 size_t GetNumNegChannels(void) const;
 NPulseChannelCommon* GetNegChannel(size_t i);
 
@@ -100,12 +104,14 @@ virtual bool UpdateSynapseData(UEPtr<NPulseSynapseCommon> synapse, UEPtr<UIPoint
 // --------------------------
 
 // --------------------------
-//    
 // --------------------------
-///   
+// Методы управления общедоступными свойствами
+// --------------------------
+/// Наличие механизма сброса
+// --------------------------
 bool SetResetAvailable(const bool &value);
 
-//   
+// Коэффициент обратной связи
 bool SetFeedbackGain(const double &value);
 
 bool SetSynapseClassName(const std::string &value);
@@ -116,9 +122,11 @@ bool SetNumInhibitorySynapses(const int &value);
 // --------------------------
 
 // --------------------------
-//    
 // --------------------------
-//         
+// Системные методы управления объектом
+// --------------------------
+// Выделяет память для новой чистой копии объекта этого класса
+// --------------------------
 virtual NPulseMembrane* New(void);
 
 protected:
@@ -136,32 +144,36 @@ virtual bool ADelComponent(UEPtr<UContainer> comp);
 // --------------------------
 
 // --------------------------
-//    
 // --------------------------
-//       
-//     
-//   'true'   
-//  'false'    
+// Методы доступа к компонентам
+// --------------------------
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
+// --------------------------
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
-//    
+// --------------------------
+// Скрытые методы управления счетом
+// --------------------------
 // --------------------------
 protected:
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//     
-//   
-//    Reset()   Ready  true
-//    
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
 virtual bool ABuild(void);
 
-//   .
+// Сброс процесса счета.
 virtual bool AReset(void);
 
-//    
+// Выполняет расчет этого объекта
 virtual bool ACalculate2(void);
 
 //      
