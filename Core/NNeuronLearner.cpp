@@ -20,9 +20,11 @@ See file license.txt for more information
 #define NOMINMAX
 #endif
 #include <algorithm>
+#include <sstream>
 #include "NNeuronLearner.h"
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseLTZoneCommon.h"
+#include "../../Rdk/Deploy/Include/rdk_cpp_init.h"
 
 
 namespace NMSDK {
@@ -400,6 +402,18 @@ bool NNeuronLearner::SetExperimentMode(const bool &value)
 bool NNeuronLearner::SetDendriteLength(const std::vector<int> &value)
 {
  OldDendriteLength = DendriteLength;
+
+ // Нормализуем размер DendriteLength относительно текущего NumInputDendrite.
+ // Сам вектор уже обновлён свойством до вызова сеттера, поэтому работаем
+ // с текущим содержимым DendriteLength, а не с параметром value.
+ if (DendriteLength.size() != static_cast<size_t>(NumInputDendrite))
+ {
+  if (DendriteLength.size() < static_cast<size_t>(NumInputDendrite))
+   DendriteLength.resize(NumInputDendrite, 1);
+  else
+   DendriteLength.resize(NumInputDendrite);
+ }
+
  Ready = false;
  return true;
 }
@@ -409,12 +423,32 @@ bool NNeuronLearner::SetDendriteLength(const std::vector<int> &value)
 /// состоят из одного сегмента и имеют только по одному тормозному и возбуждающему синапсу
 bool NNeuronLearner::SetInitialSomaPotential(const std::vector<double> &value)
 {
+ // InitialSomaPotential уже содержит данные, скопированные из value до вызова сеттера.
+ // Здесь гарантируем согласованный размер с NumInputDendrite.
+ if (InitialSomaPotential.size() != static_cast<size_t>(NumInputDendrite))
+ {
+  std::vector<double> normalized(NumInputDendrite, 0.0);
+  const size_t copyCount = std::min(normalized.size(), value.size());
+  for (size_t i = 0; i < copyCount; ++i)
+   normalized[i] = value[i];
+  // Важно: чтобы избежать рекурсии через SetData, используем SetDataDirect.
+  InitialSomaPotential.SetDataDirect(normalized);
+ }
  return true;
 }
 
 /// Установка значения массива количеств возбуждающих синапсов на дендритах
 bool NNeuronLearner::SetNumSynapse(const std::vector<int> &value)
 {
+ // NumSynapse уже обновлён свойством. Нормализуем размер, чтобы он совпадал
+ // с текущим числом входных дендритов.
+ if (NumSynapse.size() != static_cast<size_t>(NumInputDendrite))
+ {
+  if (NumSynapse.size() < static_cast<size_t>(NumInputDendrite))
+   NumSynapse.resize(NumInputDendrite, 1);
+  else
+   NumSynapse.resize(NumInputDendrite);
+ }
  Ready = false;
  return true;
 }
@@ -495,22 +529,41 @@ bool NNeuronLearner::ADelComponent(UEPtr<UContainer> comp)
 bool NNeuronLearner::BuildStructure()
 {
  bool res(true);
-
+ try
+ {
  // Cоздаём нейрон
  Neuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron"), NeuronClassName);
  Neuron->SetCoord(MVector<double,3>(8.7 + 1 * 7, 1.67, 0));
-
+ 
  // Устанавливаем количество сом
  Neuron->NumSomaMembraneParts = NumInputDendrite;
 
+ // Перед настройкой дендритов синхронизируем размер векторов,
+ // завязанных на NumInputDendrite, чтобы избежать выхода за границы
+ // при последующей работе с DendriteLength/OldDendriteLength.
+ if (DendriteLength.size() != static_cast<size_t>(NumInputDendrite))
+ {
+  if (DendriteLength.size() < static_cast<size_t>(NumInputDendrite))
+   DendriteLength.resize(NumInputDendrite, 1);
+  else
+   DendriteLength.resize(NumInputDendrite);
+ }
+
+ if (OldDendriteLength.size() != static_cast<size_t>(NumInputDendrite))
+ {
+  if (OldDendriteLength.size() < static_cast<size_t>(NumInputDendrite))
+   OldDendriteLength.resize(NumInputDendrite, 1);
+  else
+   OldDendriteLength.resize(NumInputDendrite);
+ }
+
  // Устанавливаем количество и длину дендритов
  if(Neuron->StructureBuildMode != 2)
+ {
   Neuron->NumDendriteMembraneParts = 1;
+ }
  else
  {
-  // Обновляем информацию в NeuronLearner
-  DendriteLength.resize(NumInputDendrite, 1);
-  OldDendriteLength.resize(NumInputDendrite, 1);
   // Обновляем информацию в нейроне
   Neuron->NumDendriteMembranePartsVec = DendriteLength;
  }
@@ -519,14 +572,13 @@ bool NNeuronLearner::BuildStructure()
 // if(Neuron && Neuron->GetStorage())
   // Neuron->GetStorage()->FreeObjectsStorage();
 
- // Удаляем лишние генераторы
- for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
- {
-  DelComponent(std::string("Source") + sntoa(i + 1));
- }
- Storage->FreeObjectsStorage();
+// Удаляем лишние генераторы
+for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
+{
+ DelComponent(std::string("Source") + sntoa(i + 1));
+}
 
- // Инициализируем генераторы импульсов
+// Инициализируем генераторы импульсов
  Generators.resize(NumInputDendrite);
  for(int i = 0; i < NumInputDendrite; i++)
  {
@@ -624,18 +676,17 @@ bool NNeuronLearner::BuildStructure()
  // как и синапсы
  SynapseStatus.assign(NumInputDendrite, 0);
 
- // Массив значений потенциалов на выходах дендритов при их единичной длине
- if (NumInputDendrite != InitialSomaPotential.size())
+// Массив значений потенциалов на выходах дендритов при их единичной длине
+{
+ std::vector<double> cur = InitialSomaPotential; // локальная копия текущих значений
+ if (cur.size() != static_cast<size_t>(NumInputDendrite))
  {
-  std::vector<double> newinitialsomapotential;
-  newinitialsomapotential.assign(NumInputDendrite, 0.0);
-  // Копирование старой информации
-  for (int i = 0; i < std::min(NumInputDendrite.GetData(), int(InitialSomaPotential.size())); i++)
-  {
-   newinitialsomapotential[i] = InitialSomaPotential[i];
-  }
-  InitialSomaPotential = newinitialsomapotential;
+  // сохраняем первые элементы, просто меняя размер
+  cur.resize(NumInputDendrite, 0.0);
+  // без повторного вызова сеттера, чтобы не вызвать рекурсию
+  InitialSomaPotential.SetDataDirect(cur);
  }
+}
 
  // Время для каждой сомы, когда амплитуда выходного сигнала на ней максимальна в течение итерации
  TimeOfMaxIterSomaAmp.assign(NumInputDendrite, 0.0);
@@ -652,6 +703,56 @@ bool NNeuronLearner::BuildStructure()
  PrevInputPattern.Assign(NumInputDendrite, 1, -1.0);  // Начальное значение предыдущего паттерна
  AdditionalInputPattern.Resize(NumInputDendrite, 1, 0.0);
  return true;
+ }
+ catch (const UException &ex)
+ {
+  try
+  {
+   if (RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "NNeuronLearner::BuildStructure: UException number=" << ex.GetNumber()
+        << ", type=" << ex.GetType()
+        << ", file=" << ex.GetExFileName()
+        << ", line=" << ex.GetExLineNumber()
+        << ", what=" << ex.what();
+    RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronLearner", oss.str(), ex.GetNumber());
+   }
+  }
+  catch (...) {}
+  throw;
+ }
+ catch (const std::exception &ex)
+ {
+  try
+  {
+   if (RDK::GetLogger())
+   {
+    std::ostringstream oss;
+   oss << "NNeuronLearner::BuildStructure: std::exception what=" << ex.what()
+       << ", NumInputDendrite=" << NumInputDendrite.GetData()
+       << ", OldNumInputDendrite=" << OldNumInputDendrite
+       << ", DendriteLength.size=" << DendriteLength.size()
+       << ", OldDendriteLength.size=" << OldDendriteLength.size()
+       << ", NumSynapse.size=" << NumSynapse.size();
+    RDK::GetLogger()->LogMessage(RDK_EX_ERROR, oss.str());
+   }
+  }
+  catch (...) {}
+  throw;
+ }
+ catch (...)
+ {
+  try
+  {
+   if (RDK::GetLogger())
+   {
+    RDK::GetLogger()->LogMessage(RDK_EX_ERROR, "NNeuronLearner::BuildStructure: unknown exception");
+   }
+  }
+  catch (...) {}
+  throw;
+ }
 }
 
 
@@ -1497,98 +1598,145 @@ bool NNeuronLearner::Training(void)
 // Каждый такой вызов функции называем тактом
 bool NNeuronLearner::ACalculate(void)
 {
- // Если нет нейрона, то ничего делать не надо
- if(!Neuron)
-  return true;
-
-
- // Вычисляем значения потенциалов на дендритах и сомах
- DendriteNeuronAmplitude(0, 0) = 0;
- for(int i = 0; i < NumInputDendrite; i++)
+ try
  {
-     UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i + 1)+"_1",true);
-     if(!dendrite)
-      return true;
-     DendriteNeuronAmplitude(i + 1, 0) = dendrite->SumPotential(0, 0);
-     DendriteNeuronAmplitude(0, 0) += dendrite->SumPotential(0, 0);
- }
+  // Если нет нейрона, то ничего делать не надо
+  if(!Neuron)
+   return true;
 
- SomaNeuronAmplitude(0, 0) = 0;
- for(int i = 0; i < NumInputDendrite; i++)
- {
-     UEPtr<NPulseMembrane> soma = Neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i + 1),true);
-     if(!soma)
-      return true;
-     SomaNeuronAmplitude(i + 1, 0) = soma->SumPotential(0, 0);
-     SomaNeuronAmplitude(0, 0) += soma->SumPotential(0, 0);
- }
-
-
- // Если 0 режим обучения и не 0 итерация, то можем завершить обучение
- if(!CalculateMode && (CountIteration > 0))
- {
-  // Проверяем обученность нейрона предыдущему импульсу
-  bool istrained = true;
+  // Вычисляем значения потенциалов на дендритах и сомах
+  DendriteNeuronAmplitude(0, 0) = 0;
   for(int i = 0; i < NumInputDendrite; i++)
   {
-   // Если есть хотя бы один дендрит или сома, длину кот-х надо изменить,
-   // то нейрон ещё не изучил паттерн
-   if(DendStatus[i] || SynapseStatus[i])
-   {
-    istrained = false;
-    break;
-   }
+   UEPtr<NPulseMembrane> dendrite =
+    Neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i + 1)+"_1", true);
+   if(!dendrite)
+    return true;
+
+   DendriteNeuronAmplitude(i + 1, 0) = dendrite->SumPotential(0, 0);
+   DendriteNeuronAmplitude(0, 0) += dendrite->SumPotential(0, 0);
   }
 
-  // Если нейрон уже изучил паттерн, то обновляем информацию
-  if(istrained)
+  SomaNeuronAmplitude(0, 0) = 0;
+  for(int i = 0; i < NumInputDendrite; i++)
   {
-   // Паттерн, которому обучен нейрон
-   Neuron->TrainingPattern = InputPattern;
+   UEPtr<NPulseMembrane> soma =
+    Neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i + 1), true);
+   if(!soma)
+    return true;
 
-   // Длины дендритов
-   MDMatrix<int> temp;
-   temp.Resize(NumInputDendrite, 1);
-   for(int i = 0; i < NumInputDendrite; i++)
-   {
-    temp(i, 0) = DendriteLength[i];
-   }
-   Neuron->TrainingDendIndexes.Resize(NumInputDendrite, 1);
-   Neuron->TrainingDendIndexes = temp;
-
-   // Количество синапсов на входных участках дендритов
-   for(int i = 0; i < NumInputDendrite; i++)
-   {
-    temp(i, 0) = NumSynapse[i];
-   }
-   Neuron->TrainingSynapsisNum.Resize(NumInputDendrite, 1);
-   Neuron->TrainingSynapsisNum = temp;
-
-   SetIsNeedToTrain(false);
-   IsNeedToTrain = false;
-
-   // Досрочно завершаем этот такт
-   return true;
+   SomaNeuronAmplitude(i + 1, 0) = soma->SumPotential(0, 0);
+   SomaNeuronAmplitude(0, 0) += soma->SumPotential(0, 0);
   }
+
+  // Если 0 режим обучения и не 0 итерация, то можем завершить обучение
+  if(!CalculateMode && (CountIteration > 0))
+  {
+   // Проверяем обученность нейрона предыдущему импульсу
+   bool istrained = true;
+   for(int i = 0; i < NumInputDendrite; i++)
+   {
+    // Если есть хотя бы один дендрит или сома, длину кот-х надо изменить,
+    // то нейрон ещё не изучил паттерн
+    if(DendStatus[i] || SynapseStatus[i])
+    {
+     istrained = false;
+     break;
+    }
+   }
+
+   // Если нейрон уже изучил паттерн, то обновляем информацию
+   if(istrained)
+   {
+    // Паттерн, которому обучен нейрон
+    Neuron->TrainingPattern = InputPattern;
+
+    // Длины дендритов
+    MDMatrix<int> temp;
+    temp.Resize(NumInputDendrite, 1);
+    for(int i = 0; i < NumInputDendrite; i++)
+    {
+     temp(i, 0) = DendriteLength[i];
+    }
+    Neuron->TrainingDendIndexes.Resize(NumInputDendrite, 1);
+    Neuron->TrainingDendIndexes = temp;
+
+    // Количество синапсов на входных участках дендритов
+    for(int i = 0; i < NumInputDendrite; i++)
+    {
+     temp(i, 0) = NumSynapse[i];
+    }
+    Neuron->TrainingSynapsisNum.Resize(NumInputDendrite, 1);
+    Neuron->TrainingSynapsisNum = temp;
+
+    SetIsNeedToTrain(false);
+    IsNeedToTrain = false;
+
+    // Досрочно завершаем этот такт
+    return true;
+   }
+  }
+
+  // Функция для работы с файлами.
+  // Осуществляет чтение входных данных из файла,
+  // Обработку результатов и запись результатов в файл
+  if(ExperimentMode)
+   Experiment();
+
+  // В функции происходит обучение нейрона
+  if (IsNeedToTrain)
+   Training();
+
+  // Подаём информацию с выхода нейрона на выход NNeuronLearner
+  if(Neuron)
+   Output = Neuron->Output;
+
+  return true;
  }
-
-
- // Функция для работы с файлами.
- // Осуществляет чтение входных данных из файла,
- // Обработку результатов и запись результатов в файл
- if(ExperimentMode)
-     Experiment();
-
- // В функции происходит обучение нейрона
- if (IsNeedToTrain)
-  Training();
-
-
- // Подаём информацию с выхода нейрона на выход NNeuronLearner
- if(Neuron)
-  Output = Neuron->Output;
-
- return true;
+ catch (const UException &ex)
+ {
+  try
+  {
+   if (RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "NNeuronLearner::ACalculate: UException number=" << ex.GetNumber()
+        << ", type=" << ex.GetType()
+        << ", file=" << ex.GetExFileName()
+        << ", line=" << ex.GetExLineNumber()
+        << ", what=" << ex.what();
+    RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronLearner", oss.str(), ex.GetNumber());
+   }
+  }
+  catch (...) {}
+  throw;
+ }
+ catch (const std::exception &ex)
+ {
+  try
+  {
+   if (RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "NNeuronLearner::ACalculate: std::exception what=" << ex.what();
+    RDK::GetLogger()->LogMessage(RDK_EX_ERROR, oss.str());
+   }
+  }
+  catch (...) {}
+  throw;
+ }
+ catch (...)
+ {
+  try
+  {
+   if (RDK::GetLogger())
+   {
+    RDK::GetLogger()->LogMessage(RDK_EX_ERROR, "NNeuronLearner::ACalculate: unknown exception");
+   }
+  }
+  catch (...) {}
+  throw;
+ }
 }
 
 // --------------------------
