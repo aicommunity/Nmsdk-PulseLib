@@ -20,6 +20,8 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseLTZoneCommon.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseNeuron.h"
+#include "../../Rdk/Deploy/Include/rdk_cpp_init.h"
+#include <sstream>
 //#include <QString>
 //#include <QDateTime>
 //#include <QFile>
@@ -50,7 +52,8 @@ NNeuronTrainer::NNeuronTrainer(void)
   TrainingLTZThreshold("TrainingLTZThreshold",this,&NNeuronTrainer::SetTrainingLTZThreshold),
   UseFixedLTZThreshold("UseFixedLTZThreshold",this,&NNeuronTrainer::SetUseFixedLTZThreshold),
   Output("Output",this),
-  SynapseResistanceStep("SynapseResistanceStep", this, &NNeuronTrainer::SetSynapseResistanceStep)
+  SynapseResistanceStep("SynapseResistanceStep", this, &NNeuronTrainer::SetSynapseResistanceStep),
+  EnableDebug("EnableDebug", this, &NNeuronTrainer::SetEnableDebug)
 {
  OldNumInputDendrite=0;
  generators.clear();
@@ -235,6 +238,12 @@ bool NNeuronTrainer::SetUseFixedLTZThreshold(const bool &value)
 }
 /// Сопротивление нарастающих синапсов
 bool NNeuronTrainer::SetSynapseResistanceStep(const double &value)
+{
+ return true;
+}
+
+/// Установка флага включения DEBUG-логирования обучения
+bool NNeuronTrainer::SetEnableDebug(const bool & /*value*/)
 {
  return true;
 }
@@ -465,6 +474,7 @@ bool NNeuronTrainer::ADefault(void)
  SomaNeuronAmplitude.Assign(1,1,0.0);
  Output.Assign(1,1,0.0);
  SynapseResistanceStep = 1.0e9;
+ EnableDebug = false;
 
  return true;
 }
@@ -1291,6 +1301,25 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 	}
 	if(is_trained)
 	{
+		if (EnableDebug && RDK::GetLogger())
+		{
+			std::ostringstream oss;
+			oss << "SomaSynapseNormalization: TRAINED; DendriteLength=[";
+			for (size_t i = 0; i < DendriteLength.size(); ++i)
+			{
+				if (i) oss << ',';
+				oss << DendriteLength[i];
+			}
+			oss << "], SynapseNum=[";
+			for (size_t i = 0; i < SynapseNum.size(); ++i)
+			{
+				if (i) oss << ',';
+				oss << SynapseNum[i];
+			}
+			oss << "]";
+			RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+		}
+
 		IsNeedToTrain = false;
 //        const QString dateTime = QDateTime::currentDateTime().toString("hh:mm dd.MM.yyyy");
 //        QFile file("test.txt");
@@ -1332,6 +1361,15 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 			// Добавляем синапс
 			else if(dend_status[i] == 2)
 			{
+				if (EnableDebug && RDK::GetLogger())
+				{
+					std::ostringstream oss;
+					oss << "SomaSynapseNormalization: ADD synapse; i=" << i
+						<< " DendLen=" << (i < (int)DendriteLength.size() ? DendriteLength[i] : -1)
+						<< " SynBefore=" << (i < (int)SynapseNum.size() ? SynapseNum[i] : -1);
+					RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+				}
+
 				// Проверяем условие на максимальное количество синапсов
 				// ПАРАМЕТР НЕ ЗАВЕДЁН. НУЖЕН ЛИ?
 				//if(DendriteLength[i] >= MaxDendriteLength)
@@ -1368,6 +1406,15 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 			// Удаляем синапс
 			else if(dend_status[i] == -2)
 			{
+				if (EnableDebug && RDK::GetLogger())
+				{
+					std::ostringstream oss;
+					oss << "SomaSynapseNormalization: REMOVE synapse; i=" << i
+						<< " DendLen=" << (i < (int)DendriteLength.size() ? DendriteLength[i] : -1)
+						<< " SynBefore=" << (i < (int)SynapseNum.size() ? SynapseNum[i] : -1);
+					RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+				}
+
 				// Удаляем синапс
 				SynapseNum[i]--;
 				// Помечаем как посчитанный
@@ -1445,6 +1492,16 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 				dend_status[i] = -2;
 			}
 
+			if (EnableDebug && RDK::GetLogger())
+			{
+				std::ostringstream oss;
+				oss << "SomaSynapseNormalization: iter done; i=" << i
+					<< " max_iter_dend_amp=" << max_iter_dend_amp[i]
+					<< " InitialDendritePotential=" << (i < (int)InitialDendritePotential.size() ? InitialDendritePotential[i] : 0.0)
+					<< " dend_status=" << dend_status[i];
+				RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+			}
+
 			is_new_iteration = true;
 		}
 
@@ -1472,6 +1529,14 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 	// При первом входе дособираем нейрон
 	if(is_need_to_build)
 	{
+		if (EnableDebug && RDK::GetLogger())
+		{
+			std::ostringstream oss;
+			oss << "SomaSynchronizePattern: first build; NumInputDendrite=" << NumInputDendrite
+				<< " MaxDendriteLength=" << MaxDendriteLength;
+			RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+		}
+
 		// Добаляем связи между генератором и синапсами
 		if(!neuron)
 		 return true;
@@ -1513,6 +1578,19 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 	}
 	if(is_trained)
 	{
+		if (EnableDebug && RDK::GetLogger())
+		{
+			std::ostringstream oss;
+			oss << "SomaSynchronizePattern: TRAINED; DendriteLength=[";
+			for (size_t i = 0; i < DendriteLength.size(); ++i)
+			{
+				if (i) oss << ',';
+				oss << DendriteLength[i];
+			}
+			oss << "]";
+			RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+		}
+
 		dend_status.assign(NumInputDendrite, 2); // Статус дендритов
 		dend_status[dend_index] = 0;
 		is_synchronizated = true; // Признак завершения синхронизации
@@ -1533,6 +1611,14 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 			// Наращиваем дендрит
 			else if(dend_status[i] == 1)
 			{
+				if (EnableDebug && RDK::GetLogger())
+				{
+					std::ostringstream oss;
+					oss << "SomaSynchronizePattern: INCREASE dendrite; i=" << i
+						<< " old_len=" << (i < (int)DendriteLength.size() ? DendriteLength[i] : -1);
+					RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+				}
+
 				// Проверяем условие на максимальную длину дендритов
 				if(DendriteLength[i] >= MaxDendriteLength)
 				{
@@ -1596,6 +1682,14 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 			// Укорачиваем дендрит
 			else if(dend_status[i] == -1)
 			{
+				if (EnableDebug && RDK::GetLogger())
+				{
+					std::ostringstream oss;
+					oss << "SomaSynchronizePattern: DECREASE dendrite; i=" << i
+						<< " old_len=" << (i < (int)DendriteLength.size() ? DendriteLength[i] : -1);
+					RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+				}
+
                 if(!neuron)
 				 return true;
 
@@ -1715,6 +1809,17 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 				dend_status[i] = -1;
 			}
 
+			if (EnableDebug && RDK::GetLogger())
+			{
+				std::ostringstream oss;
+				oss << "SomaSynchronizePattern: iter done; i=" << i
+					<< " dt=" << dt
+					<< " dissynchronization=" << (i < (int)dissynchronization.size() ? dissynchronization[i] : 0.0)
+					<< " dend_status=" << dend_status[i]
+					<< " DendLen=" << (i < (int)DendriteLength.size() ? DendriteLength[i] : -1);
+				RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+			}
+
 			is_new_iteration = true;
 		}
 
@@ -1737,6 +1842,40 @@ bool NNeuronTrainer::CalculateProcess(void)
 	static ofstream fout("C:\\Test_out2.txt"); // брать оттуда где проект
 	static ifstream fin("C:\\Test.txt");// сохранять туда же где и проект?
 	static double local_trainigLTZtresh = 0;
+
+	if (EnableDebug && RDK::GetLogger())
+	{
+		std::ostringstream oss;
+		oss << "CalculateProcess: mode=" << CalculateMode.GetData()
+			<< " IsNeedToTrain=" << (IsNeedToTrain.GetData() ? 1 : 0)
+			<< " NumInputDendrite=" << NumInputDendrite.GetData()
+			<< " MaxDendriteLength=" << MaxDendriteLength.GetData()
+			<< " is_need_to_build=" << (is_need_to_build ? 1 : 0)
+			<< " is_synchronizated=" << (is_synchronizated ? 1 : 0)
+			<< " is_first_iter=" << (is_first_iter ? 1 : 0)
+			<< " is_new_iteration=" << (is_new_iteration ? 1 : 0);
+		if (!DendriteLength.empty())
+		{
+			oss << " DendriteLength=[";
+			for (size_t i = 0; i < DendriteLength.size(); ++i)
+			{
+				if (i) oss << ',';
+				oss << DendriteLength[i];
+			}
+			oss << "]";
+		}
+		if (!SynapseNum.empty())
+		{
+			oss << " SynapseNum=[";
+			for (size_t i = 0; i < SynapseNum.size(); ++i)
+			{
+				if (i) oss << ',';
+				oss << SynapseNum[i];
+			}
+			oss << "]";
+		}
+		RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+	}
 
 	//Меняем порог для этапа обучения
  if (IsNeedToTrain && thresh_first_iter)
@@ -1900,6 +2039,14 @@ bool NNeuronTrainer::CalculateProcess(void)
 #endif
 bool NNeuronTrainer::ACalculate(void)
 {
+	if (EnableDebug && RDK::GetLogger())
+	{
+		std::ostringstream oss;
+		oss << "ACalculate: call CalculateProcess; mode=" << CalculateMode.GetData()
+			<< " IsNeedToTrain=" << (IsNeedToTrain.GetData() ? 1 : 0);
+		RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
+	}
+
 	CalculateProcess();
 
  	// выход нейрона

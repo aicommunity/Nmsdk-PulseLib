@@ -59,7 +59,8 @@ NNeuronLearner::NNeuronLearner(void):
  InitialSomaPotential("InitialSomaPotential", this, &NNeuronLearner::SetInitialSomaPotential),
  NumSynapse("NumSynapse", this, &NNeuronLearner::SetNumSynapse),
  ExperimentNum("ExperimentNum", this, &NNeuronLearner::SetExperimentNum),
- ExperimentMode("ExperimentMode", this, &NNeuronLearner::SetExperimentMode)
+ ExperimentMode("ExperimentMode", this, &NNeuronLearner::SetExperimentMode),
+ EnableDebug("EnableDebug", this, &NNeuronLearner::SetEnableDebug)
 {
  OldNumInputDendrite = 0;
  Generators.clear();
@@ -474,6 +475,13 @@ bool NNeuronLearner::SetExperimentNum(const int &value)
  return true;
 }
 
+/// Установка флага включения DEBUG-логирования.
+/// Само значение уже сохранено в свойстве, дополнительных действий не требуется.
+bool NNeuronLearner::SetEnableDebug(const bool & /*value*/)
+{
+ return true;
+}
+
 // --------------------------
 
 
@@ -823,6 +831,9 @@ bool NNeuronLearner::ADefault(void)
  // как и синапсы
  SynapseStatus.assign(NumInputDendrite, 0);
 
+ //  DEBUG-  ( )
+ EnableDebug = false;
+
  return true;
 }
 
@@ -899,7 +910,16 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
 
  // Если не нужно менять длину дендритов - ничего не делаем
  if(!DendStatus[num])
+ {
+  if (EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "ChangeDendriteLength: num=" << num
+       << " skipped, DendStatus=0, length=" << DendriteLength[num];
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+  }
   return true;
+ }
 
 
  // Если требуется удалить единственный оставшийся блок дендрита, то
@@ -907,6 +927,13 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
  if((DendStatus[num] == -1) && (DendriteLength[num] < 2))
  {
   DendStatus[num] = 0;
+  if (EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "ChangeDendriteLength: num=" << num
+       << " can't shrink below 1, length=" << DendriteLength[num];
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+  }
   return true;
  }
 
@@ -918,6 +945,14 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
   if(DendriteLength[num] >= MaxDendriteLength)
   {
    DendStatus[num] = 0;
+   if (EnableDebug.GetData() && RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "ChangeDendriteLength: num=" << num
+        << " reached MaxDendriteLength=" << MaxDendriteLength.GetData()
+        << " current length=" << DendriteLength[num];
+    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+   }
    return true;
   }
  }
@@ -926,6 +961,16 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
  // Изменяем информацию о числе дендритов в NeuronLearner
  OldDendriteLength[num] = DendriteLength[num];
  DendriteLength[num] += DendStatus[num];
+
+ if (EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "ChangeDendriteLength: num=" << num
+      << " new length=" << DendriteLength[num]
+      << " old length=" << OldDendriteLength[num]
+      << " DendStatus=" << DendStatus[num];
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+ }
 
 
  // Удаляем связи генератора с синапсами
@@ -1014,18 +1059,43 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
 
  // Если не нужно менять число синапсов - ничего не делаем
  if(!SynapseStatus[num])
+ {
+  if (EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "ChangeSynapseNumber: num=" << num
+       << " skipped, SynapseStatus=0, NumSynapse=" << NumSynapse[num];
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+  }
   return true;
+ }
 
  // Если требуется удалить единственный оставшийся синапс, то
  // считаем, что достигнуто оптимальное количество синапсов
  if((SynapseStatus[num] == -1) && (NumSynapse[num] < 2))
  {
   SynapseStatus[num] = 0;
+  if (EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "ChangeSynapseNumber: num=" << num
+       << " can't shrink below 1, NumSynapse=" << NumSynapse[num];
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+  }
   return true;
  }
 
  // Изменяем информацию о количестве синапсов в NeuronLearner
  NumSynapse[num] += SynapseStatus[num];
+
+ if (EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "ChangeSynapseNumber: num=" << num
+      << " new NumSynapse=" << NumSynapse[num]
+      << " SynapseStatus=" << SynapseStatus[num];
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+ }
 
  // Находим последний фрагмент дендрита
  UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(num + 1) +
@@ -1099,6 +1169,15 @@ bool NNeuronLearner::MeasureMaxPotentialAndTime(void)
    MaxIterSomaAmp[i] = currentsomaamp;
    TimeOfMaxIterSomaAmp[i] = Environment->GetTime().GetDoubleTime();
 
+   if (EnableDebug.GetData() && RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "MeasureMaxPotentialAndTime: soma=" << i
+        << " amp=" << currentsomaamp
+        << " t=" << TimeOfMaxIterSomaAmp[i];
+    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+   }
+
    // Для начального участка дендрита запоминаем выходную амплитуду
    if(DendriteLength[i] == 1 && NumSynapse[i] && currentsomaamp > InitialSomaPotential[i])
     InitialSomaPotential[i] = currentsomaamp;
@@ -1142,6 +1221,18 @@ bool NNeuronLearner::ChangeDendriteStatus(int num)
 
  // Запоминаем рассинхронизацию
  Dissynchronization[num] = dt;
+
+ if (EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "ChangeDendriteStatus: num=" << num
+      << " dt=" << dt
+      << " DendStatus=" << DendStatus[num]
+      << " Dissynchronization=" << Dissynchronization[num]
+      << " PrevInput=" << PrevInputPattern[num]
+      << " Input=" << InputPattern[num];
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+ }
 
  return true;
 }
@@ -1195,6 +1286,18 @@ bool NNeuronLearner::ChangeSynapseStatus(int num)
  AmpDifference[num] = dt;
 
  DendStatus[num] = dendstatus;
+
+ if (EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "ChangeSynapseStatus: num=" << num
+      << " dt=" << dt
+      << " SynapseStatus=" << SynapseStatus[num]
+      << " AmpDifference=" << AmpDifference[num]
+      << " InitialSomaPotential=" << InitialSomaPotential[num]
+      << " MaxIterSomaAmp=" << MaxIterSomaAmp[num];
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+ }
 
  return true;
 }
@@ -1538,6 +1641,32 @@ bool NNeuronLearner::Training(void)
  // Действия только для первого такта итерации
  if(IsFirstBeat)
  {
+  if (EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "Training: iteration=" << CountIteration
+       << " NumInputDendrite=" << NumInputDendrite.GetData()
+       << " CanChangeDendLength=" << (CanChangeDendLength ? 1 : 0)
+       << " CalculateMode=" << CalculateMode.GetData()
+       << " IsNeedToTrain=" << (IsNeedToTrain.GetData() ? 1 : 0);
+   oss << " DendriteLength=[";
+   for (size_t i = 0; i < DendriteLength.size(); ++i)
+   {
+    oss << DendriteLength[i];
+    if (i + 1 < DendriteLength.size())
+     oss << ",";
+   }
+   oss << "] NumSynapse=[";
+   for (size_t i = 0; i < NumSynapse.size(); ++i)
+   {
+    oss << NumSynapse[i];
+    if (i + 1 < NumSynapse.size())
+     oss << ",";
+   }
+   oss << "]";
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+  }
+
   // Измеряем время начала текущей итерации и вычисляем её длительность
   StartIterTime = Environment->GetTime().GetDoubleTime();
   IterLength = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep));
@@ -1685,7 +1814,18 @@ bool NNeuronLearner::ACalculate(void)
 
   // В функции происходит обучение нейрона
   if (IsNeedToTrain)
+  {
+   if (EnableDebug.GetData() && RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "ACalculate: call Training, iteration=" << CountIteration
+        << " CalculateMode=" << CalculateMode.GetData()
+        << " ExperimentMode=" << (ExperimentMode.GetData() ? 1 : 0)
+        << " IsNeedToTrain=" << (IsNeedToTrain.GetData() ? 1 : 0);
+    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
+   }
    Training();
+  }
 
   // Подаём информацию с выхода нейрона на выход NNeuronLearner
   if(Neuron)

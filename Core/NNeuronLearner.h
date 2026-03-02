@@ -121,9 +121,13 @@ public:
  ///  
  /// 2 - LearningSecondPattern() -  . 
  UProperty<int, NNeuronLearner, ptPubParameter> ExperimentNum;
-
+ 
  ///   
  UProperty<bool, NNeuronLearner, ptPubParameter> ExperimentMode;
+
+ ///   DEBUG-  :      
+ ///   ,       
+ UProperty<bool, NNeuronLearner, ptPubParameter> EnableDebug;
 
 protected:
  ///     
@@ -311,6 +315,9 @@ public: //
  /// 1 - PatternRecognition()
  /// 2 - LearningSecondPattern()
  bool SetExperimentNum(const int &value);
+
+ ///   DEBUG-  
+ bool SetEnableDebug(const bool &value);
 
  // --------------------------
 

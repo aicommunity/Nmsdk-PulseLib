@@ -142,6 +142,175 @@ ClassName = NNeuronLearner
 Name = Learner1
 ```
 
+### Подробная временная структура обучения
+
+- **Итерация**: промежуток времени между двумя последовательными входными паттернами.
+  - Начало итерации фиксируется в `StartIterTime`.
+  - Длительность итерации \(`IterLength`\) вычисляется как \(1 / SpikesFrequency - 1 / TimeStep\).
+  - Номер итерации хранится в `CountIteration`.
+- **Такт**: один вызов `ACalculate()` внутри итерации.
+  - На каждом такте обновляются потенциалы на дендритах и сомах, а также внутренние максимумы.
+
+Упрощённый псевдокод цикла `ACalculate()`:
+
+```mermaid
+flowchart TD
+    start[Start ACalculate] --> checkNeuron{Neuron exists?}
+    checkNeuron -->|No| end[Return]
+    checkNeuron -->|Yes| calcDend[Calc dendrite potentials]
+    calcDend --> calcSoma[Calc soma potentials]
+    calcSoma --> modeCheck{CalculateMode == 0 and CountIteration > 0?}
+    modeCheck -->|Yes| endOfLearning[EndOfLearning()]
+    endOfLearning --> afterTrain[Update TrainingPattern, DendriteLength, NumSynapse]
+    afterTrain --> setOutput[Output = Neuron.Output]
+    modeCheck -->|No| expCheck{ExperimentMode?}
+    expCheck -->|Yes| doExp[Experiment()]
+    expCheck -->|No| needTrain{IsNeedToTrain?}
+    doExp --> needTrain
+    needTrain -->|Yes| doTrain[Training()]
+    needTrain -->|No| setOutput
+    doTrain --> setOutput
+    setOutput --> end
+```
+
+Ключевые шаги:
+
+- **Расчёт потенциалов**:
+  - Заполнение `DendriteNeuronAmplitude` и `SomaNeuronAmplitude` на основе компонент `NPulseMembrane` (`DendriteX_Y` и `SomaX`).
+- **Переход к обучению**:
+  - При `ExperimentMode == true` вызывается `Experiment()` (работа с файлами, специальные сценарии).
+  - При `IsNeedToTrain == true` вызывается `Training()`, где выполняется рост/сжатие структуры.
+- **Обновление выходов**:
+  - Свойство `Output` просто копирует `Neuron->Output`.
+
+### Правила роста дендритов и синапсов
+
+Алгоритм роста реализован в методах `Training`, `MeasureMaxPotentialAndTime`, `ChangeDendriteStatus`, `ChangeDendriteLength`,
+`ChangeSynapseStatus`, `ChangeSynapseNumber`.
+
+#### Обучение по итерациям (`Training`)
+
+```mermaid
+flowchart TD
+    tStart[Training()] --> firstBeat{IsFirstBeat?}
+    firstBeat -->|Yes| initIter[Init iteration\n(StartIterTime, IterLength,\nreset MaxIterSomaAmp)]
+    initIter --> loopGrow[For i = 0..NumInputDendrite-2]
+    loopGrow --> growCheck{CanChangeDendLength?}
+    growCheck -->|Yes| callChangeLen[ChangeDendriteLength(i)]
+    growCheck -->|No| skipLen[Skip dendrite length change]
+    callChangeLen --> callChangeSyn[ChangeSynapseNumber(i)]
+    skipLen --> callChangeSyn
+    callChangeSyn --> endFirst[IsFirstBeat=false, return]
+    firstBeat -->|No| measure[MeasureMaxPotentialAndTime()]
+    measure --> timeCheck{currentitertime >= IterLength?}
+    timeCheck -->|No| endIter[Return]
+    timeCheck -->|Yes| statusLoop[For i = 0..NumInputDendrite-1]
+    statusLoop --> updateStatus[ChangeDendriteStatus(i),\nChangeSynapseStatus(i),\nPrevInputPattern[i] = InputPattern[i]]
+    updateStatus --> doneStatus[IsFirstBeat=true,\nCountIteration++]
+    doneStatus --> endTrain[Return]
+```
+
+Особенность: последний дендрит (\(i = NumInputDendrite - 1\)) обычно используется как **калибровочный**:
+его длина не меняется в `Training()` (цикл роста идёт до `NumInputDendrite - 2`), но его временные характеристики
+используются в `ChangeDendriteStatus` как опорные.
+
+#### Измерение максимумов на сомах (`MeasureMaxPotentialAndTime`)
+
+- На каждом такте:
+  - Для каждой сомы `SomaX` вычисляется текущий потенциал `currentsomaamp = soma->SumPotential(0,0)`.
+  - Если `currentsomaamp >= MaxIterSomaAmp[i]`, обновляются:
+    - `MaxIterSomaAmp[i] = currentsomaamp`.
+    - `TimeOfMaxIterSomaAmp[i] = Environment->GetTime().GetDoubleTime()`.
+  - Для начального сегмента (`DendriteLength[i] == 1`) при наличии синапсов обновляется `InitialSomaPotential[i]`.
+
+Именно `TimeOfMaxIterSomaAmp` и `MaxIterSomaAmp` затем определяют, как будут меняться длины дендритов и число синапсов.
+
+#### Статусы дендритов (`ChangeDendriteStatus`)
+
+- Для дендрита с индексом `num`:
+  - Рассинхронизация по времени:
+    - `dt = TimeOfMaxIterSomaAmp[last] - TimeOfMaxIterSomaAmp[num]`,
+      где `last = NumInputDendrite - 1` — калибровочный дендрит.
+  - Если `dt == 0.0`, длина считается оптимальной → `DendStatus[num] = 0`.
+  - При неизменном паттерне \(|PrevInputPattern[num] - InputPattern[num]| < eps\) и
+    смене знака/уменьшении модуля рассинхронизации по сравнению с `Dissynchronization[num]` статус также обнуляется.
+  - Иначе:
+    - Если `dt > 0` → сигнал на текущей соме пришёл **раньше** калибровочной → нужно **растить дендрит** (`DendStatus[num] = 1`).
+    - Если `dt < 0` → сигнал пришёл **позже** → нужно **укорачивать дендрит** (`DendStatus[num] = -1`).
+- В конце функция обновляет `Dissynchronization[num] = dt`.
+
+#### Изменение длины дендритов (`ChangeDendriteLength`)
+
+- Если `DendStatus[num] == 0`, функция сразу выходит, длина не меняется.
+- Если требуется удалить последний сегмент (`DendStatus[num] == -1` и `DendriteLength[num] < 2`), статус обнуляется, длина не меняется.
+- При росте:
+  - Проверяется ограничение `DendriteLength[num] < MaxDendriteLength`; при превышении статус обнуляется.
+- При допустимом изменении:
+  - `OldDendriteLength[num] = DendriteLength[num]`.
+  - `DendriteLength[num] += DendStatus[num]`.
+  - Все выходные связи соответствующего генератора разрываются.
+  - Обновляется структура нейрона:
+    - Для скалярного режима: `Neuron->NumDendriteMembraneParts = DendriteLength[num]`.
+    - Для векторного режима: обновляется `Neuron->NumDendriteMembranePartsVec[num]`.
+    - После изменений вызывается `Neuron->Reset()`.
+  - Для нового последнего сегмента дендрита:
+    - Устанавливается `NumExcitatorySynapses = NumSynapse[num]`.
+    - Перестраивается структура сегмента (`Build()`).
+    - Для всех синапсов создаются связи с соответствующим генератором `Source(num+1)`,
+      для дополнительных синапсов устанавливается сопротивление `SynapseResistanceStep`.
+
+#### Статусы синапсов (`ChangeSynapseStatus`) и изменение их числа
+
+- Для каждого дендрита `num`:
+  - Считается разность амплитуд на соме:
+    - `dt = InitialSomaPotential[num] - MaxIterSomaAmp[num]`.
+  - В экспериментах (`ExperimentNum == 2` и `!CanChangeDendLength`) временно фиксируется длина дендрита,
+    чтобы корректно подобрать только число синапсов.
+  - При неизменном паттерне и `DendStatus[num] == 0`:
+    - Если `SynapseStatus[num] == 0`, либо \(|dt|` очень мало, либо знак `dt` сменился и модуль уменьшился,
+      статус устанавливается в 0 (количество синапсов оптимально).
+  - Иначе:
+    - Если `dt > 0.0` → текущая амплитуда меньше исходной → **добавить синапсы** (`SynapseStatus[num] = 1`).
+    - Если `dt < 0.0` → текущая амплитуда больше исходной → **убавить синапсы** (`SynapseStatus[num] = -1`).
+  - Текущее значение `dt` сохраняется в `AmpDifference[num]`.
+
+Изменение количества синапсов в `ChangeSynapseNumber`:
+
+- Если `SynapseStatus[num] == 0`, функция выходит.
+- При попытке удалить последний синапс (`SynapseStatus[num] == -1` и `NumSynapse[num] < 2`) статус обнуляется.
+- В общем случае:
+  - `NumSynapse[num] += SynapseStatus[num]`.
+  - Находится последний сегмент дендрита (`Dendrite(num+1, DendriteLength[num])`).
+  - При удалении синапса разрываются его связи, затем обновляется `NumExcitatorySynapses` и вызывается `Build()`.
+  - При добавлении синапса:
+    - Строится новый синапс в сегменте (через изменение `NumExcitatorySynapses` и `Build()`).
+    - Устанавливается сопротивление `SynapseResistanceStep`.
+    - Создаётся связь `Source(num+1).Output → synapse.Input`.
+  - После изменений вызывается `Neuron->Reset()`.
+
+### Режимы экспериментов и флаг CanChangeDendLength
+
+- `ExperimentMode` — включает экспериментальные сценарии, реализованные в методе `Experiment()`:
+  - `ExperimentNum = 1` → `PatternRecognition()` — распознавание выборки из файла.
+  - `ExperimentNum = 2` → `LearningAdditionalPattern_1_4()` — обучение второму паттерну с промежуточными структурами.
+  - `ExperimentNum = 3` → `IncrementalLearning()` — инкрементное обучение между двумя паттернами.
+- Во время экспериментов:
+  - Потоки управления через `Experiment()` и `Training()` переплетаются:
+    - В `LearningAdditionalPattern_1_4` и `IncrementalLearning` самостоятельно управляются:
+      - `IsNeedToTrain`, `CountIteration`, `EpochCur`, `IsFirstFileStep`.
+      - Флаг `CanChangeDendLength` (например, после первой итерации часто ставится `false`,
+        чтобы менять только число синапсов).
+  - Это важно учитывать при анализе роста структуры:
+    - Даже при выставленных статусах дендритов `DendStatus[num] = ±1` фактическое изменение длины
+      может блокироваться через `CanChangeDendLength == false`.
+
+В типичном сценарии **простого самообучения без файловых экспериментов** рекомендуется:
+
+- Оставлять `ExperimentMode = false`.
+- Управлять только `CalculateMode`, `IsNeedToTrain`, `InputPattern` и структурными параметрами.
+- Явно задавать разумные значения `NumInputDendrite`, `MaxDendriteLength`, `NumSynapse`, чтобы алгоритм
+  роста дендритов и синапсов мог отработать полностью.
+
 ## Источники
 
 См. [Literature-References.md](../Literature-References.md): **[A]**, **[B]**, **1**, **6**.

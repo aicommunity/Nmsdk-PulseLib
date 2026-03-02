@@ -100,6 +100,10 @@ UProperty<MDMatrix<double>, NNeuronTrainer, ptOutput | ptPubState> Output;
 ///   
 UProperty<double, NNeuronTrainer, ptPubParameter> SynapseResistanceStep;
 
+/// Флаг включения DEBUG-логирования работы тренера:
+/// при активации выводит подробную информацию о процессе обучения.
+UProperty<bool, NNeuronTrainer, ptPubParameter> EnableDebug;
+
 
 protected:
 
@@ -221,6 +225,9 @@ bool SetUseFixedLTZThreshold(const bool &value);
 
 ///   
 bool SetSynapseResistanceStep(const double &value);
+
+/// Установка флага включения DEBUG-логирования обучения
+bool SetEnableDebug(const bool &value);
 
 
 // --------------------------
