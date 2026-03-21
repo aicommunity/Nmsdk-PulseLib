@@ -148,6 +148,12 @@ flowchart TB
 - **NSynapseTrainer** - тренер синапсов
 - **NSynapseTrainerStdp** - тренер синапсов с STDP
 
+Для диагностики и настройки роста дендритов и синапсов в `NNeuronTrainer` и `NNeuronLearner` доступны:
+
+- параметр `EnableDebug` в конфигурации (включает подробное DEBUG‑логирование основных шагов обучения и изменений структуры);
+- интеграционные тесты из `Tests/Integration/Libraries/Test_PulseLib_NeuronGrowth.cpp`, которые измеряют динамику роста при разных временных интервалах;
+- утилита подбора интервалов `PulseLibIntervalTuner` (`Tests/Integration/Libraries/PulseLibIntervalTuner.cpp`), перебирающая множители временных интервалов и автоматически обновляющая `Bin/Configs/Bakhshiev/TestTrain/Parameters_00.xml` до найденной оптимальной конфигурации.
+
 #### 12. Перцептроны
 
 - **NPulsePerseptron** - импульсный перцептрон

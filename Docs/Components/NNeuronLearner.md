@@ -456,6 +456,7 @@ graph TB
 - `StructureBuildMode` — режим пересборки структуры (1 — пересобрать)
 - `CalculateMode` — режим расчета (0 — завершение обучения, другие — режим обучения)
 - `NumInputDendrite` — количество входных дендритов
+- `EnableDebug` — флаг включения подробного DEBUG‑логирования работы обучателя (подробные сообщения о шагах `Training`, изменениях `DendriteLength`/`NumSynapse`, переходах по режимам и итерациям обучения)
 - `DendriteNeuronAmplitude` — амплитуда дендритов нейрона
 - `SomaNeuronAmplitude` — амплитуда сомы нейрона
 - `CountIteration` — счетчик итераций обучения
@@ -477,6 +478,23 @@ graph TB
 - **Self-learning**: `Bin/Configs/*/Model_*.xml` (where self-learning neurons are required)
 - **Pattern recognition**: experiments with pattern recognition
 - **Incremental learning**: experiments with incremental learning capabilities
+
+#### Debug configuration example
+
+To enable detailed debug logging for `NNeuronLearner` in a project configuration (for example, `Bin/Configs/Bakhshiev/TestTrain/Parameters_00.xml`), set:
+
+```ini
+<NeuronLearner Class="NNeuronLearner">
+    <Parameters>
+        ...
+        <EnableDebug Type="bool" PType="257" IoType="17">1</EnableDebug>
+        ...
+    </Parameters>
+    ...
+</NeuronLearner>
+```
+
+When `EnableDebug` is `true` and a logger is available (`RDK::GetLogger()`), the component prints extended diagnostics about dendrite/synapse growth, iteration counters and experiment modes, which can be used together with integration tests and the interval tuner (`PulseLibIntervalTuner`) to analyse and tune temporal parameters of the training process.
 
 ### References
 
