@@ -29,6 +29,70 @@ See file license.txt for more information
 // Класс, создающий нейрон со структурой, оптимизованной для распознавания заданного паттерна импульсов
 namespace NMSDK {
 
+namespace {
+constexpr double kThresholdEpsilon = 1.0e-6;
+constexpr double kMinIterationLength = 1.0e-6;
+}
+
+std::string NNeuronTrainer::MakeSourceName(const int index1)
+{
+ return std::string("Source") + sntoa(index1);
+}
+
+std::string NNeuronTrainer::MakeSomaName(const int index1)
+{
+ return std::string("Soma") + sntoa(index1);
+}
+
+std::string NNeuronTrainer::MakeDendriteName(const int dendrite_index1, const int segment_index1)
+{
+ return std::string("Dendrite") + sntoa(dendrite_index1) + std::string("_") + sntoa(segment_index1);
+}
+
+std::string NNeuronTrainer::MakeExcSynapsePath(const int dendrite_index1, const int segment_index1, const int synapse_index1)
+{
+ return MakeDendriteName(dendrite_index1, segment_index1) + std::string(".ExcSynapse") + sntoa(synapse_index1);
+}
+
+UEPtr<NLTZone> NNeuronTrainer::GetTrainerLTZone(void) const
+{
+ UEPtr<NPulseNeuron> n_in = GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
+ if(!n_in)
+  return UEPtr<NLTZone>();
+
+ return n_in->GetComponentL<NLTZone>("LTZone");
+}
+
+bool NNeuronTrainer::ApplyLTZThresholdValue(const double value, const bool update_fixed_usage_flag)
+{
+ LTZThreshold.SetDataDirect(value);
+
+ UEPtr<NLTZone> ltzone = GetTrainerLTZone();
+ if(ltzone)
+  ltzone->Threshold = value;
+
+ if(update_fixed_usage_flag)
+ {
+  const bool is_fixed = (fabs(value - FixedLTZThreshold.GetData()) <= kThresholdEpsilon);
+  UseFixedLTZThreshold.SetDataDirect(is_fixed);
+ }
+
+ return true;
+}
+
+double NNeuronTrainer::GetSafeIterationLength(void) const
+{
+ const double spikes_frequency = SpikesFrequency.GetData();
+ if(spikes_frequency <= 0.0 || TimeStep <= 0)
+  return kMinIterationLength;
+
+ const double raw_length = (1.0 / spikes_frequency) - (1.0 / static_cast<double>(TimeStep));
+ if(raw_length < kMinIterationLength)
+  return kMinIterationLength;
+
+ return raw_length;
+}
+
 // Методы
 // --------------------------
 // Конструкторы и деструкторы
@@ -118,6 +182,15 @@ bool NNeuronTrainer::SetNeedToTrain(const bool &value)
 {
  if(value)
  {
+  ApplyLTZThresholdValue(TrainingLTZThreshold.GetData(), false);
+ }
+ else
+ {
+  ApplyLTZThresholdValue(FixedLTZThreshold.GetData(), true);
+ }
+
+ if(value)
+ {
   is_need_to_build=true;
   is_synchronizated=false;
   OldNumInputDendrite=0;
@@ -188,19 +261,7 @@ bool NNeuronTrainer::SetInputPattern(const MDMatrix<double> &value)
 /// Порог низкопороговой зоны нейрона
 bool NNeuronTrainer::SetLTZThreshold(const double &value)
 {
- UEPtr<NPulseNeuron> n_in=GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
- if(!n_in)
-  return true;
-
- UEPtr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone");//GetLTZone();
- if(!ltzone)
-  return true;
-
- ltzone->Threshold = value;
- if(fabs(value - FixedLTZThreshold) > 0.000001)
-  UseFixedLTZThreshold = false;
-
- return true;
+ return ApplyLTZThresholdValue(value, true);
 }
 
 /// Порог низкопороговой зоны нейрона для этапа обучения
@@ -229,10 +290,7 @@ bool NNeuronTrainer::SetFixedLTZThreshold(const double &value)
 bool NNeuronTrainer::SetUseFixedLTZThreshold(const bool &value)
 {
  if(value)
- {
-  double threshold = FixedLTZThreshold;
-  LTZThreshold = threshold;
- }
+  ApplyLTZThresholdValue(FixedLTZThreshold.GetData(), true);
 
  return true;
 }
@@ -1042,10 +1100,10 @@ bool NNeuronTrainer::SynchronizePattern(void)
 		 return true;
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
-			UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_1.ExcSynapse1",true);
+			UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>(MakeExcSynapsePath(i+1, 1, 1),true);
 			if(!synapse)
 			 return true;
-			res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+			res&=CreateLink(MakeSourceName(i+1),"Output",synapse->GetLongName(this),"Input");
 			if(!res)
 			 return true;
 
@@ -1663,19 +1721,19 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
                 }
 
 				// Добаляем связь между текущим генератором и новым синапсом
-				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
+				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>(MakeExcSynapsePath(i+1, DendriteLength[i], 1),true);
 				if(!synapse)
-                 LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Synapse: Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1"+" not found");
+                 LogMessageEx(RDK_EX_WARNING,__FUNCTION__,std::string("Synapse: ")+MakeExcSynapsePath(i+1, DendriteLength[i], 1)+" not found");
                 else
                 {
-                 res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+                 res&=CreateLink(MakeSourceName(i+1),"Output",synapse->GetLongName(this),"Input");
                  if(!res)
-                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Falied create link: Source"+sntoa(i+1)+":Output -> "+synapse->GetLongName(this)+":Input");
+                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,std::string("Falied create link: ")+MakeSourceName(i+1)+":Output -> "+synapse->GetLongName(this)+":Input");
                 }
 				// Удаляем связь между текущим генератором и старым синапсом
-				synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]-1)+".ExcSynapse1",true);
+				synapse=neuron->GetComponentL<NPulseSynapse>(MakeExcSynapsePath(i+1, DendriteLength[i]-1, 1),true);
                 if(synapse)
-                 BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+                 BreakLink(MakeSourceName(i+1),"Output",synapse->GetLongName(this),"Input");
 
 				neuron->Reset();
 			}
@@ -1721,19 +1779,19 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 				dend_status[i] = 0;
 
 				// Добаляем связь между текущим генератором и старым синапсом
-				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1",true);
+				UEPtr<NPulseSynapse> synapse=neuron->GetComponentL<NPulseSynapse>(MakeExcSynapsePath(i+1, DendriteLength[i], 1),true);
 				if(!synapse)
-                 LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Synapse: Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i])+".ExcSynapse1"+" not found");
+                 LogMessageEx(RDK_EX_WARNING,__FUNCTION__,std::string("Synapse: ")+MakeExcSynapsePath(i+1, DendriteLength[i], 1)+" not found");
                 else
                 {
-                 res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+                 res&=CreateLink(MakeSourceName(i+1),"Output",synapse->GetLongName(this),"Input");
                  if(!res)
-                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,"Falied create link: Source"+sntoa(i+1)+":Output -> "+synapse->GetLongName(this)+":Input");
+                  LogMessageEx(RDK_EX_WARNING,__FUNCTION__,std::string("Falied create link: ")+MakeSourceName(i+1)+":Output -> "+synapse->GetLongName(this)+":Input");
                 }
 				// Удаляем связь между текущим генератором и новым синапсом
-				synapse=neuron->GetComponentL<NPulseSynapse>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]+1)+".ExcSynapse1",true);
+				synapse=neuron->GetComponentL<NPulseSynapse>(MakeExcSynapsePath(i+1, DendriteLength[i]+1, 1),true);
                 if(synapse)
-                 BreakLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
+                 BreakLink(MakeSourceName(i+1),"Output",synapse->GetLongName(this),"Input");
 
 				neuron->Reset();
 			}
@@ -1764,7 +1822,7 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 	// Ищем максимальные амплитуды на сомах
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
-		UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
+		UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>(MakeSomaName(i+1),true);
 		if(!soma)
 			return true;
 
@@ -1782,7 +1840,7 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 
 	// Признак окончания итерации (роста дендрита)
 	double iter_time = Environment->GetTime().GetDoubleTime() - start_iter_time; // Текущее время итерации
-	double iter_length = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep)); // Длина одной итерации
+	double iter_length = GetSafeIterationLength(); // Длина одной итерации
 	if(iter_time >= iter_length)
 	{
 		// Для всех дендритов
@@ -1880,8 +1938,8 @@ bool NNeuronTrainer::CalculateProcess(void)
 	//Меняем порог для этапа обучения
  if (IsNeedToTrain && thresh_first_iter)
 	{
-		local_trainigLTZtresh = TrainingLTZThreshold;
-		LTZThreshold = local_trainigLTZtresh;
+		local_trainigLTZtresh = TrainingLTZThreshold.GetData();
+		ApplyLTZThresholdValue(local_trainigLTZtresh, false);
 		thresh_first_iter = 0;
 	}
 
@@ -1890,7 +1948,9 @@ bool NNeuronTrainer::CalculateProcess(void)
 	NeuronAmplitude(0,0) = 0;
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
-		UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_1",true);
+		UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>(MakeDendriteName(i+1, 1),true);
+  if(!dendrite)
+   continue;
 		NeuronAmplitude(i+1,0) = dendrite->SumPotential(0,0);
 		NeuronAmplitude(0,0) = NeuronAmplitude(0,0) + /*8.0**/dendrite->SumPotential(0,0);
 	}
@@ -1898,7 +1958,9 @@ bool NNeuronTrainer::CalculateProcess(void)
 	SomaNeuronAmplitude(0,0) = 0;
 	for(int i = 0; i < NumInputDendrite; i++)
 	{
-		UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
+		UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>(MakeSomaName(i+1),true);
+  if(!soma)
+   continue;
 		SomaNeuronAmplitude(i+1,0) = soma->SumPotential(0,0);
 		SomaNeuronAmplitude(0,0) = SomaNeuronAmplitude(0,0) + /*8.0**/soma->SumPotential(0,0);
 	}
@@ -1940,13 +2002,11 @@ bool NNeuronTrainer::CalculateProcess(void)
 			return true;
 		}
 	}
-	else
+	else if(!IsNeedToTrain)
 	{
-		if(!IsNeedToTrain)
-		{
-		//  порог после обучения надо возвращать вручную
-			return true;
-		}
+		// Для режимов, кроме 5, после обучения процесс должен быть завершен
+		// без side-effects изменения состояния.
+		return true;
 	}
 
 
@@ -2015,8 +2075,8 @@ bool NNeuronTrainer::CalculateProcess(void)
 	 }
 	 case 6:
 	 {
-		// Выполняется обучение путём наращивания длины дендритов
-		// путём синхронизации входного паттерна на выходе сомы
+		// Основной поддерживаемый рабочий режим тренировки.
+		// Legacy-режимы 0..5 остаются без изменения алгоритма.
 
 		if(!is_synchronizated)
 		 res = SomaSynchronizePattern();
