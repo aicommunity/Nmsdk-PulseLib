@@ -11,6 +11,21 @@
 #include "../../Core/NModel.h"
 #include "../../../../Rdk/GUI/Qt/UGEngineControlWidget.h"
 
+namespace
+{
+UGEngineControlWidget* resolveEngineControlWidget(QWidget* source)
+{
+    QObject* current = source;
+    while(current)
+    {
+        if(auto* main = qobject_cast<UGEngineControlWidget*>(current))
+            return main;
+        current = current->parent();
+    }
+    return nullptr;
+}
+}
+
 PulseLibNeuronTrainerComponentControllerWidget::PulseLibNeuronTrainerComponentControllerWidget(QWidget* parent,
                                                                                                  RDK::UApplication* app)
     : UVisualControllerWidget(parent, app)
@@ -65,6 +80,7 @@ PulseLibNeuronTrainerComponentControllerWidget::PulseLibNeuronTrainerComponentCo
 void PulseLibNeuronTrainerComponentControllerWidget::setComponentContext(const UComponentGuiContext& context)
 {
     m_context = context;
+    refreshFromModel(true);
 }
 
 QString PulseLibNeuronTrainerComponentControllerWidget::componentGuiId() const
@@ -140,8 +156,7 @@ void PulseLibNeuronTrainerComponentControllerWidget::onApplyClicked()
 
 void PulseLibNeuronTrainerComponentControllerWidget::onToggleEngineControlClicked()
 {
-    // In our pipeline, parent is expected to be UGengineControlWidget.
-    auto* main = qobject_cast<UGEngineControlWidget*>(parentWidget());
+    auto* main = resolveEngineControlWidget(this);
     if(!main)
     {
         QMessageBox::information(this, "Neuron Trainer", "Engine control widget is not found as parent.");
@@ -154,7 +169,7 @@ void PulseLibNeuronTrainerComponentControllerWidget::onToggleEngineControlClicke
 
 void PulseLibNeuronTrainerComponentControllerWidget::onWatchWindowClicked()
 {
-    auto* main = qobject_cast<UGEngineControlWidget*>(parentWidget());
+    auto* main = resolveEngineControlWidget(this);
     if(!main)
         return;
 
