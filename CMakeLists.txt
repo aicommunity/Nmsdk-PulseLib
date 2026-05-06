@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
 project(Nmsdk_PulseLib LANGUAGES CXX)
 
+option(NMSDK_PULSELIB_BUILD_CORE_ONLY
+  "Build PulseLib core without Qt-dependent GUI helpers"
+  OFF)
+
 set(TARGET_NAME Nmsdk-PulseLib.qt)
 
 add_library(${TARGET_NAME} STATIC)
@@ -29,6 +33,10 @@ endif()
 
 target_sources(${TARGET_NAME} PRIVATE ${PULSE_SOURCES})
 
+if(NMSDK_PULSELIB_BUILD_CORE_ONLY)
+  target_compile_definitions(${TARGET_NAME} PUBLIC NMSDK_PULSELIB_CORE_ONLY)
+endif()
+
 target_compile_definitions(${TARGET_NAME} PUBLIC RDK_QT RDK_LIB_CVS_REVISION=0)
 
 # Pass RDK_USE_ODESOLVER to the compiler when it is enabled
@@ -37,12 +45,18 @@ if(RDK_USE_ODESOLVER)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/SelectQt.cmake)
+
 target_link_libraries(${TARGET_NAME} PUBLIC
-  Nmsdk::Qt::Core
   Threads::Threads
   rdk.static.qt
   Rdk-BasicLib.qt
   Rdk-CvBasicLib.qt
 )
+
+if(NOT NMSDK_PULSELIB_BUILD_CORE_ONLY)
+  target_link_libraries(${TARGET_NAME} PUBLIC
+    Nmsdk::Qt::Core
+  )
+endif()
 
 
