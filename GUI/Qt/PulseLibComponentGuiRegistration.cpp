@@ -1,5 +1,6 @@
 #include "../../../../Rdk/GUI/Qt/UComponentFormRegistry.h"
 #include "PulseLibComponentControllerWidget.h"
+#include "PulseLibNeuronLearnerComponentControllerWidget.h"
 #include "PulseLibNeuronTrainerComponentControllerWidget.h"
 
 namespace
@@ -31,6 +32,19 @@ UComponentFormDescriptor MakePulseNeuronTrainerDescriptor(const QString& id, con
     };
     return descriptor;
 }
+
+UComponentFormDescriptor MakePulseNeuronLearnerDescriptor(const QString& id, const QString& title)
+{
+    UComponentFormDescriptor descriptor;
+    descriptor.formId = id;
+    descriptor.title = title;
+    descriptor.singleInstance = true;
+    descriptor.factory = [](RDK::UApplication* app) -> UVisualControllerWidget*
+    {
+        return new PulseLibNeuronLearnerComponentControllerWidget(nullptr, app);
+    };
+    return descriptor;
+}
 }
 
 void RegisterPulseLibComponentGuiForms()
@@ -39,5 +53,5 @@ void RegisterPulseLibComponentGuiForms()
     registry.registerFormFactory("NNeuronTrainer",
                                  MakePulseNeuronTrainerDescriptor("pulse.neuron.trainer", "PulseLib: Neuron Trainer"));
     registry.registerFormFactory("NNeuronLearner",
-                                 MakePulseDescriptor("pulse.neuron.learner", "PulseLib: Neuron Learner"));
+                                 MakePulseNeuronLearnerDescriptor("pulse.neuron.learner", "PulseLib: Neuron Learner"));
 }

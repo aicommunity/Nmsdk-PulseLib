@@ -5,11 +5,13 @@ option(NMSDK_PULSELIB_BUILD_CORE_ONLY
   "Build PulseLib core without Qt-dependent GUI helpers"
   OFF)
 
-set(TARGET_NAME Nmsdk-PulseLib.qt)
+set(TARGET_CORE_NAME Nmsdk-PulseLib.core)
+set(TARGET_QT_NAME Nmsdk-PulseLib.qt)
 
-add_library(${TARGET_NAME} STATIC)
+add_library(${TARGET_CORE_NAME} STATIC)
+add_library(${TARGET_QT_NAME} INTERFACE)
 
-target_include_directories(${TARGET_NAME}
+target_include_directories(${TARGET_CORE_NAME}
   PUBLIC
     ${CMAKE_SOURCE_DIR}/Rdk/Deploy/Include
     ${CMAKE_SOURCE_DIR}/Libraries/Nmsdk-PulseLib/Core
@@ -31,30 +33,34 @@ if(NOT RDK_USE_ODESOLVER)
   list(FILTER PULSE_SOURCES EXCLUDE REGEX "/Libraries/Nmsdk-PulseLib/Core/NOdeSolver\\.cpp$")
 endif()
 
-target_sources(${TARGET_NAME} PRIVATE ${PULSE_SOURCES})
+target_sources(${TARGET_CORE_NAME} PRIVATE ${PULSE_SOURCES})
 
 if(NMSDK_PULSELIB_BUILD_CORE_ONLY)
-  target_compile_definitions(${TARGET_NAME} PUBLIC NMSDK_PULSELIB_CORE_ONLY)
+  target_compile_definitions(${TARGET_CORE_NAME} PUBLIC NMSDK_PULSELIB_CORE_ONLY)
 endif()
 
-target_compile_definitions(${TARGET_NAME} PUBLIC RDK_QT RDK_LIB_CVS_REVISION=0)
+target_compile_definitions(${TARGET_CORE_NAME} PUBLIC RDK_QT RDK_LIB_CVS_REVISION=0)
 
 # Pass RDK_USE_ODESOLVER to the compiler when it is enabled
 if(RDK_USE_ODESOLVER)
-  target_compile_definitions(${TARGET_NAME} PUBLIC RDK_USE_ODESOLVER)
+  target_compile_definitions(${TARGET_CORE_NAME} PUBLIC RDK_USE_ODESOLVER)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/SelectQt.cmake)
 
-target_link_libraries(${TARGET_NAME} PUBLIC
+target_link_libraries(${TARGET_CORE_NAME} PUBLIC
   Threads::Threads
   rdk.static.qt
   Rdk-BasicLib.qt
   Rdk-CvBasicLib.qt
 )
 
+target_link_libraries(${TARGET_QT_NAME} INTERFACE
+  ${TARGET_CORE_NAME}
+)
+
 if(NOT NMSDK_PULSELIB_BUILD_CORE_ONLY)
-  target_link_libraries(${TARGET_NAME} PUBLIC
+  target_link_libraries(${TARGET_QT_NAME} INTERFACE
     Nmsdk::Qt::Core
   )
 endif()
