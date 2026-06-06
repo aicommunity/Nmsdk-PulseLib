@@ -252,7 +252,7 @@ source->Build();
 
 - [`NPulseGenerator`](NPulseGenerator.md) — генератор импульсов
 - [`NReceptor`](NReceptor.md) — рецептор
-- [`NPulseDelay`](NPulseDelay.md) — задержка импульсов
+- [`NPulseDelay`](NPDelay.md) — задержка импульсов
 - [`NSinusGenerator`](NSinusGenerator.md) — синусоидальный генератор
 - [`NFileGenerator`](NFileGenerator.md) — генератор из файла
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
@@ -409,7 +409,7 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 
 - [`NPulseGenerator`](NPulseGenerator.md) — pulse generator
 - [`NReceptor`](NReceptor.md) — receptor
-- [`NPulseDelay`](NPulseDelay.md) — pulse delay
+- [`NPulseDelay`](NPDelay.md) — pulse delay
 - [`NSinusGenerator`](NSinusGenerator.md) — sinusoidal generator
 - [`NFileGenerator`](NFileGenerator.md) — file generator
 - [Architecture.md](../Architecture.md) — library architecture

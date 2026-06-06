@@ -328,7 +328,7 @@ for (int step = 0; step < 1000; step++) {
 
 ### См. также
 
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон (базовый класс)
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — живой импульсный нейрон (базовый класс)
 - [`NNewSPNeuron`](NNewSPNeuron.md) — новый мелкий нейрон
 - [`NSPLifeNeuron`](NSPLifeNeuron.md) — мелкий живой нейрон
 - [`NPNewNeuronMembrane`](NPNewNeuronMembrane.md) — новая мембрана нейрона
@@ -511,7 +511,7 @@ See [Literature-References.md](../Literature-References.md): **neuromodeler.ru**
 
 ### See Also
 
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — living spiking neuron (base class)
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — living spiking neuron (base class)
 - [`NNewSPNeuron`](NNewSPNeuron.md) — new small neuron
 - [`NSPLifeNeuron`](NSPLifeNeuron.md) — small living neuron
 - [`NPNewNeuronMembrane`](NPNewNeuronMembrane.md) — new neuron membrane

@@ -355,7 +355,7 @@ for (int step = 0; step < 1000; step++) {
 
 - [`NNet`](NNet.md) — базовая сеть
 - [`NNeuronLife`](NNeuronLife.md) — система жизнеобеспечения нейрона
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — нейрон с жизненным циклом
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — нейрон с жизненным циклом
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---

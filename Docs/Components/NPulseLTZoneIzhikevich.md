@@ -338,7 +338,7 @@ for (int step = 0; step < 1000; step++) {
 ### См. также
 
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — общая импульсная LT-зона
-- [`NLTZone`](NLTZone.md) — базовая LT-зона
+- [`NLTZone`](NPLTZone.md) — базовая LT-зона
 - [`NPulseNeuronIzhikevich`](NPulseNeuronIzhikevich.md) — нейрон модели Ижикевича
 - [`NPulseMembraneIzhikevich`](NPulseMembraneIzhikevich.md) — мембрана модели Ижикевича
 - [`NPulseChannelIzhikevich`](NPulseChannelIzhikevich.md) — канал модели Ижикевича

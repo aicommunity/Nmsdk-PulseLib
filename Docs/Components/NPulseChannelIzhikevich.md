@@ -298,7 +298,7 @@ for (int step = 0; step < 1000; step++) {
 ### См. также
 
 - [`NPulseChannelCommon`](NPulseChannelCommon.md) — общий импульсный канал
-- [`NPulseChannelClassic`](NPulseChannelClassic.md) — классический импульсный канал
+- [`NPulseChannelClassic`](NPulseChannel.md) — классический импульсный канал
 - [`NPulseMembraneIzhikevich`](NPulseMembraneIzhikevich.md) — мембрана модели Ижикевича
 - [`NPulseNeuronIzhikevich`](NPulseNeuronIzhikevich.md) — нейрон модели Ижикевича
 - [Architecture.md](../Architecture.md) — архитектура библиотеки

@@ -53,7 +53,7 @@ classDiagram
 
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
 - [`NNewSynSPNeuron`](NNewSynSPNeuron.md) — новый син-SP-нейрон
-- [`NPNewSynNeuronMembrane`](NPNewSynNeuronMembrane.md) — новая мембрана, оптимизированная для синапсов
+- [`NPNewSynNeuronMembrane`](NPNewNeuronMembrane.md) — новая мембрана, оптимизированная для синапсов
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
@@ -221,5 +221,5 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 
 - [`NPulseNeuron`](NPulseNeuron.md) — spiking neuron
 - [`NNewSynSPNeuron`](NNewSynSPNeuron.md) — new synaptic SP-neuron
-- [`NPNewSynNeuronMembrane`](NPNewSynNeuronMembrane.md) — new membrane optimized for synapses
+- [`NPNewSynNeuronMembrane`](NPNewNeuronMembrane.md) — new membrane optimized for synapses
 - [Architecture.md](../Architecture.md) — library architecture

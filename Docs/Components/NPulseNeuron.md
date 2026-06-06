@@ -404,7 +404,7 @@ for (int step = 0; step < 1000; step++) {
 - [`NPulseNeuronIzhikevich`](NPulseNeuronIzhikevich.md) — нейрон модели Ижикевича
 - [`NPulseNeuronIaF`](NPulseNeuronIaF.md) — нейрон модели IaF
 - [`NPulseMembraneCommon`](NPulseMembraneCommon.md) — общая мембрана
-- [`NLTZone`](NLTZone.md) — LT-зона
+- [`NLTZone`](NPLTZone.md) — LT-зона
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---

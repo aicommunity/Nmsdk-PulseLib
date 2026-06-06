@@ -30,7 +30,7 @@ Nmsdk-PulseLib - это библиотека компонентов для мо�
 
 #### Как создать простую импульсную сеть?
 
-См. [Getting-Started.md](Getting-Started.md) или [Config-Templates.md](Config-Templates.md) для примеров.
+См. [README.md](README.md) или [Config-Templates.md](Config-Templates.md) для примеров.
 
 **Краткий ответ:**
 1. Создайте генератор импульсов (`NPulseGenerator`)
@@ -141,7 +141,7 @@ Choice depends on the task:
 
 #### How do I create a simple spiking network?
 
-See [Getting-Started.md](Getting-Started.md) or [Config-Templates.md](Config-Templates.md) for examples.
+See [README.md](README.md) or [Config-Templates.md](Config-Templates.md) for examples.
 
 **Quick answer:**
 1. Create a pulse generator (`NPulseGenerator`)

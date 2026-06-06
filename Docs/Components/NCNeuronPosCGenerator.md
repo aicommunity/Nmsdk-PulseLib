@@ -34,7 +34,7 @@ classDiagram
 
 ### См. также
 
-- [`NConstGenerator`](NConstGenerator.md) — генератор постоянного тока (базовый класс)
+- [`NConstGenerator`](NCGenerator.md) — генератор постоянного тока (базовый класс)
 - [`NCNeuronNegCGenerator`](NCNeuronNegCGenerator.md) — генератор отрицательных токов для классических нейронов
 - [`NPNeuronPosCGenerator`](NPNeuronPosCGenerator.md) — генератор для импульсных нейронов
 
@@ -172,6 +172,6 @@ See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 
-- [`NConstGenerator`](NConstGenerator.md) — constant current generator (base class)
+- [`NConstGenerator`](NCGenerator.md) — constant current generator (base class)
 - [`NCNeuronNegCGenerator`](NCNeuronNegCGenerator.md) — negative current generator for classic neurons
 - [`NPNeuronPosCGenerator`](NPNeuronPosCGenerator.md) — generator for spiking neurons

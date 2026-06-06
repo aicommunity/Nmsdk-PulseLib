@@ -306,7 +306,7 @@ trainer->Build();
 
 ### См. также
 
-- [`NSynapseTrainer`](NSynapseTrainer.md) — базовый тренер синапсов
+- [`NSynapseTrainer`](NNeuronTrainer.md) — базовый тренер синапсов
 - [`NSynapseTrainerStdpTD`](NSynapseTrainerStdpTD.md) — STDP, зависящий от времени
 - [`NSynapseTrainerStdpWD`](NSynapseTrainerStdpWD.md) — STDP, зависящий от веса
 - [`NPulseSynapseStdp`](NPulseSynapseStdp.md) — импульсный синапс с STDP
@@ -435,7 +435,7 @@ See [Literature-References.md](../Literature-References.md): **[B]**.
 
 ### See Also
 
-- [`NSynapseTrainer`](NSynapseTrainer.md) — base synapse trainer
+- [`NSynapseTrainer`](NNeuronTrainer.md) — base synapse trainer
 - [`NSynapseTrainerStdpTD`](NSynapseTrainerStdpTD.md) — time-dependent STDP
 - [`NSynapseTrainerStdpWD`](NSynapseTrainerStdpWD.md) — weight-dependent STDP
 - [`NPulseSynapseStdp`](NPulseSynapseStdp.md) — spiking synapse with STDP

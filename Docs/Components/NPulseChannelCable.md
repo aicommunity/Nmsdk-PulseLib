@@ -322,7 +322,7 @@ channel->Build();
 
 ### См. также
 
-- [`NPulseChannelClassic`](NPulseChannelClassic.md) — классический импульсный канал (базовый класс)
+- [`NPulseChannelClassic`](NPulseChannel.md) — классический импульсный канал (базовый класс)
 - [`NPulseChannelCableMulti`](NPulseChannelCableMulti.md) — многоканальный кабельный канал
 - [`NPulseMembraneCable`](NPulseMembraneCable.md) — кабельная мембрана
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
@@ -508,7 +508,7 @@ See [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5
 
 ### See Also
 
-- [`NPulseChannelClassic`](NPulseChannelClassic.md) — classic spiking channel (base class)
+- [`NPulseChannelClassic`](NPulseChannel.md) — classic spiking channel (base class)
 - [`NPulseChannelCableMulti`](NPulseChannelCableMulti.md) — multi-channel cable channel
 - [`NPulseMembraneCable`](NPulseMembraneCable.md) — cable membrane
 - [Architecture.md](../Architecture.md) — library architecture

@@ -33,7 +33,7 @@ classDiagram
 
 ### См. также
 
-- [`NConstGenerator`](NConstGenerator.md) — генератор постоянного тока (базовый класс)
+- [`NConstGenerator`](NCGenerator.md) — генератор постоянного тока (базовый класс)
 - [`NPulseChannelCable`](NPulseChannelCable.md) — кабельный импульсный канал
 - [`NPulseMembraneCable`](NPulseMembraneCable.md) — кабельная мембрана
 
@@ -67,6 +67,6 @@ See [Literature-References.md](../Literature-References.md): **[C]**, **7**, **5
 
 ### See Also
 
-- [`NConstGenerator`](NConstGenerator.md) — constant current generator (base class)
+- [`NConstGenerator`](NCGenerator.md) — constant current generator (base class)
 - [`NPulseChannelCable`](NPulseChannelCable.md) — cable spiking channel
 - [`NPulseMembraneCable`](NPulseMembraneCable.md) — cable membrane

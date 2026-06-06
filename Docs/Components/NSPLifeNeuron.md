@@ -329,7 +329,7 @@ for (int step = 0; step < 1000; step++) {
 
 ### См. также
 
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон (базовый класс)
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — живой импульсный нейрон (базовый класс)
 - [`NSPNeuron`](NSPNeuron.md) — базовый SP-нейрон
 - [`NSPLifeHebbNeuron`](NSPLifeHebbNeuron.md) — мелкий живой нейрон с синапсами Хебба
 - [`NLPLifeNeuron`](NLPLifeNeuron.md) — крупный живой нейрон
@@ -494,7 +494,7 @@ See [Literature-References.md](../Literature-References.md): **neuromodeler.ru**
 
 ### See Also
 
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — living spiking neuron (base class)
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — living spiking neuron (base class)
 - [`NSPNeuron`](NSPNeuron.md) — base SP-neuron
 - [`NSPLifeHebbNeuron`](NSPLifeHebbNeuron.md) — small living neuron with Hebbian synapses
 - [`NLPLifeNeuron`](NLPLifeNeuron.md) — large living neuron

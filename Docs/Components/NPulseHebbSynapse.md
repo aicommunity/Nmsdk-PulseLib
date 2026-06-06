@@ -394,7 +394,7 @@ for (int step = 0; step < 10000; step++) {
 ### См. также
 
 - [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора
-- [`NPulseHebbLifeSynapse`](NPulseHebbLifeSynapse.md) — импульсный синапс Хебба с поддержкой жизнеобеспечения
+- [`NPulseHebbLifeSynapse`](NPHebbLifeSynapse.md) — импульсный синапс Хебба с поддержкой жизнеобеспечения
 - [`NPHebbSynapse`](NPHebbSynapse.md) — алиас для NPulseHebbSynapse
 - [`NPulseNeuron`](NPulseNeuron.md) — импульсный нейрон
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — общая импульсная LT-зона
@@ -460,7 +460,7 @@ See [Literature-References.md](../Literature-References.md): **25**, **29**.
 ### See Also
 
 - [`NPulseSynapse`](NPulseSynapse.md) — spiking synapse with neurotransmitter model
-- [`NPulseHebbLifeSynapse`](NPulseHebbLifeSynapse.md) — Hebbian synapse with life support
+- [`NPulseHebbLifeSynapse`](NPHebbLifeSynapse.md) — Hebbian synapse with life support
 - [`NPHebbSynapse`](NPHebbSynapse.md) — alias for NPulseHebbSynapse
 - [`NPulseNeuron`](NPulseNeuron.md) — spiking neuron
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — common spiking LT-zone

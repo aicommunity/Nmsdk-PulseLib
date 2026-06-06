@@ -57,7 +57,7 @@ classDiagram
 
 ### См. также
 
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — живой импульсный нейрон
 - [`NSPLifeNeuron`](NSPLifeNeuron.md) — мелкий живой нейрон
 - [`NSPHebbNeuron`](NSPHebbNeuron.md) — мелкий нейрон с синапсами Хебба
 - [`NPulseHebbSynapse`](NPulseHebbSynapse.md) — синапс Хебба
@@ -235,7 +235,7 @@ See [Literature-References.md](../Literature-References.md): **neuromodeler.ru**
 
 ### See Also
 
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — living spiking neuron
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — living spiking neuron
 - [`NSPLifeNeuron`](NSPLifeNeuron.md) — small living neuron
 - [`NSPHebbNeuron`](NSPHebbNeuron.md) — small neuron with Hebbian synapses
 - [`NPulseHebbSynapse`](NPulseHebbSynapse.md) — Hebbian synapse

@@ -282,7 +282,7 @@ for (int step = 0; step < 1000; step++) {
 
 - [`NPulseLTZoneThreshold`](NPulseLTZoneThreshold.md) — LT-зона с порогом
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — общая импульсная LT-зона
-- [`NLTZone`](NLTZone.md) — базовая LT-зона
+- [`NLTZone`](NPLTZone.md) — базовая LT-зона
 - [`NPulseNeuronIaF`](NPulseNeuronIaF.md) — нейрон модели IaF
 - [`NPulseMembraneIaF`](NPulseMembraneIaF.md) — мембрана модели IaF
 - [`NPulseChannelIaF`](NPulseChannelIaF.md) — канал модели IaF

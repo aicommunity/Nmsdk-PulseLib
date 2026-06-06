@@ -82,7 +82,7 @@ ltZone->Build();
 
 ### См. также
 
-- [`NContinuesLTZone`](NContinuesLTZone.md) — непрерывная LT-зона (базовый класс)
+- [`NContinuesLTZone`](NPLTZone.md) — непрерывная LT-зона (базовый класс)
 - [`NPSimpleLTZone`](NPSimpleLTZone.md) — простая импульсная LT-зона
 - [`NCLTZone`](NCLTZone.md) — классическая LT-зона
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
@@ -254,7 +254,7 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 
 ### See Also
 
-- [`NContinuesLTZone`](NContinuesLTZone.md) — continuous LT-zone (base class)
+- [`NContinuesLTZone`](NPLTZone.md) — continuous LT-zone (base class)
 - [`NPSimpleLTZone`](NPSimpleLTZone.md) — simple spiking LT-zone
 - [`NCLTZone`](NCLTZone.md) — classic LT-zone
 - [Architecture.md](../Architecture.md) — library architecture

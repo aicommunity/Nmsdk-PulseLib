@@ -313,7 +313,7 @@ for (int step = 0; step < 1000; step++) {
 ### См. также
 
 - [`NPulseChannelCommon`](NPulseChannelCommon.md) — общий импульсный канал
-- [`NPulseChannelClassic`](NPulseChannelClassic.md) — классический импульсный канал
+- [`NPulseChannelClassic`](NPulseChannel.md) — классический импульсный канал
 - [`NPulseMembraneIaF`](NPulseMembraneIaF.md) — мембрана модели IaF
 - [`NPulseNeuronIaF`](NPulseNeuronIaF.md) — нейрон модели IaF
 - [`NPulseLTZoneIaF`](NPulseLTZoneIaF.md) — LT-зона модели IaF

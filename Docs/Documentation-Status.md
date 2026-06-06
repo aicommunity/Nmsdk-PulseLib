@@ -35,7 +35,7 @@
 ## Планируется / рекомендации
 
 - Продолжать при добавлении новых компонентов использовать **Component-Documentation-Template.md** и секции **## Источники** / **### References**
-- При обновлении Literature-References согласовывать идентификаторы с [Bin/Docs/Literature-References.md](../../Bin/Docs/Literature-References.md)
+- При обновлении Literature-References согласовывать идентификаторы с [Bin/Docs/Literature-References.md](../../../Bin/Docs/Literature-References.md)
 - См. [Docs-Enrichment-Plan.md](Docs-Enrichment-Plan.md) — план дополнения описаний (CSNM, STDP-варианты по ВКР Демчевой и Зарубина)
 
 ---

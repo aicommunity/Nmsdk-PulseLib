@@ -74,7 +74,7 @@ generator->Build();
 
 ### См. также
 
-- [`NConstGenerator`](NConstGenerator.md) — генератор постоянного тока (базовый класс)
+- [`NConstGenerator`](NCGenerator.md) — генератор постоянного тока (базовый класс)
 - [`NPNeuronPosCGeneratorBio`](NPNeuronPosCGeneratorBio.md) — генератор для биоинспирированных моделей
 - [`NPNeuronPosCGeneratorCable`](NPNeuronPosCGeneratorCable.md) — генератор для кабельных моделей
 - [`NPNeuronNegCGenerator`](NPNeuronNegCGenerator.md) — генератор отрицательных токов
@@ -111,7 +111,7 @@ See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 
-- [`NConstGenerator`](NConstGenerator.md) — constant current generator (base class)
+- [`NConstGenerator`](NCGenerator.md) — constant current generator (base class)
 - [`NPNeuronPosCGeneratorBio`](NPNeuronPosCGeneratorBio.md) — generator for bio models
 - [`NPNeuronPosCGeneratorCable`](NPNeuronPosCGeneratorCable.md) — generator for cable models
 - [`NPNeuronNegCGenerator`](NPNeuronNegCGenerator.md) — negative current generator

@@ -76,7 +76,7 @@ membrane->Build();
 - [`NPulseMembrane`](NPulseMembrane.md) — базовая импульсная мембрана (базовый класс)
 - [`NPNeuronHebbMembrane`](NPNeuronHebbMembrane.md) — мембрана с синапсами Хебба
 - [`NPHebbLifeSynapse`](NPHebbLifeSynapse.md) — синапс Хебба для Life-нейронов
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — Life-нейрон
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — Life-нейрон
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
 
 ---
@@ -266,5 +266,5 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 - [`NPulseMembrane`](NPulseMembrane.md) — base spiking membrane (base class)
 - [`NPNeuronHebbMembrane`](NPNeuronHebbMembrane.md) — Hebb membrane
 - [`NPHebbLifeSynapse`](NPHebbLifeSynapse.md) — Hebb synapse for Life-neurons
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — Life-neuron
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — Life-neuron
 - [Architecture.md](../Architecture.md) — library architecture

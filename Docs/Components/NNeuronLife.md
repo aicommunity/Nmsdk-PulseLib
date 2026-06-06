@@ -588,7 +588,7 @@ for (int step = 0; step < 1000; step++) {
 
 ### См. также
 
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — живой импульсный нейрон (использует NNeuronLife)
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — живой импульсный нейрон (использует NNeuronLife)
 - [`NLifeNet`](NLifeNet.md) — сеть живых нейронов
 - [`NSPLifeNeuron`](NSPLifeNeuron.md) — живой SP-нейрон
 - [`NLPLifeNeuron`](NLPLifeNeuron.md) — живой LP-нейрон
@@ -747,6 +747,6 @@ See [Literature-References.md](../Literature-References.md): **[A]** (structural
 
 ### See Also
 
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — living spiking neuron (uses NNeuronLife)
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — living spiking neuron (uses NNeuronLife)
 - [`NLifeNet`](NLifeNet.md) — living neuron network
 - [Architecture.md](../Architecture.md) — library architecture

@@ -257,7 +257,7 @@ for (int step = 0; step < 10000; step++) {
 
 - [`NPulseHebbSynapse`](NPulseHebbSynapse.md) — импульсный синапс с механизмом Хебба (базовый класс)
 - [`NPHebbSynapse`](NPHebbSynapse.md) — алиас для NPulseHebbSynapse
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — импульсный нейрон с жизнеобеспечением
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — импульсный нейрон с жизнеобеспечением
 - [`NNeuronLife`](NNeuronLife.md) — система жизнеобеспечения нейрона
 - [`NPulseSynapse`](NPulseSynapse.md) — импульсный синапс с моделью медиатора
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
@@ -313,7 +313,7 @@ See [Literature-References.md](../Literature-References.md): **neuromodeler.ru**
 
 - [`NPulseHebbSynapse`](NPulseHebbSynapse.md) — spiking synapse with Hebbian mechanism (base class)
 - [`NPHebbSynapse`](NPHebbSynapse.md) — alias for NPulseHebbSynapse
-- [`NPulseLifeNeuron`](NPulseLifeNeuron.md) — spiking neuron with life support
+- [`NPulseLifeNeuron`](NPLifeNeuron.md) — spiking neuron with life support
 - [`NNeuronLife`](NNeuronLife.md) — neuron life support system
 - [`NPulseSynapse`](NPulseSynapse.md) — spiking synapse with neurotransmitter model
 - [Architecture.md](../Architecture.md) — library architecture

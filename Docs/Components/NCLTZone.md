@@ -76,7 +76,7 @@ ltZone->Build();
 
 ### См. также
 
-- [`NLTZone`](NLTZone.md) — базовая LT-зона (базовый класс)
+- [`NLTZone`](NPLTZone.md) — базовая LT-зона (базовый класс)
 - [`NPLTZone`](NPLTZone.md) — импульсная LT-зона
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — общая импульсная LT-зона
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
@@ -234,7 +234,7 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 
 ### See Also
 
-- [`NLTZone`](NLTZone.md) — base LT-zone (base class)
+- [`NLTZone`](NPLTZone.md) — base LT-zone (base class)
 - [`NPLTZone`](NPLTZone.md) — spiking LT-zone
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — common spiking LT-zone
 - [Architecture.md](../Architecture.md) — library architecture

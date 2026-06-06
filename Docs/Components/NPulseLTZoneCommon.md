@@ -353,7 +353,7 @@ for (int step = 0; step < 1000; step++) {
 
 ### См. также
 
-- [`NLTZone`](NLTZone.md) — базовая LT-зона
+- [`NLTZone`](NPLTZone.md) — базовая LT-зона
 - [`NPulseLTZoneIzhikevich`](NPulseLTZoneIzhikevich.md) — LT-зона модели Ижикевича
 - [`NPulseLTZoneIaF`](NPulseLTZoneIaF.md) — LT-зона модели IaF
 - [`NPulseNeuronCommon`](NPulseNeuronCommon.md) — общий нейрон
@@ -552,7 +552,7 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 
 ### See Also
 
-- [`NLTZone`](NLTZone.md) — base LT-zone
+- [`NLTZone`](NPLTZone.md) — base LT-zone
 - [`NPulseLTZoneIzhikevich`](NPulseLTZoneIzhikevich.md) — Izhikevich LT-zone
 - [`NPulseLTZoneIaF`](NPulseLTZoneIaF.md) — IaF LT-zone
 - [`NPulseNeuronCommon`](NPulseNeuronCommon.md) — common neuron
