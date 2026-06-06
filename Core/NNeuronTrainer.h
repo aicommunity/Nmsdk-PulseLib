@@ -250,6 +250,21 @@ static UComponent* NewStatic(void);
 //    
 // --------------------------
 protected:
+ /// Safely returns LTZone for the current neuron.
+ UEPtr<NLTZone> GetTrainerLTZone(void) const;
+
+ /// Applies LTZ threshold consistently to property and LTZone.
+ bool ApplyLTZThresholdValue(const double value, const bool update_fixed_usage_flag);
+
+ /// Canonical component naming helpers used in training logic.
+ static std::string MakeSourceName(const int index1);
+ static std::string MakeSomaName(const int index1);
+ static std::string MakeDendriteName(const int dendrite_index1, const int segment_index1);
+ static std::string MakeExcSynapsePath(const int dendrite_index1, const int segment_index1, const int synapse_index1);
+
+ /// Computes safe iteration length for training loop timing.
+ double GetSafeIterationLength(void) const;
+
 //    
 //       
 //      comp 

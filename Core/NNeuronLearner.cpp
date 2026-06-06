@@ -29,6 +29,41 @@ See file license.txt for more information
 
 namespace NMSDK {
 
+namespace {
+std::string MakeLearnerSourceName(const int index1)
+{
+ return std::string("Source") + sntoa(index1);
+}
+
+std::string MakeLearnerSomaName(const int index1)
+{
+ return std::string("Soma") + sntoa(index1);
+}
+
+std::string MakeLearnerDendriteName(const int dendrite_index1, const int segment_index1)
+{
+ return std::string("Dendrite") + sntoa(dendrite_index1) + std::string("_") + sntoa(segment_index1);
+}
+
+std::string MakeLearnerExcSynapsePath(const int dendrite_index1, const int segment_index1, const int synapse_index1)
+{
+ return MakeLearnerDendriteName(dendrite_index1, segment_index1) + std::string(".ExcSynapse") + sntoa(synapse_index1);
+}
+
+double GetSafeIterationLength(const double spikes_frequency, const int time_step)
+{
+ const double kMinIterationLength = 1.0e-6;
+ if(spikes_frequency <= 0.0 || time_step <= 0)
+  return kMinIterationLength;
+
+ const double raw_length = (1.0 / spikes_frequency) - (1.0 / static_cast<double>(time_step));
+ if(raw_length < kMinIterationLength)
+  return kMinIterationLength;
+
+ return raw_length;
+}
+}
+
 // Методы
 // --------------------------
 // Конструкторы и деструкторы
@@ -278,8 +313,8 @@ bool NNeuronLearner::SetMaxDendriteLength(const int &value)
    // Neuron->GetStorage()->FreeObjectsStorage();
 
    // Находим последний фрагмент дендрита
-   UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(i + 1) +
-                                                                             + "_" + sntoa(DendriteLength[i]), true);
+   UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>(
+    MakeLearnerDendriteName(i + 1, DendriteLength[i]), true);
    if(!dendrite)
     return true;
 
@@ -296,7 +331,7 @@ bool NNeuronLearner::SetMaxDendriteLength(const int &value)
     NPulseSynapseCommon *synapse = dendrite->GetExcitatorySynapses(k);
 
     // Добаляем связь между текущим генератором и синапсом
-    bool res = CreateLink("Source" + sntoa(i + 1), "Output", synapse->GetLongName(this), "Input");
+    bool res = CreateLink(MakeLearnerSourceName(i + 1), "Output", synapse->GetLongName(this), "Input");
 
     if(!res || k == 0)
      continue;
@@ -369,9 +404,8 @@ bool NNeuronLearner::SetSynapseResistanceStep(const double &value)
  {
   for(int numsyn = 2; numsyn <= NumSynapse[numdend - 1]; numsyn++)
   {
-   UEPtr<NPulseSynapse> synapse = Neuron->GetComponentL<NPulseSynapse>("Dendrite" +
-                                                                       sntoa(numdend) + "_" + sntoa(DendriteLength[numdend - 1]) +
-                                                                       ".ExcSynapse" + sntoa(numsyn), true);
+  UEPtr<NPulseSynapse> synapse = Neuron->GetComponentL<NPulseSynapse>(
+   MakeLearnerExcSynapsePath(numdend, DendriteLength[numdend - 1], numsyn), true);
    if(!synapse)
     continue;
 
@@ -1335,7 +1369,7 @@ bool NNeuronLearner::PatternRecognition(void)
  if(IsFirstBeat)
  {
   StartIterTime = Environment->GetTime().GetDoubleTime();
-  IterLength = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep));
+  IterLength = GetSafeIterationLength(SpikesFrequency.GetData(), TimeStep);
 
   // Если достигли конца файла - завершаем режим распознавания
   if(Fin.eof())
@@ -1669,7 +1703,7 @@ bool NNeuronLearner::Training(void)
 
   // Измеряем время начала текущей итерации и вычисляем её длительность
   StartIterTime = Environment->GetTime().GetDoubleTime();
-  IterLength = (1.0 / SpikesFrequency) - (1.0 / double(TimeStep));
+  IterLength = GetSafeIterationLength(SpikesFrequency.GetData(), TimeStep);
 
   // Обнуляем максимальные амплитуды выходного сигнала на сомах для данной итерации
   MaxIterSomaAmp.assign(NumInputDendrite, 0.0);
