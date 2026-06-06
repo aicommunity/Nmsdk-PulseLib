@@ -1,3 +1,5 @@
+## RU
+
 ## Генераторы, IO, классификаторы и прочие (Nmsdk-PulseLib)
 
 ### Генераторы и задержки
@@ -36,6 +38,8 @@ flowchart LR
 
 ---
 
+## EN
+
 ## Generators, IO, Classifiers & Others — overview (Nmsdk-PulseLib)
 
 Summarises non-neuron, non-synapse building blocks that provide stimuli, IO, classification, reflexes and effectors.
@@ -43,4 +47,3 @@ Summarises non-neuron, non-synapse building blocks that provide stimuli, IO, cla
 ### References
 
 See [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**, **14**, **19**, **31**.
-

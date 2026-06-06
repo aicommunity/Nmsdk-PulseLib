@@ -1,3 +1,5 @@
+## RU
+
 ## NContinuesSynLPNeuron — непрерывный LP нейрон (syn)
 
 **Класс**: `NContinuesSynLPNeuron` — непрерывный LP-нейрон в син. семействе.
@@ -53,6 +55,8 @@ Name = CSLP1
 См. [Literature-References.md](../Literature-References.md): **[A]**, **25**, **29**.
 
 ---
+
+## EN
 
 ## NContinuesSynLPNeuron — continuous LP neuron (EN)
 

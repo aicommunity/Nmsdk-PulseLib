@@ -1,3 +1,5 @@
+## RU
+
 ## Синапсы и тренеры — NPSynapse*, NSynapse*, NSynapseTrainer* (Nmsdk-PulseLib)
 
 Группа реализует передаточные элементы (синапсы) и обучающие модули (тренеры STDP и др.).
@@ -37,6 +39,8 @@ classDiagram
 
 ---
 
+## EN
+
 ## Synapses & Trainers — overview (Nmsdk-PulseLib)
 
 Comprises all synapse and trainer classes responsible for plasticity and learning rules in SNN networks.
@@ -44,4 +48,3 @@ Comprises all synapse and trainer classes responsible for plasticity and learnin
 ### References
 
 See [Literature-References.md](../Literature-References.md): **[B]**, **25**, **26**, **29**.
-

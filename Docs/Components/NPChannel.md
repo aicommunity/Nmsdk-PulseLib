@@ -1,3 +1,5 @@
+## RU
+
 ## NPChannel — импульсный канал (Nmsdk-PulseLib)
 
 **Класс**: `NPChannel` — базовый канал передачи импульсов.
@@ -54,6 +56,8 @@ Name = PCh1
 См. [Literature-References.md](../Literature-References.md): **[A]**, **25**, **29**.
 
 ---
+
+## EN
 
 ## NPChannel — pulse channel (EN)
 

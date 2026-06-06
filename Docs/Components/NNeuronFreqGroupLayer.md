@@ -1,3 +1,5 @@
+## RU
+
 ## NNeuronFreqGroupLayer — слой частотных групп
 
 **Класс**: `NNeuronFreqGroupLayer` — слой, состоящий из нескольких `NNeuronFreqGroup`.
@@ -119,6 +121,8 @@ Name = FreqLayer1
 См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru**, **15**, **[A]**.
 
 ---
+
+## EN
 
 ## NNeuronFreqGroupLayer — frequency group layer (EN)
 

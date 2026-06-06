@@ -1,3 +1,5 @@
+## RU
+
 ## NNeuronTrainer — тренер нейронов
 
 **Класс**: `NNeuronTrainer` — обучает нейроны по заданному правилу/данным.
@@ -151,6 +153,8 @@ Name = NeuronTrainer1
 См. [Literature-References.md](../Literature-References.md): **[A]**, **[B]**, **1**, **6**.
 
 ---
+
+## EN
 
 ## NNeuronTrainer — neuron trainer (EN)
 

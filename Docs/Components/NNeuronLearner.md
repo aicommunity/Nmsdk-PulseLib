@@ -1,3 +1,5 @@
+## RU
+
 ## NNeuronLearner — обучающийся нейрон
 
 **Класс**: `NNeuronLearner` — нейрон с функциями самообучения.
@@ -316,6 +318,8 @@ flowchart TD
 См. [Literature-References.md](../Literature-References.md): **[A]**, **[B]**, **1**, **6**.
 
 ---
+
+## EN
 
 ## NNeuronLearner — learning neuron (EN)
 

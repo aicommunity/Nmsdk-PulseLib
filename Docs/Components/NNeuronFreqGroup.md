@@ -1,3 +1,5 @@
+## RU
+
 ## NNeuronFreqGroup — группа частотных нейронов
 
 **Класс**: `NNeuronFreqGroup` — группирует нейроны по частотным признакам.
@@ -112,6 +114,8 @@ Name = FreqGroup1
 ```
 
 ---
+
+## EN
 
 ## NNeuronFreqGroup — neuron frequency group (EN)
 

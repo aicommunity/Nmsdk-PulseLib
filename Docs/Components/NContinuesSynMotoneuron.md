@@ -1,3 +1,5 @@
+## RU
+
 ## NContinuesSynMotoneuron — непрерывный мотонейрон (syn)
 
 **Класс**: `NContinuesSynMotoneuron` — вариант мотонейрона с непрерывной обработкой, син. семейство.
@@ -53,6 +55,8 @@ Name = CSMot1
 См. [Literature-References.md](../Literature-References.md): **19**, **28**, **31**.
 
 ---
+
+## EN
 
 ## NContinuesSynMotoneuron — continuous motor neuron (EN)
 

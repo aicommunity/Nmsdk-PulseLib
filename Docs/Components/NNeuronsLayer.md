@@ -1,3 +1,5 @@
+## RU
+
 ## NNeuronsLayer — слой нейронов (Nmsdk-PulseLib)
 
 **Класс**: `NNeuronsLayer` — слой нейронов (базовая версия).
@@ -128,6 +130,8 @@ Name = Layer1
 См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **17**.
 
 ---
+
+## EN
 
 ## NNeuronsLayer — neurons layer (EN)
 

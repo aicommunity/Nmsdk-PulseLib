@@ -1,3 +1,5 @@
+## RU
+
 ## NSynTCNNeuron — компонент PulseLib
 
 **Класс**: `NSynTCNNeuron` — компонент PulseLib (см. реализацию в `NPulseLibrary.cpp`).
@@ -53,6 +55,8 @@ Name = NSynTCNNeuron1
 См. [Literature-References.md](../Literature-References.md): **[A]**, **25**, **29**.
 
 ---
+
+## EN
 
 ## NSynTCNNeuron — component PulseLib (EN)
 

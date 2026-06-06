@@ -1,3 +1,5 @@
+## RU
+
 ## Нейроны — NNeuron, NPulseNeuron* и семейства (Nmsdk-PulseLib)
 
 Группа нейронных классов реализует различные модели (Izhikevich, IaF, Cable, Hebb, LP/SP/TCN и др.), а также афферентные, моторные и обучающиеся нейроны.
@@ -38,6 +40,8 @@ classDiagram
 
 ---
 
+## EN
+
 ## Neurons — families overview (Nmsdk-PulseLib)
 
 Describes base neuron types, spike models and specialised neuron classes used in SNN networks.
@@ -45,4 +49,3 @@ Describes base neuron types, spike models and specialised neuron classes used in
 ### References
 
 See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
-

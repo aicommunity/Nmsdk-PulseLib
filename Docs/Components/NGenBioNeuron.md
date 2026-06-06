@@ -1,3 +1,5 @@
+## RU
+
 ## NGenBioNeuron — био-генерирующий нейрон
 
 **Класс**: `NGenBioNeuron` — биологически ориентированный генерирующий нейрон.
@@ -52,6 +54,8 @@ Name = GenBio1
 ```
 
 ---
+
+## EN
 
 ## NGenBioNeuron — bio-generative neuron (EN)
 
