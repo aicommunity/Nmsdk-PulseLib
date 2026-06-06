@@ -4,6 +4,11 @@
 
 ---
 
+## Статистика аудита (2026-06-06)
+
+- Зарегистрированных классов (`UploadClass`): **177** — см. [Component-Gap-Report](../../../Docs/Audit/Component-Gap-Report.md)
+- Per-class docs в `Docs/Components/`: см. отчёт gap (групповые docs покрывают семейства)
+
 ## Выполнено
 
 ### Общая документация
