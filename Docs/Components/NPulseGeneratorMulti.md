@@ -230,8 +230,8 @@ graph TB
     end
     
     subgraph External["Внешние компоненты"]
-        Environment[Environment<br/>для получения времени]
-        Network[Нейронная сеть<br/>получатель сигналов]
+        Environment["Environment<br/>для получения времени"]
+        Network["Нейронная сеть<br/>получатель сигналов"]
     end
     
     BaseSource -->|наследуется| NPulseGeneratorMulti

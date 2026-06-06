@@ -200,9 +200,9 @@ graph TB
     end
 
     subgraph NSPLifeNeuron["NSPLifeNeuron Configuration"]
-        Membrane[NPMembrane<br/>PulseMembrane]
-        LTZone[NPulseLTZoneCommon<br/>LTZone]
-        NeuronLife[NNeuronLife<br/>NeuronLife]
+        Membrane["NPMembrane<br/>PulseMembrane"]
+        LTZone["NPulseLTZoneCommon<br/>LTZone"]
+        NeuronLife["NNeuronLife<br/>NeuronLife"]
     end
 
     subgraph External["Внешние компоненты"]

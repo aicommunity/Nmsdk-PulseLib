@@ -221,13 +221,13 @@ graph TB
     end
     
     subgraph NLogicalNot["NLogicalNot"]
-        Generator[NPulseGeneratorTransit<br/>Generator]
-        PatternGen[NPulseGeneratorTransit<br/>PatternGenerator]
-        Trainer[NNeuronTrainer<br/>NeuronTrainer]
-        GenNeuron1[NPulseNeuron<br/>GeneratorNeuron1]
-        GenNeuron2[NPulseNeuron<br/>GeneratorNeuron2]
-        OutputNeuron[NPulseNeuron<br/>OutputNeuron]
-        Synapses[NPulseSynapse<br/>Synapses]
+        Generator["NPulseGeneratorTransit<br/>Generator"]
+        PatternGen["NPulseGeneratorTransit<br/>PatternGenerator"]
+        Trainer["NNeuronTrainer<br/>NeuronTrainer"]
+        GenNeuron1["NPulseNeuron<br/>GeneratorNeuron1"]
+        GenNeuron2["NPulseNeuron<br/>GeneratorNeuron2"]
+        OutputNeuron["NPulseNeuron<br/>OutputNeuron"]
+        Synapses["NPulseSynapse<br/>Synapses"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -430,13 +430,13 @@ graph TB
     end
     
     subgraph NLogicalNot["NLogicalNot"]
-        Generator[NPulseGeneratorTransit<br/>Generator]
-        PatternGen[NPulseGeneratorTransit<br/>PatternGenerator]
-        Trainer[NNeuronTrainer<br/>NeuronTrainer]
-        GenNeuron1[NPulseNeuron<br/>GeneratorNeuron1]
-        GenNeuron2[NPulseNeuron<br/>GeneratorNeuron2]
-        OutputNeuron[NPulseNeuron<br/>OutputNeuron]
-        Synapses[NPulseSynapse<br/>Synapses]
+        Generator["NPulseGeneratorTransit<br/>Generator"]
+        PatternGen["NPulseGeneratorTransit<br/>PatternGenerator"]
+        Trainer["NNeuronTrainer<br/>NeuronTrainer"]
+        GenNeuron1["NPulseNeuron<br/>GeneratorNeuron1"]
+        GenNeuron2["NPulseNeuron<br/>GeneratorNeuron2"]
+        OutputNeuron["NPulseNeuron<br/>OutputNeuron"]
+        Synapses["NPulseSynapse<br/>Synapses"]
     end
     
     subgraph External["External Components"]

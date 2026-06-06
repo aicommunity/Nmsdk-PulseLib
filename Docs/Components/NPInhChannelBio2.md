@@ -174,11 +174,11 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> ProcessInputs[Process input signals<br/>from synapses]
-    ProcessInputs --> CalculateCurrent[Calculate channel current<br/>Type = 1 (inhibitory)]
-    CalculateCurrent --> ApplyResistance[Apply Resistance = 1.6e7<br/>FBResistance = 3e6<br/>RestingResistance = 3e6]
+    Start([Start Calculate]) --> ProcessInputs["Process input signals<br/>from synapses"]
+    ProcessInputs --> CalculateCurrent["Calculate channel current<br/>Type = 1 (inhibitory)"]
+    CalculateCurrent --> ApplyResistance["Apply Resistance = 1.6e7<br/>FBResistance = 3e6<br/>RestingResistance = 3e6"]
     ApplyResistance --> ApplyCapacity[Apply Capacity = 2.5e-10]
-    ApplyCapacity --> SetOutput[Set Output<br/>inhibitory current]
+    ApplyCapacity --> SetOutput["Set Output<br/>inhibitory current"]
     SetOutput --> End([End])
 ```
 
@@ -191,7 +191,7 @@ graph TB
     end
     
     subgraph NPInhChannelBio2["NPInhChannelBio2 Configuration"]
-        BioParams2[Bio Parameters v2<br/>Type = 1<br/>FBResistance = 3e6<br/>Resistance = 1.6e7<br/>RestingResistance = 3e6<br/>Capacity = 2.5e-10]
+        BioParams2["Bio Parameters v2<br/>Type = 1<br/>FBResistance = 3e6<br/>Resistance = 1.6e7<br/>RestingResistance = 3e6<br/>Capacity = 2.5e-10"]
     end
     
     subgraph External["External Components"]

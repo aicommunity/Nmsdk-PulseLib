@@ -161,7 +161,7 @@ graph TB
 
     subgraph NPulseMembraneCable["NPulseMembraneCable Configuration"]
         Channel[NPulseChannelCable]
-        Synapses[NSynapseCable<br/>Multiple synapses]
+        Synapses["NSynapseCable<br/>Multiple synapses"]
     end
 
     subgraph External["Внешние компоненты"]
@@ -348,7 +348,7 @@ graph TB
 
     subgraph NPulseMembraneCable["NPulseMembraneCable Configuration"]
         Channel[NPulseChannelCable]
-        Synapses[NSynapseCable<br/>Multiple synapses]
+        Synapses["NSynapseCable<br/>Multiple synapses"]
     end
 
     subgraph External["External Components"]

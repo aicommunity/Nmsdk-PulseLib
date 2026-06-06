@@ -175,10 +175,10 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> ProcessExcChannel[Process excitatory channel<br/>NPSynExcChannel]
-    ProcessExcChannel --> ProcessInhChannel[Process inhibitory channel<br/>NPSynInhChannel]
+    Start([Start Calculate]) --> ProcessExcChannel["Process excitatory channel<br/>NPSynExcChannel"]
+    ProcessExcChannel --> ProcessInhChannel["Process inhibitory channel<br/>NPSynInhChannel"]
     ProcessInhChannel --> AggregateCurrents[Aggregate channel currents]
-    AggregateCurrents --> CalculatePotential[Calculate membrane potential<br/>from channel currents]
+    AggregateCurrents --> CalculatePotential["Calculate membrane potential<br/>from channel currents"]
     CalculatePotential --> ApplyFeedback[Apply feedback gain if needed]
     ApplyFeedback --> SetOutput[Set output potential]
     SetOutput --> End([End])
@@ -193,13 +193,13 @@ graph TB
     end
     
     subgraph NPSynNeuronMembrane["NPSynNeuronMembrane Configuration"]
-        ExcChannelConfig[ExcChannelClassName<br/>= "NPSynExcChannel"]
-        InhChannelConfig[InhChannelClassName<br/>= "NPSynInhChannel"]
+        ExcChannelConfig["ExcChannelClassName<br/>= #quot;NPSynExcChannel#quot;"]
+        InhChannelConfig["InhChannelClassName<br/>= #quot;NPSynInhChannel#quot;"]
     end
     
     subgraph Channels["Channels"]
-        ExcChannel[NPSynExcChannel<br/>Excitatory Channel]
-        InhChannel[NPSynInhChannel<br/>Inhibitory Channel]
+        ExcChannel["NPSynExcChannel<br/>Excitatory Channel"]
+        InhChannel["NPSynInhChannel<br/>Inhibitory Channel"]
     end
     
     subgraph External["External Components"]

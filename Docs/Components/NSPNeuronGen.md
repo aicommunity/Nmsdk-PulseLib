@@ -346,7 +346,7 @@ graph TB
 
     subgraph NSPNeuronGen["NSPNeuronGen Configuration"]
         Membrane[NPMembraneBio]
-        LTZone[NPulseLTZoneThreshold<br/>Threshold = 0.0117]
+        LTZone["NPulseLTZoneThreshold<br/>Threshold = 0.0117"]
     end
 
     subgraph External["External Components"]

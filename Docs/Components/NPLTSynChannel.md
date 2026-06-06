@@ -225,9 +225,9 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> ReceiveInputs[Receive PreOutput from synapses]
     ReceiveInputs --> AggregateInputs[Aggregate synapse inputs]
-    AggregateInputs --> ProcessMediator[Process mediator dynamics<br/>SecretionTC, DissociationTC]
-    ProcessMediator --> CalculateCurrent[Calculate output current<br/>from synapse outputs]
-    CalculateCurrent --> IntegrateOutput[Integrate output potential<br/>with Capacity=1e-8 and RestingResistance=1e6]
+    AggregateInputs --> ProcessMediator["Process mediator dynamics<br/>SecretionTC, DissociationTC"]
+    ProcessMediator --> CalculateCurrent["Calculate output current<br/>from synapse outputs"]
+    CalculateCurrent --> IntegrateOutput["Integrate output potential<br/>with Capacity=1e-8 and RestingResistance=1e6"]
     IntegrateOutput --> SetOutput[Set output]
     SetOutput --> End([End])
 ```
@@ -241,12 +241,12 @@ graph TB
     end
     
     subgraph NPLTSynChannel["NPLTSynChannel Configuration"]
-        LTParams[LT-zone Parameters<br/>Capacity=1e-8, RestingResistance=1e6]
-        SynapseProcessing[Synapse Processing<br/>Mediator dynamics]
+        LTParams["LT-zone Parameters<br/>Capacity=1e-8, RestingResistance=1e6"]
+        SynapseProcessing["Synapse Processing<br/>Mediator dynamics"]
     end
     
     subgraph External["External Components"]
-        Synapses[NPulseSynapse<br/>Synapses]
+        Synapses["NPulseSynapse<br/>Synapses"]
         LTZone[NPulseLTZoneCommon]
     end
     

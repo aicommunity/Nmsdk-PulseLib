@@ -217,9 +217,9 @@ graph TB
     end
     
     subgraph NPulseMembrane["NPulseMembrane"]
-        ExcChannels[NPulseChannel<br/>Excitatory Channels]
-        InhChannels[NPulseChannel<br/>Inhibitory Channels]
-        Synapses[NPulseSynapse<br/>Synapses]
+        ExcChannels["NPulseChannel<br/>Excitatory Channels"]
+        InhChannels["NPulseChannel<br/>Inhibitory Channels"]
+        Synapses["NPulseSynapse<br/>Synapses"]
     end
     
     subgraph External["External Components"]

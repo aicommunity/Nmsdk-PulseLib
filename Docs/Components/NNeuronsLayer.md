@@ -95,7 +95,7 @@ graph TB
 
     subgraph NNeuronsLayer["NNeuronsLayer"]
         Layer[Слой нейронов]
-        Neurons[NPulseNeuron<br/>Neuron1..NeuronN]
+        Neurons["NPulseNeuron<br/>Neuron1..NeuronN"]
     end
 
     subgraph External["Внешние компоненты"]
@@ -201,7 +201,7 @@ graph TB
 
     subgraph NNeuronsLayer["NNeuronsLayer"]
         Layer[Neuron layer]
-        Neurons[NPulseNeuron<br/>Neuron grid<br/>NeuronsHeight x NeuronsWidth]
+        Neurons["NPulseNeuron<br/>Neuron grid<br/>NeuronsHeight x NeuronsWidth"]
     end
 
     subgraph External["External Components"]

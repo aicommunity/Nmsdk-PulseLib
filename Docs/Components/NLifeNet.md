@@ -504,13 +504,13 @@ graph TB
 
     subgraph NLifeNet["NLifeNet"]
         LifeNet[Life Network]
-        NeuronsLife[NNeuronLife<br/>Neurons Life]
-        Ensembles[Ensembles<br/>Active Neuron Groups]
-        EnsembleLinks[Ensemble Links<br/>Inter-Ensemble Connections]
+        NeuronsLife["NNeuronLife<br/>Neurons Life"]
+        Ensembles["Ensembles<br/>Active Neuron Groups"]
+        EnsembleLinks["Ensemble Links<br/>Inter-Ensemble Connections"]
     end
 
     subgraph External["External Components"]
-        LifeNeurons[NPulseLifeNeuron<br/>Life Neurons]
+        LifeNeurons["NPulseLifeNeuron<br/>Life Neurons"]
         EnergySource[Energy Source]
         OutputTarget[Output Target]
     end

@@ -195,10 +195,10 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> ProcessExcChannel[Process excitatory channel<br/>NPExcChannelBio2]
-    ProcessExcChannel --> ProcessInhChannel[Process inhibitory channel<br/>NPInhChannelBio2]
+    Start([Start Calculate]) --> ProcessExcChannel["Process excitatory channel<br/>NPExcChannelBio2"]
+    ProcessExcChannel --> ProcessInhChannel["Process inhibitory channel<br/>NPInhChannelBio2"]
     ProcessInhChannel --> AggregateCurrents[Aggregate channel currents]
-    AggregateCurrents --> CalculatePotential[Calculate membrane potential<br/>from channel currents]
+    AggregateCurrents --> CalculatePotential["Calculate membrane potential<br/>from channel currents"]
     CalculatePotential --> ApplyFeedback[Apply FeedbackGain = 0.02]
     ApplyFeedback --> SetOutput[Set output potential]
     SetOutput --> End([End])
@@ -213,19 +213,19 @@ graph TB
     end
     
     subgraph NPMembraneBio2["NPMembraneBio2 Configuration"]
-        ExcChannelConfig[ExcChannelClassName<br/>= "NPExcChannelBio2"]
-        InhChannelConfig[InhChannelClassName<br/>= "NPInhChannelBio2"]
-        SynapseConfig[SynapseClassName<br/>= "NPSynapseBio2"]
+        ExcChannelConfig["ExcChannelClassName<br/>= #quot;NPExcChannelBio2#quot;"]
+        InhChannelConfig["InhChannelClassName<br/>= #quot;NPInhChannelBio2#quot;"]
+        SynapseConfig["SynapseClassName<br/>= #quot;NPSynapseBio2#quot;"]
         FeedbackConfig[FeedbackGain = 0.02]
     end
     
     subgraph Channels["Bio Channels"]
-        ExcChannel[NPExcChannelBio2<br/>Excitatory Channel]
-        InhChannel[NPInhChannelBio2<br/>Inhibitory Channel]
+        ExcChannel["NPExcChannelBio2<br/>Excitatory Channel"]
+        InhChannel["NPInhChannelBio2<br/>Inhibitory Channel"]
     end
     
     subgraph Synapses["Synapses"]
-        Synapse[NPSynapseBio2<br/>Bio Synapse]
+        Synapse["NPSynapseBio2<br/>Bio Synapse"]
     end
     
     subgraph External["External Components"]

@@ -146,8 +146,8 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> ReceivePulses[Receive input pulses]
     ReceivePulses --> ProcessPulses[Process pulses with mediator dynamics]
-    ProcessPulses --> ApplySecretion[Apply SecretionTC<br/>mediator secretion]
-    ApplySecretion --> ApplyDissociation[Apply DissociationTC<br/>mediator dissociation]
+    ProcessPulses --> ApplySecretion["Apply SecretionTC<br/>mediator secretion"]
+    ApplySecretion --> ApplyDissociation["Apply DissociationTC<br/>mediator dissociation"]
     ApplyDissociation --> ApplyAmplitude[Apply PulseAmplitude]
     ApplyAmplitude --> ApplyGain[Apply Gain]
     ApplyGain --> SetOutput[Set output]
@@ -163,7 +163,7 @@ graph TB
     end
     
     subgraph NCPac["NCPac Configuration"]
-        MediatorDynamics[Mediator Dynamics<br/>SecretionTC, DissociationTC]
+        MediatorDynamics["Mediator Dynamics<br/>SecretionTC, DissociationTC"]
         PulseAmplitude[Pulse Amplitude]
         Gain[Gain]
     end

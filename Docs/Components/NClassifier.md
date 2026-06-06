@@ -207,9 +207,9 @@ graph TB
     end
     
     subgraph NClassifier["NClassifier"]
-        Generators[NPulseGeneratorTransit<br/>Генераторы для классов]
-        Trainers[NNeuronTrainer<br/>Тренеры для классов]
-        Neurons[NPulseNeuron<br/>Нейроны для классов]
+        Generators["NPulseGeneratorTransit<br/>Генераторы для классов"]
+        Trainers["NNeuronTrainer<br/>Тренеры для классов"]
+        Neurons["NPulseNeuron<br/>Нейроны для классов"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -436,9 +436,9 @@ graph TB
     
     subgraph NClassifier["NClassifier"]
         Classifier[Classifier]
-        Generators[NPulseGeneratorTransit<br/>Generators]
-        Trainers[NNeuronTrainer<br/>Trainers]
-        Neurons[NPulseNeuron<br/>Neurons]
+        Generators["NPulseGeneratorTransit<br/>Generators"]
+        Trainers["NNeuronTrainer<br/>Trainers"]
+        Neurons["NPulseNeuron<br/>Neurons"]
     end
     
     subgraph External["External Components"]

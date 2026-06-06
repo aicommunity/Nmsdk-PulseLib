@@ -183,14 +183,14 @@ graph TB
     end
     
     subgraph NPNeuron4x4["NPNeuron4x4 Configuration"]
-        Soma1[NPulseMembraneCommon<br/>Soma0]
-        Soma2[NPulseMembraneCommon<br/>Soma1]
-        Soma3[NPulseMembraneCommon<br/>Soma2]
-        Soma4[NPulseMembraneCommon<br/>Soma3]
-        Dendrite1[NPulseMembraneCommon<br/>Dendrite0]
-        Dendrite2[NPulseMembraneCommon<br/>Dendrite1]
-        Dendrite3[NPulseMembraneCommon<br/>Dendrite2]
-        LTZone[NPulseLTZoneCommon<br/>LTZone]
+        Soma1["NPulseMembraneCommon<br/>Soma0"]
+        Soma2["NPulseMembraneCommon<br/>Soma1"]
+        Soma3["NPulseMembraneCommon<br/>Soma2"]
+        Soma4["NPulseMembraneCommon<br/>Soma3"]
+        Dendrite1["NPulseMembraneCommon<br/>Dendrite0"]
+        Dendrite2["NPulseMembraneCommon<br/>Dendrite1"]
+        Dendrite3["NPulseMembraneCommon<br/>Dendrite2"]
+        LTZone["NPulseLTZoneCommon<br/>LTZone"]
     end
     
     subgraph External["Внешние компоненты"]

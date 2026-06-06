@@ -158,7 +158,7 @@ flowchart TD
     Start([Start Calculate]) --> AddToHistory[Add current inputs to History]
     AddToHistory --> CheckHistory{History size >= NumLevels?}
     CheckHistory -->|No| SetOutputZero[Output = 0]
-    CheckHistory -->|Yes| Extrapolate[Extrapolate using PascalCoeffs<br/>and PredictionTime]
+    CheckHistory -->|Yes| Extrapolate["Extrapolate using PascalCoeffs<br/>and PredictionTime"]
     Extrapolate --> SetOutput[Output = extrapolated value]
     SetOutputZero --> End([End])
     SetOutput --> End
@@ -175,7 +175,7 @@ graph TB
     subgraph NMExtrapolator["NMExtrapolator"]
         ExtrapolatorModel[Extrapolator Model]
         PascalCoeffs[Pascal Coefficients]
-        History[Input History<br/>UQueue]
+        History["Input History<br/>UQueue"]
     end
     
     subgraph External["External Components"]

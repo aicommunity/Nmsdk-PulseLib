@@ -357,7 +357,7 @@ graph TB
 
     subgraph NEyeMuscle["NEyeMuscle"]
         EyeMuscle[Eye Muscle]
-        InternalStates[Internal States<br/>P1, P2, P3, L, Speed, Acceleration]
+        InternalStates["Internal States<br/>P1, P2, P3, L, Speed, Acceleration"]
     end
 
     subgraph External["External Components"]

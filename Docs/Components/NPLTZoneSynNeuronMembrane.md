@@ -177,10 +177,10 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> ProcessExcChannel[Process excitatory LT synaptic channel<br/>NPLTSynExcChannel]
-    ProcessExcChannel --> ProcessInhChannel[Process inhibitory LT synaptic channel<br/>NPLTSynInhChannel]
+    Start([Start Calculate]) --> ProcessExcChannel["Process excitatory LT synaptic channel<br/>NPLTSynExcChannel"]
+    ProcessExcChannel --> ProcessInhChannel["Process inhibitory LT synaptic channel<br/>NPLTSynInhChannel"]
     ProcessInhChannel --> AggregateCurrents[Aggregate LT synaptic channel currents]
-    AggregateCurrents --> CalculatePotential[Calculate membrane potential<br/>from LT synaptic channel currents]
+    AggregateCurrents --> CalculatePotential["Calculate membrane potential<br/>from LT synaptic channel currents"]
     CalculatePotential --> ApplyFeedback[Apply feedback gain if needed]
     ApplyFeedback --> SetOutput[Set output potential]
     SetOutput --> End([End])
@@ -195,13 +195,13 @@ graph TB
     end
     
     subgraph NPLTZoneSynNeuronMembrane["NPLTZoneSynNeuronMembrane Configuration"]
-        ExcChannelConfig[ExcChannelClassName<br/>= "NPLTSynExcChannel"]
-        InhChannelConfig[InhChannelClassName<br/>= "NPLTSynInhChannel"]
+        ExcChannelConfig["ExcChannelClassName<br/>= #quot;NPLTSynExcChannel#quot;"]
+        InhChannelConfig["InhChannelClassName<br/>= #quot;NPLTSynInhChannel#quot;"]
     end
     
     subgraph Channels["LT Synaptic Channels"]
-        ExcChannel[NPLTSynExcChannel<br/>Excitatory LT Synaptic Channel]
-        InhChannel[NPLTSynInhChannel<br/>Inhibitory LT Synaptic Channel]
+        ExcChannel["NPLTSynExcChannel<br/>Excitatory LT Synaptic Channel"]
+        InhChannel["NPLTSynInhChannel<br/>Inhibitory LT Synaptic Channel"]
     end
     
     subgraph External["External Components"]

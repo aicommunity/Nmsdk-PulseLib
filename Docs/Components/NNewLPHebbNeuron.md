@@ -207,10 +207,10 @@ graph TB
     end
     
     subgraph NNewLPHebbNeuron["NNewLPHebbNeuron Configuration"]
-        Membrane[NPNeuronHebbMembrane<br/>PulseMembrane<br/>3 части сомы]
-        LTMembrane[NPLTZoneNeuronMembrane<br/>LTMembrane]
-        LTZone[NPLTZone<br/>LTZone]
-        Synapses[NPulseHebbSynapse<br/>ExcSynapse1..N]
+        Membrane["NPNeuronHebbMembrane<br/>PulseMembrane<br/>3 части сомы"]
+        LTMembrane["NPLTZoneNeuronMembrane<br/>LTMembrane"]
+        LTZone["NPLTZone<br/>LTZone"]
+        Synapses["NPulseHebbSynapse<br/>ExcSynapse1..N"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -437,7 +437,7 @@ graph TB
     end
     
     subgraph NNewLPHebbNeuron["NNewLPHebbNeuron Configuration"]
-        Membrane[NPNeuronHebbMembrane<br/>3 soma parts]
+        Membrane["NPNeuronHebbMembrane<br/>3 soma parts"]
         LTMembrane[NPLTZoneNeuronMembrane]
         LTZone[NPLTZone]
         Synapses[NPulseHebbSynapse]

@@ -124,14 +124,14 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> ReceiveInput[Receive excitatory input<br/>from motoneuron]
+    Start([Start Calculate]) --> ReceiveInput["Receive excitatory input<br/>from motoneuron"]
     ReceiveInput --> CalcMembrane[Calculate NPSynNeuronMembrane]
     CalcMembrane --> CalcSynapses[Calculate optimized synapses]
     CalcSynapses --> CalcLTZone[Calculate LT-zone]
     CalcLTZone --> CheckThreshold{Threshold reached?}
     CheckThreshold -->|Yes| GenerateInhibitorySpike[Generate inhibitory spike]
     CheckThreshold -->|No| NoSpike[No spike]
-    GenerateInhibitorySpike --> SendFeedback[Send inhibitory feedback<br/>to motoneuron]
+    GenerateInhibitorySpike --> SendFeedback["Send inhibitory feedback<br/>to motoneuron"]
     NoSpike --> SendFeedback
     SendFeedback --> End([End])
 ```
@@ -145,12 +145,12 @@ graph TB
     end
     
     subgraph NNewSynRenshowCell["NNewSynRenshowCell Configuration"]
-        Membrane[NPSynNeuronMembrane<br/>optimized for synapses]
+        Membrane["NPSynNeuronMembrane<br/>optimized for synapses"]
         LTZone[NPulseLTZoneCommon]
     end
     
     subgraph External["External Components"]
-        Synapses[Synapses<br/>optimized]
+        Synapses["Synapses<br/>optimized"]
         Motoneuron[NMotoneuron]
     end
     

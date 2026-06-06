@@ -239,7 +239,7 @@ graph TB
     
     subgraph NDataset["NDataset"]
         Dataset[Dataset]
-        Generators[NPulseGeneratorTransit<br/>Generators<br/>NumFeatures]
+        Generators["NPulseGeneratorTransit<br/>Generators<br/>NumFeatures"]
     end
     
     subgraph External["External Components"]

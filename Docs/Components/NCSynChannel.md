@@ -202,8 +202,8 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> ReceiveInputs[Receive PreOutput from synapses]
     ReceiveInputs --> AggregateInputs[Aggregate synapse inputs]
-    AggregateInputs --> CalculateOutput[Calculate syn_output<br/>syn_output = PreOutput / SynapseResistance]
-    CalculateOutput --> ApplyDynamics[Apply simplified mediator dynamics<br/>SecretionTC, DissociationTC]
+    AggregateInputs --> CalculateOutput["Calculate syn_output<br/>syn_output = PreOutput / SynapseResistance"]
+    CalculateOutput --> ApplyDynamics["Apply simplified mediator dynamics<br/>SecretionTC, DissociationTC"]
     ApplyDynamics --> ApplyType[Apply Type coefficient]
     ApplyType --> SetOutput[Set output current]
     SetOutput --> End([End])
@@ -218,12 +218,12 @@ graph TB
     end
     
     subgraph NCSynChannel["NCSynChannel Configuration"]
-        SynapseProcessing[Synapse Processing<br/>Simplified model]
-        MediatorDynamics[Mediator Dynamics<br/>SecretionTC, DissociationTC]
+        SynapseProcessing["Synapse Processing<br/>Simplified model"]
+        MediatorDynamics["Mediator Dynamics<br/>SecretionTC, DissociationTC"]
     end
     
     subgraph External["External Components"]
-        Synapses[NPulseSynapseCommon<br/>Synapses]
+        Synapses["NPulseSynapseCommon<br/>Synapses"]
         Membrane[Membrane]
     end
     

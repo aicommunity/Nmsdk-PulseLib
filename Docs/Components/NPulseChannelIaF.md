@@ -410,8 +410,8 @@ graph TB
     end
     
     subgraph NPulseChannelIaF["NPulseChannelIaF"]
-        IaFParams[IaF parameters<br/>(Cm, EL, TauM, VReset, TRef)]
-        IaFVars[State variables<br/>Vm, Rm]
+        IaFParams["IaF parameters<br/>(Cm, EL, TauM, VReset, TRef)"]
+        IaFVars["State variables<br/>Vm, Rm"]
     end
     
     subgraph External["External Components"]

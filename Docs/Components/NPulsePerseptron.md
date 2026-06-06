@@ -235,8 +235,8 @@ graph TB
     
     subgraph NPulsePerseptron["NPulsePerseptron"]
         PerceptronCore[Ядро персептрона]
-        FreqGroupLayer[NNeuronFreqGroupLayer<br/>опционально]
-        NeuronsLayers[NNeuronsLayer<br/>Layer1..LayerN]
+        FreqGroupLayer["NNeuronFreqGroupLayer<br/>опционально"]
+        NeuronsLayers["NNeuronsLayer<br/>Layer1..LayerN"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -546,8 +546,8 @@ graph TB
     
     subgraph NPulsePerseptron["NPulsePerseptron"]
         PerceptronCore[Perceptron Core]
-        FreqGroupLayer[NNeuronFreqGroupLayer<br/>optional]
-        NeuronsLayers[NNeuronsLayer<br/>Layer1..LayerN]
+        FreqGroupLayer["NNeuronFreqGroupLayer<br/>optional"]
+        NeuronsLayers["NNeuronsLayer<br/>Layer1..LayerN"]
     end
     
     subgraph External["External Components"]

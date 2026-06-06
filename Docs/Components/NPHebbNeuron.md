@@ -156,11 +156,11 @@ flowchart TD
     CallBase --> CalcMembrane[Расчет мембраны NPNeuronHebbMembrane]
     CalcMembrane --> LoopSynapses[Цикл по синапсам Хебба]
     LoopSynapses --> CalcSynapse[Расчет синапса NPulseHebbSynapse]
-    CalcSynapse --> UpdateWin[Обновление Win<br/>Win += Kin*input - Min*Win]
-    UpdateWin --> UpdateWout[Обновление Wout<br/>Wout += Kout*ltzone - Mout*Wout]
-    UpdateWout --> UpdateGd[Обновление Gd<br/>Gd += Win*Wout - Md*Gd]
-    UpdateGd --> UpdateGs[Обновление Gs<br/>Gs += motivation*Gd - Ms*Gs]
-    UpdateGs --> UpdateWeight[Модификация веса<br/>Weight *= 1.0 + G]
+    CalcSynapse --> UpdateWin["Обновление Win<br/>Win += Kin*input - Min*Win"]
+    UpdateWin --> UpdateWout["Обновление Wout<br/>Wout += Kout*ltzone - Mout*Wout"]
+    UpdateWout --> UpdateGd["Обновление Gd<br/>Gd += Win*Wout - Md*Gd"]
+    UpdateGd --> UpdateGs["Обновление Gs<br/>Gs += motivation*Gd - Ms*Gs"]
+    UpdateGs --> UpdateWeight["Модификация веса<br/>Weight *= 1.0 + G"]
     UpdateWeight --> NextSynapse{Есть еще синапсы?}
     NextSynapse -->|Да| LoopSynapses
     NextSynapse -->|Нет| AggregateMembrane[Агрегация токов мембраны]
@@ -198,7 +198,7 @@ graph TB
     subgraph NPHebbNeuron["NPHebbNeuron Configuration"]
         Membrane[NPNeuronHebbMembrane]
         LTZone[NPulseLTZoneCommon]
-        Synapses[NPulseHebbSynapse<br/>Multiple synapses]
+        Synapses["NPulseHebbSynapse<br/>Multiple synapses"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -406,9 +406,9 @@ graph TB
     end
     
     subgraph NPHebbNeuron["NPHebbNeuron Configuration"]
-        Membrane[NPNeuronHebbMembrane<br/>PulseMembrane]
-        LTZone[NPulseLTZoneCommon<br/>LTZone]
-        Synapses[NPulseHebbSynapse<br/>ExcSynapse1..N]
+        Membrane["NPNeuronHebbMembrane<br/>PulseMembrane"]
+        LTZone["NPulseLTZoneCommon<br/>LTZone"]
+        Synapses["NPulseHebbSynapse<br/>ExcSynapse1..N"]
     end
     
     subgraph External["External Components"]

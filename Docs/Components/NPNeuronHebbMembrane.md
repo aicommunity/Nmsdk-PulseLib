@@ -169,12 +169,12 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> ProcessHebbSynapses[Process Hebb synapses<br/>NPHebbSynapse]
-    ProcessHebbSynapses --> UpdateWeights[Update Hebbian weights<br/>based on activity]
+    Start([Start Calculate]) --> ProcessHebbSynapses["Process Hebb synapses<br/>NPHebbSynapse"]
+    ProcessHebbSynapses --> UpdateWeights["Update Hebbian weights<br/>based on activity"]
     UpdateWeights --> ProcessExcChannel[Process excitatory channel]
     ProcessExcChannel --> ProcessInhChannel[Process inhibitory channel]
     ProcessInhChannel --> AggregateCurrents[Aggregate channel currents]
-    AggregateCurrents --> CalculatePotential[Calculate membrane potential<br/>from channel currents]
+    AggregateCurrents --> CalculatePotential["Calculate membrane potential<br/>from channel currents"]
     CalculatePotential --> ApplyFeedback[Apply feedback gain if needed]
     ApplyFeedback --> SetOutput[Set output potential]
     SetOutput --> End([End])
@@ -189,11 +189,11 @@ graph TB
     end
     
     subgraph NPNeuronHebbMembrane["NPNeuronHebbMembrane Configuration"]
-        HebbSynapseConfig[SynapseClassName<br/>= "NPHebbSynapse"]
+        HebbSynapseConfig["SynapseClassName<br/>= #quot;NPHebbSynapse#quot;"]
     end
     
     subgraph Synapses["Synapses"]
-        HebbSynapse[NPHebbSynapse<br/>Hebb Synapse]
+        HebbSynapse["NPHebbSynapse<br/>Hebb Synapse"]
     end
     
     subgraph Channels["Channels"]

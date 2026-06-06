@@ -240,11 +240,11 @@ graph TB
     
     subgraph NPulseChannel["NPulseChannel"]
         ChannelModel[Channel Dynamics Model]
-        Synapses[NPulseSynapse<br/>Synapses]
+        Synapses["NPulseSynapse<br/>Synapses"]
     end
     
     subgraph External["External Components"]
-        Membrane[NPulseMembrane<br/>Owner]
+        Membrane["NPulseMembrane<br/>Owner"]
         InputSource[Input source]
     end
     

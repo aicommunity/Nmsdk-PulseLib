@@ -358,7 +358,7 @@ graph TB
     
     subgraph NSPNeuronBio["NSPNeuronBio Configuration"]
         Membrane[NPMembraneBio]
-        LTZone[NPulseLTZoneThresholdBio<br/>Threshold = -0.055]
+        LTZone["NPulseLTZoneThresholdBio<br/>Threshold = -0.055"]
         ExcGen[NPNeuronPosCGeneratorBio]
         InhGen[NPNeuronNegCGeneratorBio]
     end

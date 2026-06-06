@@ -158,8 +158,8 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> ReceiveInputs[Receive input signals]
     ReceiveInputs --> AggregateInputs[Aggregate input signals]
-    AggregateInputs --> ApplyType[Apply Type = -1<br/>Excitatory coefficient]
-    ApplyType --> CalculatePotential[Calculate output potential<br/>Increases membrane potential]
+    AggregateInputs --> ApplyType["Apply Type = -1<br/>Excitatory coefficient"]
+    ApplyType --> CalculatePotential["Calculate output potential<br/>Increases membrane potential"]
     CalculatePotential --> SetOutput[Set output]
     SetOutput --> End([End])
 ```
@@ -173,7 +173,7 @@ graph TB
     end
     
     subgraph NPExcChannel["NPExcChannel Configuration"]
-        ExcitatoryType[Excitatory Type<br/>Type = -1]
+        ExcitatoryType["Excitatory Type<br/>Type = -1"]
     end
     
     subgraph External["External Components"]

@@ -397,8 +397,8 @@ graph TB
     end
     
     subgraph NPulseChannelIzhikevich["NPulseChannelIzhikevich"]
-        IzhikevichParams[Izhikevich parameters<br/>(A, B, C, D)]
-        IzhikevichVars[State variables<br/>V, U]
+        IzhikevichParams["Izhikevich parameters<br/>(A, B, C, D)"]
+        IzhikevichVars["State variables<br/>V, U"]
     end
     
     subgraph External["External Components"]

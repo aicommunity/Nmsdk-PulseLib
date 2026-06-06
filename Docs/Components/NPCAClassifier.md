@@ -170,8 +170,8 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> CheckFirstStep{IsFirstStep?}
     CheckFirstStep -->|Да| InitFile[Открытие OutputFile]
-    InitFirstStep --> InitMatrices[results.Resize(rows, OutComponents + cd)<br/>Инициализация max_el, min_el]
-    InitMatrices --> ResetClassifier[SpikeClassifier.SetActivity(false)<br/>SpikeClassifier.Reset()]
+    InitFirstStep --> InitMatrices["results.Resize(rows, OutComponents + cd)<br/>Инициализация max_el, min_el"]
+    InitMatrices --> ResetClassifier["SpikeClassifier.SetActivity(false)<br/>SpikeClassifier.Reset()"]
     ResetClassifier --> LoadData[Загрузка данных из MatrixSourceTimeSeries]
     CheckFirstStep -->|Нет| LoadData
     LoadData --> CheckDataAvailable{Данные доступны?}
@@ -204,9 +204,9 @@ graph TB
     
     subgraph NPCAClassifier["NPCAClassifier"]
         Classifier[Классификатор PCA]
-        MatrixSource[UMatrixSourceTimeSeries<br/>Источник данных]
-        PCA[UCRPrincipalComponentAnalysis<br/>PCA]
-        SpikeClassifier[NSpikeClassifier<br/>Классификатор]
+        MatrixSource["UMatrixSourceTimeSeries<br/>Источник данных"]
+        PCA["UCRPrincipalComponentAnalysis<br/>PCA"]
+        SpikeClassifier["NSpikeClassifier<br/>Классификатор"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -401,9 +401,9 @@ graph TB
     
     subgraph NPCAClassifier["NPCAClassifier"]
         Classifier[PCA Classifier]
-        MatrixSource[UMatrixSourceTimeSeries<br/>MatrixSource]
-        PCA[UCRPrincipalComponentAnalysis<br/>PCA]
-        SpikeClassifier[NSpikeClassifier<br/>SpikeClassifier]
+        MatrixSource["UMatrixSourceTimeSeries<br/>MatrixSource"]
+        PCA["UCRPrincipalComponentAnalysis<br/>PCA"]
+        SpikeClassifier["NSpikeClassifier<br/>SpikeClassifier"]
     end
     
     subgraph External["External Components"]

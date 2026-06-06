@@ -153,7 +153,7 @@ graph TB
     end
     
     subgraph NPMembrane["NPMembrane Alias"]
-        Alias[NPMembrane<br/>alias]
+        Alias["NPMembrane<br/>alias"]
     end
     
     BaseMembrane -->|aliased as| Alias

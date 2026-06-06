@@ -164,8 +164,8 @@ graph TB
     end
     
     subgraph NContinuesSimpleAfferentNeuron["NContinuesSimpleAfferentNeuron Configuration"]
-        Receptor[NReceptor<br/>Receptor]
-        LTZone[NCSimpleLTZone<br/>LTZone]
+        Receptor["NReceptor<br/>Receptor"]
+        LTZone["NCSimpleLTZone<br/>LTZone"]
     end
     
     subgraph External["Внешние компоненты"]

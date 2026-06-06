@@ -137,9 +137,9 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> ProcessMembrane[Process NCSynNeuronMembrane<br/>continuous processing]
+    Start([Start Calculate]) --> ProcessMembrane["Process NCSynNeuronMembrane<br/>continuous processing"]
     ProcessMembrane --> CalculatePotential[Calculate membrane potential]
-    CalculatePotential --> ProcessLTZone[Process NCLTZone<br/>classic LT-zone]
+    CalculatePotential --> ProcessLTZone["Process NCLTZone<br/>classic LT-zone"]
     ProcessLTZone --> CheckThreshold[Check threshold]
     CheckThreshold --> GenerateOutput[Generate continuous output]
     GenerateOutput --> End([End])
@@ -154,8 +154,8 @@ graph TB
     end
     
     subgraph NContinuesSynSPNeuron["NContinuesSynSPNeuron Configuration"]
-        Membrane[NCSynNeuronMembrane<br/>Classic Membrane]
-        LTZone[NCLTZone<br/>Classic LT-Zone]
+        Membrane["NCSynNeuronMembrane<br/>Classic Membrane"]
+        LTZone["NCLTZone<br/>Classic LT-Zone"]
     end
     
     subgraph External["External Components"]

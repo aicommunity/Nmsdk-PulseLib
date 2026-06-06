@@ -207,10 +207,10 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> ReceiveInputs[Receive PreOutput from synapses]
     ReceiveInputs --> AggregateInputs[Aggregate synapse inputs]
-    AggregateInputs --> CalculateOutput[Calculate syn_output<br/>syn_output = PreOutput / SynapseResistance]
-    CalculateOutput --> ApplyType[Apply Type = 1<br/>Inhibitory coefficient]
-    ApplyType --> ApplyDynamics[Apply mediator dynamics<br/>SecretionTC, DissociationTC]
-    ApplyDynamics --> SetOutput[Set output current<br/>Decreases membrane potential]
+    AggregateInputs --> CalculateOutput["Calculate syn_output<br/>syn_output = PreOutput / SynapseResistance"]
+    CalculateOutput --> ApplyType["Apply Type = 1<br/>Inhibitory coefficient"]
+    ApplyType --> ApplyDynamics["Apply mediator dynamics<br/>SecretionTC, DissociationTC"]
+    ApplyDynamics --> SetOutput["Set output current<br/>Decreases membrane potential"]
     SetOutput --> End([End])
 ```
 
@@ -223,12 +223,12 @@ graph TB
     end
     
     subgraph NCSynInhChannel["NCSynInhChannel Configuration"]
-        InhibitoryType[Inhibitory Type<br/>Type = 1]
-        SynapseProcessing[Synapse Processing<br/>Simplified model]
+        InhibitoryType["Inhibitory Type<br/>Type = 1"]
+        SynapseProcessing["Synapse Processing<br/>Simplified model"]
     end
     
     subgraph External["External Components"]
-        Synapses[NPulseSynapseCommon<br/>Synapses]
+        Synapses["NPulseSynapseCommon<br/>Synapses"]
         Membrane[Membrane]
     end
     

@@ -210,10 +210,10 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> ReceiveInputs[Receive PreOutput from synapses]
     ReceiveInputs --> AggregateInputs[Aggregate synapse inputs]
-    AggregateInputs --> ApplyType[Apply Type = -1<br/>Excitatory coefficient]
-    ApplyType --> ProcessMediator[Process mediator dynamics<br/>SecretionTC, DissociationTC]
-    ProcessMediator --> CalculateCurrent[Calculate output current<br/>Increases LT-zone potential]
-    CalculateCurrent --> IntegrateOutput[Integrate with LT-zone parameters<br/>Capacity=1e-8, RestingResistance=1e6]
+    AggregateInputs --> ApplyType["Apply Type = -1<br/>Excitatory coefficient"]
+    ApplyType --> ProcessMediator["Process mediator dynamics<br/>SecretionTC, DissociationTC"]
+    ProcessMediator --> CalculateCurrent["Calculate output current<br/>Increases LT-zone potential"]
+    CalculateCurrent --> IntegrateOutput["Integrate with LT-zone parameters<br/>Capacity=1e-8, RestingResistance=1e6"]
     IntegrateOutput --> SetOutput[Set output]
     SetOutput --> End([End])
 ```
@@ -227,13 +227,13 @@ graph TB
     end
     
     subgraph NPLTSynExcChannel["NPLTSynExcChannel Configuration"]
-        ExcitatoryType[Excitatory Type<br/>Type = -1]
-        LTParams[LT-zone Parameters<br/>Capacity=1e-8, RestingResistance=1e6]
-        SynapseProcessing[Synapse Processing<br/>Mediator dynamics]
+        ExcitatoryType["Excitatory Type<br/>Type = -1"]
+        LTParams["LT-zone Parameters<br/>Capacity=1e-8, RestingResistance=1e6"]
+        SynapseProcessing["Synapse Processing<br/>Mediator dynamics"]
     end
     
     subgraph External["External Components"]
-        Synapses[NPulseSynapse<br/>Synapses]
+        Synapses["NPulseSynapse<br/>Synapses"]
         LTZone[NPulseLTZoneCommon]
     end
     

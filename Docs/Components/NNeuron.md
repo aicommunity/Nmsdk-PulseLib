@@ -268,10 +268,10 @@ graph TB
 
     subgraph NNeuron["NNeuron Base"]
         BaseNeuron[NNeuron]
-        Membrane[NPulseMembrane<br/>Membrane]
-        Channels[NPulseChannel<br/>Channels]
-        Synapses[NPulseSynapse<br/>Synapses]
-        LTZone[NPulseLTZone<br/>LTZone]
+        Membrane["NPulseMembrane<br/>Membrane"]
+        Channels["NPulseChannel<br/>Channels"]
+        Synapses["NPulseSynapse<br/>Synapses"]
+        LTZone["NPulseLTZone<br/>LTZone"]
     end
 
     subgraph External["External Components"]

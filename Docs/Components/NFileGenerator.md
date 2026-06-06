@@ -152,7 +152,7 @@ flowchart TD
     CheckTime -->|Нет| End([End])
     SetOutput --> IncrementIndex[++CurrentIndex]
     IncrementIndex --> CheckEnd{CurrentIndex == Data.end()?}
-    CheckEnd -->|Да| ResetIndex[CurrentIndex = Data.begin<br/>DataStartTime = 0]
+    CheckEnd -->|Да| ResetIndex["CurrentIndex = Data.begin<br/>DataStartTime = 0"]
     CheckEnd -->|Нет| End
     ResetIndex --> End
     SetZero --> End

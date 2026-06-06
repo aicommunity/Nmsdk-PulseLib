@@ -152,7 +152,7 @@ graph TB
     end
     
     subgraph NLPNeuron["NLPNeuron Configuration"]
-        Membrane[NPulseMembrane<br/>3 части сомы]
+        Membrane["NPulseMembrane<br/>3 части сомы"]
         LTZone[NPulseLTZoneCommon]
     end
     
@@ -304,7 +304,7 @@ graph TB
     end
     
     subgraph NLPNeuron["NLPNeuron Configuration"]
-        Membrane[NPulseMembrane<br/>3 soma parts]
+        Membrane["NPulseMembrane<br/>3 soma parts"]
         LTZone[NPulseLTZoneCommon]
     end
     

@@ -206,10 +206,10 @@ graph TB
     end
     
     subgraph NNewSPHebbNeuron["NNewSPHebbNeuron Configuration"]
-        Membrane[NPNeuronHebbMembrane<br/>PulseMembrane]
-        LTMembrane[NPLTZoneNeuronMembrane<br/>LTMembrane]
-        LTZone[NPLTZone<br/>LTZone]
-        Synapses[NPulseHebbSynapse<br/>ExcSynapse1..N]
+        Membrane["NPNeuronHebbMembrane<br/>PulseMembrane"]
+        LTMembrane["NPLTZoneNeuronMembrane<br/>LTMembrane"]
+        LTZone["NPLTZone<br/>LTZone"]
+        Synapses["NPulseHebbSynapse<br/>ExcSynapse1..N"]
     end
     
     subgraph External["Внешние компоненты"]

@@ -193,13 +193,13 @@ graph TB
     end
     
     subgraph NPainReflexSimple["NPainReflexSimple"]
-        ConditionalTrainer[NNeuronTrainer<br/>ConditionalStimul]
-        NormalNeuron[NPulseNeuron<br/>NormalOutputNeuron]
-        AltNeuron[NPulseNeuron<br/>AltOutputNeuron]
-        NormalBlocker[NPulseGeneratorTransit<br/>NormalBlocker]
-        AltBlocker[NPulseGeneratorTransit<br/>AltBlocker]
-        NormalInputGen[NPulseGeneratorTransit<br/>NormalInputGen]
-        AltInputGen[NPulseGeneratorTransit<br/>AltInputGen]
+        ConditionalTrainer["NNeuronTrainer<br/>ConditionalStimul"]
+        NormalNeuron["NPulseNeuron<br/>NormalOutputNeuron"]
+        AltNeuron["NPulseNeuron<br/>AltOutputNeuron"]
+        NormalBlocker["NPulseGeneratorTransit<br/>NormalBlocker"]
+        AltBlocker["NPulseGeneratorTransit<br/>AltBlocker"]
+        NormalInputGen["NPulseGeneratorTransit<br/>NormalInputGen"]
+        AltInputGen["NPulseGeneratorTransit<br/>AltInputGen"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -386,13 +386,13 @@ graph TB
     
     subgraph NPainReflexSimple["NPainReflexSimple"]
         Reflex[Pain Reflex]
-        ConditionalTrainer[NNeuronTrainer<br/>ConditionalStimul]
-        NormalNeuron[NPulseNeuron<br/>NormalOutputNeuron]
-        AltNeuron[NPulseNeuron<br/>AltOutputNeuron]
-        NormalBlocker[NPulseGeneratorTransit<br/>NormalBlocker]
-        AltBlocker[NPulseGeneratorTransit<br/>AltBlocker]
-        NormalInputGen[NPulseGeneratorTransit<br/>NormalInputGen]
-        AltInputGen[NPulseGeneratorTransit<br/>AltInputGen]
+        ConditionalTrainer["NNeuronTrainer<br/>ConditionalStimul"]
+        NormalNeuron["NPulseNeuron<br/>NormalOutputNeuron"]
+        AltNeuron["NPulseNeuron<br/>AltOutputNeuron"]
+        NormalBlocker["NPulseGeneratorTransit<br/>NormalBlocker"]
+        AltBlocker["NPulseGeneratorTransit<br/>AltBlocker"]
+        NormalInputGen["NPulseGeneratorTransit<br/>NormalInputGen"]
+        AltInputGen["NPulseGeneratorTransit<br/>AltInputGen"]
     end
     
     subgraph External["External Components"]

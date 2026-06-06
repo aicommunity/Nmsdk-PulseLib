@@ -196,9 +196,9 @@ graph TB
     end
 
     subgraph NLPLifeNeuron["NLPLifeNeuron Configuration"]
-        Membrane[NPMembrane<br/>PulseMembrane<br/>3 части сомы]
-        LTZone[NPulseLTZoneCommon<br/>LTZone]
-        NeuronLife[NNeuronLife<br/>NeuronLife]
+        Membrane["NPMembrane<br/>PulseMembrane<br/>3 части сомы"]
+        LTZone["NPulseLTZoneCommon<br/>LTZone"]
+        NeuronLife["NNeuronLife<br/>NeuronLife"]
     end
 
     subgraph External["Внешние компоненты"]
@@ -430,7 +430,7 @@ graph TB
     end
 
     subgraph NLPLifeNeuron["NLPLifeNeuron Configuration"]
-        Membrane[NPMembrane<br/>3 soma parts]
+        Membrane["NPMembrane<br/>3 soma parts"]
         LTZone[NPulseLTZoneCommon]
         NeuronLife[NNeuronLife]
     end

@@ -378,8 +378,8 @@ graph TB
     end
     
     subgraph NSPNeuronBio2["NSPNeuronBio2 Configuration"]
-        Membrane[NPMembraneBio2<br/>v2, cable compatible]
-        LTZone[NPulseLTZoneThresholdBio2<br/>Threshold = -0.055]
+        Membrane["NPMembraneBio2<br/>v2, cable compatible"]
+        LTZone["NPulseLTZoneThresholdBio2<br/>Threshold = -0.055"]
         ExcGen[NPNeuronPosCGeneratorBio]
         InhGen[NPNeuronNegCGeneratorBio]
     end

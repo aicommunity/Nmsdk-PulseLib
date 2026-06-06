@@ -218,12 +218,12 @@ graph TB
     end
     
     subgraph NAssociationFormer["NAssociationFormer"]
-        UncondTrainer[NNeuronTrainer<br/>UnconditionalStimul]
-        CondTrainer[NNeuronTrainer<br/>ConditionalStimul]
-        LogicalAnd[NNeuronTrainer<br/>LogicalAndNeuron]
-        BigNeuron[NPulseNeuron<br/>BigNeuron]
-        LogicalOr[NPulseNeuron<br/>LogicalOrNeuron]
-        Generators[NPulseGeneratorTransit<br/>Generators]
+        UncondTrainer["NNeuronTrainer<br/>UnconditionalStimul"]
+        CondTrainer["NNeuronTrainer<br/>ConditionalStimul"]
+        LogicalAnd["NNeuronTrainer<br/>LogicalAndNeuron"]
+        BigNeuron["NPulseNeuron<br/>BigNeuron"]
+        LogicalOr["NPulseNeuron<br/>LogicalOrNeuron"]
+        Generators["NPulseGeneratorTransit<br/>Generators"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -411,10 +411,10 @@ graph TB
     
     subgraph NAssociationFormer["NAssociationFormer"]
         Former[Association Former]
-        UncondTrainer[NNeuronTrainer<br/>UnconditionalStimul]
-        CondTrainer[NNeuronTrainer<br/>ConditionalStimul]
-        BigNeuron[NPulseNeuron<br/>BigNeuron]
-        Generators[NPulseGeneratorTransit<br/>Generators]
+        UncondTrainer["NNeuronTrainer<br/>UnconditionalStimul"]
+        CondTrainer["NNeuronTrainer<br/>ConditionalStimul"]
+        BigNeuron["NPulseNeuron<br/>BigNeuron"]
+        Generators["NPulseGeneratorTransit<br/>Generators"]
     end
     
     subgraph External["External Components"]

@@ -160,8 +160,8 @@ graph TB
     end
     
     subgraph NPulsePerseptronIaF["NPulsePerseptronIaF Configuration"]
-        IaFLayers[NNeuronsLayerIaF<br/>Layer1..LayerN]
-        IaFNeurons[NPulseNeuronIaF<br/>в каждом слое]
+        IaFLayers["NNeuronsLayerIaF<br/>Layer1..LayerN"]
+        IaFNeurons["NPulseNeuronIaF<br/>в каждом слое"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -379,8 +379,8 @@ graph TB
     end
     
     subgraph NPulsePerseptronIaF["NPulsePerseptronIaF Configuration"]
-        IaFLayers[NNeuronsLayerIaF<br/>Layer1..LayerN]
-        IaFNeurons[NPulseNeuronIaF<br/>in each layer]
+        IaFLayers["NNeuronsLayerIaF<br/>Layer1..LayerN"]
+        IaFNeurons["NPulseNeuronIaF<br/>in each layer"]
     end
     
     subgraph External["External Components"]

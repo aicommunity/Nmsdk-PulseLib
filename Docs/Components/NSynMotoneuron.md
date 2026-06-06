@@ -148,7 +148,7 @@ flowchart TD
     Start([Start Calculate]) --> CallBase[NPulseNeuronCommon::ACalculate]
     CallBase --> CalcMembrane[Расчет NPSynNeuronMembrane (3 части)]
     CalcMembrane --> LoopSynapses[Цикл по синапсам]
-    LoopSynapses --> CalcSynapse[Расчет синапса<br/>оптимизированная обработка]
+    LoopSynapses --> CalcSynapse["Расчет синапса<br/>оптимизированная обработка"]
     CalcSynapse --> CheckMoreSynapses{Есть еще синапсы?}
     CheckMoreSynapses -->|Да| LoopSynapses
     CheckMoreSynapses -->|Нет| CalcMembranePart1[Расчет части 1 сомы]
@@ -185,9 +185,9 @@ graph TB
     end
     
     subgraph NSynMotoneuron["NSynMotoneuron Configuration"]
-        Membrane[NPSynNeuronMembrane<br/>PulseMembrane<br/>3 части сомы<br/>оптимизированная для синапсов]
-        LTZone[NPulseLTZoneCommon<br/>LTZone]
-        Synapses[NPulseSynapse<br/>ExcSynapse1..N]
+        Membrane["NPSynNeuronMembrane<br/>PulseMembrane<br/>3 части сомы<br/>оптимизированная для синапсов"]
+        LTZone["NPulseLTZoneCommon<br/>LTZone"]
+        Synapses["NPulseSynapse<br/>ExcSynapse1..N"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -368,7 +368,7 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> CalcMembrane[Calculate membrane (3 parts)]
     CalcMembrane --> LoopSynapses[Loop through synapses]
-    LoopSynapses --> CalcSynapse[Calculate synapse<br/>optimized]
+    LoopSynapses --> CalcSynapse["Calculate synapse<br/>optimized"]
     CalcSynapse --> CalcMembraneParts[Calculate 3 soma parts]
     CalcMembraneParts --> AggregateMembrane[Aggregate potentials]
     AggregateMembrane --> CalcLTZone[Calculate LT-zone]
@@ -388,7 +388,7 @@ graph TB
     end
     
     subgraph NSynMotoneuron["NSynMotoneuron Configuration"]
-        Membrane[NPSynNeuronMembrane<br/>3 soma parts<br/>optimized]
+        Membrane["NPSynNeuronMembrane<br/>3 soma parts<br/>optimized"]
         LTZone[NPulseLTZoneCommon]
         Synapses[NPulseSynapse]
     end

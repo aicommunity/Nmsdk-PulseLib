@@ -110,7 +110,7 @@ graph TB
     end
 
     subgraph NContinuesSynLPNeuron["NContinuesSynLPNeuron"]
-        LPProcessing[LP Processing<br/>Continuous]
+        LPProcessing["LP Processing<br/>Continuous"]
     end
 
     subgraph External["External Components"]

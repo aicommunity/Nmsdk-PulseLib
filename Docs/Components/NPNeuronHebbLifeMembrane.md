@@ -173,13 +173,13 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> ProcessHebbLifeSynapses[Process Hebb Life synapses<br/>NPHebbLifeSynapse]
-    ProcessHebbLifeSynapses --> UpdateWeights[Update Hebbian weights<br/>based on activity]
-    UpdateWeights --> UpdateLifeMetrics[Update Life metrics<br/>energy, wear out]
+    Start([Start Calculate]) --> ProcessHebbLifeSynapses["Process Hebb Life synapses<br/>NPHebbLifeSynapse"]
+    ProcessHebbLifeSynapses --> UpdateWeights["Update Hebbian weights<br/>based on activity"]
+    UpdateWeights --> UpdateLifeMetrics["Update Life metrics<br/>energy, wear out"]
     UpdateLifeMetrics --> ProcessExcChannel[Process excitatory channel]
     ProcessExcChannel --> ProcessInhChannel[Process inhibitory channel]
     ProcessInhChannel --> AggregateCurrents[Aggregate channel currents]
-    AggregateCurrents --> CalculatePotential[Calculate membrane potential<br/>from channel currents]
+    AggregateCurrents --> CalculatePotential["Calculate membrane potential<br/>from channel currents"]
     CalculatePotential --> ApplyFeedback[Apply feedback gain if needed]
     ApplyFeedback --> SetOutput[Set output potential]
     SetOutput --> End([End])
@@ -194,11 +194,11 @@ graph TB
     end
     
     subgraph NPNeuronHebbLifeMembrane["NPNeuronHebbLifeMembrane Configuration"]
-        HebbLifeSynapseConfig[SynapseClassName<br/>= "NPHebbLifeSynapse"]
+        HebbLifeSynapseConfig["SynapseClassName<br/>= #quot;NPHebbLifeSynapse#quot;"]
     end
     
     subgraph Synapses["Synapses"]
-        HebbLifeSynapse[NPHebbLifeSynapse<br/>Hebb Life Synapse]
+        HebbLifeSynapse["NPHebbLifeSynapse<br/>Hebb Life Synapse"]
     end
     
     subgraph Channels["Channels"]

@@ -164,9 +164,9 @@ graph TB
     end
     
     subgraph NNeuronsLayerIaF["NNeuronsLayerIaF Configuration"]
-        IaFNeurons[NPulseNeuronIaFStdp<br/>Neuron1..NeuronN]
-        IaFMembranes[NPulseMembraneIaF<br/>в каждом нейроне]
-        IaFLTZones[NPulseLTZoneIaF<br/>в каждом нейроне]
+        IaFNeurons["NPulseNeuronIaFStdp<br/>Neuron1..NeuronN"]
+        IaFMembranes["NPulseMembraneIaF<br/>в каждом нейроне"]
+        IaFLTZones["NPulseLTZoneIaF<br/>в каждом нейроне"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -362,7 +362,7 @@ graph TB
     end
     
     subgraph NNeuronsLayerIaF["NNeuronsLayerIaF Configuration"]
-        IaFNeurons[NPulseNeuronIaFStdp<br/>Neuron1..NeuronN]
+        IaFNeurons["NPulseNeuronIaFStdp<br/>Neuron1..NeuronN"]
     end
     
     subgraph External["External Components"]

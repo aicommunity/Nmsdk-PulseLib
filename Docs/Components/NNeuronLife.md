@@ -278,7 +278,7 @@ graph TB
 
     subgraph NNeuronLife["NNeuronLife"]
         LifeCore[Ядро жизнеобеспечения]
-        ExternalBonus[NSum<br/>ExternalEnergyBonus<br/>опционально]
+        ExternalBonus["NSum<br/>ExternalEnergyBonus<br/>опционально"]
     end
 
     subgraph NPulseLifeNeuron["NPulseLifeNeuron"]
@@ -689,7 +689,7 @@ graph TB
 
     subgraph NNeuronLife["NNeuronLife"]
         LifeCore[Life Support Core]
-        ExternalBonus[NSum<br/>optional]
+        ExternalBonus["NSum<br/>optional"]
     end
 
     subgraph NPulseLifeNeuron["NPulseLifeNeuron"]

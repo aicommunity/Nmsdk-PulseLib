@@ -162,8 +162,8 @@ graph TB
     end
     
     subgraph NRenshowCell["NRenshowCell Configuration"]
-        Membrane[NPulseMembrane<br/>PulseMembrane]
-        LTZone[NPulseLTZoneCommon<br/>LTZone]
+        Membrane["NPulseMembrane<br/>PulseMembrane"]
+        LTZone["NPulseLTZoneCommon<br/>LTZone"]
     end
     
     subgraph External["Внешние компоненты"]

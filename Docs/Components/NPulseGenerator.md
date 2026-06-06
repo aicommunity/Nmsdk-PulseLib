@@ -125,8 +125,8 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> CheckFrequency{Frequency < 1e-8 или<br/>TimeStep/Frequency < 1?}
-    CheckFrequency -->|Да| ZeroOutput[Output = 0<br/>OutputPotential = 0<br/>OutputFrequency = 0<br/>OutputPulseTimes = 0<br/>Очистка AvgFrequencyCounter]
+    Start([Start Calculate]) --> CheckFrequency["Frequency < 1e-8 или<br/>TimeStep/Frequency < 1?"]
+    CheckFrequency -->|Да| ZeroOutput["Output = 0<br/>OutputPotential = 0<br/>OutputFrequency = 0<br/>OutputPulseTimes = 0<br/>Очистка AvgFrequencyCounter"]
     CheckFrequency -->|Нет| CheckDelay{Время - ResetTime < Delay?}
     CheckDelay -->|Да| End([End])
     CheckDelay -->|Нет| CheckFrequencyChanged{OldFrequency != Frequency?}
@@ -138,20 +138,20 @@ flowchart TD
     ProcessRegular --> CheckPulseCounter1{PulseCounter > 0?}
     CheckPulseCounter1 -->|Да| DecrementCounter[PulseCounter--]
     DecrementCounter --> CheckEndPulse1{PulseCounter <= 0?}
-    CheckEndPulse1 -->|Да| EndPulse[Output = 0<br/>OutputPotential = 0<br/>PulseCounter = -int(TimeStep/Frequency) + PulseLength*TimeStep]
+    CheckEndPulse1 -->|Да| EndPulse["Output = 0<br/>OutputPotential = 0<br/>PulseCounter = -int(TimeStep/Frequency) + PulseLength*TimeStep"]
     CheckEndPulse1 -->|Нет| SetFrequency[OutputFrequency = Frequency]
     CheckPulseCounter1 -->|Нет| IncrementCounter[PulseCounter++]
     IncrementCounter --> CheckStartPulse1{PulseCounter >= 0?}
-    CheckStartPulse1 -->|Да| StartPulse[Output = Amplitude<br/>OutputPotential = Amplitude<br/>PulseCounter = PulseLength*TimeStep<br/>Запись времени в AvgFrequencyCounter]
+    CheckStartPulse1 -->|Да| StartPulse["Output = Amplitude<br/>OutputPotential = Amplitude<br/>PulseCounter = PulseLength*TimeStep<br/>Запись времени в AvgFrequencyCounter"]
     CheckStartPulse1 -->|Нет| SetFrequency
     ProcessRandom --> CheckPulseCounter2{PulseCounter > 0?}
     CheckPulseCounter2 -->|Да| DecrementCounter2[PulseCounter--]
     DecrementCounter2 --> CheckEndPulse2{PulseCounter <= 0?}
-    CheckEndPulse2 -->|Да| EndPulse2[Output = 0<br/>OutputPotential = 0<br/>RandomFrequency = случайное значение<br/>PulseCounter = -int(TimeStep/RandomFrequency) + PulseLength*TimeStep]
+    CheckEndPulse2 -->|Да| EndPulse2["Output = 0<br/>OutputPotential = 0<br/>RandomFrequency = случайное значение<br/>PulseCounter = -int(TimeStep/RandomFrequency) + PulseLength*TimeStep"]
     CheckEndPulse2 -->|Нет| SetRandomFrequency[OutputFrequency = RandomFrequency]
     CheckPulseCounter2 -->|Нет| IncrementCounter2[PulseCounter++]
     IncrementCounter2 --> CheckStartPulse2{PulseCounter >= 0?}
-    CheckStartPulse2 -->|Да| StartPulse2[Output = Amplitude<br/>OutputPotential = Amplitude<br/>PulseCounter = PulseLength*TimeStep<br/>Запись времени в AvgFrequencyCounter]
+    CheckStartPulse2 -->|Да| StartPulse2["Output = Amplitude<br/>OutputPotential = Amplitude<br/>PulseCounter = PulseLength*TimeStep<br/>Запись времени в AvgFrequencyCounter"]
     CheckStartPulse2 -->|Нет| SetRandomFrequency
     EndPulse --> SetFrequency
     StartPulse --> SetFrequency

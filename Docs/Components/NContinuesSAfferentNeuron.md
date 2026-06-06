@@ -191,10 +191,10 @@ graph TB
     end
     
     subgraph NContinuesSAfferentNeuron["NContinuesSAfferentNeuron Configuration"]
-        Receptor[NReceptor<br/>Receptor]
-        Membrane[NCSynNeuronMembrane<br/>PulseMembrane]
-        LTZone[NCLTZone<br/>LTZone]
-        Generator[NCNeuronNegCGenerator<br/>ExcGenerator]
+        Receptor["NReceptor<br/>Receptor"]
+        Membrane["NCSynNeuronMembrane<br/>PulseMembrane"]
+        LTZone["NCLTZone<br/>LTZone"]
+        Generator["NCNeuronNegCGenerator<br/>ExcGenerator"]
     end
     
     subgraph External["Внешние компоненты"]

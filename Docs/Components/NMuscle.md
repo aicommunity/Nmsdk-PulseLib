@@ -332,7 +332,7 @@ graph TB
     
     subgraph NMuscle["NMuscle"]
         Muscle[Muscle]
-        Receptors[NReceptor<br/>Receptors]
+        Receptors["NReceptor<br/>Receptors"]
         InternalStates[Internal States<br/>y[15], mr[7], etc.]
     end
     

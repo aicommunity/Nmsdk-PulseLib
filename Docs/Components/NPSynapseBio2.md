@@ -205,10 +205,10 @@ flowchart TD
     ReceiveInput --> CheckPulseSignal{UsePulseSignal?}
     CheckPulseSignal -->|Yes| ProcessPulse[Process pulse signal]
     CheckPulseSignal -->|No| ProcessSignal[Process continuous signal]
-    ProcessPulse --> UpdateSecretion[Update mediator secretion<br/>SecretionTC]
+    ProcessPulse --> UpdateSecretion["Update mediator secretion<br/>SecretionTC"]
     ProcessSignal --> UpdateSecretion
-    UpdateSecretion --> UpdateDissociation[Update mediator dissociation<br/>DissociationTC = 0.005]
-    UpdateDissociation --> CalculateOutput[Calculate output<br/>Output = PreOutput / Resistance<br/>Resistance = 8.6e7]
+    UpdateSecretion --> UpdateDissociation["Update mediator dissociation<br/>DissociationTC = 0.005"]
+    UpdateDissociation --> CalculateOutput["Calculate output<br/>Output = PreOutput / Resistance<br/>Resistance = 8.6e7"]
     CalculateOutput --> ApplyWeight[Apply weight if needed]
     ApplyWeight --> End([End])
 ```
@@ -222,8 +222,8 @@ graph TB
     end
     
     subgraph NPSynapseBio2["NPSynapseBio2 Configuration"]
-        BioParams[Bio Parameters<br/>Resistance = 8.6e7<br/>DissociationTC = 0.005]
-        MediatorModel[Mediator Model<br/>SecretionTC, DissociationTC]
+        BioParams["Bio Parameters<br/>Resistance = 8.6e7<br/>DissociationTC = 0.005"]
+        MediatorModel["Mediator Model<br/>SecretionTC, DissociationTC"]
     end
     
     subgraph External["External Components"]

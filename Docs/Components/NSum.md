@@ -132,14 +132,14 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> CalcMinSize[Вычисление min_input_data_size<br/>минимальный размер среди всех Inputs]
+    Start([Start Calculate]) --> CalcMinSize["Вычисление min_input_data_size<br/>минимальный размер среди всех Inputs"]
     CalcMinSize --> CheckMode{Mode?}
     CheckMode -->|0| ResizeOutput0[Output.Resize(1, min_input_data_size)]
     CheckMode -->|1| ResizeOutput1[Output.Resize(1, 1)]
     ResizeOutput0 --> LoopInputs[Цикл по Inputs j = 0..size-1]
     ResizeOutput1 --> LoopInputs
     LoopInputs --> LoopElements[Цикл по элементам i = 0..min_size-1]
-    LoopElements --> GetGain{ Gain.GetRows() > j и<br/>Gain.GetCols() > i?}
+    LoopElements --> GetGain[" Gain.GetRows() > j и<br/>Gain.GetCols() > i?"]
     GetGain -->|Да| UseGain[gain = Gain(j,i)]
     GetGain -->|Нет| UseDefaultGain[gain = 1.0]
     UseGain --> Sum[Output += gain * Inputs[j](0,i)]

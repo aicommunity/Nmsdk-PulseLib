@@ -204,9 +204,9 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> ReceiveInputs[Receive PreOutput from synapses]
     ReceiveInputs --> AggregateInputs[Aggregate synapse inputs]
-    AggregateInputs --> ProcessMediator[Process mediator dynamics<br/>SecretionTC, DissociationTC]
-    ProcessMediator --> CalculateCurrent[Calculate output current<br/>from synapse outputs]
-    CalculateCurrent --> IntegrateOutput[Integrate output potential<br/>with Capacity and Resistance]
+    AggregateInputs --> ProcessMediator["Process mediator dynamics<br/>SecretionTC, DissociationTC"]
+    ProcessMediator --> CalculateCurrent["Calculate output current<br/>from synapse outputs"]
+    CalculateCurrent --> IntegrateOutput["Integrate output potential<br/>with Capacity and Resistance"]
     IntegrateOutput --> SetOutput[Set output]
     SetOutput --> End([End])
 ```
@@ -220,11 +220,11 @@ graph TB
     end
     
     subgraph NPSynChannel["NPSynChannel Alias"]
-        SynapseProcessing[Synapse Processing<br/>Mediator dynamics]
+        SynapseProcessing["Synapse Processing<br/>Mediator dynamics"]
     end
     
     subgraph External["External Components"]
-        Synapses[NPulseSynapse<br/>Synapses]
+        Synapses["NPulseSynapse<br/>Synapses"]
         Membrane[NPulseMembrane]
     end
     

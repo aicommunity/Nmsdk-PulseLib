@@ -371,10 +371,10 @@ graph TB
     
     subgraph NStatePredictor["NStatePredictor"]
         StatePredictor[State Predictor]
-        Predictor[NPredictor<br/>Predictor]
-        Learner[NNeuronLearner<br/>NeuronLearner]
-        LogicalNot[NLogicalNot<br/>LogicalNot]
-        Neurons[NPulseNeuron<br/>Neurons]
+        Predictor["NPredictor<br/>Predictor"]
+        Learner["NNeuronLearner<br/>NeuronLearner"]
+        LogicalNot["NLogicalNot<br/>LogicalNot"]
+        Neurons["NPulseNeuron<br/>Neurons"]
     end
     
     subgraph External["External Components"]

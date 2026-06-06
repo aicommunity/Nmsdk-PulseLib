@@ -207,13 +207,13 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> ReceiveInput[Receive input from pre-neuron]
     ReceiveInput --> ReceivePostActivity[Receive post-synaptic activity]
-    ReceivePostActivity --> UpdateX[Update X variable<br/>XModCoeff, XTau]
-    UpdateX --> UpdateY[Update Y variable<br/>YModCoeff, YTau]
+    ReceivePostActivity --> UpdateX["Update X variable<br/>XModCoeff, XTau"]
+    UpdateX --> UpdateY["Update Y variable<br/>YModCoeff, YTau"]
     UpdateY --> CalculateXYDiff[Calculate XYDiff]
-    CalculateXYDiff --> CalculateSTDP[Calculate STDP weight change<br/>APlus, AMinus]
+    CalculateXYDiff --> CalculateSTDP["Calculate STDP weight change<br/>APlus, AMinus"]
     CalculateSTDP --> UpdateWeight[Update synapse weight]
     UpdateWeight --> UpdateMediator[Update mediator model]
-    UpdateMediator --> CalculateOutput[Calculate output<br/>Output = PreOutput / Resistance]
+    UpdateMediator --> CalculateOutput["Calculate output<br/>Output = PreOutput / Resistance"]
     CalculateOutput --> End([End])
 ```
 
@@ -226,8 +226,8 @@ graph TB
     end
     
     subgraph NPSynapseStdp["NPSynapseStdp Alias"]
-        STDPModel[STDP Model<br/>XModCoeff, YModCoeff<br/>APlus, AMinus]
-        MediatorModel[Mediator Model<br/>SecretionTC, DissociationTC]
+        STDPModel["STDP Model<br/>XModCoeff, YModCoeff<br/>APlus, AMinus"]
+        MediatorModel["Mediator Model<br/>SecretionTC, DissociationTC"]
     end
     
     subgraph External["External Components"]

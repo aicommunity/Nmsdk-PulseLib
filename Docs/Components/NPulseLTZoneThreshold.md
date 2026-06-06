@@ -146,9 +146,9 @@ flowchart TD
     Start([Start Calculate]) --> AggregateInputs[Агрегация Inputs]
     AggregateInputs --> CalcPotential[Расчет Potential]
     CalcPotential --> CallACalculate2[ACalculate2]
-    CallACalculate2 --> CheckPulseOn{CheckPulseOn?<br/>Potential >= Threshold?}
+    CallACalculate2 --> CheckPulseOn["CheckPulseOn?<br/>Potential >= Threshold?"]
     CheckPulseOn -->|Да| GenerateSpike[Генерация спайка]
-    CheckPulseOn -->|Нет| CheckPulseOff{CheckPulseOff?<br/>Potential < ThresholdOff?}
+    CheckPulseOn -->|Нет| CheckPulseOff["CheckPulseOff?<br/>Potential < ThresholdOff?"]
     GenerateSpike --> SetOutput[Output = PulseAmplitude]
     SetOutput --> SetPulseFlag[PulseFlag = true]
     SetPulseFlag --> AddToFreqCounter[AvgFrequencyCounter.push_back(time)]

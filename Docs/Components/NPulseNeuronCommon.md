@@ -413,8 +413,8 @@ graph TB
     end
 
     subgraph NPulseNeuronCommon["NPulseNeuronCommon"]
-        Membranes[NPulseMembraneCommon<br/>Membranes]
-        LTZone[NLTZone<br/>LT-zone]
+        Membranes["NPulseMembraneCommon<br/>Membranes"]
+        LTZone["NLTZone<br/>LT-zone"]
         ActivityProps[Activity Properties]
     end
 

@@ -119,7 +119,7 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> CalcMembrane[Calculate NPSynNeuronMembrane<br/>3 soma parts]
+    Start([Start Calculate]) --> CalcMembrane["Calculate NPSynNeuronMembrane<br/>3 soma parts"]
     CalcMembrane --> CalcSynapses[Calculate optimized synapses]
     CalcSynapses --> CalcLTZone[Calculate LT-zone]
     CalcLTZone --> CheckThreshold{Threshold reached?}
@@ -138,12 +138,12 @@ graph TB
     end
     
     subgraph NNewSynLPNeuron["NNewSynLPNeuron Configuration"]
-        Membrane[NPSynNeuronMembrane<br/>3 soma parts<br/>optimized for synapses]
+        Membrane["NPSynNeuronMembrane<br/>3 soma parts<br/>optimized for synapses"]
         LTZone[NPulseLTZoneCommon]
     end
     
     subgraph External["External Components"]
-        Synapses[Synapses<br/>optimized]
+        Synapses["Synapses<br/>optimized"]
         PreNeurons[Presynaptic neurons]
     end
     

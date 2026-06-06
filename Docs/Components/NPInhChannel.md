@@ -158,8 +158,8 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> ReceiveInputs[Receive input signals]
     ReceiveInputs --> AggregateInputs[Aggregate input signals]
-    AggregateInputs --> ApplyType[Apply Type = 1<br/>Inhibitory coefficient]
-    ApplyType --> CalculatePotential[Calculate output potential<br/>Decreases membrane potential]
+    AggregateInputs --> ApplyType["Apply Type = 1<br/>Inhibitory coefficient"]
+    ApplyType --> CalculatePotential["Calculate output potential<br/>Decreases membrane potential"]
     CalculatePotential --> SetOutput[Set output]
     SetOutput --> End([End])
 ```
@@ -173,7 +173,7 @@ graph TB
     end
     
     subgraph NPInhChannel["NPInhChannel Configuration"]
-        InhibitoryType[Inhibitory Type<br/>Type = 1]
+        InhibitoryType["Inhibitory Type<br/>Type = 1"]
     end
     
     subgraph External["External Components"]

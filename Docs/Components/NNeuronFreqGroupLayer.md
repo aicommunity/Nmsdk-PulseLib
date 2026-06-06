@@ -86,7 +86,7 @@ graph TB
 
     subgraph NNeuronFreqGroupLayer["NNeuronFreqGroupLayer"]
         Layer[Слой частотных групп]
-        FreqGroups[Частотные группы<br/>NNeuronFreqGroup]
+        FreqGroups["Частотные группы<br/>NNeuronFreqGroup"]
     end
 
     subgraph External["Внешние компоненты"]
@@ -196,7 +196,7 @@ graph TB
 
     subgraph NNeuronFreqGroupLayer["NNeuronFreqGroupLayer"]
         Layer[Frequency group layer]
-        FreqGroups[NNeuronFreqGroup<br/>Groups grid<br/>Height x Width]
+        FreqGroups["NNeuronFreqGroup<br/>Groups grid<br/>Height x Width"]
     end
 
     subgraph External["External Components"]

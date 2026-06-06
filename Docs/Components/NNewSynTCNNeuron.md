@@ -141,8 +141,8 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> CalcMembrane[Calculate NPNewSynNeuronMembrane<br/>dendritic structure]
-    CalcMembrane --> CalcDendrites[Calculate dendrites<br/>length = {4,1,1,1}]
+    Start([Start Calculate]) --> CalcMembrane["Calculate NPNewSynNeuronMembrane<br/>dendritic structure"]
+    CalcMembrane --> CalcDendrites["Calculate dendrites<br/>length = {4,1,1,1}"]
     CalcDendrites --> CalcSynapses[Calculate optimized synapses]
     CalcSynapses --> CalcLTMembrane[Calculate NPLTZoneSynNeuronMembrane]
     CalcLTMembrane --> CalcLTZone[Calculate NPLTZone]
@@ -162,14 +162,14 @@ graph TB
     end
     
     subgraph NNewSynTCNNeuron["NNewSynTCNNeuron Configuration"]
-        Membrane[NPNewSynNeuronMembrane<br/>dendrite_length = {4,1,1,1}]
+        Membrane["NPNewSynNeuronMembrane<br/>dendrite_length = {4,1,1,1}"]
         LTMembrane[NPLTZoneSynNeuronMembrane]
         LTZone[NPLTZone]
     end
     
     subgraph External["External Components"]
-        Synapses[Synapses<br/>optimized]
-        PreNeurons[Presynaptic neurons<br/>thalamic/cortical]
+        Synapses["Synapses<br/>optimized"]
+        PreNeurons["Presynaptic neurons<br/>thalamic/cortical"]
     end
     
     BaseNeuron -->|configured as| NNewSynTCNNeuron

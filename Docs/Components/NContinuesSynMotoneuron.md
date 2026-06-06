@@ -110,7 +110,7 @@ graph TB
     end
 
     subgraph NContinuesSynMotoneuron["NContinuesSynMotoneuron"]
-        MotorProcessing[Motor Processing<br/>Continuous]
+        MotorProcessing["Motor Processing<br/>Continuous"]
     end
 
     subgraph External["External Components"]

@@ -179,7 +179,7 @@ graph TB
     
     subgraph NPattern["NPattern"]
         PatternModel[Генератор паттернов]
-        Generators[NPulseGeneratorTransit<br/>Generator1..GeneratorN]
+        Generators["NPulseGeneratorTransit<br/>Generator1..GeneratorN"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -386,7 +386,7 @@ graph TB
     
     subgraph NPattern["NPattern"]
         PatternModel[Pattern Generator]
-        Generators[NPulseGeneratorTransit<br/>Generator1..GeneratorN]
+        Generators["NPulseGeneratorTransit<br/>Generator1..GeneratorN"]
     end
     
     subgraph External["External Components"]

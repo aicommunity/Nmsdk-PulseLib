@@ -109,8 +109,8 @@ stateDiagram-v2
 ```mermaid
 flowchart TD
     Start([Start Calculate]) --> GetAmplitude[Get Amplitude = -1.0]
-    GetAmplitude --> GenerateCurrent[Generate constant current<br/>Output = Amplitude]
-    GenerateCurrent --> SetOutput[Set Output = -1.0<br/>negative current]
+    GetAmplitude --> GenerateCurrent["Generate constant current<br/>Output = Amplitude"]
+    GenerateCurrent --> SetOutput["Set Output = -1.0<br/>negative current"]
     SetOutput --> End([End])
 ```
 
@@ -123,7 +123,7 @@ graph TB
     end
     
     subgraph NPNeuronNegCGenerator["NPNeuronNegCGenerator Configuration"]
-        NegativeAmplitude[Negative Amplitude<br/>Amplitude = -1.0]
+        NegativeAmplitude["Negative Amplitude<br/>Amplitude = -1.0"]
     end
     
     subgraph External["External Components"]

@@ -163,7 +163,7 @@ stateDiagram-v2
 ```mermaid
 flowchart TD
     Start([Start Calculate]) --> AggregateInputs[Aggregate input signals]
-    AggregateInputs --> CalculatePotential[Calculate potential<br/>UseAveragePotential?]
+    AggregateInputs --> CalculatePotential["Calculate potential<br/>UseAveragePotential?"]
     CalculatePotential --> CheckThreshold{Potential >= Threshold?}
     CheckThreshold -->|Yes| CheckThresholdOff{Potential < ThresholdOff?}
     CheckThreshold -->|No| SetOutputZero[Output = 0]
@@ -182,8 +182,8 @@ graph TB
     end
     
     subgraph NCLTZone["NCLTZone Configuration"]
-        ThresholdLogic[Threshold Logic<br/>Threshold, ThresholdOff]
-        PotentialCalc[Potential Calculation<br/>UseAveragePotential]
+        ThresholdLogic["Threshold Logic<br/>Threshold, ThresholdOff"]
+        PotentialCalc["Potential Calculation<br/>UseAveragePotential"]
     end
     
     subgraph External["External Components"]

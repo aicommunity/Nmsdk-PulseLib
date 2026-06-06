@@ -187,7 +187,7 @@ graph TB
 
     subgraph NNeuronFreqGroup["NNeuronFreqGroup"]
         FreqGroup[Frequency neuron group]
-        AffNeurons[Afferent Neurons<br/>NumAffNeurons]
+        AffNeurons["Afferent Neurons<br/>NumAffNeurons"]
     end
 
     subgraph External["External Components"]

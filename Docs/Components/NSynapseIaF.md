@@ -339,7 +339,7 @@ graph TB
     end
     
     subgraph NSynapseIaF["NSynapseIaF"]
-        IaFParams[IaF-specific parameters<br/>(SecretionTC, DissociationTC, Resistance)]
+        IaFParams["IaF-specific parameters<br/>(SecretionTC, DissociationTC, Resistance)"]
     end
     
     subgraph External["External Components"]

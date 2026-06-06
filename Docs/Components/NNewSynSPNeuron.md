@@ -138,12 +138,12 @@ graph TB
     end
     
     subgraph NNewSynSPNeuron["NNewSynSPNeuron Configuration"]
-        Membrane[NPSynNeuronMembrane<br/>optimized for synapses]
+        Membrane["NPSynNeuronMembrane<br/>optimized for synapses"]
         LTZone[NPulseLTZoneCommon]
     end
     
     subgraph External["External Components"]
-        Synapses[Synapses<br/>optimized]
+        Synapses["Synapses<br/>optimized"]
         PreNeurons[Presynaptic neurons]
     end
     

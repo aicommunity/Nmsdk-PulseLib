@@ -115,8 +115,8 @@ graph TB
 
     subgraph NNeuronTrainer["NNeuronTrainer"]
         Trainer[Тренер нейронов]
-        Neuron[NPulseNeuron<br/>Neuron]
-        Generators[NPulseGeneratorTransit<br/>Source1..SourceN]
+        Neuron["NPulseNeuron<br/>Neuron"]
+        Generators["NPulseGeneratorTransit<br/>Source1..SourceN"]
     end
 
     subgraph External["Внешние компоненты"]
@@ -277,7 +277,7 @@ graph TB
     subgraph NNeuronTrainer["NNeuronTrainer"]
         Trainer[Neuron trainer]
         Neuron[NPulseNeuron]
-        Generators[NPulseGeneratorTransit<br/>Source1..SourceN]
+        Generators["NPulseGeneratorTransit<br/>Source1..SourceN"]
     end
 
     subgraph External["External Components"]

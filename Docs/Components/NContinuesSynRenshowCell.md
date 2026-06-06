@@ -136,12 +136,12 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> ReceiveInputs[Receive inputs from motoneuron<br/>collateral]
-    ReceiveInputs --> ProcessMembrane[Process NCSynNeuronMembrane<br/>continuous processing]
+    Start([Start Calculate]) --> ReceiveInputs["Receive inputs from motoneuron<br/>collateral"]
+    ReceiveInputs --> ProcessMembrane["Process NCSynNeuronMembrane<br/>continuous processing"]
     ProcessMembrane --> CalculatePotential[Calculate membrane potential]
-    CalculatePotential --> ProcessLTZone[Process NCLTZone<br/>classic LT-zone]
+    CalculatePotential --> ProcessLTZone["Process NCLTZone<br/>classic LT-zone"]
     ProcessLTZone --> CheckThreshold[Check threshold]
-    CheckThreshold --> GenerateInhibition[Generate inhibitory feedback<br/>to motoneuron]
+    CheckThreshold --> GenerateInhibition["Generate inhibitory feedback<br/>to motoneuron"]
     GenerateInhibition --> End([End])
 ```
 
@@ -154,12 +154,12 @@ graph TB
     end
     
     subgraph NContinuesSynRenshowCell["NContinuesSynRenshowCell Configuration"]
-        Membrane[NCSynNeuronMembrane<br/>Classic Membrane]
-        LTZone[NCLTZone<br/>Classic LT-Zone]
+        Membrane["NCSynNeuronMembrane<br/>Classic Membrane"]
+        LTZone["NCLTZone<br/>Classic LT-Zone"]
     end
     
     subgraph External["External Components"]
-        Motoneuron[Motoneuron<br/>Collateral Input]
+        Motoneuron["Motoneuron<br/>Collateral Input"]
         OtherNeurons[Other Neurons]
     end
     

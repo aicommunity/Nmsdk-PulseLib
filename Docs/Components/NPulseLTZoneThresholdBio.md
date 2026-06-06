@@ -179,9 +179,9 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> AggregateInputs[Aggregate input potentials]
     AggregateInputs --> GetPotential[Get Potential from channels]
-    GetPotential --> CheckPulseOn{Potential >= Threshold<br/>(-0.055)?}
+    GetPotential --> CheckPulseOn["Potential >= Threshold<br/>(-0.055)?"]
     CheckPulseOn -->|Yes| GenerateSpike[Generate spike]
-    CheckPulseOn -->|No| CheckPulseOff{Potential < ThresholdOff<br/>(-0.1)?}
+    CheckPulseOn -->|No| CheckPulseOff["Potential < ThresholdOff<br/>(-0.1)?"]
     CheckPulseOff -->|Yes| StopSpike[Stop spike]
     CheckPulseOff -->|No| UpdateOutput[Update Output]
     GenerateSpike --> UpdateFrequency[Update OutputFrequency]
@@ -199,7 +199,7 @@ graph TB
     end
     
     subgraph NPulseLTZoneThresholdBio["NPulseLTZoneThresholdBio Configuration"]
-        BioThresholds[Bio Thresholds<br/>Threshold = -0.055<br/>ThresholdOff = -0.1]
+        BioThresholds["Bio Thresholds<br/>Threshold = -0.055<br/>ThresholdOff = -0.1"]
     end
     
     subgraph External["External Components"]

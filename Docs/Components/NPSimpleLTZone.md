@@ -194,7 +194,7 @@ flowchart TD
     CheckThreshold -->|No| End([End])
     CheckThreshold -->|Yes| CheckFrequency{Current frequency < MaxFrequency?}
     CheckFrequency -->|No| End
-    CheckFrequency -->|Yes| GenerateSpike[Generate spike<br/>using internal generator]
+    CheckFrequency -->|Yes| GenerateSpike["Generate spike<br/>using internal generator"]
     GenerateSpike --> UpdateOutput[Update Output]
     UpdateOutput --> End
 ```
@@ -208,8 +208,8 @@ graph TB
     end
     
     subgraph NPSimpleLTZone["NPSimpleLTZone Configuration"]
-        MaxFreqLimit[MaxFrequency Limit<br/>MaxFrequency parameter]
-        InternalGenerator[NPulseGenerator<br/>Internal Generator]
+        MaxFreqLimit["MaxFrequency Limit<br/>MaxFrequency parameter"]
+        InternalGenerator["NPulseGenerator<br/>Internal Generator"]
     end
     
     subgraph External["External Components"]

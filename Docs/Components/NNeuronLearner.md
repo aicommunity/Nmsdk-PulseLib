@@ -111,8 +111,8 @@ graph TB
 
     subgraph NNeuronLearner["NNeuronLearner"]
         Learner[Обучающийся нейрон]
-        Neuron[NPulseNeuron<br/>Neuron]
-        Generators[NPulseGeneratorTransit<br/>Source1..SourceN]
+        Neuron["NPulseNeuron<br/>Neuron"]
+        Generators["NPulseGeneratorTransit<br/>Source1..SourceN"]
     end
 
     subgraph External["Внешние компоненты"]
@@ -435,7 +435,7 @@ graph TB
     subgraph NNeuronLearner["NNeuronLearner"]
         Learner[Learning neuron]
         Neuron[NPulseNeuron]
-        Generators[NPulseGeneratorTransit<br/>Source1..SourceN]
+        Generators["NPulseGeneratorTransit<br/>Source1..SourceN"]
     end
 
     subgraph External["External Components"]

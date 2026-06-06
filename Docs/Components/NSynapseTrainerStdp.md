@@ -136,17 +136,17 @@ flowchart TD
     CheckPostConnected -->|Нет| SetWeight1
     CheckPostConnected -->|Да| CheckPostCols{PostSynInput.GetCols() > 0?}
     CheckPostCols -->|Нет| SetWeight1
-    CheckPostCols -->|Да| ResetFlags[IsInputPulseActive = false<br/>IsOutputPulseActive = false]
+    CheckPostCols -->|Да| ResetFlags["IsInputPulseActive = false<br/>IsOutputPulseActive = false"]
     SetWeight1 --> End
-    ResetFlags --> CheckPreSpike{PreSynInput > 0 и<br/>время > TPre + 1/TimeStep?}
-    CheckPreSpike -->|Да| UpdateTPre[TPreOld = TPre<br/>TPre = текущее время<br/>IsInputPulseActive = true]
-    CheckPreSpike -->|Нет| CheckPostSpike{PostSynInput > 0 и<br/>время > TPost + 1/TimeStep?}
+    ResetFlags --> CheckPreSpike["PreSynInput > 0 и<br/>время > TPre + 1/TimeStep?"]
+    CheckPreSpike -->|Да| UpdateTPre["TPreOld = TPre<br/>TPre = текущее время<br/>IsInputPulseActive = true"]
+    CheckPreSpike -->|Нет| CheckPostSpike["PostSynInput > 0 и<br/>время > TPost + 1/TimeStep?"]
     UpdateTPre --> CheckPostSpike
-    CheckPostSpike -->|Да| UpdateTPost[TPostOld = TPost<br/>TPost = текущее время<br/>IsOutputPulseActive = true]
+    CheckPostSpike -->|Да| UpdateTPost["TPostOld = TPost<br/>TPost = текущее время<br/>IsOutputPulseActive = true"]
     CheckPostSpike -->|Нет| End
     UpdateTPost --> End
     
-    Note1[Базовый класс только отслеживает спайки.<br/>Изменение весов реализуется в производных классах.]
+    Note1["Базовый класс только отслеживает спайки.<br/>Изменение весов реализуется в производных классах."]
     Note1 -.-> End
 ```
 

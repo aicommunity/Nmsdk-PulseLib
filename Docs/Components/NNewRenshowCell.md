@@ -145,14 +145,14 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> ReceiveInput[Receive excitatory input<br/>from motoneuron]
+    Start([Start Calculate]) --> ReceiveInput["Receive excitatory input<br/>from motoneuron"]
     ReceiveInput --> CalcMembrane[Calculate NPNewNeuronMembrane]
     CalcMembrane --> CalcLTMembrane[Calculate NPLTZoneNeuronMembrane]
     CalcLTMembrane --> CalcLTZone[Calculate NPLTZone]
     CalcLTZone --> CheckThreshold{Threshold reached?}
     CheckThreshold -->|Yes| GenerateInhibitorySpike[Generate inhibitory spike]
     CheckThreshold -->|No| NoSpike[No spike]
-    GenerateInhibitorySpike --> SendFeedback[Send inhibitory feedback<br/>to motoneuron]
+    GenerateInhibitorySpike --> SendFeedback["Send inhibitory feedback<br/>to motoneuron"]
     NoSpike --> SendFeedback
     SendFeedback --> End([End])
 ```

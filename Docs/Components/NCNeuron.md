@@ -118,7 +118,7 @@ flowchart TD
     Start([Start ACalculate]) --> ReceiveInputs[Прием входных сигналов]
     ReceiveInputs --> AggregateInputs[Агрегация входных сигналов]
     AggregateInputs --> CalculateInput[Вычисление Input]
-    CalculateInput --> ApplyActivation[Применение функции активации<br/>f(Input, ActA, ActB)]
+    CalculateInput --> ApplyActivation["Применение функции активации<br/>f(Input, ActA, ActB)"]
     ApplyActivation --> SetOutput[Установка Output = активация]
     SetOutput --> End([End])
 ```
@@ -138,7 +138,7 @@ graph TB
     end
     
     subgraph NCNeuron["NCNeuron"]
-        ActivationFunction[Функция активации<br/>ActA, ActB]
+        ActivationFunction["Функция активации<br/>ActA, ActB"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -317,7 +317,7 @@ flowchart TD
     Start([Start ACalculate]) --> ReceiveInputs[Receive input signals]
     ReceiveInputs --> AggregateInputs[Aggregate inputs]
     AggregateInputs --> CalculateInput[Calculate Input]
-    CalculateInput --> ApplyActivation[Apply activation function<br/>f(Input, ActA, ActB)]
+    CalculateInput --> ApplyActivation["Apply activation function<br/>f(Input, ActA, ActB)"]
     ApplyActivation --> SetOutput[Set Output = activation]
     SetOutput --> End([End])
 ```
@@ -331,7 +331,7 @@ graph TB
     end
     
     subgraph NCNeuron["NCNeuron"]
-        ActivationFunction[Activation Function<br/>ActA, ActB]
+        ActivationFunction["Activation Function<br/>ActA, ActB"]
     end
     
     subgraph External["External Components"]

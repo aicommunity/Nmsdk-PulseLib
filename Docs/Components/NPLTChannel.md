@@ -217,7 +217,7 @@ graph TB
     end
     
     subgraph NPLTChannel["NPLTChannel Configuration"]
-        LTParams[LT-zone parameters<br/>Capacity = 1e-8<br/>RestingResistance = 1e6]
+        LTParams["LT-zone parameters<br/>Capacity = 1e-8<br/>RestingResistance = 1e6"]
     end
     
     subgraph External["External Components"]

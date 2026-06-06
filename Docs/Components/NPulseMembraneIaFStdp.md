@@ -179,8 +179,8 @@ graph TB
     
     subgraph NPulseMembraneIaFStdp["NPulseMembraneIaFStdp"]
         ExcChannel[NPulseChannelIaF]
-        STDPSynapses[NSynapseStdp<br/>Multiple synapses]
-        Trainers[NSynapseTrainerStdp<br/>STDP Trainers]
+        STDPSynapses["NSynapseStdp<br/>Multiple synapses"]
+        Trainers["NSynapseTrainerStdp<br/>STDP Trainers"]
         Properties[Мембранные свойства]
     end
     
@@ -489,8 +489,8 @@ graph TB
     
     subgraph NPulseMembraneIaFStdp["NPulseMembraneIaFStdp"]
         ExcChannel[NPulseChannelIaF]
-        STDPSynapses[NSynapseStdp<br/>Multiple synapses]
-        Trainers[NSynapseTrainerStdp<br/>STDP Trainers]
+        STDPSynapses["NSynapseStdp<br/>Multiple synapses"]
+        Trainers["NSynapseTrainerStdp<br/>STDP Trainers"]
         Properties[Membrane Properties]
     end
     

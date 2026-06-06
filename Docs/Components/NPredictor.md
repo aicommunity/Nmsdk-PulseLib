@@ -351,7 +351,7 @@ graph TB
     
     subgraph NPredictor["NPredictor"]
         Predictor[Predictor]
-        Neurons[NPulseNeuron<br/>Neurons]
+        Neurons["NPulseNeuron<br/>Neurons"]
     end
     
     subgraph External["External Components"]

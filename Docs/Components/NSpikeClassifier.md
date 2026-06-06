@@ -598,9 +598,9 @@ graph TB
     
     subgraph NSpikeClassifier["NSpikeClassifier"]
         Classifier[Spike Classifier]
-        Generators[NPulseGeneratorTransit<br/>Generators]
-        Trainers[NNeuronTrainer<br/>Trainers]
-        Neurons[NPulseNeuron<br/>Neurons]
+        Generators["NPulseGeneratorTransit<br/>Generators"]
+        Trainers["NNeuronTrainer<br/>Trainers"]
+        Neurons["NPulseNeuron<br/>Neurons"]
     end
     
     subgraph External["External Components"]

@@ -99,7 +99,7 @@ stateDiagram-v2
     Resetting --> ClearBuffer: Очистка buffer
     ClearBuffer --> Ready: Состояния сброшены
     Ready --> Calculating: Calculate()
-    Calculating --> CheckDelay{DelayTime < 0.001<br/>или<br/>desired_buffer_length == 0?}
+    Calculating --> CheckDelay["DelayTime < 0.001<br/>или<br/>desired_buffer_length == 0?"]
     CheckDelay -->|Да| NoDelay: Output = Input
     CheckDelay -->|Нет| CheckBufferFull{Буфер заполнен?}
     CheckBufferFull -->|Нет| AddToBuffer: buffer.push_back(Input), Output = 0.0
@@ -132,11 +132,11 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> CheckDelay{DelayTime < 0.001<br/>или<br/>desired_buffer_length == 0?}
+    Start([Start Calculate]) --> CheckDelay["DelayTime < 0.001<br/>или<br/>desired_buffer_length == 0?"]
     CheckDelay -->|Да| NoDelay[Output = Input]
     CheckDelay -->|Нет| CheckBufferFull{Буфер заполнен?}
-    CheckBufferFull -->|Нет| AddToBuffer[buffer.push_back(Input)<br/>Output = 0.0]
-    CheckBufferFull -->|Да| GetFromBuffer[Output = buffer.back()<br/>buffer.pop_back()]
+    CheckBufferFull -->|Нет| AddToBuffer["buffer.push_back(Input)<br/>Output = 0.0"]
+    CheckBufferFull -->|Да| GetFromBuffer["Output = buffer.back()<br/>buffer.pop_back()"]
     GetFromBuffer --> AddToFront[buffer.push_front(Input)]
     NoDelay --> End([End])
     AddToBuffer --> End

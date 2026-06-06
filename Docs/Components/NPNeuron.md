@@ -162,10 +162,10 @@ graph TB
     end
     
     subgraph NPNeuron["NPNeuron Configuration"]
-        Membrane[NPulseMembraneCommon<br/>PulseMembrane]
-        LTZone[NPulseLTZoneCommon<br/>LTZone]
-        PosGen[NConstGenerator<br/>PosGenerator]
-        NegGen[NConstGenerator<br/>NegGenerator]
+        Membrane["NPulseMembraneCommon<br/>PulseMembrane"]
+        LTZone["NPulseLTZoneCommon<br/>LTZone"]
+        PosGen["NConstGenerator<br/>PosGenerator"]
+        NegGen["NConstGenerator<br/>NegGenerator"]
     end
     
     subgraph External["Внешние компоненты"]

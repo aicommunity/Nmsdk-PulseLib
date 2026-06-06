@@ -168,11 +168,11 @@ flowchart TD
     CheckPattern -->|Да| CheckPatternMode{IsInPatternMode?}
     CheckPattern -->|Нет| NormalGenerate[NPulseGenerator::ACalculate]
     CheckPatternMode -->|Нет| CheckInputSignal{Input >= 0.01 и !TheSamePulse?}
-    CheckPatternMode -->|Да| CheckPatternEnd{Время истекло или<br/>повторный сигнал?}
-    CheckInputSignal -->|Да| StartPattern[Frequency = PatternFrequency<br/>IsInPatternMode = true<br/>PatternStartTime = time]
+    CheckPatternMode -->|Да| CheckPatternEnd["Время истекло или<br/>повторный сигнал?"]
+    CheckInputSignal -->|Да| StartPattern["Frequency = PatternFrequency<br/>IsInPatternMode = true<br/>PatternStartTime = time"]
     CheckInputSignal -->|Нет| NormalGenerate
     StartPattern --> GeneratePattern[NPulseGenerator::ACalculate]
-    CheckPatternEnd -->|Да| EndPattern[Frequency = 0<br/>IsInPatternMode = false]
+    CheckPatternEnd -->|Да| EndPattern["Frequency = 0<br/>IsInPatternMode = false"]
     CheckPatternEnd -->|Нет| GeneratePattern
     EndPattern --> NormalGenerate
     GeneratePattern --> End

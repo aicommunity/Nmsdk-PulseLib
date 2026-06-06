@@ -190,9 +190,9 @@ graph TB
     end
     
     subgraph NLPHebbNeuron["NLPHebbNeuron Configuration"]
-        Membrane[NPNeuronHebbMembrane<br/>PulseMembrane<br/>3 части сомы]
-        LTZone[NPulseLTZoneCommon<br/>LTZone]
-        Synapses[NPulseHebbSynapse<br/>ExcSynapse1..N]
+        Membrane["NPNeuronHebbMembrane<br/>PulseMembrane<br/>3 части сомы"]
+        LTZone["NPulseLTZoneCommon<br/>LTZone"]
+        Synapses["NPulseHebbSynapse<br/>ExcSynapse1..N"]
     end
     
     subgraph External["Внешние компоненты"]
@@ -405,7 +405,7 @@ graph TB
     end
     
     subgraph NLPHebbNeuron["NLPHebbNeuron Configuration"]
-        Membrane[NPNeuronHebbMembrane<br/>3 soma parts]
+        Membrane["NPNeuronHebbMembrane<br/>3 soma parts"]
         LTZone[NPulseLTZoneCommon]
         Synapses[NPulseHebbSynapse]
     end

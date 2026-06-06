@@ -178,12 +178,12 @@ flowchart TD
     Start([Start ACalculate2]) --> ReceiveInputs[Receive input signals]
     ReceiveInputs --> AggregateInputs[Aggregate input signals]
     AggregateInputs --> CalculateNeuralPotential[Calculate NeuralPotential]
-    CalculateNeuralPotential --> ApplyTanh[Apply tanh function<br/>potential = tanh(NeuralPotential)]
+    CalculateNeuralPotential --> ApplyTanh["Apply tanh function<br/>potential = tanh(NeuralPotential)"]
     ApplyTanh --> CheckThreshold{Potential >= Threshold?}
     CheckThreshold -->|Yes| CheckThresholdOff{Potential < ThresholdOff?}
     CheckThreshold -->|No| SetOutputZero[Output = 0]
     CheckThresholdOff -->|Yes| SetOutputZero
-    CheckThresholdOff -->|No| SetOutputSignal[Output = signal<br/>PulseAmplitude]
+    CheckThresholdOff -->|No| SetOutputSignal["Output = signal<br/>PulseAmplitude"]
     SetOutputZero --> End([End])
     SetOutputSignal --> End
 ```
@@ -197,9 +197,9 @@ graph TB
     end
     
     subgraph NCSimpleLTZone["NCSimpleLTZone"]
-        TimeConstant[Time Constant<br/>SetTimeConstant]
-        PulseAmplitude[Pulse Amplitude<br/>SetPulseAmplitude]
-        TanhFunction[tanh Function<br/>for potential calculation]
+        TimeConstant["Time Constant<br/>SetTimeConstant"]
+        PulseAmplitude["Pulse Amplitude<br/>SetPulseAmplitude"]
+        TanhFunction["tanh Function<br/>for potential calculation"]
     end
     
     subgraph External["External Components"]

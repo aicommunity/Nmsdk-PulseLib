@@ -169,9 +169,9 @@ graph TB
     end
     
     subgraph NNewSPNeuron["NNewSPNeuron Configuration"]
-        Membrane[NPNewNeuronMembrane<br/>PulseMembrane]
-        LTMembrane[NPLTZoneNeuronMembrane<br/>LTMembrane]
-        LTZone[NPLTZone<br/>LTZone]
+        Membrane["NPNewNeuronMembrane<br/>PulseMembrane"]
+        LTMembrane["NPLTZoneNeuronMembrane<br/>LTMembrane"]
+        LTZone["NPLTZone<br/>LTZone"]
     end
     
     subgraph External["Внешние компоненты"]

@@ -115,7 +115,7 @@ graph TB
     end
     
     subgraph External["Внешние компоненты"]
-        Network[Классическая нейронная сеть<br/>получатель токов]
+        Network["Классическая нейронная сеть<br/>получатель токов"]
     end
     
     BaseSource -->|создается как| NCGenerator

@@ -169,11 +169,11 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Start([Start Calculate]) --> CalcSomaMembrane[Calculate soma membrane<br/>NPNeuronHebbMembrane]
-    CalcSomaMembrane --> CalcDendriteMembranes[Calculate dendrite membranes<br/>3 parts]
-    CalcDendriteMembranes --> AggregatePotentials[Aggregate potentials<br/>from soma and dendrites]
+    Start([Start Calculate]) --> CalcSomaMembrane["Calculate soma membrane<br/>NPNeuronHebbMembrane"]
+    CalcSomaMembrane --> CalcDendriteMembranes["Calculate dendrite membranes<br/>3 parts"]
+    CalcDendriteMembranes --> AggregatePotentials["Aggregate potentials<br/>from soma and dendrites"]
     AggregatePotentials --> CalcLTZone[Calculate LT-zone]
-    CalcLTZone --> UpdateNeuronLife[Update NeuronLife<br/>life metrics]
+    CalcLTZone --> UpdateNeuronLife["Update NeuronLife<br/>life metrics"]
     UpdateNeuronLife --> CheckLifeMetrics{Life metrics OK?}
     CheckLifeMetrics -->|Yes| UpdateOutput[Update Output]
     CheckLifeMetrics -->|No| AdjustActivity[Adjust activity]
@@ -190,13 +190,13 @@ graph TB
     end
     
     subgraph NSPDendriteLifeHebbNeuron["NSPDendriteLifeHebbNeuron Configuration"]
-        SomaMembrane[NPNeuronHebbMembrane<br/>Soma Membrane]
-        DendriteMembrane1[NPNeuronHebbMembrane<br/>Dendrite 1]
-        DendriteMembrane2[NPNeuronHebbMembrane<br/>Dendrite 2]
-        DendriteMembrane3[NPNeuronHebbMembrane<br/>Dendrite 3]
-        LTZone[NPulseLTZoneCommon<br/>LTZone]
-        NeuronLife[NNeuronLife<br/>NeuronLife]
-        Synapses[NPulseHebbSynapse<br/>Synapses]
+        SomaMembrane["NPNeuronHebbMembrane<br/>Soma Membrane"]
+        DendriteMembrane1["NPNeuronHebbMembrane<br/>Dendrite 1"]
+        DendriteMembrane2["NPNeuronHebbMembrane<br/>Dendrite 2"]
+        DendriteMembrane3["NPNeuronHebbMembrane<br/>Dendrite 3"]
+        LTZone["NPulseLTZoneCommon<br/>LTZone"]
+        NeuronLife["NNeuronLife<br/>NeuronLife"]
+        Synapses["NPulseHebbSynapse<br/>Synapses"]
     end
     
     subgraph External["External Components"]

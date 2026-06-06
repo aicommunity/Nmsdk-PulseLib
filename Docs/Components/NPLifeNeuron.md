@@ -156,7 +156,7 @@ graph TB
 
     subgraph NPLifeNeuron["NPLifeNeuron"]
         LifeNeuron[Нейрон Life]
-        LifeModel[NNeuronLife<br/>Life Model]
+        LifeModel["NNeuronLife<br/>Life Model"]
         Membrane[Мембрана]
         Channels[Каналы]
         Synapses[Синапсы]
@@ -377,7 +377,7 @@ graph TB
 
     subgraph NPLifeNeuron["NPLifeNeuron"]
         LifeNeuron[Life Neuron]
-        LifeModel[NNeuronLife<br/>Life Model]
+        LifeModel["NNeuronLife<br/>Life Model"]
         Membrane[Membrane]
         Channels[Channels]
         Synapses[Synapses]

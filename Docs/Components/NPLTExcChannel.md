@@ -201,7 +201,7 @@ graph TB
     end
     
     subgraph NPLTExcChannel["NPLTExcChannel Configuration"]
-        ExcType[Excitatory Type<br/>Type = -1]
+        ExcType["Excitatory Type<br/>Type = -1"]
         LTParams[LT-zone parameters]
     end
     

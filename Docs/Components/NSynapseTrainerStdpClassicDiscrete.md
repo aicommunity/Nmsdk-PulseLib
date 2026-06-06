@@ -128,7 +128,7 @@ flowchart TD
     Start([Start Calculate]) --> CallBase[NSynapseTrainerStdpTD::ACalculate]
     CallBase --> CheckTrainEnable{IsTrainEnable?}
     CheckTrainEnable -->|Нет| End([End])
-    CheckTrainEnable -->|Да| CheckSpikes{IsInputPulseActive или<br/>IsOutputPulseActive?}
+    CheckTrainEnable -->|Да| CheckSpikes["IsInputPulseActive или<br/>IsOutputPulseActive?"]
     CheckSpikes -->|Нет| End
     CheckSpikes -->|Да| CheckTimes{TPre != 0 и TPost != 0?}
     CheckTimes -->|Нет| End

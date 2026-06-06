@@ -201,7 +201,7 @@ graph TB
     end
     
     subgraph NPLTInhChannel["NPLTInhChannel Configuration"]
-        InhType[Inhibitory Type<br/>Type = 1]
+        InhType["Inhibitory Type<br/>Type = 1"]
         LTParams[LT-zone parameters]
     end
     

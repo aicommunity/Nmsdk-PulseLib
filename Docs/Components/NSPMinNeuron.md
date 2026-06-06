@@ -164,8 +164,8 @@ stateDiagram-v2
 ```mermaid
 flowchart TD
     Start([Start Calculate]) --> CalcMembrane[Calculate membrane]
-    CalcMembrane --> CalcInhChannel[Calculate InhChannel<br/>with Synapse1 only]
-    CalcInhChannel --> CalcExcChannel[Calculate ExcChannel<br/>with Synapse1 only]
+    CalcMembrane --> CalcInhChannel["Calculate InhChannel<br/>with Synapse1 only"]
+    CalcInhChannel --> CalcExcChannel["Calculate ExcChannel<br/>with Synapse1 only"]
     CalcExcChannel --> AggregateCurrents[Aggregate currents]
     AggregateCurrents --> CalcLTZone[Calculate LT-zone]
     CalcLTZone --> CheckThreshold{Threshold reached?}
@@ -185,9 +185,9 @@ graph TB
     
     subgraph NSPMinNeuron["NSPMinNeuron Configuration"]
         Membrane[NPulseMembrane]
-        InhChannel[NPulseChannel<br/>InhChannel]
-        ExcChannel[NPulseChannel<br/>ExcChannel]
-        Synapse1[NPulseSynapse<br/>Synapse1 only]
+        InhChannel["NPulseChannel<br/>InhChannel"]
+        ExcChannel["NPulseChannel<br/>ExcChannel"]
+        Synapse1["NPulseSynapse<br/>Synapse1 only"]
         LTZone[NPulseLTZoneCommon]
     end
     

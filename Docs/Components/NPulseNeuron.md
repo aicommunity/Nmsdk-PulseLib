@@ -514,10 +514,10 @@ graph TB
 
     subgraph NPulseNeuron["NPulseNeuron"]
         LTZone[NLTZone]
-        PosGenerator[NConstGenerator<br/>PosGenerator]
-        NegGenerator[NConstGenerator<br/>NegGenerator]
-        Soma[NPulseMembraneCommon<br/>Soma membranes]
-        Dendrites[NPulseMembraneCommon<br/>Dendrite membranes]
+        PosGenerator["NConstGenerator<br/>PosGenerator"]
+        NegGenerator["NConstGenerator<br/>NegGenerator"]
+        Soma["NPulseMembraneCommon<br/>Soma membranes"]
+        Dendrites["NPulseMembraneCommon<br/>Dendrite membranes"]
     end
 
     subgraph External["External Components"]

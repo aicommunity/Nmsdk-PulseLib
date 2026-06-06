@@ -211,9 +211,9 @@ stateDiagram-v2
 flowchart TD
     Start([Start Calculate]) --> ReceiveInputs[Receive PreOutput from synapses]
     ReceiveInputs --> AggregateInputs[Aggregate synapse inputs]
-    AggregateInputs --> ApplyType[Apply Type = -1<br/>Excitatory coefficient]
-    ApplyType --> ProcessMediator[Process mediator dynamics<br/>SecretionTC, DissociationTC]
-    ProcessMediator --> CalculateCurrent[Calculate output current<br/>Increases membrane potential]
+    AggregateInputs --> ApplyType["Apply Type = -1<br/>Excitatory coefficient"]
+    ApplyType --> ProcessMediator["Process mediator dynamics<br/>SecretionTC, DissociationTC"]
+    ProcessMediator --> CalculateCurrent["Calculate output current<br/>Increases membrane potential"]
     CalculateCurrent --> SetOutput[Set output]
     SetOutput --> End([End])
 ```
@@ -227,12 +227,12 @@ graph TB
     end
     
     subgraph NPSynExcChannel["NPSynExcChannel Configuration"]
-        ExcitatoryType[Excitatory Type<br/>Type = -1]
-        SynapseProcessing[Synapse Processing<br/>Mediator dynamics]
+        ExcitatoryType["Excitatory Type<br/>Type = -1"]
+        SynapseProcessing["Synapse Processing<br/>Mediator dynamics"]
     end
     
     subgraph External["External Components"]
-        Synapses[NPulseSynapse<br/>Synapses]
+        Synapses["NPulseSynapse<br/>Synapses"]
         Membrane[NPulseMembrane]
     end
     
