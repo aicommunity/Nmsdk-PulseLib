@@ -1,6 +1,6 @@
 # [ComponentName] — [RU название]
 
-**Каталог компонентов:** [Component-Catalog.md](../Component-Catalog.md).
+**Каталог компонентов:** [Component-Catalog.md](Component-Catalog.md).
 
 ## RU
 
@@ -56,7 +56,7 @@ classDiagram
 
 ## Источники
 
-- [Literature-References.md](../Literature-References.md): [A], [B], [C], [номера публикаций] — [краткое пояснение по тематике компонента].
+- [Literature-References.md](Literature-References.md): [A], [B], [C], [номера публикаций] — [краткое пояснение по тематике компонента]. (В `Docs/Components/*.md` используйте `../Literature-References.md`.)
 
 ---
 
@@ -86,10 +86,10 @@ classDiagram
 
 ### References
 
-See [Literature-References.md](../Literature-References.md): **[A]**, **[B]**, **[C]**, [publication numbers].
+See [Literature-References.md](Literature-References.md): **[A]**, **[B]**, **[C]**, [publication numbers].
 
 ### See Also
 
-- [RelatedComponent](RelatedComponent.md) — [brief note]
-- [Architecture.md](../Architecture.md) — library architecture
-- [Scientific-Background.md](../Scientific-Background.md) — scientific background
+- `RelatedComponent.md` — [brief note] (замените на реальный компонент)
+- [Architecture.md](Architecture.md) — library architecture
+- [Scientific-Background.md](Scientific-Background.md) — scientific background

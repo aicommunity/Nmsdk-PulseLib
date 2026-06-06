@@ -28,7 +28,7 @@
 - В ключевых компонентах в блоке «Использование» / «Использование в конфигурациях» добавлены пути к `Bin/Configs/SpikeSamples/`: NPulseNeuronIzhikevich, NIntegrateAndFireNeuron, NSynapseStdp, NPulseGenerator, NEyeMuscle
 
 ### Навигация
-- В ключевых компонентах в начале описания можно добавить строку: «Каталог компонентов: [Component-Catalog.md](../Component-Catalog.md)» (по образцу шаблона и MotionControlLib)
+- В ключевых компонентах в начале описания можно добавить строку «Каталог компонентов: `../Component-Catalog.md`» (относительно `Docs/Components/`, по образцу шаблона и MotionControlLib)
 
 ---
 
