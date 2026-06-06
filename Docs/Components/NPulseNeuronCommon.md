@@ -435,27 +435,27 @@ graph TB
 
 ### Properties
 
-- `UseAverageDendritesPotential` — использовать усреднение потенциалов дендритов
-- `UseAverageLTZonePotential` — использовать усреднение потенциалов LT-зоны
-- `Output` — выходной сигнал нейрона
-- `ActiveOutputs` — активные выходы
-- `ActivePosInputs` — активные положительные входы
-- `ActiveNegInputs` — активные отрицательные входы
-- `DendriticSumPotential` — суммарный потенциал дендритов
-- `SomaSumPotential` — суммарный потенциал сомы
-- `NumActiveOutputs` — количество активных выходов
-- `NumActivePosInputs` — количество активных положительных входов
-- `NumActiveNegInputs` — количество активных отрицательных входов
+- `UseAverageDendritesPotential` — use dendrite potential averaging
+- `UseAverageLTZonePotential` — use LT-zone potential averaging
+- `Output` — neuron output signal
+- `ActiveOutputs` — active outputs
+- `ActivePosInputs` — active positive inputs
+- `ActiveNegInputs` — active negative inputs
+- `DendriticSumPotential` — total dendrite potential
+- `SomaSumPotential` — total soma potential
+- `NumActiveOutputs` — number of active outputs
+- `NumActivePosInputs` — number of active positive inputs
+- `NumActiveNegInputs` — number of active negative inputs
 
 ### Methods
 
-- `SetUseAverageDendritesPotential(value)` — установка использования усреднения потенциалов дендритов
-- `SetUseAverageLTZonePotential(value)` — установка использования усреднения потенциалов LT-зоны
-- `GetLTZone()` — получение LT-зоны
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры нейрона
-- `AReset()` — сброс состояния
-- `ACalculate()` — выполнение шага расчета нейрона
+- `SetUseAverageDendritesPotential(value)` — setting dendrite potential averaging usage
+- `SetUseAverageLTZonePotential(value)` — setting LT-zone potential averaging usage
+- `GetLTZone()` — getting LT-zone
+- `ADefault()` — setting default parameters
+- `ABuild()` — building neuron structure
+- `AReset()` — resetting state
+- `ACalculate()` — neuron calculation step
 
 ### Usage in configurations
 

@@ -352,3 +352,32 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 - [`NCPac`](NCPac.md) — classic PAC
 - [`NPulseSynapse`](NPulseSynapse.md) — spiking synapse
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+graph TB
+    subgraph UNet["UNet Base"]
+        BaseNet[UNet]
+    end
+    
+    subgraph NPac["NPac"]
+        PacModel[Модель PAC]
+        MediatorDynamics[Динамика медиатора]
+        PreOutputStates[Состояния PreOutput]
+    end
+    
+    subgraph External["External components"]
+        Input1[Входной сигнал 1]
+        Input2[Входной сигнал 2]
+        InputN[Входной сигнал N]
+        OutputTarget[Целевой компонент]
+    end
+    
+    BaseNet -->|inherits| NPac
+    NPac -->|реализует| PacModel
+    NPac -->|uses| MediatorDynamics
+    NPac -->|хранит| PreOutputStates
+    Input1 -->|Inputs[0]| NPac
+    Input2 -->|Inputs[1]| NPac
+    InputN -->|Inputs[N-1]| NPac
+    NPac -->|Output| OutputTarget
+```

@@ -448,26 +448,26 @@ graph TB
 
 ### Properties
 
-- `Gain` — коэффициент усиления
-- `MinInputRange` — минимальное значение входного диапазона
-- `MaxInputRange` — максимальное значение входного диапазона
-- `MinOutputRange` — минимальное значение выходного диапазона
-- `MaxOutputRange` — максимальное значение выходного диапазона
-- `ExpCoeff` — коэффициент экспоненты (для режима 1)
-- `SumCoeff` — коэффициент суммы (для режима 1)
-- `InputAdaptationArrestingTC` — временная константа адаптации входа
-- `InputAdaptationMode` — режим адаптации входа (0 — нет, 1 — расширение диапазона, 2 — с забыванием)
-- `OutputAdaptationMode` — режим адаптации выхода (0 — линейный, 1 — экспоненциальный, 4 — линейный с усилением, 5 — другой)
-- `Input` — входной сигнал
-- `Output` — выходной сигнал (преобразованный)
+- `Gain` — gain coefficient
+- `MinInputRange` — minimum input range value
+- `MaxInputRange` — maximum input range value
+- `MinOutputRange` — minimum output range value
+- `MaxOutputRange` — maximum output range value
+- `ExpCoeff` — exponent coefficient (for mode 1)
+- `SumCoeff` — sum coefficient (for mode 1)
+- `InputAdaptationArrestingTC` — input adaptation time constant
+- `InputAdaptationMode` — input adaptation mode (0 — none, 1 — range expansion, 2 — with forgetting)
+- `OutputAdaptationMode` — output adaptation mode (0 — linear, 1 — exponential, 4 — linear with gain, 5 — otherгой)
+- `Input` — input signal
+- `Output` — output signal (transformed)
 
 ### Methods
 
-- `SetGain(value)` — установка коэффициента усиления
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры рецептора
-- `AReset()` — сброс состояния (инициализация диапазонов)
-- `ACalculate()` — выполнение шага преобразования сигнала
+- `SetGain(value)` — setting gain coefficient
+- `ADefault()` — setting default parameters
+- `ABuild()` — building receptor structure
+- `AReset()` — state reset (range initialization)
+- `ACalculate()` — signal transformation step
 
 ### Usage in configurations
 

@@ -38,7 +38,7 @@
 
 Current plan for improving component documentation based on text sources: Demcheva's thesis, Zarubin's thesis. *(Section 2.2 on Bakhsheev's dissertation has been removed from the plan.)*
 
-**Completed (documentation improvements, 2025):** components now include **## Источники** (RU) sections with a link to [Literature-References.md](Literature-References.md) and identifiers ([A], [B], [C], publication numbers); README, Usage-Examples, and key components include links to `Bin/Configs/SpikeSamples/` (STDP, NM-Neurons, StructTrain, MC-Muscles, etc.). The plan for CSNM (Demcheva) and STDP (Zarubin) below is unchanged.
+**Completed (documentation improvements, 2025):** components now include **## Sources** (RU) sections with a link to [Literature-References.md](Literature-References.md) and identifiers ([A], [B], [C], publication numbers); README, Usage-Examples, and key components include links to `Bin/Configs/SpikeSamples/` (STDP, NM-Neurons, StructTrain, MC-Muscles, etc.). The plan for CSNM (Demcheva) and STDP (Zarubin) below is unchanged.
 
 ## 1. Encodings
 

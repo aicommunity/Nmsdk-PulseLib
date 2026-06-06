@@ -328,3 +328,28 @@ See [Literature-References.md](../Literature-References.md): **[B]**.
 - [`NSynapseTrainerStdpClassicIntegrated`](NSynapseTrainerStdpClassicIntegrated.md) — classic STDP (integrated)
 - [`NSynapseTrainerStdp`](NSynapseTrainerStdp.md) — base STDP trainer
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+graph TB
+    subgraph NSynapseTrainerStdpTD["NSynapseTrainerStdpTD Base"]
+        BaseTrainer[NSynapseTrainerStdpTD]
+    end
+
+    subgraph NSynapseTrainerStdpClassicDiscrete["NSynapseTrainerStdpClassicDiscrete"]
+        ClassicSTDP[Классический STDP]
+        WeightDependence[Зависимость от веса]
+    end
+
+    subgraph External["External components"]
+        PreNeuron[Пресинаптический нейрон]
+        PostNeuron[Постсинаптический нейрон]
+        Synapse[NPulseSynapse]
+    end
+
+    BaseTrainer -->|inherits| NSynapseTrainerStdpClassicDiscrete
+    NSynapseTrainerStdpClassicDiscrete -->|реализует| ClassicSTDP
+    NSynapseTrainerStdpClassicDiscrete -->|uses| WeightDependence
+    PreNeuron -->|PreSynInput| NSynapseTrainerStdpClassicDiscrete
+    PostNeuron -->|PostSynInput| NSynapseTrainerStdpClassicDiscrete
+    NSynapseTrainerStdpClassicDiscrete -->|WeightOutput| Synapse
+```

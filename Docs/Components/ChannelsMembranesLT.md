@@ -45,3 +45,11 @@ Defines how spikes travel, how membrane potential is integrated and how long-ter
 ### References
 
 See [Literature-References.md](../Literature-References.md): **[A]**, **[C]**, **7**, **25**, **26**, **29**.
+
+```mermaid
+classDiagram
+    NPulseMembrane <|-- NPulseMembraneIzhikevich
+    NPulseChannel <|-- NPulseChannelIaF
+    NPulseChannel <|-- NPulseChannelIzhikevich
+    NPulseLTZone <|-- NPulseLTZoneIzhikevich
+```

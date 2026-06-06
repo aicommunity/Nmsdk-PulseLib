@@ -375,21 +375,21 @@ graph TB
 
 ### Properties
 
-- `MulCoeffs` — вектор коэффициентов умножения (3 элемента: [0.74, 0.75, 0.5])
-- `K` — коэффициент для расчета длины (0.2)
-- `TC` — вектор временных констант (3 элемента: [0.003, 0.0092, 0.0327])
-- `Inputs` — вектор входных сигналов
-- `OutputAcceleration` — выходной сигнал ускорения
-- `OutputLength` — выходной сигнал длины
-- `OutputSpeed` — выходной сигнал скорости
+- `MulCoeffs` — multiplication coefficient vector (3 elements: [0.74, 0.75, 0.5])
+- `K` — length calculation coefficient (0.2)
+- `TC` — time constant vector (3 elements: [0.003, 0.0092, 0.0327])
+- `Inputs` — input signal vector
+- `OutputAcceleration` — acceleration output signal
+- `OutputLength` — length output signal
+- `OutputSpeed` — speed output signal
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры глазной мышцы (инициализация состояний)
-- `ACalculate()` — выполнение шага расчета глазной мышцы
-- `ThresholdCount(k)` — подсчет порога для входа k
-- `MuscularReduction(k, in)` — функция мышечного сокращения для входа k
+- `ADefault()` — setting default parameters
+- `ABuild()` — building eye muscle structure (state initialization)
+- `ACalculate()` — eye muscle calculation step
+- `ThresholdCount(k)` — threshold count for input k
+- `MuscularReduction(k, in)` — muscle contraction function for input k
 
 ### Usage in configurations
 

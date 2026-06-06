@@ -222,21 +222,21 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры (0 — не пересобирать, 1 — пересобрать)
-- `NeuronsClassName` — имя класса нейронов (по умолчанию "NSPNeuron")
-- `NeuronsHeight` — высота слоя (количество строк)
-- `NeuronsWidth` — ширина слоя (количество столбцов)
+- `StructureBuildMode` — structure rebuild mode (0 — do not rebuild, 1 — rebuild)
+- `NeuronsClassName` — neuron class name (default "NSPNeuron")
+- `NeuronsHeight` — layer height (row count)
+- `NeuronsWidth` — layer width (column count)
 
 ### Methods
 
-- `SetStructureBuildMode(value)` — установка режима пересборки структуры
-- `SetNeuronsClassName(value)` — установка имени класса нейронов
-- `SetNeuronsHeight(value)` — установка высоты слоя
-- `SetNeuronsWidth(value)` — установка ширины слоя
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры слоя
-- `ACalculate()` — выполнение шага расчета (пустой метод)
-- `BuildStructure()` — построение сетки нейронов
+- `SetStructureBuildMode(value)` — setting structure rebuild mode
+- `SetNeuronsClassName(value)` — setting neuron class name
+- `SetNeuronsHeight(value)` — setting layer height
+- `SetNeuronsWidth(value)` — setting layer width
+- `ADefault()` — setting default parameters
+- `ABuild()` — building layer structure
+- `ACalculate()` — calculation step (empty method)
+- `BuildStructure()` — building neuron grid
 
 ### Usage in configurations
 

@@ -439,26 +439,26 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры
-- `PulseGeneratorClassName` — имя класса генератора импульсов
-- `NeuronTrainerClassName` — имя класса тренера нейронов
-- `NeuronClassName` — имя класса нейрона
-- `SynapseClassName` — имя класса синапса
-- `BigNeuronSize` — размер большого нейрона
-- `IsNeedToTrain` — необходимость обучения
-- `NumUnconditionalStimulDendrite` — количество дендритов для безусловного стимула
-- `NumConditionalStimulDendrite` — количество дендритов для условного стимула
-- `MaxDendriteLength` — максимальная длина дендрита
-- `UnconditionalStimulPattern` — паттерн безусловного стимула
-- `ConditionalStimulPattern` — паттерн условного стимула
-- `LTZThreshold` — порог LT-зоны
+- `StructureBuildMode` — structure rebuild mode
+- `PulseGeneratorClassName` — pulse generator class name
+- `NeuronTrainerClassName` — neuron trainer class name
+- `NeuronClassName` — neuron class name
+- `SynapseClassName` — synapse class name
+- `BigNeuronSize` — large neuron size
+- `IsNeedToTrain` — training required flag
+- `NumUnconditionalStimulDendrite` — number of dendrites for unconditioned stimulus
+- `NumConditionalStimulDendrite` — number of dendrites for conditioned stimulus
+- `MaxDendriteLength` — maximum dendrite length
+- `UnconditionalStimulPattern` — unconditioned stimulus pattern
+- `ConditionalStimulPattern` — conditioned stimulus pattern
+- `LTZThreshold` — LT-zone threshold
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры формирователя ассоциаций
-- `ACalculate()` — выполнение шага обучения или проверки
-- `BuildStructure()` — построение структуры нейронов и тренеров
+- `ADefault()` — setting default parameters
+- `ABuild()` — building association former structure
+- `ACalculate()` — training or verification step
+- `BuildStructure()` — building neuron and trainer structure
 
 ### Usage in configurations
 

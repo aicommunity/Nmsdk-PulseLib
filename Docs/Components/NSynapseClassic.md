@@ -291,3 +291,44 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 - [`NSynapseIaF`](NSynapseIaF.md) — synapse for IaF model
 - [`NPulseSynapse`](NPulseSynapse.md) — spiking synapse with neurotransmitter model
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Built: Build()
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> Ready: ACalculate2() возвращает true
+    Ready --> Resetting: Reset()
+    Resetting --> Ready: Состояния сброшены
+```
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> CallBase[NPulseSynapseCommon::ACalculate]
+    CallBase --> ACalculate2[ACalculate2]
+    ACalculate2 --> ReturnTrue[return true]
+    ReturnTrue --> End([End])
+    
+    Note1[Примечание: Метод не выполняет расчетов]
+    Note1 -.-> ACalculate2
+```
+
+```mermaid
+graph TB
+    subgraph NPulseSynapseCommon["NPulseSynapseCommon Base"]
+        BaseSynapse[NPulseSynapseCommon]
+    end
+    
+    subgraph NSynapseClassic["NSynapseClassic"]
+        ClassicSynapse[NSynapseClassic]
+    end
+    
+    subgraph Derived["Производные классы"]
+        ClassicSlv[NSynapseClassicSlv]
+    end
+    
+    BaseSynapse -->|inherits| ClassicSynapse
+    ClassicSynapse -->|inherits| ClassicSlv
+```

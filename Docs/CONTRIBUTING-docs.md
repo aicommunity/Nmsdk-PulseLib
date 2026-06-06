@@ -115,8 +115,8 @@ Brief description of component purpose.
 Добавьте ссылку на новый компонент в соответствующий раздел `Component-Catalog.md`:
 
 ```markdown
-- **[ИмяКомпонента]** — [`[ИмяКомпонента]`](Components/[ИмяКомпонента].md)  
-  *Использование:* `Bin/Configs/путь/к/проекту/`
+- **[ComponentName]** — [`[ComponentName]`](Components/[ComponentName].md)  
+  *Usage:* `Bin/Configs/path/to/project/`
 ```
 
 #### Шаг 3: Обновление групповых обзоров (если применимо)
@@ -184,9 +184,10 @@ Brief description of component purpose.
 Все основные документы должны содержать разделы на русском (RU) и английском (EN) языках:
 
 ```markdown
+
 ## RU
 
-[Содержание на русском]
+[Contents in Russian]
 
 ---
 
@@ -200,9 +201,9 @@ Brief description of component purpose.
 Используйте следующий формат для ссылок на конфигурационные проекты:
 
 ```markdown
-*Использование:* `Bin/Configs/путь/к/проекту/`
-*Используется в:* `Bin/Configs/путь/к/проекту/`
-*Часто используется в:* `Bin/Configs/путь/к/проекту/`
+*Usage:* `Bin/Configs/path/to/project/`
+*Used в:* `Bin/Configs/path/to/project/`
+*Frequently used в:* `Bin/Configs/path/to/project/`
 ```
 
 #### Формат ссылок на компоненты
@@ -210,7 +211,7 @@ Brief description of component purpose.
 Используйте относительные ссылки:
 
 ```markdown
-[`ИмяКомпонента`](Components/ИмяКомпонента.md)
+[`ИмяКомпонента`](Components/Componentname.md)
 ```
 
 #### Формат ссылок на другие документы
@@ -247,14 +248,14 @@ Brief description of component purpose.
 #### Пример 1: Документация компонента с примерами конфигураций
 
 ```markdown
-### Использование в конфигурациях
+### Usage in configurations
 
-Компонент `NPulseNeuronIzhikevich` широко используется в экспериментах:
+Component `NPulseNeuronIzhikevich` widely used в experiments:
 
-- `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/` — демонстрация различных типов нейронов
-- `Bin/Configs/!OldConfigs/STDP-Simple-01/` — базовый эксперимент по STDP-обучению
+- `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/` — demonstration various types neurons
+- `Bin/Configs/!OldConfigs/STDP-Simple-01/` — base experiment по STDP-training
 
-### Пример конфигурации XML
+### Example configuration XML
 
 ```xml
 <Neuron1 Class="NPulseNeuronIzhikevich">
@@ -267,22 +268,22 @@ Brief description of component purpose.
 </Neuron1>
 ```
 
-Параметры A, B, C, D соответствуют свойствам класса `NPulseNeuronIzhikevich` в коде.
+Parameters A, B, C, D match properties class `NPulseNeuronIzhikevich` в code.
 ```
 
 #### Пример 2: Связь с научными публикациями
 
 ```markdown
-### Научная основа
+### Scientific basis
 
-Модель Ижикевича описана в следующих публикациях:
+Model Izhikevich described в following publications:
 
 - Izhikevich, E. M. (2003). "Simple model of spiking neurons." IEEE Transactions on Neural Networks, 14(6), 1569-1572.
 
-**Связь с компонентами:**
-- Параметры `A`, `B`, `C`, `D` в `NPulseNeuronIzhikevich` соответствуют параметрам модели из публикаций
+**Link с components:**
+- Parameters `A`, `B`, `C`, `D` в `NPulseNeuronIzhikevich` match parameters models из publications
 
-**См. также:** [Scientific-Background.md](Scientific-Background.md)
+**See also:** [Scientific-Background.md](Scientific-Background.md)
 ```
 
 ### Часто задаваемые вопросы
@@ -299,7 +300,7 @@ A: Изучите `Bin/Configs`, найдите проекты, использу
 **Q: Нужно ли обновлять Doxygen?**  
 A: Doxygen автоматически обрабатывает Markdown-файлы из `Docs/`, если они указаны в `INPUT`. Убедитесь, что `USE_MDFILE_AS_MAINPAGE` указывает на `README.md`.
 
-### См. также
+### See Also
 
 - [README.md](README.md) - главная страница документации
 - [Component-Catalog.md](Component-Catalog.md) - каталог компонентов

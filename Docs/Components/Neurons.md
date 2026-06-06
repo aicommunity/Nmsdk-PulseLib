@@ -49,3 +49,10 @@ Describes base neuron types, spike models and specialised neuron classes used in
 ### References
 
 See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**, **29**.
+
+```mermaid
+classDiagram
+    NNeuron <|-- NPulseNeuron
+    NPulseNeuron <|-- NPulseNeuronIzhikevich
+    NPulseNeuron <|-- NIntegrateAndFireNeuron
+```

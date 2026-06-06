@@ -419,3 +419,32 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 ### See Also
 
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+graph TB
+    subgraph UNet["UNet Base"]
+        BaseNet[UNet]
+    end
+    
+    subgraph NOdeSolver["NOdeSolver"]
+        OdeSolver[Решатель ODE]
+        OdeCpuImpl[OdeCpu Implementation]
+    end
+    
+    subgraph ExternalLib["Внешняя библиотека"]
+        OdeSolverLib[ODE Solver Library]
+        OdeSolverBase[OdeSolverBase]
+    end
+    
+    subgraph External["External components"]
+        InputSource[Источник входных данных]
+        OutputTarget[Целевой компонент]
+    end
+    
+    BaseNet -->|inherits| NOdeSolver
+    NOdeSolver -->|uses| OdeSolverLib
+    OdeSolverLib -->|creates| OdeSolverBase
+    NOdeSolver -->|хранит| OdeCpuImpl
+    InputSource -->|Inputs| NOdeSolver
+    NOdeSolver -->|Outputs| OutputTarget
+```

@@ -353,24 +353,24 @@ graph TB
 
 ### Properties
 
-- `MulCoeffs` — вектор коэффициентов умножения (18 элементов)
-- `Param` — вектор параметров (4 элемента)
-- `TC` — вектор временных констант (3 элемента)
-- `Mass` — масса мышцы
-- `Threshold` — порог активации
-- `G` — коэффициент усиления
-- `Input` — входной сигнал (активация мышцы)
-- `LengthInput` — входной сигнал длины мышцы
-- `Output` — выходной сигнал (мышечная активность)
+- `MulCoeffs` — multiplication coefficient vector (18 elements)
+- `Param` — parameter vector (4 elements)
+- `TC` — time constant vector (3 elements)
+- `Mass` — muscle mass
+- `Threshold` — activation threshold
+- `G` — gain coefficient
+- `Input` — input signal (muscle activation)
+- `LengthInput` — muscle length input signal
+- `Output` — output signal (muscle activity)
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры мышцы
-- `ACalculate()` — выполнение шага расчета мышечной динамики
-- `MuscularReduction(value)` — функция мышечного сокращения
-- `MuscleFeedback(...)` — функция обратной связи мышцы
-- `CompareThreshold(value)` — сравнение с порогом
+- `ADefault()` — setting default parameters
+- `ABuild()` — building muscle structure
+- `ACalculate()` — muscle dynamics calculation step
+- `MuscularReduction(value)` — muscle contraction function
+- `MuscleFeedback(...)` — muscle feedback function
+- `CompareThreshold(value)` — threshold comparison
 
 ### Usage in configurations
 

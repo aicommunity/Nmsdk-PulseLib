@@ -217,23 +217,23 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры (0 — не пересобирать, 1 — пересобрать)
-- `AffNeuronGroupClassName` — имя класса группы афферентных нейронов (по умолчанию "NNeuronFreqGroup")
-- `AffNeuronsGroupHeight` — высота слоя групп (количество строк)
-- `AffNeuronsGroupWidth` — ширина слоя групп (количество столбцов)
-- `NumAffNeuronsInGroup` — количество афферентных нейронов в группе
+- `StructureBuildMode` — structure rebuild mode (0 — do not rebuild, 1 — rebuild)
+- `AffNeuronGroupClassName` — afferent neuron group class name (default "NNeuronFreqGroup")
+- `AffNeuronsGroupHeight` — group layer height (row count)
+- `AffNeuronsGroupWidth` — group layer width (column count)
+- `NumAffNeuronsInGroup` — number of afferent neurons in group
 
 ### Methods
 
-- `SetStructureBuildMode(value)` — установка режима пересборки структуры
-- `SetAffNeuronGroupClassName(value)` — установка имени класса группы
-- `SetAffNeuronsGroupHeight(value)` — установка высоты слоя групп
-- `SetAffNeuronsGroupWidth(value)` — установка ширины слоя групп
-- `SetNumAffNeuronsInGroup(value)` — установка количества нейронов в группе
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры слоя групп
-- `ACalculate()` — выполнение шага расчета всех групп
-- `BuildStructure()` — построение сетки частотных групп
+- `SetStructureBuildMode(value)` — setting structure rebuild mode
+- `SetAffNeuronGroupClassName(value)` — setting group class name
+- `SetAffNeuronsGroupHeight(value)` — setting group layer height
+- `SetAffNeuronsGroupWidth(value)` — setting group layer width
+- `SetNumAffNeuronsInGroup(value)` — setting number of neurons in group
+- `ADefault()` — setting default parameters
+- `ABuild()` — building group layer structure
+- `ACalculate()` — calculation step for all groups
+- `BuildStructure()` — building frequency group grid
 
 ### Usage in configurations
 

@@ -294,3 +294,26 @@ See [Literature-References.md](../Literature-References.md): **26**, **29**, **3
 - [`NPExcChannelBio`](NPExcChannelBio.md) — excitatory bio channel
 - [`NPInhChannel`](NPInhChannel.md) — inhibitory channel
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+graph TB
+    subgraph NPulseChannel["NPulseChannel Base"]
+        BaseChannel[NPulseChannel]
+    end
+    
+    subgraph NPInhChannelBio["NPInhChannelBio Configuration"]
+        InhChannel[Тормозной канал]
+        BioParams[Биологические параметры]
+    end
+    
+    subgraph External["External components"]
+        Synapses[Synapses]
+        Membrane[Мембрана]
+    end
+    
+    BaseChannel -->|конфигурируется как| NPInhChannelBio
+    NPInhChannelBio -->|реализует| InhChannel
+    NPInhChannelBio -->|uses| BioParams
+    Synapses -->|SumSynapticInput| NPInhChannelBio
+    NPInhChannelBio -->|Output (тормозной ток)| Membrane
+```

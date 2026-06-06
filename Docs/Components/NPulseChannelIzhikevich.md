@@ -418,22 +418,22 @@ graph TB
 
 ### Properties
 
-- `A` — параметр модели Ижикевича (скорость восстановления)
-- `B` — параметр модели Ижикевича (чувствительность восстановления)
-- `C` — параметр модели Ижикевича (потенциал после спайка)
-- `D` — параметр модели Ижикевича (изменение восстановления после спайка)
-- `Output` — выходной сигнал (потенциал V)
-- `OutputU` — выходной сигнал (переменная восстановления U)
-- `V` — текущий мембранный потенциал (внутреннее состояние)
-- `U` — текущая переменная восстановления (внутреннее состояние)
+- `A` — Izhikevich model parameter (recovery rate)
+- `B` — Izhikevich model parameter (recovery sensitivity)
+- `C` — Izhikevich model parameter (post-spike potential)
+- `D` — Izhikevich model parameter (post-spike recovery change)
+- `Output` — output signal (potential V)
+- `OutputU` — output signal (recovery variable U)
+- `V` — current membrane potential (internal state)
+- `U` — current recovery variable (internal state)
 
 ### Methods
 
-- `NeuronActivated()` — вызывается при активации нейрона (сброс V=C, U=U+D)
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры канала
-- `AReset()` — сброс состояния (V=-70, U=0)
-- `ACalculate2()` — выполнение шага расчета (интеграция уравнений Ижикевича)
+- `NeuronActivated()` — called on neuron activation (reset V=C, U=U+D)
+- `ADefault()` — setting default parameters
+- `ABuild()` — building channel structure
+- `AReset()` — state reset (V=-70, U=0)
+- `ACalculate2()` — calculation step (Izhikevich equation integration)
 
 ### Usage in configurations
 

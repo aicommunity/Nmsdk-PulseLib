@@ -273,6 +273,7 @@
 The full list of registrations (`Core/NPulseLibrary.cpp`) is very large. Below is a grouping with brief purpose and signal types. For the complete set, see the source file `NPulseLibrary.cpp`.
 
 ## Basic networks/structures
+
 - **NNet** — see [`NNet`](Components/NNet.md)  
   *Usage:* Root component in some configuration projects
 - **NModel** — see [`NModel`](Components/NModel.md)  
@@ -286,6 +287,7 @@ The full list of registrations (`Core/NPulseLibrary.cpp`) is very large. Below i
 - **NNeuronLife** — see [`NNeuronLife`](Components/NNeuronLife.md)
 
 ## Neurons
+
 - Overview: [`Neurons`](Components/Neurons.md)  
   *Typical configurations:* `Bin/Configs/!OldConfigs/NM-Neurons/`, `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`
 - Details:
@@ -297,6 +299,7 @@ The full list of registrations (`Core/NPulseLibrary.cpp`) is very large. Below i
   - [`NAfferentNeuron`](Components/NAfferentNeuron.md) — *Used in:* `Bin/Configs/!OldConfigs/NM-AfferentNeurons/`, `Bin/Configs/!OldConfigs/OldExperiments/SimplestMotionControlSAfferent/`
 
 ## Synapses / Trainers / Channels / Membranes / LT zones
+
 - Overview:
   - [`Synapses & Trainers`](Components/SynapsesAndTrainers.md) — *Typical configurations:* `Bin/Configs/!OldConfigs/STDP-Simple-01/`, `Bin/Configs/!OldConfigs/SpikeAnsTrainer/`
   - [`Channels, Membranes & LT zones`](Components/ChannelsMembranesLT.md) — *Typical configurations:* `Bin/Configs/User/CognitiveNavigation/`, `Bin/Configs/!OldConfigs/NM-Neurons/`
@@ -313,6 +316,7 @@ The full list of registrations (`Core/NPulseLibrary.cpp`) is very large. Below i
   - [`NCLTZone`](Components/NCLTZone.md)
 
 ## Generators / Sources / Delays and IO
+
 - Overview: [`Generators, IO, Classifiers & Others`](Components/GeneratorsIOClassifiers.md)  
   *Typical configurations:* `Bin/Configs/!OldConfigs/NM-Neurons/`, `Bin/Configs/User/CognitiveNavigation/`
 - Details:
@@ -325,6 +329,7 @@ The full list of registrations (`Core/NPulseLibrary.cpp`) is very large. Below i
   - [`NReceptor`](Components/NReceptor.md) — *Used in:* `Bin/Configs/!OldConfigs/NReceptor/`
 
 ## Classifiers / Reflexes / Predictors / Effectors / Logic / Solver
+
 - Classifiers:
   - [`NClassifier`](Components/NClassifier.md)
   - [`NSpikeClassifier`](Components/NSpikeClassifier.md) — *Used in:* `Bin/Configs/!OldConfigs/SpikeClassifier/`, `Bin/Configs/!OldConfigs/SpikeANPA3/`
@@ -341,6 +346,7 @@ The full list of registrations (`Core/NPulseLibrary.cpp`) is very large. Below i
   - [`NOdeSolver`](Components/NOdeSolver.md)
 
 ## Full component list (UploadClass)
+
 Below is the full list of registration names from `Core/NPulseLibrary.cpp` with links to per-component files in `Docs/Components/`.
 
 - **NAfferentNeuron** — [`NAfferentNeuron`](Components/NAfferentNeuron.md)

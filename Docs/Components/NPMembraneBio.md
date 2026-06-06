@@ -344,3 +344,34 @@ See [Literature-References.md](../Literature-References.md): **26**, **29**, **3
 - [`NPSynapseBio`](NPSynapseBio.md) — bio synapse
 - [`NPulseMembraneCommon`](NPulseMembraneCommon.md) — common spiking membrane
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+graph TB
+    subgraph NPulseMembrane["NPulseMembrane Base"]
+        BaseMembrane[NPulseMembrane]
+    end
+    
+    subgraph NPMembraneBio["NPMembraneBio"]
+        ExcChannel[NPExcChannelBio]
+        InhChannel[NPInhChannelBio]
+        Synapses[NPSynapseBio]
+        Properties[Properties мембраны]
+    end
+    
+    subgraph External["External components"]
+        InputSynapses[Входные синапсы]
+        Neuron[Нейрон]
+        LTZone[LT zone]
+    end
+    
+    BaseMembrane -->|конфигурация| NPMembraneBio
+    NPMembraneBio -->|creates| ExcChannel
+    NPMembraneBio -->|creates| InhChannel
+    NPMembraneBio -->|uses| Synapses
+    NPMembraneBio -->|вычисляет| Properties
+    InputSynapses -->|подключаются к| ExcChannel
+    InputSynapses -->|подключаются к| InhChannel
+    NPMembraneBio -->|SumPotential| Neuron
+    NPMembraneBio -->|SumPotential| LTZone
+    Neuron -->|Feedback| NPMembraneBio
+```

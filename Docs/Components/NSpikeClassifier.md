@@ -622,26 +622,26 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры
-- `PulseGeneratorClassName` — имя класса генератора импульсов
-- `NeuronTrainerClassName` — имя класса тренера нейронов
-- `NeuronClassName` — имя класса нейрона
-- `SynapseClassName` — имя класса синапса
-- `NumNeurons` — количество нейронов (классов)
-- `IsNeedToTrain` — необходимость обучения
-- `TrainingPatterns` — паттерны для обучения
-- `InputPattern` — входной паттерн для классификации
-- `LTZThreshold` — порог LT-зоны
-- `UseTransitSignal` — использование транзитного сигнала
-- `DataFromFile` — загрузка данных из файла
+- `StructureBuildMode` — structure rebuild mode
+- `PulseGeneratorClassName` — pulse generator class name
+- `NeuronTrainerClassName` — neuron trainer class name
+- `NeuronClassName` — neuron class name
+- `SynapseClassName` — synapse class name
+- `NumNeurons` — number of neurons (classes)
+- `IsNeedToTrain` — training required flag
+- `TrainingPatterns` — training patterns
+- `InputPattern` — input classification pattern
+- `LTZThreshold` — LT-zone threshold
+- `UseTransitSignal` — use transit signal
+- `DataFromFile` — loading data from file
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры классификатора
-- `ACalculate()` — выполнение шага классификации или обучения
-- `BuildStructure()` — построение структуры нейронов и тренеров
-- `TreatDataFromFile()` — обработка данных из файла
+- `ADefault()` — setting default parameters
+- `ABuild()` — building classifier structure
+- `ACalculate()` — classification or training step
+- `BuildStructure()` — building neuron and trainer structure
+- `TreatDataFromFile()` — processing data from file
 
 ### Usage in configurations
 

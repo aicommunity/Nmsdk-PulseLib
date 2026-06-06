@@ -206,29 +206,29 @@ graph TB
     NNeuronFreqGroup -->|frequency activity| OutputTarget
 ```
 
-## Источники
+## References
 
-См. [Literature-References.md](../Literature-References.md): **neuromodeler.ru**, **15**, **[A]**.
+See [Literature-References.md](../Literature-References.md): **neuromodeler.ru**, **15**, **[A]**.
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры (0 — не пересобирать, 1 — пересобрать)
-- `AffNeuronClassName` — имя класса афферентных нейронов
-- `NumAffNeurons` — количество афферентных нейронов
-- `MinInputFreq` — минимальная входная частота
-- `MaxInputFreq` — максимальная входная частота
+- `StructureBuildMode` — structure rebuild mode (0 — do not rebuild, 1 — rebuild)
+- `AffNeuronClassName` — afferent neuron class name
+- `NumAffNeurons` — number of afferent neurons
+- `MinInputFreq` — minimum input frequency
+- `MaxInputFreq` — maximum input frequency
 
 ### Methods
 
-- `SetStructureBuildMode(value)` — установка режима пересборки структуры
-- `SetAffNeuronClassName(value)` — установка имени класса афферентных нейронов
-- `SetNumAffNeurons(value)` — установка количества афферентных нейронов
-- `SetMinInputFreq(value)` — установка минимальной входной частоты
-- `SetMaxInputFreq(value)` — установка максимальной входной частоты
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры группы
-- `ACalculate()` — выполнение шага расчета частотной активности
-- `BuildStructure()` — построение структуры афферентных нейронов
+- `SetStructureBuildMode(value)` — setting structure rebuild mode
+- `SetAffNeuronClassName(value)` — setting afferent neuron class name
+- `SetNumAffNeurons(value)` — setting number of afferent neurons
+- `SetMinInputFreq(value)` — setting minimum input frequency
+- `SetMaxInputFreq(value)` — setting maximum input frequency
+- `ADefault()` — setting default parameters
+- `ABuild()` — building group structure
+- `ACalculate()` — frequency activity calculation step
+- `BuildStructure()` — building afferent neuron structure
 
 ### Usage in configurations
 

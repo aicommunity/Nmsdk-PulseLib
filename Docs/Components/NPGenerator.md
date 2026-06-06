@@ -273,24 +273,24 @@ graph TB
 ### Properties
 
 `NPGenerator` uses all properties of base class `NPulseGenerator`:
-- `Frequency` — частота генерации импульсов (Гц)
-- `PulseLength` — длительность импульса (сек)
-- `Amplitude` — амплитуда импульса
-- `Delay` — задержка начала генерации (сек)
-- `FrequencyDeviation` — отклонение частоты (для случайной генерации)
-- `AvgInterval` — средний интервал между импульсами (сек)
-- `Output` — выходной сигнал (генерируемый импульс)
-- `OutputPotential` — выходной потенциал
-- `OutputFrequency` — выходная частота
-- `OutputPulseTimes` — времена спайков
+- `Frequency` — pulse generation frequency (Hz)
+- `PulseLength` — pulse duration (sec)
+- `Amplitude` — pulse amplitude
+- `Delay` — generation start delay (sec)
+- `FrequencyDeviation` — frequency deviation (for random generation)
+- `AvgInterval` — average interval between pulses (sec)
+- `Output` — output signal (generated pulse)
+- `OutputPotential` — output potential
+- `OutputFrequency` — output frequency
+- `OutputPulseTimes` — spike times
 
 ### Methods
 
 `NPGenerator` uses all methods of base class `NPulseGenerator`:
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры генератора
-- `AReset()` — сброс состояния генератора
-- `ACalculate()` — выполнение шага генерации
+- `ADefault()` — setting default parameters
+- `ABuild()` — building generator structure
+- `AReset()` — resetting generator state
+- `ACalculate()` — generation step
 
 ### Usage in configurations
 

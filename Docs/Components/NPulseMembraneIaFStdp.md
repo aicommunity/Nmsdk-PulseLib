@@ -523,24 +523,24 @@ graph TB
 - `InhChannelClassName = ""` — inhibitory channel not used
 
 **Inherited properties from NPulseMembrane:**
-- `FeedbackGain` — коэффициент обратной связи
-- `ResetAvailable` — доступность сброса
-- `NumExcitatorySynapses` — количество возбуждающих синапсов
-- `NumInhibitorySynapses` — количество тормозных синапсов
-- `InputFeedbackSignal` — входной сигнал обратной связи
+- `FeedbackGain` — feedback gain
+- `ResetAvailable` — reset availability
+- `NumExcitatorySynapses` — number of excitatory synapses
+- `NumInhibitorySynapses` — number of inhibitory synapses
+- `InputFeedbackSignal` — feedback input signal
 
 **IaF parameters (in ExcChannel):**
-- `Cm`, `EL`, `TauM`, `VReset`, `TRef` — параметры модели IaF (хранятся в канале)
+- `Cm`, `EL`, `TauM`, `VReset`, `TRef` — IaF model parameters (stored in channel)
 
 **STDP parameters (in STDPSynapses):**
-- `APlus`, `AMinus`, `XTau`, `YTau` — параметры STDP (хранятся в синапсах)
+- `APlus`, `AMinus`, `XTau`, `YTau` — STDP parameters (stored in synapses)
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры мембраны (автоматическое создание NPulseChannelIaF, NSynapseStdp, NSynapseTrainerStdp)
-- `AReset()` — сброс состояния мембраны
-- `ACalculate2()` — выполнение шага расчета мембраны (вызов расчета синапсов с STDP, расчет канала, обновление весов, агрегация потенциалов)
+- `ADefault()` — setting default parameters
+- `ABuild()` — building membrane structure (auto-create NPulseChannelIaF, NSynapseStdp, NSynapseTrainerStdp)
+- `AReset()` — resetting membrane state
+- `ACalculate2()` — membrane calculation step (STDP synapse calculation, channel calculation, weight update, potential aggregation)
 
 ### Usage in configurations
 

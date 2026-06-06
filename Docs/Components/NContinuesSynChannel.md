@@ -301,3 +301,119 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 - [`NCSynInhChannel`](NCSynInhChannel.md) — inhibitory continuous synaptic channel
 - [`NPulseChannel`](NPulseChannel.md) — base spiking channel
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+sequenceDiagram
+    participant Synapses as Synapses (NPulseSynapseCommon)
+    participant Channel as NContinuesSynChannel
+    participant Membrane as NPulseMembrane
+    participant Neuron as NPulseNeuron
+    
+    Synapses->>Channel: Входные signals (ChannelInputs)
+    Channel->>Channel: ACalculate2()
+    Channel->>Channel: Разделение входов на каналы и синапсы
+    Note over Channel: Определение синапсов через NPulseSynapseCommon
+    loop Для каждого синапса
+        Channel->>Channel: Получение входного сигнала
+        Channel->>Channel: Обновление PreOutput[i]
+        Note over Channel: PreOutput[i] += (input/PulseAmplitude - PreOutput[i]) / VSecretionTC
+        Channel->>Channel: Расчет syn_output (упрощенный)
+        Note over Channel: syn_output = PreOutput[i] / SynapseResistance
+        Channel->>Channel: G += syn_output
+    end
+    Channel->>Channel: Суммирование входов от каналов
+    Channel->>Channel: Расчет выходного potentialа
+    Note over Channel: Output += (channel_input - Output*sum_u) / (Ti*TimeStep)
+    Channel-->>Membrane: Output (potential канала)
+```
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Built: Build()
+    Built --> Ready: Ready = true
+    Ready --> Resetting: Reset()
+    Resetting --> IdentifySynapses: Определение синапсов через NPulseSynapseCommon
+    IdentifySynapses --> InitPreOutput: Initialization PreOutput
+    InitPreOutput --> Ready: Состояния сброшены
+    Ready --> Calculating: Calculate()
+    Calculating --> SeparateInputs: Разделение входов
+    SeparateInputs --> ProcessSynapses: Processing синапсов (упрощенная)
+    ProcessSynapses --> UpdatePreOutput: Обновление PreOutput
+    UpdatePreOutput --> CalcSynOutput: Расчет syn_output = PreOutput / SynapseResistance
+    CalcSynOutput --> SumG: Суммирование G
+    SumG --> ProcessChannels: Processing каналов
+    ProcessChannels --> IntegrateOutput: Интегрирование Output
+    IntegrateOutput --> Ready: Шаг завершен
+```
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> InitVars[channel_input_sum = 0, G = 0, num_connected_synapsis = 0]
+    InitVars --> LoopInputs[Цикл по ChannelInputs]
+    LoopInputs --> CheckSize{ChannelInputs[n].GetCols() > 0?}
+    CheckSize -->|Нет| CheckMore{Еще входы?}
+    CheckSize -->|Да| CheckSynapse{SynapseInputFlagsList[n]?}
+    CheckSynapse -->|Нет| AddChannelInput[channel_input_sum += ChannelInputs[n]]
+    CheckSynapse -->|Да| ProcessSynapse[Processing синапса]
+    AddChannelInput --> IncrementChannels[num_connected_channels++]
+    IncrementChannels --> CheckMore
+    ProcessSynapse --> ResizePreOutput{PreOutput.size() < num_connected_synapsis?}
+    ResizePreOutput -->|Да| Resize[PreOutput.resize(num_connected_synapsis)]
+    ResizePreOutput -->|Нет| GetInput[input = ChannelInputs[n](0,0)]
+    Resize --> GetInput
+    GetInput --> UpdatePreOutput{input > 0?}
+    UpdatePreOutput -->|Да| PreOutputSecretion[PreOutput[i] += (input/PulseAmplitude - PreOutput[i]) / VSecretionTC]
+    UpdatePreOutput -->|Нет| PreOutputDissociation[PreOutput[i] -= PreOutput[i] / VDissociationTC]
+    PreOutputSecretion --> CalcSynOutput[syn_output = PreOutput[i] / SynapseResistance]
+    PreOutputDissociation --> CalcSynOutput
+    CalcSynOutput --> CheckSynOutput{syn_output > 0?}
+    CheckSynOutput -->|Да| AddG[G += syn_output]
+    CheckSynOutput -->|Нет| IncrementSynapses[num_connected_synapsis++]
+    AddG --> IncrementSynapses
+    IncrementSynapses --> CheckMore
+    CheckMore -->|Да| LoopInputs
+    CheckMore -->|Нет| AverageChannels{UseAveragePotential и num_connected_channels > 0?}
+    AverageChannels -->|Да| AverageChannelInput[channel_input_sum /= num_connected_channels]
+    AverageChannels -->|Нет| SetSumInput[SumChannelInput = channel_input_sum]
+    AverageChannelInput --> SetSumInput
+    SetSumInput --> AverageSynapses{UseAverageSynapsis и num_connected_synapsis > 0?}
+    AverageSynapses -->|Да| AverageG[G /= num_connected_synapsis]
+    AverageSynapses -->|Нет| DetermineResistance{Определение resistance}
+    AverageG --> DetermineResistance
+    DetermineResistance --> CalcTi[Ti = Capacity / (G + 1.0/resistance)]
+    CalcTi --> CalcSumU[sum_u = 1.0 + G*resistance]
+    CalcSumU --> Integrate[Output += (channel_input_sum - Output*sum_u) / (Ti*TimeStep)]
+    Integrate --> End([End])
+    
+    Note1[Упрощенный расчет: syn_output = PreOutput / SynapseResistance]
+    Note1 -.-> CalcSynOutput
+```
+
+```mermaid
+graph TB
+    subgraph NPulseChannel["NPulseChannel Base"]
+        BaseChannel[NPulseChannel]
+    end
+    
+    subgraph NContinuesSynChannel["NContinuesSynChannel"]
+        SimplifiedModel[Упрощенная модель медиатора]
+        SynapseProcessor[Обработчик синапсов]
+    end
+    
+    subgraph External["External components"]
+        Synapses[NPulseSynapseCommon[]]
+        Channels[NPulseChannel[]]
+        Membrane[NPulseMembrane]
+        Neuron[NPulseNeuron]
+    end
+    
+    BaseChannel -->|inherits| NContinuesSynChannel
+    NContinuesSynChannel -->|обрабатывает| SimplifiedModel
+    NContinuesSynChannel -->|обрабатывает| SynapseProcessor
+    Synapses -->|ChannelInputs| NContinuesSynChannel
+    Channels -->|ChannelInputs| NContinuesSynChannel
+    NContinuesSynChannel -->|Output| Membrane
+    Membrane -->|часть| Neuron
+```

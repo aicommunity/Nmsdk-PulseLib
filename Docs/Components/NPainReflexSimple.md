@@ -421,24 +421,24 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры
-- `PulseGeneratorClassName` — имя класса генератора импульсов
-- `NeuronTrainerClassName` — имя класса тренера нейронов
-- `NeuronClassName` — имя класса нейрона
-- `SynapseClassName` — имя класса синапса
-- `IsNeedToTrain` — необходимость обучения
-- `NumConditionalStimulDendrite` — количество дендритов для условного стимула
-- `MaxDendriteLength` — максимальная длина дендрита
-- `IsNegInfluence` — отрицательное влияние
-- `LTZThreshold` — порог LT-зоны
-- `PainInput` — входной болевой сигнал
+- `StructureBuildMode` — structure rebuild mode
+- `PulseGeneratorClassName` — pulse generator class name
+- `NeuronTrainerClassName` — neuron trainer class name
+- `NeuronClassName` — neuron class name
+- `SynapseClassName` — synapse class name
+- `IsNeedToTrain` — training required flag
+- `NumConditionalStimulDendrite` — number of dendrites for conditioned stimulus
+- `MaxDendriteLength` — maximum dendrite length
+- `IsNegInfluence` — negative influence
+- `LTZThreshold` — LT-zone threshold
+- `PainInput` — pain input signal
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры болевого рефлекса
-- `ACalculate()` — выполнение шага обработки болевого сигнала
-- `BuildStructure()` — построение структуры нейронов и генераторов
+- `ADefault()` — setting default parameters
+- `ABuild()` — building pain reflex structure
+- `ACalculate()` — pain signal processing step
+- `BuildStructure()` — building neuron and generator structure
 
 ### Usage in configurations
 

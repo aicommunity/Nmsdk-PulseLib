@@ -8,52 +8,52 @@
 
 ## EN
 
-## Статистика аудита (2026-06-06)
+## Audit Statistics (2026-06-06)
 
-- Зарегистрированных классов (`UploadClass`): **177** — см. [Component-Gap-Report](../../../Docs/Audit/Component-Gap-Report.md)
-- Per-class docs в `Docs/Components/`: см. отчёт gap (групповые docs покрывают семейства)
+- Registered classes (`UploadClass`): **177** — see [Component-Gap-Report](../../../Docs/Audit/Component-Gap-Report.md)
+- Per-class docs in `Docs/Components/`: see gap report (group docs cover families)
 
-## Выполнено
+## Completed
 
-### Общая документация
-- **Literature-References.md** — справочник источников ([A], [B], [C], номера публикаций 1–31); ссылка на полный список в `Bin/Docs/Literature-References.md`
-- **Component-Catalog.md** — каталог компонентов со ссылками на `Components/*.md` и путями к конфигам (`Bin/Configs/!OldConfigs/`, `Bin/Configs/User/`, `Bin/Configs/SpikeSamples/`)
-- **API-Overview.md** — описание API синхронизировано с реальными заголовками Core (NIntegrateAndFireNeuron: C, U0, Upr, I, U; NSynapseStdp: XModCoeff, YModCoeff, APlus, AMinus, XTau, YTau, PsActivityInput, StdpInfluence и наследованные Weight, Input, Output)
-- **Usage-Examples.md** — примеры использования; добавлены пути к `Bin/Configs/SpikeSamples/`
+### General Documentation
+- **Literature-References.md** — literature reference ([A], [B], [C], publication numbers 1–31); link to full list in `Bin/Docs/Literature-References.md`
+- **Component-Catalog.md** — component catalog with links to `Components/*.md` and config paths (`Bin/Configs/!OldConfigs/`, `Bin/Configs/User/`, `Bin/Configs/SpikeSamples/`)
+- **API-Overview.md** — API description synced with Core headers (NIntegrateAndFireNeuron: C, U0, Upr, I, U; NSynapseStdp: XModCoeff, YModCoeff, APlus, AMinus, XTau, YTau, PsActivityInput, StdpInfluence and inherited Weight, Input, Output)
+- **Usage-Examples.md** — usage examples; paths to `Bin/Configs/SpikeSamples/` added
 
-### Компоненты (Docs/Components)
-- Во всех файлах компонентов есть RU-описание и EN-секция с диаграммами и текстом (без заглушек «[Same as RU section]»)
-- В конце RU-блока каждого компонента добавлена секция **## Источники** со ссылкой на [Literature-References.md](Literature-References.md) и идентификаторами ([A], [B], [C], номера публикаций); идентификаторы взяты из блока **### References** (EN)
-- **Component-Documentation-Template.md** — шаблон документа компонента с обязательными блоками, включая **## Источники** (RU) и **### References** (EN)
+### Components (Docs/Components)
+- All component files have RU description and EN section with diagrams and text (no «[Same as RU section]» placeholders)
+- Each component RU block ends with **## Sources** linking [Literature-References.md](Literature-References.md) with identifiers ([A], [B], [C], publication numbers); identifiers match **### References** (EN)
+- **Component-Documentation-Template.md** — component doc template with required blocks including **## Sources** (RU) and **### References** (EN)
 
-### Ссылки на конфигурации
-- В **README.md** (раздел «Реальные примеры использования») добавлены пункты по `Bin/Configs/SpikeSamples/`: STDP, NM-Neurons, StructTrain, MC-Muscles, Classifier, Memory, NM-AfferentNeurons
-- В **Usage-Examples.md** добавлены примеры из SpikeSamples (STDP-Simple-01, StructTrain, NM-Neurons, MC-Muscles, SpikeIrisClassifier)
-- В ключевых компонентах в блоке «Использование» / «Использование в конфигурациях» добавлены пути к `Bin/Configs/SpikeSamples/`: NPulseNeuronIzhikevich, NIntegrateAndFireNeuron, NSynapseStdp, NPulseGenerator, NEyeMuscle
+### Configuration Links
+- **README.md** («Real usage examples») includes `Bin/Configs/SpikeSamples/`: STDP, NM-Neurons, StructTrain, MC-Muscles, Classifier, Memory, NM-AfferentNeurons
+- **Usage-Examples.md** includes SpikeSamples examples (STDP-Simple-01, StructTrain, NM-Neurons, MC-Muscles, SpikeIrisClassifier)
+- Key components «Usage» / «Usage in configurations» include `Bin/Configs/SpikeSamples/` paths: NPulseNeuronIzhikevich, NIntegrateAndFireNeuron, NSynapseStdp, NPulseGenerator, NEyeMuscle
 
-### Навигация
-- В ключевых компонентах в начале описания можно добавить строку «Каталог компонентов: `../Component-Catalog.md`» (относительно `Docs/Components/`, по образцу шаблона и MotionControlLib)
-
----
-
-## Планируется / рекомендации
-
-- Продолжать при добавлении новых компонентов использовать **Component-Documentation-Template.md** и секции **## Источники** / **### References**
-- При обновлении Literature-References согласовывать идентификаторы с [Bin/Docs/Literature-References.md](../../../Bin/Docs/Literature-References.md)
-- См. [Docs-Enrichment-Plan.md](Docs-Enrichment-Plan.md) — план дополнения описаний (CSNM, STDP-варианты по ВКР Демчевой и Зарубина)
+### Navigation
+- Key components may add «Component catalog: `../Component-Catalog.md`» at description start (relative to `Docs/Components/`, per template and MotionControlLib)
 
 ---
 
-## Чеклист синхронизации с кодом
+## Planned / Recommendations
 
-При добавлении или изменении класса в `Libraries/Nmsdk-PulseLib/Core/` рекомендуется обновить:
-
-1. **Component-Catalog.md** — при добавлении нового компонента в библиотеку (регистрация в `NPulseLibrary.cpp`)
-2. **Docs/Components/[ComponentName].md** — при изменении свойств/методов: таблицы свойств и методов, диаграммы классов, примеры кода
-3. **API-Overview.md** — при изменении публичного API ключевых классов (NIntegrateAndFireNeuron, NSynapseStdp, NPulseNeuronIzhikevich, NPulseGenerator, NEyeMuscle и др.)
-4. **Usage-Examples.md** — при появлении новых типовых сценариев или изменении путей к конфигам
-5. В соответствующем компоненте — блок **## Источники** (RU) и **### References** (EN) при использовании новых публикаций из Literature-References.md
+- Continue using **Component-Documentation-Template.md** and **## Sources** / **### References** sections for new components
+- When updating Literature-References, align identifiers with [Bin/Docs/Literature-References.md](../../../Bin/Docs/Literature-References.md)
+- See [Docs-Enrichment-Plan.md](Docs-Enrichment-Plan.md) — enrichment plan (CSNM, STDP variants from Demcheva and Zarubin theses)
 
 ---
 
-*Источники: план улучшения документации PulseLib; [CONTRIBUTING-docs.md](CONTRIBUTING-docs.md).*
+## Code Synchronization Checklist
+
+When adding or changing a class in `Libraries/Nmsdk-PulseLib/Core/`, update:
+
+1. **Component-Catalog.md** — when adding a new library component (registration in `NPulseLibrary.cpp`)
+2. **Docs/Components/[ComponentName].md** — when changing properties/methods: property/method tables, class diagrams, code examples
+3. **API-Overview.md** — when changing public API of key classes (NIntegrateAndFireNeuron, NSynapseStdp, NPulseNeuronIzhikevich, NPulseGenerator, NEyeMuscle, etc.)
+4. **Usage-Examples.md** — for new typical scenarios or config path changes
+5. In the component — **## Sources** (RU) and **### References** (EN) when using new publications from Literature-References.md
+
+---
+
+*Sources: PulseLib documentation improvement plan; [CONTRIBUTING-docs.md](CONTRIBUTING-docs.md).*

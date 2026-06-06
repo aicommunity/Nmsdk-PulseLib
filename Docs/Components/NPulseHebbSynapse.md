@@ -466,3 +466,87 @@ See [Literature-References.md](../Literature-References.md): **25**, **29**.
 - [`NPulseLTZoneCommon`](NPulseLTZoneCommon.md) — common spiking LT-zone
 - [Architecture.md](../Architecture.md) — library architecture
 - [Scientific-Background.md](../Scientific-Background.md) — scientific background (Hebb's rule, synaptic plasticity)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Built: Build()
+    Built --> Connecting: InstallHebbianConnection()
+    Connecting --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> CalcBase: Расчет базового синапса
+    CalcBase --> UpdateWin: Обновление Win
+    UpdateWin --> UpdateWout: Обновление Wout
+    UpdateWout --> UpdateGd: Обновление Gd
+    UpdateGd --> UpdateGs: Обновление Gs
+    UpdateGs --> CalcG: Расчет G
+    CalcG --> ModifyOutput: Модификация Output
+    ModifyOutput --> SetOutputs: Установка Output1-Output6
+    SetOutputs --> Ready: Шаг завершен
+    Ready --> Resetting: Reset()
+    Resetting --> Ready: Win=0, Wout=0, Gd=0, Gs=0
+```
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> CallBase[NPulseSynapse::ACalculate2]
+    CallBase --> CheckInputs{Input и InputLTZoneFeedbackSignal подключены?}
+    CheckInputs -->|Нет| End([End])
+    CheckInputs -->|Да| GetInputs[Получение input и ltzoneoutput]
+    GetInputs --> GetMotivation{InputMotivation подключен?}
+    GetMotivation -->|Да| ApplyMotivation[Применение мотивационных сигналов]
+    GetMotivation -->|Нет| InitMotivation[motivation = 0]
+    ApplyMotivation --> UpdateWin[Win += (Kin*input - Min*Win) / TimeStep]
+    InitMotivation --> UpdateWin
+    UpdateWin --> UpdateWout[Wout += (Kout*ltzoneoutput - Mout*Wout) / TimeStep]
+    UpdateWout --> UpdateGd[Gd += (Win*Wout - Md*Gd) / TimeStep]
+    UpdateGd --> LoopGs[Цикл по Gs]
+    LoopGs --> CheckMotivation{motivation[i] > 0?}
+    CheckMotivation -->|Да| UpdateGsActive[Gs[i] += (motivation[i]*Gd - ActiveMs[i]*Gs[i]) / TimeStep]
+    CheckMotivation -->|Нет| UpdateGsPassive[Gs[i] += (motivation[i]*Gd - PassiveMs[i]*Gs[i]) / TimeStep]
+    UpdateGsActive --> CheckMoreGs{Еще элементы?}
+    UpdateGsPassive --> CheckMoreGs
+    CheckMoreGs -->|Да| LoopGs
+    CheckMoreGs -->|Нет| SumGs[GsSum = сумма Gs]
+    SumGs --> CalcG[G = Gd*GdGain + GsSum*GsGain]
+    CalcG --> ModifyOutput[Output *= (1.0 + G)]
+    ModifyOutput --> SetOutput1[Output1 = Output]
+    SetOutput1 --> SetOutput2[Output2 = G]
+    SetOutput2 --> SetOutput3[Output3 = Gd*GdGain]
+    SetOutput3 --> SetOutput4[Output4 = GsSum*GsGain]
+    SetOutput4 --> SetOutput5[Output5 = Win]
+    SetOutput5 --> SetOutput6[Output6 = Wout]
+    SetOutput6 --> End
+```
+
+```mermaid
+graph TB
+    subgraph NPulseSynapse["NPulseSynapse Base"]
+        BaseSynapse[NPulseSynapse]
+    end
+    
+    subgraph NPulseHebbSynapse["NPulseHebbSynapse"]
+        HebbMechanism[Механизм Хебба]
+        MotivationSystem[Система мотивации]
+        MultipleOutputs[Множественные выходы]
+    end
+    
+    subgraph External["External components"]
+        PreNeuron[Пресинаптический нейрон]
+        PostNeuron[Постсинаптический нейрон]
+        LTZone[LT zone]
+        Channel[Канал]
+        MotivationSource[Источник мотивации]
+    end
+    
+    BaseSynapse -->|inherits| NPulseHebbSynapse
+    NPulseHebbSynapse -->|вычисляет| HebbMechanism
+    NPulseHebbSynapse -->|вычисляет| MotivationSystem
+    NPulseHebbSynapse -->|вычисляет| MultipleOutputs
+    PreNeuron -->|Input| NPulseHebbSynapse
+    LTZone -->|InputLTZoneFeedbackSignal| NPulseHebbSynapse
+    MotivationSource -->|InputMotivation| NPulseHebbSynapse
+    NPulseHebbSynapse -->|Output| Channel
+    NPulseHebbSynapse -->|Output1-Output6| External
+```

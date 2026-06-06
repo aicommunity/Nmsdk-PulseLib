@@ -405,11 +405,11 @@ graph TB
 
 ### Methods
 
-- `CheckComponentType(comp)` — проверка допустимости типа компонента
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры мембраны (автоматическое создание NPulseChannelIzhikevich)
-- `AReset()` — сброс состояния мембраны
-- `ACalculate2()` — выполнение шага расчета мембраны (вызов расчета канала, агрегация потенциалов)
+- `CheckComponentType(comp)` — validating component type
+- `ADefault()` — setting default parameters
+- `ABuild()` — building membrane structure (auto-create NPulseChannelIzhikevich)
+- `AReset()` — resetting membrane state
+- `ACalculate2()` — membrane calculation step (channel calculation, potential aggregation)
 
 ### Usage in configurations
 

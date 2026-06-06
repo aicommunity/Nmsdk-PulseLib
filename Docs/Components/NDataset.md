@@ -262,35 +262,35 @@ graph TB
 
 ### Properties
 
-- `PulseGeneratorClassName` — имя класса генератора импульсов
-- `NumGenerators` — количество генераторов (соответствует NumFeatures)
-- `NumFeatures` — количество признаков (измерений) в датасете
-- `NumSamples` — количество образцов (примеров) в датасете
-- `MatrixData` — матрица данных (строки — образцы, столбцы — признаки)
-- `MatrixClasses` — матрица классов (метки классов для каждого образца)
-- `ReloadDataset` — флаг перезагрузки датасета
-- `MatrixDelay` — матрица временных сдвигов запусков генераторов
-- `Iteration` — текущая итерация (индекс образца)
-- `Tay` — параметр для расчета задержек
-- `Delay` — базовая задержка
-- `SpikesFrequency` — частота спайков
-- `NumClasses` — количество классов в датасете
-- `FileName` — путь к файлу с данными
-- `StateGeneration` — состояние генерации
-- `TimeGeneration` — время генерации
-- `OperatingTime` — рабочее время
-- `ResetDelay` — флаг сброса задержки
+- `PulseGeneratorClassName` — pulse generator class name
+- `NumGenerators` — number of generators (matches NumFeatures)
+- `NumFeatures` — number of features (measurements) in dataset
+- `NumSamples` — number of samples in dataset
+- `MatrixData` — data matrix (rows — samples, columns — features)
+- `MatrixClasses` — class matrix (class labels per sample)
+- `ReloadDataset` — dataset reload flag
+- `MatrixDelay` — matrix of generator start time shifts
+- `Iteration` — current iteration (sample index)
+- `Tay` — parameter for delay calculation
+- `Delay` — base delay
+- `SpikesFrequency` — spike frequency
+- `NumClasses` — number of classes in dataset
+- `FileName` — path to data file
+- `StateGeneration` — generation state
+- `TimeGeneration` — generation time
+- `OperatingTime` — operating time
+- `ResetDelay` — delay reset flag
 
 ### Methods
 
-- `SetPulseGeneratorClassName(value)` — установка имени класса генератора
-- `SetNumGenerators(value)` — установка количества генераторов
-- `SetNumFeatures(value)` — установка количества признаков
-- `SetMatrixData(value)` — установка матрицы данных
-- `SetMatrixClasses(value)` — установка матрицы классов
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры датасета (загрузка данных, создание генераторов)
-- `ACalculate()` — выполнение шага генерации паттерна для текущего образца
+- `SetPulseGeneratorClassName(value)` — setting generator class name
+- `SetNumGenerators(value)` — setting number of generators
+- `SetNumFeatures(value)` — setting number of features
+- `SetMatrixData(value)` — setting data matrix
+- `SetMatrixClasses(value)` — setting class matrix
+- `ADefault()` — setting default parameters
+- `ABuild()` — building dataset structure (load data, create generators)
+- `ACalculate()` — pattern generation step for current sample
 
 ### Usage in configurations
 

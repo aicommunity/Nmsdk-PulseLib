@@ -789,7 +789,7 @@ The last dendrite (index `NumInputDendrite - 1`) is used as calibration and **ne
 
 ```mermaid
 flowchart TD
-  startD["Конец итерации для дендрита i"] --> calcDt["dt = T_max[last] - T_max[i]"]
+  startD["End итерации для дендрита i"] --> calcDt["dt = T_max[last] - T_max[i]"]
   calcDt --> checkPattern{"abs(PrevInputPattern[i] - InputPattern[i]) < eps?"}
 
   checkPattern -->|нет| baseDecision{"dt > 0?"}
@@ -864,7 +864,7 @@ Thus, synapse count growth in `NNeuronLearner` is controlled by sign and magnitu
 
 ```mermaid
 flowchart TD
-  startS["Конец итерации для дендрита i"] --> calcDtS["dt = InitialSomaPotential[i] - MaxIterSomaAmp[i]"]
+  startS["End итерации для дендрита i"] --> calcDtS["dt = InitialSomaPotential[i] - MaxIterSomaAmp[i]"]
   calcDtS --> checkPatternS{"abs(PrevInputPattern[i] - InputPattern[i]) < eps\nи DendStatus[i] == 0?"}
 
   checkPatternS -->|нет| baseDecisionS{"dt > 0?"}

@@ -182,10 +182,10 @@ graph TB
 ### Methods
 
 `NSimpleAfferentNeuron` uses all methods of base class `NAfferentNeuron`:
-- `ADefault()` — установка параметров по умолчанию (устанавливает StructureBuildMode = 2)
-- `ABuild()` — сборка структуры нейрона (вызывает BuildSimpleStructure)
-- `AReset()` — сброс состояний нейрона
-- `ACalculate()` — выполнение шага расчета нейрона
+- `ADefault()` — setting default parameters (sets StructureBuildMode = 2)
+- `ABuild()` — building neuron structure (calls BuildSimpleStructure)
+- `AReset()` — resetting neuron states
+- `ACalculate()` — neuron calculation step
 
 ### Usage in configurations
 

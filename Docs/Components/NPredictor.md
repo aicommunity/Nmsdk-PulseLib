@@ -369,21 +369,21 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры
-- `InputMode` — режим ввода (0 — ручной, 1 — внешний источник)
-- `InputMatrix` — входная матрица данных
-- `InputCols` — количество столбцов входных данных
-- `InputRows` — количество строк входных данных
-- `MeasurementPeriod` — период измерений
-- `Input` — входной сигнал (для внешнего источника)
-- `Output` — выходной сигнал (предсказание)
+- `StructureBuildMode` — structure rebuild mode
+- `InputMode` — input mode (0 — manual, 1 — external source)
+- `InputMatrix` — input data matrix
+- `InputCols` — number of input data columns
+- `InputRows` — number of input data rows
+- `MeasurementPeriod` — measurement period
+- `Input` — input signal (external source)
+- `Output` — output signal (prediction)
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры предсказателя
-- `ACalculate()` — выполнение шага предсказания
-- `Predict(input_pattern)` — предсказание следующего значения на основе паттерна
+- `ADefault()` — setting default parameters
+- `ABuild()` — building predictor structure
+- `ACalculate()` — prediction step
+- `Predict(input_pattern)` — predict next value from pattern
 
 ### Usage in configurations
 

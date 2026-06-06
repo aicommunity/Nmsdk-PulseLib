@@ -619,3 +619,31 @@ The library contains 140 files (70 .cpp, 70 .h) in the `Core/` directory, implem
 
 - [Usage-Examples.md](Usage-Examples.md) - usage examples
 - [API-Overview.md](API-Overview.md) - API overview
+
+```mermaid
+flowchart TB
+    subgraph "Нейроны"
+        NPulseNeuron[NPulseNeuron]
+        NIzhikevich[NPulseNeuronIzhikevich]
+        NIntegrateFire[NIntegrateAndFireNeuron]
+    end
+    
+    subgraph "Synapses"
+        NPulseSynapse[NPulseSynapse]
+        NSynapseStdp[NSynapseStdp]
+    end
+    
+    subgraph "Channels"
+        NPulseChannel[NPulseChannel]
+        NPulseChannelIzh[NPulseChannelIzhikevich]
+    end
+    
+    subgraph "Классификация"
+        NClassifier[NClassifier]
+        NSpikeClassifier[NSpikeClassifier]
+    end
+    
+    NPulseNeuron --> NPulseSynapse
+    NPulseSynapse --> NPulseChannel
+    NPulseChannel --> NClassifier
+```

@@ -431,23 +431,23 @@ graph TB
 
 ### Properties
 
-- `Cm` — емкость мембраны
-- `EL` — потенциал покоя
-- `TauM` — постоянная времени мембраны
-- `TRef` — рефрактерный период
-- `VReset` — потенциал сброса
-- `VMin` — минимальный потенциал
-- `VResetEnable` — включение сброса потенциала
-- `Vm` — текущий мембранный потенциал (внутреннее состояние)
-- `Rm` — мембранное сопротивление (внутреннее состояние, вычисляется как TauM/Cm)
-- `Output` — выходной сигнал (потенциал Vm)
+- `Cm` — membrane capacitance
+- `EL` — resting potential
+- `TauM` — membrane time constant
+- `TRef` — refractory period
+- `VReset` — reset potential
+- `VMin` — minimum potential
+- `VResetEnable` — potential reset enable
+- `Vm` — current membrane potential (internal state)
+- `Rm` — membrane resistance (internal, computed as TauM/Cm)
+- `Output` — output signal (potential Vm)
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры канала (вычисление Rm = TauM/Cm)
-- `AReset()` — сброс состояния (Vm=EL, Rm=TauM/Cm)
-- `ACalculate2()` — выполнение шага расчета (интеграция уравнения IaF, проверка активации, сброс при необходимости)
+- `ADefault()` — setting default parameters
+- `ABuild()` — building channel structure (compute Rm = TauM/Cm)
+- `AReset()` — state reset (Vm=EL, Rm=TauM/Cm)
+- `ACalculate2()` — calculation step (IaF equation integration, activation check, reset when needed)
 
 ### Usage in configurations
 

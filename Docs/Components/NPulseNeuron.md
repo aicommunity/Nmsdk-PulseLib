@@ -541,33 +541,33 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры (0 — не пересобирать, 1 — пересобирать при изменении параметров, 2 — пересобирать всегда)
-- `MembraneClassName` — имя класса мембраны
-- `LTMembraneClassName` — имя класса LT-мембраны
-- `LTZoneClassName` — имя класса LT-зоны
-- `ExcGeneratorClassName` — имя класса возбуждающего генератора
-- `InhGeneratorClassName` — имя класса тормозного генератора
-- `NumSomaMembraneParts` — количество частей сомальной мембраны
-- `NumDendriteMembraneParts` — количество частей дендритной мембраны
-- `NumDendriteMembranePartsVec` — вектор количества частей дендритных мембран
-- `TrainingPattern` — паттерн для обучения
-- `TrainingDendIndexes` — индексы дендритов для обучения
-- `TrainingSynapsisNum` — количество синапсов для обучения
+- `StructureBuildMode` — structure rebuild mode (0 — do not rebuild, 1 — rebuild when parameters change, 2 — always rebuild)
+- `MembraneClassName` — membrane class name
+- `LTMembraneClassName` — LT-membrane class name
+- `LTZoneClassName` — LT-zone class name
+- `ExcGeneratorClassName` — excitatory generator class name
+- `InhGeneratorClassName` — inhibitory generator class name
+- `NumSomaMembraneParts` — number of soma membrane parts
+- `NumDendriteMembraneParts` — number of dendrite membrane parts
+- `NumDendriteMembranePartsVec` — vector of dendrite membrane part counts
+- `TrainingPattern` — training pattern
+- `TrainingDendIndexes` — dendrite indexes for training
+- `TrainingSynapsisNum` — number of synapses for training
 
 ### Methods
 
-- `SetStructureBuildMode(value)` — установка режима пересборки структуры
-- `SetMembraneClassName(value)` — установка имени класса мембраны
-- `GetPosGenerator()` — получение возбуждающего генератора
-- `GetNegGenerator()` — получение тормозного генератора
-- `GetNumMembranes()` — получение количества мембран
-- `GetMembrane(i)` — получение мембраны по индексу
-- `ElongateDendrite(name, feedback)` — удлинение дендрита
-- `BranchDendrite(name, feedback)` — ветвление дендрита
-- `EraseDendrite(name)` — удаление дендрита
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры нейрона
-- `BuildStructure(...)` — построение структуры нейрона
+- `SetStructureBuildMode(value)` — setting structure rebuild mode
+- `SetMembraneClassName(value)` — setting membrane class name
+- `GetPosGenerator()` — getting excitatory generator
+- `GetNegGenerator()` — getting inhibitory generator
+- `GetNumMembranes()` — getting number of membranes
+- `GetMembrane(i)` — getting membrane by index
+- `ElongateDendrite(name, feedback)` — elongating dendrite
+- `BranchDendrite(name, feedback)` — branching dendrite
+- `EraseDendrite(name)` — erasing dendrite
+- `ADefault()` — setting default parameters
+- `ABuild()` — building neuron structure
+- `BuildStructure(...)` — building neuron structure
 
 ### Usage in configurations
 

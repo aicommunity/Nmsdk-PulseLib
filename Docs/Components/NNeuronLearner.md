@@ -457,23 +457,23 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры (1 — пересобрать)
-- `CalculateMode` — режим расчета (0 — завершение обучения, другие — режим обучения)
-- `NumInputDendrite` — количество входных дендритов
-- `EnableDebug` — флаг включения подробного DEBUG‑логирования работы обучателя (подробные сообщения о шагах `Training`, изменениях `DendriteLength`/`NumSynapse`, переходах по режимам и итерациям обучения)
-- `DendriteNeuronAmplitude` — амплитуда дендритов нейрона
-- `SomaNeuronAmplitude` — амплитуда сомы нейрона
-- `CountIteration` — счетчик итераций обучения
+- `StructureBuildMode` — structure rebuild mode (1 — rebuild)
+- `CalculateMode` — calculation mode (0 — training complete, others — training mode)
+- `NumInputDendrite` — number of input dendrites
+- `EnableDebug` — flag enabling detailed DEBUG logging of learner steps (`Training`, changes to `DendriteLength`/`NumSynapse`, mode and iteration transitions)
+- `DendriteNeuronAmplitude` — neuron dendrite amplitude
+- `SomaNeuronAmplitude` — soma neuron amplitude
+- `CountIteration` — training iteration counter
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры обучателя
-- `AReset()` — сброс состояния/весов
-- `ACalculate()` — шаг расчета + обновление по правилу обучения
-- `Training()` — выполнение обучения
-- `PatternRecognition()` — распознавание паттерна
-- `IncrementalLearning()` — инкрементальное обучение
+- `ADefault()` — setting default parameters
+- `ABuild()` — building learner structure
+- `AReset()` — resetting state/weights
+- `ACalculate()` — calculation step + training rule update
+- `Training()` — training execution
+- `PatternRecognition()` — pattern recognition
+- `IncrementalLearning()` — incremental learning
 
 ### Usage in configurations
 
@@ -503,3 +503,43 @@ When `EnableDebug` is `true` and a logger is available (`RDK::GetLogger()`), the
 ### References
 
 See [Literature-References.md](../Literature-References.md): **[A]**, **[B]**, **1**, **6**.
+
+```mermaid
+flowchart TD
+    start[Start ACalculate] --> checkNeuron{Neuron exists?}
+    checkNeuron -->|No| end[Return]
+    checkNeuron -->|Yes| calcDend[Calc dendrite potentials]
+    calcDend --> calcSoma[Calc soma potentials]
+    calcSoma --> modeCheck{CalculateMode == 0 and CountIteration > 0?}
+    modeCheck -->|Yes| endOfLearning[EndOfLearning()]
+    endOfLearning --> afterTrain[Update TrainingPattern, DendriteLength, NumSynapse]
+    afterTrain --> setOutput[Output = Neuron.Output]
+    modeCheck -->|No| expCheck{ExperimentMode?}
+    expCheck -->|Yes| doExp[Experiment()]
+    expCheck -->|No| needTrain{IsNeedToTrain?}
+    doExp --> needTrain
+    needTrain -->|Yes| doTrain[Training()]
+    needTrain -->|No| setOutput
+    doTrain --> setOutput
+    setOutput --> end
+```
+
+```mermaid
+flowchart TD
+    tStart[Training()] --> firstBeat{IsFirstBeat?}
+    firstBeat -->|Yes| initIter[Init iteration\n(StartIterTime, IterLength,\nreset MaxIterSomaAmp)]
+    initIter --> loopGrow[For i = 0..NumInputDendrite-2]
+    loopGrow --> growCheck{CanChangeDendLength?}
+    growCheck -->|Yes| callChangeLen[ChangeDendriteLength(i)]
+    growCheck -->|No| skipLen[Skip dendrite length change]
+    callChangeLen --> callChangeSyn[ChangeSynapseNumber(i)]
+    skipLen --> callChangeSyn
+    callChangeSyn --> endFirst[IsFirstBeat=false, return]
+    firstBeat -->|No| measure[MeasureMaxPotentialAndTime()]
+    measure --> timeCheck{currentitertime >= IterLength?}
+    timeCheck -->|No| endIter[Return]
+    timeCheck -->|Yes| statusLoop[For i = 0..NumInputDendrite-1]
+    statusLoop --> updateStatus[ChangeDendriteStatus(i),\nChangeSynapseStatus(i),\nPrevInputPattern[i] = InputPattern[i]]
+    updateStatus --> doneStatus[IsFirstBeat=true,\nCountIteration++]
+    doneStatus --> endTrain[Return]
+```

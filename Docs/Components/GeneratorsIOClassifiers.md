@@ -47,3 +47,10 @@ Summarises non-neuron, non-synapse building blocks that provide stimuli, IO, cla
 ### References
 
 See [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**, **14**, **19**, **31**.
+
+```mermaid
+flowchart LR
+    gen[NPulseGenerator*] --> net[NNet]
+    net --> cls[NSpikeClassifier]
+    net --> eff[NMuscle/NPac]
+```

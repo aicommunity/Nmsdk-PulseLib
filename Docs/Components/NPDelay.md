@@ -363,22 +363,22 @@ graph TB
 
 ### Properties
 
-- `Input` — входной сигнал (задерживаемый)
-- `DelayTime` — время задержки (сек)
-- `Output` — выходной сигнал (задержанный)
-- `buffer` — буфер сигналов (внутреннее состояние, хранит историю сигналов)
-- `desired_buffer_length` — желаемая длина буфера (вычисляется как `int(DelayTime / TimeStep)`)
+- `Input` — input signal (delayed)
+- `DelayTime` — delay time (sec)
+- `Output` — output signal (delayed)
+- `buffer` — signal buffer (internal state, stores signal history)
+- `desired_buffer_length` — desired buffer length (computed as `int(DelayTime / TimeStep)`)
 
 ### Methods
 
-- `SetDelayTime(value)` — установка времени задержки (вычисляет desired_buffer_length и очищает буфер)
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры задержки (инициализация буфера)
-- `AReset()` — сброс состояния задержки (очистка буфера, обнуление выходного сигнала)
-- `ACalculate()` — выполнение шага задержки:
-  - Если `DelayTime < 0.001` или `desired_buffer_length == 0`, выдает входной сигнал без задержки
-  - Если буфер не заполнен, добавляет входной сигнал в буфер и выдает нулевой выход
-  - Если буфер заполнен, выдает сигнал из конца буфера и добавляет новый входной сигнал в начало буфера
+- `SetDelayTime(value)` — setting delay time (computes desired_buffer_length and clears buffer)
+- `ADefault()` — setting default parameters
+- `ABuild()` — building delay structure (buffer initialization)
+- `AReset()` — resetting delay state (clear buffer, zero output)
+- `ACalculate()` — delay step:
+  - If `DelayTime < 0.001` or `desired_buffer_length == 0`, passes input signal without delay
+  - If buffer not full, adds input signal to buffer and outputs zero
+  - If buffer full, outputs signal from buffer end and prepends new input signal
 
 ### Usage in configurations
 

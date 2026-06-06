@@ -352,19 +352,19 @@ graph TB
 - `StructureBuildMode = 1` — classical structure mode
 
 **Inherited properties:**
-- `MembraneClassName` — имя класса мембраны (по умолчанию "NPulseMembrane")
-- `LTZoneClassName` — имя класса LT-зоны (по умолчанию "NPulseLTZone")
-- `ReceptorClassName` — имя класса рецептора (по умолчанию "NReceptor")
-- `ExcGeneratorClassName` — имя класса возбуждающего генератора
-- `NumSomaMembraneParts` — количество частей сомы
+- `MembraneClassName` — membrane class name (default "NPulseMembrane")
+- `LTZoneClassName` — LT-zone class name (default "NPulseLTZone")
+- `ReceptorClassName` — receptor class name (by default "NReceptor")
+- `ExcGeneratorClassName` — excitatory generator class name
+- `NumSomaMembraneParts` — number of soma parts
 
 ### Methods
 
 `NSAfferentNeuron` uses all methods of base class `NAfferentNeuron`:
-- `ADefault()` — установка параметров по умолчанию (устанавливает StructureBuildMode = 1)
-- `ABuild()` — сборка структуры нейрона (вызывает BuildClassicalStructure)
-- `AReset()` — сброс состояний нейрона
-- `ACalculate()` — выполнение шага расчета нейрона
+- `ADefault()` — setting default parameters (sets StructureBuildMode = 1)
+- `ABuild()` — building neuron structure (calls BuildClassicalStructure)
+- `AReset()` — resetting neuron states
+- `ACalculate()` — neuron calculation step
 
 ### Usage in configurations
 

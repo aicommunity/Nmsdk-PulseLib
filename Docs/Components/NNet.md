@@ -628,3 +628,22 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 - [`NLifeNet`](NLifeNet.md) — network with neuron lifecycle
 - [Architecture.md](../Architecture.md) — library architecture
 - [Config-Overview.md](../Config-Overview.md) — configuration projects description
+
+```mermaid
+sequenceDiagram
+    participant Cfg as Config
+    participant Net as NNet
+    participant Nodes as NeuronsAndSynapses
+    Cfg->>Net: UploadClass + params
+    Net->>Net: ADefault + ABuild
+    loop timestep
+        Net->>Nodes: ACalculate() for all
+        Nodes-->>Net: activity
+    end
+```
+
+```mermaid
+flowchart LR
+    stim[Stimuli] --> net[NNet]
+    net --> act[Network activity]
+```

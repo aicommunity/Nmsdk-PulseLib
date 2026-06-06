@@ -403,21 +403,21 @@ graph TB
 - `InhChannelClassName = ""` — inhibitory channel not used
 
 **Inherited properties from NPulseMembrane:**
-- `FeedbackGain` — коэффициент обратной связи
-- `ResetAvailable` — доступность сброса
-- `NumExcitatorySynapses` — количество возбуждающих синапсов
-- `NumInhibitorySynapses` — количество тормозных синапсов
-- `InputFeedbackSignal` — входной сигнал обратной связи
+- `FeedbackGain` — feedback gain
+- `ResetAvailable` — reset availability
+- `NumExcitatorySynapses` — number of excitatory synapses
+- `NumInhibitorySynapses` — number of inhibitory synapses
+- `InputFeedbackSignal` — feedback input signal
 
 **IaF parameters (in ExcChannel):**
-- `Cm`, `EL`, `TauM`, `VReset`, `TRef` — параметры модели IaF (хранятся в канале)
+- `Cm`, `EL`, `TauM`, `VReset`, `TRef` — IaF model parameters (stored in channel)
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры мембраны (автоматическое создание NPulseChannelIaF и NSynapseIaF)
-- `AReset()` — сброс состояния мембраны
-- `ACalculate2()` — выполнение шага расчета мембраны (вызов расчета канала, агрегация потенциалов)
+- `ADefault()` — setting default parameters
+- `ABuild()` — building membrane structure (auto-create NPulseChannelIaF and NSynapseIaF)
+- `AReset()` — resetting membrane state
+- `ACalculate2()` — membrane calculation step (channel calculation, potential aggregation)
 
 ### Usage in configurations
 

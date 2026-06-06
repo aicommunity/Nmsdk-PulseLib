@@ -314,8 +314,58 @@ This document describes templates (patterns) for typical spiking neural network 
 
 **Structure:**
 - Two Izhikevich neurons (`NPulseNeuronIzhikevich`)
-- One STDP synapse (`NSynapseStdp`)
+- One STDP synapse (`NSynapseStdp`) or `NPulseSynapseStdp`
 - Input signal generator (`NPulseGenerator`)
+
+**Example configuration:** `Bin/Configs/!OldConfigs/STDP-Simple-01/`
+
+**Key parameters:**
+```xml
+<!-- Neuron 1 -->
+<Neuron1 Class="NPulseNeuronIzhikevich">
+    <Parameters>
+        <A>0.02</A>
+        <B>0.2</B>
+        <C>-65.0</C>
+        <D>8.0</D>
+    </Parameters>
+</Neuron1>
+
+<!-- Neuron 2 -->
+<Neuron2 Class="NPulseNeuronIzhikevich">
+    <Parameters>
+        <A>0.02</A>
+        <B>0.2</B>
+        <C>-65.0</C>
+        <D>8.0</D>
+    </Parameters>
+</Neuron2>
+
+<!-- STDP synapse -->
+<Synapse1 Class="NSynapseStdp">
+    <Parameters>
+        <PreNeuron>Neuron1</PreNeuron>
+        <PostNeuron>Neuron2</PostNeuron>
+        <Weight>0.5</Weight>
+        <LearningRate>0.01</LearningRate>
+        <TauPlus>0.02</TauPlus>
+        <TauMinus>0.02</TauMinus>
+    </Parameters>
+</Synapse1>
+
+<!-- Input signal generator -->
+<InputGenerator Class="NPulseGenerator">
+    <Parameters>
+        <Frequency>10.0</Frequency>
+        <Amplitude>1.0</Amplitude>
+    </Parameters>
+</InputGenerator>
+```
+
+**Connections:**
+- `InputGenerator.Output` → `Neuron1.Input`
+- `Neuron1.Output` → `Synapse1.Input`
+- `Synapse1.Output` → `Neuron2.Input`
 
 ### Template 2: Spike Pattern Classifier
 
@@ -324,8 +374,38 @@ This document describes templates (patterns) for typical spiking neural network 
 **Structure:**
 - Input neuron layer (data encoding)
 - Hidden layer (optional)
-- Classifier (`NSpikeClassifier`)
+- Classifier (`NSpikeClassifier` or `NClassifier`)
 - Pattern generators (`NPattern`)
+
+**Example configuration:** `Bin/Configs/!OldConfigs/SpikeANPA3/`, `Bin/Configs/!OldConfigs/SpikeClassifier/`
+
+**Key components:**
+```xml
+<!-- Input neuron layer -->
+<InputLayer Class="NNeuronsLayer">
+    <Parameters>
+        <NeuronsClassName>NPulseNeuronIzhikevich</NeuronsClassName>
+        <LayerWidth>10</LayerWidth>
+        <LayerHeight>1</LayerHeight>
+    </Parameters>
+</InputLayer>
+
+<!-- Classifier -->
+<Classifier Class="NSpikeClassifier">
+    <Parameters>
+        <InputNeurons>InputLayer.Neurons</InputNeurons>
+        <OutputClasses>5</OutputClasses>
+    </Parameters>
+</Classifier>
+
+<!-- Training patterns -->
+<Pattern1 Class="NPattern">
+    <Parameters>
+        <Label>0</Label>
+        <!-- Pattern data -->
+    </Parameters>
+</Pattern1>
+```
 
 ### Template 3: Bio-Inspired Neuron with LT-Zone
 
@@ -334,24 +414,187 @@ This document describes templates (patterns) for typical spiking neural network 
 **Structure:**
 - Neuron with configurable structure (`NSPNeuronGen`)
 - Bio-inspired membranes (`NPMembraneBio`)
-- Excitatory and inhibitory channels
+- Excitatory and inhibitory channels (`NPExcChannelBio`, `NPInhChannelBio`)
+- Bio-inspired synapses (`NPSynapseBio`)
 - LT-zone (`NPulseLTZoneThreshold`)
+
+**Example configuration:** `Bin/Configs/User/CognitiveNavigation/Ivan_VKR_3-4_13/`
+
+**Key components:**
+```xml
+<!-- Neuron with configurable structure -->
+<Neuron1 Class="NSPNeuronGen">
+    <Parameters>
+        <MembraneClassName>NPMembraneBio</MembraneClassName>
+        <LTZoneClassName>NPulseLTZoneThreshold</LTZoneClassName>
+        <ExcGeneratorClassName>NPNeuronPosCGenerator</ExcGeneratorClassName>
+        <InhGeneratorClassName>NPNeuronNegCGenerator</InhGeneratorClassName>
+        <NumSomaMembraneParts>1</NumSomaMembraneParts>
+        <NumDendriteMembranePartsVec>1</NumDendriteMembranePartsVec>
+    </Parameters>
+    <Components>
+        <!-- Soma -->
+        <Soma1 Class="NPMembraneBio">
+            <Parameters>
+                <ExcChannelClassName>NPExcChannelBio</ExcChannelClassName>
+                <InhChannelClassName>NPInhChannelBio</InhChannelClassName>
+                <SynapseClassName>NPSynapseBio</SynapseClassName>
+                <NumExcitatorySynapses>1</NumExcitatorySynapses>
+                <NumInhibitorySynapses>1</NumInhibitorySynapses>
+            </Parameters>
+            <Components>
+                <!-- Excitatory synapse -->
+                <ExcSynapse1 Class="NPSynapseBio">
+                    <Parameters>
+                        <Weight>1.0</Weight>
+                        <PulseAmplitude>1.0</PulseAmplitude>
+                        <SecretionTC>0.001</SecretionTC>
+                        <DissociationTC>0.005</DissociationTC>
+                        <Resistance>86000000</Resistance>
+                        <Type>-1</Type>
+                    </Parameters>
+                </ExcSynapse1>
+                <!-- Excitatory channel -->
+                <ExcChannel Class="NPExcChannelBio">
+                    <Parameters>
+                        <Resistance>10000000</Resistance>
+                        <Capacity>1e-9</Capacity>
+                        <Type>-1</Type>
+                    </Parameters>
+                </ExcChannel>
+            </Components>
+        </Soma1>
+        <!-- LT-zone -->
+        <LTZone Class="NPulseLTZoneThreshold">
+            <Parameters>
+                <Threshold>1e-5</Threshold>
+                <TimeConstant>0.005</TimeConstant>
+                <PulseAmplitude>1.0</PulseAmplitude>
+            </Parameters>
+        </LTZone>
+    </Components>
+</Neuron1>
+```
 
 ### Template 4: Logical Operations (NOT, AND, OR)
 
 **Purpose:** Implementation of logical operations through neuron and generator combinations.
 
+**Structure:**
+- Input signal generators (`NPulseGeneratorTransit`)
+- Neurons with inverting connections (`NSPNeuronGen`)
+- Combining neurons for AND/OR operations
+
+**Example configuration:** `Bin/Configs/User/CognitiveNavigation/Ivan_VKR_3-4_13/`
+
+**NOT logic:**
+- Input signal generator
+- Neuron with excitatory input on dendrite and inhibitory on soma
+- Neuron output inverts the input signal
+
+**AND logic:**
+- Multiple input generators
+- Neuron with multiple excitatory inputs
+- LT-zone for activity accumulation
+- Neuron fires only when all inputs are activated simultaneously
+
+**OR logic:**
+- Multiple input generators
+- Neuron with multiple excitatory inputs
+- Neuron fires when any input is activated
+
 ### Template 5: Afferent Neuron with Receptor
 
-**Purpose:** Modeling sensory input through afferent neuron and receptor.
+**Purpose:** Modeling sensory input through an afferent neuron and receptor.
+
+**Structure:**
+- Receptor (`NReceptor`) for receiving external signals
+- Afferent neuron (`NAfferentNeuron` or `NSAfferentNeuron`)
+- Receptor-to-neuron connection
+
+**Example configuration:** `Bin/Configs/!OldConfigs/NM-AfferentNeurons/`, `Bin/Configs/!OldConfigs/NReceptor/`
+
+**Key components:**
+```xml
+<!-- Receptor -->
+<Receptor1 Class="NReceptor">
+    <Parameters>
+        <!-- Receptor parameters -->
+    </Parameters>
+</Receptor1>
+
+<!-- Afferent neuron -->
+<AfferentNeuron1 Class="NSAfferentNeuron">
+    <Parameters>
+        <!-- Neuron parameters -->
+    </Parameters>
+</AfferentNeuron1>
+```
+
+**Connections:**
+- `Receptor1.Output` → `AfferentNeuron1.Input`
 
 ### Template 6: Muscle Control via Motor Neuron
 
-**Purpose:** Modeling effector (muscle) control through motor neuron.
+**Purpose:** Modeling effector (muscle) control through a motor neuron.
+
+**Structure:**
+- Motor neuron (`NMotoneuron` or `NNewMotoneuron`)
+- Muscle (`NMuscle` or `NEyeMuscle`)
+- Input signals from other neurons
+
+**Example configuration:** `Bin/Configs/!OldConfigs/OldExperiments/MotionControl/`, `Bin/Configs/!OldConfigs/MC-Muscles/`
+
+**Key components:**
+```xml
+<!-- Motor neuron -->
+<Motoneuron1 Class="NMotoneuron">
+    <Parameters>
+        <!-- Motor neuron parameters -->
+    </Parameters>
+</Motoneuron1>
+
+<!-- Muscle -->
+<Muscle1 Class="NMuscle">
+    <Parameters>
+        <!-- Muscle parameters -->
+    </Parameters>
+</Muscle1>
+```
+
+**Connections:**
+- `InputNeuron.Output` → `Motoneuron1.Input`
+- `Motoneuron1.Output` → `Muscle1.Input`
 
 ### Template 7: Network with Feedback Connections for Memory
 
 **Purpose:** Creating a network with feedback connections for short-term and long-term memory formation.
+
+**Structure:**
+- Main neurons with LT-zones
+- Feedback connections from outputs to inputs
+- Generators for activity initialization
+
+**Example configuration:** `Bin/Configs/User/CognitiveNavigation/Ivan_VKR_3-4_13/`
+
+**Features:**
+- LT-zones accumulate activity and maintain state
+- Feedback connections create recurrent dynamics
+- Generators can initiate or reset state
+
+### Recommendations for Creating New Experiments
+
+1. **Start simple:** Use template 1 (two neurons + STDP) to understand basic mechanisms.
+
+2. **Use existing configurations:** Study similar projects in `Bin/Configs` and adapt them to your tasks.
+
+3. **Iterative development:** Create multiple model versions (`Model_00.xml`, `Model_01.xml`, ...) to track changes.
+
+4. **Document parameters:** Record which parameters you changed and how it affected network behavior.
+
+5. **Visualization:** Configure charts in `Interface.xml` to observe key values (potentials, spikes, synapse weights).
+
+6. **Testing:** Verify network operation on simple input signals before moving to complex tasks.
 
 ### See Also
 

@@ -294,3 +294,28 @@ See [Literature-References.md](../Literature-References.md): **26**, **29**, **3
 - [`NPExcChannel`](NPExcChannel.md) — excitatory channel
 - [`NPulseChannelCommon`](NPulseChannelCommon.md) — common spiking channel
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+graph TB
+    subgraph NPulseChannel["NPulseChannel Base"]
+        BaseChannel[NPulseChannel]
+    end
+    
+    subgraph NPExcChannelBio["NPExcChannelBio"]
+        BioParams[Биоинспирированные параметры]
+        ChannelLogic[Логика канала]
+    end
+    
+    subgraph External["External components"]
+        InputSynapses[Входные синапсы]
+        Membrane[Мембрана]
+        Neuron[Нейрон]
+    end
+    
+    BaseChannel -->|конфигурация| NPExcChannelBio
+    NPExcChannelBio -->|имеет| BioParams
+    NPExcChannelBio -->|uses| ChannelLogic
+    InputSynapses -->|SynapticInputs| NPExcChannelBio
+    NPExcChannelBio -->|Output| Membrane
+    Membrane -->|IsNeuronActivated| NPExcChannelBio
+```

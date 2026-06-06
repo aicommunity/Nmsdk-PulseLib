@@ -299,35 +299,35 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры (0 — не пересобирать, 1 — пересобрать)
-- `CalculateMode` — режим расчета (0 — максимизация амплитуды, 6 — CalculateProcess)
-- `PulseGeneratorClassName` — имя класса генератора импульсов
-- `NeuronClassName` — имя класса нейрона
-- `SynapseClassName` — имя класса синапса
-- `IsNeedToTrain` — необходимость обучения
-- `InputPattern` — входной паттерн для обучения
-- `NeuronAmplitude` — амплитуда нейрона
-- `SomaNeuronAmplitude` — амплитуда сомы нейрона
-- `Output` — выходной сигнал
+- `StructureBuildMode` — structure rebuild mode (0 — do not rebuild, 1 — rebuild)
+- `CalculateMode` — calculation mode (0 — amplitude maximization, 6 — CalculateProcess)
+- `PulseGeneratorClassName` — pulse generator class name
+- `NeuronClassName` — neuron class name
+- `SynapseClassName` — synapse class name
+- `IsNeedToTrain` — training required flag
+- `InputPattern` — input training pattern
+- `NeuronAmplitude` — neuron amplitude
+- `SomaNeuronAmplitude` — soma neuron amplitude
+- `Output` — output signal
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры тренера
-- `AReset()` — сброс состояния обучения
-- `ACalculate()` — выполнение шага обучения
+- `ADefault()` — setting default parameters
+- `ABuild()` — building trainer structure
+- `AReset()` — resetting training state
+- `ACalculate()` — training step
 
-### Подробная временная структура обучения
+### Detailed Training Timeline
 
-- **Итерация** в `NNeuronTrainer` — это временной промежуток, в течение которого
-  измеряются максимальные амплитуды на дендритах/сомах и принимается решение
-  о росте/сжатии дендритов и изменении числа синапсов.
-  - Начало итерации фиксируется в `start_iter_time`.
-  - Длительность итерации \(`iter_length`\) вычисляется внутри конкретного алгоритма
-    как \(1 / SpikesFrequency - 1 / TimeStep\).
-- **Такт** — один вызов `ACalculate()` тренера в общем цикле расчёта модели.
+- **Iteration** in `NNeuronTrainer` is a time interval during which
+  maximum amplitudes on dendrites/somas are measured and a decision is made
+  about dendrite growth/shrinkage and changing the number of synapses.
+  - Iteration start is recorded in `start_iter_time`.
+  - Iteration duration \(`iter_length`\) is computed inside the specific algorithm
+    as \(1 / SpikesFrequency - 1 / TimeStep\).
+- **Step** — one call to the trainer's `ACalculate()` in the model calculation loop.
 
-Упрощённый поток вызываемых методов:
+Simplified call flow:
 
 ```mermaid
 flowchart TD
@@ -338,7 +338,7 @@ flowchart TD
     ltZone --> end
 ```
 
-Внутри `CalculateProcess()`:
+Inside `CalculateProcess()`:
 
 ```mermaid
 flowchart TD
@@ -355,75 +355,75 @@ flowchart TD
     legacy --> cpReturn
 ```
 
-Таким образом:
+Thus:
 
-- При `CalculateMode = 0` тренер фактически ничего не делает (режим «выключен»).
-- При `CalculateMode = 6` используется двухэтапный алгоритм:
-  1. `SomaSynchronizePattern()` — подбирает длины дендритов, чтобы синхронизировать времена максимумов сигналов на сомах.
-  2. `SomaSynapseNormalization()` — подбирает число синапсов, чтобы компенсировать потери амплитуды и зафиксировать структуру.
+- With `CalculateMode = 0` the trainer effectively does nothing (disabled mode).
+- With `CalculateMode = 6` a two-stage algorithm is used:
+  1. `SomaSynchronizePattern()` — adjusts dendrite lengths to synchronize soma signal peak times.
+  2. `SomaSynapseNormalization()` — adjusts synapse count to compensate amplitude loss and fix the structure.
 
-Режимы `1–5` либо закомментированы, либо используются для старых экспериментальных алгоритмов и в текущей реализации
-могут рассматриваться как устаревшие.
+Modes `1–5` are either commented out or used for legacy experimental algorithms and in the current implementation
+may be considered obsolete.
 
-### Структура состояния и параметров
+### State and Parameter Structure
 
-Ключевые публичные свойства `NNeuronTrainer`:
+Key public properties of `NNeuronTrainer`:
 
-- **Структура и режимы**:
-  - `StructureBuildMode` — режим пересборки структуры (0 — не пересобирать, 1 — пересобрать по `BuildStructure`).
-  - `CalculateMode` — режим расчёта/обучения:
-    - 0 — ранний выход без обучения (используется только чтение амплитуд),
-    - 6 — активный режим `SomaSynchronizePattern` + `SomaSynapseNormalization`.
-  - `IsNeedToTrain` — флаг необходимости обучения; при его опускании тренер прекращает менять структуру и только считает.
-- **Классы и компоненты**:
-  - `PulseGeneratorClassName` — имя класса генераторов импульсов (`NPulseGeneratorTransit`).
-  - `NeuronClassName` — имя класса целевого нейрона (`NSPNeuronGen` и др.).
-  - `SynapseClassName` — имя класса синапсов (`NPSynapseBio` и др.).
-- **Входы и тайминг**:
-  - `NumInputDendrite` — число входных дендритов.
-  - `MaxDendriteLength` — максимальная разрешённая длина дендритов (число сегментов).
-  - `InputPattern` — паттерн задержек входных импульсов (TTFS) для каждого дендрита.
-  - `Delay` — общая задержка начала обучения относительно старта системы.
-  - `SpikesFrequency` — частота генераторов (определяет период итерации).
-- **Пороги LT‑зоны**:
-  - `LTZThreshold` — текущий порог низкопороговой зоны.
-  - `FixedLTZThreshold` — фиксированный (рабочий) порог.
-  - `TrainingLTZThreshold` — порог, используемый на этапе обучения (выставляется в начале обучения).
-  - `UseFixedLTZThreshold` — признак использования фиксированного порога.
-- **Амплитуды и выход**:
-  - `NeuronAmplitude` — амплитуды на дендритах (суммарный потенциал и по дендритам отдельно).
-  - `SomaNeuronAmplitude` — амплитуды на сомах.
-  - `Output` — выход `LTZone->Output` целевого нейрона.
-- **Синапсы**:
-  - `SynapseResistanceStep` — сопротивление добавляемых в процессе обучения синапсов.
+- **Structure and modes**:
+  - `StructureBuildMode` — structure rebuild mode (0 — do not rebuild, 1 — rebuild via `BuildStructure`).
+  - `CalculateMode` — calculation/training mode:
+    - 0 — early exit without training (amplitude readout only),
+    - 6 — active mode `SomaSynchronizePattern` + `SomaSynapseNormalization`.
+  - `IsNeedToTrain` — training-required flag; when cleared the trainer stops changing structure and only computes.
+- **Classes and components**:
+  - `PulseGeneratorClassName` — pulse generator class name (`NPulseGeneratorTransit`).
+  - `NeuronClassName` — target neuron class name (`NSPNeuronGen`, etc.).
+  - `SynapseClassName` — synapse class name (`NPSynapseBio`, etc.).
+- **Inputs and timing**:
+  - `NumInputDendrite` — number of input dendrites.
+  - `MaxDendriteLength` — maximum allowed dendrite length (number of segments).
+  - `InputPattern` — input pulse delay pattern (TTFS) for each dendrite.
+  - `Delay` — overall training start delay relative to system start.
+  - `SpikesFrequency` — generator frequency (defines iteration period).
+- **LT-zone thresholds**:
+  - `LTZThreshold` — current low-threshold zone threshold.
+  - `FixedLTZThreshold` — fixed (operating) threshold.
+  - `TrainingLTZThreshold` — threshold used during training (set at training start).
+  - `UseFixedLTZThreshold` — flag to use fixed threshold.
+- **Amplitudes and output**:
+  - `NeuronAmplitude` — dendrite amplitudes (total potential and per-dendrite).
+  - `SomaNeuronAmplitude` — soma amplitudes.
+  - `Output` — target neuron `LTZone->Output`.
+- **Synapses**:
+  - `SynapseResistanceStep` — resistance of synapses added during training.
 
-Внутренние поля, управляющие обучением:
+Internal fields controlling training:
 
-- Геометрия и синапсы:
-  - `DendriteLength` — вектор текущих длин дендритов (число сегментов на каждом входе).
-  - `SynapseNum` — вектор числа возбуждающих синапсов на входных сегментах дендритов.
-  - `InitialDendritePotential` — максимальные исходные потенциалы при единичной длине дендритов.
-- Временная структура:
-  - `is_first_iter` — флаг первого такта внутри итерации (инициализация максимумов и времени начала).
-  - `start_iter_time` — время начала текущей итерации.
-  - `max_iter_neuron_amp`, `max_neuron_amp`, `max_neuron_amp_time` — метрики для старых режимов максимизации амплитуды нейрона.
-- Управление ростом:
-  - `dend_counter`, `dend_index` — индексы текущих дендритов в старых алгоритмах; в режиме 6 `dend_index` задаёт калибровочный дендрит.
-  - `is_new_dend`, `is_new_iteration` — флаги необходимости перейти к следующему дендриту / итерации роста.
-  - `syn_counter` — индекс дендрита, на котором растут синапсы в устаревших режимах.
-- Для режимов синхронизации (особенно `CalculateMode = 6`):
-  - `is_need_to_build` — флаг необходимости первоначальной досборки структуры (подключения генераторов, инициализации длины).
-  - `max_iter_dend_amp` — максимальные амплитуды на сомах или дендритах за итерацию.
-  - `max_dend_amp_time` — времена, когда наблюдались максимумы.
-  - `dissynchronization` — текущая оценка рассинхронизации по времени относительно калибровочного дендрита.
-  - `dend_status` — статусы дендритов:
-    - 0 — без изменений,
-    - 1/−1 — нужно удлинить/укоротить дендрит,
-    - 2/−2 — нужно добавить/убавить синапсы (в `SomaSynapseNormalization`).
-  - `is_synchronizated` — флаг завершения процесса синхронизации (подбора длин).
+- Geometry and synapses:
+  - `DendriteLength` — vector of current dendrite lengths (segments per input).
+  - `SynapseNum` — vector of excitatory synapse counts on input dendrite segments.
+  - `InitialDendritePotential` — initial maximum potentials at unit dendrite length.
+- Temporal structure:
+  - `is_first_iter` — flag of first step within iteration (initialize maxima and start time).
+  - `start_iter_time` — current iteration start time.
+  - `max_iter_neuron_amp`, `max_neuron_amp`, `max_neuron_amp_time` — metrics for legacy neuron amplitude maximization modes.
+- Growth control:
+  - `dend_counter`, `dend_index` — current dendrite indices in legacy algorithms; in mode 6 `dend_index` is the calibration dendrite.
+  - `is_new_dend`, `is_new_iteration` — flags to move to next dendrite / growth iteration.
+  - `syn_counter` — dendrite index where synapses grow in legacy modes.
+- For synchronization modes (especially `CalculateMode = 6`):
+  - `is_need_to_build` — flag for initial structure assembly (connect generators, initialize length).
+  - `max_iter_dend_amp` — maximum soma or dendrite amplitudes per iteration.
+  - `max_dend_amp_time` — times when maxima were observed.
+  - `dissynchronization` — current time desynchronization estimate relative to calibration dendrite.
+  - `dend_status` — dendrite statuses:
+    - 0 — no change,
+    - 1/−1 — lengthen/shorten dendrite,
+    - 2/−2 — add/remove synapses (in `SomaSynapseNormalization`).
+  - `is_synchronizated` — flag that synchronization (length tuning) is complete.
 
-Эти структуры данных используются двумя основными алгоритмами: `SomaSynchronizePattern` (подбор длины) и
-`SomaSynapseNormalization` (нормализация числа синапсов при фиксированной длине).
+These data structures are used by two main algorithms: `SomaSynchronizePattern` (length tuning) and
+`SomaSynapseNormalization` (synapse count normalization at fixed length).
 
 ### Usage in configurations
 
@@ -433,9 +433,9 @@ flowchart TD
 - **Amplitude maximization**: experiments with optimizing neuron responses
 - **Dendrite growth**: experiments with structural plasticity
 
-### Детальный разбор алгоритмов роста дендритов и синапсов
+### Detailed Analysis of Dendrite and Synapse Growth Algorithms
 
-#### Режим 6: `SomaSynchronizePattern` (рост дендритов по времени на соме)
+#### Mode 6: `SomaSynchronizePattern` (dendrite growth by soma peak time)
 
 ```mermaid
 flowchart TD
@@ -459,53 +459,53 @@ flowchart TD
     decideStatus --> returnEarly
 ```
 
-- **Первичный билд (`is_need_to_build`)**:
-  - Все генераторы `SourceX` подключаются к `DendriteX_1.ExcSynapse1`.
-  - Для всех входов `DendriteLength[i] = 1`.
-  - Инициализируются:
+- **Initial build (`is_need_to_build`)**:
+  - All `SourceX` generators connect to `DendriteX_1.ExcSynapse1`.
+  - For all inputs `DendriteLength[i] = 1`.
+  - Initialized:
     - `max_dend_amp_time[i] = 0`,
-    - `dissynchronization[i] = period` (кроме калибровочного дендрита `dend_index`, где 0),
-    - `dend_status[i] = 1` (растим), а для калибровочного `dend_status[dend_index] = 0`,
+    - `dissynchronization[i] = period` (except calibration dendrite `dend_index`, where 0),
+    - `dend_status[i] = 1` (grow), calibration `dend_status[dend_index] = 0`,
     - `is_synchronizated = false`.
 
-- **Рост/сжатие при `is_new_iteration == true`**:
-  - Для каждого дендрита `i`:
-    - Если `dend_status[i] == 1` и `DendriteLength[i] < MaxDendriteLength`:
+- **Growth/shrinkage when `is_new_iteration == true`**:
+  - For each dendrite `i`:
+    - If `dend_status[i] == 1` and `DendriteLength[i] < MaxDendriteLength`:
       - `DendriteLength[i]++`.
-      - Обновляется структура нейрона (`NumDendriteMembraneParts` или `NumDendriteMembranePartsVec`),
-        выполняется `Reset()`.
-      - Переключаются связи генератора:
-        - создаётся линк `Source(i+1).Output -> Dendrite(i+1)_(new).ExcSynapse1.Input`,
-        - разрывается линк со старым сегментом.
-    - Если `dend_status[i] == -1`:
-      - `DendriteLength[i]--` (при необходимости уменьшается и вектор длины мембран в нейроне),
+      - Neuron structure updated (`NumDendriteMembraneParts` or `NumDendriteMembranePartsVec`),
+        `Reset()` is called.
+      - Generator links are switched:
+        - link created `Source(i+1).Output -> Dendrite(i+1)_(new).ExcSynapse1.Input`,
+        - link to old segment removed.
+    - If `dend_status[i] == -1`:
+      - `DendriteLength[i]--` (membrane length vector in neuron reduced if needed),
       - `dend_status[i] = 0`,
-      - связи генератора возвращаются на более короткий сегмент.
-  - После обхода всех входов `is_new_iteration = false`.
+      - generator links moved back to shorter segment.
+  - After all inputs `is_new_iteration = false`.
 
-- **Измерение максимумов сомы**:
-  - В каждом такте:
-    - Для каждой сомы `Soma(i+1)` снимается `soma_amp = soma->SumPotential(0,0)`.
-    - Если `soma_amp` больше сохранённого максимума для текущей итерации:
-      - обновляются `max_iter_dend_amp[i]` и `max_dend_amp_time[i]`.
-      - при `DendriteLength[i] == 1` `InitialDendritePotential[i] = soma_amp`.
+- **Soma maximum measurement**:
+  - Each step:
+    - For each soma `Soma(i+1)` read `soma_amp = soma->SumPotential(0,0)`.
+    - If `soma_amp` exceeds stored maximum for current iteration:
+      - update `max_iter_dend_amp[i]` and `max_dend_amp_time[i]`.
+      - at `DendriteLength[i] == 1` set `InitialDendritePotential[i] = soma_amp`.
 
-- **Окончание итерации**:
-  - Когда `iter_time >= iter_length`, для каждого `i` с `dend_status[i] != 0`:
-    - вычисляется `dt = |max_dend_amp_time[dend_index] - max_dend_amp_time[i]|`;
-    - если `dt < dissynchronization[i]` → рассинхронизация уменьшилась, продолжаем рост (`dend_status[i] = 1`);
-    - иначе → ухудшение, укорачиваем (`dend_status[i] = -1`);
-    - `is_new_iteration = true`, `is_first_iter = true` для следующего цикла.
+- **End of iteration**:
+  - When `iter_time >= iter_length`, for each `i` with `dend_status[i] != 0`:
+    - compute `dt = |max_dend_amp_time[dend_index] - max_dend_amp_time[i]|`;
+    - if `dt < dissynchronization[i]` → desynchronization decreased, continue growth (`dend_status[i] = 1`);
+    - else → worsened, shorten (`dend_status[i] = -1`);
+    - `is_new_iteration = true`, `is_first_iter = true` for next cycle.
 
-- **Завершение синхронизации**:
-  - Если в начале вызова обнаружено, что все `dend_status[i] == 0`:
+- **Synchronization completion**:
+  - If at call start all `dend_status[i] == 0`:
     - `is_synchronizated = true`,
-    - при `CalculateMode == 3` дополнительно `IsNeedToTrain = false`.
+    - with `CalculateMode == 3` also set `IsNeedToTrain = false`.
 
-Если `dend_status` быстро обнуляются без заметного изменения `DendriteLength`, обучение может завершиться
-без реального роста дендритов.
+If `dend_status` zero out quickly without noticeable `DendriteLength` change, training may finish
+without actual dendrite growth.
 
-#### Режим 6: `SomaSynapseNormalization` (рост числа синапсов по амплитуде на соме)
+#### Mode 6: `SomaSynapseNormalization` (synapse count growth by soma amplitude)
 
 ```mermaid
 flowchart TD
@@ -526,39 +526,39 @@ flowchart TD
     decideSyn --> snReturn
 ```
 
-- **Определение завершения обучения**:
-  - Если `dend_status[i] == 0` для всех входов, считаем нейрон обученным:
+- **Training completion detection**:
+  - If `dend_status[i] == 0` for all inputs, neuron is considered trained:
     - `IsNeedToTrain = false`.
-    - В `neuron` записывается:
+    - Written to `neuron`:
       - `TrainingPattern = InputPattern`,
       - `TrainingDendIndexes(i,0) = DendriteLength[i]`,
       - `TrainingSynapsisNum(i,0) = SynapseNum[i]`.
-    - LT‑порог переводится на фиксированное значение `FixedLTZThreshold`.
+    - LT threshold set to fixed value `FixedLTZThreshold`.
 
-- **Изменение числа синапсов при `is_new_iteration == true`**:
-  - Для `dend_status[i] == 2`:
+- **Synapse count change when `is_new_iteration == true`**:
+  - For `dend_status[i] == 2`:
     - `SynapseNum[i]++`.
-    - На последнем сегменте дендрита `Dendrite(i+1)_(DendriteLength[i])` увеличивается `NumExcitatorySynapses`,
-      выполняется `Build()`, берётся последний возбуждающий синапс, создаётся линк от `Source(i+1)`,
-      сопротивление синапса устанавливается в `SynapseResistanceStep`.
-  - Для `dend_status[i] == -2`:
+    - On last dendrite segment `Dendrite(i+1)_(DendriteLength[i])` increase `NumExcitatorySynapses`,
+      call `Build()`, take last excitatory synapse, link from `Source(i+1)`,
+      synapse resistance set to `SynapseResistanceStep`.
+  - For `dend_status[i] == -2`:
     - `SynapseNum[i]--`,
-    - уменьшается `NumExcitatorySynapses` на том же сегменте, выполняется `Build()` и `neuron->Reset()`,
+    - decrease `NumExcitatorySynapses` on same segment, `Build()` and `neuron->Reset()`,
     - `dend_status[i] = 0`.
 
-- **Сравнение амплитуд и выставление статусов**:
-  - В течение итерации:
-    - для каждой сомы `Soma(i+1)` вычисляется `soma_amp = soma->SumPotential(0,0)`,
-      максимум за итерацию сохраняется в `max_iter_dend_amp[i]`.
-  - По завершении итерации:
-    - если `max_iter_dend_amp[i] < InitialDendritePotential[i] + 0.000005` → **амплитуда меньше исходной**, нужно
-      **увеличивать число синапсов**: `dend_status[i] = 2`;
-    - иначе → амплитуда выросла или не ухудшилась — можно уменьшать число синапсов:
+- **Amplitude comparison and status assignment**:
+  - During iteration:
+    - for each soma `Soma(i+1)` compute `soma_amp = soma->SumPotential(0,0)`,
+      iteration maximum stored in `max_iter_dend_amp[i]`.
+  - At iteration end:
+    - if `max_iter_dend_amp[i] < InitialDendritePotential[i] + 0.000005` → **amplitude below initial**, need to
+      **increase synapse count**: `dend_status[i] = 2`;
+    - else → amplitude increased or did not worsen — may decrease synapse count:
       `dend_status[i] = -2`.
-    - После этого `is_new_iteration = true`, `is_first_iter = true`.
+    - Then `is_new_iteration = true`, `is_first_iter = true`.
 
-Вместе `SomaSynchronizePattern` и `SomaSynapseNormalization` реализуют двухэтапное структурное обучение:
-сначала подбор длины дендритов по времени максимума на сомах, затем подбор числа синапсов по амплитуде выхода сом.
+Together `SomaSynchronizePattern` and `SomaSynapseNormalization` implement two-stage structural training:
+first dendrite length tuning by soma peak time, then synapse count tuning by soma output amplitude.
 
 ### References
 

@@ -600,11 +600,13 @@ for (int step = 0; step < 1000; step++) {
 
 ### Purpose
 
-**Class**: `NNeuronLife` — component for neuron life support model with energy, wear out, and feel metrics.
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLife", ...)`.
-**Instances**: `ClassName = "NNeuronLife"` in `Bin/Configs/*/Model_*.xml`.
+**Component catalog:** [Component-Catalog.md](../Component-Catalog.md).
 
-`NNeuronLife` implements neuron life support model that tracks energy, wear out, and feel metrics and calculates activation thresholds based on these metrics. Component is used within `NPulseLifeNeuron` for modeling "living" neurons with life support metrics. In neuromorphic systems [A], the life support model supports structural and parametric adaptation of the neuron (resources, wear, thresholds) and aligns with plasticity and motor memory as described in Bakhshiev's thesis.
+**Class**: `NNeuronLife` — neuron life support model component with energy, wear out, and feel metrics.
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLife", ...)`.
+**Storage instances**: `ClassName = "NNeuronLife"` in `Bin/Configs/*/Model_*.xml`.
+
+`NNeuronLife` implements a neuron life support model that tracks energy, wear out (wear), feel, and activation thresholds derived from these metrics. The component is used within `NPulseLifeNeuron` to model "living" neurons with life support metrics. In neuromorphic systems [A], the life support model supports structural and parametric neuron adaptation (resources, wear, thresholds) and aligns with plasticity and motor memory described in Bakhshiev's thesis.
 
 **Usage:** Modeling neuron life support, experiments with energy and wear out metrics, modeling neuron adaptation
 
@@ -629,21 +631,84 @@ classDiagram
     }
 ```
 
+**Inheritance hierarchy:**
+- `UNet` — Rdk Framework base network
+- `NNeuronLife` — neuron life support model
+
+**Internal structure:**
+- **ExternalEnergyBonus** (`NSum`) — optional component for external energy bonus
+
+**Inputs:**
+- **Input1** — neuron potential (Usum)
+- **Input2** — positive energy (epos)
+- **Input3** — charge sum (qsum)
+
+**Outputs:**
+- **Output1** — thresholds [Threshold, ThresholdWearOut, ThresholdFeel, ThresholdLife]
+- **Output2** — feel (Feel)
+- **Output3** — wear out (WearOut)
+- **OutputThreshold** — energy components [Ey, Ee, Eh, Ey+Ee+Eh]
+- **Output5** — energy (Energy)
+- **Output6** — excitatory synapse motivation [dEa*TimeStep, -dEy, -dEe*TimeStep, dEh*TimeStep, 0]
+- **Output7** — inhibitory synapse motivation
+- **Output8** — additional metrics
+
 ### UML Sequence Diagram
 
 ```mermaid
 sequenceDiagram
     participant Neuron as NPulseLifeNeuron
     participant Life as NNeuronLife
+    participant Membrane as NPulseMembrane
+    participant ExternalBonus as NSum
+    participant Storage as UStorage
 
-    Neuron->>Life: Input1, Input2, Input3
-    Neuron->>Life: Calculate()
-    Life->>Life: ACalcWearOut()
-    Life->>Life: ACalcEnergy()
-    Life->>Life: ACalcFeel()
-    Life->>Life: ACalcThresholdLife()
-    Life-->>Neuron: Output1..Output8 (metrics)
+    Storage->>Life: New()
+    Storage->>Life: Default()
+    Life->>Life: ADefault()
+    Note over Life: Initialize all parameters<br/>Energy=100, WearOut=0.1
+    Storage->>Life: Build()
+    Life->>Life: ABuild()
+    Life->>ExternalBonus: AddMissingComponent("ExternalEnergyBonus", "NSum")
+    Life-->>Storage: Ready = true
+
+    loop Each simulation step
+        Neuron->>Membrane: Get potential
+        Membrane-->>Neuron: Potential
+        Neuron->>Life: Input1 = potential
+        Neuron->>Life: Input2 = positive energy
+        Neuron->>Life: Input3 = charge sum
+        Storage->>Life: Calculate()
+        Life->>Life: ACalculate()
+        Life->>Life: ACalcWearOut()
+        Note over Life: Update wear out<br/>based on activity
+        Life->>Life: ACalcEnergy()
+        Note over Life: Update energy<br/>Ea, Ey, Ee, Eh
+        Life->>Life: ACalcFeel()
+        Note over Life: Calculate feel<br/>based on energy
+        Life->>Life: ACalcThresholdLife()
+        Note over Life: Calculate thresholds<br/>ThresholdWearOut, ThresholdFeel
+        alt Energy < 0
+            Life->>Neuron: SetActivity(false)
+            Life->>Life: Zero outputs
+        else Energy >= 0
+            Life->>Life: Fill outputs with metrics
+        end
+        Life-->>Neuron: Output1..Output8 (metrics)
+        Neuron-->>Storage: Use metrics for adaptation
+    end
 ```
+
+**Lifecycle:**
+1. **Initialization**: Set default parameters (Energy=100, WearOut=0.1)
+2. **Build**: Create optional `ExternalEnergyBonus` component
+3. **Calculation on each step**:
+   - Read inputs (potential, energy, charges)
+   - Calculate wear out (`ACalcWearOut`)
+   - Calculate energy (`ACalcEnergy`)
+   - Calculate feel (`ACalcFeel`)
+   - Calculate thresholds (`ACalcThresholdLife`)
+   - Deactivate neuron on insufficient energy (if Energy < 0)
 
 ### UML State Diagram
 
@@ -652,32 +717,86 @@ stateDiagram-v2
     [*] --> Uninitialized: New()
     Uninitialized --> Defaulted: Default()
     Defaulted --> Building: Build()
-    Building --> Built: Structure built
+    Building --> CreateExternalBonus: Create ExternalEnergyBonus (optional)
+    CreateExternalBonus --> Built: Structure created
     Built --> Ready: Ready = true
     Ready --> Calculating: Calculate()
-    Calculating --> CalcMetrics: Calculate metrics
-    CalcMetrics --> CheckEnergy{Energy < 0?}
+    Calculating --> ReadInputs: Read Input1, Input2, Input3
+    ReadInputs --> CalcWearOut: ACalcWearOut()
+    CalcWearOut --> CalcEnergy: ACalcEnergy()
+    CalcEnergy --> CalcFeel: ACalcFeel()
+    CalcFeel --> CalcThresholds: ACalcThresholdLife()
+    CalcThresholds --> CheckEnergy{Energy < 0?}
     CheckEnergy -->|Yes| Deactivate: Deactivate neuron
     CheckEnergy -->|No| FillOutputs: Fill outputs
+    Deactivate --> ZeroOutputs: Zero outputs
+    ZeroOutputs --> Ready: Step completed
     FillOutputs --> Ready: Step completed
-    Deactivate --> Ready: Step completed
+    Ready --> Resetting: Reset()
+    Resetting --> ResetStates: Reset states
+    ResetStates --> Ready: Energy=100, WearOut=0.1
 ```
+
+**States:**
+- **Uninitialized** — created but not initialized
+- **Defaulted** — default parameters set
+- **Building** — structure build in progress
+- **CreateExternalBonus** — creating optional external energy bonus component
+- **Built** — structure built
+- **Ready** — ready for calculations
+- **Calculating** — metrics calculation in progress
+- **ReadInputs** — reading input data
+- **CalcWearOut** — calculating wear out
+- **CalcEnergy** — calculating energy
+- **CalcFeel** — calculating feel
+- **CalcThresholds** — calculating thresholds
+- **CheckEnergy** — checking energy level
+- **Deactivate** — deactivating neuron on insufficient energy
+- **ZeroOutputs** — zeroing outputs
+- **FillOutputs** — filling outputs with metrics
+- **Resetting** — state reset in progress
+- **ResetStates** — resetting all metrics to initial values
 
 ### UML Activity Diagram
 
 ```mermaid
 flowchart TD
-    Start([Start ACalculate]) --> ReadInputs[Read Input1, Input2, Input3]
-    ReadInputs --> CalcWearOut[ACalcWearOut]
-    CalcWearOut --> CalcEnergy[ACalcEnergy]
-    CalcEnergy --> CalcFeel[ACalcFeel]
-    CalcFeel --> CalcThresholds[ACalcThresholdLife]
-    CalcThresholds --> CheckEnergy{Energy < 0?}
+    Start([Start ACalculate]) --> CheckInputs{Inputs connected?}
+    CheckInputs -->|No| End([End])
+    CheckInputs -->|Yes| ReadInputs[Read Input1, Input2, Input3]
+    ReadInputs --> SetUsum[Usum = Input1]
+    ReadInputs --> SetQsum[Qsum = Input3]
+    ReadInputs --> GetEpos[epos = Input2]
+    GetEpos --> CheckExternalBonus{ExternalEnergyBonus exists?}
+    CheckExternalBonus -->|Yes| AddExternalBonus[ebonus += ExternalEnergyBonus->Output]
+    CheckExternalBonus -->|No| CalcEa
+    AddExternalBonus --> CalcEa[Calculate dEa and Ea]
+    CalcEa --> CalcWearOut[ACalcWearOut]
+    CalcWearOut --> UpdateWearOut[Update WearOut]
+    UpdateWearOut --> CalcEnergy[ACalcEnergy]
+    CalcEnergy --> UpdateEnergy[Update Energy, Ey, Ee, Eh]
+    UpdateEnergy --> CalcFeel[ACalcFeel]
+    CalcFeel --> UpdateFeel[Update Feel]
+    UpdateFeel --> CalcThresholds[ACalcThresholdLife]
+    CalcThresholds --> UpdateThresholds[Update ThresholdWearOut, ThresholdFeel]
+    UpdateThresholds --> CheckEnergy{Energy < 0?}
     CheckEnergy -->|Yes| Deactivate[Deactivate neuron]
-    CheckEnergy -->|No| FillOutputs[Fill outputs]
-    Deactivate --> End([End])
+    Deactivate --> ZeroOutputs[Zero all outputs]
+    ZeroOutputs --> End
+    CheckEnergy -->|No| FillOutputs[Fill Output1..Output8]
     FillOutputs --> End
 ```
+
+**Calculation algorithm:**
+1. Check input connections
+2. Read input data (potential, energy, charges)
+3. Get external energy bonus (if present)
+4. Calculate wear out based on activity
+5. Calculate energy (Ea, Ey, Ee, Eh)
+6. Calculate feel based on energy
+7. Calculate thresholds (ThresholdWearOut, ThresholdFeel)
+8. Check energy level and deactivate if necessary
+9. Fill outputs with metrics
 
 ### UML Component Diagram
 
@@ -689,44 +808,220 @@ graph TB
 
     subgraph NNeuronLife["NNeuronLife"]
         LifeCore[Life Support Core]
-        ExternalBonus["NSum<br/>optional"]
+        ExternalBonus["NSum<br/>ExternalEnergyBonus<br/>optional"]
     end
 
     subgraph NPulseLifeNeuron["NPulseLifeNeuron"]
         Neuron[Neuron]
+        Membrane[Membrane]
+    end
+
+    subgraph External["External Components"]
+        EnergySource[Energy Source]
     end
 
     BaseNet -->|inherits| NNeuronLife
     NNeuronLife -->|creates| ExternalBonus
     NPulseLifeNeuron -->|contains| NNeuronLife
+    NPulseLifeNeuron -->|contains| Membrane
+    Membrane -->|potential| NNeuronLife
+    EnergySource -->|energy| NNeuronLife
     NNeuronLife -->|metrics| NPulseLifeNeuron
 ```
 
+**Dependencies:**
+- **Base class**: `UNet`
+- **Internal components**: `NSum` (optional, for external energy bonus)
+- **Used in**: `NPulseLifeNeuron` (living spiking neuron)
+- **External components**: energy source, neuron membrane (for potential)
+
 ### Properties
 
-- **`Threshold`** (`double`) — base activation threshold. Default: 0.001
-- **`Energy`** (`double`) — current neuron energy. Default: 100
-- **`WearOut`** (`double`) — current neuron wear out. Default: 0.1
-- **`Feel`** (`double`) — current neuron feel. Default: 0
-- **`Input1`** (`MDMatrix<double>`) — input potential (Usum)
-- **`Input2`** (`MDMatrix<double>`) — positive energy (epos)
-- **`Input3`** (`MDMatrix<double>`) — charge sum (qsum)
-- **`Output1`** (`MDMatrix<double>`) — thresholds [Threshold, ThresholdWearOut, ThresholdFeel, ThresholdLife]
-- **`Output2`** (`MDMatrix<double>`) — feel (Feel)
-- **`Output3`** (`MDMatrix<double>`) — wear out (WearOut)
-- **`Output5`** (`MDMatrix<double>`) — energy (Energy)
+#### Parameters (ptPubParameter)
+
+**Main parameters:**
+- **`Threshold`** (double) — base activation threshold. Default: 0.001
+- **`CriticalEnergy`** (double) — critical energy. Default: 0.5
+- **`MaxPotentialGradient`** (double) — maximum potential gradient. Default: 1
+
+**Wear out parameters:**
+- **`WearOutConstPositive`** (double) — positive wear out constant (wear increase). Default: 100
+- **`WearOutConstNegative`** (double) — negative wear out constant (wear decrease with activity). Default: 1
+- **`WearOutcr`** (double) — critical wear out. Default: 10000
+
+**Energy parameters:**
+- **`Emax`** (double) — maximum energy. Default: 1
+- **`En`** (double) — normal energy. Default: 0.1
+- **`Ee0`** (double) — initial consumption energy. Default: 10
+- **`Eh0`** (double) — initial wear energy. Default: 180
+- **`Es`** (double) — feel energy. Default: 1
+- **`Econst`** (double) — energy constant. Default: 1
+- **`Ecr`** (double) — critical consumption energy. Default: 500
+- **`EnergyWearOutCritical`** (double) — critical wear energy. Default: 5000
+- **`EyConst`** (double) — activity energy constant. Default: 10000
+- **`EyBonusPos`** (double) — positive energy bonus. Default: 1
+- **`EyBonusNeg`** (double) — negative energy bonus. Default: 0.1
+- **`EnergyComprehensibility`** (double) — energy comprehensibility. Default: 1000
+- **`EnergyBonus`** (double) — energy bonus. Default: 0
+
+**Feel parameters:**
+- **`Kq`** (double) — feel constant. Default: 1
+- **`Qsummax`** (double) — maximum charge sum. Default: 2
+
+**Threshold parameters:**
+- **`Kdp`** (double) — feel threshold constant. Default: 1.0/1000
+- **`Pdmax`** (double) — maximum division probability. Default: 0.001
+- **`Qd`** (double) — division parameter. Default: 1
+- **`Khp0`** (double) — wear threshold constant 0. Default: 0.1e-3
+- **`Khp1`** (double) — wear threshold constant 1. Default: Threshold/1000
+
+**Computation parameters:**
+- **`Kw`** (double) — wear constant. Computed as `log(2)/MaxPotentialGradient`. Default: computed automatically
+
+#### States (ptPubState)
+
+- **`Energy`** (double) — current neuron energy. Default: 100
+- **`WearOut`** (double) — current neuron wear out. Default: 0.1
+- **`Feel`** (double) — current neuron feel. Default: 0
+- **`ThresholdLife`** (double) — life support threshold. Computed dynamically
+- **`ThresholdWearOut`** (double) — wear out threshold. Computed dynamically
+- **`ThresholdFeel`** (double) — feel threshold. Computed dynamically
+- **`Qsum`** (double) — charge sum. Default: 0
+- **`Esum`** (double) — energy sum. Default: 1
+- **`EsumOld`** (double) — previous energy sum. Default: 100
+- **`EsumProizv`** (double) — energy sum derivative. Default: 0
+- **`Ea`** (double) — activity energy. Default: 0
+- **`Ey`** (double) — activity energy component. Default: 0
+- **`Ee`** (double) — consumption energy. Default: 0
+- **`Eh`** (double) — wear energy. Default: 0
+- **`dEa`** (double) — activity energy derivative. Default: 0
+- **`dEy`** (double) — activity energy derivative. Default: 0
+- **`dEe`** (double) — consumption energy derivative. Default: 0
+- **`dEh`** (double) — wear energy derivative. Default: 0
+- **`dE`** (double) — energy derivative. Default: 0
+- **`Usum`** (double) — total potential. Default: 0
+
+#### Inputs (ptInput | ptPubState)
+
+- **`Input1`** (MDMatrix<double>) — input neuron potential (Usum)
+- **`Input2`** (MDMatrix<double>) — positive energy (epos)
+- **`Input3`** (MDMatrix<double>) — charge sum (qsum)
+
+#### Outputs (ptOutput | ptPubState)
+
+- **`Output1`** (MDMatrix<double>) — thresholds [Threshold, ThresholdWearOut, ThresholdFeel, ThresholdLife]
+- **`Output2`** (MDMatrix<double>) — feel (Feel)
+- **`Output3`** (MDMatrix<double>) — wear out (WearOut)
+- **`OutputThreshold`** (MDMatrix<double>) — energy components [Ey, Ee, Eh, Ey+Ee+Eh]
+- **`Output5`** (MDMatrix<double>) — energy (Energy)
+- **`Output6`** (MDMatrix<double>) — excitatory synapse motivation [dEa*TimeStep, -dEy, -dEe*TimeStep, dEh*TimeStep, 0]
+- **`Output7`** (MDMatrix<double>) — inhibitory synapse motivation
+- **`Output8`** (MDMatrix<double>) — additional metrics
 
 ### Methods
 
-- **`ADefault()`** → `bool` — initializes default parameters.
-- **`ABuild()`** → `bool` — builds component structure (creates optional ExternalEnergyBonus).
-- **`AReset()`** → `bool` — resets component states (Energy=100, WearOut=0.1).
+#### Public methods
+
+- **`New()`** → `NNeuronLife*` — creates a new class instance.
+
+#### Protected lifecycle methods
+
+- **`ADefault()`** → `bool` — initializes default parameters:
+  - Sets all parameters to initial values
+  - Initializes outputs
+  - Computes constants (Kw, Kq)
+
+- **`ABuild()`** → `bool` — builds component structure:
+  - Creates optional `ExternalEnergyBonus` component (NSum)
+
+- **`AReset()`** → `bool` — resets component states:
+  - Resets Energy=100, WearOut=0.1
+  - Resets all derivatives and metrics
+
 - **`ACalculate()`** → `bool` — performs life support metrics calculation:
-  - calculates wear out (`ACalcWearOut`)
-  - calculates energy (`ACalcEnergy`)
-  - calculates feel (`ACalcFeel`)
-  - calculates thresholds (`ACalcThresholdLife`)
-  - deactivates neuron if Energy < 0
+  1. Reads inputs (Input1, Input2, Input3)
+  2. Calls `ACalcWearOut()` — wear out calculation
+  3. Calls `ACalcEnergy()` — energy calculation
+  4. Calls `ACalcFeel()` — feel calculation
+  5. Calls `ACalcThresholdLife()` — threshold calculation
+  6. Deactivates neuron on insufficient energy (if Energy < 0)
+  7. Fills outputs with metrics
+
+#### Protected computation methods
+
+- **`ACalcWearOut()`** → `bool` — calculates neuron wear out:
+  - Adds fixed wear increment: `WearOut += WearOutConstPositive/TimeStep`
+  - Reduces wear with activity: `WearOut -= WearOut * fabs(Usum) * WearOutConstNegative/TimeStep`
+
+- **`ACalcEnergy()`** → `bool` — calculates neuron energy:
+  - Updates energy bonus: `EnergyBonus += fabs(Usum)*EyBonusPos - EnergyBonus*EyBonusNeg`
+  - Updates activity energy: `Energy += Ea`
+  - Updates energy components: `Ey`, `Ee`, `Eh`
+  - Computes total energy: `Energy -= (Ey + Ee + Eh)`
+
+- **`ACalcFeel()`** → `bool` — calculates neuron feel:
+  - Computes energy derivative: `EsumProizv = (Energy - EsumOld) * TimeStep`
+  - Updates feel: `Feel = (Energy - En) + FeelDiff(Kq, EsumProizv, En)`
+
+- **`ACalcThresholdLife()`** → `bool` — calculates life support thresholds:
+  - Computes feel threshold: `ThresholdFeel = Pdmax/(1+exp(-Kdp*(Feel-Qd)))`
+  - Computes wear threshold: depends on wear level
+  - Computes life support threshold: `ThresholdLife = ThresholdWearOut + ThresholdFeel + Threshold`
+
+- **`FeelDiff(double kq, double ediff, double en)`** → `double` — helper for feel difference:
+  - Returns `en` if `ediff > 1e2`
+  - Returns `0` if `ediff < -1e2`
+  - Otherwise returns `(1.0/(1.0+exp(-kq*ediff))-0.5)*en*2.0`
+
+#### Parameter setter methods
+
+- **`SetThreshold(const double &value)`** → `bool` — sets base threshold
+- **`SetMaxPotentialGradient(const double &value)`** → `bool` — sets maximum potential gradient. Returns `false` if `value <= 0`. Resets `Ready = false`.
+- **`SetEmax(const double &value)`** → `bool` — sets maximum energy. Returns `false` if `value <= 0`. Resets `Ready = false`.
+- **`SetEn(const double &value)`** → `bool` — sets normal energy. Returns `false` if `value <= 0`. Resets `Ready = false`.
+- **`SetPdmax(const double &value)`** → `bool` — sets maximum division probability. Returns `false` if `value <= 0`. Resets `Ready = false`.
+- **`SetQsummax(const double &value)`** → `bool` — sets maximum charge sum. Returns `false` if `value <= 1`. Resets `Ready = false`.
+
+### Usage Examples
+
+#### Example 1: Creating a life support component in C++
+
+```cpp
+auto neuronLife = storage->CreateComponent<NNeuronLife>();
+neuronLife->SetName("NeuronLife");
+neuronLife->Default();
+neuronLife->Threshold = 0.001;
+neuronLife->CriticalEnergy = 0.5;
+neuronLife->MaxPotentialGradient = 1.0;
+neuronLife->WearOutConstPositive = 100.0;
+neuronLife->WearOutConstNegative = 1.0;
+neuronLife->Build();
+
+for (int step = 0; step < 1000; step++) {
+    neuronLife->Calculate();
+    double energy = neuronLife->Output5(0, 0);
+    double wearOut = neuronLife->Output3(0, 0);
+    double feel = neuronLife->Output2(0, 0);
+}
+```
+
+#### Example 2: XML configuration
+
+```xml
+<NeuronLife1 Class="NNeuronLife">
+    <Parameters>
+        <Threshold>0.001</Threshold>
+        <CriticalEnergy>0.5</CriticalEnergy>
+        <MaxPotentialGradient>1.0</MaxPotentialGradient>
+        <WearOutConstPositive>100.0</WearOutConstPositive>
+        <WearOutConstNegative>1.0</WearOutConstNegative>
+        <Emax>1.0</Emax>
+        <En>0.1</En>
+        <Ee0>10.0</Ee0>
+        <Eh0>180.0</Eh0>
+    </Parameters>
+</NeuronLife1>
+```
 
 ### Usage in configurations
 
@@ -738,8 +1033,15 @@ graph TB
 **Typical parameter values:**
 - **Threshold**: 0.001 (base threshold)
 - **CriticalEnergy**: 0.5 (critical energy)
-- **WearOutConstPositive**: 100 (wear out increase)
-- **WearOutConstNegative**: 1 (wear out decrease with activity)
+- **WearOutConstPositive**: 100 (wear increase)
+- **WearOutConstNegative**: 1 (wear decrease with activity)
+- **Emax**: 1.0 (maximum energy)
+- **En**: 0.1 (normal energy)
+
+**Features:**
+- Automatic deactivation: neuron deactivates on insufficient energy (Energy < 0)
+- Multiple metrics: component computes many life support metrics
+- Adaptation: metrics are used to adapt the neuron to operating conditions
 
 ### References
 
@@ -749,4 +1051,8 @@ See [Literature-References.md](../Literature-References.md): **[A]** (structural
 
 - [`NPulseLifeNeuron`](NPLifeNeuron.md) — living spiking neuron (uses NNeuronLife)
 - [`NLifeNet`](NLifeNet.md) — living neuron network
+- [`NSPLifeNeuron`](NSPLifeNeuron.md) — living SP neuron
+- [`NLPLifeNeuron`](NLPLifeNeuron.md) — living LP neuron
 - [Architecture.md](../Architecture.md) — library architecture
+
+---

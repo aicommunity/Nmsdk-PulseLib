@@ -313,3 +313,28 @@ See [Literature-References.md](../Literature-References.md): **[B]**.
 - [`NSynapseTrainerStdpTD`](NSynapseTrainerStdpTD.md) — time-dependent STDP
 - [`NSynapseTrainerStdp`](NSynapseTrainerStdp.md) — base STDP trainer
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+graph TB
+    subgraph NSynapseTrainerStdpTD["NSynapseTrainerStdpTD Base"]
+        BaseTrainer[NSynapseTrainerStdpTD]
+    end
+    
+    subgraph NSynapseTrainerStdpLobov["NSynapseTrainerStdpLobov"]
+        LobovSTDP[STDP по Лобову]
+        ActivityIntegration[Интегрирование активности]
+    end
+    
+    subgraph External["External components"]
+        PreNeuron[Пресинаптический нейрон]
+        PostNeuron[Постсинаптический нейрон]
+        Synapse[NPulseSynapse]
+    end
+    
+    BaseTrainer -->|inherits| NSynapseTrainerStdpLobov
+    NSynapseTrainerStdpLobov -->|реализует| LobovSTDP
+    NSynapseTrainerStdpLobov -->|uses| ActivityIntegration
+    PreNeuron -->|PreSynInput| NSynapseTrainerStdpLobov
+    PostNeuron -->|PostSynInput| NSynapseTrainerStdpLobov
+    NSynapseTrainerStdpLobov -->|WeightOutput| Synapse
+```

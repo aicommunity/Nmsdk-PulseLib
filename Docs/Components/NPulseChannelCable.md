@@ -489,7 +489,7 @@ graph TB
     end
 
     subgraph External["External Components"]
-        Synapses[Синапсы]
+        Synapses[Synapses]
         Membrane[Мембрана]
     end
 

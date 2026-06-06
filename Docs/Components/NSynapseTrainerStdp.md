@@ -414,16 +414,16 @@ graph TB
         TimeCalculator[Вычислитель времен]
     end
     
-    subgraph External["Внешние компоненты"]
+    subgraph External["External components"]
         PreNeuron[Пресинаптический нейрон]
         PostNeuron[Постсинаптический нейрон]
-        Synapse[Синапс]
+        Synapse[Synapse]
     end
     
-    BaseTrainer -->|наследуется| NSynapseTrainerStdp
+    BaseTrainer -->|inherits| NSynapseTrainerStdp
     NSynapseTrainerStdp -->|реализует| TrainerModel
-    NSynapseTrainerStdp -->|использует| SpikeTracker
-    NSynapseTrainerStdp -->|использует| TimeCalculator
+    NSynapseTrainerStdp -->|uses| SpikeTracker
+    NSynapseTrainerStdp -->|uses| TimeCalculator
     PreNeuron -->|PreSynInput| NSynapseTrainerStdp
     PostNeuron -->|PostSynInput| NSynapseTrainerStdp
     NSynapseTrainerStdp -->|WeightOutput| Synapse

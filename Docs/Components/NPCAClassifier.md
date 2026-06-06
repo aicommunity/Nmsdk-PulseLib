@@ -425,24 +425,24 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры
-- `MatrixSourceTimeSeriesClassName` — имя класса источника временных рядов
-- `PCAClassName` — имя класса PCA
-- `SpikeClassifierClassName` — имя класса классификатора по спайкам
-- `FileName` — имя файла с данными
-- `OutComponents` — количество выходных компонентов PCA
-- `IsCalibrativeDendrite` — калибровочный дендрит
-- `OutputFile` — имя выходного файла
-- `ColCount` — количество столбцов
-- `TimeWindowSize` — размер временного окна
-- `TrainingPatternInx` — индекс обучающего паттерна
+- `StructureBuildMode` — structure rebuild mode
+- `MatrixSourceTimeSeriesClassName` — time series source class name
+- `PCAClassName` — PCA class name
+- `SpikeClassifierClassName` — spike classifier class name
+- `FileName` — data file name
+- `OutComponents` — number of PCA output components
+- `IsCalibrativeDendrite` — calibration dendrite
+- `OutputFile` — output file name
+- `ColCount` — number of columns
+- `TimeWindowSize` — time window size
+- `TrainingPatternInx` — training pattern index
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры PCA-классификатора
-- `ACalculate()` — выполнение шага PCA и классификации
-- `BuildStructure()` — построение структуры компонентов
+- `ADefault()` — setting default parameters
+- `ABuild()` — building PCA classifier structure
+- `ACalculate()` — PCA and classification step
+- `BuildStructure()` — building component structure
 
 ### Usage in configurations
 

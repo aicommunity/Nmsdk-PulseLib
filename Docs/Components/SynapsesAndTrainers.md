@@ -48,3 +48,15 @@ Comprises all synapse and trainer classes responsible for plasticity and learnin
 ### References
 
 See [Literature-References.md](../Literature-References.md): **[B]**, **25**, **26**, **29**.
+
+```mermaid
+classDiagram
+    NPSynapse <|-- NPulseSynapse
+    NPulseSynapse <|-- NPulseSynapseStdp
+    NPSynapse <|-- NPHebbSynapse
+```
+
+```mermaid
+classDiagram
+    NSynapseTrainer <|-- NSynapseTrainerStdp
+```

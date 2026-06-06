@@ -24,53 +24,75 @@
 
 ## EN
 
-### 2. Базовые классы синапсов
+## Overview and History of All Synapse Models (Nmsdk-PulseLib)
+
+### 1. Introduction
+
+This document systematizes **all synapse models** registered in `NPulseLibrary.cpp` and their parameters:
+
+- Base classes: `NPulseSynapseCommon`, `NPulseSynapse`.
+- Configuration synapses: `NPSynapse`, `NPSynapseBio`, `NPSynapseBio2`.
+- Specialized models: `NPulseHebbSynapse`, `NPulseHebbLifeSynapse`, `NPulseSynapseStdp`, `NSynapseClassic`, `NSynapseClassicSlv`, `NSynapseStdp`, `NSynapseIaF`, `NSynapseCable`, `NSynapseCableMulti`, etc.
+- Trainers (`NSynapseTrainer*`) mainly work with weights and training parameters and are covered here only in terms of base relationships.
+
+For **each Storage class** from `NPulseLibrary.cpp` we:
+
+- identify the base C++ class (via `TakeObject`/inheritance);
+- list **current parameter values** (accounting for inheritance and overrides);
+- record **key parameter changes** in git history when they affect behavior.
+
+> A detailed report on training synapses used by `NNeuronLearner`/`NNeuronTrainer` in the `TestTrain` config is in `SynapseParamsHistory.md`.  
+> Here we cover **all synapse classes** registered in the library.
+
+---
+
+### 2. Base Synapse Classes
 
 #### 2.1. NPulseSynapseCommon
 
-Файл: `Core/NPulseSynapseCommon.cpp`  
-Док: `Docs/Components/NPulseSynapseCommon.md`
+File: `Core/NPulseSynapseCommon.cpp`  
+Doc: `Docs/Components/NPulseSynapseCommon.md`
 
-Основные свойства (UProperty):
+Main properties (UProperty):
 
-- `Type` — знак/тип синапса (возбуждающий/тормозной), по умолчанию `-1`.
-- `PulseAmplitude` — амплитуда входных импульсов, по умолчанию `1.0`.
-- `Resistance` — эффективное сопротивление (используется в производных классах и каналах).
-- `Weight` — вес синапса (масштабирует `Output`).
-- `TrainerClassName` — имя класса тренера веса (по умолчанию пусто).
-- Матрицы ввода/вывода: `Input`, `WeightInput`, `Output`, `OutInCopy`.
+- `Type` — synapse sign/type (excitatory/inhibitory), default `-1`.
+- `PulseAmplitude` — input pulse amplitude, default `1.0`.
+- `Resistance` — effective resistance (used in derived classes and channels).
+- `Weight` — synapse weight (scales `Output`).
+- `TrainerClassName` — weight trainer class name (empty by default).
+- Input/output matrices: `Input`, `WeightInput`, `Output`, `OutInCopy`.
 
-Текущие значения по умолчанию (`ADefault()`):
+Current default values (`ADefault()`):
 
 - `Type = -1`.
 - `PulseAmplitude = 1.0`.
 - `Resistance = 10.0`.
 - `Weight = 1.0`.
-- `Input`, `Output`, `OutInCopy`, `WeightInput` инициализированы нулями.
+- `Input`, `Output`, `OutInCopy`, `WeightInput` initialized to zero.
 
-История параметров:
+Parameter history:
 
-- До коммита `127e38e "Resistence param has been changed"`:
+- Before commit `127e38e "Resistence param has been changed"`:
   - `Resistance = 1.0`.
-- С `127e38e` и по HEAD:
+- From `127e38e` through HEAD:
   - `Resistance = 10.0`.
-- `PulseAmplitude = 1.0` — неизменно по всей истории.
+- `PulseAmplitude = 1.0` — unchanged throughout history.
 
 #### 2.2. NPulseSynapse
 
-Файл: `Core/NPulseSynapse.cpp`  
-Док: `Docs/Components/NPulseSynapse.md`
+File: `Core/NPulseSynapse.cpp`  
+Doc: `Docs/Components/NPulseSynapse.md`
 
-Наследуется от `NPulseSynapseCommon` и добавляет модель медиатора:
+Inherits from `NPulseSynapseCommon` and adds a mediator model:
 
-- `SecretionTC` — постоянная времени секреции медиатора.
-- `DissociationTC` — постоянная времени распада медиатора.
-- `TypicalPulseDuration` — типичная длительность спайка.
-- `InhibitionCoeff` — коэффициент пресинаптического торможения.
-- Флаги: `UsePresynapticInhibition`, `UsePulseSignal`.
-- Временные производные: `VSecretionTC`, `VDissociationTC` (рассчитываются в `ABuild()`).
+- `SecretionTC` — mediator secretion time constant.
+- `DissociationTC` — mediator dissociation time constant.
+- `TypicalPulseDuration` — typical spike duration.
+- `InhibitionCoeff` — presynaptic inhibition coefficient.
+- Flags: `UsePresynapticInhibition`, `UsePulseSignal`.
+- Time derivatives: `VSecretionTC`, `VDissociationTC` (computed in `ABuild()`).
 
-В актуальной версии файла (HEAD) в методе `ADefault()` задаются:
+In the current file version (HEAD) `ADefault()` sets:
 
 ```157:185:e:\Science-Repo\nmsdk-git\Libraries\Nmsdk-PulseLib\Core\NPulseSynapse.cpp
 bool NPulseSynapse::ADefault(void)
@@ -91,24 +113,24 @@ bool NPulseSynapse::ADefault(void)
 }
 ```
 
-Однако по git‑истории значения временно изменялись:
+However, git history shows temporary value changes:
 
-- **Изначально** (до 2022‑04‑15) и **сейчас (HEAD)**:
+- **Initially** (before 2022-04-15) and **now (HEAD)**:
   - `PulseAmplitude = 1.0`,
   - `SecretionTC = 0.001`,
   - `DissociationTC = 0.01`,
   - `Resistance = 1.0e9`.
-- **Промежуточно** в коммите `5f3f06d "Change parameters NPulseSynapse"` (2022‑04‑15):
-  - `SecretionTC` было изменено на `0.002`,
-  - `DissociationTC` — на `0.002`,
-  - `Resistance` — на `100000000`.
-- В коммите `0be546f "Fix: synapse defaults return to normal."` (2022‑06‑27) эти параметры **вернули к исходным значениям**, поэтому HEAD совпадает с первоначальной моделью.
+- **Interim** in commit `5f3f06d "Change parameters NPulseSynapse"` (2022-04-15):
+  - `SecretionTC` changed to `0.002`,
+  - `DissociationTC` — to `0.002`,
+  - `Resistance` — to `100000000`.
+- In commit `0be546f "Fix: synapse defaults return to normal."` (2022-06-27) these parameters were **restored to original values**, so HEAD matches the initial model.
 
 ---
 
-### 3. Конфигурационные синапсы из NPulseLibrary.cpp
+### 3. Configuration Synapses from NPulseLibrary.cpp
 
-Все Storage‑классы синапсов регистрируются в `NPulseLibrary::CreateClassSamples(UStorage *storage)`:
+All Storage synapse classes are registered in `NPulseLibrary::CreateClassSamples(UStorage *storage)`:
 
 ```197:231:e:\Science-Repo\nmsdk-git\Libraries\Nmsdk-PulseLib\Core\NPulseLibrary.cpp
 cont = new NPulseSynapse;
@@ -136,56 +158,56 @@ UploadClass("NPHebbSynapse", cont);
 
 #### 3.1. NPSynapse
 
-- **Storage‑имя**: `"NPSynapse"`.
-- **База**: новый `NPulseSynapse` с `Default()`.
-- **Параметры**:
-  - Совпадают с `NPulseSynapse::ADefault()` (см. п. 2.2) для текущей версии.
-  - Используется как базовый объект для других конфигураций.
+- **Storage name**: `"NPSynapse"`.
+- **Base**: new `NPulseSynapse` with `Default()`.
+- **Parameters**:
+  - Match `NPulseSynapse::ADefault()` (see section 2.2) for the current version.
+  - Used as base object for other configurations.
 
 #### 3.2. NPSynapseBio
 
-- **Storage‑имя**: `"NPSynapseBio"`.
-- **База**: копия `"NPSynapse"` (через `TakeObject("NPSynapse")`).
-- **Переопределения**:
-  - `Resistance = 2e7 * 4.3 = 8.6e7` Ом (86 МОм).
+- **Storage name**: `"NPSynapseBio"`.
+- **Base**: copy of `"NPSynapse"` (via `TakeObject("NPSynapse")`).
+- **Overrides**:
+  - `Resistance = 2e7 * 4.3 = 8.6e7` Ohm (86 MOhm).
   - `DissociationTC = 0.005`.
-- **Эффективные параметры**:
-  - Наследует:
+- **Effective parameters**:
+  - Inherits:
     - `PulseAmplitude = 1.0`.
     - `SecretionTC = 0.002` (HEAD).
     - `TypicalPulseDuration = 0.001`.
     - `InhibitionCoeff = 0`.
     - `UsePresynapticInhibition = false`, `UsePulseSignal = true`.
-  - Переопределяет:
+  - Overrides:
     - `Resistance = 8.6e7`.
     - `DissociationTC = 0.005`.
 
-История:
+History:
 
-- Введён в коммите `b8aad55 (2021-03-04)` с теми же значениями.
-- После этого значения `Resistance` и `DissociationTC` не менялись; изменялась только база (`NPulseSynapse`) в `5f3f06d` (влияет на унаследованный `SecretionTC` и базовый `Resistance`).
+- Introduced in commit `b8aad55 (2021-03-04)` with the same values.
+- After that `Resistance` and `DissociationTC` did not change; only the base (`NPulseSynapse`) changed in `5f3f06d` (affects inherited `SecretionTC` and base `Resistance`).
 
 #### 3.3. NPSynapseBio2
 
-- **Storage‑имя**: `"NPSynapseBio2"`.
-- **База**: копия `"NPSynapse"`.
-- **Переопределения**:
-  - `Resistance = 86000000` (эквивалентно `8.6e7`).
+- **Storage name**: `"NPSynapseBio2"`.
+- **Base**: copy of `"NPSynapse"`.
+- **Overrides**:
+  - `Resistance = 86000000` (equivalent to `8.6e7`).
   - `DissociationTC = 0.005`.
-- По сути дублирует `NPSynapseBio` с явным числом вместо выражения `2e7*4.3`.
-- История по `NPulseLibrary.cpp` показывает только введение этого класса; параметры не менялись.
+- Essentially duplicates `NPSynapseBio` with an explicit number instead of expression `2e7*4.3`.
+- History in `NPulseLibrary.cpp` shows only introduction of this class; parameters unchanged.
 
 #### 3.4. NPHebbSynapse
 
-- **Storage‑имя**: `"NPHebbSynapse"`.
-- **База**: `NPulseHebbSynapse` (дочерний класс `NPulseSynapse`).
-- **Параметры по умолчанию**:
-  - Наследует параметры `NPulseSynapse` (включая `SecretionTC`, `DissociationTC`, `Resistance`) и добавляет Hebb‑специфичные коэффициенты (см. `Docs/Components/NPulseHebbSynapse.md` и `NPHebbSynapse.md`).
-- В `NPulseLibrary.cpp` дополнительных численных переопределений не выполняется; все значения берутся из `ADefault()` соответствующих классов.
+- **Storage name**: `"NPHebbSynapse"`.
+- **Base**: `NPulseHebbSynapse` (child of `NPulseSynapse`).
+- **Default parameters**:
+  - Inherits `NPulseSynapse` parameters (including `SecretionTC`, `DissociationTC`, `Resistance`) and adds Hebb-specific coefficients (see `Docs/Components/NPulseHebbSynapse.md` and `NPHebbSynapse.md`).
+- No additional numeric overrides in `NPulseLibrary.cpp`; all values come from `ADefault()` of the respective classes.
 
-#### 3.5. Модели для кабельных и IaF‑синапсов
+#### 3.5. Cable and IaF Synapse Models
 
-Ниже в `NPulseLibrary.cpp` регистрируются:
+Registered below in `NPulseLibrary.cpp`:
 
 ```508:541:e:\Science-Repo\nmsdk-git\Libraries\Nmsdk-PulseLib\Core\NPulseLibrary.cpp
 cont = new NPulseSynapseStdp;
@@ -209,11 +231,11 @@ cont->Default();
 UploadClass("NSynapseCableMulti", cont);
 ```
 
-Для этих классов **все параметры берутся из их `ADefault()`**:
+For these classes **all parameters come from their `ADefault()`**:
 
-- `NPulseSynapseStdp` наследует `NPulseSynapse` и добавляет STDP‑характеристики (окна времени, коэффициенты усиления).
-- `NSynapseIaF`, `NSynapseCable`, `NSynapseCableMulti` наследуют `NPulseSynapseCommon` и реализуют специфическую динамику (см. соответствующие `Docs/Components/*.md`).
-- В `NPulseLibrary.cpp` никаких численных параметров для них не переопределяется.
+- `NPulseSynapseStdp` inherits `NPulseSynapse` and adds STDP characteristics (time windows, gain coefficients).
+- `NSynapseIaF`, `NSynapseCable`, `NSynapseCableMulti` inherit `NPulseSynapseCommon` and implement specific dynamics (see respective `Docs/Components/*.md`).
+- `NPulseLibrary.cpp` does not override numeric parameters for them.
 
 #### 3.6. NSynapseStdp, NSynapseClassic, NSynapseClassicSlv
 
@@ -234,36 +256,36 @@ cont->Default();
 UploadClass("NSynapseClassicSlv", cont);
 ```
 
-- **NSynapseStdp**: наследует `NPulseSynapseCommon`, добавляет STDP‑логику (см. `Docs/Components/NSynapseStdp.md`). В `NPulseLibrary.cpp` параметров не переопределяет.
-- **NSynapseClassic / NSynapseClassicSlv**: классические синапсы (см. `NSynapseClassic.md`, `NSynapseClassicSlv.md`). Параметры (сопротивление, вес, коэффициенты фильтрации) задаются в их `ADefault()`; регистрация их не меняет.
+- **NSynapseStdp**: inherits `NPulseSynapseCommon`, adds STDP logic (see `Docs/Components/NSynapseStdp.md`). No parameter overrides in `NPulseLibrary.cpp`.
+- **NSynapseClassic / NSynapseClassicSlv**: classic synapses (see `NSynapseClassic.md`, `NSynapseClassicSlv.md`). Parameters (resistance, weight, filter coefficients) set in their `ADefault()`; registration does not change them.
 
 ---
 
-### 4. Сводная таблица основных Storage‑синапсов
+### 4. Summary Table of Main Storage Synapses
 
-| Storage‑класс       | Базовый C++‑класс      | Переопределённые параметры (vs базовый `ADefault`)                 |
+| Storage class       | Base C++ class      | Overridden parameters (vs base `ADefault`)                 |
 |---------------------|------------------------|---------------------------------------------------------------------|
-| `NPSynapse`         | `NPulseSynapse`        | Нет (все параметры из `NPulseSynapse::ADefault`)                    |
+| `NPSynapse`         | `NPulseSynapse`        | None (all from `NPulseSynapse::ADefault`)                    |
 | `NPSynapseBio`      | `NPulseSynapse`        | `Resistance = 8.6e7`, `DissociationTC = 0.005`                      |
 | `NPSynapseBio2`     | `NPulseSynapse`        | `Resistance = 8.6e7`, `DissociationTC = 0.005`                      |
-| `NPHebbSynapse`     | `NPulseHebbSynapse`    | Нет (все из `NPulseHebbSynapse::ADefault`)                          |
-| `NPulseSynapseStdp` | `NPulseSynapseStdp`    | Нет (все из `NPulseSynapseStdp::ADefault`)                          |
-| `NSynapseIaF`       | `NSynapseIaF`          | Нет (все из `NSynapseIaF::ADefault`)                                |
-| `NSynapseCable`     | `NSynapseCable`        | Нет (все из `NSynapseCable::ADefault`)                              |
-| `NSynapseCableMulti`| `NSynapseCableMulti`   | Нет (все из `NSynapseCableMulti::ADefault`)                         |
-| `NSynapseStdp`      | `NSynapseStdp`         | Нет (все из `NSynapseStdp::ADefault`)                               |
-| `NSynapseClassic`   | `NSynapseClassic`      | Нет (все из `NSynapseClassic::ADefault`)                            |
-| `NSynapseClassicSlv`| `NSynapseClassicSlv`   | Нет (все из `NSynapseClassicSlv::ADefault`)                         |
-| `NPulseHebbLifeSynapse` | `NPulseHebbLifeSynapse` | Регистрируется как тренер/спец‑синапс, без доп. параметров в `NPulseLibrary` |
+| `NPHebbSynapse`     | `NPulseHebbSynapse`    | None (all from `NPulseHebbSynapse::ADefault`)                          |
+| `NPulseSynapseStdp` | `NPulseSynapseStdp`    | None (all from `NPulseSynapseStdp::ADefault`)                          |
+| `NSynapseIaF`       | `NSynapseIaF`          | None (all from `NSynapseIaF::ADefault`)                                |
+| `NSynapseCable`     | `NSynapseCable`        | None (all from `NSynapseCable::ADefault`)                              |
+| `NSynapseCableMulti`| `NSynapseCableMulti`   | None (all from `NSynapseCableMulti::ADefault`)                         |
+| `NSynapseStdp`      | `NSynapseStdp`         | None (all from `NSynapseStdp::ADefault`)                               |
+| `NSynapseClassic`   | `NSynapseClassic`      | None (all from `NSynapseClassic::ADefault`)                            |
+| `NSynapseClassicSlv`| `NSynapseClassicSlv`   | None (all from `NSynapseClassicSlv::ADefault`)                         |
+| `NPulseHebbLifeSynapse` | `NPulseHebbLifeSynapse` | Registered as trainer/special synapse, no extra parameters in `NPulseLibrary` |
 
-Полное перечисление всех параметров для каждого класса (включая Hebb/STDP‑коэффициенты, окна времени и т.п.) содержится в соответствующих `Docs/Components/*.md`. Здесь фиксируется лишь факт, что **`NPulseLibrary.cpp` практически не модифицирует параметры специализированных синапсов**, за исключением `NPSynapseBio`/`Bio2`, чьи сопротивление и постоянная распада переопределяются явно.
+Full parameter lists for each class (including Hebb/STDP coefficients, time windows, etc.) are in the corresponding `Docs/Components/*.md`. Here we only note that **`NPulseLibrary.cpp` practically does not modify specialized synapse parameters**, except `NPSynapseBio`/`Bio2`, whose resistance and dissociation constant are explicitly overridden.
 
 ---
 
-### 5. Выводы по истории параметров
+### 5. Parameter History Conclusions
 
-1. **Базовый класс `NPulseSynapseCommon`** менял только параметр `Resistance` (1 → 10) один раз в 2021 году; остальные базовые параметры стабильны.
-2. **`NPulseSynapse`** пережил существенное изменение динамики медиатора в 2022 году (`5f3f06d` и `0be546f`): константы времени стали в 5–10 раз короче, а сопротивление снизилось с 1 ГОм до 100 МОм. Это влияет на все производные синапсы, включая `NPSynapse`, `NPSynapseBio/Bio2`, Hebb и STDP‑варианты.
-3. **Конфигурационные синапсы из `NPulseLibrary.cpp`** (особенно `NPSynapseBio`/`NPSynapseBio2`) имеют свои устойчивые значения сопротивления и `DissociationTC`, которые **не менялись** с момента введения (`b8aad55`), за исключением косвенного влияния изменения базы.
-4. **Специализированные модели (`NPulseSynapseStdp`, `NSynapseStdp`, Hebb‑синапсы, кабельные и IaF‑синапсы)** конфигурируются почти полностью своими `ADefault()` и документацией; `NPulseLibrary.cpp` не вносит для них дополнительных численных модификаций.
-5. С точки зрения возможных регрессий, основное «узкое место» — это изменения **базовой модели `NPulseSynapse`** и выбор конкретных конфигурационных классов в `NPulseLibrary.cpp` (`NPSynapseBio` для `NPMembraneBio`). Большинство других синаптических моделей имеют **стабильные параметры по всей истории** и вряд ли являются источником недавних изменений поведения.
+1. **Base class `NPulseSynapseCommon`** changed only `Resistance` (1 → 10) once in 2021; other base parameters are stable.
+2. **`NPulseSynapse`** underwent substantial mediator dynamics change in 2022 (`5f3f06d` and `0be546f`): time constants became 5–10× shorter, resistance dropped from 1 GOhm to 100 MOhm. This affects all derived synapses including `NPSynapse`, `NPSynapseBio/Bio2`, Hebb and STDP variants.
+3. **Configuration synapses from `NPulseLibrary.cpp`** (especially `NPSynapseBio`/`NPSynapseBio2`) have stable resistance and `DissociationTC` values that **did not change** since introduction (`b8aad55`), except indirect base changes.
+4. **Specialized models (`NPulseSynapseStdp`, `NSynapseStdp`, Hebb synapses, cable and IaF synapses)** are configured almost entirely by their `ADefault()` and documentation; `NPulseLibrary.cpp` adds no further numeric modifications.
+5. For possible regressions, the main bottleneck is changes to the **base model `NPulseSynapse`** and choice of configuration classes in `NPulseLibrary.cpp` (`NPSynapseBio` for `NPMembraneBio`). Most other synaptic models have **stable parameters throughout history** and are unlikely sources of recent behavior changes.

@@ -90,6 +90,19 @@ See [Literature-References.md](Literature-References.md): **[A]**, **[B]**, **[C
 
 ### See Also
 
-- `RelatedComponent.md` — [brief note] (замените на реальный компонент)
+- `RelatedComponent.md` — [brief note] (replace with an actual component)
 - [Architecture.md](Architecture.md) — library architecture
 - [Scientific-Background.md](Scientific-Background.md) — scientific background
+
+```mermaid
+classDiagram
+    [BaseClass] <|-- [ComponentName]
+    class [ComponentName] {
+        +Property1 : Type
+        +New() [ComponentName]*
+        +ADefault() bool
+        +ABuild() bool
+        +AReset() bool
+        +ACalculate() bool
+    }
+```

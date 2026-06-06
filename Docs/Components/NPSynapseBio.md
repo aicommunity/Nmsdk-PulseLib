@@ -349,3 +349,27 @@ See [Literature-References.md](../Literature-References.md): **26**, **29**, **3
 - [`NPulseSynapseStdp`](NPulseSynapseStdp.md) — spiking synapse with STDP
 - [Architecture.md](../Architecture.md) — library architecture
 
+```mermaid
+graph TB
+    subgraph NPulseSynapse["NPulseSynapse Base"]
+        BaseSynapse[NPulseSynapse]
+    end
+    
+    subgraph NPSynapseBio["NPSynapseBio"]
+        MediatorModel[Модель медиатора]
+        BioParams[Биоинспирированные параметры]
+    end
+    
+    subgraph External["External components"]
+        PreNeuron[Пресинаптический нейрон]
+        PostNeuron[Постсинаптический нейрон]
+        Channel[Канал]
+    end
+    
+    BaseSynapse -->|конфигурация| NPSynapseBio
+    NPSynapseBio -->|uses| MediatorModel
+    NPSynapseBio -->|имеет| BioParams
+    PreNeuron -->|Input| NPSynapseBio
+    NPSynapseBio -->|Output| Channel
+    Channel -->|ток| PostNeuron
+```

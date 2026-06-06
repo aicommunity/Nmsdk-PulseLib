@@ -433,27 +433,27 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим сборки структуры (0 — без сборки, 1 — классическая структура, 2 — простая структура)
-- `MembraneClassName` — имя класса мембраны
-- `LTZoneClassName` — имя класса LT-зоны
-- `ReceptorClassName` — имя класса рецептора
-- `ExcGeneratorClassName` — имя класса возбуждающего генератора
-- `NumSomaMembraneParts` — количество частей сомы
-- `MaxReceptorOutput` — максимальный выходной сигнал рецептора (для простой структуры)
+- `StructureBuildMode` — structure build mode (0 — no build, 1 — classical structure, 2 — simple structure)
+- `MembraneClassName` — membrane class name
+- `LTZoneClassName` — LT-zone class name
+- `ReceptorClassName` — receptor class name
+- `ExcGeneratorClassName` — excitatory generator class name
+- `NumSomaMembraneParts` — number of soma parts
+- `MaxReceptorOutput` — maximum receptor output (simple structure)
 
 ### Methods
 
-- `SetStructureBuildMode(value)` — установка режима сборки структуры
-- `SetMembraneClassName(value)` — установка имени класса мембраны
-- `SetLTZoneClassName(value)` — установка имени класса LT-зоны
-- `SetReceptorClassName(value)` — установка имени класса рецептора
-- `SetExcGeneratorClassName(value)` — установка имени класса возбуждающего генератора
-- `SetNumSomaMembraneParts(value)` — установка количества частей сомы
-- `SetMaxReceptorOutput(value)` — установка максимального выходного сигнала рецептора
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры нейрона (вызывает BuildClassicalStructure или BuildSimpleStructure в зависимости от режима)
-- `AReset()` — сброс состояний нейрона
-- `ACalculate()` — выполнение шага расчета нейрона
+- `SetStructureBuildMode(value)` — setting structure build mode
+- `SetMembraneClassName(value)` — setting membrane class name
+- `SetLTZoneClassName(value)` — setting LT-zone class name
+- `SetReceptorClassName(value)` — setting receptor class name
+- `SetExcGeneratorClassName(value)` — setting excitatory generator class name
+- `SetNumSomaMembraneParts(value)` — setting number of soma parts
+- `SetMaxReceptorOutput(value)` — setting maximum receptor output
+- `ADefault()` — setting default parameters
+- `ABuild()` — building neuron structure (calls BuildClassicalStructure or BuildSimpleStructure depending on mode)
+- `AReset()` — resetting neuron states
+- `ACalculate()` — neuron calculation step
 
 ### Usage in configurations
 
@@ -484,3 +484,36 @@ See [Literature-References.md](../Literature-References.md): **25**, **29**.
 - [`NSAfferentNeuron`](NSAfferentNeuron.md) — classical afferent neuron
 - [`NSimpleAfferentNeuron`](NSimpleAfferentNeuron.md) — simple afferent neuron
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+graph TB
+    subgraph NPulseNeuronCommon["NPulseNeuronCommon Base"]
+        BaseNeuron[NPulseNeuronCommon]
+    end
+    
+    subgraph NAfferentNeuron["NAfferentNeuron"]
+        Receptor[NReceptor]
+        Membrane[NPulseMembrane]
+        LTZone[NLTZone]
+        ExcGenerator[NConstGenerator]
+    end
+    
+    subgraph External["External components"]
+        ExternalStimulus[External stimulus]
+        Channels[Channels]
+        Synapses[Synapses]
+    end
+    
+    BaseNeuron -->|inherits| NAfferentNeuron
+    NAfferentNeuron -->|creates| Receptor
+    NAfferentNeuron -->|creates| Membrane
+    NAfferentNeuron -->|creates| LTZone
+    NAfferentNeuron -->|creates| ExcGenerator
+    ExternalStimulus -->|input signal| Receptor
+    Receptor -->|output signal| Membrane
+    Receptor -->|output signal| LTZone
+    Channels -->|currents| Membrane
+    Synapses -->|signals| Channels
+    Membrane -->|potential| LTZone
+    LTZone -->|spikes| External
+```

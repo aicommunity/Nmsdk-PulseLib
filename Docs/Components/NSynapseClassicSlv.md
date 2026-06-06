@@ -385,3 +385,80 @@ See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **2
 - [`NSynapseIaF`](NSynapseIaF.md) — synapse for IaF model
 - [`NPulseSynapse`](NPulseSynapse.md) — spiking synapse with neurotransmitter model
 - [Architecture.md](../Architecture.md) — library architecture
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Building: Build()
+    Building --> CreatingBuffer: Creation SpikeBuffer
+    CreatingBuffer --> Built: Буфер создан
+    Built --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> CheckInput: Проверка входного сигнала
+    CheckInput -->|Новый спайк| AddSpike: Добавление спайка в буфер
+    CheckInput -->|Нет спайка| CalcCurrents: Расчет токов
+    AddSpike --> UpdateIndices: Обновление индексов буфера
+    UpdateIndices --> CalcCurrents: Расчет токов для всех спайков
+    CalcCurrents --> SumCurrents: Суммирование токов
+    SumCurrents --> Ready: Шаг завершен
+    Ready --> Resetting: Reset()
+    Resetting --> Ready: Буфер очищен, индексы обнулены
+```
+
+```mermaid
+flowchart TD
+    Start([Start Calculate]) --> CheckInput{Input подключен?}
+    CheckInput -->|Нет| SetOutputZero[Output = 0]
+    CheckInput -->|Да| CheckNewSpike{Новый спайк?}
+    SetOutputZero --> ResetIndices[FirstSpikeBufferIndex = LastSpikeBufferIndex = 0]
+    ResetIndices --> End([End])
+    CheckNewSpike -->|Input > 0 и PreviousInput <= 0| AddSpikeToBuffer[Добавление спайка в буфер]
+    CheckNewSpike -->|Нет| CalcCurrents
+    AddSpikeToBuffer --> UpdateLastIndex[LastSpikeBufferIndex++]
+    UpdateLastIndex --> CheckOverflow{LastSpikeBufferIndex >= SpikeBuffer.size()?}
+    CheckOverflow -->|Да| WrapLastIndex[LastSpikeBufferIndex = 0]
+    CheckOverflow -->|Нет| CheckBufferFull{Буфер переполнен?}
+    WrapLastIndex --> CheckBufferFull
+    CheckBufferFull -->|Да| UpdateFirstIndex[FirstSpikeBufferIndex++]
+    CheckBufferFull -->|Нет| SetSpikeData[SpikeBuffer[LastSpikeBufferIndex].SpikeTimeStamp = GetTime()]
+    UpdateFirstIndex --> CheckFirstWrap{FirstSpikeBufferIndex >= SpikeBuffer.size()?}
+    CheckFirstWrap -->|Да| WrapFirstIndex[FirstSpikeBufferIndex = 0]
+    CheckFirstWrap -->|Нет| SetSpikeData
+    WrapFirstIndex --> SetSpikeData
+    SetSpikeData --> SetSpikeWeight[SpikeBuffer[LastSpikeBufferIndex].Weight = Weight]
+    SetSpikeWeight --> UpdatePreviousInput[PreviousInput = Input]
+    UpdatePreviousInput --> CalcCurrents[Расчет токов для всех спайков в буфере]
+    CalcCurrents --> InitResult[result = 0]
+    InitResult --> CheckBufferOrder{FirstSpikeBufferIndex < LastSpikeBufferIndex?}
+    CheckBufferOrder -->|Да| LoopNormal[Цикл от FirstSpikeBufferIndex до LastSpikeBufferIndex]
+    CheckBufferOrder -->|Нет| LoopWrapped[Цикл от FirstSpikeBufferIndex до конца + от начала до LastSpikeBufferIndex]
+    LoopNormal --> CalcCurrentForSpike[CalcCurrent для каждого спайка]
+    LoopWrapped --> CalcCurrentForSpike
+    CalcCurrentForSpike --> AddToResult[result += CalcCurrent]
+    AddToResult --> SetOutput[Output = result]
+    SetOutput --> End
+```
+
+```mermaid
+graph TB
+    subgraph NSynapseClassic["NSynapseClassic Base"]
+        BaseSynapse[NSynapseClassic]
+    end
+    
+    subgraph NSynapseClassicSlv["NSynapseClassicSlv"]
+        SpikeBuffer[Буфер спайков]
+        CurrentCalculator[Калькулятор тока]
+    end
+    
+    subgraph External["External components"]
+        PreNeuron[Пресинаптический нейрон]
+        Channel[Канал]
+    end
+    
+    BaseSynapse -->|inherits| NSynapseClassicSlv
+    NSynapseClassicSlv -->|содержит| SpikeBuffer
+    NSynapseClassicSlv -->|вычисляет| CurrentCalculator
+    PreNeuron -->|Input| NSynapseClassicSlv
+    NSynapseClassicSlv -->|Output| Channel
+```

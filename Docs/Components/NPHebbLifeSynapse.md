@@ -318,3 +318,62 @@ See [Literature-References.md](../Literature-References.md): **neuromodeler.ru**
 - [`NPulseSynapse`](NPulseSynapse.md) — spiking synapse with neurotransmitter model
 - [Architecture.md](../Architecture.md) — library architecture
 - [Scientific-Background.md](../Scientific-Background.md) — scientific background (Hebb's rule, neuron life support)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uninitialized: New()
+    Uninitialized --> Defaulted: Default()
+    Defaulted --> Built: Build()
+    Built --> ConnectingHebb: InstallHebbianConnection()
+    ConnectingHebb --> ConnectingLife: InstallLifeConnection()
+    ConnectingLife --> Ready: Ready = true
+    Ready --> Calculating: Calculate()
+    Calculating --> CalcBase: Расчет базового синапса
+    CalcBase --> UpdateHebb: Обновление механизма Хебба
+    UpdateHebb --> ApplyLife: Применение сигналов жизнеобеспечения
+    ApplyLife --> Ready: Шаг завершен
+    Ready --> Resetting: Reset()
+    Resetting --> Ready: Состояния сброшены
+```
+
+```mermaid
+flowchart TD
+    Start([Start Build]) --> CallBaseBuild[NPulseHebbSynapse::ABuild]
+    CallBaseBuild --> CheckOwner{MainOwner - NPulseLifeNeuron?}
+    CheckOwner -->|Да| GetLifeSystem[Получение NNeuronLife]
+    CheckOwner -->|Нет| End([End])
+    GetLifeSystem --> CheckLifeSystem{NeuronLife существует?}
+    CheckLifeSystem -->|Нет| End
+    CheckLifeSystem -->|Да| InstallLife[InstallLifeConnection]
+    InstallLife --> CreateLink{Creation связи}
+    CreateLink -->|Успешно| End
+    CreateLink -->|Ошибка| End
+```
+
+```mermaid
+graph TB
+    subgraph NPulseHebbSynapse["NPulseHebbSynapse Base"]
+        BaseHebbSynapse[NPulseHebbSynapse]
+    end
+
+    subgraph NPulseHebbLifeSynapse["NPulseHebbLifeSynapse"]
+        LifeIntegration[Интеграция с жизнеобеспечением]
+        HebbMechanism[Механизм Хебба]
+    end
+
+    subgraph External["External components"]
+        PreNeuron[Пресинаптический нейрон]
+        PostNeuron[NPulseLifeNeuron]
+        LTZone[LT zone]
+        LifeSystem[NNeuronLife]
+        Channel[Канал]
+    end
+
+    BaseHebbSynapse -->|inherits| NPulseHebbLifeSynapse
+    NPulseHebbLifeSynapse -->|вычисляет| LifeIntegration
+    NPulseHebbLifeSynapse -->|вычисляет| HebbMechanism
+    PreNeuron -->|Input| NPulseHebbLifeSynapse
+    LTZone -->|InputLTZoneFeedbackSignal| NPulseHebbLifeSynapse
+    LifeSystem -->|signals жизнеобеспечения| NPulseHebbLifeSynapse
+    NPulseHebbLifeSynapse -->|Output| Channel
+```

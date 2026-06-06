@@ -398,28 +398,28 @@ graph TB
 
 ### Properties
 
-- `StructureBuildMode` — режим пересборки структуры
-- `NeuronClassName` — имя класса нейрона
-- `SynapseClassName` — имя класса синапса
-- `PredictorClassName` — имя класса предсказателя
-- `NeuronLearnerClassName` — имя класса обучателя нейронов
-- `LogicalNotClassName` — имя класса логического НЕ
-- `InputMode` — режим ввода (0 — ручной, 1 — внешний источник)
-- `IsNeedToTrain` — необходимость обучения
-- `InputPattern` — входной паттерн
-- `InputMatrix` — входная матрица данных
-- `StatesNumber` — количество состояний
-- `FeaturesNumber` — количество признаков
-- `MeasurementPeriod` — период измерений
-- `Input` — входной сигнал
-- `Output` — выходной сигнал (предсказание состояний)
+- `StructureBuildMode` — structure rebuild mode
+- `NeuronClassName` — neuron class name
+- `SynapseClassName` — synapse class name
+- `PredictorClassName` — predictor class name
+- `NeuronLearnerClassName` — neuron learner class name
+- `LogicalNotClassName` — logical NOT class name
+- `InputMode` — input mode (0 — manual, 1 — external source)
+- `IsNeedToTrain` — training required flag
+- `InputPattern` — input pattern
+- `InputMatrix` — input data matrix
+- `StatesNumber` — number of states
+- `FeaturesNumber` — number of features
+- `MeasurementPeriod` — measurement period
+- `Input` — input signal
+- `Output` — output signal (state prediction)
 
 ### Methods
 
-- `ADefault()` — установка параметров по умолчанию
-- `ABuild()` — сборка структуры предсказателя состояний
-- `ACalculate()` — выполнение шага предсказания или обучения
-- `BuildStructure()` — построение структуры компонентов
+- `ADefault()` — setting default parameters
+- `ABuild()` — building state predictor structure
+- `ACalculate()` — prediction or training step
+- `BuildStructure()` — building component structure
 
 ### Usage in configurations
 
