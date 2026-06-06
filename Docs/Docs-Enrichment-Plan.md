@@ -6,10 +6,6 @@
 
 **Выполнено (улучшение документации, 2025):** в компонентах добавлены разделы **## Источники** (RU) со ссылкой на [Literature-References.md](Literature-References.md) и идентификаторами ([A], [B], [C], номера публикаций); в README, Usage-Examples и ключевых компонентах добавлены ссылки на `Bin/Configs/SpikeSamples/` (STDP, NM-Neurons, StructTrain, MC-Muscles и др.). План по CSNM (Демчева) и STDP (Зарубин) ниже оставлен как есть.
 
----
-
-## EN
-
 ## 1. Кодировки
 
 Рекомендовано конвертировать или вычитывать вручную фрагменты из файлов с повреждённой кодировкой (при необходимости) по мере работы с источниками.
@@ -35,3 +31,37 @@
 ---
 
 *Источники: локальный [Literature-References.md](Literature-References.md).*
+
+---
+
+## EN
+
+Current plan for improving component documentation based on text sources: Demcheva's thesis, Zarubin's thesis. *(Section 2.2 on Bakhsheev's dissertation has been removed from the plan.)*
+
+**Completed (documentation improvements, 2025):** components now include **## Источники** (RU) sections with a link to [Literature-References.md](Literature-References.md) and identifiers ([A], [B], [C], publication numbers); README, Usage-Examples, and key components include links to `Bin/Configs/SpikeSamples/` (STDP, NM-Neurons, StructTrain, MC-Muscles, etc.). The plan for CSNM (Demcheva) and STDP (Zarubin) below is unchanged.
+
+## 1. Encodings
+
+Recommended: convert or manually read fragments from files with corrupted encoding (as needed) while working with sources.
+
+---
+
+## 2. Demcheva's thesis (cable components)
+
+Add to descriptions of components related to cable models:
+
+- **CSNM** context (segmental spiking neuron model based on cable theory), cable equation, segment parameters (200 µm length, 20 µm diameter).
+- Components: `NPulseNeuronCable`, `NPulseMembraneCable`, `NPulseChannelCable`, `NPulseLTZoneCable`, `NPulseNeuronPosCGeneratorCable`, `NSynapseCableMulti`.
+- Reference comparison with IaF in the corresponding components.
+
+---
+
+## 3. Zarubin's thesis (STDP, training variants)
+
+Add to descriptions of the corresponding STDP trainer classes:
+
+- Brief descriptions and formulas for STDP variants: discrete and integral weight change, P-STDP, S-STDP, T-STDP, M-STDP (per Zarubin's thesis text).
+
+---
+
+*Sources: local [Literature-References.md](Literature-References.md).*
