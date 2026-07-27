@@ -11,6 +11,15 @@
 
 `NSynapseTrainerStdpClassicDiscrete` реализует классический STDP с дискретной реализацией. Наследуется от `NSynapseTrainerStdpTD` и использует параметр `Mu` для управления зависимостью изменения веса от текущего веса. Формула изменения веса зависит от разности времен спайков (`TDiff`) и текущего веса. Соответствует дискретному изменению веса по ВКР Зарубина: LTP/LTD задаются разностью времён спайков Δt, зависимость от веса — через w/w_max (формула (2.8) в [B]).
 
+### STDP — formula stub
+
+Кратко по [Literature-References.md](../Literature-References.md) ([B]):
+
+- \(\Delta t = t_\mathrm{post} - t_\mathrm{pre}\) (в коде — `TDiff`).
+- LTP (\(\Delta t > 0\)): \(\Delta w \propto A_+\,(1 - \tilde{w})^{\mu}\,e^{-\Delta t/\tau_+}\)
+- LTD (\(\Delta t < 0\)): \(\Delta w \propto A_-\,\tilde{w}^{\mu}\,e^{\Delta t/\tau_-}\)
+- \(\tilde{w} = (w - w_\min)/(w_\max - w_\min)\); в коде: `APlus`/`AMinus`, `TauPlus`/`TauMinus`, `Mu`.
+
 **Использование:** Классический STDP с дискретной реализацией, зависимость от веса
 
 ### UML-диаграмма классов
@@ -252,6 +261,15 @@ graph TB
 **Instances**: `ClassName = "NSynapseTrainerStdpClassicDiscrete"` in `Bin/Configs/*/Model_*.xml`.
 
 `NSynapseTrainerStdpClassicDiscrete` implements classic STDP with discrete implementation. Inherits from `NSynapseTrainerStdpTD` and uses parameter `Mu` to control weight dependence. Corresponds to discrete weight update in Zarubin's thesis: LTP/LTD from spike time difference Δt, dependence on w/w_max (formula (2.8) in [B]).
+
+### STDP formula stub
+
+From [Literature-References.md](../Literature-References.md) ([B]):
+
+- \(\Delta t = t_\mathrm{post} - t_\mathrm{pre}\) (`TDiff` in code).
+- LTP (\(\Delta t > 0\)): \(\Delta w \propto A_+\,(1 - \tilde{w})^{\mu}\,e^{-\Delta t/\tau_+}\)
+- LTD (\(\Delta t < 0\)): \(\Delta w \propto A_-\,\tilde{w}^{\mu}\,e^{\Delta t/\tau_-}\)
+- \(\tilde{w} = (w - w_\min)/(w_\max - w_\min)\); code: `APlus`/`AMinus`, `TauPlus`/`TauMinus`, `Mu`.
 
 **Usage:** Classic STDP with discrete implementation, weight dependence
 

@@ -10,6 +10,14 @@
 
 `NPulseNeuronCable` реализует импульсный нейрон с кабельной моделью мембраны, которая позволяет моделировать пространственное распространение потенциала по дендритам и аксону. Создается из `NPulseNeuron` с параметрами для кабельной модели: мембрана `NPulseMembraneCable`, LT-зона `NPulseLTZoneCable`, генератор `NPNeuronPosCGeneratorCable`. В архитектуре сегментной спайковой модели нейрона (CSNM) по кабельной теории [C] нейрон представляется цепочкой сегментов; типичные ориентиры для режима точечного нейрона — длина сегмента ~200 мкм, диаметр ~20 мкм (см. [C]). Кабельное уравнение связывает продольный ток с градиентом потенциала (dV/dx = −r_i·i) и входит в интеграцию CSNM.
 
+### CSNM — formula stub
+
+Кратко по [Literature-References.md](../Literature-References.md) ([C], публ. 7) и [`CSNM-Models.md`](../../../Bin/Docs/SpikeSamples/CSNM-Models.md):
+
+- Кабельное уравнение (непрерывная форма): \(\lambda^2 \frac{\partial^2 V}{\partial x^2} = \tau_m \frac{\partial V}{\partial t} + V\), где \(\lambda = \sqrt{r_m/r_i}\), \(\tau_m = r_m c_m\).
+- Ориентиры сегмента (точечный режим сравнения с CSNM): длина ~200 мкм, диаметр ~20 мкм.
+- Сравнение с IaF: точечные мембраны (`NPulseMembraneIaF`) не решают пространственное кабельное уравнение; кабельный вариант моделирует \(\partial V/\partial x\) вдоль компартментов.
+
 **Использование:** Моделирование пространственно-распределенных нейронов, эксперименты с дендритными структурами, кабельная теория
 
 ### UML-диаграмма классов
@@ -400,6 +408,14 @@ for (int step = 0; step < 10000; step++) {
 **Instances**: `ClassName = "NPulseNeuronCable"` in `Bin/Configs/*/Model_*.xml`.
 
 `NPulseNeuronCable` implements a spiking neuron with cable membrane model that allows modeling spatial potential propagation along dendrites and axon. Created from `NPulseNeuron` with parameters for cable model: membrane `NPulseMembraneCable`, LT-zone `NPulseLTZoneCable`, generator `NPNeuronPosCGeneratorCable`.
+
+### CSNM formula stub
+
+From [Literature-References.md](../Literature-References.md) ([C], pub. 7) and [`CSNM-Models.md`](../../../Bin/Docs/SpikeSamples/CSNM-Models.md):
+
+- Cable equation: \(\lambda^2 \frac{\partial^2 V}{\partial x^2} = \tau_m \frac{\partial V}{\partial t} + V\), with \(\lambda = \sqrt{r_m/r_i}\), \(\tau_m = r_m c_m\).
+- Segment orientation (point-neuron comparison): length ~200 µm, diameter ~20 µm.
+- Vs IaF: point membranes (`NPulseMembraneIaF`) do not solve the spatial cable equation; the cable variant models \(\partial V/\partial x\) along compartments.
 
 **Usage:** Modeling spatially-distributed neurons, experiments with dendritic structures, cable theory
 

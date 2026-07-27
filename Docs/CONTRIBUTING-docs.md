@@ -211,7 +211,8 @@ Brief description of component purpose.
 Используйте относительные ссылки:
 
 ```markdown
-[`ИмяКомпонента`](Components/Componentname.md)
+[`ИмяКомпонента`](Components/[ComponentName].md)
+(шаблон имени файла — как в [Component-Documentation-Template.md](Component-Documentation-Template.md))
 ```
 
 #### Формат ссылок на другие документы
