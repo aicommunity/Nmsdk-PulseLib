@@ -31,7 +31,7 @@ classDiagram
 
 **Иерархия наследования:** [описание.]
 
-**Ключевые свойства:** [список свойств.]
+**Ключевые свойства / Favorites:** таблица primary-свойств для ClDesc Favorites (`{CompName}:Prop`); secondary (`Activity`, `Coord`, `Name`, `TimeStep`, debug…) не включать; для композитов — 0–N curated nested I/O aliases. См. `Docs/ClDesc-Detailed-Methodology.md`.
 
 ### UML-диаграмма последовательности
 

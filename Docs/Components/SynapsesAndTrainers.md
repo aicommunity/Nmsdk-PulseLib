@@ -33,6 +33,11 @@ classDiagram
 - Регистрация: `NPulseLibrary.cpp` → `UploadClass("NPulseSynapseStdp", ...)`, `UploadClass("NSynapseTrainerStdp", ...)` и др.
 - В конфигурациях задаются параметры обучения (коэффициенты, окна времени, усиления и т.п.).
 
+### Типовые Favorites (ClDesc)
+
+Для leaf-синапсов (`NPSynapse*`, `NSynapseCable*`): `Weight`, `Resistance`, `SecretionTC`, `DissociationTC`, `PulseAmplitude`, флаги `UsePulseSignal` / `UsePresynapticInhibition`.  
+Не включать secondary (`Activity`, `Coord`, …). Подробнее: [Favorites-Curation-Guide.md](../Favorites-Curation-Guide.md).
+
 ## Источники
 
 См. [Literature-References.md](../Literature-References.md): **[B]**, **25**, **26**, **29**.

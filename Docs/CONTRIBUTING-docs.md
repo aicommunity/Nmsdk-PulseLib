@@ -21,6 +21,7 @@ Docs/
 ├── Config-Templates.md         # Шаблоны типовых экспериментов
 ├── Scientific-Background.md    # Научный фон и публикации
 ├── CONTRIBUTING-docs.md        # Это руководство
+├── Favorites-Curation-Guide.md # Курация ClDesc Favorites (primary vs alias)
 ├── Components/                 # Детальная документация компонентов
 │   ├── Neurons.md
 │   ├── SynapsesAndTrainers.md

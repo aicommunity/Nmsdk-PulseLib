@@ -140,6 +140,36 @@ graph TB
 
 `NPGenerator` использует все свойства базового класса `NPulseGenerator` с параметрами по умолчанию.
 
+### Ключевые свойства / Favorites
+
+| Свойство | Роль |
+|----------|------|
+| `Frequency` | Частота импульсов |
+| `Amplitude` | Амплитуда спайка |
+| `PulseLength` | Длительность импульса |
+| `Delay` | Задержка старта |
+| `FrequencyDeviation` | Разброс частоты |
+| `RandomFrequency` | Случайная частота |
+| `Output` | Выходной импульсный сигнал |
+
+ClDesc: `Bin/ClDesc/PulseLibrary/ru-RU/NPGenerator.xml` — direct Favorites `{CompName}:…`. См. [Favorites-Curation-Guide.md](../Favorites-Curation-Guide.md).
+
+### Ключевые свойства / Favorites
+
+Primary для `Bin/ClDesc/PulseLibrary/ru-RU/NPGenerator.xml` (`{CompName}:…`):
+
+| Свойство | Роль |
+|----------|------|
+| `Frequency` | Частота импульсов |
+| `Amplitude` | Амплитуда спайка |
+| `PulseLength` | Длительность импульса |
+| `Delay` | Задержка старта |
+| `FrequencyDeviation` | Разброс частоты |
+| `RandomFrequency` | Случайная частота |
+| `Output` | Выходной сигнал |
+
+Secondary (`Activity`, `Coord`, `Name`, `TimeStep`, …) в Favorites не включаются. См. [Favorites-Curation-Guide.md](../Favorites-Curation-Guide.md).
+
 ### Методы
 
 `NPGenerator` использует все методы базового класса `NPulseGenerator`.
