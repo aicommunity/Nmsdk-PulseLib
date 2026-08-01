@@ -1,10 +1,13 @@
 #include "RegisterPulseLibLlmTools.h"
 
 #include <filesystem>
+#include <memory>
 
 #include "../../../Rdk/LLM/Core/Context/ILLMProjectContextProvider.h"
 #include "../../../Rdk/LLM/Core/Context/UDocSearchIndex.h"
+#include "../../../Rdk/LLM/Core/LlmPublicApi.h"
 #include "../../../Rdk/LLM/Core/Tools/ULLMToolRegistry.h"
+#include "UPackPulseDocs.h"
 
 namespace fs = std::filesystem;
 
@@ -83,4 +86,11 @@ void RegisterPulseLibLlmTools(RDK::LLM::ULLMToolRegistry& registry,
             r.ok = true;
             return r;
         });
+
+    // TD-171: library capability pack adapter (hints band; tools registered above).
+    if(RDK::LLM::LLMServices::instance().isInitialized())
+    {
+        RDK::LLM::LLMServices::instance().packs().registerPack(
+            std::make_unique<RDK::LLM::UPackPulseDocs>());
+    }
 }
