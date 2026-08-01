@@ -15,6 +15,8 @@ PulseLibComponentControllerWidget::PulseLibComponentControllerWidget(QWidget* pa
     setAccessibleName("PulseLibComponentControllerWidget");
 
     QVBoxLayout* rootLayout = new QVBoxLayout(this);
+    rootLayout->setContentsMargins(4, 4, 4, 4);
+    rootLayout->setSpacing(4);
     rootLayout->addWidget(m_titleLabel);
     rootLayout->addWidget(m_details);
 

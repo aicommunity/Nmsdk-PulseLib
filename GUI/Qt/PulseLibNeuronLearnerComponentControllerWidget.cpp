@@ -80,6 +80,8 @@ PulseLibNeuronLearnerComponentControllerWidget::PulseLibNeuronLearnerComponentCo
     buttonsLayout->addWidget(m_calculateButton);
 
     QVBoxLayout* rootLayout = new QVBoxLayout(this);
+    rootLayout->setContentsMargins(4, 4, 4, 4);
+    rootLayout->setSpacing(4);
     rootLayout->addLayout(formLayout);
     rootLayout->addLayout(buttonsLayout);
 
