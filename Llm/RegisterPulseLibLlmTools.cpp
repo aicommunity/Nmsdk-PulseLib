@@ -5,6 +5,7 @@
 
 #include "../../../Rdk/LLM/Core/Context/ILLMProjectContextProvider.h"
 #include "../../../Rdk/LLM/Core/Context/UDocSearchIndex.h"
+#include "../../../Rdk/LLM/Core/Domain/URdkDomainAccess.h"
 #include "../../../Rdk/LLM/Core/LlmPublicApi.h"
 #include "../../../Rdk/LLM/Core/Tools/ULLMToolRegistry.h"
 #include "UPackPulseDocs.h"
@@ -38,7 +39,6 @@ void RegisterPulseLibLlmTools(RDK::LLM::ULLMToolRegistry& registry,
                               RDK::LLM::ILLMProjectContextProvider* project_context,
                               RDK::LLM::URdkDomainAccess& domain)
 {
-    (void)domain;
     registry.registerTool(
         makeReadDef("search_pulse_docs",
                     "Search Nmsdk-PulseLib documentation (SNN neurons, synapses, trainers)",
@@ -69,18 +69,16 @@ void RegisterPulseLibLlmTools(RDK::LLM::ULLMToolRegistry& registry,
 
     registry.registerTool(
         makeReadDef("list_pulse_component_classes",
-                    "Lists pulse library component class names (use add_component to create)",
+                    "Lists pulse library component class names from the live registry",
                     {{"type", "object"}, {"additionalProperties", false}}),
-        [](const nlohmann::json& args) -> RDK::LLM::ToolGatewayResult {
+        [&domain](const nlohmann::json& args) -> RDK::LLM::ToolGatewayResult {
             (void)args;
             RDK::LLM::ToolGatewayResult r;
-            r.result["classes"] = nlohmann::json::array({
-                {{"class_name", "NPulseNeuron"}, {"summary", "Pulse neuron model"}},
-                {{"class_name", "NPulseSynapseStdp"}, {"summary", "STDP synapse"}},
-                {{"class_name", "NNeuronTrainer"}, {"summary", "Neuron trainer (STDP params)"}},
-                {{"class_name", "NNeuronLearner"}, {"summary", "Online learner"}},
-                {{"class_name", "NPulseMembrane"}, {"summary", "Membrane dynamics"}},
-            });
+            nlohmann::json out;
+            if(domain.listRegisteredClasses(out, "PulseLibrary").ok())
+                r.result = std::move(out);
+            else
+                r.result["classes"] = nlohmann::json::array();
             r.result["docs_hint"] = "Libraries/Nmsdk-PulseLib/Docs/README.md";
             r.result["mutation_hint"] = "Use add_component with class_name from this list.";
             r.ok = true;
