@@ -2,6 +2,7 @@
 
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QLocale>
 #include <QSignalBlocker>
 #include <QVBoxLayout>
 
@@ -19,12 +20,15 @@ PulseLibNeuronLearnerComponentControllerWidget::PulseLibNeuronLearnerComponentCo
 
     m_needToTrainCheck = new QCheckBox("Need to train", this);
 
+    const QLocale cLocale = QLocale::c();
     m_delaySpin = new QDoubleSpinBox(this);
+    m_delaySpin->setLocale(cLocale);
     m_delaySpin->setRange(0.0, 1e9);
     m_delaySpin->setDecimals(6);
     m_delaySpin->setSingleStep(0.1);
 
     m_spikesFrequencySpin = new QDoubleSpinBox(this);
+    m_spikesFrequencySpin->setLocale(cLocale);
     m_spikesFrequencySpin->setRange(0.0, 1e9);
     m_spikesFrequencySpin->setDecimals(6);
     m_spikesFrequencySpin->setSingleStep(0.1);
@@ -37,11 +41,13 @@ PulseLibNeuronLearnerComponentControllerWidget::PulseLibNeuronLearnerComponentCo
 
     m_useFixedThresholdCheck = new QCheckBox("Use fixed LTZ threshold", this);
     m_thresholdSpin = new QDoubleSpinBox(this);
+    m_thresholdSpin->setLocale(cLocale);
     m_thresholdSpin->setRange(-1e9, 1e9);
     m_thresholdSpin->setDecimals(6);
     m_thresholdSpin->setSingleStep(0.1);
 
     m_synapseResistanceStepSpin = new QDoubleSpinBox(this);
+    m_synapseResistanceStepSpin->setLocale(cLocale);
     m_synapseResistanceStepSpin->setRange(0.0, 1e9);
     m_synapseResistanceStepSpin->setDecimals(9);
     m_synapseResistanceStepSpin->setSingleStep(0.000001);

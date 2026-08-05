@@ -2,6 +2,7 @@
 
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QLocale>
 #include <QMessageBox>
 #include <QVBoxLayout>
 
@@ -30,19 +31,23 @@ PulseLibNeuronTrainerComponentControllerWidget::PulseLibNeuronTrainerComponentCo
                                                                                                  RDK::UApplication* app)
     : UVisualControllerWidget(parent, app)
 {
+    const QLocale cLocale = QLocale::c();
     m_needToTrainCheck = new QCheckBox("Need to train", this);
     m_delaySpin = new QDoubleSpinBox(this);
+    m_delaySpin->setLocale(cLocale);
     m_delaySpin->setRange(0.0, 1e9);
     m_delaySpin->setDecimals(6);
     m_delaySpin->setSingleStep(0.1);
 
     m_spikesFrequencySpin = new QDoubleSpinBox(this);
+    m_spikesFrequencySpin->setLocale(cLocale);
     m_spikesFrequencySpin->setRange(0.0, 1e9);
     m_spikesFrequencySpin->setDecimals(6);
     m_spikesFrequencySpin->setSingleStep(0.1);
 
     m_useFixedThresholdCheck = new QCheckBox("Use fixed LTZ threshold", this);
     m_thresholdSpin = new QDoubleSpinBox(this);
+    m_thresholdSpin->setLocale(cLocale);
     m_thresholdSpin->setRange(0.0, 1e9);
     m_thresholdSpin->setDecimals(6);
     m_thresholdSpin->setSingleStep(0.1);
