@@ -370,6 +370,9 @@ protected:
  //    
  virtual bool ABuild(void);
 
+ /// Sources (generators) before Neuron — same calc contract as NNeuronTrainer.
+ void UpdateComputationOrder(void) override;
+
  ///   
  virtual bool AReset(void);
 

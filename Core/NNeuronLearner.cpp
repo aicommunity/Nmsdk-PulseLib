@@ -328,7 +328,10 @@ bool NNeuronLearner::SetMaxDendriteLength(const int &value)
    // добавляем связь с генератором и меняем сопротивление
    for(int k = 0; k < NumSynapse[i]; k++)
    {
-    NPulseSynapseCommon *synapse = dendrite->GetExcitatorySynapses(k);
+    NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
+        std::string("ExcSynapse") + sntoa(k + 1), true);
+    if(!synapse)
+     continue;
 
     // Добаляем связь между текущим генератором и синапсом
     bool res = CreateLink(MakeLearnerSourceName(i + 1), "Output", synapse->GetLongName(this), "Input");
@@ -681,7 +684,8 @@ for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
   // Для каждого синапса
   for(int numsyn = 0; numsyn < NumSynapse[numdend]; numsyn++)
   {
-   NPulseSynapseCommon *synapse = segmentofdendrite->GetExcitatorySynapses(numsyn);
+   NPulseSynapseCommon *synapse = segmentofdendrite->GetComponentL<NPulseSynapseCommon>(
+       std::string("ExcSynapse") + sntoa(numsyn + 1), true);
 
    if(!synapse)
    {
@@ -888,6 +892,18 @@ bool NNeuronLearner::ABuild(void)
  return true;
 }
 
+void NNeuronLearner::UpdateComputationOrder(void)
+{
+ int position = 0;
+ for(size_t i = 0; i < Generators.size(); ++i)
+ {
+  if(Generators[i])
+   SetComponentPosition(Generators[i]->GetName(), position++);
+ }
+ if(Neuron)
+  SetComponentPosition(Neuron->GetName(), position++);
+}
+
 
 /// Сброс процесса счета
 bool NNeuronLearner::AReset(void)
@@ -1068,7 +1084,10 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
  // Добаляем связи между текущим генератором и синапсами на новом дендрите
  for (int i = 0; i < NumSynapse[num]; i++)
  {
-  NPulseSynapseCommon *synapse = dendrite->GetExcitatorySynapses(i);
+  NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
+      std::string("ExcSynapse") + sntoa(i + 1), true);
+  if(!synapse)
+   return true;
 
   res &= CreateLink("Source" + sntoa(num + 1), "Output", synapse->GetLongName(this), "Input");
   if(!res)
@@ -1140,8 +1159,11 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
  // Если надо удалить синапс, то прежде разрываем его связи
  if (SynapseStatus[num] == -1)
  {
-  NPulseSynapseCommon *synapse = dendrite->GetExcitatorySynapses(NumSynapse[num]);
-  synapse->DisconnectAll();
+  // NumSynapse[num] already decremented above; disconnect the synapse that will be removed (old last = newCount+1).
+  NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
+      std::string("ExcSynapse") + sntoa(NumSynapse[num] + 1), true);
+  if(synapse)
+   synapse->DisconnectAll();
  }
 
  // Изменяем количество синапсов в дендрите
@@ -1153,7 +1175,8 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
  // Если добавился синапс
  if (SynapseStatus[num] == 1)
  {
-  NPulseSynapseCommon *synapse = dendrite->GetExcitatorySynapses(NumSynapse[num] - 1);
+  NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
+      std::string("ExcSynapse") + sntoa(NumSynapse[num]), true);
   if(!synapse)
    return true;
 

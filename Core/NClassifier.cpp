@@ -638,7 +638,10 @@ bool NClassifier::BuildStructure(void)
 				if(!ltzone)
 					return true;
 
-				NPulseSynapseCommon *synapse=soma->GetExcitatorySynapses(j);
+				NPulseSynapseCommon *synapse=soma->GetComponentL<NPulseSynapseCommon>(
+				    std::string("ExcSynapse")+sntoa(j+1), true);
+				if(!synapse)
+					return true;
 
 				bool res(true);
 				res &= CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");  //"ExcSynapse"+sntoa(j+1)

@@ -1451,8 +1451,11 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 //				if(!synapse)
 //				 return true;
 
-				// Добаляем связь между текущим генератором и новым синапсом
-				NPulseSynapseCommon *synapse=dendrite->GetExcitatorySynapses(dendrite->NumExcitatorySynapses - 1);
+				// Добаляем связь между текущим генератором и новым синапсом (by name, not vector index)
+				NPulseSynapseCommon *synapse=dendrite->GetComponentL<NPulseSynapseCommon>(
+				    std::string("ExcSynapse")+sntoa(static_cast<int>(dendrite->NumExcitatorySynapses)), true);
+				if(!synapse)
+				 return true;
 				res&=CreateLink("Source"+sntoa(i+1),"Output",synapse->GetLongName(this),"Input");
 				if(!res)
 				 return true;
