@@ -21,7 +21,6 @@ void NDatasetManual::PromoteEditableProperties(void)
     ChangeLookupPropertyType("MaxSpikesPerFeature", ptPubParameter);
     ChangeLookupPropertyType("MatrixData", ptPubParameter);
     ChangeLookupPropertyType("MatrixClasses", ptPubParameter);
-    ChangeLookupPropertyType("MatrixSpikeDelays", ptPubParameter);
 }
 
 void NDatasetManual::ResizeMatricesFromDims(int num_samples, int num_features, int max_spikes)
@@ -33,9 +32,38 @@ void NDatasetManual::ResizeMatricesFromDims(int num_samples, int num_features, i
     if(max_spikes < 1)
         max_spikes = 1;
 
-    MatrixData.Resize(num_samples, num_features);
+    MatrixData.Resize(num_samples, num_features * max_spikes, -1.0);
     MatrixClasses.Resize(num_samples > 0 ? 1 : 0, num_samples);
-    MatrixSpikeDelays.Resize(num_samples, num_features * max_spikes, -1.0);
+}
+
+void NDatasetManual::SyncMatricesToDimParams(void)
+{
+    int num_samples = NumSamples;
+    int num_features = NumFeatures;
+    int max_spikes = MaxSpikesPerFeature;
+
+    if(num_samples < 0)
+    {
+        num_samples = 0;
+        NumSamples.SetDataDirect(0);
+    }
+    if(num_features < 0)
+    {
+        num_features = 0;
+        NumFeatures.SetDataDirect(0);
+    }
+    if(max_spikes < 1)
+    {
+        max_spikes = 1;
+        MaxSpikesPerFeature.SetDataDirect(1);
+    }
+
+    ResizeMatricesFromDims(num_samples, num_features, max_spikes);
+
+    if(MatrixClasses.GetRows() == 1 && MatrixClasses.GetCols() == num_samples && num_samples > 0)
+        NumClasses = CalcNumClasses(MatrixClasses);
+    else
+        NumClasses = 0;
 }
 
 NDatasetManual* NDatasetManual::New(void)
@@ -52,7 +80,8 @@ bool NDatasetManual::SetNumFeatures(const int &value)
 {
     if(value < 0)
         return false;
-    ResizeMatricesFromDims(NumSamples, value, MaxSpikesPerFeature);
+    NumFeatures.SetDataDirect(value);
+    SyncMatricesToDimParams();
     Ready = false;
     return true;
 }
@@ -61,7 +90,8 @@ bool NDatasetManual::SetNumSamples(const int &value)
 {
     if(value < 0)
         return false;
-    ResizeMatricesFromDims(value, NumFeatures, MaxSpikesPerFeature);
+    NumSamples.SetDataDirect(value);
+    SyncMatricesToDimParams();
     Ready = false;
     return true;
 }
@@ -70,15 +100,24 @@ bool NDatasetManual::SetMaxSpikesPerFeature(const int &value)
 {
     if(value < 1)
         return false;
-    ResizeMatricesFromDims(NumSamples, NumFeatures, value);
+    MaxSpikesPerFeature.SetDataDirect(value);
+    SyncMatricesToDimParams();
     Ready = false;
     return true;
 }
 
 bool NDatasetManual::SetMatrixData(const MDMatrix<double> &value)
 {
+    const int max_spikes = MaxSpikesPerFeature < 1 ? 1 : int(MaxSpikesPerFeature);
+    if(value.GetCols() > 0 && value.GetCols() % max_spikes != 0)
+        return false;
+
     NumSamples.SetDataDirect(value.GetRows());
-    NumFeatures.SetDataDirect(value.GetCols());
+    if(value.GetCols() > 0)
+        NumFeatures.SetDataDirect(value.GetCols() / max_spikes);
+    else
+        NumFeatures.SetDataDirect(0);
+
     if(value.GetRows() > 0)
     {
         if(MatrixClasses.GetRows() != 1 || MatrixClasses.GetCols() != value.GetRows())
@@ -89,43 +128,16 @@ bool NDatasetManual::SetMatrixData(const MDMatrix<double> &value)
         MatrixClasses.Resize(0, 0);
     }
 
-    const int max_spikes = MaxSpikesPerFeature < 1 ? 1 : int(MaxSpikesPerFeature);
-    const int expected_cols = value.GetCols() * max_spikes;
-    if(MatrixSpikeDelays.GetRows() != value.GetRows() || MatrixSpikeDelays.GetCols() != expected_cols)
-        MatrixSpikeDelays.Resize(value.GetRows(), expected_cols, -1.0);
-
     Ready = false;
     return true;
 }
 
 bool NDatasetManual::SetMatrixClasses(const MDMatrix<int> &value)
 {
-    (void)value;
-    Ready = false;
-    return true;
-}
-
-bool NDatasetManual::SetMatrixSpikeDelays(const MDMatrix<double> &value)
-{
-    const int max_spikes = MaxSpikesPerFeature < 1 ? 1 : int(MaxSpikesPerFeature);
-    if(value.GetCols() > 0 && max_spikes > 0 && value.GetCols() % max_spikes == 0)
-    {
-        NumSamples.SetDataDirect(value.GetRows());
-        NumFeatures.SetDataDirect(value.GetCols() / max_spikes);
-        if(value.GetRows() > 0)
-        {
-            if(MatrixClasses.GetRows() != 1 || MatrixClasses.GetCols() != value.GetRows())
-                MatrixClasses.Resize(1, value.GetRows());
-            if(MatrixData.GetRows() != value.GetRows() ||
-               MatrixData.GetCols() != value.GetCols() / max_spikes)
-                MatrixData.Resize(value.GetRows(), value.GetCols() / max_spikes);
-        }
-        else
-        {
-            MatrixClasses.Resize(0, 0);
-            MatrixData.Resize(0, 0);
-        }
-    }
+    if(value.GetRows() == 1 && value.GetCols() > 0)
+        NumClasses = CalcNumClasses(value);
+    else
+        NumClasses = 0;
     Ready = false;
     return true;
 }
@@ -137,33 +149,33 @@ bool NDatasetManual::ADefault(void)
     NumSamples.SetDataDirect(1);
     NumFeatures.SetDataDirect(1);
     MaxSpikesPerFeature.SetDataDirect(1);
-    ResizeMatricesFromDims(1, 1, 1);
-    // One spike at sample start so Reset creates Generator1 and fires once in spike-train mode
-    MatrixSpikeDelays(0, 0) = 0.0;
+    SyncMatricesToDimParams();
+    MatrixData(0, 0) = 0.0;
+    NumClasses = CalcNumClasses(MatrixClasses);
     Ready = false;
     return true;
 }
 
+bool NDatasetManual::AReset(void)
+{
+    SyncMatricesToDimParams();
+    return NDatasetBase::AReset();
+}
+
 bool NDatasetManual::PrepareDataset(void)
 {
+    SyncMatricesToDimParams();
+
     const int max_spikes = MaxSpikesPerFeature;
     if(max_spikes < 1)
         return false;
-
-    const int delay_rows = MatrixSpikeDelays.GetRows();
-    const int delay_cols = MatrixSpikeDelays.GetCols();
-    if(delay_rows > 0 && delay_cols > 0)
-    {
-        if(delay_cols % max_spikes != 0)
-            return false;
-        if(MatrixClasses.GetRows() != 1 || MatrixClasses.GetCols() != delay_rows)
-            return false;
-        return true;
-    }
-
-    if(MatrixData.GetRows() <= 0 || MatrixData.GetCols() <= 0)
+    if(NumSamples <= 0 || NumFeatures <= 0)
         return false;
-    if(MatrixClasses.GetRows() != 1 || MatrixClasses.GetCols() != MatrixData.GetRows())
+
+    if(MatrixData.GetRows() != NumSamples ||
+       MatrixData.GetCols() != NumFeatures * max_spikes)
+        return false;
+    if(MatrixClasses.GetRows() != 1 || MatrixClasses.GetCols() != NumSamples)
         return false;
     return true;
 }

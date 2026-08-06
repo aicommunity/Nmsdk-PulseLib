@@ -7,7 +7,7 @@ namespace NMSDK {
 
 using namespace RDK;
 
-/// Manual dataset: dims and matrices are editable parameters; dims resize MatrixData/MatrixClasses
+/// Manual dataset: dims resize MatrixData/MatrixClasses; MatrixData holds ISI spike trains
 class RDK_LIB_TYPE NDatasetManual: public NDatasetBase
 {
 public:
@@ -22,17 +22,15 @@ virtual bool SetNumSamples(const int &value);
 virtual bool SetMaxSpikesPerFeature(const int &value);
 virtual bool SetMatrixData(const MDMatrix<double> &value);
 virtual bool SetMatrixClasses(const MDMatrix<int> &value);
-virtual bool SetMatrixSpikeDelays(const MDMatrix<double> &value);
 
 protected:
-/// Promote dims and matrices to public parameters for GUI editing
 void PromoteEditableProperties(void);
-
-/// Resize MatrixData, MatrixClasses and MatrixSpikeDelays from dims
 void ResizeMatricesFromDims(int num_samples, int num_features, int max_spikes);
+void SyncMatricesToDimParams(void);
 
 virtual bool PrepareDataset(void);
 virtual bool ADefault(void);
+virtual bool AReset(void);
 };
 
 }
