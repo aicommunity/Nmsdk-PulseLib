@@ -15,10 +15,7 @@ public:
 /// Class name used to create child pulse generators
 UProperty<std::string, NDatasetBase, ptPubParameter> PulseGeneratorClassName;
 
-/// Number of child generators (equals NumFeatures after ApplyFromMatrices)
-UProperty<int, NDatasetBase, ptPubState> NumGenerators;
-
-/// Number of features (columns) derived from MatrixData
+/// Number of features (columns) derived from MatrixData; also count of child Generator1..N
 UProperty<int, NDatasetBase, ptPubState> NumFeatures;
 
 /// Number of samples (rows) derived from MatrixData
@@ -80,10 +77,10 @@ protected:
 /// Fill or validate MatrixData/MatrixClasses from the concrete source
 virtual bool PrepareDataset() = 0;
 
-/// Derive Num*/MatrixDelay/NumGenerators from MatrixData/MatrixClasses
+/// Derive NumSamples/NumFeatures/NumClasses/MatrixDelay from MatrixData/MatrixClasses
 bool ApplyFromMatrices(void);
 
-/// Create/remove child generators to match NumGenerators
+/// Create/remove child generators to match NumFeatures
 bool SyncGenerators(void);
 
 /// Matrix of generator start delays from normalized feature values

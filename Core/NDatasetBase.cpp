@@ -10,7 +10,6 @@ namespace NMSDK {
 
 NDatasetBase::NDatasetBase(void)
 : PulseGeneratorClassName("PulseGeneratorClassName", this, &NDatasetBase::SetPulseGeneratorClassName),
-  NumGenerators("NumGenerators", this),
   NumFeatures("NumFeatures", this),
   NumSamples("NumSamples", this),
   MatrixData("MatrixData", this, &NDatasetBase::SetMatrixData),
@@ -111,7 +110,6 @@ bool NDatasetBase::ADefault(void)
     NumClasses = 0;
     NumFeatures = 0;
     NumSamples = 0;
-    NumGenerators = 0;
     MatrixData.Resize(0, 0);
     MatrixClasses.Resize(0, 0);
     MatrixDelay.Resize(0, 0);
@@ -194,21 +192,20 @@ bool NDatasetBase::ApplyFromMatrices(void)
     NumFeatures = num_features;
     MatrixDelay = CalcMatrixDelay(num_samples, num_features, MatrixData, Tay);
     NumClasses = CalcNumClasses(MatrixClasses);
-    NumGenerators = num_features;
     return true;
 }
 
 bool NDatasetBase::SyncGenerators(void)
 {
     int old_ex_generators = int(Generators.size());
-    for(int i = NumGenerators; i < old_ex_generators; i++)
+    for(int i = NumFeatures; i < old_ex_generators; i++)
     {
      UEPtr<UContainer> gen = GetComponentL(std::string("Generator")+sntoa(i+1), true);
      if(gen)
       DelComponent(gen, true);
     }
 
-    for(int i = 0; i < NumGenerators; i++)
+    for(int i = 0; i < NumFeatures; i++)
     {
      UEPtr<NPulseGeneratorTransit> generator =
          AddMissingComponent<NPulseGeneratorTransit>(std::string("Generator")+sntoa(i+1), PulseGeneratorClassName);

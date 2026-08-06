@@ -15,7 +15,7 @@ ChangeLookupPropertyType("MatrixData", ptPubParameter);
 ChangeLookupPropertyType("MatrixClasses", ptPubParameter);
 ```
 
-Размеры (`NumFeatures`, `NumSamples`, `NumGenerators`, `NumClasses`) и `MatrixDelay` остаются State и считаются в `ApplyFromMatrices()` при Build.
+Размеры (`NumFeatures`, `NumSamples`, `NumClasses`) и `MatrixDelay` остаются State и считаются в `ApplyFromMatrices()` при Build. Число дочерних `Generator1..N` равно `NumFeatures`.
 
 ### Использование в GUI
 
@@ -28,7 +28,7 @@ ChangeLookupPropertyType("MatrixClasses", ptPubParameter);
 
 ClDesc: `Bin/ClDesc/PulseLibrary/ru-RU/NDatasetManual.xml`.
 
-Favorites: `MatrixData`, `MatrixClasses`, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`, `PulseGeneratorClassName`, `NumFeatures`, `NumSamples`, `NumGenerators`, `NumClasses`.
+Favorites: `MatrixData`, `MatrixClasses`, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`, `PulseGeneratorClassName`, `NumFeatures`, `NumSamples`, `NumClasses`.
 
 ### См. также
 

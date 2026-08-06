@@ -21,8 +21,8 @@ classDiagram
 ### Контракт сборки
 
 1. **`PrepareDataset()`** (pure virtual) — заполнить или проверить `MatrixData` / `MatrixClasses`.
-2. **`ApplyFromMatrices()`** — выставить `NumSamples`/`NumFeatures`/`NumClasses`/`NumGenerators`, пересчитать `MatrixDelay`.
-3. **`SyncGenerators()`** — создать/удалить `Generator1..N`.
+2. **`ApplyFromMatrices()`** — выставить `NumSamples`/`NumFeatures`/`NumClasses`, пересчитать `MatrixDelay`.
+3. **`SyncGenerators()`** — создать/удалить `Generator1..N` по `NumFeatures`.
 
 `ABuild()` вызывает эти три шага по порядку.
 
@@ -30,7 +30,7 @@ classDiagram
 
 **Parameters:** `PulseGeneratorClassName`, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`.
 
-**States (default):** `MatrixData`, `MatrixClasses`, `MatrixDelay`, `NumFeatures`, `NumSamples`, `NumGenerators`, `NumClasses`, `StateGeneration`, `TimeGeneration`, `OperatingTime`, `ResetDelay`.
+**States (default):** `MatrixData`, `MatrixClasses`, `MatrixDelay`, `NumFeatures`, `NumSamples`, `NumClasses`, `StateGeneration`, `TimeGeneration`, `OperatingTime`, `ResetDelay`.
 
 У `NDatasetManual` runtime-тип `MatrixData`/`MatrixClasses` переключается в Parameter через `ChangeLookupPropertyType`.
 
