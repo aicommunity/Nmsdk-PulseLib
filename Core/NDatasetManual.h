@@ -19,15 +19,17 @@ static UComponent* NewStatic(void);
 
 virtual bool SetNumFeatures(const int &value);
 virtual bool SetNumSamples(const int &value);
+virtual bool SetMaxSpikesPerFeature(const int &value);
 virtual bool SetMatrixData(const MDMatrix<double> &value);
 virtual bool SetMatrixClasses(const MDMatrix<int> &value);
+virtual bool SetMatrixSpikeDelays(const MDMatrix<double> &value);
 
 protected:
 /// Promote dims and matrices to public parameters for GUI editing
 void PromoteEditableProperties(void);
 
-/// Resize MatrixData (samples x features) and MatrixClasses (1 x samples)
-void ResizeMatricesFromDims(int num_samples, int num_features);
+/// Resize MatrixData, MatrixClasses and MatrixSpikeDelays from dims
+void ResizeMatricesFromDims(int num_samples, int num_features, int max_spikes);
 
 virtual bool PrepareDataset(void);
 virtual bool ADefault(void);
