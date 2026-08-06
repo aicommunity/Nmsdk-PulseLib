@@ -6,7 +6,7 @@
 
 **Класс**: `NDataset` — загрузка ISI-пачек из файла.  
 **База**: [`NDatasetBase`](NDatasetBase.md).  
-**Sibling**: [`NDatasetManual`](NDatasetManual.md).
+**Sibling**: [`NDatasetMatrix`](NDatasetMatrix.md).
 
 ### Формат файла
 

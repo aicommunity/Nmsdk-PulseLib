@@ -1,20 +1,20 @@
-#ifndef NDATASETMANUAL_CPP
-#define NDATASETMANUAL_CPP
+#ifndef NDATASETMATRIX_CPP
+#define NDATASETMATRIX_CPP
 
-#include "NDatasetManual.h"
+#include "NDatasetMatrix.h"
 
 namespace NMSDK {
 
-NDatasetManual::NDatasetManual(void)
+NDatasetMatrix::NDatasetMatrix(void)
 {
     PromoteEditableProperties();
 }
 
-NDatasetManual::~NDatasetManual(void)
+NDatasetMatrix::~NDatasetMatrix(void)
 {
 }
 
-void NDatasetManual::PromoteEditableProperties(void)
+void NDatasetMatrix::PromoteEditableProperties(void)
 {
     ChangeLookupPropertyType("NumFeatures", ptPubParameter);
     ChangeLookupPropertyType("NumSamples", ptPubParameter);
@@ -23,7 +23,7 @@ void NDatasetManual::PromoteEditableProperties(void)
     ChangeLookupPropertyType("MatrixClasses", ptPubParameter);
 }
 
-void NDatasetManual::ResizeMatricesFromDims(int num_samples, int num_features, int max_spikes)
+void NDatasetMatrix::ResizeMatricesFromDims(int num_samples, int num_features, int max_spikes)
 {
     if(num_samples < 0)
         num_samples = 0;
@@ -36,7 +36,7 @@ void NDatasetManual::ResizeMatricesFromDims(int num_samples, int num_features, i
     MatrixClasses.Resize(num_samples > 0 ? 1 : 0, num_samples);
 }
 
-void NDatasetManual::SyncMatricesToDimParams(void)
+void NDatasetMatrix::SyncMatricesToDimParams(void)
 {
     int num_samples = NumSamples;
     int num_features = NumFeatures;
@@ -66,17 +66,17 @@ void NDatasetManual::SyncMatricesToDimParams(void)
         NumClasses = 0;
 }
 
-NDatasetManual* NDatasetManual::New(void)
+NDatasetMatrix* NDatasetMatrix::New(void)
 {
-    return new NDatasetManual;
+    return new NDatasetMatrix;
 }
 
-UComponent* NDatasetManual::NewStatic(void)
+UComponent* NDatasetMatrix::NewStatic(void)
 {
-    return new NDatasetManual;
+    return new NDatasetMatrix;
 }
 
-bool NDatasetManual::SetNumFeatures(const int &value)
+bool NDatasetMatrix::SetNumFeatures(const int &value)
 {
     if(value < 0)
         return false;
@@ -86,7 +86,7 @@ bool NDatasetManual::SetNumFeatures(const int &value)
     return true;
 }
 
-bool NDatasetManual::SetNumSamples(const int &value)
+bool NDatasetMatrix::SetNumSamples(const int &value)
 {
     if(value < 0)
         return false;
@@ -96,7 +96,7 @@ bool NDatasetManual::SetNumSamples(const int &value)
     return true;
 }
 
-bool NDatasetManual::SetMaxSpikesPerFeature(const int &value)
+bool NDatasetMatrix::SetMaxSpikesPerFeature(const int &value)
 {
     if(value < 1)
         return false;
@@ -106,7 +106,7 @@ bool NDatasetManual::SetMaxSpikesPerFeature(const int &value)
     return true;
 }
 
-bool NDatasetManual::SetMatrixData(const MDMatrix<double> &value)
+bool NDatasetMatrix::SetMatrixData(const MDMatrix<double> &value)
 {
     const int max_spikes = MaxSpikesPerFeature < 1 ? 1 : int(MaxSpikesPerFeature);
     if(value.GetCols() > 0 && value.GetCols() % max_spikes != 0)
@@ -132,7 +132,7 @@ bool NDatasetManual::SetMatrixData(const MDMatrix<double> &value)
     return true;
 }
 
-bool NDatasetManual::SetMatrixClasses(const MDMatrix<int> &value)
+bool NDatasetMatrix::SetMatrixClasses(const MDMatrix<int> &value)
 {
     if(value.GetRows() == 1 && value.GetCols() > 0)
         NumClasses = CalcNumClasses(value);
@@ -142,7 +142,7 @@ bool NDatasetManual::SetMatrixClasses(const MDMatrix<int> &value)
     return true;
 }
 
-bool NDatasetManual::ADefault(void)
+bool NDatasetMatrix::ADefault(void)
 {
     NDatasetBase::ADefault();
     PromoteEditableProperties();
@@ -156,13 +156,13 @@ bool NDatasetManual::ADefault(void)
     return true;
 }
 
-bool NDatasetManual::AReset(void)
+bool NDatasetMatrix::AReset(void)
 {
     SyncMatricesToDimParams();
     return NDatasetBase::AReset();
 }
 
-bool NDatasetManual::PrepareDataset(void)
+bool NDatasetMatrix::PrepareDataset(void)
 {
     SyncMatricesToDimParams();
 

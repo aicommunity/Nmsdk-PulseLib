@@ -5,7 +5,7 @@
 ### Назначение
 
 **Класс**: `NDatasetBase` — абстрактная база для компонентов датасета спайков.  
-**Регистрация**: **не регистрируется** в Storage (только листья `NDataset`, `NDatasetManual`).
+**Регистрация**: **не регистрируется** в Storage (только листья `NDataset`, `NDatasetMatrix`).
 
 Пайплайн: `MatrixData` (ISI-пачки) → размеры / расписание → дочерние `NPulseGeneratorTransit` → цикл пачка → `Delay` → повтор.
 
@@ -15,7 +15,7 @@
 classDiagram
     UNet <|-- NDatasetBase
     NDatasetBase <|-- NDataset
-    NDatasetBase <|-- NDatasetManual
+    NDatasetBase <|-- NDatasetMatrix
 ```
 
 ### Контракт сборки
@@ -40,7 +40,7 @@ classDiagram
 ### См. также
 
 - [`NDataset`](NDataset.md)
-- [`NDatasetManual`](NDatasetManual.md)
+- [`NDatasetMatrix`](NDatasetMatrix.md)
 
 ---
 

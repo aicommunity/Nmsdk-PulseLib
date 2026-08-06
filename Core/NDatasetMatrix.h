@@ -1,5 +1,5 @@
-#ifndef NDATASETMANUAL_H
-#define NDATASETMANUAL_H
+#ifndef NDATASETMATRIX_H
+#define NDATASETMATRIX_H
 
 #include "NDatasetBase.h"
 
@@ -7,14 +7,14 @@ namespace NMSDK {
 
 using namespace RDK;
 
-/// Manual dataset: dims resize MatrixData/MatrixClasses; MatrixData holds ISI spike trains
-class RDK_LIB_TYPE NDatasetManual: public NDatasetBase
+/// Matrix dataset: dims resize MatrixData/MatrixClasses; MatrixData holds ISI spike trains
+class RDK_LIB_TYPE NDatasetMatrix: public NDatasetBase
 {
 public:
-NDatasetManual(void);
-virtual ~NDatasetManual(void);
+NDatasetMatrix(void);
+virtual ~NDatasetMatrix(void);
 
-virtual NDatasetManual* New(void);
+virtual NDatasetMatrix* New(void);
 static UComponent* NewStatic(void);
 
 virtual bool SetNumFeatures(const int &value);

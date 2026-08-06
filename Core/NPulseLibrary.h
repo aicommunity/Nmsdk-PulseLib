@@ -75,7 +75,7 @@ See file license.txt for more information
 #include "NPredictor.h"
 #include "NDatasetBase.h"
 #include "NDataset.h"
-#include "NDatasetManual.h"
+#include "NDatasetMatrix.h"
 #include "NStatePredictor.h"
 #include "NPCAClassifier.h"
 #include "NPainReflexSimple.h"

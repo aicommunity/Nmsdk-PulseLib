@@ -1,10 +1,10 @@
-# NDatasetManual — ручной датасет
+# NDatasetMatrix — датасет из матрицы
 
 ## RU
 
 ### Назначение
 
-**Класс**: `NDatasetManual` — размеры и `MatrixData` в параметрах GUI.  
+**Класс**: `NDatasetMatrix` — размеры и `MatrixData` в параметрах GUI.  
 **База**: [`NDatasetBase`](NDatasetBase.md).
 
 В ctor/`ADefault` в Parameter: `NumSamples`, `NumFeatures`, `MaxSpikesPerFeature`, `MatrixData`, `MatrixClasses`.
