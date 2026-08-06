@@ -4,13 +4,13 @@
 
 ### Назначение
 
-**Класс**: `NDataset` — компонент для управления датасетами (выборками данных) для обучения и тестирования.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NDataset", ...)`.  
+**Класс**: `NDataset` — компонент для загрузки датасета из файла и генерации спайковых паттернов.  
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NDataset", ...)` (только `Default()`, без `Build()` — файл при регистрации может отсутствовать).  
 **Storage-инстансы**: `ClassName = "NDataset"` в `Bin/Configs/*/Model_*.xml`.
 
-`NDataset` реализует компонент для управления датасетами, который создает генераторы импульсов для каждого признака данных и управляет их работой на основе матрицы данных (`MatrixData`) и классов (`MatrixClasses`). Компонент может загружать данные из файла и генерировать паттерны импульсов для обучения и тестирования нейронных сетей.
+`NDataset` читает файл с метками классов и признаками, вычисляет размеры и матрицы, создаёт по одному `NPulseGeneratorTransit` на каждый признак и управляет их задержками/частотой.
 
-**Использование:** Управление датасетами, генерация паттернов для обучения
+**Использование:** загрузка датасета, генерация паттернов для обучения/тестирования.
 
 ### UML-диаграмма классов
 
@@ -19,81 +19,85 @@ classDiagram
     UNet <|-- NDataset
     NDataset *-- NPulseGeneratorTransit : Generators
     class NDataset {
+        +FileName : string
+        +UseRelativePathFromConfig : bool
+        +UseRelativePathFromWorkDir : bool
+        +ReloadDataset : bool
         +PulseGeneratorClassName : string
+        +SpikesFrequency : double
+        +Delay : double
+        +Tay : float
+        +Iteration : int
         +NumGenerators : int
         +NumFeatures : int
         +NumSamples : int
+        +NumClasses : int
         +MatrixData : MDMatrix~double~
         +MatrixClasses : MDMatrix~int~
-        +ReloadDataset : bool
         +MatrixDelay : MDMatrix~double~
-        +Iteration : int
-        +Tay : float
-        +Delay : double
-        +SpikesFrequency : double
-        +NumClasses : int
-        +FileName : string
         +StateGeneration : int
-        +TimeGeneration : double
-        +OperatingTime : double
-        +ResetDelay : bool
         -Generators : vector~NPulseGeneratorTransit*~
-        +New() NDataset*
         +ADefault() bool
         +ABuild() bool
         +ACalculate() bool
+        +TreatDataFromFile() bool
+        +CalcActualSourceFilePath() string
     }
 ```
 
-**Иерархия наследования:**
-- `UNet` — базовая сеть Rdk Framework
-- `NDataset` — датасет
-
-**Связи:**
-- Создает и управляет генераторами импульсов (`NPulseGeneratorTransit`)
+**Иерархия:** `UNet` → `NDataset`.  
+**Связи:** создаёт и управляет дочерними `NPulseGeneratorTransit`.
 
 ### Свойства
 
-#### Параметры (ptPubParameter)
+#### Параметры (`ptPubParameter`) — задаются пользователем
 
-- **`NumFeatures`** (int) — количество признаков (измерений) в датасете. Значение по умолчанию: зависит от реализации
+| Свойство | Тип | Описание |
+|----------|-----|----------|
+| `FileName` | string | Путь к файлу датасета. Абсолютный, либо относительный к Config/Work по флагам |
+| `UseRelativePathFromConfig` | bool | Относительно каталога Config/данных (`GetCurrentDataDir`). По умолчанию `true` |
+| `UseRelativePathFromWorkDir` | bool | Относительно рабочей папки приложения (`GetSystemDir`). Взаимоисключает Config |
+| `ReloadDataset` | bool | Перезагрузить файл на следующем Build/Calculate; после успеха сбрасывается в `false` |
+| `PulseGeneratorClassName` | string | Класс дочерних генераторов (по умолчанию `NPulseGeneratorTransit`) |
+| `SpikesFrequency` | double | Частота спайков генераторов (Гц) |
+| `Delay` | double | Базовая задержка (сек) |
+| `Tay` | float | Масштаб нормализации признаков → `MatrixDelay` |
+| `Iteration` | int | Индекс текущего образца |
 
-- **`NumSamples`** (int) — количество образцов (примеров) в датасете. Значение по умолчанию: зависит от реализации
+Если оба флага относительных путей выключены, `FileName` используется как есть (абсолютный путь или от cwd). Логика совпадает с `UMatrixSourceDataFile::CalcActualSourceFilePath`.
 
-- **`MatrixData`** (MDMatrix<double>) — матрица данных. Строки — образцы, столбцы — признаки. Значение по умолчанию: зависит от реализации
+#### Состояния (`ptPubState`) — только из файла / расчёта
 
-- **`MatrixClasses`** (MDMatrix<int>) — матрица классов. Содержит метки классов для каждого образца. Значение по умолчанию: зависит от реализации
+| Свойство | Тип | Описание |
+|----------|-----|----------|
+| `NumFeatures` | int | Число признаков; **вручную не задаётся** |
+| `NumSamples` | int | Число образцов; **вручную не задаётся** |
+| `NumGenerators` | int | Всегда `= NumFeatures` после успешной загрузки |
+| `NumClasses` | int | Число уникальных меток в `MatrixClasses` |
+| `MatrixData` | MDMatrix\<double\> | Признаки (строки × столбцы) |
+| `MatrixClasses` | MDMatrix\<int\> | Метки классов (1 × NumSamples) |
+| `MatrixDelay` | MDMatrix\<double\> | Задержки генераторов из `MatrixData` и `Tay` |
+| `StateGeneration` | int | 0 — выкл., 1 — timed, 2 — непрерывно |
+| `TimeGeneration` | double | Длительность timed-режима (сек) |
+| `OperatingTime` | double | Метка старта timed-режима |
+| `ResetDelay` | bool | Переприменить Delay/Frequency к генераторам |
 
-- **`ReloadDataset`** (bool) — флаг перезагрузки датасета. Значение по умолчанию: зависит от реализации
+### Формат файла
 
-- **`MatrixDelay`** (MDMatrix<double>) — матрица временных сдвигов запусков генераторов. Вычисляется на основе `MatrixData` и `Tay`. Значение по умолчанию: зависит от реализации
-
-- **`Iteration`** (int) — текущая итерация (индекс образца). Значение по умолчанию: зависит от реализации
-
-- **`Tay`** (float) — параметр для расчета задержек. Значение по умолчанию: зависит от реализации
-
-- **`NumClasses`** (int) — количество классов в датасете. Вычисляется автоматически из `MatrixClasses`. Значение по умолчанию: зависит от реализации
-
-- **`FileName`** (string) — путь к файлу с данными. Значение по умолчанию: зависит от реализации
-
-**Остальные параметры аналогичны `NPattern`.**
+Разделитель `;`. Первая строка — заголовок (число `;` = `NumFeatures`). Далее строки данных: `класс;признак1;признак2;...`.
 
 ### Методы
 
-- **`ABuild()`** → `bool` — строит структуру датасета:
-  1. Загружает данные из файла (если указан `FileName`)
-  2. Вычисляет `NumClasses` из `MatrixClasses`
-  3. Вычисляет `MatrixDelay` на основе `MatrixData` и `Tay`
-  4. Создает генераторы импульсов для каждого признака
+- **`CalcActualSourceFilePath(file_name)`** — абсолютный / Config / Work путь.
+- **`TreatDataFromFile()`** — атомарная загрузка: при ошибке размеры не сбрасываются; при успехе обновляются матрицы, размеры и `NumGenerators`.
+- **`ABuild()`** — загрузка + sync дочерних `Generator1..N`; при ошибке файла возвращает `false`.
+- **`ACalculate()`** — при `ReloadDataset` перечитывает файл и sync генераторов; управляет режимами `StateGeneration`.
 
-- **`ACalculate()`** → `bool` — выполняет расчет датасета:
-  1. Управляет генераторами для текущего образца (`Iteration`)
-  2. Устанавливает задержки генераторов на основе `MatrixDelay`
-  3. Обновляет состояние генерации
+### Favorites / ClDesc
 
-## Источники
+ClDesc: `Bin/ClDesc/PulseLibrary/ru-RU/NDataset.xml`.
 
-См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
+Primary Favorites: `FileName`, `ReloadDataset`, `UseRelativePathFromConfig`, `UseRelativePathFromWorkDir`, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`, `PulseGeneratorClassName`, `NumFeatures`, `NumSamples`, `NumGenerators`, `NumClasses`.
 
 ### См. также
 
@@ -101,6 +105,11 @@ classDiagram
 - [`NPulseGeneratorTransit`](NPulseGeneratorTransit.md) — генератор с транзитным сигналом
 - [`NClassifier`](NClassifier.md) — классификатор
 - [Architecture.md](../Architecture.md) — архитектура библиотеки
+- `UMatrixSourceDataFile` (BasicLib) — эталон относительных путей Config/Work
+
+### Источники
+
+См. [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
 
 ---
 
@@ -108,218 +117,46 @@ classDiagram
 
 ### Purpose
 
-**Class**: `NDataset` — component for managing datasets (data samples) for training and testing.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NDataset", ...)`.  
+**Class**: `NDataset` — loads a dataset from file and drives one pulse generator per feature.  
+**Registration**: `NPulseLibrary.cpp` → `UploadClass("NDataset", ...)` (`Default()` only; no `Build()` at upload).  
 **Instances**: `ClassName = "NDataset"` in `Bin/Configs/*/Model_*.xml`.
 
-`NDataset` implements dataset management component that creates pulse generators for each data feature and manages their operation based on data matrix (`MatrixData`) and classes (`MatrixClasses`). Component can load data from file and generate pulse patterns for training and testing neural networks.
+Sizes and matrices are **derived from the file** (States). Users configure `FileName`, path flags, reload, and generation parameters.
 
-**Usage:** Dataset management, pattern generation for training
+### Path resolution
 
-### UML Class Diagram
+Same rules as `UMatrixSourceDataFile::CalcActualSourceFilePath`:
 
-```mermaid
-classDiagram
-    UNet <|-- NDataset
-    NDataset *-- NPulseGeneratorTransit : Generators
-    class NDataset {
-        +PulseGeneratorClassName : string
-        +NumGenerators : int
-        +NumFeatures : int
-        +NumSamples : int
-        +MatrixData : MDMatrix~double~
-        +MatrixClasses : MDMatrix~int~
-        +ReloadDataset : bool
-        +MatrixDelay : MDMatrix~double~
-        +Iteration : int
-        +Tay : float
-        +Delay : double
-        +SpikesFrequency : double
-        +NumClasses : int
-        +FileName : string
-        +StateGeneration : int
-        +TimeGeneration : double
-        +OperatingTime : double
-        +ResetDelay : bool
-        -Generators : vector~NPulseGeneratorTransit*~
-        +New() NDataset*
-        +ADefault() bool
-        +ABuild() bool
-        +ACalculate() bool
-    }
-```
-
-### UML Sequence Diagram
-
-```mermaid
-sequenceDiagram
-    participant Storage
-    participant Dataset as NDataset
-    participant Generators as NPulseGeneratorTransit
-    participant FileSystem as File System
-    participant OutputTarget
-    
-    Storage->>Dataset: New()
-    Storage->>Dataset: Default()
-    Storage->>Dataset: SetFileName("data.ini")
-    Storage->>Dataset: SetMatrixData(...)
-    Storage->>Dataset: SetMatrixClasses(...)
-    Storage->>Dataset: Build()
-    Dataset->>Dataset: ABuild()
-    alt FileName specified
-        Dataset->>FileSystem: Load data from file
-        FileSystem-->>Dataset: MatrixData, MatrixClasses
-    end
-    Dataset->>Dataset: Calculate NumClasses from MatrixClasses
-    Dataset->>Dataset: Calculate MatrixDelay from MatrixData and Tay
-    loop For each feature (i = 0..NumFeatures-1)
-        Dataset->>Generators: CreateComponent("Generator" + i)
-        Dataset->>Generators: SetDelay(MatrixDelay(Iteration, i))
-    end
-    Dataset-->>Storage: Ready = true
-    
-    loop Each simulation step
-        Storage->>Dataset: Calculate()
-        Dataset->>Dataset: ACalculate()
-        Dataset->>Dataset: Update Iteration
-        loop For each generator
-            Dataset->>Generators: SetDelay(MatrixDelay(Iteration, i))
-            Dataset->>Generators: ACalculate()
-            Generators-->>Dataset: Output (pulses)
-        end
-        Dataset-->>OutputTarget: Output (pattern for current sample)
-    end
-```
-
-### UML State Diagram
-
-```mermaid
-stateDiagram-v2
-    [*] --> Uninitialized: New()
-    Uninitialized --> Defaulted: Default()
-    Defaulted --> Building: Build()
-    Building --> LoadData{FileName specified?}
-    LoadData -->|Yes| LoadFromFile: Load from file
-    LoadData -->|No| CalcNumClasses: Calculate NumClasses
-    LoadFromFile --> CalcNumClasses
-    CalcNumClasses --> CalcMatrixDelay: Calculate MatrixDelay
-    CalcMatrixDelay --> CreateGenerators: Create generators
-    CreateGenerators --> Built: Structure built
-    Built --> Ready: Ready = true
-    Ready --> Calculating: Calculate()
-    Calculating --> UpdateIteration: Update Iteration
-    UpdateIteration --> UpdateGenerators: Update generator delays
-    UpdateGenerators --> Ready: Step completed
-    Ready --> Resetting: Reset()
-    Resetting --> ResetIteration: Iteration = 0
-    ResetIteration --> Ready
-```
-
-### UML Activity Diagram
-
-```mermaid
-flowchart TD
-    Start([Start Calculate]) --> UpdateIteration[Update Iteration]
-    UpdateIteration --> LoopGenerators[Loop through generators]
-    LoopGenerators --> SetDelay[Set generator delay from MatrixDelay]
-    SetDelay --> CalcGenerator[Calculate generator]
-    CalcGenerator --> CheckMore{More generators?}
-    CheckMore -->|Yes| LoopGenerators
-    CheckMore -->|No| AggregateOutputs[Aggregate generator outputs]
-    AggregateOutputs --> End([End])
-```
-
-### UML Component Diagram
-
-```mermaid
-graph TB
-    subgraph UNet["UNet Base"]
-        BaseNet[UNet]
-    end
-    
-    subgraph NDataset["NDataset"]
-        Dataset[Dataset]
-        Generators["NPulseGeneratorTransit<br/>Generators<br/>NumFeatures"]
-    end
-    
-    subgraph External["External Components"]
-        DataFile[Data File]
-        MatrixData[Matrix Data]
-        MatrixClasses[Matrix Classes]
-        OutputTarget[Output Target]
-    end
-    
-    BaseNet -->|inherits| NDataset
-    NDataset -->|creates| Generators
-    DataFile -->|FileName| NDataset
-    MatrixData -->|MatrixData| NDataset
-    MatrixClasses -->|MatrixClasses| NDataset
-    NDataset -->|calculates| MatrixDelay
-    MatrixDelay -->|delays| Generators
-    Generators -->|pulse patterns| NDataset
-    NDataset -->|Output| OutputTarget
-```
+- both relative flags off → use `FileName` as-is (absolute / cwd);
+- `UseRelativePathFromConfig` → `GetCurrentDataDir() + FileName`;
+- `UseRelativePathFromWorkDir` → `GetSystemDir() + FileName`;
+- flags are mutually exclusive in setters.
 
 ### Properties
 
-- `PulseGeneratorClassName` — pulse generator class name
-- `NumGenerators` — number of generators (matches NumFeatures)
-- `NumFeatures` — number of features (measurements) in dataset
-- `NumSamples` — number of samples in dataset
-- `MatrixData` — data matrix (rows — samples, columns — features)
-- `MatrixClasses` — class matrix (class labels per sample)
-- `ReloadDataset` — dataset reload flag
-- `MatrixDelay` — matrix of generator start time shifts
-- `Iteration` — current iteration (sample index)
-- `Tay` — parameter for delay calculation
-- `Delay` — base delay
-- `SpikesFrequency` — spike frequency
-- `NumClasses` — number of classes in dataset
-- `FileName` — path to data file
-- `StateGeneration` — generation state
-- `TimeGeneration` — generation time
-- `OperatingTime` — operating time
-- `ResetDelay` — delay reset flag
+**Parameters:** `FileName`, `UseRelativePathFromConfig`, `UseRelativePathFromWorkDir`, `ReloadDataset`, `PulseGeneratorClassName`, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`.
+
+**States (read-only from GUI intent):** `NumFeatures`, `NumSamples`, `NumGenerators` (= `NumFeatures`), `NumClasses`, `MatrixData`, `MatrixClasses`, `MatrixDelay`, `StateGeneration`, `TimeGeneration`, `OperatingTime`, `ResetDelay`.
 
 ### Methods
 
-- `SetPulseGeneratorClassName(value)` — setting generator class name
-- `SetNumGenerators(value)` — setting number of generators
-- `SetNumFeatures(value)` — setting number of features
-- `SetMatrixData(value)` — setting data matrix
-- `SetMatrixClasses(value)` — setting class matrix
-- `ADefault()` — setting default parameters
-- `ABuild()` — building dataset structure (load data, create generators)
-- `ACalculate()` — pattern generation step for current sample
+- `CalcActualSourceFilePath` — resolve path
+- `TreatDataFromFile` — atomic load (no wipe on failure)
+- `ABuild` — load + sync generators; fail if file missing
+- `ACalculate` — honor `ReloadDataset`; drive generation modes
 
-### Usage in configurations
+### Favorites / ClDesc
 
-`NDataset` is used for dataset management:
+See `Bin/ClDesc/PulseLibrary/ru-RU/NDataset.xml`.
 
-- **Dataset management**: `Bin/Configs/*/Model_*.xml` (where dataset management is required)
-- **Pattern generation**: generating pulse patterns for training and testing
-- **Data loading**: loading data from files for neural network training
+### See Also
 
-**Features:**
-- Automatic structure building: creates generators for each feature
-- Data loading: supports loading data from files
-- Class management: automatically calculates number of classes
-- Delay calculation: calculates generator delays from data matrix
-- Iteration management: manages current sample iteration
-
-**Typical parameter values:**
-- **PulseGeneratorClassName**: "NPulseGeneratorTransit" (transit pulse generator)
-- **NumFeatures**: 5-50 (number of features in dataset)
-- **NumSamples**: 10-1000 (number of samples in dataset)
-- **Tay**: 0.1-1.0 (parameter for delay calculation)
+- [`NPattern`](NPattern.md)
+- [`NPulseGeneratorTransit`](NPulseGeneratorTransit.md)
+- [`NClassifier`](NClassifier.md)
+- [Architecture.md](../Architecture.md)
+- `UMatrixSourceDataFile` (BasicLib)
 
 ### References
 
 See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.
-
-### See Also
-
-- [`NPattern`](NPattern.md) — data pattern
-- [`NPulseGeneratorTransit`](NPulseGeneratorTransit.md) — generator with transit signal
-- [`NClassifier`](NClassifier.md) — classifier
-- [Architecture.md](../Architecture.md) — library architecture

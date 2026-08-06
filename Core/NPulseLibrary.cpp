@@ -1271,11 +1271,10 @@ cont->Default();
 cont->Build();
 UploadClass("NPredictor",cont);
 
-    // Создаем класс чтения датасета
+    // Создаем класс чтения датасета (без Build: файл датасета может отсутствовать при регистрации)
  cont=new NDataset;
  cont->SetName("Dataset");
  cont->Default();
- cont->Build();
  UploadClass("NDataset",cont);
 
 // Создаем предиктор состояния
