@@ -7,7 +7,7 @@
 **Класс**: `NDatasetBase` — абстрактная база для компонентов датасета спайков.  
 **Регистрация**: **не регистрируется** в Storage (только листья `NDataset`, `NDatasetManual`).
 
-Общая логика: матрицы → размеры / расписание спайков → дочерние `NPulseGeneratorTransit` → режимы генерации в `ACalculate`.
+Пайплайн: `MatrixData` (ISI-пачки) → размеры / расписание → дочерние `NPulseGeneratorTransit` → цикл пачка → `Delay` → повтор.
 
 ### Иерархия
 
@@ -20,50 +20,30 @@ classDiagram
 
 ### Контракт сборки
 
-1. **`PrepareDataset()`** (pure virtual) — заполнить или проверить матрицы.
-2. **`ApplyFromMatrices()`** — выставить `NumSamples`/`NumFeatures`/`NumClasses`; legacy: `MatrixDelay`; spike-train: из `MatrixSpikeDelays`.
-3. **`SyncGenerators()`** — создать/удалить `Generator1..N` по `NumFeatures`.
+1. **`PrepareDataset()`** — заполнить или проверить `MatrixData` / `MatrixClasses`.
+2. **`ApplyFromMatrices()`** — `NumSamples`/`NumFeatures`/`NumClasses` из широкой `MatrixData` и `MaxSpikesPerFeature`.
+3. **`SyncGenerators()`** — `Generator1..N` по `NumFeatures`.
 
-`ABuild()` вызывает эти три шага по порядку.
+### Данные и время
 
-### Два режима данных
+- `MatrixData`: `NumSamples × (NumFeatures × MaxSpikesPerFeature)`, `col = f*M + s`.
+- Значение `≥ 0` — ISI (сек); `s=0` от единого старта сэмпла; далее между спайками; `-1` — пропуск.
+- Единый `SampleStartTime` для всех фич; one-shot на генераторах.
+- После пачки пауза **`Delay`**, затем повтор **того же `Iteration`**.
 
-**Legacy (single-spike):** `MaxSpikesPerFeature == 1` и `MatrixSpikeDelays` пуста / все слоты `-1`. Источник — `MatrixData` → `MatrixDelay` (через `Tay`) → постоянный `SpikesFrequency` на генераторах.
+### Свойства
 
-**Spike-train:** иначе primary — `MatrixSpikeDelays` размера `NumSamples × (NumFeatures × MaxSpikesPerFeature)`.
+**Parameters:** `PulseGeneratorClassName`, `Delay`, `Iteration`, `MaxSpikesPerFeature`.
 
-Layout колонок: `col = f * M + s` (`f` — признак, `s` — слот спайка, `M = MaxSpikesPerFeature`).
-
-- Значение `≥ 0` — ISI в секундах (`s=0` — от старта сэмпла до 1-го спайка; далее — между спайками).
-- Sentinel **`-1`** — слот пропущен; `cumsum` только по валидным слотам по порядку `s`.
-- Базовый параметр `Delay` добавляется ко всем абсолютным временам.
-- На событии — one-shot на генераторе фичи (Frequency/Reset на `PulseLength`, затем Frequency=0).
-
-### Общие свойства
-
-**Parameters:** `PulseGeneratorClassName`, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`, `MaxSpikesPerFeature`.
-
-**States (default):** `MatrixData`, `MatrixClasses`, `MatrixSpikeDelays`, `MatrixDelay`, `NumFeatures`, `NumSamples`, `NumClasses`, `StateGeneration`, `TimeGeneration`, `OperatingTime`, `ResetDelay`.
-
-У `NDatasetManual` runtime-тип размеров и матриц (включая `MaxSpikesPerFeature`, `MatrixSpikeDelays`) переключается в Parameter через `ChangeLookupPropertyType`.
+**States:** `MatrixData`, `MatrixClasses`, `NumFeatures`, `NumSamples`, `NumClasses`, `StateGeneration`, `TimeGeneration`, `OperatingTime`, `ResetDelay`.
 
 ### См. также
 
-- [`NDataset`](NDataset.md) — загрузка из файла
-- [`NDatasetManual`](NDatasetManual.md) — ручной ввод матриц
+- [`NDataset`](NDataset.md)
+- [`NDatasetManual`](NDatasetManual.md)
 
 ---
 
 ## EN
 
-### Purpose
-
-**Class**: `NDatasetBase` — shared abstract base for spike dataset components.  
-**Registration**: not uploaded to Storage.
-
-Supports legacy single-spike (`MatrixData`/`Tay`) and multi-spike trains via `MatrixSpikeDelays` (ISI, sentinel `-1`).
-
-### See Also
-
-- [`NDataset`](NDataset.md) — file-backed
-- [`NDatasetManual`](NDatasetManual.md) — manual matrices
+**Class**: `NDatasetBase` — shared spike-dataset base. Wide `MatrixData` ISI trains; burst → `Delay` → repeat same `Iteration`.
