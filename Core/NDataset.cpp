@@ -5,8 +5,35 @@
 
 #include <fstream>
 #include <sstream>
+#include <cstring>
 
 namespace NMSDK {
+
+namespace {
+
+int CountDelimiter(const std::string &line, char delimiter)
+{
+    int count = 0;
+    for(size_t i = 0; i < line.length(); i++)
+    {
+        if(line[i] == delimiter)
+            count++;
+    }
+    return count;
+}
+
+bool ParseMaxSpikesFromMeta(const std::string &line, int &max_spikes)
+{
+    // Expected: #NDataset;MaxSpikes=N  (extra fields allowed after)
+    const char *key = "MaxSpikes=";
+    const size_t pos = line.find(key);
+    if(pos == std::string::npos)
+        return false;
+    max_spikes = atoi(line.c_str() + pos + std::strlen(key));
+    return max_spikes >= 1;
+}
+
+} // namespace
 
 NDataset::NDataset(void)
 : ReloadDataset("ReloadDataset", this),
@@ -107,18 +134,44 @@ bool NDataset::TreatDataFromFile(void)
     if(!std::getline(file_dataset, line))
         return false;
 
-    int num_features = 0;
-    for(size_t i = 0; i < line.length(); i++)
+    int max_spikes = 1;
+    bool is_v2 = false;
+    if(!line.empty() && line[0] == '#' && line.find("NDataset") != std::string::npos)
     {
-        if(line[i] == ';')
-            num_features++;
+        if(!ParseMaxSpikesFromMeta(line, max_spikes))
+            return false;
+        is_v2 = true;
+        if(!std::getline(file_dataset, line))
+            return false;
     }
+
+    const int header_semicolons = CountDelimiter(line, delimiter);
+    if(header_semicolons <= 0)
+        return false;
+
+    int num_features = 0;
+    int delay_cols = 0;
+    if(is_v2)
+    {
+        if(header_semicolons % max_spikes != 0)
+            return false;
+        num_features = header_semicolons / max_spikes;
+        delay_cols = header_semicolons;
+    }
+    else
+    {
+        num_features = header_semicolons;
+        delay_cols = 0;
+    }
+
+    if(num_features <= 0)
+        return false;
 
     int num_samples = 0;
     while(std::getline(file_dataset, line))
         num_samples++;
 
-    if(num_features <= 0 || num_samples <= 0)
+    if(num_samples <= 0)
         return false;
 
     file_dataset.close();
@@ -127,28 +180,61 @@ bool NDataset::TreatDataFromFile(void)
     if(!file_dataset)
         return false;
 
-    MDMatrix<double> matrix_data;
-    MDMatrix<int> matrix_classes;
-    matrix_data.Resize(num_samples, num_features);
-    matrix_classes.Resize(1, num_samples);
-
+    // Skip meta (v2) and header
     if(!std::getline(file_dataset, line))
         return false;
+    if(is_v2)
+    {
+        if(!std::getline(file_dataset, line))
+            return false;
+    }
+
+    MDMatrix<double> matrix_data;
+    MDMatrix<double> matrix_spike_delays;
+    MDMatrix<int> matrix_classes;
+    matrix_classes.Resize(1, num_samples);
+
+    if(is_v2)
+    {
+        matrix_spike_delays.Resize(num_samples, delay_cols, -1.0);
+        matrix_data.Resize(0, 0);
+    }
+    else
+    {
+        matrix_data.Resize(num_samples, num_features);
+        matrix_spike_delays.Resize(0, 0);
+    }
 
     int row = 0;
     while(std::getline(file_dataset, line) && row < num_samples)
     {
-        int col = 0;
         std::stringstream stream(line);
         std::string number;
         if(!std::getline(stream, number, delimiter))
             return false;
         matrix_classes(0, row) = atoi(number.c_str());
-        std::string count;
-        while(std::getline(stream, count, delimiter) && col < num_features)
+
+        if(is_v2)
         {
-            matrix_data(row, col) = atof(count.c_str());
-            col++;
+            int col = 0;
+            std::string count;
+            while(std::getline(stream, count, delimiter) && col < delay_cols)
+            {
+                matrix_spike_delays(row, col) = atof(count.c_str());
+                col++;
+            }
+            if(col != delay_cols)
+                return false;
+        }
+        else
+        {
+            int col = 0;
+            std::string count;
+            while(std::getline(stream, count, delimiter) && col < num_features)
+            {
+                matrix_data(row, col) = atof(count.c_str());
+                col++;
+            }
         }
         row++;
     }
@@ -157,8 +243,19 @@ bool NDataset::TreatDataFromFile(void)
     if(row != num_samples)
         return false;
 
-    MatrixData = matrix_data;
+    MaxSpikesPerFeature = max_spikes;
     MatrixClasses = matrix_classes;
+    if(is_v2)
+    {
+        MatrixSpikeDelays = matrix_spike_delays;
+        MatrixData.Resize(0, 0);
+    }
+    else
+    {
+        MatrixData = matrix_data;
+        MatrixSpikeDelays.Resize(0, 0);
+    }
+
     return true;
 }
 
