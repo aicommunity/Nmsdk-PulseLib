@@ -8,18 +8,19 @@
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NDatasetManual", ...)` (`Default()` без `Build()`).  
 **База**: [`NDatasetBase`](NDatasetBase.md).
 
-В отличие от [`NDataset`](NDataset.md), файл не используется. В ctor/`ADefault` свойства `NumSamples`, `NumFeatures`, `MatrixData`, `MatrixClasses` переводятся в `ptPubParameter` через `ChangeLookupPropertyType`.
+В отличие от [`NDataset`](NDataset.md), файл не используется. В ctor/`ADefault` свойства `NumSamples`, `NumFeatures`, `MaxSpikesPerFeature`, `MatrixData`, `MatrixClasses`, `MatrixSpikeDelays` переводятся в `ptPubParameter` через `ChangeLookupPropertyType`.
 
-- **`NumSamples` / `NumFeatures`** — параметры: ресайзят `MatrixData` (samples×features) и `MatrixClasses` (1×samples).
+- **`NumSamples` / `NumFeatures` / `MaxSpikesPerFeature`** — параметры: ресайзят `MatrixData`, `MatrixClasses` и `MatrixSpikeDelays` (`samples × features×maxSpikes`, новые слоты = `-1`).
+- **`MatrixSpikeDelays`** — ISI-слоты; sentinel `-1` = пропуск; layout как в [`NDatasetBase`](NDatasetBase.md).
 - **`NumClasses`** — State, считается из уникальных меток при Build.
-- По умолчанию **1×1**, чтобы Reset сразу создавал `Generator1`.
+- По умолчанию **1×1×1** с одним слотом `0.0`, чтобы Reset создавал `Generator1` и давал один спайк в начале сэмпла.
 
 ### Использование в GUI
 
-1. Создать `NDatasetManual` (после Default уже 1 образец × 1 признак).
-2. Задать `NumSamples` и `NumFeatures` — матрицы инициализируются нужным размером.
-3. Заполнить значения `MatrixData` и метки `MatrixClasses`.
-4. **Reset** (или Build) — появятся `Generator1..NumFeatures`.
+1. Создать `NDatasetManual` (после Default уже 1 образец × 1 признак × 1 слот).
+2. Задать `NumSamples`, `NumFeatures`, `MaxSpikesPerFeature` — матрицы инициализируются нужным размером.
+3. Заполнить `MatrixSpikeDelays` (и при необходимости legacy `MatrixData`) и метки `MatrixClasses`.
+4. **Reset** (или Build) — появятся `Generator1..NumFeatures`; в spike-train режиме спайки идут по cumsum ISI.
 
 При ошибке сборки (пустые/несогласованные матрицы) `ABuild` логирует и бросает исключение, чтобы `Ready` не залипал в `true`.
 
@@ -27,7 +28,7 @@
 
 ClDesc: `Bin/ClDesc/PulseLibrary/ru-RU/NDatasetManual.xml`.
 
-Favorites: `NumSamples`, `NumFeatures`, `MatrixData`, `MatrixClasses`, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`, `PulseGeneratorClassName`, `NumClasses`.
+Favorites: `NumSamples`, `NumFeatures`, `MaxSpikesPerFeature`, `MatrixSpikeDelays`, `MatrixData`, `MatrixClasses`, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`, `PulseGeneratorClassName`, `NumClasses`.
 
 ### См. также
 
@@ -41,11 +42,11 @@ Favorites: `NumSamples`, `NumFeatures`, `MatrixData`, `MatrixClasses`, `SpikesFr
 
 ### Purpose
 
-**Class**: `NDatasetManual` — manual dataset; `NumSamples`/`NumFeatures` resize matrices; fill values; Build creates one generator per feature.  
+**Class**: `NDatasetManual` — manual dataset; dims resize matrices including wide `MatrixSpikeDelays`; Build creates one generator per feature.  
 **Registration**: `UploadClass("NDatasetManual", ...)`.  
 **Base**: [`NDatasetBase`](NDatasetBase.md).
 
-Default size is 1×1. `NumClasses` remains a derived State.
+Default size is 1×1×1 with spike slot `0.0`. `NumClasses` remains a derived State.
 
 ### Favorites / ClDesc
 
