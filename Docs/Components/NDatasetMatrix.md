@@ -4,27 +4,16 @@
 
 ### Назначение
 
-**Класс**: `NDatasetMatrix` — размеры и `MatrixData` в параметрах GUI.  
-**База**: [`NDatasetBase`](NDatasetBase.md).
+`NumSamples` / `NumFeatures` / `MaxSpikesPerFeature` ресайзят `MatrixData` до `(S*M)×F` и `MatrixClasses` до `1×S`.
 
-В ctor/`ADefault` в Parameter: `NumSamples`, `NumFeatures`, `MaxSpikesPerFeature`, `MatrixData`, `MatrixClasses`.
+Default: `1×1×1`, слот `(0,0)=0.0`.
 
-- Размерности ресайзят `MatrixData` (`samples × features×maxSpikes`, новые слоты `-1`) и `MatrixClasses` (`1×samples`).
-- Default **1×1×1**, слот `0.0` (один спайк в старте сэмпла).
-- На Reset матрицы синхронизируются с размерностями.
+### Несколько сэмплов
 
-### Использование
-
-1. Задать `NumSamples` / `NumFeatures` / `MaxSpikesPerFeature`.
-2. Заполнить **`MatrixData`** (ISI) и `MatrixClasses`.
-3. Reset — генераторы и цикл пачка→`Delay`→повтор.
+1. Задать `NumSamples=N` → матрица станет `(N*M)×F`.
+2. Заполнить блоки строк `0..M-1`, `M..2M-1`, …
+3. `Iteration` выбирает сэмпл; при `AdvanceSampleAfterBurst` после `Delay` идёт следующий.
 
 ### Favorites
 
-`NumSamples`, `NumFeatures`, `MaxSpikesPerFeature`, `MatrixData`, `MatrixClasses`, `Delay`, `Iteration`, `PulseGeneratorClassName`, `NumClasses`.
-
----
-
-## EN
-
-Manual leaf: edit wide ISI `MatrixData`; dims own matrix size; Reset syncs matrices to dims.
+`NumSamples`, `NumFeatures`, `MaxSpikesPerFeature`, `MatrixData`, `MatrixClasses`, `Delay`, `Iteration`, `AdvanceSampleAfterBurst`.

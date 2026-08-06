@@ -10,23 +10,23 @@ namespace NMSDK {
 
 using namespace RDK;
 
-/// Shared base for file and manual spike-dataset components (not registered in Storage)
+/// Shared base for file and matrix spike-dataset components (not registered in Storage)
 class RDK_LIB_TYPE NDatasetBase: public UNet
 {
 public:
 /// Class name used to create child pulse generators
 UProperty<std::string, NDatasetBase, ptPubParameter> PulseGeneratorClassName;
 
-/// Number of features; also count of child Generator1..N
+/// Number of features (MatrixData columns); also count of child Generator1..N
 UProperty<int, NDatasetBase, ptPubState> NumFeatures;
 
-/// Number of samples (rows of MatrixData)
+/// Number of samples (MatrixData has NumSamples * MaxSpikesPerFeature rows)
 UProperty<int, NDatasetBase, ptPubState> NumSamples;
 
-/// Spike slots per feature in MatrixData (cols = NumFeatures * MaxSpikesPerFeature)
+/// Spike slots per sample block (MatrixData rows = NumSamples * MaxSpikesPerFeature)
 UProperty<int, NDatasetBase, ptPubParameter> MaxSpikesPerFeature;
 
-/// ISI matrix: NumSamples x (NumFeatures * MaxSpikesPerFeature); -1 = skip slot
+/// ISI: (NumSamples * MaxSpikesPerFeature) rows x NumFeatures cols; -1 = skip
 UProperty<MDMatrix<double>, NDatasetBase, ptPubState> MatrixData;
 
 /// Class labels matrix (1 x NumSamples)
@@ -35,8 +35,11 @@ UProperty<MDMatrix<int>, NDatasetBase, ptPubState> MatrixClasses;
 /// Current sample index
 UProperty<int, NDatasetBase, ptPubParameter> Iteration;
 
-/// Pause after a spike burst before repeating the same Iteration (sec)
+/// Pause after a spike burst before next play (sec)
 UProperty<double, NDatasetBase, ptPubParameter> Delay;
+
+/// After burst+Delay: if true, Iteration = (Iteration+1) % NumSamples
+UProperty<bool, NDatasetBase, ptPubParameter> AdvanceSampleAfterBurst;
 
 /// Generation mode: 0 = off, 1 = timed, 2 = continuous (burst -> Delay -> burst)
 UProperty<int, NDatasetBase, ptPubState> StateGeneration;
@@ -63,7 +66,7 @@ virtual ~NDatasetBase(void);
 bool SetPulseGeneratorClassName(const std::string &value);
 bool SetDelay(const double &value);
 
-/// Dimensional setters (virtual: Manual resizes matrices)
+/// Dimensional setters (virtual: Matrix leaf resizes matrices)
 virtual bool SetNumFeatures(const int &value);
 virtual bool SetNumSamples(const int &value);
 virtual bool SetMaxSpikesPerFeature(const int &value);
@@ -83,6 +86,9 @@ bool ApplyFromMatrices(void);
 /// Create/remove child generators to match NumFeatures
 bool SyncGenerators(void);
 
+/// Row index in MatrixData for sample + spike slot
+int SampleSlotRow(int sample, int spike_slot) const;
+
 /// Absolute spike times for current Iteration from MatrixData ISI slots
 void RebuildSpikeAbsTimesForIteration(void);
 
@@ -95,7 +101,7 @@ void SilenceGenerators(void);
 /// Begin spike-train schedule for current sample
 void BeginSpikeTrainSample(double now);
 
-/// Advance one-shot schedule; after burst+Delay restart same Iteration
+/// Advance one-shot schedule; after burst+Delay restart or advance Iteration
 void UpdateSpikeTrainPlayback(double now);
 
 /// True when all scheduled spikes for the sample have been fired and pulses ended

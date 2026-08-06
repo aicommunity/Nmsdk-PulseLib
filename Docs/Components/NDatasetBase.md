@@ -4,36 +4,33 @@
 
 ### Назначение
 
-**Класс**: `NDatasetBase` — абстрактная база для компонентов датасета спайков.  
-**Регистрация**: **не регистрируется** в Storage (только листья `NDataset`, `NDatasetMatrix`).
+**Класс**: `NDatasetBase` — абстрактная база датасета спайков.  
+**Регистрация**: не в Storage (листья `NDataset`, `NDatasetMatrix`).
 
-Пайплайн: `MatrixData` (ISI-пачки) → размеры / расписание → дочерние `NPulseGeneratorTransit` → цикл пачка → `Delay` → повтор.
+### Layout `MatrixData`
 
-### Иерархия
+```text
+rows = NumSamples * MaxSpikesPerFeature   // блоки по M строк на сэмпл
+cols = NumFeatures                        // колонка = фича
 
-```mermaid
-classDiagram
-    UNet <|-- NDatasetBase
-    NDatasetBase <|-- NDataset
-    NDatasetBase <|-- NDatasetMatrix
+MatrixData(sample * M + spikeSlot, feature)
 ```
 
-### Контракт сборки
+- Значение `≥ 0` — ISI (сек); `-1` — пропуск слота.
+- Внутри сэмпла cumsum по строкам слотов **вниз по колонке** фичи.
+- `MatrixClasses`: `1 × NumSamples`.
+- Активный сэмпл: `Iteration` ∈ `[0, NumSamples)`.
 
-1. **`PrepareDataset()`** — заполнить или проверить `MatrixData` / `MatrixClasses`.
-2. **`ApplyFromMatrices()`** — `NumSamples`/`NumFeatures`/`NumClasses` из широкой `MatrixData` и `MaxSpikesPerFeature`.
-3. **`SyncGenerators()`** — `Generator1..N` по `NumFeatures`.
+### Воспроизведение
 
-### Данные и время
+Единый старт сэмпла → one-shot на генераторах → пауза `Delay` → снова пачка.
 
-- `MatrixData`: `NumSamples × (NumFeatures × MaxSpikesPerFeature)`, `col = f*M + s`.
-- Значение `≥ 0` — ISI (сек); `s=0` от единого старта сэмпла; далее между спайками; `-1` — пропуск.
-- Единый `SampleStartTime` для всех фич; one-shot на генераторах.
-- После пачки пауза **`Delay`**, затем повтор **того же `Iteration`**.
+- `AdvanceSampleAfterBurst=false` (default): повтор того же `Iteration`.
+- `AdvanceSampleAfterBurst=true`: `Iteration = (Iteration+1) % NumSamples`.
 
 ### Свойства
 
-**Parameters:** `PulseGeneratorClassName`, `Delay`, `Iteration`, `MaxSpikesPerFeature`.
+**Parameters:** `PulseGeneratorClassName`, `Delay`, `Iteration`, `MaxSpikesPerFeature`, `AdvanceSampleAfterBurst`.
 
 **States:** `MatrixData`, `MatrixClasses`, `NumFeatures`, `NumSamples`, `NumClasses`, `StateGeneration`, `TimeGeneration`, `OperatingTime`, `ResetDelay`.
 
@@ -41,9 +38,3 @@ classDiagram
 
 - [`NDataset`](NDataset.md)
 - [`NDatasetMatrix`](NDatasetMatrix.md)
-
----
-
-## EN
-
-**Class**: `NDatasetBase` — shared spike-dataset base. Wide `MatrixData` ISI trains; burst → `Delay` → repeat same `Iteration`.

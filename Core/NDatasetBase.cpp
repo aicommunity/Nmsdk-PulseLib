@@ -17,6 +17,7 @@ NDatasetBase::NDatasetBase(void)
   MatrixClasses("MatrixClasses", this, &NDatasetBase::SetMatrixClasses),
   Iteration("Iteration", this),
   Delay("Delay", this, &NDatasetBase::SetDelay),
+  AdvanceSampleAfterBurst("AdvanceSampleAfterBurst", this),
   StateGeneration("StateGeneration", this),
   TimeGeneration("TimeGeneration", this),
   OperatingTime("OperatingTime", this),
@@ -42,7 +43,6 @@ bool NDatasetBase::SetPulseGeneratorClassName(const std::string &value)
 bool NDatasetBase::SetDelay(const double &value)
 {
     (void)value;
-    // Delay is the post-burst pause before repeating Iteration; no push to generators
     return true;
 }
 
@@ -122,6 +122,7 @@ bool NDatasetBase::ADefault(void)
     MatrixClasses.Resize(0, 0);
     StateGeneration = 2;
     Delay = 0;
+    AdvanceSampleAfterBurst = false;
     OperatingTime = 0;
     ResetDelay = true;
     TimeGeneration = 5;
@@ -136,10 +137,16 @@ bool NDatasetBase::ADefault(void)
     return true;
 }
 
+int NDatasetBase::SampleSlotRow(int sample, int spike_slot) const
+{
+    return sample * int(MaxSpikesPerFeature) + spike_slot;
+}
+
 void NDatasetBase::RebuildSpikeAbsTimesForIteration(void)
 {
     const int features = NumFeatures;
     const int max_spikes = MaxSpikesPerFeature;
+    const int num_samples = NumSamples;
     SampleSpikeAbsTimes.assign(features > 0 ? features : 0, std::vector<double>());
     NextSpikeIndex.assign(features > 0 ? features : 0, 0);
     OneShotEndTime.assign(features > 0 ? features : 0, 0.0);
@@ -147,11 +154,13 @@ void NDatasetBase::RebuildSpikeAbsTimesForIteration(void)
 
     if(features <= 0 || max_spikes < 1)
         return;
-    if(Iteration < 0 || Iteration >= NumSamples)
+    if(Iteration < 0 || Iteration >= num_samples)
         return;
-    if(MatrixData.GetRows() <= Iteration)
+
+    const int base = SampleSlotRow(Iteration, 0);
+    if(MatrixData.GetCols() < features)
         return;
-    if(MatrixData.GetCols() < features * max_spikes)
+    if(MatrixData.GetRows() < base + max_spikes)
         return;
 
     double max_abs = 0.0;
@@ -163,7 +172,7 @@ void NDatasetBase::RebuildSpikeAbsTimesForIteration(void)
         abs_times.clear();
         for(int s = 0; s < max_spikes; s++)
         {
-            const double d = MatrixData(Iteration, f * max_spikes + s);
+            const double d = MatrixData(base + s, f);
             if(d < 0.0)
                 continue;
             t += d;
@@ -213,6 +222,11 @@ void NDatasetBase::FireOneShot(int feature_index, NPulseGeneratorTransit* gen, d
 
 void NDatasetBase::BeginSpikeTrainSample(double now)
 {
+    if(NumSamples > 0 && Iteration >= NumSamples)
+        Iteration.SetDataDirect(0);
+    if(Iteration < 0)
+        Iteration.SetDataDirect(0);
+
     SampleStartTime = now;
     LastPlayedIteration = Iteration;
     RebuildSpikeAbsTimesForIteration();
@@ -270,10 +284,16 @@ void NDatasetBase::UpdateSpikeTrainPlayback(double now)
             FireOneShot(f, gen, now);
     }
 
-    // After burst completes, wait Delay, then replay the same Iteration
     const double repeat_at = SampleBurstEndRel + (Delay > 0.0 ? double(Delay) : 0.0);
     if(IsBurstFullyComplete() && t_rel + 1e-12 >= repeat_at)
+    {
+        if(AdvanceSampleAfterBurst && NumSamples > 0)
+        {
+            const int next = (int(Iteration) + 1) % int(NumSamples);
+            Iteration.SetDataDirect(next);
+        }
         BeginSpikeTrainSample(now);
+    }
 }
 
 int NDatasetBase::CalcNumClasses(const MDMatrix<int> &matrix_classes) const
@@ -299,13 +319,16 @@ bool NDatasetBase::ApplyFromMatrices(void)
     if(max_spikes < 1)
         return false;
 
-    const int num_samples = MatrixData.GetRows();
+    const int rows = MatrixData.GetRows();
     const int cols = MatrixData.GetCols();
-    if(num_samples <= 0 || cols <= 0 || cols % max_spikes != 0)
+    if(rows <= 0 || cols <= 0)
+        return false;
+    if(rows % max_spikes != 0)
         return false;
 
-    const int num_features = cols / max_spikes;
-    if(num_features <= 0)
+    const int num_samples = rows / max_spikes;
+    const int num_features = cols;
+    if(num_samples <= 0 || num_features <= 0)
         return false;
     if(MatrixClasses.GetRows() != 1 || MatrixClasses.GetCols() != num_samples)
         return false;

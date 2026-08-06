@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
+#include <vector>
 
 namespace NMSDK {
 
@@ -30,6 +31,40 @@ bool ParseMaxSpikesFromMeta(const std::string &line, int &max_spikes)
         return false;
     max_spikes = atoi(line.c_str() + pos + std::strlen(key));
     return max_spikes >= 1;
+}
+
+/// Parse one data row: optional leading class token, then exactly num_features doubles.
+/// Slot 0 rows: "class;v0;v1;..." — class_out set when parse_class is true.
+/// Later slots: ";v0;v1;..." (empty class) or "v0;v1;..." — class ignored.
+bool ParseFeatureRow(const std::string &line, char delimiter, int num_features,
+                     bool parse_class, int &class_out, std::vector<double> &values)
+{
+    values.clear();
+    values.reserve(num_features);
+
+    std::stringstream stream(line);
+    std::string token;
+
+    if(parse_class)
+    {
+        if(!std::getline(stream, token, delimiter))
+            return false;
+        class_out = atoi(token.c_str());
+    }
+    else
+    {
+        // Leading empty field before first ';' (";v0;v1") — consume and ignore
+        if(!line.empty() && line[0] == delimiter)
+        {
+            if(!std::getline(stream, token, delimiter))
+                return false;
+        }
+    }
+
+    while(std::getline(stream, token, delimiter) && int(values.size()) < num_features)
+        values.push_back(atof(token.c_str()));
+
+    return int(values.size()) == num_features;
 }
 
 } // namespace
@@ -144,68 +179,52 @@ bool NDataset::TreatDataFromFile(void)
             return false;
     }
 
-    const int header_semicolons = CountDelimiter(line, delimiter);
-    if(header_semicolons <= 0)
-        return false;
-    if(header_semicolons % max_spikes != 0)
-        return false;
-
-    const int num_features = header_semicolons / max_spikes;
-    const int data_cols = header_semicolons;
+    // Header: semicolon count == NumFeatures
+    const int num_features = CountDelimiter(line, delimiter);
     if(num_features <= 0)
         return false;
 
-    int num_samples = 0;
+    std::vector<std::string> data_lines;
     while(std::getline(file_dataset, line))
-        num_samples++;
-
-    if(num_samples <= 0)
-        return false;
-
-    file_dataset.close();
-    file_dataset.clear();
-    file_dataset.open(path.c_str());
-    if(!file_dataset)
-        return false;
-
-    if(!std::getline(file_dataset, line))
-        return false;
-    if(has_meta)
     {
-        if(!std::getline(file_dataset, line))
-            return false;
+        if(!line.empty())
+            data_lines.push_back(line);
     }
+    file_dataset.close();
+
+    if(data_lines.empty())
+        return false;
+    if(int(data_lines.size()) % max_spikes != 0)
+        return false;
+
+    const int num_samples = int(data_lines.size()) / max_spikes;
 
     MDMatrix<double> matrix_data;
     MDMatrix<int> matrix_classes;
-    matrix_data.Resize(num_samples, data_cols, -1.0);
+    matrix_data.Resize(num_samples * max_spikes, num_features, -1.0);
     matrix_classes.Resize(1, num_samples);
 
-    int row = 0;
-    while(std::getline(file_dataset, line) && row < num_samples)
+    for(int s = 0; s < num_samples; s++)
     {
-        std::stringstream stream(line);
-        std::string number;
-        if(!std::getline(stream, number, delimiter))
-            return false;
-        matrix_classes(0, row) = atoi(number.c_str());
-
-        int col = 0;
-        std::string count;
-        while(std::getline(stream, count, delimiter) && col < data_cols)
+        for(int k = 0; k < max_spikes; k++)
         {
-            matrix_data(row, col) = atof(count.c_str());
-            col++;
+            const std::string &row_line = data_lines[s * max_spikes + k];
+            std::vector<double> values;
+            int class_value = 0;
+            const bool parse_class = (k == 0);
+            if(!ParseFeatureRow(row_line, delimiter, num_features, parse_class, class_value, values))
+                return false;
+
+            if(k == 0)
+                matrix_classes(0, s) = class_value;
+
+            const int row = s * max_spikes + k;
+            for(int f = 0; f < num_features; f++)
+                matrix_data(row, f) = values[f];
         }
-        if(col != data_cols)
-            return false;
-        row++;
     }
-    file_dataset.close();
 
-    if(row != num_samples)
-        return false;
-
+    (void)has_meta;
     MaxSpikesPerFeature = max_spikes;
     MatrixData = matrix_data;
     MatrixClasses = matrix_classes;

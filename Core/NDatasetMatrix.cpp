@@ -21,6 +21,7 @@ void NDatasetMatrix::PromoteEditableProperties(void)
     ChangeLookupPropertyType("MaxSpikesPerFeature", ptPubParameter);
     ChangeLookupPropertyType("MatrixData", ptPubParameter);
     ChangeLookupPropertyType("MatrixClasses", ptPubParameter);
+    ChangeLookupPropertyType("AdvanceSampleAfterBurst", ptPubParameter);
 }
 
 void NDatasetMatrix::ResizeMatricesFromDims(int num_samples, int num_features, int max_spikes)
@@ -32,7 +33,7 @@ void NDatasetMatrix::ResizeMatricesFromDims(int num_samples, int num_features, i
     if(max_spikes < 1)
         max_spikes = 1;
 
-    MatrixData.Resize(num_samples, num_features * max_spikes, -1.0);
+    MatrixData.Resize(num_samples * max_spikes, num_features, -1.0);
     MatrixClasses.Resize(num_samples > 0 ? 1 : 0, num_samples);
 }
 
@@ -109,19 +110,17 @@ bool NDatasetMatrix::SetMaxSpikesPerFeature(const int &value)
 bool NDatasetMatrix::SetMatrixData(const MDMatrix<double> &value)
 {
     const int max_spikes = MaxSpikesPerFeature < 1 ? 1 : int(MaxSpikesPerFeature);
-    if(value.GetCols() > 0 && value.GetCols() % max_spikes != 0)
+    if(value.GetRows() > 0 && value.GetRows() % max_spikes != 0)
         return false;
 
-    NumSamples.SetDataDirect(value.GetRows());
-    if(value.GetCols() > 0)
-        NumFeatures.SetDataDirect(value.GetCols() / max_spikes);
-    else
-        NumFeatures.SetDataDirect(0);
+    NumFeatures.SetDataDirect(value.GetCols());
+    NumSamples.SetDataDirect(value.GetRows() > 0 ? value.GetRows() / max_spikes : 0);
 
-    if(value.GetRows() > 0)
+    const int num_samples = NumSamples;
+    if(num_samples > 0)
     {
-        if(MatrixClasses.GetRows() != 1 || MatrixClasses.GetCols() != value.GetRows())
-            MatrixClasses.Resize(1, value.GetRows());
+        if(MatrixClasses.GetRows() != 1 || MatrixClasses.GetCols() != num_samples)
+            MatrixClasses.Resize(1, num_samples);
     }
     else
     {
@@ -172,8 +171,8 @@ bool NDatasetMatrix::PrepareDataset(void)
     if(NumSamples <= 0 || NumFeatures <= 0)
         return false;
 
-    if(MatrixData.GetRows() != NumSamples ||
-       MatrixData.GetCols() != NumFeatures * max_spikes)
+    if(MatrixData.GetRows() != NumSamples * max_spikes ||
+       MatrixData.GetCols() != NumFeatures)
         return false;
     if(MatrixClasses.GetRows() != 1 || MatrixClasses.GetCols() != NumSamples)
         return false;
