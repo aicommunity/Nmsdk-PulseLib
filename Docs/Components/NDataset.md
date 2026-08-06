@@ -1,111 +1,63 @@
-# NDataset — датасет
+# NDataset — датасет из файла
 
 ## RU
 
 ### Назначение
 
-**Класс**: `NDataset` — компонент для загрузки датасета из файла и генерации спайковых паттернов.  
-**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NDataset", ...)` (только `Default()`, без `Build()` — файл при регистрации может отсутствовать).  
-**Storage-инстансы**: `ClassName = "NDataset"` в `Bin/Configs/*/Model_*.xml`.
+**Класс**: `NDataset` — загрузка датасета из файла и генерация спайковых паттернов.  
+**Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NDataset", ...)` (только `Default()`, без `Build()`).  
+**База**: [`NDatasetBase`](NDatasetBase.md).  
+**Sibling**: [`NDatasetManual`](NDatasetManual.md) — ручной ввод матриц.
 
-`NDataset` читает файл с метками классов и признаками, вычисляет размеры и матрицы, создаёт по одному `NPulseGeneratorTransit` на каждый признак и управляет их задержками/частотой.
+`NDataset` читает файл с метками классов и признаками, заполняет `MatrixData`/`MatrixClasses`, затем общая база считает размеры, `MatrixDelay` и создаёт по одному `NPulseGeneratorTransit` на признак.
 
-**Использование:** загрузка датасета, генерация паттернов для обучения/тестирования.
-
-### UML-диаграмма классов
+### UML
 
 ```mermaid
 classDiagram
-    UNet <|-- NDataset
+    UNet <|-- NDatasetBase
+    NDatasetBase <|-- NDataset
+    NDatasetBase <|-- NDatasetManual
     NDataset *-- NPulseGeneratorTransit : Generators
-    class NDataset {
-        +FileName : string
-        +UseRelativePathFromConfig : bool
-        +UseRelativePathFromWorkDir : bool
-        +ReloadDataset : bool
-        +PulseGeneratorClassName : string
-        +SpikesFrequency : double
-        +Delay : double
-        +Tay : float
-        +Iteration : int
-        +NumGenerators : int
-        +NumFeatures : int
-        +NumSamples : int
-        +NumClasses : int
-        +MatrixData : MDMatrix~double~
-        +MatrixClasses : MDMatrix~int~
-        +MatrixDelay : MDMatrix~double~
-        +StateGeneration : int
-        -Generators : vector~NPulseGeneratorTransit*~
-        +ADefault() bool
-        +ABuild() bool
-        +ACalculate() bool
-        +TreatDataFromFile() bool
-        +CalcActualSourceFilePath() string
-    }
 ```
-
-**Иерархия:** `UNet` → `NDataset`.  
-**Связи:** создаёт и управляет дочерними `NPulseGeneratorTransit`.
 
 ### Свойства
 
-#### Параметры (`ptPubParameter`) — задаются пользователем
+#### Параметры файла (`ptPubParameter`)
 
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `FileName` | string | Путь к файлу датасета. Абсолютный, либо относительный к Config/Work по флагам |
-| `UseRelativePathFromConfig` | bool | Относительно каталога Config/данных (`GetCurrentDataDir`). По умолчанию `true` |
-| `UseRelativePathFromWorkDir` | bool | Относительно рабочей папки приложения (`GetSystemDir`). Взаимоисключает Config |
-| `ReloadDataset` | bool | Перезагрузить файл на следующем Build/Calculate; после успеха сбрасывается в `false` |
-| `PulseGeneratorClassName` | string | Класс дочерних генераторов (по умолчанию `NPulseGeneratorTransit`) |
-| `SpikesFrequency` | double | Частота спайков генераторов (Гц) |
-| `Delay` | double | Базовая задержка (сек) |
-| `Tay` | float | Масштаб нормализации признаков → `MatrixDelay` |
-| `Iteration` | int | Индекс текущего образца |
+| Свойство | Описание |
+|----------|----------|
+| `FileName` | Путь к файлу (абсолютный или относительный к Config/Work) |
+| `UseRelativePathFromConfig` | База `GetCurrentDataDir()` (по умолчанию `true`) |
+| `UseRelativePathFromWorkDir` | База `GetSystemDir()`; взаимоисключает Config |
+| `ReloadDataset` | Перечитать файл на Build/Calculate; после успеха сбрасывается |
 
-Если оба флага относительных путей выключены, `FileName` используется как есть (абсолютный путь или от cwd). Логика совпадает с `UMatrixSourceDataFile::CalcActualSourceFilePath`.
+Если оба флага относительных путей выключены, `FileName` используется как есть. Логика как у `UMatrixSourceDataFile::CalcActualSourceFilePath`.
 
-#### Состояния (`ptPubState`) — только из файла / расчёта
-
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `NumFeatures` | int | Число признаков; **вручную не задаётся** |
-| `NumSamples` | int | Число образцов; **вручную не задаётся** |
-| `NumGenerators` | int | Всегда `= NumFeatures` после успешной загрузки |
-| `NumClasses` | int | Число уникальных меток в `MatrixClasses` |
-| `MatrixData` | MDMatrix\<double\> | Признаки (строки × столбцы) |
-| `MatrixClasses` | MDMatrix\<int\> | Метки классов (1 × NumSamples) |
-| `MatrixDelay` | MDMatrix\<double\> | Задержки генераторов из `MatrixData` и `Tay` |
-| `StateGeneration` | int | 0 — выкл., 1 — timed, 2 — непрерывно |
-| `TimeGeneration` | double | Длительность timed-режима (сек) |
-| `OperatingTime` | double | Метка старта timed-режима |
-| `ResetDelay` | bool | Переприменить Delay/Frequency к генераторам |
+Общие параметры генерации и States — см. [`NDatasetBase`](NDatasetBase.md). Матрицы и размеры у file-класса остаются **State** (из файла).
 
 ### Формат файла
 
-Разделитель `;`. Первая строка — заголовок (число `;` = `NumFeatures`). Далее строки данных: `класс;признак1;признак2;...`.
+Разделитель `;`. Первая строка — заголовок (число `;` = `NumFeatures`). Далее: `класс;признак1;признак2;...`.
 
 ### Методы
 
-- **`CalcActualSourceFilePath(file_name)`** — абсолютный / Config / Work путь.
-- **`TreatDataFromFile()`** — атомарная загрузка: при ошибке размеры не сбрасываются; при успехе обновляются матрицы, размеры и `NumGenerators`.
-- **`ABuild()`** — загрузка + sync дочерних `Generator1..N`; при ошибке файла возвращает `false`.
-- **`ACalculate()`** — при `ReloadDataset` перечитывает файл и sync генераторов; управляет режимами `StateGeneration`.
+- `PrepareDataset()` → `TreatDataFromFile()` — загрузка матриц.
+- `ACalculate()` — при `ReloadDataset` перечитывает файл, затем `NDatasetBase::ACalculate()`.
 
-### Favorites / ClDesc
+### Ключевые свойства / Favorites
 
 ClDesc: `Bin/ClDesc/PulseLibrary/ru-RU/NDataset.xml`.
 
-Primary Favorites: `FileName`, `ReloadDataset`, `UseRelativePathFromConfig`, `UseRelativePathFromWorkDir`, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`, `PulseGeneratorClassName`, `NumFeatures`, `NumSamples`, `NumGenerators`, `NumClasses`.
+Favorites: `FileName`, `ReloadDataset`, path-флаги, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`, `PulseGeneratorClassName`, размеры-state.
 
 ### См. также
 
-- [`NPattern`](NPattern.md) — паттерн данных
-- [`NPulseGeneratorTransit`](NPulseGeneratorTransit.md) — генератор с транзитным сигналом
-- [`NClassifier`](NClassifier.md) — классификатор
-- [Architecture.md](../Architecture.md) — архитектура библиотеки
-- `UMatrixSourceDataFile` (BasicLib) — эталон относительных путей Config/Work
+- [`NDatasetBase`](NDatasetBase.md)
+- [`NDatasetManual`](NDatasetManual.md)
+- [`NPulseGeneratorTransit`](NPulseGeneratorTransit.md)
+- [`NClassifier`](NClassifier.md)
+- [Architecture.md](../Architecture.md)
 
 ### Источники
 
@@ -117,33 +69,13 @@ Primary Favorites: `FileName`, `ReloadDataset`, `UseRelativePathFromConfig`, `Us
 
 ### Purpose
 
-**Class**: `NDataset` — loads a dataset from file and drives one pulse generator per feature.  
-**Registration**: `NPulseLibrary.cpp` → `UploadClass("NDataset", ...)` (`Default()` only; no `Build()` at upload).  
-**Instances**: `ClassName = "NDataset"` in `Bin/Configs/*/Model_*.xml`.
-
-Sizes and matrices are **derived from the file** (States). Users configure `FileName`, path flags, reload, and generation parameters.
+**Class**: `NDataset` — file-backed spike dataset (leaf of `NDatasetBase`).  
+**Registration**: `UploadClass("NDataset", ...)` without `Build()` at upload.  
+**Sibling**: [`NDatasetManual`](NDatasetManual.md) for manual matrices.
 
 ### Path resolution
 
-Same rules as `UMatrixSourceDataFile::CalcActualSourceFilePath`:
-
-- both relative flags off → use `FileName` as-is (absolute / cwd);
-- `UseRelativePathFromConfig` → `GetCurrentDataDir() + FileName`;
-- `UseRelativePathFromWorkDir` → `GetSystemDir() + FileName`;
-- flags are mutually exclusive in setters.
-
-### Properties
-
-**Parameters:** `FileName`, `UseRelativePathFromConfig`, `UseRelativePathFromWorkDir`, `ReloadDataset`, `PulseGeneratorClassName`, `SpikesFrequency`, `Delay`, `Tay`, `Iteration`.
-
-**States (read-only from GUI intent):** `NumFeatures`, `NumSamples`, `NumGenerators` (= `NumFeatures`), `NumClasses`, `MatrixData`, `MatrixClasses`, `MatrixDelay`, `StateGeneration`, `TimeGeneration`, `OperatingTime`, `ResetDelay`.
-
-### Methods
-
-- `CalcActualSourceFilePath` — resolve path
-- `TreatDataFromFile` — atomic load (no wipe on failure)
-- `ABuild` — load + sync generators; fail if file missing
-- `ACalculate` — honor `ReloadDataset`; drive generation modes
+Same rules as `UMatrixSourceDataFile::CalcActualSourceFilePath` (absolute / Config / Work).
 
 ### Favorites / ClDesc
 
@@ -151,12 +83,6 @@ See `Bin/ClDesc/PulseLibrary/ru-RU/NDataset.xml`.
 
 ### See Also
 
-- [`NPattern`](NPattern.md)
+- [`NDatasetBase`](NDatasetBase.md)
+- [`NDatasetManual`](NDatasetManual.md)
 - [`NPulseGeneratorTransit`](NPulseGeneratorTransit.md)
-- [`NClassifier`](NClassifier.md)
-- [Architecture.md](../Architecture.md)
-- `UMatrixSourceDataFile` (BasicLib)
-
-### References
-
-See [Literature-References.md](../Literature-References.md): **[A]**, **4**, **25**.

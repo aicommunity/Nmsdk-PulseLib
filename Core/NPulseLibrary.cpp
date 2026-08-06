@@ -1277,6 +1277,12 @@ UploadClass("NPredictor",cont);
  cont->Default();
  UploadClass("NDataset",cont);
 
+ // Ручной датасет (матрицы задаются в параметрах; без Build при регистрации)
+ cont=new NDatasetManual;
+ cont->SetName("DatasetManual");
+ cont->Default();
+ UploadClass("NDatasetManual",cont);
+
 // Создаем предиктор состояния
 cont=new NStatePredictor;
 cont->SetName("StatePredictor");
