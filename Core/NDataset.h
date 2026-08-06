@@ -10,6 +10,7 @@ using namespace RDK;
 /// File-backed dataset: loads feature/class matrices from disk and drives pulse generators
 class RDK_LIB_TYPE NDataset: public NDatasetBase
 {
+public:
 /// Request dataset reload from file (cleared after successful load)
 UProperty<bool, NDataset, ptPubParameter> ReloadDataset;
 

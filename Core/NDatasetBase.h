@@ -11,6 +11,7 @@ using namespace RDK;
 /// Shared base for file and manual spike-dataset components (not registered in Storage)
 class RDK_LIB_TYPE NDatasetBase: public UNet
 {
+public:
 /// Class name used to create child pulse generators
 UProperty<std::string, NDatasetBase, ptPubParameter> PulseGeneratorClassName;
 
