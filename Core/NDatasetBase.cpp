@@ -10,8 +10,8 @@ namespace NMSDK {
 
 NDatasetBase::NDatasetBase(void)
 : PulseGeneratorClassName("PulseGeneratorClassName", this, &NDatasetBase::SetPulseGeneratorClassName),
-  NumFeatures("NumFeatures", this),
-  NumSamples("NumSamples", this),
+  NumFeatures("NumFeatures", this, &NDatasetBase::SetNumFeatures),
+  NumSamples("NumSamples", this, &NDatasetBase::SetNumSamples),
   MatrixData("MatrixData", this, &NDatasetBase::SetMatrixData),
   MatrixClasses("MatrixClasses", this, &NDatasetBase::SetMatrixClasses),
   MatrixDelay("MatrixDelay", this),
@@ -61,14 +61,30 @@ bool NDatasetBase::SetDelay(const double &value)
  return true;
 }
 
+bool NDatasetBase::SetNumFeatures(const int &value)
+{
+    (void)value;
+    Ready = false;
+    return true;
+}
+
+bool NDatasetBase::SetNumSamples(const int &value)
+{
+    (void)value;
+    Ready = false;
+    return true;
+}
+
 bool NDatasetBase::SetMatrixData(const MDMatrix<double> &value)
 {
+    (void)value;
     Ready = false;
     return true;
 }
 
 bool NDatasetBase::SetMatrixClasses(const MDMatrix<int> &value)
 {
+    (void)value;
     Ready = false;
     return true;
 }
@@ -218,9 +234,19 @@ bool NDatasetBase::SyncGenerators(void)
 bool NDatasetBase::ABuild(void)
 {
     if(!PrepareDataset())
-        return false;
+    {
+        const std::string msg = std::string("NDatasetBase::ABuild failed: PrepareDataset rejected data on ")
+            + GetName();
+        LogMessageEx(RDK_EX_ERROR, __FUNCTION__, msg);
+        RDK_THROW(EStringError(msg));
+    }
     if(!ApplyFromMatrices())
-        return false;
+    {
+        const std::string msg = std::string("NDatasetBase::ABuild failed: ApplyFromMatrices rejected data on ")
+            + GetName();
+        LogMessageEx(RDK_EX_ERROR, __FUNCTION__, msg);
+        RDK_THROW(EStringError(msg));
+    }
     return SyncGenerators();
 }
 

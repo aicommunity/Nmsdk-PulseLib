@@ -67,8 +67,12 @@ virtual ~NDatasetBase(void);
 bool SetPulseGeneratorClassName(const std::string &value);
 bool SetSpikesFrequency(const double &value);
 bool SetDelay(const double &value);
-bool SetMatrixData(const MDMatrix<double> &value);
-bool SetMatrixClasses(const MDMatrix<int> &value);
+
+/// Dimensional setters (virtual: Manual resizes matrices)
+virtual bool SetNumFeatures(const int &value);
+virtual bool SetNumSamples(const int &value);
+virtual bool SetMatrixData(const MDMatrix<double> &value);
+virtual bool SetMatrixClasses(const MDMatrix<int> &value);
 
 virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer = 0);
 virtual bool ADelComponent(UEPtr<UContainer> comp);
