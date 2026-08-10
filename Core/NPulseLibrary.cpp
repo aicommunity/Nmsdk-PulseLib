@@ -1190,6 +1190,12 @@ cont->Default();
 cont->Build();
 UploadClass("NNeuronLearner",cont);
 
+cont=new NNeuronTimeLearner;
+cont->SetName("NeuronTimeLearner");
+cont->Default();
+cont->Build();
+UploadClass("NNeuronTimeLearner",cont);
+
 	// Создаем слой нейронов
  cont=new NNeuronsLayer;
  cont->SetName("NeuronsLayer");
