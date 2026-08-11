@@ -116,6 +116,9 @@ public:
  /// 0 - Sync dendrites; 1 - Normalize synapses; 2 - Done
  UProperty<int, NNeuronTimeLearner, ptPubState> TrainingPhase;
 
+ /// One-shot reset to initial untrained structure/state
+ UProperty<bool, NNeuronTimeLearner, ptPubState> ResetToUntrainedState;
+
  UProperty<int, NNeuronTimeLearner, ptPubParameter> ExperimentNum;
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> ExperimentMode;
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> EnableDebug;
@@ -137,6 +140,10 @@ protected:
  bool IterationActive;
  bool WaitingPeakAfterLastPulse;
  double LastPulseTime;
+ std::vector<double> ExpectedPulseRelTimes;
+ /// First local max after pulse i is locked (descending flank seen)
+ std::vector<bool> PeakLocked;
+ std::vector<bool> PeakSeen;
 
  ifstream Fin;
  ofstream Fout;
@@ -145,6 +152,7 @@ protected:
  bool IsWritten;
  bool IsFirstFileStep;
  int CountIteration;
+ bool HasUntrainedSnapshot;
 
  bool IsFirstBeat;
  double IterLength;
@@ -152,6 +160,9 @@ protected:
  std::vector<double> TimeOfMaxIterSomaAmp;
  std::vector<double> Dissynchronization;
  std::vector<double> AmpDifference;
+ std::vector<int> UntrainedDendriteLength;
+ std::vector<int> UntrainedNumSynapse;
+ std::vector<double> UntrainedInitialSomaPotential;
  /// 0 optimal; 1 grow; -1 shrink
  std::vector<int> DendStatus;
  /// 0 optimal; 1 add synapses; -1 remove
@@ -190,6 +201,7 @@ public:
  bool SetNumSynapse(const std::vector<int> &value);
  bool SetIterationGap(const double &value);
  bool SetSyncTolerance(const double &value);
+ bool SetResetToUntrainedState(const bool &value);
  bool SetExperimentNum(const int &value);
  bool SetEnableDebug(const bool &value);
 
@@ -208,6 +220,7 @@ protected:
 
  bool CompareInputPatterns(MDMatrix<double> prev_input_pattern, MDMatrix<double> input_pattern, double e);
  bool ZeroingTrainingPattern(void);
+ bool ResetToUntrained(void);
  bool ChangeDendriteLength(int num);
  bool ChangeSynapseNumber(int num);
  bool MeasureMaxPotentialAndTime(void);
@@ -228,6 +241,7 @@ protected:
  bool RelinkDendriteSynapsesToDataset(int dendrite_index0);
  void SyncDatasetDimsFromDendrites(void);
  bool DetectNewImpulse(void);
+ int DetectNewImpulseCount(void);
  void BeginTrainingIteration(double now);
  void FinishTrainingIteration(void);
  bool AllDendritesSynced(void) const;
