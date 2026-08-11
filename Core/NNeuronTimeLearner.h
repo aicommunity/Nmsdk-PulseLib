@@ -30,6 +30,7 @@ using namespace RDK;
 
 /// Temporal-pattern neuron learner: one NDatasetMatrix burst fans out to all dendrites;
 /// dendrite k grows from pulse k; last dendrite is sync reference; then synapse normalize.
+/// Algorithm overview: Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearner/ALGORITHM.md
 class RDK_LIB_TYPE NNeuronTimeLearner: public UNet
 {
 public:
@@ -159,7 +160,11 @@ protected:
  std::vector<double> MaxIterSomaAmp;
  std::vector<double> TimeOfMaxIterSomaAmp;
  std::vector<double> Dissynchronization;
+ /// Snapshot of Dissynchronization at the start of FinishTrainingIteration
+ std::vector<double> PrevDissynchronization;
  std::vector<double> AmpDifference;
+ /// True if MaxIterSomaAmp[i] exceeded kMinMeasurableSomaAmp this iteration
+ std::vector<bool> SomaPeakValid;
  std::vector<int> UntrainedDendriteLength;
  std::vector<int> UntrainedNumSynapse;
  std::vector<double> UntrainedInitialSomaPotential;
@@ -167,6 +172,8 @@ protected:
  std::vector<int> DendStatus;
  /// 0 optimal; 1 add synapses; -1 remove
  std::vector<int> SynapseStatus;
+
+ static constexpr double kMinMeasurableSomaAmp = 1e-6;
 
  int EpochCur;
  bool CanChangeDendLength;
@@ -223,6 +230,8 @@ protected:
  bool ZeroingTrainingPattern(void);
  bool ResetToUntrained(void);
  bool ChangeDendriteLength(int num);
+ /// Grow/shrink all dendrites with DendStatus!=0 in one Build/relink pass
+ bool ApplyPendingDendriteLengthChanges(void);
  bool ChangeSynapseNumber(int num);
  bool MeasureMaxPotentialAndTime(void);
  bool ChangeDendriteStatus(int num);

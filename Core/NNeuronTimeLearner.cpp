@@ -70,14 +70,17 @@ bool NNeuronTimeLearner::LinkSynapseToDataset(NPulseSynapseCommon *synapse)
  if(!synapse)
   return false;
  const std::string gen_path = DatasetGeneratorPath();
- // Always recreate: after dendrite growth CheckLink may stay true while connectors are gone.
- synapse->DisconnectAll("Input");
- const bool ok = CreateLink(gen_path, "Output", synapse->GetLongName(this), "Input");
+ // Clear incoming Input attachment (DisconnectAll("Input") only clears outgoing
+ // RelatedConnectors and does not DetachFrom the Input property).
+ synapse->Input.DetachFrom();
+ synapse->DisconnectAllItems();
+ const bool ok = CreateLink(gen_path, "Output", synapse->GetLongName(this), "Input", -1, true);
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
   oss << "LinkSynapseToDataset: " << gen_path << ".Output -> "
-      << synapse->GetLongName(this) << ".Input ok=" << (ok ? 1 : 0);
+      << synapse->GetLongName(this) << ".Input ok=" << (ok ? 1 : 0)
+      << " connected=" << (synapse->Input.IsConnected() ? 1 : 0);
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
  }
  return ok;
@@ -99,7 +102,10 @@ bool NNeuronTimeLearner::RelinkDendriteSynapsesToDataset(int dendrite_index0)
    NPulseSynapseCommon *prox_syn = proximal->GetComponentL<NPulseSynapseCommon>(
     std::string("ExcSynapse1"), true);
    if(prox_syn)
-    prox_syn->DisconnectAll("Input");
+  {
+   prox_syn->Input.DetachFrom();
+   prox_syn->DisconnectAllItems();
+  }
   }
  }
 
@@ -295,7 +301,9 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
  Dissynchronization.assign(NumInputDendrite, period);
  if(!Dissynchronization.empty())
   Dissynchronization[NumInputDendrite - 1] = 0.0;
+ PrevDissynchronization = Dissynchronization;
  AmpDifference.assign(NumInputDendrite, 0.0);
+ SomaPeakValid.assign(NumInputDendrite, false);
  PrevInputPattern.Assign(NumInputDendrite, 1, -1.0);
  CountIteration = 0;
  IsFirstBeat = true;
@@ -806,7 +814,9 @@ bool NNeuronTimeLearner::BuildStructure()
  double period = IterationGap > 0.0 ? IterationGap.GetData() : 0.5;
  Dissynchronization.assign(NumInputDendrite, period);
  Dissynchronization[NumInputDendrite - 1] = 0.0;
+ PrevDissynchronization = Dissynchronization;
  AmpDifference.assign(NumInputDendrite, 0.0);
+ SomaPeakValid.assign(NumInputDendrite, false);
 
  InputPattern.Resize(NumInputDendrite, 1, 0.0);
  PrevInputPattern.Assign(NumInputDendrite, 1, -1.0);
@@ -921,7 +931,9 @@ bool NNeuronTimeLearner::ADefault(void)
  MaxIterSomaAmp.assign(NumInputDendrite, 0.0);
  TimeOfMaxIterSomaAmp.assign(NumInputDendrite, 0.0);
  Dissynchronization.assign(NumInputDendrite, IterationGap + 0.001);
+ PrevDissynchronization = Dissynchronization;
  AmpDifference.assign(NumInputDendrite, 0.0);
+ SomaPeakValid.assign(NumInputDendrite, false);
  DendStatus.assign(NumInputDendrite, 0);
  SynapseStatus.assign(NumInputDendrite, 0);
  EnableDebug = false;
@@ -1023,63 +1035,133 @@ bool NNeuronTimeLearner::CompareInputPatterns(MDMatrix<double> prev_input_patter
 
 bool NNeuronTimeLearner::ChangeDendriteLength(int num)
 {
- bool res(true);
-
+ if(num < 0 || num >= NumInputDendrite - 1)
+  return true;
  if(!DendStatus[num])
   return true;
 
- if((DendStatus[num] == -1) && (DendriteLength[num] < 2))
+ // Preserve other statuses, apply only this dendrite via the batch path.
+ std::vector<int> saved = DendStatus;
+ for(int i = 0; i < NumInputDendrite - 1; ++i)
  {
-  DendStatus[num] = 0;
-  return true;
+  if(i != num)
+   DendStatus[i] = 0;
+ }
+ const bool ok = ApplyPendingDendriteLengthChanges();
+ DendStatus = saved;
+ return ok;
+}
+
+
+bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
+{
+ bool res(true);
+ std::vector<int> changed;
+ changed.reserve(static_cast<size_t>(std::max(0, NumInputDendrite.GetData() - 1)));
+
+ for(int i = 0; i < NumInputDendrite - 1; ++i)
+ {
+  if(!DendStatus[i])
+   continue;
+  if((DendStatus[i] == -1) && (DendriteLength[i] < 2))
+  {
+   DendStatus[i] = 0;
+   continue;
+  }
+  if((DendStatus[i] == 1) && (DendriteLength[i] >= MaxDendriteLength))
+  {
+   DendStatus[i] = 0;
+   continue;
+  }
+
+  if(i >= int(OldDendriteLength.size()))
+   OldDendriteLength.resize(static_cast<size_t>(i + 1), DendriteLength[i]);
+  OldDendriteLength[i] = DendriteLength[i];
+  DendriteLength[i] += DendStatus[i];
+  changed.push_back(i);
  }
 
- if(DendStatus[num] == 1)
+ if(changed.empty())
+  return true;
+
+ if (EnableDebug.GetData() && RDK::GetLogger())
  {
-  if(DendriteLength[num] >= MaxDendriteLength)
+  std::ostringstream oss;
+  oss << "ApplyPendingDendriteLengthChanges: changed=[";
+  for(size_t k = 0; k < changed.size(); ++k)
   {
-   DendStatus[num] = 0;
-   return true;
+   if(k) oss << ',';
+   oss << changed[k] << ":" << OldDendriteLength[changed[k]]
+       << "->" << DendriteLength[changed[k]];
   }
+  oss << "] len=[";
+  for(int i = 0; i < NumInputDendrite; ++i)
+  {
+   if(i) oss << ',';
+   oss << DendriteLength[i];
+  }
+  oss << "]";
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
  }
+
+ if(!Neuron)
+  return false;
 
  NPulseGeneratorTransit *gen = GetDatasetGenerator();
  if(gen)
   gen->DisconnectAll("Output");
 
- OldDendriteLength[num] = DendriteLength[num];
- DendriteLength[num] += DendStatus[num];
-
- if(Neuron->StructureBuildMode != 2)
-  Neuron->StructureBuildMode = 2;
-
  Neuron->NumDendriteMembranePartsVec = DendriteLength;
- Neuron->Reset();
- Neuron->InvalidateActiveComponentsCache();
-
- if((DendStatus[num] == 1) && (DendriteLength[num] > 1))
+ Neuron->StructureBuildMode = 2;
+ if(!Neuron->Build())
  {
-  UEPtr<NPulseMembrane> prevdendrite = Neuron->GetComponentL<NPulseMembrane>(
-   MakeLearnerDendriteName(num + 1, DendriteLength[num] - 1), true);
-  if(prevdendrite)
+  LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
+               "ApplyPendingDendriteLengthChanges: Neuron->Build failed");
+  return false;
+ }
+
+ // Neuron->Build already creates tip membranes with default NumExcitatorySynapses=1
+ // and cable/PosNeg links. Only rebuild a tip when synapse count must change;
+ // a blanket tip->Build() after cable linking has left ExcSynapse Input dead
+ // for Dataset fan-out on newly added distal segments.
+ for(int i : changed)
+ {
+  UEPtr<NPulseMembrane> tip = Neuron->GetComponentL<NPulseMembrane>(
+   MakeLearnerDendriteName(i + 1, DendriteLength[i]), true);
+  if(!tip)
   {
-   prevdendrite->NumExcitatorySynapses = 1;
-   prevdendrite->Build();
+   LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
+                std::string("ApplyPendingDendriteLengthChanges: missing tip ")
+                + MakeLearnerDendriteName(i + 1, DendriteLength[i]));
+   return false;
+  }
+  if(int(tip->NumExcitatorySynapses) != NumSynapse[i])
+  {
+   tip->NumExcitatorySynapses = NumSynapse[i];
+   tip->Build();
+  }
+  if(!tip->GetActivity())
+   tip->SetActivity(true);
+  if(!tip->IsInit())
+   tip->Init();
+
+  if(DendriteLength[i] > OldDendriteLength[i] && DendriteLength[i] > 1)
+  {
+   UEPtr<NPulseMembrane> prevdendrite = Neuron->GetComponentL<NPulseMembrane>(
+    MakeLearnerDendriteName(i + 1, OldDendriteLength[i]), true);
+   // Previous tip keeps one ExcSynapse for structure, but must not stay
+   // driven by Dataset — RelinkDendriteSynapsesToDataset disconnects it.
+   if(prevdendrite && int(prevdendrite->NumExcitatorySynapses) != 1)
+   {
+    prevdendrite->NumExcitatorySynapses = 1;
+    prevdendrite->Build();
+   }
   }
  }
 
- UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>(
-  MakeLearnerDendriteName(num + 1, DendriteLength[num]), true);
- if(!dendrite)
-  return false;
- dendrite->NumExcitatorySynapses = NumSynapse[num];
- dendrite->Build();
-
- Neuron->NumDendriteMembranePartsVec = DendriteLength;
  Neuron->Reset();
  Neuron->InvalidateActiveComponentsCache();
 
- // One Generator→ExcSynapse link per dendrite, on the distal tip only.
  for(int d = 0; d < NumInputDendrite; ++d)
   res &= RelinkDendriteSynapsesToDataset(d);
 
@@ -1167,7 +1249,10 @@ bool NNeuronTimeLearner::MeasureMaxPotentialAndTime(void)
   const double t_end = FirstImpulseTime + pattern_end + settle;
   if(now > t_end)
   {
-   PeakLocked[i] = true;
+   // Lock only after a real peak; otherwise leave unlocked so IterationGap
+   // ends the wait while SomaPeakValid stays false (amp≈0 is not sync).
+   if(i < int(PeakSeen.size()) && PeakSeen[i] && i < int(PeakLocked.size()))
+    PeakLocked[i] = true;
    continue;
   }
 
@@ -1211,18 +1296,56 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
   return true;
  }
 
- double dt = TimeOfMaxIterSomaAmp[NumInputDendrite - 1] - TimeOfMaxIterSomaAmp[num];
+ const int ref = NumInputDendrite - 1;
+ const bool num_valid = (num < int(SomaPeakValid.size())) && SomaPeakValid[num];
+ const bool ref_valid = (ref < int(SomaPeakValid.size())) && SomaPeakValid[ref];
 
- // Only SyncTolerance stops growth. The Learner sign-flip heuristic freezes too early
- // when a single-segment step overshoots noisy timing.
- if(fabs(dt) <= SyncTolerance)
+ if(!num_valid || !ref_valid)
+ {
+  // Invalid measurement: do not treat as synced; push growth if this dendrite
+  // is not longer than the reference (heuristic for missing tip signal).
+  if(DendriteLength[num] <= DendriteLength[ref])
+   DendStatus[num] = 1;
+  if (EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "ChangeDendriteStatus: num=" << num
+       << " invalid peak (num_valid=" << (num_valid ? 1 : 0)
+       << " ref_valid=" << (ref_valid ? 1 : 0)
+       << ") skip sync decision DendStatus=" << DendStatus[num];
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
+  return true;
+ }
+
+ const double dt = TimeOfMaxIterSomaAmp[ref] - TimeOfMaxIterSomaAmp[num];
+ const double prev_dt = (num < int(PrevDissynchronization.size()))
+  ? PrevDissynchronization[num] : 0.0;
+
+ if(dt == 0.0)
   DendStatus[num] = 0;
+ else if(fabs(dt) <= SyncTolerance)
+  DendStatus[num] = 0;
+ else if((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001)
+         && (prev_dt * dt < 0.0)
+         && (fabs(dt) <= fabs(prev_dt)))
+  DendStatus[num] = 0; // sign flip with shrinking |dt| — stop oscillation
  else if(dt > 0)
   DendStatus[num] = 1;
  else
   DendStatus[num] = -1;
 
  Dissynchronization[num] = dt;
+
+ if (EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "ChangeDendriteStatus: num=" << num
+      << " dt=" << dt
+      << " DendStatus=" << DendStatus[num]
+      << " prev_dt=" << prev_dt;
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
  return true;
 }
 
@@ -1288,8 +1411,13 @@ bool NNeuronTimeLearner::Experiment(void)
 
 bool NNeuronTimeLearner::AllDendritesSynced(void) const
 {
+ const int ref = NumInputDendrite - 1;
  for(int i = 0; i < NumInputDendrite - 1; i++)
  {
+  if(i < int(SomaPeakValid.size()) && !SomaPeakValid[i])
+   return false;
+  if(ref < int(SomaPeakValid.size()) && !SomaPeakValid[ref])
+   return false;
   if(DendStatus[i])
    return false;
   if(i < int(Dissynchronization.size()) && fabs(Dissynchronization[i]) > SyncTolerance.GetData())
@@ -1437,6 +1565,25 @@ void NNeuronTimeLearner::BeginTrainingIteration(double now)
 
 void NNeuronTimeLearner::FinishTrainingIteration(void)
 {
+ PrevDissynchronization = Dissynchronization;
+ SomaPeakValid.assign(static_cast<size_t>(NumInputDendrite.GetData()), false);
+ for(int i = 0; i < NumInputDendrite; ++i)
+ {
+  const bool valid = (i < int(MaxIterSomaAmp.size()))
+   && (MaxIterSomaAmp[i] > kMinMeasurableSomaAmp)
+   && (i < int(PeakSeen.size()) ? PeakSeen[i] : false);
+  if(i < int(SomaPeakValid.size()))
+   SomaPeakValid[i] = valid;
+  if(!valid && EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "FinishTrainingIteration: soma " << (i + 1)
+       << " no peak detected (amp="
+       << ((i < int(MaxIterSomaAmp.size())) ? MaxIterSomaAmp[i] : 0.0) << ")";
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
+ }
+
  if(TrainingPhase == kPhaseSync)
  {
   for(int i = 0; i < NumInputDendrite; i++)
@@ -1493,6 +1640,12 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
    if(i) oss << ',';
    oss << Dissynchronization[i];
   }
+  oss << "] peakValid=[";
+  for(size_t i = 0; i < SomaPeakValid.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << (SomaPeakValid[i] ? 1 : 0);
+  }
   oss << "]";
   if(Neuron && !DendriteLength.empty())
   {
@@ -1511,23 +1664,7 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
 
  // Apply structure updates in the inter-burst gap so the next burst sees a stable neuron.
  if(TrainingPhase == kPhaseSync && CanChangeDendLength)
- {
-  int worst = -1;
-  double worst_abs = -1.0;
-  for(int j = 0; j < NumInputDendrite - 1; ++j)
-  {
-   if(!DendStatus[j])
-    continue;
-   const double a = fabs(Dissynchronization[j]);
-   if(a > worst_abs)
-   {
-    worst_abs = a;
-    worst = j;
-   }
-  }
-  if(worst >= 0)
-   ChangeDendriteLength(worst);
- }
+  ApplyPendingDendriteLengthChanges();
  else if(TrainingPhase == kPhaseNormalize)
  {
   for(int i = 0; i < NumInputDendrite; ++i)
