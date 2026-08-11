@@ -72,37 +72,52 @@ bool NNeuronTimeLearner::LinkSynapseToDataset(NPulseSynapseCommon *synapse)
  const std::string gen_path = DatasetGeneratorPath();
  // Always recreate: after dendrite growth CheckLink may stay true while connectors are gone.
  synapse->DisconnectAll("Input");
- return CreateLink(gen_path, "Output", synapse->GetLongName(this), "Input");
+ const bool ok = CreateLink(gen_path, "Output", synapse->GetLongName(this), "Input");
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "LinkSynapseToDataset: " << gen_path << ".Output -> "
+      << synapse->GetLongName(this) << ".Input ok=" << (ok ? 1 : 0);
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
+ return ok;
 }
 
 bool NNeuronTimeLearner::RelinkDendriteSynapsesToDataset(int dendrite_index0)
 {
  if(!Neuron || dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
   return true;
- // Drive the distal tip. Also keep a link on segment 1: for some membrane builds the
- // newly added distal segment accepts CreateLink but never shows synaptic current.
+ // Only the distal tip receives the dataset generator. A second drive on segment 1
+ // (previous workaround) left long dendrites with two Generator→ExcSynapse links.
  const int tip_seg = DendriteLength[dendrite_index0];
- const int segs[2] = { tip_seg, 1 };
- for(int s = 0; s < 2; ++s)
+ if(tip_seg > 1)
  {
-  if(s == 1 && segs[1] == segs[0])
-   break;
-  UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>(
-   MakeLearnerDendriteName(dendrite_index0 + 1, segs[s]), true);
-  if(!dendrite)
-   continue;
-  const int nsyn = (segs[s] == tip_seg) ? NumSynapse[dendrite_index0] : 1;
-  for(int k = 0; k < nsyn; k++)
+  UEPtr<NPulseMembrane> proximal = Neuron->GetComponentL<NPulseMembrane>(
+   MakeLearnerDendriteName(dendrite_index0 + 1, 1), true);
+  if(proximal)
   {
-   NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
-    std::string("ExcSynapse") + sntoa(k + 1), true);
-   if(!synapse)
-    continue;
-   if(k != 0)
-    synapse->Resistance = SynapseResistanceStep;
-   if(!LinkSynapseToDataset(synapse))
-    return false;
+   NPulseSynapseCommon *prox_syn = proximal->GetComponentL<NPulseSynapseCommon>(
+    std::string("ExcSynapse1"), true);
+   if(prox_syn)
+    prox_syn->DisconnectAll("Input");
   }
+ }
+
+ UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>(
+  MakeLearnerDendriteName(dendrite_index0 + 1, tip_seg), true);
+ if(!dendrite)
+  return false;
+ const int nsyn = NumSynapse[dendrite_index0];
+ for(int k = 0; k < nsyn; k++)
+ {
+  NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
+   std::string("ExcSynapse") + sntoa(k + 1), true);
+  if(!synapse)
+   continue;
+  if(k != 0)
+   synapse->Resistance = SynapseResistanceStep;
+  if(!LinkSynapseToDataset(synapse))
+   return false;
  }
  return true;
 }
@@ -392,17 +407,17 @@ bool NNeuronTimeLearner::SetMaxDendriteLength(const int &value)
  if(value < 1)
   return false;
 
- for (int i = 0; i < NumInputDendrite; i++)
+ // During XML load NumInputDendrite may already be 4 while DendriteLength is still
+ // the default size-1 vector — never index past DendriteLength.size().
+ const int n = std::min(NumInputDendrite.GetData(), int(DendriteLength.size()));
+ for (int i = 0; i < n; i++)
  {
-  if (DendriteLength.empty())
-   return true;
-
   if (DendriteLength[i] > value)
   {
    DendriteLength[i] = value;
 
    if (!Neuron)
-    return true;
+    continue;
 
    if(Neuron->StructureBuildMode != 2)
    {
@@ -412,17 +427,20 @@ bool NNeuronTimeLearner::SetMaxDendriteLength(const int &value)
    {
     vector<int> temp;
     temp = Neuron->NumDendriteMembranePartsVec;
-    temp[i] = value;
-    Neuron->NumDendriteMembranePartsVec = temp;
+    if(i < int(temp.size()))
+    {
+     temp[i] = value;
+     Neuron->NumDendriteMembranePartsVec = temp;
+    }
    }
    Neuron->Reset();
 
    UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>(
     MakeLearnerDendriteName(i + 1, DendriteLength[i]), true);
    if(!dendrite)
-    return true;
+    continue;
 
-   dendrite->NumExcitatorySynapses = NumSynapse[i];
+   dendrite->NumExcitatorySynapses = (i < int(NumSynapse.size())) ? NumSynapse[i] : 1;
    dendrite->Build();
    RelinkDendriteSynapsesToDataset(i);
    Neuron->Reset();
@@ -515,6 +533,8 @@ bool NNeuronTimeLearner::SetExperimentMode(const bool &value)
 bool NNeuronTimeLearner::SetDendriteLength(const std::vector<int> &value)
 {
  (void)value;
+ // Parameters may override Model after an early snapshot; allow re-snapshot.
+ HasUntrainedSnapshot = false;
  OldDendriteLength = DendriteLength;
  if (DendriteLength.size() != static_cast<size_t>(NumInputDendrite))
  {
@@ -630,6 +650,14 @@ bool NNeuronTimeLearner::BuildStructure()
  bool res(true);
  try
  {
+ Neuron = GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
+ if(Neuron)
+ {
+  // Drop stale neuron copied from class prototype / previous save so cable and
+  // generator links are rebuilt for current DendriteLength.
+  DelComponent(std::string("Neuron"));
+  Neuron = NULL;
+ }
  Neuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron"), NeuronClassName);
  Neuron->SetCoord(MVector<double,3>(8.7 + 1 * 7, 1.67, 0));
  // Independent dendrite lengths are required for temporal sync.
@@ -642,6 +670,11 @@ bool NNeuronTimeLearner::BuildStructure()
    DendriteLength.resize(NumInputDendrite, 1);
   else
    DendriteLength.resize(NumInputDendrite);
+ }
+ for(int i = 0; i < NumInputDendrite; ++i)
+ {
+  if(DendriteLength[i] < 1)
+   DendriteLength[i] = 1;
  }
 
  if (OldDendriteLength.size() != static_cast<size_t>(NumInputDendrite))
@@ -657,7 +690,28 @@ bool NNeuronTimeLearner::BuildStructure()
   Neuron->StructureBuildMode = 2;
  }
  Neuron->NumDendriteMembranePartsVec = DendriteLength;
+ // Force neuron ABuild so soma/dendrite cables and Pos/Neg generator links match tips.
+ Neuron->StructureBuildMode = 2;
+ if(!Neuron->Build())
+ {
+  LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
+               "BuildStructure: Neuron->Build failed after length sync");
+  return false;
+ }
  Neuron->Reset();
+
+ if (EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "BuildStructure: DendriteLength=[";
+  for(int i = 0; i < NumInputDendrite; ++i)
+  {
+   if(i) oss << ',';
+   oss << DendriteLength[i];
+  }
+  oss << "] NeuronClass=" << NeuronClassName.GetData();
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
 
  // Remove legacy per-dendrite Sources from copied Learner layouts
  for(int i = 0; i < std::max(OldNumInputDendrite, NumInputDendrite.GetData()) + 4; i++)
@@ -823,7 +877,7 @@ bool NNeuronTimeLearner::ADefault(void)
  StructureBuildMode = 1;
  CalculateMode = 0;
  PulseGeneratorClassName = "NPulseGeneratorTransit";
- NeuronClassName = "NSPNeuronBio2";
+ NeuronClassName = "NSPNeuronGen";
  SynapseClassName = "NPSynapseBio";
  IsNeedToTrain = true;
  ExperimentMode = false;
@@ -1025,8 +1079,7 @@ bool NNeuronTimeLearner::ChangeDendriteLength(int num)
  Neuron->Reset();
  Neuron->InvalidateActiveComponentsCache();
 
- // Relink keeps a drive on segment 1 as well as the tip (see RelinkDendriteSynapsesToDataset):
- // distal-only injection on BuildStructure-created cables currently yields amp=0.
+ // One Generator→ExcSynapse link per dendrite, on the distal tip only.
  for(int d = 0; d < NumInputDendrite; ++d)
   res &= RelinkDendriteSynapsesToDataset(d);
 
