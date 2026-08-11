@@ -29,8 +29,8 @@ namespace NMSDK {
 using namespace RDK;
 
 /// Temporal-pattern neuron learner: one NDatasetMatrix burst fans out to all dendrites;
-/// dendrite k grows from pulse k; last dendrite is sync reference; then synapse normalize.
-/// Algorithm overview: Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearner/ALGORITHM.md
+/// Sync is one-dendrite-per-burst vs PrevPeakRel snapshot (last dendrite is Prev anchor);
+/// then synapse normalize. See Bin/Configs/.../TimeNeuronTimeLearner/ALGORITHM.md
 class RDK_LIB_TYPE NNeuronTimeLearner: public UNet
 {
 public:
@@ -165,6 +165,27 @@ protected:
  std::vector<double> AmpDifference;
  /// True if MaxIterSomaAmp[i] exceeded kMinMeasurableSomaAmp this iteration
  std::vector<bool> SomaPeakValid;
+ /// TimeOfMax[i] - FirstImpulseTime (current burst)
+ std::vector<double> PeakRel;
+ /// TimeOfMax[i] - (FirstImpulseTime + ExpectedPulseRelTimes[i])
+ std::vector<double> DelayFromPulse;
+ /// Previous-burst PeakRel / Delay / validity (Sync reference snapshot)
+ std::vector<double> PrevPeakRel;
+ std::vector<double> PrevDelayFromPulse;
+ std::vector<bool> PrevPeakValid;
+ bool HasPrevPeakSnapshot;
+ /// Index 0..N-2 trained this burst (round-robin)
+ int ActiveDendrite;
+ /// |dt| from last decision per dendrite (AllDendritesSynced / no-improve)
+ std::vector<double> DendLastAbsDt;
+ std::vector<int> NoImproveCount;
+ /// Accepted without |dt|≤tol (amp-collapse / no-improve stop)
+ std::vector<bool> DendBestEffortSynced;
+ /// Estimated cable delay per segment (sec); refined from observed |Δdt|/ΔL
+ double EstDelayPerSeg;
+ /// Last length delta applied for EstDelayPerSeg update
+ int LastLengthDelta;
+ int LastLengthDeltaDendrite;
  std::vector<int> UntrainedDendriteLength;
  std::vector<int> UntrainedNumSynapse;
  std::vector<double> UntrainedInitialSomaPotential;
@@ -174,6 +195,12 @@ protected:
  std::vector<int> SynapseStatus;
 
  static constexpr double kMinMeasurableSomaAmp = 1e-6;
+ static constexpr double kMinSettle = 0.08;
+ static constexpr double kDelayPerSegDefault = 0.01;
+ static constexpr double kGapSlack = 0.05;
+ static constexpr int kNoImproveLimit = 2;
+ static constexpr double kAmpCollapseRatio = 0.35;
+ static constexpr int kMaxLengthStep = 8;
 
  int EpochCur;
  bool CanChangeDendLength;
@@ -230,7 +257,7 @@ protected:
  bool ZeroingTrainingPattern(void);
  bool ResetToUntrained(void);
  bool ChangeDendriteLength(int num);
- /// Grow/shrink all dendrites with DendStatus!=0 in one Build/relink pass
+ /// Grow/shrink pending dendrites (typically one active) in one Build/relink pass
  bool ApplyPendingDendriteLengthChanges(void);
  bool ChangeSynapseNumber(int num);
  bool MeasureMaxPotentialAndTime(void);
@@ -257,6 +284,16 @@ protected:
  void FinishTrainingIteration(void);
  bool AllDendritesSynced(void) const;
  bool AllSynapsesNormalized(void) const;
+
+ double PatternSpanSec() const;
+ double SettleMarginSec() const;
+ double EffectiveIterationGapSec() const;
+ double EffectiveDatasetDelaySec() const;
+ void ResizeSyncVectors(int n);
+ void ComputePeakRelAndDelay(void);
+ int SelectActiveDendrite() const;
+ void CommitPrevPeakSnapshot(void);
+ void RefreshDendLastAbsDtFromPrevAnchor(void);
 };
 
 }

@@ -56,6 +56,136 @@ std::string NNeuronTimeLearner::DatasetGeneratorPath(void)
  return std::string("DatasetMatrix.Generator1");
 }
 
+double NNeuronTimeLearner::PatternSpanSec() const
+{
+ if(ExpectedPulseRelTimes.empty())
+  return 0.0;
+ return ExpectedPulseRelTimes.back();
+}
+
+double NNeuronTimeLearner::SettleMarginSec() const
+{
+ int max_len = 1;
+ for(size_t i = 0; i < DendriteLength.size(); ++i)
+ {
+  if(DendriteLength[i] > max_len)
+   max_len = DendriteLength[i];
+ }
+ const double from_len = kDelayPerSegDefault * double(max_len);
+ return std::max(kMinSettle, from_len);
+}
+
+double NNeuronTimeLearner::EffectiveIterationGapSec() const
+{
+ const double configured = IterationGap.GetData() > 0.0 ? IterationGap.GetData() : 0.5;
+ return std::max(configured, PatternSpanSec() + SettleMarginSec() + kGapSlack);
+}
+
+double NNeuronTimeLearner::EffectiveDatasetDelaySec() const
+{
+ const double configured = Delay.GetData() > 0.0 ? Delay.GetData() : 0.5;
+ return std::max(configured, SettleMarginSec() + kGapSlack);
+}
+
+void NNeuronTimeLearner::ResizeSyncVectors(int n)
+{
+ if(n < 1)
+  n = 1;
+ const double large_dt = (IterationGap.GetData() > 0.0 ? IterationGap.GetData() : 0.5) + 0.001;
+ PeakRel.assign(static_cast<size_t>(n), 0.0);
+ DelayFromPulse.assign(static_cast<size_t>(n), 0.0);
+ PrevPeakRel.assign(static_cast<size_t>(n), 0.0);
+ PrevDelayFromPulse.assign(static_cast<size_t>(n), 0.0);
+ PrevPeakValid.assign(static_cast<size_t>(n), false);
+ DendLastAbsDt.assign(static_cast<size_t>(n), large_dt);
+ NoImproveCount.assign(static_cast<size_t>(n), 0);
+ DendBestEffortSynced.assign(static_cast<size_t>(n), false);
+ ActiveDendrite = 0;
+ HasPrevPeakSnapshot = false;
+ EstDelayPerSeg = kDelayPerSegDefault;
+ LastLengthDelta = 0;
+ LastLengthDeltaDendrite = -1;
+}
+
+void NNeuronTimeLearner::ComputePeakRelAndDelay(void)
+{
+ const int n = NumInputDendrite.GetData();
+ if(int(PeakRel.size()) != n)
+  PeakRel.assign(static_cast<size_t>(n), 0.0);
+ if(int(DelayFromPulse.size()) != n)
+  DelayFromPulse.assign(static_cast<size_t>(n), 0.0);
+
+ for(int i = 0; i < n; ++i)
+ {
+  if(i >= int(SomaPeakValid.size()) || !SomaPeakValid[i]
+     || i >= int(TimeOfMaxIterSomaAmp.size()))
+  {
+   PeakRel[static_cast<size_t>(i)] = 0.0;
+   DelayFromPulse[static_cast<size_t>(i)] = 0.0;
+   continue;
+  }
+  const double t_pulse_rel = (i < int(ExpectedPulseRelTimes.size()))
+   ? ExpectedPulseRelTimes[static_cast<size_t>(i)] : 0.0;
+  PeakRel[static_cast<size_t>(i)] = TimeOfMaxIterSomaAmp[static_cast<size_t>(i)] - FirstImpulseTime;
+  DelayFromPulse[static_cast<size_t>(i)] =
+   TimeOfMaxIterSomaAmp[static_cast<size_t>(i)] - (FirstImpulseTime + t_pulse_rel);
+ }
+}
+
+int NNeuronTimeLearner::SelectActiveDendrite() const
+{
+ const int n = NumInputDendrite.GetData();
+ if(n < 2)
+  return 0;
+ // CountIteration 0 is the bootstrap snapshot pack; training rounds start at 1.
+ const int round = (CountIteration > 0) ? (CountIteration - 1) : 0;
+ return round % (n - 1);
+}
+
+void NNeuronTimeLearner::CommitPrevPeakSnapshot(void)
+{
+ const int n = NumInputDendrite.GetData();
+ if(int(PrevPeakRel.size()) != n)
+  PrevPeakRel.assign(static_cast<size_t>(n), 0.0);
+ if(int(PrevDelayFromPulse.size()) != n)
+  PrevDelayFromPulse.assign(static_cast<size_t>(n), 0.0);
+ if(int(PrevPeakValid.size()) != n)
+  PrevPeakValid.assign(static_cast<size_t>(n), false);
+
+ for(int i = 0; i < n; ++i)
+ {
+  const bool valid = (i < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(i)];
+  PrevPeakValid[static_cast<size_t>(i)] = valid;
+  PrevPeakRel[static_cast<size_t>(i)] =
+   (i < int(PeakRel.size())) ? PeakRel[static_cast<size_t>(i)] : 0.0;
+  PrevDelayFromPulse[static_cast<size_t>(i)] =
+   (i < int(DelayFromPulse.size())) ? DelayFromPulse[static_cast<size_t>(i)] : 0.0;
+ }
+ HasPrevPeakSnapshot = true;
+}
+
+void NNeuronTimeLearner::RefreshDendLastAbsDtFromPrevAnchor(void)
+{
+ const int n = NumInputDendrite.GetData();
+ const int ref = n - 1;
+ if(n < 2 || !HasPrevPeakSnapshot)
+  return;
+ if(ref < 0 || ref >= int(PrevPeakValid.size()) || !PrevPeakValid[static_cast<size_t>(ref)])
+  return;
+ if(int(DendLastAbsDt.size()) != n)
+  DendLastAbsDt.assign(static_cast<size_t>(n), IterationGap.GetData() + 0.001);
+
+ for(int i = 0; i < n - 1; ++i)
+ {
+  if(i >= int(SomaPeakValid.size()) || !SomaPeakValid[static_cast<size_t>(i)])
+   continue;
+  if(i >= int(PeakRel.size()))
+   continue;
+  DendLastAbsDt[static_cast<size_t>(i)] =
+   fabs(PrevPeakRel[static_cast<size_t>(ref)] - PeakRel[static_cast<size_t>(i)]);
+ }
+}
+
 NPulseGeneratorTransit* NNeuronTimeLearner::GetDatasetGenerator(void)
 {
  if(!Dataset)
@@ -139,7 +269,7 @@ void NNeuronTimeLearner::SyncDatasetDimsFromDendrites(void)
   Dataset->SetNumSamples(1);
  if(Dataset->MaxSpikesPerFeature != NumInputDendrite)
   Dataset->SetMaxSpikesPerFeature(NumInputDendrite);
- Dataset->Delay = Delay;
+ Dataset->Delay = EffectiveDatasetDelaySec();
  Dataset->AdvanceSampleAfterBurst = false;
  Dataset->StateGeneration = 2;
 }
@@ -228,6 +358,11 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  IterationActive = false;
  WaitingPeakAfterLastPulse = false;
  LastPulseTime = 0.0;
+ HasPrevPeakSnapshot = false;
+ ActiveDendrite = 0;
+ EstDelayPerSeg = kDelayPerSegDefault;
+ LastLengthDelta = 0;
+ LastLengthDeltaDendrite = -1;
 }
 
 
@@ -316,6 +451,8 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
  PrevGenOutput = 0.0;
  PeakLocked.assign(NumInputDendrite, false);
  PeakSeen.assign(NumInputDendrite, false);
+ ResizeSyncVectors(NumInputDendrite.GetData());
+ CanChangeDendLength = true;
 
  if (Neuron)
  {
@@ -367,6 +504,8 @@ bool NNeuronTimeLearner::SetIsNeedToTrain(const bool &value)
  if(value)
  {
   TrainingPhase = kPhaseSync;
+  CanChangeDendLength = true;
+  HasPrevPeakSnapshot = false;
   SetLTZThreshold(TrainingLTZThreshold.GetData());
   LTZThreshold.SetDataDirect(TrainingLTZThreshold.GetData());
  }
@@ -391,7 +530,7 @@ bool NNeuronTimeLearner::SetCalculateMode(const int &value)
 bool NNeuronTimeLearner::SetDelay(const double &value)
 {
  if(Dataset)
-  Dataset->Delay = value;
+  Dataset->Delay = std::max(value > 0.0 ? value : 0.5, SettleMarginSec() + kGapSlack);
  return true;
 }
 
@@ -817,12 +956,15 @@ bool NNeuronTimeLearner::BuildStructure()
  PrevDissynchronization = Dissynchronization;
  AmpDifference.assign(NumInputDendrite, 0.0);
  SomaPeakValid.assign(NumInputDendrite, false);
+ ResizeSyncVectors(NumInputDendrite.GetData());
 
  InputPattern.Resize(NumInputDendrite, 1, 0.0);
  PrevInputPattern.Assign(NumInputDendrite, 1, -1.0);
  AdditionalInputPattern.Resize(NumInputDendrite, 1, 0.0);
 
  TrainingPhase = IsNeedToTrain ? kPhaseSync : kPhaseDone;
+ if(IsNeedToTrain.GetData())
+  CanChangeDendLength = true;
  IterationActive = false;
  HasPrevIteration = false;
  PulseIndexInIter = 0;
@@ -937,6 +1079,7 @@ bool NNeuronTimeLearner::ADefault(void)
  DendStatus.assign(NumInputDendrite, 0);
  SynapseStatus.assign(NumInputDendrite, 0);
  EnableDebug = false;
+ ResizeSyncVectors(NumInputDendrite.GetData());
 
  IterationActive = false;
  HasPrevIteration = false;
@@ -1011,6 +1154,19 @@ bool NNeuronTimeLearner::AReset(void)
  PrevGenOutput = 0.0;
  IterationActive = false;
  HasPrevIteration = false;
+ HasPrevPeakSnapshot = false;
+ if(int(DendLastAbsDt.size()) != NumInputDendrite.GetData())
+  ResizeSyncVectors(NumInputDendrite.GetData());
+ else
+ {
+  const double large_dt = (IterationGap.GetData() > 0.0 ? IterationGap.GetData() : 0.5) + 0.001;
+  std::fill(DendLastAbsDt.begin(), DendLastAbsDt.end(), large_dt);
+  std::fill(NoImproveCount.begin(), NoImproveCount.end(), 0);
+  if(DendBestEffortSynced.size() != DendLastAbsDt.size())
+   DendBestEffortSynced.assign(DendLastAbsDt.size(), false);
+  else
+   std::fill(DendBestEffortSynced.begin(), DendBestEffortSynced.end(), false);
+ }
  PulseIndexInIter = 0;
  ActiveMeasureSoma = -1;
  WaitingPeakAfterLastPulse = false;
@@ -1077,7 +1233,43 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
   if(i >= int(OldDendriteLength.size()))
    OldDendriteLength.resize(static_cast<size_t>(i + 1), DendriteLength[i]);
   OldDendriteLength[i] = DendriteLength[i];
-  DendriteLength[i] += DendStatus[i];
+
+  const int direction = (DendStatus[i] > 0) ? 1 : -1;
+  int delta = 1;
+  if(i < int(Dissynchronization.size()) && EstDelayPerSeg > 1e-9)
+  {
+   delta = int(std::round(fabs(Dissynchronization[static_cast<size_t>(i)]) / EstDelayPerSeg));
+   if(delta < 1)
+    delta = 1;
+   if(delta > kMaxLengthStep)
+    delta = kMaxLengthStep;
+  }
+  if(direction > 0)
+  {
+   const int room = MaxDendriteLength.GetData() - DendriteLength[i];
+   if(room < 1)
+   {
+    DendStatus[i] = 0;
+    continue;
+   }
+   if(delta > room)
+    delta = room;
+  }
+  else
+  {
+   const int room = DendriteLength[i] - 1;
+   if(room < 1)
+   {
+    DendStatus[i] = 0;
+    continue;
+   }
+   if(delta > room)
+    delta = room;
+  }
+
+  DendriteLength[i] += direction * delta;
+  LastLengthDelta = delta;
+  LastLengthDeltaDendrite = i;
   changed.push_back(i);
  }
 
@@ -1233,8 +1425,8 @@ bool NNeuronTimeLearner::MeasureMaxPotentialAndTime(void)
 
  const double pattern_end = ExpectedPulseRelTimes.empty()
   ? 0.0 : ExpectedPulseRelTimes.back();
- // Allow dendritic delay up to the full pattern span plus a small settle margin.
- const double settle = 0.08;
+ // Allow dendritic delay up to settle margin that scales with max length.
+ const double settle = SettleMarginSec();
 
  for(int i = 0; i < NumInputDendrite; ++i)
  {
@@ -1296,31 +1488,80 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
   return true;
  }
 
+ if(num != ActiveDendrite)
+ {
+  DendStatus[num] = 0;
+  return true;
+ }
+
  const int ref = NumInputDendrite - 1;
  const bool num_valid = (num < int(SomaPeakValid.size())) && SomaPeakValid[num];
- const bool ref_valid = (ref < int(SomaPeakValid.size())) && SomaPeakValid[ref];
+ const bool prev_ref_valid = HasPrevPeakSnapshot
+  && (ref < int(PrevPeakValid.size())) && PrevPeakValid[static_cast<size_t>(ref)];
 
- if(!num_valid || !ref_valid)
+ if(!num_valid || !prev_ref_valid || num >= int(PeakRel.size())
+    || ref >= int(PrevPeakRel.size()))
  {
-  // Invalid measurement: do not treat as synced; push growth if this dendrite
-  // is not longer than the reference (heuristic for missing tip signal).
+  // Invalid measurement / no Prev anchor: push growth if not longer than ref.
   if(DendriteLength[num] <= DendriteLength[ref])
    DendStatus[num] = 1;
   if (EnableDebug.GetData() && RDK::GetLogger())
   {
    std::ostringstream oss;
    oss << "ChangeDendriteStatus: num=" << num
-       << " invalid peak (num_valid=" << (num_valid ? 1 : 0)
-       << " ref_valid=" << (ref_valid ? 1 : 0)
-       << ") skip sync decision DendStatus=" << DendStatus[num];
+       << " invalid peak/anchor (num_valid=" << (num_valid ? 1 : 0)
+       << " prev_ref_valid=" << (prev_ref_valid ? 1 : 0)
+       << ") DendStatus=" << DendStatus[num];
    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
   }
   return true;
  }
 
- const double dt = TimeOfMaxIterSomaAmp[ref] - TimeOfMaxIterSomaAmp[num];
+ const double dt = PrevPeakRel[static_cast<size_t>(ref)] - PeakRel[static_cast<size_t>(num)];
  const double prev_dt = (num < int(PrevDissynchronization.size()))
   ? PrevDissynchronization[num] : 0.0;
+
+ // Did we apply a length change to this dendrite after the previous decision?
+ const bool had_length_apply = (LastLengthDeltaDendrite == num && LastLengthDelta > 0);
+ const int applied_delta = LastLengthDelta;
+
+ // Refine EstDelayPerSeg from previous apply on this dendrite.
+ if(had_length_apply && fabs(prev_dt) > 1e-12 && fabs(dt) < fabs(prev_dt))
+ {
+  const double observed = (fabs(prev_dt) - fabs(dt)) / double(applied_delta);
+  if(observed > 1e-4 && observed < 1.0)
+   EstDelayPerSeg = 0.7 * EstDelayPerSeg + 0.3 * observed;
+ }
+ LastLengthDelta = 0;
+ LastLengthDeltaDendrite = -1;
+
+ // Amp collapse: growing further only smooths peaks — accept as best-effort sync.
+ if(dt > 0.0
+    && num < int(InitialSomaPotential.size())
+    && InitialSomaPotential[num] > 0.0
+    && num < int(MaxIterSomaAmp.size())
+    && MaxIterSomaAmp[num] < kAmpCollapseRatio * InitialSomaPotential[num])
+ {
+  DendStatus[num] = 0;
+  // Allow AllDendritesSynced to pass: further lengthening is useless.
+  if(num < int(DendLastAbsDt.size()))
+   DendLastAbsDt[static_cast<size_t>(num)] = std::min(fabs(dt), SyncTolerance.GetData());
+  if(num < int(DendBestEffortSynced.size()))
+   DendBestEffortSynced[static_cast<size_t>(num)] = true;
+  Dissynchronization[num] = dt;
+  if(num < int(NoImproveCount.size()))
+   NoImproveCount[static_cast<size_t>(num)] = 0;
+  if (EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "ChangeDendriteStatus: num=" << num
+       << " amp-collapse accept dt=" << dt
+       << " amp=" << MaxIterSomaAmp[num]
+       << " init=" << InitialSomaPotential[num];
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
+  return true;
+ }
 
  if(dt == 0.0)
   DendStatus[num] = 0;
@@ -1335,6 +1576,30 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
  else
   DendStatus[num] = -1;
 
+ if(DendStatus[num] != 0 && num < int(DendBestEffortSynced.size()))
+  DendBestEffortSynced[static_cast<size_t>(num)] = false;
+
+ // No-improve only after a real length apply on this dendrite failed to reduce |dt|.
+ if(num < int(NoImproveCount.size()))
+ {
+  if(had_length_apply && DendStatus[num] != 0
+     && fabs(dt) >= fabs(prev_dt) - 1e-12)
+   NoImproveCount[static_cast<size_t>(num)]++;
+  else if(fabs(dt) < fabs(prev_dt) - 1e-12 || fabs(dt) <= SyncTolerance.GetData())
+   NoImproveCount[static_cast<size_t>(num)] = 0;
+  if(NoImproveCount[static_cast<size_t>(num)] >= kNoImproveLimit)
+  {
+   DendStatus[num] = 0;
+   if(num < int(DendBestEffortSynced.size()))
+    DendBestEffortSynced[static_cast<size_t>(num)] = true;
+  }
+ }
+
+ if(fabs(dt) <= SyncTolerance.GetData() && num < int(DendBestEffortSynced.size()))
+  DendBestEffortSynced[static_cast<size_t>(num)] = false; // real sync supersedes best-effort
+
+ if(num < int(DendLastAbsDt.size()))
+  DendLastAbsDt[static_cast<size_t>(num)] = fabs(dt);
  Dissynchronization[num] = dt;
 
  if (EnableDebug.GetData() && RDK::GetLogger())
@@ -1342,8 +1607,10 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
   std::ostringstream oss;
   oss << "ChangeDendriteStatus: num=" << num
       << " dt=" << dt
+      << " (PrevPeakRel[ref]-PeakRel[k])"
       << " DendStatus=" << DendStatus[num]
-      << " prev_dt=" << prev_dt;
+      << " prev_dt=" << prev_dt
+      << " estDelayPerSeg=" << EstDelayPerSeg;
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
  }
  return true;
@@ -1411,16 +1678,29 @@ bool NNeuronTimeLearner::Experiment(void)
 
 bool NNeuronTimeLearner::AllDendritesSynced(void) const
 {
- const int ref = NumInputDendrite - 1;
- for(int i = 0; i < NumInputDendrite - 1; i++)
+ if(!HasPrevPeakSnapshot)
+  return false;
+
+ const int n = NumInputDendrite.GetData();
+ const int ref = n - 1;
+ if(n < 2)
+  return true;
+
+ if(ref < int(SomaPeakValid.size()) && !SomaPeakValid[static_cast<size_t>(ref)])
+  return false;
+ if(ref >= int(PrevPeakValid.size()) || !PrevPeakValid[static_cast<size_t>(ref)])
+  return false;
+
+ const double tol = SyncTolerance.GetData();
+ for(int i = 0; i < n - 1; i++)
  {
-  if(i < int(SomaPeakValid.size()) && !SomaPeakValid[i])
+  if(i < int(SomaPeakValid.size()) && !SomaPeakValid[static_cast<size_t>(i)])
    return false;
-  if(ref < int(SomaPeakValid.size()) && !SomaPeakValid[ref])
-   return false;
-  if(DendStatus[i])
-   return false;
-  if(i < int(Dissynchronization.size()) && fabs(Dissynchronization[i]) > SyncTolerance.GetData())
+  const bool best_effort = (i < int(DendBestEffortSynced.size()))
+   && DendBestEffortSynced[static_cast<size_t>(i)];
+  if(best_effort)
+   continue;
+  if(i >= int(DendLastAbsDt.size()) || DendLastAbsDt[static_cast<size_t>(i)] > tol)
    return false;
  }
  return true;
@@ -1539,6 +1819,8 @@ void NNeuronTimeLearner::BeginTrainingIteration(double now)
  LastPulseTime = now;
  IterationActive = true;
  IsFirstBeat = false;
+ PeakRel.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0.0);
+ DelayFromPulse.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0.0);
 
  // Structure changes are applied in FinishTrainingIteration (during the inter-burst
  // gap). Changing length here would Reset() the neuron after pulse 0 and break timing.
@@ -1551,7 +1833,10 @@ void NNeuronTimeLearner::BeginTrainingIteration(double now)
       << " t=" << now
       << " N=" << NumInputDendrite.GetData()
       << " gap=" << IterationGap.GetData()
+      << " gapEff=" << EffectiveIterationGapSec()
       << " delay=" << Delay.GetData()
+      << " span=" << PatternSpanSec()
+      << " settle=" << SettleMarginSec()
       << " expected=[";
   for(size_t i = 0; i < ExpectedPulseRelTimes.size(); ++i)
   {
@@ -1584,10 +1869,23 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
   }
  }
 
+ ComputePeakRelAndDelay();
+
  if(TrainingPhase == kPhaseSync)
  {
-  for(int i = 0; i < NumInputDendrite; i++)
-   ChangeDendriteStatus(i);
+  ActiveDendrite = SelectActiveDendrite();
+  DendStatus.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0);
+  if(!HasPrevPeakSnapshot)
+  {
+   if (EnableDebug.GetData() && RDK::GetLogger())
+    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner",
+     "FinishTrainingIteration: bootstrap PrevPeakRel snapshot (no growth)");
+  }
+  else
+   ChangeDendriteStatus(ActiveDendrite);
+
+  // Done-check: all dendrites vs Prev anchor (not only active DendStatus).
+  RefreshDendLastAbsDtFromPrevAnchor();
  }
  else if(TrainingPhase == kPhaseNormalize)
  {
@@ -1603,6 +1901,8 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
   std::ostringstream oss;
   oss << "FinishTrainingIteration: iter=" << CountIteration
       << " phase=" << TrainingPhase.GetData()
+      << " active=" << ActiveDendrite
+      << " hasPrev=" << (HasPrevPeakSnapshot ? 1 : 0)
       << " pulseIndex=" << PulseIndexInIter
       << " DendStatus=[";
   for(size_t i = 0; i < DendStatus.size(); ++i)
@@ -1622,6 +1922,24 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
    if(i) oss << ',';
    oss << TimeOfMaxIterSomaAmp[i];
   }
+  oss << "] peakRel=[";
+  for(size_t i = 0; i < PeakRel.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << PeakRel[i];
+  }
+  oss << "] delay=[";
+  for(size_t i = 0; i < DelayFromPulse.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << DelayFromPulse[i];
+  }
+  oss << "] prevPeakRel=[";
+  for(size_t i = 0; i < PrevPeakRel.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << PrevPeakRel[i];
+  }
   oss << "] amp=[";
   for(size_t i = 0; i < MaxIterSomaAmp.size(); ++i)
   {
@@ -1639,6 +1957,12 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
   {
    if(i) oss << ',';
    oss << Dissynchronization[i];
+  }
+  oss << "] lastAbsDt=[";
+  for(size_t i = 0; i < DendLastAbsDt.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << DendLastAbsDt[i];
   }
   oss << "] peakValid=[";
   for(size_t i = 0; i < SomaPeakValid.size(); ++i)
@@ -1671,6 +1995,9 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
    ChangeSynapseNumber(i);
  }
 
+ // Snapshot this burst for next iteration's Prev* comparison (before CountIteration++).
+ CommitPrevPeakSnapshot();
+
  PrevFirstImpulseTime = FirstImpulseTime;
  HasPrevIteration = true;
  IterationActive = false;
@@ -1699,7 +2026,7 @@ bool NNeuronTimeLearner::Training(void)
  {
   bool can_start = !HasPrevIteration;
   if(HasPrevIteration)
-   can_start = (now - PrevFirstImpulseTime) >= IterationGap;
+   can_start = (now - PrevFirstImpulseTime) >= EffectiveIterationGapSec();
 
   if(new_pulses > 0 && can_start)
   {
@@ -1746,12 +2073,13 @@ bool NNeuronTimeLearner::Training(void)
   }
  }
 
- // Wait until every soma locked its first post-pulse max, or IterationGap.
+ // Wait until every soma locked its first post-pulse max, or effective gap.
  // Do not cut shortly after the last ISI — long dendrites need more settle time.
  bool finished = false;
- if(all_locked && now >= last_pulse + 0.01)
+ const double settle = SettleMarginSec();
+ if(all_locked && now >= last_pulse + std::max(0.01, settle * 0.25))
   finished = true;
- if((now - FirstImpulseTime) >= IterationGap)
+ if((now - FirstImpulseTime) >= EffectiveIterationGapSec())
   finished = true;
 
  if(finished)
