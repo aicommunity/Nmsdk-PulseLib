@@ -123,6 +123,42 @@ void NNeuronTimeLearner::SyncDatasetDimsFromDendrites(void)
  Dataset->StateGeneration = 2;
 }
 
+bool NNeuronTimeLearner::SyncInputPatternToDataset(const MDMatrix<double> *pattern_override)
+{
+ if(!Dataset)
+  return true;
+
+ SyncDatasetDimsFromDendrites();
+
+ MDMatrix<double> matrix = pattern_override ? *pattern_override : InputPattern.GetData();
+ const int n = NumInputDendrite.GetData();
+ if(matrix.GetRows() != n || matrix.GetCols() != 1)
+  matrix.Resize(n, 1, 0.0);
+
+ // SetMatrixData stores payload and validates dims against MaxSpikesPerFeature.
+ if(!Dataset->SetMatrixData(matrix))
+  return false;
+
+ if(Dataset->MatrixClasses.GetRows() != 1 || Dataset->MatrixClasses.GetCols() != 1)
+  Dataset->MatrixClasses.Resize(1, 1, 0);
+
+ if (EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "SyncInputPatternToDataset: trainer InputPattern -> DatasetMatrix.MatrixData rows="
+      << Dataset->MatrixData.GetRows() << " cols=" << Dataset->MatrixData.GetCols()
+      << " values=[";
+  for(int i = 0; i < n && i < Dataset->MatrixData.GetRows(); ++i)
+  {
+   if(i) oss << ',';
+   oss << Dataset->MatrixData(i, 0);
+  }
+  oss << "]";
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
+ return true;
+}
+
 
 NNeuronTimeLearner::NNeuronTimeLearner(void):
  StructureBuildMode("StructureBuildMode",this,&NNeuronTimeLearner::SetStructureBuildMode),
@@ -397,21 +433,8 @@ bool NNeuronTimeLearner::SetMaxDendriteLength(const int &value)
 
 bool NNeuronTimeLearner::SetInputPattern(const MDMatrix<double> &value)
 {
- if(Dataset)
- {
-  MDMatrix<double> matrix = value;
-  const int n = NumInputDendrite;
-  if(matrix.GetRows() != n || matrix.GetCols() != 1)
-   matrix.Resize(n, 1, 0.0);
-  Dataset->SetMatrixData(matrix);
-  if (EnableDebug.GetData() && RDK::GetLogger())
-  {
-   std::ostringstream oss;
-   oss << "SetInputPattern: synced InputPattern -> DatasetMatrix.MatrixData rows="
-       << matrix.GetRows() << " cols=" << matrix.GetCols();
-   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
-  }
- }
+ if(Dataset && !SyncInputPatternToDataset(&value))
+  return false;
  IsFirstBeat = true;
  CountIteration = 0;
  IterationActive = false;
@@ -577,14 +600,28 @@ UComponent* NNeuronTimeLearner::NewStatic(void)
 
 bool NNeuronTimeLearner::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
- (void)comp;
  (void)pointer;
+ UEPtr<NDatasetMatrix> dataset = dynamic_pointer_cast<NDatasetMatrix>(comp);
+ if(dataset)
+ {
+  Dataset = dataset;
+  SyncInputPatternToDataset();
+ }
  return true;
 }
 
 bool NNeuronTimeLearner::ADelComponent(UEPtr<UContainer> comp)
 {
  (void)comp;
+ return true;
+}
+
+bool NNeuronTimeLearner::ABeforeBuild(void)
+{
+ if(!Dataset)
+  Dataset = GetComponentL<NDatasetMatrix>(std::string("DatasetMatrix"), true);
+ if(Dataset)
+  SyncInputPatternToDataset();
  return true;
 }
 
@@ -636,26 +673,22 @@ bool NNeuronTimeLearner::BuildStructure()
   return false;
  }
  Dataset->SetCoord(MVector<double,3>(6.7, 1.67, 0));
- SyncDatasetDimsFromDendrites();
  if(InputPattern.GetRows() != NumInputDendrite || InputPattern.GetCols() != 1)
   InputPattern.Resize(NumInputDendrite, 1, 0.0);
- if(!Dataset->SetMatrixData(InputPattern))
+ if(!SyncInputPatternToDataset())
  {
   LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
-               "BuildStructure: DatasetMatrix.SetMatrixData rejected InputPattern");
+               "BuildStructure: failed to sync InputPattern into DatasetMatrix");
   return false;
  }
- if (EnableDebug.GetData() && RDK::GetLogger())
- {
-  std::ostringstream oss;
-  oss << "BuildStructure: synced trainer InputPattern -> DatasetMatrix.MatrixData rows="
-      << InputPattern.GetRows() << " cols=" << InputPattern.GetCols();
-  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
- }
- if(Dataset->MatrixClasses.GetRows() != 1 || Dataset->MatrixClasses.GetCols() != 1)
-  Dataset->MatrixClasses.Resize(1, 1, 0);
  Dataset->Build();
  Dataset->Reset();
+ if(!SyncInputPatternToDataset())
+ {
+  LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
+               "BuildStructure: failed to sync InputPattern into DatasetMatrix");
+  return false;
+ }
 
  if (NumInputDendrite != int(NumSynapse.size()))
   NumSynapse.resize(NumInputDendrite, 1);
@@ -901,8 +934,9 @@ bool NNeuronTimeLearner::AReset(void)
 
  if(Dataset)
  {
-  SyncDatasetDimsFromDendrites();
   Dataset->Reset();
+  if(!SyncInputPatternToDataset())
+   return false;
  }
 
  NPulseGeneratorTransit *gen = GetDatasetGenerator();

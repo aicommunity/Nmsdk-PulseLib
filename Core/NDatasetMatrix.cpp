@@ -127,6 +127,8 @@ bool NDatasetMatrix::SetMatrixData(const MDMatrix<double> &value)
         MatrixClasses.Resize(0, 0);
     }
 
+    // Store payload when SetMatrixData() is invoked directly (not only via UProperty::SetData).
+    MatrixData.SetDataDirect(value);
     Ready = false;
     return true;
 }

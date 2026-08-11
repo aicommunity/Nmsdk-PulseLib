@@ -213,6 +213,7 @@ protected:
  virtual bool ADelComponent(UEPtr<UContainer> comp);
 
  bool BuildStructure();
+ virtual bool ABeforeBuild(void);
  virtual bool ADefault(void);
  virtual bool ABuild(void);
  void UpdateComputationOrder(void) override;
@@ -240,6 +241,7 @@ protected:
  bool LinkSynapseToDataset(NPulseSynapseCommon *synapse);
  bool RelinkDendriteSynapsesToDataset(int dendrite_index0);
  void SyncDatasetDimsFromDendrites(void);
+ bool SyncInputPatternToDataset(const MDMatrix<double> *pattern_override = 0);
  bool DetectNewImpulse(void);
  int DetectNewImpulseCount(void);
  void BeginTrainingIteration(double now);
