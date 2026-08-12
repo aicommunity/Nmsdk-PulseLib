@@ -201,7 +201,7 @@ protected:
  static constexpr int kNoImproveLimit = 2;
  static constexpr double kAmpCollapseRatio = 0.35;
  static constexpr int kMaxLengthStep = 8;
- static constexpr int kMaxSynapsesPerDend = 64; // experimental headroom (was 16)
+ static constexpr int kMaxSynapsesPerDend = 128; // experimental headroom (was 16)
 
  int EpochCur;
  bool CanChangeDendLength;

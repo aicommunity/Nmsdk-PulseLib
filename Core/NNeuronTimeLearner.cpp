@@ -2248,6 +2248,26 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
    if(i) oss << ',';
    oss << MaxIterSomaAmp[i];
   }
+  oss << "] initial=[";
+  for(size_t i = 0; i < InitialSomaPotential.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << InitialSomaPotential[i];
+  }
+  oss << "] ampDt=[";
+  for(size_t i = 0; i < MaxIterSomaAmp.size(); ++i)
+  {
+   if(i) oss << ',';
+   const double initial = (i < InitialSomaPotential.size())
+    ? InitialSomaPotential[i] : 0.0;
+   oss << (initial - MaxIterSomaAmp[i]);
+  }
+  oss << "] atCap=[";
+  for(size_t i = 0; i < NumSynapse.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << ((NumSynapse[i] >= kMaxSynapsesPerDend) ? 1 : 0);
+  }
   oss << "] len=[";
   for(size_t i = 0; i < DendriteLength.size(); ++i)
   {
