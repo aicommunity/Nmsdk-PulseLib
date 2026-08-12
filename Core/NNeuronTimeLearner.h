@@ -110,6 +110,9 @@ public:
  /// Cable attenuation gamma for feedforward R*=exp(-gamma*deltaL); <=0 = auto-estimate
  UProperty<double, NNeuronTimeLearner, ptPubParameter> AttenuationGamma;
 
+ /// P-regulator gain for parametric R step (0..1], default 0.4
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> ResistanceAdjustGain;
+
  /// Current tip ExcSynapse1 resistance per dendrite (parametric mode)
  UProperty<std::vector<double>, NNeuronTimeLearner, ptPubParameter | ptPubState> TipSynapseResistance;
 
@@ -213,6 +216,10 @@ protected:
  /// Parametric: 0 ok; nonzero = apply pending R change
  std::vector<int> ResistanceStatus;
  std::vector<double> ResistanceDifference;
+ std::vector<double> PrevAmpError;
+ std::vector<double> PrevResistanceRatio;
+ std::vector<int> NoImproveResistanceCount;
+ std::vector<double> EffectiveResistanceGain;
 
  static constexpr int kNormStructural = 0;
  static constexpr int kNormParametric = 1;
@@ -225,6 +232,13 @@ protected:
  static constexpr double kDelayPerSegDefault = 0.01;
  static constexpr double kGapSlack = 0.05;
  static constexpr int kNoImproveLimit = 2;
+ static constexpr double kResistanceAdjustGainDefault = 0.4;
+ static constexpr double kResistanceSettleRatio = 1e-3;
+ static constexpr double kAmpOscillationBand = 0.005;
+ static constexpr double kGainOvershootFactor = 0.5;
+ static constexpr double kGainUndershootFactor = 1.5;
+ static constexpr double kUndershootBoostRatio = 2.0;
+ static constexpr int kNoImproveResistanceLimit = 3;
  static constexpr double kAmpCollapseRatio = 0.35;
  static constexpr int kMaxLengthStep = 8;
  static constexpr int kMaxSynapsesPerDend = 128; // experimental headroom (was 16)
@@ -261,6 +275,7 @@ public:
  bool SetResistanceMin(const double &value);
  bool SetResistanceMax(const double &value);
  bool SetAttenuationGamma(const double &value);
+ bool SetResistanceAdjustGain(const double &value);
  bool SetTipSynapseResistance(const std::vector<double> &value);
  bool SetExperimentMode(const bool &value);
  bool SetDendriteLength(const std::vector<int> &value);
@@ -302,6 +317,10 @@ protected:
  bool SetTipSynapseResistanceOnComponent(int dendrite_index0, double r);
  bool ChangeSynapseResistanceStatus(int num);
  bool ApplySynapseResistanceChange(int num);
+ double ComputeModelTipResistance(int dendrite_index0) const;
+ double ComputeDampedTipResistance(int dendrite_index0, double r_old,
+  double amp, double initial, double dt, double &effective_gain_out) const;
+ void ApplyComputedResistance(int num, double r_old, double r_new, double effective_gain);
  void FeedforwardResistanceOnLengthGrow(int dendrite_index0, int deltaL);
  void EnforceParametricSynapseCount(void);
  bool PatternRecognition(void);
