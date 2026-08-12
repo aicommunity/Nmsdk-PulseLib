@@ -184,6 +184,63 @@ void NNeuronTimeLearner::EnforceParametricSynapseCount(void)
  Ready = false;
 }
 
+void NNeuronTimeLearner::UpdateNormTraces(void)
+{
+ const int n = std::max(1, NumInputDendrite.GetData());
+
+ MDMatrix<double> amp_dt;
+ amp_dt.Assign(1, n, 0.0);
+ for(int i = 0; i < n; ++i)
+ {
+  const double initial = (i < int(InitialSomaPotential.size())) ? InitialSomaPotential[i] : 0.0;
+  const double amp = (i < int(MaxIterSomaAmp.size())) ? MaxIterSomaAmp[i] : 0.0;
+  amp_dt(0, i) = initial - amp;
+ }
+ AmpDtTrace = amp_dt;
+
+ MDMatrix<double> tips;
+ tips.Assign(1, n, 0.0);
+ for(int i = 0; i < n; ++i)
+  tips(0, i) = (i < int(TipSynapseResistance.size())) ? TipSynapseResistance[i] : 0.0;
+ TipSynapseResistanceTrace = tips;
+
+ MDMatrix<double> res_st;
+ res_st.Assign(1, n, 0.0);
+ for(int i = 0; i < n; ++i)
+  res_st(0, i) = (i < int(ResistanceStatus.size())) ? double(ResistanceStatus[i]) : 0.0;
+ ResistanceStatusTrace = res_st;
+
+ MDMatrix<double> no_imp;
+ no_imp.Assign(1, n, 0.0);
+ for(int i = 0; i < n; ++i)
+  no_imp(0, i) = (i < int(NoImproveResistanceCount.size()))
+   ? double(NoImproveResistanceCount[i]) : 0.0;
+ NoImproveResistanceTrace = no_imp;
+
+ MDMatrix<double> gain;
+ gain.Assign(1, n, 0.0);
+ for(int i = 0; i < n; ++i)
+  gain(0, i) = (i < int(EffectiveResistanceGain.size()))
+   ? EffectiveResistanceGain[i] : 0.0;
+ EffectiveGainTrace = gain;
+
+ MDMatrix<double> lens;
+ lens.Assign(1, n, 0.0);
+ for(int i = 0; i < n; ++i)
+  lens(0, i) = (i < int(DendriteLength.size())) ? double(DendriteLength[i]) : 0.0;
+ DendriteLengthTrace = lens;
+
+ MDMatrix<double> last_dt;
+ last_dt.Assign(1, n, 0.0);
+ for(int i = 0; i < n; ++i)
+  last_dt(0, i) = (i < int(DendLastAbsDt.size())) ? DendLastAbsDt[i] : 0.0;
+ LastAbsDtTrace = last_dt;
+
+ MDMatrix<double> iter_m;
+ iter_m.Assign(1, 1, double(CountIteration));
+ StimulusIterTrace = iter_m;
+}
+
 void NNeuronTimeLearner::ApplyLoadedAnchorProperties(void)
 {
  const int n = NumInputDendrite.GetData();
@@ -348,11 +405,21 @@ double NNeuronTimeLearner::ComputeDampedTipResistance(int dendrite_index0, doubl
 
  double r_new = r_old * step_ratio;
 
+ // r_model is a feedforward orientation, not a hard floor for feedback: when amp
+ // is still below Initial, allow R below the cable model down to ResistanceMin
+ // so long dendrites are not permanently stuck on the model floor.
  if(amp < initial)
  {
   const double r_model = ComputeModelTipResistance(dendrite_index0);
-  if(r_new < r_model)
-   r_new = r_model;
+  if(r_new < r_model && EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "ResistanceFloor: dend=" << dendrite_index0
+       << " r_old=" << r_old << " r_model=" << r_model
+       << " r_step=" << r_new << " ampDt=" << (initial - amp)
+       << " (allowing below model toward Rmin)";
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
  }
 
  return ClampResistance(r_new);
@@ -499,13 +566,9 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  {
   ResistanceStatus[num] = 0;
  }
- else if(same_pattern
-         && (dt > eps) && (fabs(ResistanceDifference[num]) > eps)
-         && (ResistanceDifference[num] > 0.0)
-         && (fabs(dt) <= fabs(ResistanceDifference[num])))
- {
-  ResistanceStatus[num] = 0;
- }
+ // Do not stop on partial ampDt improvement: keep damped-P until |dt|<=eps
+ // (or no-improve / Rmin escapes). The old "dt got smaller" settle left dend0
+ // stuck with ampDt~1e-3 after a single R step.
  else if(fabs(dt) > eps)
  {
   double eff_gain = kResistanceAdjustGainDefault;
@@ -524,6 +587,10 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
 
   const double prev_res_dt = ResistanceDifference[num];
   ApplyComputedResistance(num, r_old, r_new, eff_gain);
+  // Tiny ΔR near the target still needs to reach the tip synapse; settle-ratio
+  // alone left ResistanceStatus=0 and froze ampDt just above eps.
+  if(fabs(dt) > eps)
+   ResistanceStatus[num] = 1;
 
   if(num < int(NoImproveResistanceCount.size()))
   {
@@ -833,6 +900,14 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  TrainingLTZThreshold("TrainingLTZThreshold",this,&NNeuronTimeLearner::SetTrainingLTZThreshold),
  UseFixedLTZThreshold("UseFixedLTZThreshold",this,&NNeuronTimeLearner::SetUseFixedLTZThreshold),
  Output("Output",this),
+ AmpDtTrace("AmpDtTrace",this),
+ TipSynapseResistanceTrace("TipSynapseResistanceTrace",this),
+ ResistanceStatusTrace("ResistanceStatusTrace",this),
+ NoImproveResistanceTrace("NoImproveResistanceTrace",this),
+ EffectiveGainTrace("EffectiveGainTrace",this),
+ DendriteLengthTrace("DendriteLengthTrace",this),
+ LastAbsDtTrace("LastAbsDtTrace",this),
+ StimulusIterTrace("StimulusIterTrace",this),
  SynapseResistanceStep("SynapseResistanceStep", this, &NNeuronTimeLearner::SetSynapseResistanceStep),
  NormalizationMode("NormalizationMode", this, &NNeuronTimeLearner::SetNormalizationMode),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
@@ -2737,10 +2812,14 @@ bool NNeuronTimeLearner::AllDendritesSynced(void) const
 bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
 {
  const double eps = 0.000005;
+ // Ref dendrite (N-1) is the length/timing anchor: ChangeSynapseResistanceStatus
+ // skips R-tune there, and DendLastAbsDt[ref] stays a large sentinel. Match
+ // AllDendritesSynced — only non-ref dendrites gate amp Done.
+ const int n_check = std::max(0, NumInputDendrite.GetData() - 1);
  if(IsParametricNormalization())
  {
   const double rmin = ResistanceMin.GetData();
-  for(int i = 0; i < NumInputDendrite; i++)
+  for(int i = 0; i < n_check; i++)
   {
    const bool length_ok = (i < int(DendLastAbsDt.size())
     && DendLastAbsDt[static_cast<size_t>(i)] <= SyncTolerance.GetData())
@@ -2770,7 +2849,10 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
     && (InitialSomaPotential[i] > MaxIterSomaAmp[i] + eps);
    const bool dead_tip = (i < int(MaxIterSomaAmp.size()))
     && (MaxIterSomaAmp[i] < kMinMeasurableSomaAmp);
-   if(dead_tip && length_ok)
+   // Require a real peak attempt this burst (PeakSeen): freshly zeroed MaxAmp at
+   // BeginTrainingIteration must not count as dead-tip Done.
+   const bool peak_attempted = (i < int(PeakSeen.size())) && PeakSeen[static_cast<size_t>(i)];
+   if(dead_tip && length_ok && peak_attempted)
     continue;
    if(at_r_min && dt_positive && length_ok)
     continue;
@@ -2798,7 +2880,7 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
   return true;
  }
 
- for(int i = 0; i < NumInputDendrite; i++)
+ for(int i = 0; i < n_check; i++)
  {
   if(SynapseStatus[i])
    return false;
@@ -2811,11 +2893,12 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
    continue;
   const bool dead_tip = (i < int(MaxIterSomaAmp.size()))
    && (MaxIterSomaAmp[i] < kMinMeasurableSomaAmp);
+  const bool peak_attempted = (i < int(PeakSeen.size())) && PeakSeen[static_cast<size_t>(i)];
   const bool length_ok = (i < int(DendLastAbsDt.size())
    && DendLastAbsDt[static_cast<size_t>(i)] <= SyncTolerance.GetData())
    || ((i < int(DendBestEffortSynced.size()))
        && DendBestEffortSynced[static_cast<size_t>(i)]);
-  if(dead_tip && length_ok)
+  if(dead_tip && length_ok && peak_attempted)
    continue;
   if(at_cap)
    continue; // best-effort amp after synapse cap
@@ -3167,6 +3250,8 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
  ActiveMeasureSoma = -1;
  WaitingPeakAfterLastPulse = false;
  IsFirstBeat = true;
+
+ UpdateNormTraces();
  CountIteration++;
 
  if(!CalculateMode)
@@ -3283,7 +3368,10 @@ bool NNeuronTimeLearner::ACalculate(void)
    SomaNeuronAmplitude(0, 0) += soma->SumPotential(0, 0);
   }
 
-  if(!CalculateMode && (CountIteration > 0) && TrainingPhase != kPhaseDone)
+  // Only evaluate Done between bursts: BeginTrainingIteration zeros MaxIterSomaAmp,
+  // which would falsely trip the dead-tip escape in AllSynapsesNormalized mid-burst.
+  if(!CalculateMode && (CountIteration > 0) && !IterationActive
+     && TrainingPhase != kPhaseDone)
   {
    if(EndOfLearning() && TrainingPhase == kPhaseDone)
     return true;

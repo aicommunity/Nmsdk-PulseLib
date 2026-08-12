@@ -94,6 +94,16 @@ public:
  /// Neuron output copy
  UProperty<MDMatrix<double>, NNeuronTimeLearner, ptOutput | ptPubState> Output;
 
+ /// Norm/sync traces for StatisticDoubleMatrix (1×N or 1×1), updated each training iter
+ UProperty<MDMatrix<double>, NNeuronTimeLearner, ptOutput | ptPubState> AmpDtTrace;
+ UProperty<MDMatrix<double>, NNeuronTimeLearner, ptOutput | ptPubState> TipSynapseResistanceTrace;
+ UProperty<MDMatrix<double>, NNeuronTimeLearner, ptOutput | ptPubState> ResistanceStatusTrace;
+ UProperty<MDMatrix<double>, NNeuronTimeLearner, ptOutput | ptPubState> NoImproveResistanceTrace;
+ UProperty<MDMatrix<double>, NNeuronTimeLearner, ptOutput | ptPubState> EffectiveGainTrace;
+ UProperty<MDMatrix<double>, NNeuronTimeLearner, ptOutput | ptPubState> DendriteLengthTrace;
+ UProperty<MDMatrix<double>, NNeuronTimeLearner, ptOutput | ptPubState> LastAbsDtTrace;
+ UProperty<MDMatrix<double>, NNeuronTimeLearner, ptOutput | ptPubState> StimulusIterTrace;
+
  /// Resistance for extra synapses (k>=2)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> SynapseResistanceStep;
 
@@ -329,6 +339,7 @@ protected:
  void FeedforwardResistanceOnLengthGrow(int dendrite_index0, int deltaL);
  void EnforceParametricSynapseCount(void);
  void ApplyLoadedAnchorProperties(void);
+ void UpdateNormTraces(void);
  bool PatternRecognition(void);
  bool LearningAdditionalPattern_1_4(MDMatrix<double> second_pattern);
  bool IncrementalLearning(MDMatrix<double> InitialPattern, MDMatrix<double> second_pattern);
