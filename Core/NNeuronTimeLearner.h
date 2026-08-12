@@ -209,6 +209,11 @@ protected:
  std::vector<int> UntrainedNumSynapse;
  std::vector<double> UntrainedInitialSomaPotential;
  std::vector<double> UntrainedTipSynapseResistance;
+ /// Last values passed to setters during XML load (hash order may precede NumInputDendrite).
+ std::vector<double> LoadedInitialSomaPotential;
+ std::vector<double> LoadedTipSynapseResistance;
+ bool HasLoadedInitialSomaPotential;
+ bool HasLoadedTipSynapseResistance;
  /// 0 optimal; 1 grow; -1 shrink
  std::vector<int> DendStatus;
  /// 0 optimal; 1 add synapses; -1 remove
@@ -323,6 +328,7 @@ protected:
  void ApplyComputedResistance(int num, double r_old, double r_new, double effective_gain);
  void FeedforwardResistanceOnLengthGrow(int dendrite_index0, int deltaL);
  void EnforceParametricSynapseCount(void);
+ void ApplyLoadedAnchorProperties(void);
  bool PatternRecognition(void);
  bool LearningAdditionalPattern_1_4(MDMatrix<double> second_pattern);
  bool IncrementalLearning(MDMatrix<double> InitialPattern, MDMatrix<double> second_pattern);

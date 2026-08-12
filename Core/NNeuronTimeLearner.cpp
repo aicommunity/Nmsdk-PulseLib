@@ -21,6 +21,7 @@ See file license.txt for more information
 #endif
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <sstream>
 #include "NNeuronTimeLearner.h"
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
@@ -181,6 +182,125 @@ void NNeuronTimeLearner::EnforceParametricSynapseCount(void)
   ns[static_cast<size_t>(i)] = 1;
  NumSynapse.SetDataDirect(ns);
  Ready = false;
+}
+
+void NNeuronTimeLearner::ApplyLoadedAnchorProperties(void)
+{
+ const int n = NumInputDendrite.GetData();
+ if(n < 1)
+  return;
+
+ auto vector_all_zero = [](const std::vector<double> &v, int count) {
+  for(int i = 0; i < count; ++i)
+  {
+   if(i < int(v.size()) && v[static_cast<size_t>(i)] > 0.0)
+    return false;
+  }
+  return true;
+ };
+
+ auto parse_simplevector_text = [](const std::string &text, int size_hint) {
+  std::vector<double> out;
+  if(size_hint > 0)
+   out.resize(static_cast<size_t>(size_hint), 0.0);
+  const char *start = text.c_str();
+  const char *end = start + text.size();
+  for(int i = 0; i < size_hint && start < end; ++i)
+  {
+   while(start < end && (*start == ' ' || *start == '\t' || *start == '\n' || *start == '\r'))
+    ++start;
+   if(start >= end)
+    break;
+   const char *next = start;
+   while(next < end && *next != ' ' && *next != '\t' && *next != '\n' && *next != '\r')
+    ++next;
+   out[static_cast<size_t>(i)] = RDK::atof(std::string(start, next));
+   start = next;
+  }
+  return out;
+ };
+
+ auto reload_vector_property = [&](const char *tag, int size_hint, std::vector<double> &dest,
+                                 bool &has_dest) {
+  std::vector<std::string> paths;
+  if(GetEnvironment())
+   paths.push_back(GetEnvironment()->GetCurrentDataDir() + "Parameters_00.xml");
+  paths.push_back("Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearner/Parameters_00.xml");
+  paths.push_back("Parameters_00.xml");
+  if(GetEnvironment())
+  {
+   paths.push_back(GetEnvironment()->GetCurrentDataDir() + "Model_00.xml");
+   paths.push_back(GetEnvironment()->GetCurrentDataDir() + "Parameters.xml");
+  }
+  for(size_t pi = 0; pi < paths.size(); ++pi)
+  {
+   std::ifstream f(paths[pi].c_str());
+   if(!f)
+    continue;
+   std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+   const std::string stag(tag);
+   const size_t pos = content.find("<" + stag);
+   if(pos == std::string::npos)
+    continue;
+   const size_t gt = content.find('>', pos);
+   const size_t lt = content.find('<', gt + 1);
+   if(gt == std::string::npos || lt == std::string::npos || lt <= gt)
+    continue;
+   int hint = size_hint;
+   const size_t size_attr = content.find("Size=\"", pos);
+   if(size_attr != std::string::npos && size_attr < gt)
+    hint = std::max(hint, std::atoi(content.c_str() + size_attr + 6));
+   dest = parse_simplevector_text(content.substr(gt + 1, lt - gt - 1), hint);
+   has_dest = !dest.empty();
+   return has_dest;
+  }
+  return false;
+ };
+
+ const std::vector<double> cur_initial = InitialSomaPotential.GetData();
+ if(vector_all_zero(cur_initial, n))
+  reload_vector_property("InitialSomaPotential", n, LoadedInitialSomaPotential, HasLoadedInitialSomaPotential);
+
+ if(HasLoadedInitialSomaPotential && !LoadedInitialSomaPotential.empty())
+ {
+  const int target_n = std::max(n, int(LoadedInitialSomaPotential.size()));
+  std::vector<double> normalized(static_cast<size_t>(target_n), 0.0);
+  const size_t copyCount = std::min(normalized.size(), LoadedInitialSomaPotential.size());
+  for(size_t i = 0; i < copyCount; ++i)
+   normalized[i] = LoadedInitialSomaPotential[i];
+  InitialSomaPotential.SetDataDirect(normalized);
+ }
+
+ const std::vector<double> cur_tips = TipSynapseResistance.GetData();
+ const double rmin = ResistanceMin.GetData();
+ bool tips_need_reload = false;
+ for(int i = 0; i < n; ++i)
+ {
+  if(i >= int(cur_tips.size()) || cur_tips[static_cast<size_t>(i)] <= 0.0
+     || cur_tips[static_cast<size_t>(i)] <= rmin * (1.0 + 1e-6))
+  {
+   tips_need_reload = true;
+   break;
+  }
+ }
+ if(tips_need_reload)
+  reload_vector_property("TipSynapseResistance", n, LoadedTipSynapseResistance, HasLoadedTipSynapseResistance);
+
+ if(HasLoadedTipSynapseResistance && !LoadedTipSynapseResistance.empty())
+ {
+  const int target_n = std::max(n, int(LoadedTipSynapseResistance.size()));
+  std::vector<double> normalized(static_cast<size_t>(target_n), SynapseResistanceBase.GetData());
+  const size_t copyCount = std::min(normalized.size(), LoadedTipSynapseResistance.size());
+  for(size_t i = 0; i < copyCount; ++i)
+   normalized[i] = ClampResistance(LoadedTipSynapseResistance[i]);
+  TipSynapseResistance.SetDataDirect(normalized);
+  if(Neuron && IsParametricNormalization())
+  {
+   const int apply_n = std::min(n, int(normalized.size()));
+   for(int i = 0; i < apply_n; ++i)
+    SetTipSynapseResistanceOnComponent(i, normalized[static_cast<size_t>(i)]);
+  }
+ }
 }
 
 double NNeuronTimeLearner::ComputeModelTipResistance(int dendrite_index0) const
@@ -733,10 +853,14 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  EnableDebug("EnableDebug", this, &NNeuronTimeLearner::SetEnableDebug)
 {
  OldNumInputDendrite = 0;
+ InitialSomaPotential.SetCheckEquals(false);
+ TipSynapseResistance.SetCheckEquals(false);
  Dataset = NULL;
  Neuron = NULL;
  IsFirstFileStep = true;
  HasUntrainedSnapshot = false;
+ HasLoadedInitialSomaPotential = false;
+ HasLoadedTipSynapseResistance = false;
  FirstImpulseTime = 0.0;
  PrevFirstImpulseTime = -1.0;
  HasPrevIteration = false;
@@ -947,6 +1071,7 @@ bool NNeuronTimeLearner::SetNumInputDendrite(const int &value)
   return false;
  Ready = false;
  OldNumInputDendrite = NumInputDendrite;
+ ApplyLoadedAnchorProperties();
  return true;
 }
 
@@ -1067,21 +1192,37 @@ bool NNeuronTimeLearner::SetNormalizationMode(const int &value)
 {
  if(value != kNormStructural && value != kNormParametric)
   return false;
- if(value == kNormParametric)
+ if(value == kNormParametric && Neuron)
  {
-  EnforceParametricSynapseCount();
-  if(Neuron)
+  std::vector<double> tips = TipSynapseResistance.GetData();
+  if(tips.size() != static_cast<size_t>(NumInputDendrite))
+   tips.resize(static_cast<size_t>(NumInputDendrite), SynapseResistanceBase.GetData());
+  int synced = 0;
+  for(int i = 0; i < NumInputDendrite; ++i)
   {
-   std::vector<double> tips = TipSynapseResistance.GetData();
-   if(tips.size() != static_cast<size_t>(NumInputDendrite))
-    tips.resize(static_cast<size_t>(NumInputDendrite), SynapseResistanceBase.GetData());
+   if(NPulseSynapseCommon *syn = GetTipSynapse(i))
+   {
+    tips[static_cast<size_t>(i)] = syn->Resistance;
+    synced++;
+   }
+  }
+  // Only adopt neuron tips when every dendrite resolves; partial sync leaves zeros
+  // and breaks mid-train Console reload before BuildStructure rebuilds the neuron.
+  if(synced == NumInputDendrite)
+  {
+   bool all_positive = true;
    for(int i = 0; i < NumInputDendrite; ++i)
    {
-    if(NPulseSynapseCommon *syn = GetTipSynapse(i))
-     tips[static_cast<size_t>(i)] = syn->Resistance;
+    if(tips[static_cast<size_t>(i)] <= 0.0)
+    {
+     all_positive = false;
+     break;
+    }
    }
-   TipSynapseResistance.SetDataDirect(tips);
+   if(all_positive)
+    TipSynapseResistance.SetDataDirect(tips);
   }
+  EnforceParametricSynapseCount();
  }
  return true;
 }
@@ -1122,25 +1263,19 @@ bool NNeuronTimeLearner::SetResistanceAdjustGain(const double &value)
 
 bool NNeuronTimeLearner::SetTipSynapseResistance(const std::vector<double> &value)
 {
- if(value.size() != static_cast<size_t>(NumInputDendrite))
- {
-  std::vector<double> normalized(NumInputDendrite, SynapseResistanceBase.GetData());
-  const size_t copyCount = std::min(normalized.size(), value.size());
-  for(size_t i = 0; i < copyCount; ++i)
-   normalized[i] = ClampResistance(value[i]);
-  TipSynapseResistance.SetDataDirect(normalized);
- }
- else
- {
-  std::vector<double> clamped = value;
-  for(size_t i = 0; i < clamped.size(); ++i)
-   clamped[i] = ClampResistance(clamped[i]);
-  TipSynapseResistance.SetDataDirect(clamped);
- }
+ LoadedTipSynapseResistance = value;
+ HasLoadedTipSynapseResistance = true;
+ const int target_n = std::max(NumInputDendrite.GetData(), int(value.size()));
+ std::vector<double> normalized(static_cast<size_t>(target_n), SynapseResistanceBase.GetData());
+ const size_t copyCount = std::min(normalized.size(), value.size());
+ for(size_t i = 0; i < copyCount; ++i)
+  normalized[i] = ClampResistance(value[i]);
+ TipSynapseResistance.SetDataDirect(normalized);
  if(Neuron && IsParametricNormalization())
  {
-  for(int i = 0; i < NumInputDendrite; ++i)
-   SetTipSynapseResistanceOnComponent(i, TipSynapseResistance[i]);
+  const int apply_n = std::min(NumInputDendrite.GetData(), int(normalized.size()));
+  for(int i = 0; i < apply_n; ++i)
+   SetTipSynapseResistanceOnComponent(i, normalized[static_cast<size_t>(i)]);
  }
  return true;
 }
@@ -1181,14 +1316,14 @@ bool NNeuronTimeLearner::SetDendriteLength(const std::vector<int> &value)
 
 bool NNeuronTimeLearner::SetInitialSomaPotential(const std::vector<double> &value)
 {
- if (InitialSomaPotential.size() != static_cast<size_t>(NumInputDendrite))
- {
-  std::vector<double> normalized(NumInputDendrite, 0.0);
-  const size_t copyCount = std::min(normalized.size(), value.size());
-  for (size_t i = 0; i < copyCount; ++i)
-   normalized[i] = value[i];
-  InitialSomaPotential.SetDataDirect(normalized);
- }
+ LoadedInitialSomaPotential = value;
+ HasLoadedInitialSomaPotential = true;
+ const int target_n = std::max(NumInputDendrite.GetData(), int(value.size()));
+ std::vector<double> normalized(static_cast<size_t>(target_n), 0.0);
+ const size_t copyCount = std::min(normalized.size(), value.size());
+ for(size_t i = 0; i < copyCount; ++i)
+  normalized[i] = value[i];
+ InitialSomaPotential.SetDataDirect(normalized);
  return true;
 }
 
@@ -1282,6 +1417,8 @@ bool NNeuronTimeLearner::BuildStructure()
  bool res(true);
  try
  {
+ ApplyLoadedAnchorProperties();
+
  Neuron = GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
  if(Neuron)
  {
@@ -1479,11 +1616,57 @@ bool NNeuronTimeLearner::BuildStructure()
  SynapseStatus.assign(NumInputDendrite, 0);
 
  {
-  std::vector<double> cur = InitialSomaPotential;
-  if (cur.size() != static_cast<size_t>(NumInputDendrite))
+  std::vector<double> cur = InitialSomaPotential.GetData();
+  if(cur.size() != static_cast<size_t>(NumInputDendrite))
+   cur.resize(static_cast<size_t>(NumInputDendrite), 0.0);
+  if(HasUntrainedSnapshot
+     && UntrainedInitialSomaPotential.size() == static_cast<size_t>(NumInputDendrite))
   {
-   cur.resize(NumInputDendrite, 0.0);
-   InitialSomaPotential.SetDataDirect(cur);
+   for(int i = 0; i < NumInputDendrite; ++i)
+   {
+    if(cur[static_cast<size_t>(i)] <= 0.0
+       && UntrainedInitialSomaPotential[static_cast<size_t>(i)] > 0.0)
+     cur[static_cast<size_t>(i)] = UntrainedInitialSomaPotential[static_cast<size_t>(i)];
+   }
+  }
+  InitialSomaPotential.SetDataDirect(cur);
+ }
+
+ if(IsParametricNormalization())
+ {
+  std::vector<double> tips = TipSynapseResistance.GetData();
+  if(tips.size() != static_cast<size_t>(NumInputDendrite))
+   tips.resize(static_cast<size_t>(NumInputDendrite), SynapseResistanceBase.GetData());
+  if(HasUntrainedSnapshot
+     && UntrainedTipSynapseResistance.size() == static_cast<size_t>(NumInputDendrite))
+  {
+   for(int i = 0; i < NumInputDendrite; ++i)
+   {
+    if(tips[static_cast<size_t>(i)] <= 0.0
+       && UntrainedTipSynapseResistance[static_cast<size_t>(i)] > 0.0)
+     tips[static_cast<size_t>(i)] = UntrainedTipSynapseResistance[static_cast<size_t>(i)];
+   }
+   TipSynapseResistance.SetDataDirect(tips);
+  }
+ }
+
+ {
+  bool any_initial = false;
+  for(int i = 0; i < NumInputDendrite; ++i)
+  {
+   if(i < int(InitialSomaPotential.size()) && InitialSomaPotential[i] > 0.0)
+   {
+    any_initial = true;
+    break;
+   }
+  }
+  if(any_initial)
+  {
+   UntrainedDendriteLength = DendriteLength.GetData();
+   UntrainedNumSynapse = NumSynapse.GetData();
+   UntrainedInitialSomaPotential = InitialSomaPotential.GetData();
+   UntrainedTipSynapseResistance = TipSynapseResistance.GetData();
+   HasUntrainedSnapshot = true;
   }
  }
 
@@ -1515,6 +1698,25 @@ bool NNeuronTimeLearner::BuildStructure()
   PrevPulseCounter = gen->PulseCounter;
 
  OldNumInputDendrite = NumInputDendrite;
+ ApplyLoadedAnchorProperties();
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "BuildStructure anchors: Initial=[";
+  for(int i = 0; i < NumInputDendrite; ++i)
+  {
+   if(i) oss << ',';
+   oss << ((i < int(InitialSomaPotential.size())) ? InitialSomaPotential[i] : -1.0);
+  }
+  oss << "] tips=[";
+  for(int i = 0; i < NumInputDendrite; ++i)
+  {
+   if(i) oss << ',';
+   oss << ((i < int(TipSynapseResistance.size())) ? TipSynapseResistance[i] : -1.0);
+  }
+  oss << "]";
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
  return res;
  }
  catch (const UException &ex)
@@ -1670,7 +1872,18 @@ void NNeuronTimeLearner::UpdateComputationOrder(void)
 
 bool NNeuronTimeLearner::AReset(void)
 {
- if(!HasUntrainedSnapshot)
+ ApplyLoadedAnchorProperties();
+
+ bool any_initial = false;
+ for(size_t i = 0; i < InitialSomaPotential.size(); ++i)
+ {
+  if(InitialSomaPotential[i] > 0.0)
+  {
+   any_initial = true;
+   break;
+  }
+ }
+ if(any_initial)
  {
   UntrainedDendriteLength = DendriteLength.GetData();
   UntrainedNumSynapse = NumSynapse.GetData();
