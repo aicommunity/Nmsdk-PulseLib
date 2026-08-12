@@ -29,8 +29,8 @@ namespace NMSDK {
 using namespace RDK;
 
 /// Temporal-pattern neuron learner: one NDatasetMatrix burst fans out to all dendrites;
-/// Sync is one-dendrite-per-burst vs PrevPeakRel snapshot (last dendrite is Prev anchor);
-/// then synapse normalize. See Bin/Configs/.../TimeNeuronTimeLearner/ALGORITHM.md
+/// joint train = one-dendrite-per-burst length sync (PrevPeakRel / DelayFromPulse) plus
+/// synapse amp normalize each burst (NNeuronLearner-style). See ALGORITHM.md.
 class RDK_LIB_TYPE NNeuronTimeLearner: public UNet
 {
 public:
@@ -114,7 +114,7 @@ public:
  /// |dt| below this => dendrite considered synchronized (sec)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> SyncTolerance;
 
- /// 0 - Sync dendrites; 1 - Normalize synapses; 2 - Done
+ /// 0 - joint train (length+synapses); 1 - legacy unused; 2 - Done
  UProperty<int, NNeuronTimeLearner, ptPubState> TrainingPhase;
 
  /// One-shot reset to initial untrained structure/state
@@ -201,6 +201,7 @@ protected:
  static constexpr int kNoImproveLimit = 2;
  static constexpr double kAmpCollapseRatio = 0.35;
  static constexpr int kMaxLengthStep = 8;
+ static constexpr int kMaxSynapsesPerDend = 64; // experimental headroom (was 16)
 
  int EpochCur;
  bool CanChangeDendLength;
@@ -257,7 +258,7 @@ protected:
  bool ZeroingTrainingPattern(void);
  bool ResetToUntrained(void);
  bool ChangeDendriteLength(int num);
- /// Grow/shrink pending dendrites (typically one active) in one Build/relink pass
+ /// Grow/shrink pending length (typically one active); synapses applied separately in Finish
  bool ApplyPendingDendriteLengthChanges(void);
  bool ChangeSynapseNumber(int num);
  bool MeasureMaxPotentialAndTime(void);
@@ -294,6 +295,9 @@ protected:
  int SelectActiveDendrite() const;
  void CommitPrevPeakSnapshot(void);
  void RefreshDendLastAbsDtFromPrevAnchor(void);
+ double DelayLenOf(int num) const;
+ /// Prefer DelayFromPulse when it agrees with cable model; else delay_len.
+ double DelayUseOf(int num, double expected_k, double delay_meas) const;
 };
 
 }
