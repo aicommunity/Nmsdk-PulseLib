@@ -97,6 +97,22 @@ public:
  /// Resistance for extra synapses (k>=2)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> SynapseResistanceStep;
 
+ /// 0 = structural (grow NumSynapse); 1 = parametric (NumSynapse=1, tune tip Resistance)
+ UProperty<int, NNeuronTimeLearner, ptPubParameter> NormalizationMode;
+
+ /// Reference tip synapse resistance at L==1 (typically 8.6e7)
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> SynapseResistanceBase;
+
+ /// Lower / upper bounds for tip Resistance in parametric mode
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> ResistanceMin;
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> ResistanceMax;
+
+ /// Cable attenuation gamma for feedforward R*=exp(-gamma*deltaL); <=0 = auto-estimate
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> AttenuationGamma;
+
+ /// Current tip ExcSynapse1 resistance per dendrite (parametric mode)
+ UProperty<std::vector<double>, NNeuronTimeLearner, ptPubParameter | ptPubState> TipSynapseResistance;
+
  /// Dendrite segment counts
  UProperty<std::vector<int>, NNeuronTimeLearner, ptPubParameter> DendriteLength;
 
@@ -189,10 +205,20 @@ protected:
  std::vector<int> UntrainedDendriteLength;
  std::vector<int> UntrainedNumSynapse;
  std::vector<double> UntrainedInitialSomaPotential;
+ std::vector<double> UntrainedTipSynapseResistance;
  /// 0 optimal; 1 grow; -1 shrink
  std::vector<int> DendStatus;
  /// 0 optimal; 1 add synapses; -1 remove
  std::vector<int> SynapseStatus;
+ /// Parametric: 0 ok; nonzero = apply pending R change
+ std::vector<int> ResistanceStatus;
+ std::vector<double> ResistanceDifference;
+
+ static constexpr int kNormStructural = 0;
+ static constexpr int kNormParametric = 1;
+ static constexpr double kSynapseResistanceBioDefault = 8.6e7;
+ static constexpr double kAttenuationGammaAuto = -1.0;
+ static constexpr double kAttenuationGammaFallback = 0.05;
 
  static constexpr double kMinMeasurableSomaAmp = 1e-6;
  static constexpr double kMinSettle = 0.08;
@@ -230,6 +256,12 @@ public:
  bool SetFixedLTZThreshold(const double &value);
  bool SetUseFixedLTZThreshold(const bool &value);
  bool SetSynapseResistanceStep(const double &value);
+ bool SetNormalizationMode(const int &value);
+ bool SetSynapseResistanceBase(const double &value);
+ bool SetResistanceMin(const double &value);
+ bool SetResistanceMax(const double &value);
+ bool SetAttenuationGamma(const double &value);
+ bool SetTipSynapseResistance(const std::vector<double> &value);
  bool SetExperimentMode(const bool &value);
  bool SetDendriteLength(const std::vector<int> &value);
  bool SetInitialSomaPotential(const std::vector<double> &value);
@@ -264,6 +296,14 @@ protected:
  bool MeasureMaxPotentialAndTime(void);
  bool ChangeDendriteStatus(int num);
  bool ChangeSynapseStatus(int num);
+ bool IsParametricNormalization(void) const;
+ double ClampResistance(double r) const;
+ NPulseSynapseCommon* GetTipSynapse(int dendrite_index0) const;
+ bool SetTipSynapseResistanceOnComponent(int dendrite_index0, double r);
+ bool ChangeSynapseResistanceStatus(int num);
+ bool ApplySynapseResistanceChange(int num);
+ void FeedforwardResistanceOnLengthGrow(int dendrite_index0, int deltaL);
+ void EnforceParametricSynapseCount(void);
  bool PatternRecognition(void);
  bool LearningAdditionalPattern_1_4(MDMatrix<double> second_pattern);
  bool IncrementalLearning(MDMatrix<double> InitialPattern, MDMatrix<double> second_pattern);

@@ -105,6 +105,246 @@ void NNeuronTimeLearner::ResizeSyncVectors(int n)
  EstDelayPerSeg = kDelayPerSegDefault;
  LastLengthDelta = 0;
  LastLengthDeltaDendrite = -1;
+ if(int(ResistanceStatus.size()) != n)
+  ResistanceStatus.assign(static_cast<size_t>(n), 0);
+ if(int(ResistanceDifference.size()) != n)
+  ResistanceDifference.assign(static_cast<size_t>(n), 0.0);
+ if(IsParametricNormalization() && int(TipSynapseResistance.size()) != n)
+ {
+  TipSynapseResistance.resize(static_cast<size_t>(n), SynapseResistanceBase.GetData());
+  TipSynapseResistance.SetDataDirect(TipSynapseResistance.GetData());
+ }
+}
+
+bool NNeuronTimeLearner::IsParametricNormalization(void) const
+{
+ return NormalizationMode.GetData() == kNormParametric;
+}
+
+double NNeuronTimeLearner::ClampResistance(double r) const
+{
+ const double rmin = ResistanceMin.GetData();
+ const double rmax = ResistanceMax.GetData();
+ if(r < rmin)
+  return rmin;
+ if(r > rmax)
+  return rmax;
+ return r;
+}
+
+NPulseSynapseCommon* NNeuronTimeLearner::GetTipSynapse(int dendrite_index0) const
+{
+ if(!Neuron || dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
+  return NULL;
+ if(dendrite_index0 >= int(DendriteLength.size()))
+  return NULL;
+ const int seg = DendriteLength[static_cast<size_t>(dendrite_index0)];
+ return Neuron->GetComponentL<NPulseSynapseCommon>(
+  MakeLearnerExcSynapsePath(dendrite_index0 + 1, seg, 1), true);
+}
+
+bool NNeuronTimeLearner::SetTipSynapseResistanceOnComponent(int dendrite_index0, double r)
+{
+ if(dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
+  return true;
+ r = ClampResistance(r);
+ std::vector<double> tips = TipSynapseResistance.GetData();
+ if(tips.size() != static_cast<size_t>(NumInputDendrite))
+  tips.resize(static_cast<size_t>(NumInputDendrite), SynapseResistanceBase.GetData());
+ tips[static_cast<size_t>(dendrite_index0)] = r;
+ TipSynapseResistance.SetDataDirect(tips);
+ if(NPulseSynapseCommon *synapse = GetTipSynapse(dendrite_index0))
+  synapse->Resistance = r;
+ return true;
+}
+
+void NNeuronTimeLearner::EnforceParametricSynapseCount(void)
+{
+ if(!IsParametricNormalization())
+  return;
+ std::vector<int> ns = NumSynapse.GetData();
+ if(ns.size() != static_cast<size_t>(NumInputDendrite))
+  ns.resize(static_cast<size_t>(NumInputDendrite), 1);
+ for(int i = 0; i < NumInputDendrite; ++i)
+  ns[static_cast<size_t>(i)] = 1;
+ NumSynapse.SetDataDirect(ns);
+ Ready = false;
+}
+
+void NNeuronTimeLearner::FeedforwardResistanceOnLengthGrow(int dendrite_index0, int deltaL)
+{
+ if(!IsParametricNormalization() || deltaL <= 0)
+  return;
+ if(dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
+  return;
+
+ double gamma = AttenuationGamma.GetData();
+ if(gamma <= 0.0)
+  gamma = kAttenuationGammaFallback;
+
+ double r = SynapseResistanceBase.GetData();
+ if(dendrite_index0 < int(TipSynapseResistance.size()))
+  r = TipSynapseResistance[static_cast<size_t>(dendrite_index0)];
+ if(r <= 0.0)
+  r = SynapseResistanceBase.GetData();
+
+ r *= std::exp(-gamma * double(deltaL));
+ SetTipSynapseResistanceOnComponent(dendrite_index0, r);
+ if(dendrite_index0 < int(ResistanceStatus.size()))
+  ResistanceStatus[static_cast<size_t>(dendrite_index0)] = 0;
+ if(dendrite_index0 < int(ResistanceDifference.size())
+    && dendrite_index0 < int(InitialSomaPotential.size())
+    && dendrite_index0 < int(MaxIterSomaAmp.size()))
+ {
+  ResistanceDifference[static_cast<size_t>(dendrite_index0)] =
+   InitialSomaPotential[static_cast<size_t>(dendrite_index0)]
+   - MaxIterSomaAmp[static_cast<size_t>(dendrite_index0)];
+ }
+
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "FeedforwardResistance: dend=" << dendrite_index0
+      << " deltaL=" << deltaL << " gamma=" << gamma << " R=" << r;
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
+}
+
+bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
+{
+ const int dendstatus = DendStatus[num];
+
+ if(num == NumInputDendrite - 1)
+ {
+  ResistanceStatus[num] = 0;
+  SynapseStatus[num] = 0;
+  DendStatus[num] = dendstatus;
+  return true;
+ }
+
+ if(num >= int(InitialSomaPotential.size()) || InitialSomaPotential[num] <= 0.0)
+ {
+  ResistanceStatus[num] = 0;
+  ResistanceDifference[num] = 0.0;
+  SynapseStatus[num] = 0;
+  DendStatus[num] = dendstatus;
+  return true;
+ }
+
+ const bool length_settled = (num < int(DendLastAbsDt.size())
+  && DendLastAbsDt[static_cast<size_t>(num)] <= SyncTolerance.GetData())
+  || ((num < int(DendBestEffortSynced.size()))
+      && DendBestEffortSynced[static_cast<size_t>(num)]);
+ if(!DendStatus[num] && length_settled
+    && (num < int(MaxIterSomaAmp.size()))
+    && (MaxIterSomaAmp[num] < kMinMeasurableSomaAmp))
+ {
+  ResistanceStatus[num] = 0;
+  SynapseStatus[num] = 0;
+  ResistanceDifference[num] = InitialSomaPotential[num] - MaxIterSomaAmp[num];
+  DendStatus[num] = dendstatus;
+  return true;
+ }
+
+ double dt = InitialSomaPotential[num] - MaxIterSomaAmp[num];
+ const double eps = 0.000005;
+
+ // Auto-estimate cable attenuation gamma from observed amp/Initial at L>1.
+ if(MaxIterSomaAmp[num] > kMinMeasurableSomaAmp && InitialSomaPotential[num] > 0.0
+    && num < int(DendriteLength.size()) && DendriteLength[num] > 1)
+ {
+  const double ratio = MaxIterSomaAmp[num] / InitialSomaPotential[num];
+  if(ratio > 1e-6 && ratio < 1.0)
+  {
+   const double gamma_obs = -std::log(ratio) / double(DendriteLength[num] - 1);
+   if(gamma_obs > 1e-4 && gamma_obs < 1.0)
+   {
+    const double cur_gamma = AttenuationGamma.GetData();
+    if(cur_gamma <= 0.0)
+     AttenuationGamma = gamma_obs;
+    else
+     AttenuationGamma = 0.7 * cur_gamma + 0.3 * gamma_obs;
+   }
+  }
+ }
+
+ double r_old = SynapseResistanceBase.GetData();
+ if(num < int(TipSynapseResistance.size()))
+  r_old = TipSynapseResistance[static_cast<size_t>(num)];
+ if(r_old <= 0.0)
+  r_old = SynapseResistanceBase.GetData();
+
+ if((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001) && !DendStatus[num]
+    && (fabs(dt) <= eps))
+ {
+  ResistanceStatus[num] = 0;
+ }
+ else if((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001) && !DendStatus[num]
+         && (fabs(dt) > eps) && (fabs(ResistanceDifference[num]) > eps)
+         && ((dt / fabs(dt)) * (ResistanceDifference[num] / fabs(ResistanceDifference[num])) < 0)
+         && (fabs(dt) <= fabs(ResistanceDifference[num])))
+ {
+  ResistanceStatus[num] = 0;
+ }
+ else if(dt > 0.0 || dt < 0.0)
+ {
+  if(MaxIterSomaAmp[num] > kMinMeasurableSomaAmp && InitialSomaPotential[num] > 0.0)
+  {
+   double r_new = r_old * (MaxIterSomaAmp[num] / InitialSomaPotential[num]);
+   r_new = ClampResistance(r_new);
+   if(num < int(TipSynapseResistance.size()))
+   {
+    std::vector<double> tips = TipSynapseResistance.GetData();
+    tips[static_cast<size_t>(num)] = r_new;
+    TipSynapseResistance.SetDataDirect(tips);
+   }
+   ResistanceStatus[num] = (fabs(r_new - r_old) > 1e-6 * r_old) ? 1 : 0;
+  }
+  else if(dt > 0.0)
+  {
+   const double r_new = ClampResistance(r_old * 0.85);
+   if(num < int(TipSynapseResistance.size()))
+   {
+    std::vector<double> tips = TipSynapseResistance.GetData();
+    tips[static_cast<size_t>(num)] = r_new;
+    TipSynapseResistance.SetDataDirect(tips);
+   }
+   ResistanceStatus[num] = 1;
+  }
+  else
+  {
+   const double r_new = ClampResistance(r_old * 1.15);
+   if(num < int(TipSynapseResistance.size()))
+   {
+    std::vector<double> tips = TipSynapseResistance.GetData();
+    tips[static_cast<size_t>(num)] = r_new;
+    TipSynapseResistance.SetDataDirect(tips);
+   }
+   ResistanceStatus[num] = -1;
+  }
+ }
+ else
+  ResistanceStatus[num] = 0;
+
+ ResistanceDifference[num] = dt;
+ SynapseStatus[num] = 0;
+ DendStatus[num] = dendstatus;
+ return true;
+}
+
+bool NNeuronTimeLearner::ApplySynapseResistanceChange(int num)
+{
+ if(num < 0 || num >= int(ResistanceStatus.size()) || !ResistanceStatus[num])
+  return true;
+ if(!Neuron)
+  return true;
+ double r = SynapseResistanceBase.GetData();
+ if(num < int(TipSynapseResistance.size()))
+  r = TipSynapseResistance[static_cast<size_t>(num)];
+ SetTipSynapseResistanceOnComponent(num, r);
+ ResistanceStatus[num] = 0;
+ Neuron->Reset();
+ return true;
 }
 
 void NNeuronTimeLearner::ComputePeakRelAndDelay(void)
@@ -279,14 +519,23 @@ bool NNeuronTimeLearner::RelinkDendriteSynapsesToDataset(int dendrite_index0)
   MakeLearnerDendriteName(dendrite_index0 + 1, tip_seg), true);
  if(!dendrite)
   return false;
- const int nsyn = NumSynapse[dendrite_index0];
+ const int nsyn = IsParametricNormalization() ? 1 : NumSynapse[dendrite_index0];
  for(int k = 0; k < nsyn; k++)
  {
   NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
    std::string("ExcSynapse") + sntoa(k + 1), true);
   if(!synapse)
    return false;
-  if(k != 0)
+  if(k == 0 && IsParametricNormalization())
+  {
+   double r = SynapseResistanceBase.GetData();
+   if(dendrite_index0 < int(TipSynapseResistance.size()))
+    r = TipSynapseResistance[static_cast<size_t>(dendrite_index0)];
+   if(r <= 0.0)
+    r = kSynapseResistanceBioDefault;
+   synapse->Resistance = ClampResistance(r);
+  }
+  else if(k != 0)
    synapse->Resistance = SynapseResistanceStep;
   if(!LinkSynapseToDataset(synapse))
    return false;
@@ -370,6 +619,12 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  UseFixedLTZThreshold("UseFixedLTZThreshold",this,&NNeuronTimeLearner::SetUseFixedLTZThreshold),
  Output("Output",this),
  SynapseResistanceStep("SynapseResistanceStep", this, &NNeuronTimeLearner::SetSynapseResistanceStep),
+ NormalizationMode("NormalizationMode", this, &NNeuronTimeLearner::SetNormalizationMode),
+ SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
+ ResistanceMin("ResistanceMin", this, &NNeuronTimeLearner::SetResistanceMin),
+ ResistanceMax("ResistanceMax", this, &NNeuronTimeLearner::SetResistanceMax),
+ AttenuationGamma("AttenuationGamma", this, &NNeuronTimeLearner::SetAttenuationGamma),
+ TipSynapseResistance("TipSynapseResistance", this, &NNeuronTimeLearner::SetTipSynapseResistance),
  DendriteLength("DendriteLength", this, &NNeuronTimeLearner::SetDendriteLength),
  InitialSomaPotential("InitialSomaPotential", this, &NNeuronTimeLearner::SetInitialSomaPotential),
  NumSynapse("NumSynapse", this, &NNeuronTimeLearner::SetNumSynapse),
@@ -458,16 +713,24 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
   DendriteLength = UntrainedDendriteLength;
   NumSynapse = UntrainedNumSynapse;
   InitialSomaPotential = UntrainedInitialSomaPotential;
+  if(UntrainedTipSynapseResistance.size() == static_cast<size_t>(NumInputDendrite))
+   TipSynapseResistance.SetDataDirect(UntrainedTipSynapseResistance);
  }
  else
  {
   DendriteLength.assign(NumInputDendrite, 1);
   NumSynapse.assign(NumInputDendrite, 1);
   InitialSomaPotential.assign(NumInputDendrite, 0.0);
+  TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
  }
  OldDendriteLength = DendriteLength.GetData();
  DendStatus.assign(NumInputDendrite, 0);
  SynapseStatus.assign(NumInputDendrite, 0);
+ ResistanceStatus.assign(NumInputDendrite, 0);
+ ResistanceDifference.assign(NumInputDendrite, 0.0);
+ AttenuationGamma = kAttenuationGammaAuto;
+ if(IsParametricNormalization())
+  EnforceParametricSynapseCount();
  MaxIterSomaAmp.assign(NumInputDendrite, 0.0);
  TimeOfMaxIterSomaAmp.assign(NumInputDendrite, 0.0);
  const double period = IterationGap.GetData() > 0.0 ? IterationGap.GetData() : 0.5;
@@ -681,6 +944,8 @@ bool NNeuronTimeLearner::SetUseFixedLTZThreshold(const bool &value)
 
 bool NNeuronTimeLearner::SetSynapseResistanceStep(const double &value)
 {
+ if(IsParametricNormalization())
+  return true;
  if (NumSynapse.empty() || !Neuron)
   return true;
 
@@ -694,6 +959,81 @@ bool NNeuronTimeLearner::SetSynapseResistanceStep(const double &value)
     continue;
    synapse->Resistance = value;
   }
+ }
+ return true;
+}
+
+bool NNeuronTimeLearner::SetNormalizationMode(const int &value)
+{
+ if(value != kNormStructural && value != kNormParametric)
+  return false;
+ if(value == kNormParametric)
+ {
+  EnforceParametricSynapseCount();
+  if(Neuron)
+  {
+   std::vector<double> tips = TipSynapseResistance.GetData();
+   if(tips.size() != static_cast<size_t>(NumInputDendrite))
+    tips.resize(static_cast<size_t>(NumInputDendrite), SynapseResistanceBase.GetData());
+   for(int i = 0; i < NumInputDendrite; ++i)
+   {
+    if(NPulseSynapseCommon *syn = GetTipSynapse(i))
+     tips[static_cast<size_t>(i)] = syn->Resistance;
+   }
+   TipSynapseResistance.SetDataDirect(tips);
+  }
+ }
+ return true;
+}
+
+bool NNeuronTimeLearner::SetSynapseResistanceBase(const double &value)
+{
+ if(value <= 0.0)
+  return false;
+ return true;
+}
+
+bool NNeuronTimeLearner::SetResistanceMin(const double &value)
+{
+ if(value <= 0.0)
+  return false;
+ return true;
+}
+
+bool NNeuronTimeLearner::SetResistanceMax(const double &value)
+{
+ if(value <= 0.0)
+  return false;
+ return true;
+}
+
+bool NNeuronTimeLearner::SetAttenuationGamma(const double &value)
+{
+ (void)value;
+ return true;
+}
+
+bool NNeuronTimeLearner::SetTipSynapseResistance(const std::vector<double> &value)
+{
+ if(value.size() != static_cast<size_t>(NumInputDendrite))
+ {
+  std::vector<double> normalized(NumInputDendrite, SynapseResistanceBase.GetData());
+  const size_t copyCount = std::min(normalized.size(), value.size());
+  for(size_t i = 0; i < copyCount; ++i)
+   normalized[i] = ClampResistance(value[i]);
+  TipSynapseResistance.SetDataDirect(normalized);
+ }
+ else
+ {
+  std::vector<double> clamped = value;
+  for(size_t i = 0; i < clamped.size(); ++i)
+   clamped[i] = ClampResistance(clamped[i]);
+  TipSynapseResistance.SetDataDirect(clamped);
+ }
+ if(Neuron && IsParametricNormalization())
+ {
+  for(int i = 0; i < NumInputDendrite; ++i)
+   SetTipSynapseResistanceOnComponent(i, TipSynapseResistance[i]);
  }
  return true;
 }
@@ -931,6 +1271,8 @@ bool NNeuronTimeLearner::BuildStructure()
 
  if (NumInputDendrite != int(NumSynapse.size()))
   NumSynapse.resize(NumInputDendrite, 1);
+ if(IsParametricNormalization())
+  EnforceParametricSynapseCount();
 
  // Neuron->Build already creates tips with default NumExcitatorySynapses=1.
  // Avoid a blanket tip->Build() here: it historically left ExcSynapse Input dead
@@ -1015,6 +1357,8 @@ bool NNeuronTimeLearner::BuildStructure()
  {
   if(!RelinkDendriteSynapsesToDataset(numdend))
    res = false;
+  if(IsParametricNormalization())
+   SetTipSynapseResistanceOnComponent(numdend, TipSynapseResistance[numdend]);
  }
  if(gen)
   gen->Reset();
@@ -1147,6 +1491,12 @@ bool NNeuronTimeLearner::ADefault(void)
  Output.Assign(NumInputDendrite, 1, 0.0);
 
  SynapseResistanceStep = 1.0e9;
+ NormalizationMode = kNormStructural;
+ SynapseResistanceBase = kSynapseResistanceBioDefault;
+ ResistanceMin = 1.0e6;
+ ResistanceMax = 1.0e11;
+ AttenuationGamma = kAttenuationGammaAuto;
+ TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
  DendriteLength.assign(NumInputDendrite, 1);
  OldDendriteLength.assign(NumInputDendrite, 1);
  NumSynapse.assign(NumInputDendrite, 1);
@@ -1166,6 +1516,8 @@ bool NNeuronTimeLearner::ADefault(void)
  SomaPeakValid.assign(NumInputDendrite, false);
  DendStatus.assign(NumInputDendrite, 0);
  SynapseStatus.assign(NumInputDendrite, 0);
+ ResistanceStatus.assign(NumInputDendrite, 0);
+ ResistanceDifference.assign(NumInputDendrite, 0.0);
  EnableDebug = false;
  ResizeSyncVectors(NumInputDendrite.GetData());
 
@@ -1211,6 +1563,7 @@ bool NNeuronTimeLearner::AReset(void)
   UntrainedDendriteLength = DendriteLength.GetData();
   UntrainedNumSynapse = NumSynapse.GetData();
   UntrainedInitialSomaPotential = InitialSomaPotential.GetData();
+  UntrainedTipSynapseResistance = TipSynapseResistance.GetData();
   HasUntrainedSnapshot = true;
  }
 
@@ -1502,6 +1855,14 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
   res &= linked;
  }
 
+ for(int d : changed)
+ {
+  if(d < 0 || d >= int(DendriteLength.size()) || d >= int(OldDendriteLength.size()))
+   continue;
+  const int deltaL = DendriteLength[static_cast<size_t>(d)] - OldDendriteLength[static_cast<size_t>(d)];
+  FeedforwardResistanceOnLengthGrow(d, deltaL);
+ }
+
  if(gen)
   gen->Reset();
  return res;
@@ -1510,6 +1871,26 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
 
 bool NNeuronTimeLearner::ChangeSynapseNumber(int num)
 {
+ if(IsParametricNormalization())
+ {
+  SynapseStatus[num] = 0;
+  if(NumSynapse[num] != 1)
+  {
+   NumSynapse[num] = 1;
+   if(Neuron)
+   {
+    UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>(
+     MakeLearnerDendriteName(num + 1, DendriteLength[num]), true);
+    if(dendrite && int(dendrite->NumExcitatorySynapses) != 1)
+    {
+     dendrite->NumExcitatorySynapses = 1;
+     dendrite->Build();
+    }
+   }
+  }
+  return ApplySynapseResistanceChange(num);
+ }
+
  bool res(true);
 
  if(!SynapseStatus[num])
@@ -1651,6 +2032,20 @@ bool NNeuronTimeLearner::MeasureMaxPotentialAndTime(void)
    if(DendriteLength[i] == 1 && NumSynapse[i]
       && currentsomaamp > InitialSomaPotential[i])
     InitialSomaPotential[i] = currentsomaamp;
+
+   if(DendriteLength[i] == 1 && NumSynapse[i] == 1 && IsParametricNormalization())
+   {
+    if(NPulseSynapseCommon *synapse = GetTipSynapse(i))
+    {
+     std::vector<double> tips = TipSynapseResistance.GetData();
+     if(tips.size() != static_cast<size_t>(NumInputDendrite))
+      tips.resize(static_cast<size_t>(NumInputDendrite), SynapseResistanceBase.GetData());
+     tips[static_cast<size_t>(i)] = synapse->Resistance;
+     TipSynapseResistance.SetDataDirect(tips);
+     if(i == 0 || SynapseResistanceBase.GetData() <= 0.0)
+      SynapseResistanceBase = synapse->Resistance;
+    }
+   }
   }
   else if(i < int(PeakSeen.size()) && PeakSeen[i]
           && MaxIterSomaAmp[i] > 0.0
@@ -1877,6 +2272,9 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
 
 bool NNeuronTimeLearner::ChangeSynapseStatus(int num)
 {
+ if(IsParametricNormalization())
+  return ChangeSynapseResistanceStatus(num);
+
  int dendstatus = DendStatus[num];
 
  // No amp target yet (need a successful L==1 peak) — do not ±1 synapses.
@@ -1995,6 +2393,38 @@ bool NNeuronTimeLearner::AllDendritesSynced(void) const
 bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
 {
  const double eps = 0.000005;
+ if(IsParametricNormalization())
+ {
+  const double rmin = ResistanceMin.GetData();
+  for(int i = 0; i < NumInputDendrite; i++)
+  {
+   if(i < int(ResistanceStatus.size()) && ResistanceStatus[i])
+    return false;
+   const bool amp_ok = (i < int(InitialSomaPotential.size()))
+    && (i < int(MaxIterSomaAmp.size()))
+    && (fabs(InitialSomaPotential[i] - MaxIterSomaAmp[i]) <= eps);
+   if(amp_ok)
+    continue;
+   const bool at_r_min = (i < int(TipSynapseResistance.size()))
+    && (TipSynapseResistance[static_cast<size_t>(i)] <= rmin * (1.0 + 1e-6));
+   const bool dt_positive = (i < int(InitialSomaPotential.size()))
+    && (i < int(MaxIterSomaAmp.size()))
+    && (InitialSomaPotential[i] > MaxIterSomaAmp[i] + eps);
+   const bool dead_tip = (i < int(MaxIterSomaAmp.size()))
+    && (MaxIterSomaAmp[i] < kMinMeasurableSomaAmp);
+   const bool length_ok = (i < int(DendLastAbsDt.size())
+    && DendLastAbsDt[static_cast<size_t>(i)] <= SyncTolerance.GetData())
+    || ((i < int(DendBestEffortSynced.size()))
+        && DendBestEffortSynced[static_cast<size_t>(i)]);
+   if(dead_tip && length_ok)
+    continue;
+   if(at_r_min && dt_positive && length_ok)
+    continue;
+   return false;
+  }
+  return true;
+ }
+
  for(int i = 0; i < NumInputDendrite; i++)
  {
   if(SynapseStatus[i])
@@ -2268,6 +2698,27 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
    if(i) oss << ',';
    oss << ((NumSynapse[i] >= kMaxSynapsesPerDend) ? 1 : 0);
   }
+  oss << "] resistance=[";
+  for(size_t i = 0; i < TipSynapseResistance.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << TipSynapseResistance[i];
+  }
+  oss << "] resStatus=[";
+  for(size_t i = 0; i < ResistanceStatus.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << ResistanceStatus[i];
+  }
+  oss << "] atRMin=[";
+  {
+   const double rmin = ResistanceMin.GetData();
+   for(size_t i = 0; i < TipSynapseResistance.size(); ++i)
+   {
+    if(i) oss << ',';
+    oss << ((TipSynapseResistance[i] <= rmin * (1.0 + 1e-6)) ? 1 : 0);
+   }
+  }
   oss << "] len=[";
   for(size_t i = 0; i < DendriteLength.size(); ++i)
   {
@@ -2314,7 +2765,12 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
  if(TrainingPhase != kPhaseDone && IsNeedToTrain)
  {
   for(int i = 0; i < NumInputDendrite; ++i)
-   ChangeSynapseNumber(i);
+  {
+   if(IsParametricNormalization())
+    ApplySynapseResistanceChange(i);
+   else
+    ChangeSynapseNumber(i);
+  }
  }
 
  // Snapshot this burst for next iteration's Prev* comparison (before CountIteration++).
