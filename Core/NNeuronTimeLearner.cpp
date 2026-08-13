@@ -254,6 +254,18 @@ bool NNeuronTimeLearner::StructureLooksUntrained(const std::vector<int> &lengths
  return true;
 }
 
+void NNeuronTimeLearner::ApplyActiveLtzThreshold(void)
+{
+ // Parameters often ship LTZThreshold=Fixed (recognition) together with
+ // IsNeedToTrain=1. During training soma peaks (~0.012–0.03) sit above Fixed
+ // (~0.0115) and the neuron spikes continuously unless TrainingLTZ is applied.
+ const double thr = IsNeedToTrain.GetData()
+  ? TrainingLTZThreshold.GetData()
+  : FixedLTZThreshold.GetData();
+ LTZThreshold.SetDataDirect(thr);
+ SetLTZThreshold(thr);
+}
+
 void NNeuronTimeLearner::ApplyLoadedAnchorProperties(void)
 {
  // Restore InitialSomaPotential / TipSynapseResistance only when they are empty or
@@ -543,7 +555,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  }
 
  double dt = InitialSomaPotential[num] - MaxIterSomaAmp[num];
- const double eps = 0.000005;
+ const double eps = kAmpNormEps;
 
  // Auto-estimate cable attenuation gamma from observed amp/Initial at L>1.
  if(MaxIterSomaAmp[num] > kMinMeasurableSomaAmp && InitialSomaPotential[num] > 0.0
@@ -600,6 +612,16 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
     r_new = ClampResistance(r_old * (1.0 - 0.15 * eff_gain));
    else
     r_new = ClampResistance(r_old * (1.0 + 0.15 * eff_gain));
+  }
+
+  // Near the target, damped-P steps shrink below settle ratio and ampDt can
+  // freeze just above eps (seen: dend2 stuck at ~6e-6). Force a minimal R step.
+  if(r_old > 0.0 && fabs(r_new - r_old) < kResistanceSettleRatio * r_old)
+  {
+   if(dt > 0.0)
+    r_new = ClampResistance(r_old * (1.0 - kResistanceSettleRatio));
+   else
+    r_new = ClampResistance(r_old * (1.0 + kResistanceSettleRatio));
   }
 
   const double prev_res_dt = ResistanceDifference[num];
@@ -1042,8 +1064,11 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
   InitialSomaPotential.assign(NumInputDendrite, 0.0);
   TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
  }
+ // Prefer setter path for LTZ; SetDataDirect(true) alone left FixedLTZ on the
+ // membrane and the neuron fired through the whole training run.
  TrainingPhase.SetDataDirect(kPhaseSync);
  IsNeedToTrain.SetDataDirect(true);
+ ApplyActiveLtzThreshold();
  OldDendriteLength = DendriteLength.GetData();
  DendStatus.assign(NumInputDendrite, 0);
  SynapseStatus.assign(NumInputDendrite, 0);
@@ -1792,6 +1817,7 @@ bool NNeuronTimeLearner::BuildStructure()
  TrainingPhase = IsNeedToTrain ? kPhaseSync : kPhaseDone;
  if(IsNeedToTrain.GetData())
   CanChangeDendLength = true;
+ ApplyActiveLtzThreshold();
  IterationActive = false;
  HasPrevIteration = false;
  PulseIndexInIter = 0;
@@ -2013,6 +2039,11 @@ bool NNeuronTimeLearner::AReset(void)
   ResetToUntrainedState.SetDataDirect(false);
   if(!ResetToUntrained())
    return false;
+ }
+ else
+ {
+  // Load / ordinary Reset: Parameters may keep IsNeedToTrain=1 with Fixed LTZ.
+  ApplyActiveLtzThreshold();
  }
 
  UEPtr<NPulseNeuron> n_in = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
@@ -2767,7 +2798,7 @@ bool NNeuronTimeLearner::ChangeSynapseStatus(int num)
  // still drives SynapseStatus ±1 in parallel with length (NNeuronLearner-style).
  // Do not lock SynapseStatus=0 solely because it was already 0 (max-cap / prior).
  if ((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001) && !DendStatus[num]
-          && (fabs(dt) <= 0.000005))
+          && (fabs(dt) <= kAmpNormEps))
  {
   SynapseStatus[num] = 0;
  }
@@ -2852,7 +2883,7 @@ bool NNeuronTimeLearner::AllDendritesSynced(void) const
 
 bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
 {
- const double eps = 0.000005;
+ const double eps = kAmpNormEps;
  // Ref dendrite (N-1) is the length/timing anchor: ChangeSynapseResistanceStatus
  // skips R-tune there, and DendLastAbsDt[ref] stays a large sentinel. Match
  // AllDendritesSynced — only non-ref dendrites gate amp Done.

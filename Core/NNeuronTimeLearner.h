@@ -249,6 +249,9 @@ protected:
  static constexpr int kNoImproveLimit = 2;
  static constexpr double kResistanceAdjustGainDefault = 0.4;
  static constexpr double kResistanceSettleRatio = 1e-3;
+ /// Absolute |Initial-amp| tolerance for parametric amp Done (was 5e-6; cold runs
+ /// often stall ~6e-6 on one dendrite and never clear IsNeedToTrain).
+ static constexpr double kAmpNormEps = 1e-5;
  static constexpr double kAmpOscillationBand = 0.005;
  static constexpr double kGainOvershootFactor = 0.5;
  static constexpr double kGainUndershootFactor = 1.5;
@@ -341,6 +344,8 @@ protected:
  void ApplyLoadedAnchorProperties(void);
  /// True when every dendrite length is <= 1 (cold / untrained topology).
  bool StructureLooksUntrained(const std::vector<int> &lengths) const;
+ /// Push TrainingLTZ or FixedLTZ onto LTZThreshold + neuron LTZone.
+ void ApplyActiveLtzThreshold(void);
  void UpdateNormTraces(void);
  bool PatternRecognition(void);
  bool LearningAdditionalPattern_1_4(MDMatrix<double> second_pattern);
