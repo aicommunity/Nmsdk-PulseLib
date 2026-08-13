@@ -241,8 +241,24 @@ void NNeuronTimeLearner::UpdateNormTraces(void)
  StimulusIterTrace = iter_m;
 }
 
+bool NNeuronTimeLearner::StructureLooksUntrained(const std::vector<int> &lengths) const
+{
+ // Cold / untrained topology: every dendrite length is 1 (empty → treat as cold).
+ if(lengths.empty())
+  return true;
+ for(size_t i = 0; i < lengths.size(); ++i)
+ {
+  if(lengths[i] > 1)
+   return false;
+ }
+ return true;
+}
+
 void NNeuronTimeLearner::ApplyLoadedAnchorProperties(void)
 {
+ // Restore InitialSomaPotential / TipSynapseResistance only when they are empty or
+ // degenerate. Do NOT re-apply Loaded* on every call — that undoes ResetToUntrained
+ // (cold TipR=base, cleared Initial) and pulls trained tips from Parameters_00.xml.
  const int n = NumInputDendrite.GetData();
  if(n < 1)
   return;
@@ -316,16 +332,15 @@ void NNeuronTimeLearner::ApplyLoadedAnchorProperties(void)
 
  const std::vector<double> cur_initial = InitialSomaPotential.GetData();
  if(vector_all_zero(cur_initial, n))
-  reload_vector_property("InitialSomaPotential", n, LoadedInitialSomaPotential, HasLoadedInitialSomaPotential);
-
- if(HasLoadedInitialSomaPotential && !LoadedInitialSomaPotential.empty())
  {
-  const int target_n = std::max(n, int(LoadedInitialSomaPotential.size()));
-  std::vector<double> normalized(static_cast<size_t>(target_n), 0.0);
-  const size_t copyCount = std::min(normalized.size(), LoadedInitialSomaPotential.size());
-  for(size_t i = 0; i < copyCount; ++i)
-   normalized[i] = LoadedInitialSomaPotential[i];
-  InitialSomaPotential.SetDataDirect(normalized);
+  // Only apply file Initial when current is empty — not after intentional cold clear.
+  // Exception: first load / open still has zeros before Parameters apply; callers that
+  // need trained Initial should leave non-zero values in place (already loaded).
+  // After ResetToUntrained we keep zeros so amp capture can re-fill at L==1.
+  (void)reload_vector_property("InitialSomaPotential", n, LoadedInitialSomaPotential,
+                               HasLoadedInitialSomaPotential);
+  // Do not SetDataDirect(LoadedInitial) here: that would re-inject trained Initial
+  // from Parameters_00 into a cold L=1 structure after ResetToUntrainedState.
  }
 
  const std::vector<double> cur_tips = TipSynapseResistance.GetData();
@@ -341,21 +356,23 @@ void NNeuronTimeLearner::ApplyLoadedAnchorProperties(void)
   }
  }
  if(tips_need_reload)
-  reload_vector_property("TipSynapseResistance", n, LoadedTipSynapseResistance, HasLoadedTipSynapseResistance);
-
- if(HasLoadedTipSynapseResistance && !LoadedTipSynapseResistance.empty())
  {
-  const int target_n = std::max(n, int(LoadedTipSynapseResistance.size()));
-  std::vector<double> normalized(static_cast<size_t>(target_n), SynapseResistanceBase.GetData());
-  const size_t copyCount = std::min(normalized.size(), LoadedTipSynapseResistance.size());
-  for(size_t i = 0; i < copyCount; ++i)
-   normalized[i] = ClampResistance(LoadedTipSynapseResistance[i]);
-  TipSynapseResistance.SetDataDirect(normalized);
-  if(Neuron && IsParametricNormalization())
+  if(reload_vector_property("TipSynapseResistance", n, LoadedTipSynapseResistance,
+                            HasLoadedTipSynapseResistance)
+     && HasLoadedTipSynapseResistance && !LoadedTipSynapseResistance.empty())
   {
-   const int apply_n = std::min(n, int(normalized.size()));
-   for(int i = 0; i < apply_n; ++i)
-    SetTipSynapseResistanceOnComponent(i, normalized[static_cast<size_t>(i)]);
+   const int target_n = std::max(n, int(LoadedTipSynapseResistance.size()));
+   std::vector<double> normalized(static_cast<size_t>(target_n), SynapseResistanceBase.GetData());
+   const size_t copyCount = std::min(normalized.size(), LoadedTipSynapseResistance.size());
+   for(size_t i = 0; i < copyCount; ++i)
+    normalized[i] = ClampResistance(LoadedTipSynapseResistance[i]);
+   TipSynapseResistance.SetDataDirect(normalized);
+   if(Neuron && IsParametricNormalization())
+   {
+    const int apply_n = std::min(n, int(normalized.size()));
+    for(int i = 0; i < apply_n; ++i)
+     SetTipSynapseResistanceOnComponent(i, normalized[static_cast<size_t>(i)]);
+   }
   }
  }
 }
@@ -1003,21 +1020,30 @@ bool NNeuronTimeLearner::ZeroingTrainingPattern(void)
 
 bool NNeuronTimeLearner::ResetToUntrained(void)
 {
- if(HasUntrainedSnapshot)
+ // Prefer a cold (L<=1) snapshot. StructTrain Parameters ship trained lengths
+ // (49 41 25 1) + Initial — never restore that as "untrained".
+ const bool snapshot_ok =
+  HasUntrainedSnapshot && StructureLooksUntrained(UntrainedDendriteLength);
+
+ if(snapshot_ok)
  {
-  DendriteLength = UntrainedDendriteLength;
-  NumSynapse = UntrainedNumSynapse;
-  InitialSomaPotential = UntrainedInitialSomaPotential;
+  // SetDataDirect: avoid SetDendriteLength clearing HasUntrainedSnapshot.
+  DendriteLength.SetDataDirect(UntrainedDendriteLength);
+  NumSynapse.SetDataDirect(UntrainedNumSynapse);
+  InitialSomaPotential.SetDataDirect(UntrainedInitialSomaPotential);
   if(UntrainedTipSynapseResistance.size() == static_cast<size_t>(NumInputDendrite))
    TipSynapseResistance.SetDataDirect(UntrainedTipSynapseResistance);
  }
  else
  {
+  HasUntrainedSnapshot = false;
   DendriteLength.assign(NumInputDendrite, 1);
   NumSynapse.assign(NumInputDendrite, 1);
   InitialSomaPotential.assign(NumInputDendrite, 0.0);
   TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
  }
+ TrainingPhase.SetDataDirect(kPhaseSync);
+ IsNeedToTrain.SetDataDirect(true);
  OldDendriteLength = DendriteLength.GetData();
  DendStatus.assign(NumInputDendrite, 0);
  SynapseStatus.assign(NumInputDendrite, 0);
@@ -1726,22 +1752,26 @@ bool NNeuronTimeLearner::BuildStructure()
  }
 
  {
-  bool any_initial = false;
-  for(int i = 0; i < NumInputDendrite; ++i)
+  // First successful cold anchors only (all L<=1). Never snapshot trained lengths.
+  if(!HasUntrainedSnapshot && StructureLooksUntrained(DendriteLength.GetData()))
   {
-   if(i < int(InitialSomaPotential.size()) && InitialSomaPotential[i] > 0.0)
+   bool any_initial = false;
+   for(int i = 0; i < NumInputDendrite; ++i)
    {
-    any_initial = true;
-    break;
+    if(i < int(InitialSomaPotential.size()) && InitialSomaPotential[i] > 0.0)
+    {
+     any_initial = true;
+     break;
+    }
    }
-  }
-  if(any_initial)
-  {
-   UntrainedDendriteLength = DendriteLength.GetData();
-   UntrainedNumSynapse = NumSynapse.GetData();
-   UntrainedInitialSomaPotential = InitialSomaPotential.GetData();
-   UntrainedTipSynapseResistance = TipSynapseResistance.GetData();
-   HasUntrainedSnapshot = true;
+   if(any_initial)
+   {
+    UntrainedDendriteLength = DendriteLength.GetData();
+    UntrainedNumSynapse = NumSynapse.GetData();
+    UntrainedInitialSomaPotential = InitialSomaPotential.GetData();
+    UntrainedTipSynapseResistance = TipSynapseResistance.GetData();
+    HasUntrainedSnapshot = true;
+   }
   }
  }
 
@@ -1949,25 +1979,36 @@ bool NNeuronTimeLearner::AReset(void)
 {
  ApplyLoadedAnchorProperties();
 
- bool any_initial = false;
- for(size_t i = 0; i < InitialSomaPotential.size(); ++i)
+ // Snapshot only a cold topology (all L<=1). Trained samples (L=49 41 25 1 in
+ // Parameters_00.xml) must not become the "untrained" baseline.
+ const bool do_reset_untrained = ResetToUntrainedState.GetData();
+ if(!HasUntrainedSnapshot && !do_reset_untrained
+    && StructureLooksUntrained(DendriteLength.GetData()))
  {
-  if(InitialSomaPotential[i] > 0.0)
+  bool any_initial = false;
+  for(size_t i = 0; i < InitialSomaPotential.size(); ++i)
   {
-   any_initial = true;
-   break;
+   if(InitialSomaPotential[i] > 0.0)
+   {
+    any_initial = true;
+    break;
+   }
+  }
+  if(any_initial)
+  {
+   UntrainedDendriteLength = DendriteLength.GetData();
+   UntrainedNumSynapse = NumSynapse.GetData();
+   UntrainedInitialSomaPotential = InitialSomaPotential.GetData();
+   UntrainedTipSynapseResistance = TipSynapseResistance.GetData();
+   HasUntrainedSnapshot = true;
   }
  }
- if(any_initial)
- {
-  UntrainedDendriteLength = DendriteLength.GetData();
-  UntrainedNumSynapse = NumSynapse.GetData();
-  UntrainedInitialSomaPotential = InitialSomaPotential.GetData();
-  UntrainedTipSynapseResistance = TipSynapseResistance.GetData();
-  HasUntrainedSnapshot = true;
- }
 
- if(ResetToUntrainedState.GetData())
+ // Drop a contaminated snapshot taken before this guard existed (trained L).
+ if(HasUntrainedSnapshot && !StructureLooksUntrained(UntrainedDendriteLength))
+  HasUntrainedSnapshot = false;
+
+ if(do_reset_untrained)
  {
   ResetToUntrainedState.SetDataDirect(false);
   if(!ResetToUntrained())

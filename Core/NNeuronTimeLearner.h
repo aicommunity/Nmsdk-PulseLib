@@ -339,6 +339,8 @@ protected:
  void FeedforwardResistanceOnLengthGrow(int dendrite_index0, int deltaL);
  void EnforceParametricSynapseCount(void);
  void ApplyLoadedAnchorProperties(void);
+ /// True when every dendrite length is <= 1 (cold / untrained topology).
+ bool StructureLooksUntrained(const std::vector<int> &lengths) const;
  void UpdateNormTraces(void);
  bool PatternRecognition(void);
  bool LearningAdditionalPattern_1_4(MDMatrix<double> second_pattern);
