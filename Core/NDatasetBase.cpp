@@ -18,6 +18,9 @@ NDatasetBase::NDatasetBase(void)
   Iteration("Iteration", this),
   Delay("Delay", this, &NDatasetBase::SetDelay),
   AdvanceSampleAfterBurst("AdvanceSampleAfterBurst", this),
+  LoopSamples("LoopSamples", this),
+  CurrentClass("CurrentClass", this),
+  CurrentClassMatrix("CurrentClassMatrix", this),
   StateGeneration("StateGeneration", this),
   TimeGeneration("TimeGeneration", this),
   OperatingTime("OperatingTime", this),
@@ -123,6 +126,9 @@ bool NDatasetBase::ADefault(void)
     StateGeneration = 2;
     Delay = 0;
     AdvanceSampleAfterBurst = false;
+    LoopSamples = true;
+    CurrentClass = 0;
+    CurrentClassMatrix.Resize(1, 1, 0.0);
     OperatingTime = 0;
     ResetDelay = true;
     TimeGeneration = 5;
@@ -229,6 +235,15 @@ void NDatasetBase::BeginSpikeTrainSample(double now)
 
     SampleStartTime = now;
     LastPlayedIteration = Iteration;
+
+    int cls = 0;
+    if(MatrixClasses.GetRows() >= 1 && MatrixClasses.GetCols() > int(Iteration)
+       && int(Iteration) >= 0)
+        cls = MatrixClasses(0, int(Iteration));
+    CurrentClass.SetDataDirect(cls);
+    CurrentClassMatrix.Resize(1, 1, 0.0);
+    CurrentClassMatrix(0, 0) = double(cls);
+
     RebuildSpikeAbsTimesForIteration();
     SilenceGenerators();
 }
@@ -289,8 +304,19 @@ void NDatasetBase::UpdateSpikeTrainPlayback(double now)
     {
         if(AdvanceSampleAfterBurst && NumSamples > 0)
         {
-            const int next = (int(Iteration) + 1) % int(NumSamples);
-            Iteration.SetDataDirect(next);
+            const int next = int(Iteration) + 1;
+            if(next >= int(NumSamples))
+            {
+                if(!LoopSamples)
+                {
+                    StateGeneration = 0;
+                    SilenceGenerators();
+                    return;
+                }
+                Iteration.SetDataDirect(0);
+            }
+            else
+                Iteration.SetDataDirect(next);
         }
         BeginSpikeTrainSample(now);
     }

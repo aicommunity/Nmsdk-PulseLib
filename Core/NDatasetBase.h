@@ -41,6 +41,15 @@ UProperty<double, NDatasetBase, ptPubParameter> Delay;
 /// After burst+Delay: if true, Iteration = (Iteration+1) % NumSamples
 UProperty<bool, NDatasetBase, ptPubParameter> AdvanceSampleAfterBurst;
 
+/// If true, wrap Iteration to 0 after last sample; if false, stop after last sample
+UProperty<bool, NDatasetBase, ptPubParameter> LoopSamples;
+
+/// Class label of the active sample (from MatrixClasses at Iteration)
+UProperty<int, NDatasetBase, ptOutput | ptPubState> CurrentClass;
+
+/// Same as CurrentClass as 1×1 matrix for links to analyzers
+UProperty<MDMatrix<double>, NDatasetBase, ptOutput | ptPubState> CurrentClassMatrix;
+
 /// Generation mode: 0 = off, 1 = timed, 2 = continuous (burst -> Delay -> burst)
 UProperty<int, NDatasetBase, ptPubState> StateGeneration;
 

@@ -26,13 +26,13 @@ MatrixData(sample * M + spikeSlot, feature)
 Единый старт сэмпла → one-shot на генераторах → пауза `Delay` → снова пачка.
 
 - `AdvanceSampleAfterBurst=false` (default): повтор того же `Iteration`.
-- `AdvanceSampleAfterBurst=true`: `Iteration = (Iteration+1) % NumSamples`.
+- `AdvanceSampleAfterBurst=true`: следующий `Iteration`; при `LoopSamples=true` — wrap на 0, при `LoopSamples=false` — `StateGeneration=0` и стоп.
 
 ### Свойства
 
-**Parameters:** `PulseGeneratorClassName`, `Delay`, `Iteration`, `MaxSpikesPerFeature`, `AdvanceSampleAfterBurst`.
+**Parameters:** `PulseGeneratorClassName`, `Delay`, `Iteration`, `MaxSpikesPerFeature`, `AdvanceSampleAfterBurst`, `LoopSamples`.
 
-**States:** `MatrixData`, `MatrixClasses`, `NumFeatures`, `NumSamples`, `NumClasses`, `StateGeneration`, `TimeGeneration`, `OperatingTime`, `ResetDelay`.
+**States:** `MatrixData`, `MatrixClasses`, `CurrentClass`, `NumFeatures`, `NumSamples`, `NumClasses`, `StateGeneration`, `TimeGeneration`, `OperatingTime`, `ResetDelay`.
 
 ### См. также
 

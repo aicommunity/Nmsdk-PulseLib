@@ -870,6 +870,8 @@ void NNeuronTimeLearner::SyncDatasetDimsFromDendrites(void)
 {
  if(!Dataset)
   return;
+ if(!IsNeedToTrain.GetData())
+  return;
  Dataset->PulseGeneratorClassName = PulseGeneratorClassName;
  if(Dataset->NumFeatures != 1)
   Dataset->SetNumFeatures(1);
@@ -885,6 +887,8 @@ void NNeuronTimeLearner::SyncDatasetDimsFromDendrites(void)
 bool NNeuronTimeLearner::SyncInputPatternToDataset(const MDMatrix<double> *pattern_override)
 {
  if(!Dataset)
+  return true;
+ if(!IsNeedToTrain.GetData())
   return true;
 
  SyncDatasetDimsFromDendrites();

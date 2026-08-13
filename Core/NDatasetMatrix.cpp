@@ -135,6 +135,7 @@ bool NDatasetMatrix::SetMatrixData(const MDMatrix<double> &value)
 
 bool NDatasetMatrix::SetMatrixClasses(const MDMatrix<int> &value)
 {
+    MatrixClasses.SetDataDirect(value);
     if(value.GetRows() == 1 && value.GetCols() > 0)
         NumClasses = CalcNumClasses(value);
     else
