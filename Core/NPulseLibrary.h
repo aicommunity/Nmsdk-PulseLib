@@ -65,6 +65,7 @@ See file license.txt for more information
 #include "NNeuronFreqGroupLayer.h"
 #include "NNeuronLearner.h"
 #include "NNeuronTimeLearner.h"
+#include "NPatternResponseAnalyzer.h"
 #include "NNeuronsLayer.h"
 #include "NPulsePerseptron.h"
 #include "NNeuronTrainer.h"

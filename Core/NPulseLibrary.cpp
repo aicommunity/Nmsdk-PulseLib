@@ -1290,6 +1290,11 @@ UploadClass("NPredictor",cont);
  cont->Build();
  UploadClass("NNeuronTimeLearner",cont);
 
+ cont=new NPatternResponseAnalyzer;
+ cont->SetName("PatternResponseAnalyzer");
+ cont->Default();
+ UploadClass("NPatternResponseAnalyzer",cont);
+
 // Создаем предиктор состояния
 cont=new NStatePredictor;
 cont->SetName("StatePredictor");
