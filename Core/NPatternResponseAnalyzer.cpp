@@ -2,7 +2,12 @@
 #define NPATTERNRESPONSEANALYZER_CPP
 
 #include "NPatternResponseAnalyzer.h"
+#include "NNeuronTimeLearner.h"
+#include "NPulseLTZoneCommon.h"
+#include "NPulseNeuron.h"
 
+#include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <iomanip>
 #include <sstream>
@@ -23,12 +28,18 @@ std::string JoinPath(const std::string &base, const std::string &sub)
  return base + "/" + sub;
 }
 
+const char *kCsvHeader =
+ "trial,target_class,stim_count,isi0,isi1,isi2,isi3,neuron_fired,neuron_t_rel,match,"
+ "ltz_potential_max,soma_amp_0,soma_amp_1,soma_amp_2,soma_amp_3,soma_amp_sum\n";
+
 }
 
 NPatternResponseAnalyzer::NPatternResponseAnalyzer(void)
 : StimulusInputs("StimulusInputs", this),
   NeuronOutputs("NeuronOutputs", this),
   TargetClassInput("TargetClassInput", this),
+  SomaAmplitudeInput("SomaAmplitudeInput", this),
+  LearnerComponentName("LearnerComponentName", this),
   PostPatternWindow("PostPatternWindow", this),
   PulseDetectThreshold("PulseDetectThreshold", this),
   SavePath("SavePath", this),
@@ -47,8 +58,13 @@ NPatternResponseAnalyzer::NPatternResponseAnalyzer(void)
   trial_neuron_fired_(0),
   trial_t_first_stim_(0.0),
   trial_t_last_stim_(0.0),
-  trial_t_neuron_(-1.0)
+  trial_t_neuron_(-1.0),
+  trial_ltz_potential_max_(0.0),
+  ltz_source_(nullptr)
 {
+ trial_soma_amp_max_[0] = trial_soma_amp_max_[1] = 0.0;
+ trial_soma_amp_max_[2] = trial_soma_amp_max_[3] = 0.0;
+ trial_soma_amp_sum_max_ = 0.0;
 }
 
 NPatternResponseAnalyzer::~NPatternResponseAnalyzer(void)
@@ -73,6 +89,7 @@ bool NPatternResponseAnalyzer::ADefault(void)
  FileName = "results.csv";
  AppendMode = false;
  Enable = true;
+ LearnerComponentName = "NeuronTimeLearner";
  TrialIndex = 0;
  LastFired = 0;
  LastMatch = 0;
@@ -85,11 +102,32 @@ bool NPatternResponseAnalyzer::ADefault(void)
  prev_neuron_.clear();
  trial_stim_times_.clear();
  csv_full_path_.clear();
+ trial_ltz_potential_max_ = 0.0;
+ trial_soma_amp_max_[0] = trial_soma_amp_max_[1] = 0.0;
+ trial_soma_amp_max_[2] = trial_soma_amp_max_[3] = 0.0;
+ trial_soma_amp_sum_max_ = 0.0;
+ ltz_source_ = nullptr;
  return true;
 }
 
 bool NPatternResponseAnalyzer::ABuild(void)
 {
+ ltz_source_ = nullptr;
+ if(UEPtr<UContainer> parent = GetOwner())
+ {
+  const std::string learner_name = std::string(LearnerComponentName);
+  if(UEPtr<NNeuronTimeLearner> learner =
+      parent->GetComponentL<NNeuronTimeLearner>(learner_name, true))
+  {
+   if(UEPtr<NPulseNeuron> neuron =
+       learner->GetComponentL<NPulseNeuron>(std::string("Neuron"), true))
+   {
+    if(UEPtr<NPulseLTZoneCommon> ltz =
+        neuron->GetComponentL<NPulseLTZoneCommon>(std::string("LTZone"), true))
+     ltz_source_ = ltz.Get();
+   }
+  }
+ }
  return true;
 }
 
@@ -130,6 +168,70 @@ bool NPatternResponseAnalyzer::DetectRisingEdge(const std::vector<MDMatrix<doubl
  return rising;
 }
 
+double NPatternResponseAnalyzer::ReadLtzPotential(void) const
+{
+ if(!ltz_source_ && GetOwner())
+ {
+  const std::string learner_name = std::string(LearnerComponentName);
+  if(UEPtr<NNeuronTimeLearner> learner =
+      GetOwner()->GetComponentL<NNeuronTimeLearner>(learner_name, true))
+  {
+   if(UEPtr<NPulseNeuron> neuron =
+       learner->GetComponentL<NPulseNeuron>(std::string("Neuron"), true))
+   {
+    if(UEPtr<NPulseLTZoneCommon> ltz =
+        neuron->GetComponentL<NPulseLTZoneCommon>(std::string("LTZone"), true))
+     const_cast<NPatternResponseAnalyzer *>(this)->ltz_source_ = ltz.Get();
+   }
+  }
+ }
+ if(ltz_source_)
+  return ltz_source_->Potential.GetData();
+ return 0.0;
+}
+
+void NPatternResponseAnalyzer::ReadSomaAmplitudes(double soma_out[4], double &soma_sum) const
+{
+ soma_sum = 0.0;
+ for(int i = 0; i < 4; ++i)
+  soma_out[i] = 0.0;
+
+ const std::vector<MDMatrix<double> > &amps = SomaAmplitudeInput.GetData();
+ if(amps.empty())
+  return;
+
+ const MDMatrix<double> &m = amps[0];
+ if(m.GetRows() <= 0 || m.GetCols() <= 0)
+  return;
+
+ if(m.GetRows() > 0)
+  soma_sum = m(0, 0);
+ for(int i = 0; i < 4; ++i)
+ {
+  const int row = i + 1;
+  if(row < m.GetRows())
+   soma_out[i] = m(row, 0);
+ }
+}
+
+void NPatternResponseAnalyzer::UpdateTrialMetrics(double /*now*/)
+{
+ const double ltz = ReadLtzPotential();
+ if(ltz > trial_ltz_potential_max_)
+  trial_ltz_potential_max_ = ltz;
+
+ double soma[4] = {0.0, 0.0, 0.0, 0.0};
+ double soma_sum = 0.0;
+ ReadSomaAmplitudes(soma, soma_sum);
+ if(soma_sum > trial_soma_amp_sum_max_)
+  trial_soma_amp_sum_max_ = soma_sum;
+ for(int i = 0; i < 4; ++i)
+ {
+  if(soma[i] > trial_soma_amp_max_[i])
+   trial_soma_amp_max_[i] = soma[i];
+ }
+}
+
 bool NPatternResponseAnalyzer::EnsureCsvReady(void)
 {
  if(csv_full_path_.empty())
@@ -148,7 +250,7 @@ bool NPatternResponseAnalyzer::EnsureCsvReady(void)
   std::ofstream out(csv_full_path_.c_str(), std::ios::trunc);
   if(!out)
    return false;
-  out << "trial,target_class,stim_count,isi0,isi1,isi2,isi3,neuron_fired,neuron_t_rel,match\n";
+  out << kCsvHeader;
   csv_header_written_ = true;
   return true;
  }
@@ -161,7 +263,7 @@ bool NPatternResponseAnalyzer::EnsureCsvReady(void)
    std::ofstream out(csv_full_path_.c_str(), std::ios::trunc);
    if(!out)
     return false;
-   out << "trial,target_class,stim_count,isi0,isi1,isi2,isi3,neuron_fired,neuron_t_rel,match\n";
+   out << kCsvHeader;
   }
   csv_header_written_ = true;
  }
@@ -223,7 +325,15 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
      out << (trial_t_neuron_ - trial_t_first_stim_);
     else
      out << -1;
-    out << ',' << match << '\n';
+    out << ',' << match << ','
+        << trial_ltz_potential_max_ << ',';
+    for(int i = 0; i < 4; ++i)
+    {
+     out << trial_soma_amp_max_[i];
+     if(i < 3)
+      out << ',';
+    }
+    out << ',' << trial_soma_amp_sum_max_ << '\n';
    }
   }
  }
@@ -235,6 +345,10 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
  trial_t_first_stim_ = 0.0;
  trial_t_last_stim_ = 0.0;
  trial_t_neuron_ = -1.0;
+ trial_ltz_potential_max_ = 0.0;
+ trial_soma_amp_max_[0] = trial_soma_amp_max_[1] = 0.0;
+ trial_soma_amp_max_[2] = trial_soma_amp_max_[3] = 0.0;
+ trial_soma_amp_sum_max_ = 0.0;
 }
 
 bool NPatternResponseAnalyzer::AReset(void)
@@ -264,7 +378,7 @@ bool NPatternResponseAnalyzer::AReset(void)
   {
    std::ofstream out(csv_full_path_.c_str(), std::ios::trunc);
    if(out)
-    out << "trial,target_class,stim_count,isi0,isi1,isi2,isi3,neuron_fired,neuron_t_rel,match\n";
+    out << kCsvHeader;
    csv_header_written_ = true;
   }
  }
@@ -290,6 +404,10 @@ bool NPatternResponseAnalyzer::ACalculate(void)
    trial_t_first_stim_ = now;
    trial_t_last_stim_ = now;
    trial_t_neuron_ = -1.0;
+   trial_ltz_potential_max_ = 0.0;
+   trial_soma_amp_max_[0] = trial_soma_amp_max_[1] = 0.0;
+   trial_soma_amp_max_[2] = trial_soma_amp_max_[3] = 0.0;
+   trial_soma_amp_sum_max_ = 0.0;
    trial_stim_times_.clear();
    trial_stim_times_.push_back(now);
   }
@@ -303,12 +421,16 @@ bool NPatternResponseAnalyzer::ACalculate(void)
  if(trial_active_)
   trial_target_class_ = int(ReadTargetClass());
 
+ if(trial_active_)
+  UpdateTrialMetrics(now);
+
  if(trial_active_ && !trial_neuron_fired_
     && DetectRisingEdge(neuron, prev_neuron_)
     && now <= trial_t_last_stim_ + double(PostPatternWindow))
  {
-  trial_neuron_fired_ = 1;
   trial_t_neuron_ = now;
+  trial_neuron_fired_ = 1;
+  UpdateTrialMetrics(now);
  }
 
  if(trial_active_ && now >= trial_t_last_stim_ + double(PostPatternWindow))
