@@ -153,36 +153,44 @@ std::string NDataset::CalcActualSourceFilePath(const std::string &file_name)
  return file_path;
 }
 
-bool NDataset::TreatDataFromFile(void)
+NDataset::FileLoadResult NDataset::TreatDataFromFile(void)
 {
     const std::string path = CalcActualSourceFilePath(FileName);
     if(path.empty())
-        return false;
+    {
+        MatrixData.Resize(0, 0);
+        MatrixClasses.Resize(0, 0);
+        return FileLoadResult::Unavailable;
+    }
 
     std::ifstream file_dataset(path.c_str());
     if(!file_dataset)
-        return false;
+    {
+        MatrixData.Resize(0, 0);
+        MatrixClasses.Resize(0, 0);
+        return FileLoadResult::Unavailable;
+    }
 
     std::string line;
     const char delimiter = ';';
     if(!std::getline(file_dataset, line))
-        return false;
+        return FileLoadResult::Invalid;
 
     int max_spikes = 1;
     bool has_meta = false;
     if(!line.empty() && line[0] == '#' && line.find("NDataset") != std::string::npos)
     {
         if(!ParseMaxSpikesFromMeta(line, max_spikes))
-            return false;
+            return FileLoadResult::Invalid;
         has_meta = true;
         if(!std::getline(file_dataset, line))
-            return false;
+            return FileLoadResult::Invalid;
     }
 
     // Header: semicolon count == NumFeatures
     const int num_features = CountDelimiter(line, delimiter);
     if(num_features <= 0)
-        return false;
+        return FileLoadResult::Invalid;
 
     std::vector<std::string> data_lines;
     while(std::getline(file_dataset, line))
@@ -193,9 +201,9 @@ bool NDataset::TreatDataFromFile(void)
     file_dataset.close();
 
     if(data_lines.empty())
-        return false;
+        return FileLoadResult::Invalid;
     if(int(data_lines.size()) % max_spikes != 0)
-        return false;
+        return FileLoadResult::Invalid;
 
     const int num_samples = int(data_lines.size()) / max_spikes;
 
@@ -213,7 +221,7 @@ bool NDataset::TreatDataFromFile(void)
             int class_value = 0;
             const bool parse_class = (k == 0);
             if(!ParseFeatureRow(row_line, delimiter, num_features, parse_class, class_value, values))
-                return false;
+                return FileLoadResult::Invalid;
 
             if(k == 0)
                 matrix_classes(0, s) = class_value;
@@ -228,28 +236,44 @@ bool NDataset::TreatDataFromFile(void)
     MaxSpikesPerFeature = max_spikes;
     MatrixData = matrix_data;
     MatrixClasses = matrix_classes;
-    return true;
+    return FileLoadResult::Loaded;
 }
 
 bool NDataset::PrepareDataset(void)
 {
-    const bool ok = TreatDataFromFile();
-    if(ok)
+    const FileLoadResult result = TreatDataFromFile();
+    if(result == FileLoadResult::Invalid)
+        return false;
+    if(result == FileLoadResult::Loaded)
         ReloadDataset = false;
-    return ok;
+    // Unavailable: empty matrices, ReloadDataset stays true for a later retry
+    return true;
 }
 
 bool NDataset::ACalculate(void)
 {
     if(ReloadDataset)
     {
-        if(!TreatDataFromFile())
+        const FileLoadResult result = TreatDataFromFile();
+        if(result == FileLoadResult::Invalid)
             return false;
-        if(!ApplyFromMatrices())
-            return false;
-        ReloadDataset = false;
-        SyncGenerators();
-        ResetDelay = true;
+        if(result == FileLoadResult::Loaded)
+        {
+            if(!ApplyFromMatrices())
+                return false;
+            ReloadDataset = false;
+            SyncGenerators();
+            ResetDelay = true;
+        }
+        else
+        {
+            // Unavailable: idle empty — keep ReloadDataset for retry
+            NumSamples = 0;
+            NumFeatures = 0;
+            NumClasses = 0;
+            LastPlayedIteration = -1;
+            SyncGenerators();
+        }
     }
     return NDatasetBase::ACalculate();
 }

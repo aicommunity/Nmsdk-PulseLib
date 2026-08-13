@@ -395,6 +395,17 @@ bool NDatasetBase::ABuild(void)
         LogMessageEx(RDK_EX_ERROR, __FUNCTION__, msg);
         RDK_THROW(EStringError(msg));
     }
+
+    // Empty matrices = idle (e.g. file source not present yet); valid built state.
+    if(MatrixData.GetRows() <= 0 || MatrixData.GetCols() <= 0)
+    {
+        NumSamples = 0;
+        NumFeatures = 0;
+        NumClasses = 0;
+        LastPlayedIteration = -1;
+        return SyncGenerators();
+    }
+
     if(!ApplyFromMatrices())
     {
         const std::string msg = std::string("NDatasetBase::ABuild failed: ApplyFromMatrices rejected data on ")

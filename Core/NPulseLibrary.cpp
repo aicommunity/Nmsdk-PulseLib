@@ -1271,13 +1271,13 @@ cont->Default();
 cont->Build();
 UploadClass("NPredictor",cont);
 
-    // Создаем класс чтения датасета (без Build: файл датасета может отсутствовать при регистрации)
+ // File dataset: UploadClass always Build(); missing default file is idle OK in ABuild
  cont=new NDataset;
  cont->SetName("Dataset");
  cont->Default();
  UploadClass("NDataset",cont);
 
- // Датасет из матрицы (параметры GUI; без Build при регистрации)
+ // Matrix dataset: ADefault seeds valid 1x1 matrices so Build succeeds
  cont=new NDatasetMatrix;
  cont->SetName("DatasetMatrix");
  cont->Default();

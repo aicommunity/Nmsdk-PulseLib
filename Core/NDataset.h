@@ -35,8 +35,16 @@ virtual NDataset* New(void);
 static UComponent* NewStatic(void);
 
 protected:
-/// Load matrices from FileName into MatrixData/MatrixClasses
-bool TreatDataFromFile(void);
+/// Result of attempting to read FileName into MatrixData/MatrixClasses
+enum class FileLoadResult
+{
+    Loaded,      ///< File parsed into matrices
+    Unavailable, ///< Empty path or file missing — idle empty matrices OK
+    Invalid      ///< File opened but content/schema is wrong
+};
+
+/// Load matrices from FileName; Unavailable clears matrices and keeps ReloadDataset
+FileLoadResult TreatDataFromFile(void);
 
 /// Resolve FileName using absolute / Config / Work rules
 std::string CalcActualSourceFilePath(const std::string &file_name);
