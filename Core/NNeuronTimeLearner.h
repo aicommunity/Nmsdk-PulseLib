@@ -91,6 +91,24 @@ public:
  /// Force FixedLTZThreshold
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> UseFixedLTZThreshold;
 
+ /// After EndOfLearning: set FixedLTZThreshold from last synced training LTZ min/max
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> AutoCalibrateFixedLTZThreshold;
+
+ /// 0 = gap_fraction (min + f*(max-min)); 1 = peak_fraction (max*f)
+ UProperty<int, NNeuronTimeLearner, ptPubParameter> CalibrateLTZThresholdMode;
+
+ /// Fraction for gap_fraction or peak_fraction calibration
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> CalibrateLTZThresholdFraction;
+
+ /// Lower clamp for calibrated threshold
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> CalibrateLTZThresholdMin;
+
+ /// Upper clamp for calibrated threshold
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> CalibrateLTZThresholdMax;
+
+ /// Result of last AutoCalibrateFixedLTZThreshold (0 if not calibrated)
+ UProperty<double, NNeuronTimeLearner, ptPubState> CalibratedFixedLTZThreshold;
+
  /// Neuron output copy
  UProperty<MDMatrix<double>, NNeuronTimeLearner, ptOutput | ptPubState> Output;
 
@@ -266,6 +284,17 @@ protected:
  double SumMaxIterSomaAmp;
  double PrevSumMaxIterSomaAmp;
 
+ /// LTZ Potential min/max during current training iteration
+ double IterMinLTZPotential;
+ double IterMaxLTZPotential;
+ bool IterLTZTrackingActive;
+ /// Snapshot from last iteration where AllDendritesSynced()
+ double LastSyncedMinLTZ;
+ double LastSyncedMaxLTZ;
+
+ static constexpr int kCalibrateGapFraction = 0;
+ static constexpr int kCalibratePeakFraction = 1;
+
 public:
  NNeuronTimeLearner(void);
  virtual ~NNeuronTimeLearner(void);
@@ -287,6 +316,11 @@ public:
  bool SetTrainingLTZThreshold(const double &value);
  bool SetFixedLTZThreshold(const double &value);
  bool SetUseFixedLTZThreshold(const bool &value);
+ bool SetAutoCalibrateFixedLTZThreshold(const bool &value);
+ bool SetCalibrateLTZThresholdMode(const int &value);
+ bool SetCalibrateLTZThresholdFraction(const double &value);
+ bool SetCalibrateLTZThresholdMin(const double &value);
+ bool SetCalibrateLTZThresholdMax(const double &value);
  bool SetSynapseResistanceStep(const double &value);
  bool SetNormalizationMode(const int &value);
  bool SetSynapseResistanceBase(const double &value);
@@ -346,6 +380,9 @@ protected:
  bool StructureLooksUntrained(const std::vector<int> &lengths) const;
  /// Push TrainingLTZ or FixedLTZ onto LTZThreshold + neuron LTZone.
  void ApplyActiveLtzThreshold(void);
+ double ReadLTZonePotential(void) const;
+ void UpdateIterLTZPotential(void);
+ void CalibrateFixedLTZThresholdFromTraining(void);
  void UpdateNormTraces(void);
  bool PatternRecognition(void);
  bool LearningAdditionalPattern_1_4(MDMatrix<double> second_pattern);

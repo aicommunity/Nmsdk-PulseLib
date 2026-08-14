@@ -25,6 +25,10 @@
 | `SyncTolerance` | Допуск одновременности пиков (сек) |
 | `TrainingPhase` | 0 Sync / 1 Normalize / 2 Done |
 | `TrainingLTZThreshold` / `FixedLTZThreshold` | Порог при обучении / после |
+| `AutoCalibrateFixedLTZThreshold` | После Done: выставить `FixedLTZThreshold` по min/max LTZ последней synced-итерации |
+| `CalibrateLTZThresholdMode` | 0 = gap_fraction (`min + f*(max-min)`), 1 = peak_fraction (`max*f`) |
+| `CalibrateLTZThresholdFraction` | Доля (default 0.85) |
+| `CalibratedFixedLTZThreshold` | Результат калибровки (state) |
 
 ### Lifecycle
 

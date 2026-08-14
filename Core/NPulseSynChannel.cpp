@@ -106,8 +106,9 @@ bool NPulseSynChannel::SetInhibitionCoeff(const double &value)
  double synapseResistanceVal = SynapseResistance.GetData();
  if(synapseResistanceVal > 0)
  {
+  // Channel always uses quadratic output; C=4k/R peak-normalizes to 1/R.
   if(value>0)
-   OutputConstData=4.0*(value+1)/synapseResistanceVal;
+   OutputConstData=4.0*value/synapseResistanceVal;
   else
    OutputConstData=1.0/synapseResistanceVal;
  }
@@ -125,7 +126,7 @@ bool NPulseSynChannel::SetSynapseResistance(const double &value)
 
  double inhibitionCoeffVal = InhibitionCoeff.GetData();
  if(inhibitionCoeffVal>0)
-  OutputConstData=4.0*(inhibitionCoeffVal+1)/value;
+  OutputConstData=4.0*inhibitionCoeffVal/value;
  else
   OutputConstData=1.0/value;
 
@@ -459,7 +460,12 @@ bool NContinuesSynChannel::SetInhibitionCoeff(const double &value)
 {
  const double synapseResistance = SynapseResistance.GetData();
  if(synapseResistance > 0)
-  OutputConstData=4.0*(value+1)/synapseResistance;
+ {
+  if(value > 0)
+   OutputConstData=4.0*value/synapseResistance;
+  else
+   OutputConstData=1.0/synapseResistance;
+ }
  else
   OutputConstData=0;
 

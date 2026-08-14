@@ -209,6 +209,20 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  syn->DissociationTC=0.005;
  UploadClass("NPSynapseBio",syn);
 
+ // Presynaptic-inhibition Bio variants (peak-normalized C=4k/R); same R/DissociationTC as Bio
+ {
+  const double preinh_ks[] = {0.5, 1.0, 2.0};
+  const char *preinh_syn_names[] = {
+   "NPSynapseBioPreinh0_5", "NPSynapseBioPreinh", "NPSynapseBioPreinh2_0"};
+  for(int pi = 0; pi < 3; ++pi)
+  {
+   syn=dynamic_pointer_cast<NPulseSynapse>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynapseBio"));
+   syn->InhibitionCoeff = preinh_ks[pi];
+   syn->UsePresynapticInhibition = true;
+   UploadClass(preinh_syn_names[pi], syn);
+  }
+ }
+
  syn=dynamic_pointer_cast<NPulseSynapse>(dynamic_cast<UStorage*>(storage)->TakeObject("NPSynapse"));
  syn->Resistance=86000000;
  syn->DissociationTC=0.005;
@@ -367,6 +381,19 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  membr->SynapseClassName="NPSynapseBio";
  membr->InhChannelClassName="NPInhChannelBio";
  UploadClass("NPMembraneBio",membr);
+
+ {
+  const char *preinh_syn_names[] = {
+   "NPSynapseBioPreinh0_5", "NPSynapseBioPreinh", "NPSynapseBioPreinh2_0"};
+  const char *preinh_mem_names[] = {
+   "NPMembraneBioPreinh0_5", "NPMembraneBioPreinh", "NPMembraneBioPreinh2_0"};
+  for(int pi = 0; pi < 3; ++pi)
+  {
+   membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembraneBio"));
+   membr->SynapseClassName = preinh_syn_names[pi];
+   UploadClass(preinh_mem_names[pi], membr);
+  }
+ }
 
  membr=dynamic_pointer_cast<NPulseMembrane>(dynamic_cast<UStorage*>(storage)->TakeObject("NPMembrane"));
  membr->SetName("PMembrane");
@@ -1055,6 +1082,23 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->Build();
  n->LTZone->Threshold=0.0117;
  UploadClass("NSPNeuronGen",n);
+
+ {
+  const char *preinh_mem_names[] = {
+   "NPMembraneBioPreinh0_5", "NPMembraneBioPreinh", "NPMembraneBioPreinh2_0"};
+  const char *preinh_neu_names[] = {
+   "NSPNeuronGenPreinh0_5", "NSPNeuronGenPreinh", "NSPNeuronGenPreinh2_0"};
+  for(int pi = 0; pi < 3; ++pi)
+  {
+   n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+   n->LTMembraneClassName="";
+   n->MembraneClassName=preinh_mem_names[pi];
+   n->LTZoneClassName="NPulseLTZoneThreshold";
+   n->Build();
+   n->LTZone->Threshold=0.0117;
+   UploadClass(preinh_neu_names[pi], n);
+  }
+ }
 
  // Создаем мелкий нейрон с биологически правдоподобными параметрами
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));

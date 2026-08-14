@@ -22,6 +22,7 @@ See file license.txt for more information
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <limits>
 #include <sstream>
 #include "NNeuronTimeLearner.h"
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
@@ -264,6 +265,79 @@ void NNeuronTimeLearner::ApplyActiveLtzThreshold(void)
   : FixedLTZThreshold.GetData();
  LTZThreshold.SetDataDirect(thr);
  SetLTZThreshold(thr);
+}
+
+double NNeuronTimeLearner::ReadLTZonePotential(void) const
+{
+ if(!Neuron)
+  return 0.0;
+ UEPtr<NLTZone> ltzone = Neuron->GetComponentL<NLTZone>(std::string("LTZone"), true);
+ if(!ltzone)
+  return 0.0;
+ return ltzone->Potential.GetData();
+}
+
+void NNeuronTimeLearner::UpdateIterLTZPotential(void)
+{
+ if(!IsNeedToTrain.GetData() || !IterationActive)
+  return;
+
+ const double ltz = ReadLTZonePotential();
+ if(ltz <= 0.0)
+  return;
+
+ if(!IterLTZTrackingActive)
+ {
+  IterMinLTZPotential = ltz;
+  IterMaxLTZPotential = ltz;
+  IterLTZTrackingActive = true;
+ }
+ else
+ {
+  IterMinLTZPotential = std::min(IterMinLTZPotential, ltz);
+  IterMaxLTZPotential = std::max(IterMaxLTZPotential, ltz);
+ }
+}
+
+void NNeuronTimeLearner::CalibrateFixedLTZThresholdFromTraining(void)
+{
+ if(!AutoCalibrateFixedLTZThreshold.GetData())
+  return;
+
+ const double min_ltz = LastSyncedMinLTZ;
+ const double max_ltz = LastSyncedMaxLTZ;
+ if(max_ltz <= min_ltz + 1e-9)
+ {
+  if(EnableDebug.GetData() && RDK::GetLogger())
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner",
+    "CalibrateFixedLTZ: skip (no valid min/max LTZ snapshot)");
+  return;
+ }
+
+ double thr;
+ if(CalibrateLTZThresholdMode.GetData() == kCalibratePeakFraction)
+  thr = max_ltz * CalibrateLTZThresholdFraction.GetData();
+ else
+  thr = min_ltz + CalibrateLTZThresholdFraction.GetData() * (max_ltz - min_ltz);
+
+ const double tmin = CalibrateLTZThresholdMin.GetData();
+ const double tmax = CalibrateLTZThresholdMax.GetData();
+ thr = std::max(tmin, std::min(tmax, thr));
+
+ FixedLTZThreshold.SetDataDirect(thr);
+ CalibratedFixedLTZThreshold.SetDataDirect(thr);
+ UseFixedLTZThreshold = true;
+ SetLTZThreshold(thr);
+
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "CalibrateFixedLTZ: mode=" << CalibrateLTZThresholdMode.GetData()
+      << " min=" << min_ltz << " max=" << max_ltz
+      << " fraction=" << CalibrateLTZThresholdFraction.GetData()
+      << " thr=" << thr;
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
 }
 
 void NNeuronTimeLearner::ApplyLoadedAnchorProperties(void)
@@ -942,6 +1016,12 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  FixedLTZThreshold("FixedLTZThreshold",this,&NNeuronTimeLearner::SetFixedLTZThreshold),
  TrainingLTZThreshold("TrainingLTZThreshold",this,&NNeuronTimeLearner::SetTrainingLTZThreshold),
  UseFixedLTZThreshold("UseFixedLTZThreshold",this,&NNeuronTimeLearner::SetUseFixedLTZThreshold),
+ AutoCalibrateFixedLTZThreshold("AutoCalibrateFixedLTZThreshold",this,&NNeuronTimeLearner::SetAutoCalibrateFixedLTZThreshold),
+ CalibrateLTZThresholdMode("CalibrateLTZThresholdMode",this,&NNeuronTimeLearner::SetCalibrateLTZThresholdMode),
+ CalibrateLTZThresholdFraction("CalibrateLTZThresholdFraction",this,&NNeuronTimeLearner::SetCalibrateLTZThresholdFraction),
+ CalibrateLTZThresholdMin("CalibrateLTZThresholdMin",this,&NNeuronTimeLearner::SetCalibrateLTZThresholdMin),
+ CalibrateLTZThresholdMax("CalibrateLTZThresholdMax",this,&NNeuronTimeLearner::SetCalibrateLTZThresholdMax),
+ CalibratedFixedLTZThreshold("CalibratedFixedLTZThreshold",this),
  Output("Output",this),
  AmpDtTrace("AmpDtTrace",this),
  TipSynapseResistanceTrace("TipSynapseResistanceTrace",this),
@@ -994,6 +1074,11 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  EstDelayPerSeg = kDelayPerSegDefault;
  LastLengthDelta = 0;
  LastLengthDeltaDendrite = -1;
+ IterMinLTZPotential = std::numeric_limits<double>::max();
+ IterMaxLTZPotential = 0.0;
+ IterLTZTrackingActive = false;
+ LastSyncedMinLTZ = 0.0;
+ LastSyncedMaxLTZ = 0.0;
 }
 
 
@@ -1294,6 +1379,36 @@ bool NNeuronTimeLearner::SetUseFixedLTZThreshold(const bool &value)
   SetLTZThreshold(FixedLTZThreshold.GetData());
   LTZThreshold.SetDataDirect(FixedLTZThreshold.GetData());
  }
+ return true;
+}
+
+bool NNeuronTimeLearner::SetAutoCalibrateFixedLTZThreshold(const bool &value)
+{
+ (void)value;
+ return true;
+}
+
+bool NNeuronTimeLearner::SetCalibrateLTZThresholdMode(const int &value)
+{
+ (void)value;
+ return true;
+}
+
+bool NNeuronTimeLearner::SetCalibrateLTZThresholdFraction(const double &value)
+{
+ (void)value;
+ return true;
+}
+
+bool NNeuronTimeLearner::SetCalibrateLTZThresholdMin(const double &value)
+{
+ (void)value;
+ return true;
+}
+
+bool NNeuronTimeLearner::SetCalibrateLTZThresholdMax(const double &value)
+{
+ (void)value;
  return true;
 }
 
@@ -1925,6 +2040,17 @@ bool NNeuronTimeLearner::ADefault(void)
  FixedLTZThreshold = 0.0115;
  TrainingLTZThreshold = 100;
  UseFixedLTZThreshold = false;
+ AutoCalibrateFixedLTZThreshold = false;
+ CalibrateLTZThresholdMode = kCalibrateGapFraction;
+ CalibrateLTZThresholdFraction = 0.85;
+ CalibrateLTZThresholdMin = 0.0115;
+ CalibrateLTZThresholdMax = 0.05;
+ CalibratedFixedLTZThreshold = 0.0;
+ IterMinLTZPotential = std::numeric_limits<double>::max();
+ IterMaxLTZPotential = 0.0;
+ IterLTZTrackingActive = false;
+ LastSyncedMinLTZ = 0.0;
+ LastSyncedMaxLTZ = 0.0;
 
  InputPattern.Resize(NumInputDendrite, 1);
  AdditionalInputPattern.Resize(NumInputDendrite, 1);
@@ -3006,6 +3132,8 @@ bool NNeuronTimeLearner::EndOfLearning(void)
  Neuron->TrainingSynapsisNum.Resize(NumInputDendrite, 1);
  Neuron->TrainingSynapsisNum = temp;
 
+ CalibrateFixedLTZThresholdFromTraining();
+
  TrainingPhase = kPhaseDone;
  CanChangeDendLength = false;
  SetIsNeedToTrain(false);
@@ -3080,6 +3208,9 @@ void NNeuronTimeLearner::BeginTrainingIteration(double now)
  IsFirstBeat = false;
  PeakRel.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0.0);
  DelayFromPulse.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0.0);
+ IterMinLTZPotential = std::numeric_limits<double>::max();
+ IterMaxLTZPotential = 0.0;
+ IterLTZTrackingActive = false;
 
  // Structure changes are applied in FinishTrainingIteration (during the inter-burst
  // gap). Changing length here would Reset() the neuron after pulse 0 and break timing.
@@ -3303,6 +3434,13 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
  }
 
+ if(AllDendritesSynced() && IterLTZTrackingActive
+  && IterMaxLTZPotential > IterMinLTZPotential + 1e-9)
+ {
+  LastSyncedMinLTZ = IterMinLTZPotential;
+  LastSyncedMaxLTZ = IterMaxLTZPotential;
+ }
+
  // Apply length then synapses in one inter-burst gap (tip after Build/relink).
  if(TrainingPhase != kPhaseDone && IsNeedToTrain && CanChangeDendLength)
   ApplyPendingDendriteLengthChanges();
@@ -3356,6 +3494,7 @@ bool NNeuronTimeLearner::Training(void)
   {
    BeginTrainingIteration(now);
    MeasureMaxPotentialAndTime();
+   UpdateIterLTZPotential();
   }
   return true;
  }
@@ -3383,6 +3522,7 @@ bool NNeuronTimeLearner::Training(void)
  }
 
  MeasureMaxPotentialAndTime();
+ UpdateIterLTZPotential();
 
  const double last_pulse = FirstImpulseTime
   + ((NumInputDendrite > 0 && !ExpectedPulseRelTimes.empty())

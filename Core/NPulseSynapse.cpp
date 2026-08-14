@@ -94,8 +94,9 @@ bool NPulseSynapse::SetInhibitionCoeff(const double &value)
  const double resistance = Resistance.GetData();
  if(resistance > 0)
  {
-  if(value>0)
-   OutputConstData=4.0*(value+1)/resistance;
+  // Peak-normalize like SetResistance: C=4k/R so max of (1-k*p)*p equals 1/R.
+  if(value > 0 && UsePresynapticInhibition)
+   OutputConstData=4.0*value/resistance;
   else
    OutputConstData=1.0/resistance;
  }

@@ -229,7 +229,7 @@ graph TB
 **Внутренние состояния:**
 - **`VSecretionTC`** (double) — нормализованная постоянная времени выделения (`SecretionTC * TimeStep`)
 - **`VDissociationTC`** (double) — нормализованная постоянная времени распада (`DissociationTC * TimeStep`)
-- **`OutputConstData`** (double) — константа для расчета выходного тока (`1/Resistance` или `4*InhibitionCoeff/Resistance`)
+- **`OutputConstData`** (double) — константа для расчета выходного тока. При `UsePresynapticInhibition` и `InhibitionCoeff=k>0`: `C = 4k/Resistance` (пик квадратичной формы `(1−k·p)·p` равен `1/R`). Иначе `C = 1/Resistance`. Все сеттеры (`SetInhibitionCoeff`, `SetResistance`, `SetUsePresynapticInhibition`) согласованы на эту нормализацию (legacy `4(k+1)/R` в `SetInhibitionCoeff` убран).
 - **`PulseCounter`** (int) — счетчик длительности импульса. Уменьшается на каждом шаге, когда обрабатывается импульс. Начальное значение: 0
 
 ### Методы
@@ -258,7 +258,7 @@ graph TB
 
 - **`SetTypicalPulseDuration(const double &value)`** → `bool` — устанавливает типовую длительность импульса. Проверяет, что значение > 0, устанавливает `Ready=false`.
 
-- **`SetInhibitionCoeff(const double &value)`** → `bool` — устанавливает коэффициент пресинаптического торможения. Пересчитывает `OutputConstData`.
+- **`SetInhibitionCoeff(const double &value)`** → `bool` — устанавливает коэффициент пресинаптического торможения. Пересчитывает `OutputConstData` (`4k/R` при PSI и `k>0`, иначе `1/R`).
 
 - **`SetUsePulseSignal(const bool &value)`** → `bool` — устанавливает флаг использования импульсных сигналов. Устанавливает `Ready=false`.
 
