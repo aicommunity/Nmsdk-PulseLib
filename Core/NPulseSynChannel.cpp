@@ -20,6 +20,7 @@ See file license.txt for more information
 #include "NPulseMembrane.h"
 #include "NPulseNeuron.h"
 #include "NPulseLifeNeuron.h"
+#include "NPulseSynapse.h"
 #include "NReceptor.h"
 
 
@@ -324,7 +325,9 @@ bool NPulseSynChannel::ACalculate2(void)
    else
     preOutputVec[num_connected_synapsis-1]-=preOutputVec[num_connected_synapsis-1]/VDissociationTC;
 
-   syn_output=OutputConstData*(1.0-inhibitionCoeffVal*preOutputVec[num_connected_synapsis-1])*preOutputVec[num_connected_synapsis-1];
+   syn_output=PresynapticInhibitionConductance(
+    OutputConstData, inhibitionCoeffVal,
+    preOutputVec[num_connected_synapsis-1], input>0);
 
    if(syn_output>0)
     G+=syn_output;

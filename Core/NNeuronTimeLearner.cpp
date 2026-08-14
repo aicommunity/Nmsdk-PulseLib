@@ -419,14 +419,24 @@ void NNeuronTimeLearner::ApplyLoadedAnchorProperties(void)
  const std::vector<double> cur_initial = InitialSomaPotential.GetData();
  if(vector_all_zero(cur_initial, n))
  {
-  // Only apply file Initial when current is empty — not after intentional cold clear.
-  // Exception: first load / open still has zeros before Parameters apply; callers that
-  // need trained Initial should leave non-zero values in place (already loaded).
-  // After ResetToUntrained we keep zeros so amp capture can re-fill at L==1.
+  // Reload from Parameters when the in-memory vector is still default zeros
+  // (ABuild often runs before InitialSomaPotential XML is applied).
   (void)reload_vector_property("InitialSomaPotential", n, LoadedInitialSomaPotential,
                                HasLoadedInitialSomaPotential);
-  // Do not SetDataDirect(LoadedInitial) here: that would re-inject trained Initial
-  // from Parameters_00 into a cold L=1 structure after ResetToUntrainedState.
+  // Cold ResetToUntrained must keep zeros so L=1 can recapture amp. Trained
+  // cables (any L>1) need the file anchors or continue-train never reaches
+  // AllSynapsesNormalized (EXP01 GUI continue: initial=[0,0,0,ref]).
+  const bool trained_cables = !StructureLooksUntrained(DendriteLength.GetData());
+  if(trained_cables && HasLoadedInitialSomaPotential && !LoadedInitialSomaPotential.empty()
+     && !ResetToUntrainedState.GetData())
+  {
+   const int target_n = std::max(n, int(LoadedInitialSomaPotential.size()));
+   std::vector<double> normalized(static_cast<size_t>(target_n), 0.0);
+   const size_t copyCount = std::min(normalized.size(), LoadedInitialSomaPotential.size());
+   for(size_t i = 0; i < copyCount; ++i)
+    normalized[i] = LoadedInitialSomaPotential[i];
+   InitialSomaPotential.SetDataDirect(normalized);
+  }
  }
 
  const std::vector<double> cur_tips = TipSynapseResistance.GetData();
@@ -707,10 +717,19 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
 
   if(num < int(NoImproveResistanceCount.size()))
   {
-   if(ResistanceStatus[num] && fabs(dt) >= fabs(prev_res_dt) - 1e-12)
-    NoImproveResistanceCount[static_cast<size_t>(num)]++;
-   else if(fabs(dt) < fabs(prev_res_dt) - 1e-12 || fabs(dt) <= eps)
+   // Near eps, |dt| 1.16e-5↔1.30e-5 used to reset the counter every other
+   // iter (PSI k=0.5 GUI). Far from target, a slow crawl (0.07→0.065) must
+   // NOT freeze R — that blocked k=2 after coincident pulses raised amp.
+   const bool reached_eps = (fabs(dt) <= eps);
+   const bool near_target = (fabs(dt) <= kAmpOscillationBand)
+    || (fabs(prev_res_dt) <= kAmpOscillationBand);
+   const bool meaningful_drop = (fabs(prev_res_dt) > eps)
+    && (fabs(dt) < 0.5 * fabs(prev_res_dt));
+   const bool any_drop = (fabs(dt) < fabs(prev_res_dt));
+   if(reached_eps || meaningful_drop || (!near_target && any_drop))
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+   else if(ResistanceStatus[num])
+    NoImproveResistanceCount[static_cast<size_t>(num)]++;
    if(NoImproveResistanceCount[static_cast<size_t>(num)] >= kNoImproveResistanceLimit)
     ResistanceStatus[num] = 0;
   }

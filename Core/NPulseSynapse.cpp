@@ -257,7 +257,8 @@ bool NPulseSynapse::ACalculate2(void)
  double preOutputNewVal = PreOutput.GetData();
  double inhibitionCoeffVal = InhibitionCoeff.GetData();
  if(UsePresynapticInhibition)
-  Output(0,0)=OutputConstData*(1.0-inhibitionCoeffVal*preOutputNewVal)*preOutputNewVal;
+  Output(0,0)=PresynapticInhibitionConductance(
+   OutputConstData, inhibitionCoeffVal, preOutputNewVal, input>0);
  else
   Output(0,0)=OutputConstData*preOutputNewVal;
 

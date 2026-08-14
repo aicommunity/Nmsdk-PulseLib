@@ -130,5 +130,24 @@ virtual bool ACalculate2(void);
 // --------------------------
 };
 
+/// PSI conductance C*(1-k*p)*p.
+/// The parabola is <= 0 for p >= 1/k. With k=2 a shared burst keeps Pre above
+/// 0.5 after pulse 1, so later dendrite windows saw no peak and length sync
+/// never started. Apply a small residual only while input is active — flooring
+/// the gate during dissociation leaked DC and inflated soma amp at long L.
+inline double PresynapticInhibitionConductance(
+ double output_const, double inhibition_coeff, double pre, bool input_active)
+{
+ if(inhibition_coeff <= 0.0)
+  return output_const * pre;
+ double gate = 1.0 - inhibition_coeff * pre;
+ if(gate >= 0.0)
+  return output_const * gate * pre;
+ if(!input_active)
+  return 0.0;
+ constexpr double kPsiMinGate = 0.05;
+ return output_const * kPsiMinGate * pre;
+}
+
 }
 #endif
