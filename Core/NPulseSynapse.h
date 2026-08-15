@@ -146,7 +146,12 @@ inline double PresynapticInhibitionConductance(
  if(!input_active)
   return 0.0;
  constexpr double kPsiMinGate = 0.05;
- return output_const * kPsiMinGate * pre;
+ double min_gate = kPsiMinGate;
+ // C=4k/R: residual C*0.05*p at k=2 is 0.4/R. For k>2 keep that absolute
+ // residual (scale gate by 2/k) so stronger PSI does not invert later spikes.
+ if(inhibition_coeff > 2.0)
+  min_gate = kPsiMinGate * (2.0 / inhibition_coeff);
+ return output_const * min_gate * pre;
 }
 
 }

@@ -198,6 +198,16 @@ bool NPulseSynapse::ABuild(void)
  VSecretionTC=SecretionTC*TimeStep;
  VDissociationTC=DissociationTC*TimeStep;
 
+ const double k = InhibitionCoeff.GetData();
+ const double r = Resistance.GetData();
+ if(r > 0.0)
+ {
+  if(k > 0.0 && UsePresynapticInhibition)
+   OutputConstData=4.0*k/r;
+  else
+   OutputConstData=1.0/r;
+ }
+
  return true;
 }
 
@@ -257,8 +267,13 @@ bool NPulseSynapse::ACalculate2(void)
  double preOutputNewVal = PreOutput.GetData();
  double inhibitionCoeffVal = InhibitionCoeff.GetData();
  if(UsePresynapticInhibition)
+ {
+  const double r = Resistance.GetData();
+  if(r > 0.0 && inhibitionCoeffVal > 0.0)
+   OutputConstData=4.0*inhibitionCoeffVal/r;
   Output(0,0)=PresynapticInhibitionConductance(
    OutputConstData, inhibitionCoeffVal, preOutputNewVal, input>0);
+ }
  else
   Output(0,0)=OutputConstData*preOutputNewVal;
 
