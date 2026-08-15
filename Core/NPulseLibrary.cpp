@@ -212,12 +212,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  // Presynaptic-inhibition Bio variants (peak-normalized C=4k/R); same R/DissociationTC as Bio
  {
   const double preinh_ks[] = {
-   0.5, 1.0, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 10.0, 1.8, 2.1, 2.2};
+   0.5, 1.0, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 10.0, 1.8, 2.1, 2.2,
+   2.4, 2.6, 2.7};
   const char *preinh_syn_names[] = {
    "NPSynapseBioPreinh0_5", "NPSynapseBioPreinh", "NPSynapseBioPreinh2_0",
    "NPSynapseBioPreinh2_5", "NPSynapseBioPreinh3_0", "NPSynapseBioPreinh4_0",
    "NPSynapseBioPreinh5_0", "NPSynapseBioPreinh6_0", "NPSynapseBioPreinh10_0",
-   "NPSynapseBioPreinh1_8", "NPSynapseBioPreinh2_1", "NPSynapseBioPreinh2_2"};
+   "NPSynapseBioPreinh1_8", "NPSynapseBioPreinh2_1", "NPSynapseBioPreinh2_2",
+   "NPSynapseBioPreinh2_4", "NPSynapseBioPreinh2_6", "NPSynapseBioPreinh2_7"};
   const int preinh_n = int(sizeof(preinh_ks) / sizeof(preinh_ks[0]));
   for(int pi = 0; pi < preinh_n; ++pi)
   {
@@ -393,12 +395,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
    "NPSynapseBioPreinh0_5", "NPSynapseBioPreinh", "NPSynapseBioPreinh2_0",
    "NPSynapseBioPreinh2_5", "NPSynapseBioPreinh3_0", "NPSynapseBioPreinh4_0",
    "NPSynapseBioPreinh5_0", "NPSynapseBioPreinh6_0", "NPSynapseBioPreinh10_0",
-   "NPSynapseBioPreinh1_8", "NPSynapseBioPreinh2_1", "NPSynapseBioPreinh2_2"};
+   "NPSynapseBioPreinh1_8", "NPSynapseBioPreinh2_1", "NPSynapseBioPreinh2_2",
+   "NPSynapseBioPreinh2_4", "NPSynapseBioPreinh2_6", "NPSynapseBioPreinh2_7"};
   const char *preinh_mem_names[] = {
    "NPMembraneBioPreinh0_5", "NPMembraneBioPreinh", "NPMembraneBioPreinh2_0",
    "NPMembraneBioPreinh2_5", "NPMembraneBioPreinh3_0", "NPMembraneBioPreinh4_0",
    "NPMembraneBioPreinh5_0", "NPMembraneBioPreinh6_0", "NPMembraneBioPreinh10_0",
-   "NPMembraneBioPreinh1_8", "NPMembraneBioPreinh2_1", "NPMembraneBioPreinh2_2"};
+   "NPMembraneBioPreinh1_8", "NPMembraneBioPreinh2_1", "NPMembraneBioPreinh2_2",
+   "NPMembraneBioPreinh2_4", "NPMembraneBioPreinh2_6", "NPMembraneBioPreinh2_7"};
   const int preinh_n = int(sizeof(preinh_syn_names) / sizeof(preinh_syn_names[0]));
   for(int pi = 0; pi < preinh_n; ++pi)
   {
@@ -1101,12 +1105,14 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
    "NPMembraneBioPreinh0_5", "NPMembraneBioPreinh", "NPMembraneBioPreinh2_0",
    "NPMembraneBioPreinh2_5", "NPMembraneBioPreinh3_0", "NPMembraneBioPreinh4_0",
    "NPMembraneBioPreinh5_0", "NPMembraneBioPreinh6_0", "NPMembraneBioPreinh10_0",
-   "NPMembraneBioPreinh1_8", "NPMembraneBioPreinh2_1", "NPMembraneBioPreinh2_2"};
+   "NPMembraneBioPreinh1_8", "NPMembraneBioPreinh2_1", "NPMembraneBioPreinh2_2",
+   "NPMembraneBioPreinh2_4", "NPMembraneBioPreinh2_6", "NPMembraneBioPreinh2_7"};
   const char *preinh_neu_names[] = {
    "NSPNeuronGenPreinh0_5", "NSPNeuronGenPreinh", "NSPNeuronGenPreinh2_0",
    "NSPNeuronGenPreinh2_5", "NSPNeuronGenPreinh3_0", "NSPNeuronGenPreinh4_0",
    "NSPNeuronGenPreinh5_0", "NSPNeuronGenPreinh6_0", "NSPNeuronGenPreinh10_0",
-   "NSPNeuronGenPreinh1_8", "NSPNeuronGenPreinh2_1", "NSPNeuronGenPreinh2_2"};
+   "NSPNeuronGenPreinh1_8", "NSPNeuronGenPreinh2_1", "NSPNeuronGenPreinh2_2",
+   "NSPNeuronGenPreinh2_4", "NSPNeuronGenPreinh2_6", "NSPNeuronGenPreinh2_7"};
   const int preinh_n = int(sizeof(preinh_neu_names) / sizeof(preinh_neu_names[0]));
   for(int pi = 0; pi < preinh_n; ++pi)
   {
