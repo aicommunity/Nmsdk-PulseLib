@@ -161,6 +161,12 @@ public:
  /// |dt| below this => dendrite considered synchronized (sec)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> SyncTolerance;
 
+ /// Half-width of soma peak search window around Expected[i]+cable delay (sec)
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> PeakMeasureMargin;
+
+ /// Floor for DelayUseOf agree_margin: max(SyncTolerance, DelayAgreeMarginMin) (sec)
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> DelayAgreeMarginMin;
+
  /// 0 - joint train (length+synapses); 1 - legacy unused; 2 - Done
  UProperty<int, NNeuronTimeLearner, ptPubState> TrainingPhase;
 
@@ -335,6 +341,8 @@ public:
  bool SetNumSynapse(const std::vector<int> &value);
  bool SetIterationGap(const double &value);
  bool SetSyncTolerance(const double &value);
+ bool SetPeakMeasureMargin(const double &value);
+ bool SetDelayAgreeMarginMin(const double &value);
  bool SetResetToUntrainedState(const bool &value);
  bool SetExperimentNum(const int &value);
  bool SetEnableDebug(const bool &value);

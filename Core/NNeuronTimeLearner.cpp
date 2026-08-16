@@ -864,9 +864,9 @@ double NNeuronTimeLearner::DelayLenOf(int num) const
 double NNeuronTimeLearner::DelayUseOf(int num, double expected_k, double delay_meas) const
 {
  const double delay_len = DelayLenOf(num);
- // Tight margin: loose 0.06 allowed PeakRel-aligned delay_meas to "agree" while
- // delay_len still disagreed by ~0.05 (L1 stopped near 47 instead of ~41).
- const double agree_margin = std::max(SyncTolerance.GetData(), 0.03);
+ // Tight margin: loose PeakMeasureMargin-scale agree allowed PeakRel-aligned
+ // delay_meas to "agree" while delay_len still disagreed (L1 stopped early).
+ const double agree_margin = std::max(SyncTolerance.GetData(), DelayAgreeMarginMin.GetData());
  const bool peak_valid = (num < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(num)];
  const double peak_meas = (num < int(PeakRel.size())) ? PeakRel[static_cast<size_t>(num)] : 0.0;
  const double peak_model = expected_k + delay_len;
@@ -1063,6 +1063,8 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  NumSynapse("NumSynapse", this, &NNeuronTimeLearner::SetNumSynapse),
  IterationGap("IterationGap", this, &NNeuronTimeLearner::SetIterationGap),
  SyncTolerance("SyncTolerance", this, &NNeuronTimeLearner::SetSyncTolerance),
+ PeakMeasureMargin("PeakMeasureMargin", this, &NNeuronTimeLearner::SetPeakMeasureMargin),
+ DelayAgreeMarginMin("DelayAgreeMarginMin", this, &NNeuronTimeLearner::SetDelayAgreeMarginMin),
  TrainingPhase("TrainingPhase", this),
  ResetToUntrainedState("ResetToUntrainedState", this, &NNeuronTimeLearner::SetResetToUntrainedState),
  ExperimentNum("ExperimentNum", this, &NNeuronTimeLearner::SetExperimentNum),
@@ -1619,6 +1621,20 @@ bool NNeuronTimeLearner::SetSyncTolerance(const double &value)
  return true;
 }
 
+bool NNeuronTimeLearner::SetPeakMeasureMargin(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NNeuronTimeLearner::SetDelayAgreeMarginMin(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
 bool NNeuronTimeLearner::SetResetToUntrainedState(const bool &value)
 {
  (void)value;
@@ -2051,6 +2067,8 @@ bool NNeuronTimeLearner::ADefault(void)
  IterationGap = 0.5;
  // ~1 model step (DefaultTimeStep often 2e-3 s); 1e-6 never matched discrete peaks
  SyncTolerance = 0.02;
+ PeakMeasureMargin = 0.06;
+ DelayAgreeMarginMin = 0.03;
  TrainingPhase = kPhaseSync;
  ResetToUntrainedState = false;
  HasUntrainedSnapshot = false;
@@ -2600,7 +2618,8 @@ bool NNeuronTimeLearner::MeasureMaxPotentialAndTime(void)
    (DendriteLength[i] > 1) ? (DendriteLength[i] - 1) * EstDelayPerSeg : 0.0);
   const double expected_i = (i < int(ExpectedPulseRelTimes.size()))
    ? ExpectedPulseRelTimes[static_cast<size_t>(i)] : 0.0;
-  const double margin = std::max(0.06, 0.5 * double(kMaxLengthStep) * EstDelayPerSeg);
+  const double margin = std::max(PeakMeasureMargin.GetData(),
+   0.5 * double(kMaxLengthStep) * EstDelayPerSeg);
   double t_lo_rel = expected_i + delay_est - margin;
   double t_hi_rel = expected_i + delay_est + margin;
   if(t_lo_rel < 0.0)
