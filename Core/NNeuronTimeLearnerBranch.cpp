@@ -3243,6 +3243,7 @@ bool NNeuronTimeLearnerBranch::EndOfLearning(void)
  CanChangeDendLength = false;
  SetIsNeedToTrain(false);
  IsNeedToTrain = false;
+ ApplyPulseGeneratorMute(); // recognition: reconnect all tip synapses after Done
  if (EnableDebug.GetData() && RDK::GetLogger())
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", "phase -> Done");
  return true;
