@@ -1360,6 +1360,12 @@ UploadClass("NPredictor",cont);
  cont->Build();
  UploadClass("NNeuronTimeLearner",cont);
 
+ cont=new NNeuronTimeLearnerBranch;
+ cont->SetName("NeuronTimeLearnerBranch");
+ cont->Default();
+ cont->Build();
+ UploadClass("NNeuronTimeLearnerBranch",cont);
+
  cont=new NPatternResponseAnalyzer;
  cont->SetName("PatternResponseAnalyzer");
  cont->Default();
