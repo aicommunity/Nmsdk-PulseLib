@@ -3121,10 +3121,9 @@ bool NNeuronTimeLearnerBranch::AllSynapsesNormalized(void) const
   const double rmin = ResistanceMin.GetData();
   for(int i = 0; i < n_check; i++)
   {
-   // Reverse train: lower indices are not started yet — do not block Done/amp.
-   if(i < ActivePulseIndex)
-    continue;
-   if(i > ActivePulseIndex && (i >= int(PulseSynced.size()) || !PulseSynced[static_cast<size_t>(i)]))
+   // Reverse train: only the active pulse is tuned; lower indices are not started
+   // yet and higher indices are already committed — muted bursts must not re-gate Done.
+   if(i != ActivePulseIndex)
     continue;
 
    const bool length_ok = (i < int(DendLastAbsDt.size())
