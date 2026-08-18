@@ -1013,19 +1013,29 @@ void NNeuronTimeLearnerBranch::ApplyPulseGeneratorMute(void)
  const int n = NumInputDendrite.GetData();
  const bool all_on = (!IsNeedToTrain.GetData()) || (TrainingPhase.GetData() == kPhaseDone);
  const int active = ActivePulseIndex;
+ // Pulses on the same segment share ExcSynapse1. Disconnect unique synapses
+ // first, then link the active one last so a later mute-off cannot undo it.
  for(int f = 0; f < n; ++f)
  {
-  const bool enable = all_on || (active >= 0 && f == active);
   NPulseSynapseCommon *syn = GetTipSynapse(f);
   if(!syn)
    continue;
-  if(enable)
-   LinkSynapseToDataset(syn);
-  else
+  syn->Input.DetachFrom();
+  syn->DisconnectAllItems();
+ }
+ if(all_on)
+ {
+  for(int f = 0; f < n; ++f)
   {
-   syn->Input.DetachFrom();
-   syn->DisconnectAllItems();
+   NPulseSynapseCommon *syn = GetTipSynapse(f);
+   if(syn && !syn->Input.IsConnected())
+    LinkSynapseToDataset(syn);
   }
+ }
+ else if(active >= 0 && active < n)
+ {
+  if(NPulseSynapseCommon *syn = GetTipSynapse(active))
+   LinkSynapseToDataset(syn);
  }
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
@@ -1037,7 +1047,8 @@ void NNeuronTimeLearnerBranch::ApplyPulseGeneratorMute(void)
    if(f) oss << ',';
    oss << ((all_on || (active >= 0 && f == active)) ? 1 : 0);
   }
-  oss << "]";
+  NPulseSynapseCommon *active_syn = (active >= 0 && active < n) ? GetTipSynapse(active) : NULL;
+  oss << "] connected=" << ((active_syn && active_syn->Input.IsConnected()) ? 1 : 0);
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
  }
  if(Neuron)
@@ -1052,23 +1063,9 @@ bool NNeuronTimeLearnerBranch::RelinkDendriteSynapsesToDataset(int dendrite_inde
  if(!Neuron || dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
   return true;
 
- const int attach_seg = PulseAttachPos(dendrite_index0);
- // Same as NNeuronTimeLearner: only the distal attach segment receives input.
- if(attach_seg > 1)
- {
-  UEPtr<NPulseMembrane> proximal = Neuron->GetComponentL<NPulseMembrane>(
-   MakeBranchDendriteName(1), true);
-  if(proximal)
-  {
-   if(NPulseSynapseCommon *prox_syn = proximal->GetComponentL<NPulseSynapseCommon>(
-     std::string("ExcSynapse1"), true))
-   {
-    prox_syn->Input.DetachFrom();
-    prox_syn->DisconnectAllItems();
-   }
-  }
- }
-
+ // Do not detach other segments: several pulses share one cable, and mute
+ // chooses which unique ExcSynapse1 is driven. TimeLearner's proximal-detach
+ // is safe only because each pulse owns a private dendrite.
  UEPtr<NPulseMembrane> membr = GetInputMembraneForPulse(dendrite_index0);
  if(!membr)
   return false;
