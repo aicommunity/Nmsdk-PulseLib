@@ -44,11 +44,37 @@ std::string MakeBranchDendriteName(const int segment_index1)
  return std::string("Dendrite1_") + sntoa(segment_index1);
 }
 
+int BranchAttachSegment(const int attach_pos)
+{
+ return (attach_pos <= 0) ? 1 : attach_pos;
+}
+
+void EnsureSingleInputSynapseOnBranchSegments(NPulseNeuron *neuron, const int lmax)
+{
+ if(!neuron || lmax < 1)
+  return;
+ for(int seg = 1; seg <= lmax; ++seg)
+ {
+  UEPtr<NPulseMembrane> membr = neuron->GetComponentL<NPulseMembrane>(
+   MakeBranchDendriteName(seg), true);
+  if(!membr)
+   continue;
+  if(int(membr->NumExcitatorySynapses) != 1)
+  {
+   membr->NumExcitatorySynapses = 1;
+   membr->Build();
+  }
+  if(!membr->GetActivity())
+   membr->SetActivity(true);
+  if(!membr->IsInit())
+   membr->Init();
+ }
+}
+
 std::string MakeBranchExcSynapsePath(const int attach_pos, const int synapse_index1)
 {
- if(attach_pos <= 0)
-  return MakeBranchSomaName() + std::string(".ExcSynapse") + sntoa(synapse_index1);
- return MakeBranchDendriteName(attach_pos) + std::string(".ExcSynapse") + sntoa(synapse_index1);
+ return MakeBranchDendriteName(BranchAttachSegment(attach_pos))
+  + std::string(".ExcSynapse") + sntoa(synapse_index1);
 }
 
 const int kPhaseSync = 0;
@@ -157,22 +183,14 @@ double NNeuronTimeLearnerBranch::ClampResistance(double r) const
 int NNeuronTimeLearnerBranch::PulseAttachPos(int pulse_k) const
 {
  if(pulse_k < 0 || pulse_k >= int(DendriteLength.size()))
-  return 0;
- return DendriteLength[static_cast<size_t>(pulse_k)];
+  return 1;
+ return BranchAttachSegment(DendriteLength[static_cast<size_t>(pulse_k)]);
 }
 
 int NNeuronTimeLearnerBranch::SynapseIndexOnMembrane(int pulse_k) const
 {
- const int pos = PulseAttachPos(pulse_k);
- int idx = 0;
- for(int i = 0; i < NumInputDendrite; ++i)
- {
-  if(PulseAttachPos(i) != pos)
-   continue;
-  ++idx;
-  if(i == pulse_k)
-   return idx;
- }
+ (void)pulse_k;
+ // One excitatory synapse per dendrite segment; active pulse selected by mute.
  return 1;
 }
 
@@ -191,10 +209,8 @@ NPulseMembrane* NNeuronTimeLearnerBranch::GetInputMembraneForPulse(int pulse_k) 
 {
  if(!Neuron)
   return NULL;
- const int pos = PulseAttachPos(pulse_k);
- if(pos <= 0)
-  return Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(), true);
- return Neuron->GetComponentL<NPulseMembrane>(MakeBranchDendriteName(pos), true);
+ return Neuron->GetComponentL<NPulseMembrane>(
+  MakeBranchDendriteName(PulseAttachPos(pulse_k)), true);
 }
 
 NPulseSynapseCommon* NNeuronTimeLearnerBranch::GetTipSynapse(int dendrite_index0) const
@@ -321,15 +337,12 @@ void NNeuronTimeLearnerBranch::UpdateNormTraces(void)
 
 bool NNeuronTimeLearnerBranch::StructureLooksUntrained(const std::vector<int> &lengths) const
 {
- // Cold: pulses 0..N-2 on first dendrite segment (pos<=1), anchor on soma (pos==0).
+ // Cold: all pulses on the first dendrite segment (pos<=1); no soma inputs.
  if(lengths.empty())
   return true;
- const int n = int(lengths.size());
- if(n >= 1 && lengths[static_cast<size_t>(n - 1)] != 0)
-  return false;
- for(int i = 0; i < n - 1; ++i)
+ for(size_t i = 0; i < lengths.size(); ++i)
  {
-  if(lengths[static_cast<size_t>(i)] > 1)
+  if(lengths[i] > 1)
    return false;
  }
  return true;
@@ -965,26 +978,18 @@ double NNeuronTimeLearnerBranch::DelayUseOf(int num, double expected_k, double d
 
 NPulseGeneratorTransit* NNeuronTimeLearnerBranch::GetDatasetGenerator(void)
 {
- return GetDatasetGenerator(0);
-}
-
-NPulseGeneratorTransit* NNeuronTimeLearnerBranch::GetDatasetGenerator(int feature_index)
-{
  if(!Dataset)
   return 0;
- if(feature_index < 0)
-  feature_index = 0;
- if(feature_index < int(Dataset->Generators.size()) && Dataset->Generators[static_cast<size_t>(feature_index)])
-  return Dataset->Generators[static_cast<size_t>(feature_index)];
- return Dataset->GetComponentL<NPulseGeneratorTransit>(
-  std::string("Generator") + sntoa(feature_index + 1), true).Get();
+ if(!Dataset->Generators.empty() && Dataset->Generators[0])
+  return Dataset->Generators[0];
+ return Dataset->GetComponentL<NPulseGeneratorTransit>("Generator1", true).Get();
 }
 
-bool NNeuronTimeLearnerBranch::LinkSynapseToDataset(NPulseSynapseCommon *synapse, int feature_index)
+bool NNeuronTimeLearnerBranch::LinkSynapseToDataset(NPulseSynapseCommon *synapse)
 {
  if(!synapse)
   return false;
- const std::string gen_path = DatasetGeneratorPath(feature_index);
+ const std::string gen_path = DatasetGeneratorPath();
  synapse->Input.DetachFrom();
  synapse->DisconnectAllItems();
  const bool ok = CreateLink(gen_path, "Output", synapse->GetLongName(this), "Input", -1, true);
@@ -993,8 +998,7 @@ bool NNeuronTimeLearnerBranch::LinkSynapseToDataset(NPulseSynapseCommon *synapse
   std::ostringstream oss;
   oss << "LinkSynapseToDataset: " << gen_path << ".Output -> "
       << synapse->GetLongName(this) << ".Input ok=" << (ok ? 1 : 0)
-      << " connected=" << (synapse->Input.IsConnected() ? 1 : 0)
-      << " feature=" << feature_index;
+      << " connected=" << (synapse->Input.IsConnected() ? 1 : 0);
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
  }
  return ok;
@@ -1004,30 +1008,42 @@ void NNeuronTimeLearnerBranch::ApplyPulseGeneratorMute(void)
 {
  if(!Dataset)
   return;
+ if(NPulseGeneratorTransit *gen = GetDatasetGenerator())
+  gen->DisconnectAll("Output");
  const int n = NumInputDendrite.GetData();
  const bool all_on = (!IsNeedToTrain.GetData()) || (TrainingPhase.GetData() == kPhaseDone);
  const int active = ActivePulseIndex;
  for(int f = 0; f < n; ++f)
  {
-  NPulseGeneratorTransit *gen = GetDatasetGenerator(f);
-  const bool enable = all_on || (active >= 0 && f >= active);
-  if(!enable && gen)
-  {
-   gen->Frequency = 0.0;
-  }
+  const bool enable = all_on || (active >= 0 && f == active);
   NPulseSynapseCommon *syn = GetTipSynapse(f);
   if(!syn)
    continue;
   if(enable)
-  {
-   if(!syn->Input.IsConnected())
-    LinkSynapseToDataset(syn, f);
-  }
+   LinkSynapseToDataset(syn);
   else
   {
    syn->Input.DetachFrom();
    syn->DisconnectAllItems();
   }
+ }
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "ApplyPulseGeneratorMute: active=" << active << " all_on=" << (all_on ? 1 : 0)
+      << " enable=[";
+  for(int f = 0; f < n; ++f)
+  {
+   if(f) oss << ',';
+   oss << ((all_on || (active >= 0 && f == active)) ? 1 : 0);
+  }
+  oss << "]";
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+ }
+ if(Neuron)
+ {
+  Neuron->InvalidateActiveComponentsCache();
+  Neuron->Reset();
  }
 }
 
@@ -1036,22 +1052,30 @@ bool NNeuronTimeLearnerBranch::RelinkDendriteSynapsesToDataset(int dendrite_inde
  if(!Neuron || dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
   return true;
 
+ const int attach_seg = PulseAttachPos(dendrite_index0);
+ // Same as NNeuronTimeLearner: only the distal attach segment receives input.
+ if(attach_seg > 1)
+ {
+  UEPtr<NPulseMembrane> proximal = Neuron->GetComponentL<NPulseMembrane>(
+   MakeBranchDendriteName(1), true);
+  if(proximal)
+  {
+   if(NPulseSynapseCommon *prox_syn = proximal->GetComponentL<NPulseSynapseCommon>(
+     std::string("ExcSynapse1"), true))
+   {
+    prox_syn->Input.DetachFrom();
+    prox_syn->DisconnectAllItems();
+   }
+  }
+ }
+
  UEPtr<NPulseMembrane> membr = GetInputMembraneForPulse(dendrite_index0);
  if(!membr)
   return false;
 
- const int nsyn_needed = SynapseIndexOnMembrane(dendrite_index0);
- // Ensure this membrane has enough excitatory synapses for all pulses that share it.
- int pulses_here = 0;
- const int pos = PulseAttachPos(dendrite_index0);
- for(int i = 0; i < NumInputDendrite; ++i)
+ if(int(membr->NumExcitatorySynapses) != 1)
  {
-  if(PulseAttachPos(i) == pos)
-   ++pulses_here;
- }
- if(int(membr->NumExcitatorySynapses) < pulses_here)
- {
-  membr->NumExcitatorySynapses = pulses_here;
+  membr->NumExcitatorySynapses = 1;
   membr->Build();
  }
  if(!membr->GetActivity())
@@ -1071,13 +1095,9 @@ bool NNeuronTimeLearnerBranch::RelinkDendriteSynapsesToDataset(int dendrite_inde
    r = kSynapseResistanceBioDefault;
   synapse->Resistance = ClampResistance(r);
  }
- else if(nsyn_needed > 1)
+ else if(NumSynapse[dendrite_index0] > 1)
   synapse->Resistance = SynapseResistanceStep;
 
- if(!LinkSynapseToDataset(synapse, dendrite_index0))
-  return false;
- if(!synapse->Input.IsConnected())
-  return false;
  return true;
 }
 
@@ -1088,13 +1108,12 @@ void NNeuronTimeLearnerBranch::SyncDatasetDimsFromDendrites(void)
  if(!IsNeedToTrain.GetData())
   return;
  Dataset->PulseGeneratorClassName = PulseGeneratorClassName;
- const int n = std::max(1, NumInputDendrite.GetData());
- if(Dataset->MaxSpikesPerFeature != 1)
-  Dataset->SetMaxSpikesPerFeature(1);
- if(Dataset->NumFeatures != n)
-  Dataset->SetNumFeatures(n);
+ if(Dataset->NumFeatures != 1)
+  Dataset->SetNumFeatures(1);
  if(Dataset->NumSamples != 1)
   Dataset->SetNumSamples(1);
+ if(Dataset->MaxSpikesPerFeature != NumInputDendrite)
+  Dataset->SetMaxSpikesPerFeature(NumInputDendrite);
  Dataset->Delay = EffectiveDatasetDelaySec();
  Dataset->AdvanceSampleAfterBurst = false;
  Dataset->StateGeneration = 2;
@@ -1109,25 +1128,12 @@ bool NNeuronTimeLearnerBranch::SyncInputPatternToDataset(const MDMatrix<double> 
 
  SyncDatasetDimsFromDendrites();
 
- MDMatrix<double> isi = pattern_override ? *pattern_override : InputPattern.GetData();
+ MDMatrix<double> matrix = pattern_override ? *pattern_override : InputPattern.GetData();
  const int n = NumInputDendrite.GetData();
- if(isi.GetRows() != n || isi.GetCols() != 1)
-  isi.Resize(n, 1, 0.0);
+ if(matrix.GetRows() != n || matrix.GetCols() != 1)
+  matrix.Resize(n, 1, 0.0);
 
- // Absolute fire times, 1 sample x N features, MaxSpikesPerFeature=1.
- MDMatrix<double> abs_times;
- abs_times.Resize(1, n, 0.0);
- double t = 0.0;
- for(int i = 0; i < n; ++i)
- {
-  double d = isi(i, 0);
-  if(d < 0.0)
-   d = 0.0;
-  t += d;
-  abs_times(0, i) = t;
- }
-
- if(!Dataset->SetMatrixData(abs_times))
+ if(!Dataset->SetMatrixData(matrix))
   return false;
 
  if(Dataset->MatrixClasses.GetRows() != 1 || Dataset->MatrixClasses.GetCols() != 1)
@@ -1136,11 +1142,13 @@ bool NNeuronTimeLearnerBranch::SyncInputPatternToDataset(const MDMatrix<double> 
  if (EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
-  oss << "SyncInputPatternToDataset: ISI -> abs 1xN values=[";
-  for(int i = 0; i < n && i < Dataset->MatrixData.GetCols(); ++i)
+  oss << "SyncInputPatternToDataset: trainer InputPattern -> DatasetMatrix.MatrixData rows="
+      << Dataset->MatrixData.GetRows() << " cols=" << Dataset->MatrixData.GetCols()
+      << " values=[";
+  for(int i = 0; i < n && i < Dataset->MatrixData.GetRows(); ++i)
   {
    if(i) oss << ',';
-   oss << Dataset->MatrixData(0, i);
+   oss << Dataset->MatrixData(i, 0);
   }
   oss << "]";
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
@@ -1835,12 +1843,7 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
   else
    DendriteLength.resize(NumInputDendrite);
  }
- if(NumInputDendrite.GetData() >= 1 && StructureLooksUntrained(DendriteLength.GetData()))
- {
-  // Cold: last pulse on soma (pos 0). Do not clamp 0 up to 1.
-  DendriteLength[NumInputDendrite.GetData() - 1] = 0;
- }
- for(int i = 0; i < NumInputDendrite - 1; ++i)
+ for(int i = 0; i < NumInputDendrite; ++i)
  {
   if(DendriteLength[i] < 1)
    DendriteLength[i] = 1;
@@ -1917,38 +1920,15 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
  if(IsParametricNormalization())
   EnforceParametricSynapseCount();
 
- // Count pulses per attach position and size excitatory synapses on each membrane.
- {
-  std::map<int, int> pulses_at;
-  for(int i = 0; i < NumInputDendrite; ++i)
-   pulses_at[PulseAttachPos(i)]++;
-  for(std::map<int, int>::const_iterator it = pulses_at.begin(); it != pulses_at.end(); ++it)
-  {
-   UEPtr<NPulseMembrane> membr;
-   if(it->first <= 0)
-    membr = Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(), true);
-   else
-    membr = Neuron->GetComponentL<NPulseMembrane>(MakeBranchDendriteName(it->first), true);
-   if(!membr)
-    continue;
-   if(int(membr->NumExcitatorySynapses) != it->second)
-   {
-    membr->NumExcitatorySynapses = it->second;
-    membr->Build();
-   }
-   if(!membr->GetActivity())
-    membr->SetActivity(true);
-   if(!membr->IsInit())
-    membr->Init();
-  }
- }
+ // One ExcSynapse1 per dendrite segment (active pulse wired by mute).
+ EnsureSingleInputSynapseOnBranchSegments(Neuron, ChainLengthMax());
 
  Neuron->Reset();
  Neuron->InvalidateActiveComponentsCache();
 
  for(int f = 0; f < NumInputDendrite; ++f)
  {
-  if(NPulseGeneratorTransit *g = GetDatasetGenerator(f))
+  if(NPulseGeneratorTransit *g = GetDatasetGenerator())
    g->DisconnectAll("Output");
  }
 
@@ -1972,14 +1952,14 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
 
  for(int f = 0; f < NumInputDendrite; ++f)
  {
-  if(NPulseGeneratorTransit *g = GetDatasetGenerator(f))
+  if(NPulseGeneratorTransit *g = GetDatasetGenerator())
    g->Reset();
  }
 
  // Cold-start wake-pass: rebuild single cable then relink all pulse synapses.
  for(int f = 0; f < NumInputDendrite; ++f)
  {
-  if(NPulseGeneratorTransit *g = GetDatasetGenerator(f))
+  if(NPulseGeneratorTransit *g = GetDatasetGenerator())
    g->DisconnectAll("Output");
  }
  {
@@ -2004,7 +1984,7 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
  }
  for(int f = 0; f < NumInputDendrite; ++f)
  {
-  if(NPulseGeneratorTransit *g = GetDatasetGenerator(f))
+  if(NPulseGeneratorTransit *g = GetDatasetGenerator())
    g->Reset();
  }
  ApplyPulseGeneratorMute();
@@ -2101,8 +2081,8 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
  WaitingPeakAfterLastPulse = false;
  PrevPulseCounter = 0;
  PrevGenOutput = 0.0;
- if(NPulseGeneratorTransit *gen0 = GetDatasetGenerator(0))
-  PrevPulseCounter = gen0->PulseCounter;
+ if(NPulseGeneratorTransit *gen = GetDatasetGenerator())
+  PrevPulseCounter = gen->PulseCounter;
 
  OldNumInputDendrite = NumInputDendrite;
  ApplyLoadedAnchorProperties();
@@ -2124,6 +2104,13 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
   oss << "]";
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
  }
+ InvalidateActiveComponentsCache();
+ if(Dataset && !Dataset->IsInit())
+  Dataset->Init();
+ if(Neuron && !Neuron->IsInit())
+  Neuron->Init();
+ if(Dataset)
+  Dataset->Reset();
  return res;
  }
  catch (const UException &ex)
@@ -2537,7 +2524,7 @@ bool NNeuronTimeLearnerBranch::ApplyPendingDendriteLengthChanges(void)
 
  for(int f = 0; f < NumInputDendrite; ++f)
  {
-  if(NPulseGeneratorTransit *g = GetDatasetGenerator(f))
+  if(NPulseGeneratorTransit *g = GetDatasetGenerator())
    g->DisconnectAll("Output");
  }
 
@@ -2553,35 +2540,7 @@ bool NNeuronTimeLearnerBranch::ApplyPendingDendriteLengthChanges(void)
   return false;
  }
 
- {
-  std::map<int, int> pulses_at;
-  for(int i = 0; i < NumInputDendrite; ++i)
-   pulses_at[PulseAttachPos(i)]++;
-  for(std::map<int, int>::const_iterator it = pulses_at.begin(); it != pulses_at.end(); ++it)
-  {
-   UEPtr<NPulseMembrane> membr;
-   if(it->first <= 0)
-    membr = Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(), true);
-   else
-    membr = Neuron->GetComponentL<NPulseMembrane>(MakeBranchDendriteName(it->first), true);
-   if(!membr)
-   {
-    LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearnerBranch",
-                 std::string("ApplyPendingDendriteLengthChanges: missing membrane pos=")
-                 + sntoa(it->first));
-    return false;
-   }
-   if(int(membr->NumExcitatorySynapses) != it->second)
-   {
-    membr->NumExcitatorySynapses = it->second;
-    membr->Build();
-   }
-   if(!membr->GetActivity())
-    membr->SetActivity(true);
-   if(!membr->IsInit())
-    membr->Init();
-  }
- }
+ EnsureSingleInputSynapseOnBranchSegments(Neuron, ChainLengthMax());
 
  Neuron->Reset();
  Neuron->InvalidateActiveComponentsCache();
@@ -2623,11 +2582,10 @@ bool NNeuronTimeLearnerBranch::ApplyPendingDendriteLengthChanges(void)
  }
 
  ApplyPulseGeneratorMute();
- for(int f = 0; f < NumInputDendrite; ++f)
- {
-  if(NPulseGeneratorTransit *g = GetDatasetGenerator(f))
-   g->Reset();
- }
+ if(NPulseGeneratorTransit *g = GetDatasetGenerator())
+  g->Reset();
+ PrevPulseCounter = 0;
+ PrevGenOutput = 0.0;
  return res;
 }
 
@@ -2694,7 +2652,9 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseNumber(int num)
   if(!synapse)
    return true;
   synapse->Resistance = SynapseResistanceStep;
-  res &= LinkSynapseToDataset(synapse, num);
+  res &= (synapse != 0);
+  if(num == ActivePulseIndex)
+   ApplyPulseGeneratorMute();
   if(!res)
    return true;
  }
@@ -2829,7 +2789,7 @@ bool NNeuronTimeLearnerBranch::MeasureMaxPotentialAndTime(void)
 
 bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
 {
- if(num == NumInputDendrite - 1 || PulseAttachPos(num) <= 0)
+ if(num == NumInputDendrite - 1)
  {
   DendStatus[num] = 0;
   Dissynchronization[num] = 0.0;
@@ -3335,9 +3295,8 @@ void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
  PeakSeen.assign(NumInputDendrite, false);
  ExpectedPulseRelTimes.assign(NumInputDendrite, 0.0);
  {
-  // FirstImpulseTime is the detected first pulse. Rel times are gaps after that pulse,
-  // so Expected[0]=0 (not cumsum including the pre-first ISI — that shifted measure
-  // windows +0.01 and missed L=1 peaks at ~FI+0.008).
+  // Rel times are gaps after pulse 0, so Expected[0]=0 (not cumsum including the
+  // pre-first ISI — that shifted measure windows +0.01 and missed L=1 peaks).
   ExpectedPulseRelTimes[0] = 0.0;
   double acc = 0.0;
   for(int i = 1; i < NumInputDendrite; ++i)
@@ -3370,6 +3329,8 @@ void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
   oss << "BeginTrainingIteration: iter=" << CountIteration
       << " phase=" << TrainingPhase.GetData()
       << " t=" << now
+      << " t0=" << FirstImpulseTime
+      << " active=" << ActivePulseIndex
       << " N=" << NumInputDendrite.GetData()
       << " gap=" << IterationGap.GetData()
       << " gapEff=" << EffectiveIterationGapSec()
@@ -3437,11 +3398,11 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
     ActiveDendrite = ActivePulseIndex;
     if (EnableDebug.GetData() && RDK::GetLogger())
      RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch",
-      "FinishTrainingIteration: anchor pulse committed on Soma1");
+      "FinishTrainingIteration: anchor pulse committed on Dendrite1_1");
    }
    else if (EnableDebug.GetData() && RDK::GetLogger())
     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch",
-     "FinishTrainingIteration: bootstrap waiting valid Soma1 peak (no growth)");
+     "FinishTrainingIteration: bootstrap waiting valid anchor peak (no growth)");
   }
   else
   {
@@ -3770,12 +3731,17 @@ bool NNeuronTimeLearnerBranch::ACalculate(void)
   if(!Neuron)
    return true;
 
+  if(DendriteNeuronAmplitude.GetRows() < 1 + NumInputDendrite)
+   DendriteNeuronAmplitude.Assign(1 + NumInputDendrite, 1, 0.0);
+  if(SomaNeuronAmplitude.GetRows() < 1 + NumInputDendrite)
+   SomaNeuronAmplitude.Assign(1 + NumInputDendrite, 1, 0.0);
+
   DendriteNeuronAmplitude(0, 0) = 0;
   for(int i = 0; i < NumInputDendrite; i++)
   {
    UEPtr<NPulseMembrane> membr = GetInputMembraneForPulse(i);
    if(!membr)
-    return true;
+    continue;
 
    DendriteNeuronAmplitude(i + 1, 0) = membr->SumPotential(0, 0);
    DendriteNeuronAmplitude(0, 0) += membr->SumPotential(0, 0);

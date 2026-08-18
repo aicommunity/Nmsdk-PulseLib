@@ -29,8 +29,8 @@ namespace NMSDK {
 using namespace RDK;
 
 /// Single-dendrite temporal-pattern learner: N pulses attach at different distances
-/// on one cable. DendriteLength[k] is pulse-k attach position (0 = Soma1 anchor,
-/// >=1 = Dendrite1_seg). Reverse sequential sync + joint amp normalize. See ALGORITHM.md.
+/// on one cable. DendriteLength[k] is pulse-k attach segment on Dendrite1 (>=1;
+/// soma has no excitatory inputs). Reverse sequential sync + joint amp normalize.
 class RDK_LIB_TYPE NNeuronTimeLearnerBranch: public UNet
 {
 public:
@@ -144,7 +144,7 @@ public:
  /// Current tip ExcSynapse1 resistance per dendrite (parametric mode)
  UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubParameter | ptPubState> TipSynapseResistance;
 
- /// Pulse attach positions: [k]=0 soma (anchor), [k]>=1 Dendrite1_seg (not per-dendrite lengths)
+ /// Pulse attach segments on Dendrite1: [k]>=1 (soma has no excitatory inputs)
  UProperty<std::vector<int>, NNeuronTimeLearnerBranch, ptPubParameter> DendriteLength;
 
  std::vector<int> OldDendriteLength;
@@ -415,8 +415,7 @@ protected:
  /// Path to dataset generator feature_index (0-based) under this net
  static std::string DatasetGeneratorPath(int feature_index = 0);
  NPulseGeneratorTransit* GetDatasetGenerator(void);
- NPulseGeneratorTransit* GetDatasetGenerator(int feature_index);
- bool LinkSynapseToDataset(NPulseSynapseCommon *synapse, int feature_index);
+ bool LinkSynapseToDataset(NPulseSynapseCommon *synapse);
  bool RelinkDendriteSynapsesToDataset(int dendrite_index0);
  void SyncDatasetDimsFromDendrites(void);
  bool SyncInputPatternToDataset(const MDMatrix<double> *pattern_override = 0);
