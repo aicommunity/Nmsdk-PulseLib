@@ -1834,8 +1834,9 @@ bool NNeuronTimeLearner::BuildStructure()
  Neuron->InvalidateActiveComponentsCache();
 
  NPulseGeneratorTransit *gen = GetDatasetGenerator();
- if(gen)
-  gen->DisconnectAll("Output");
+ // Keep non-synapse fan-out (e.g. PatternResponseAnalyzer stimulus tap).
+ // RelinkDendriteSynapsesToDataset() already detaches each target synapse input
+ // before rebuilding the Generator1 -> ExcSynapse links.
 
  for(int numdend = 0; numdend < NumInputDendrite; numdend++)
  {
@@ -1865,8 +1866,7 @@ bool NNeuronTimeLearner::BuildStructure()
  // Cold-start: first Relink after Dataset Build often leaves L=1 tips with amp=0
  // (links report connected). A second cable Build+Relink matches the first
  // ApplyPending cycle that historically woke the tips.
- if(gen)
-  gen->DisconnectAll("Output");
+ // Preserve external listeners on Generator1.Output across the wake-pass.
  Neuron->NumDendriteMembranePartsVec = DendriteLength;
  Neuron->StructureBuildMode = 2;
  if(!Neuron->Build())
@@ -2411,8 +2411,7 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
   return false;
 
  NPulseGeneratorTransit *gen = GetDatasetGenerator();
- if(gen)
-  gen->DisconnectAll("Output");
+ // Preserve external listeners on Generator1.Output while retargeting synapses.
 
  Neuron->NumDendriteMembranePartsVec = DendriteLength;
  Neuron->StructureBuildMode = 2;

@@ -1008,8 +1008,6 @@ void NNeuronTimeLearnerBranch::ApplyPulseGeneratorMute(void)
 {
  if(!Dataset)
   return;
- if(NPulseGeneratorTransit *gen = GetDatasetGenerator())
-  gen->DisconnectAll("Output");
  const int n = NumInputDendrite.GetData();
  const bool all_on = (!IsNeedToTrain.GetData()) || (TrainingPhase.GetData() == kPhaseDone);
  const int active = ActivePulseIndex;
@@ -1820,6 +1818,16 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
  {
  ApplyLoadedAnchorProperties();
 
+  if (EnableDebug.GetData() && RDK::GetLogger() && Dataset)
+  {
+   std::ostringstream oss;
+   oss << "BuildStructure begin: DatasetMatrix dims samples=" << int(Dataset->NumSamples)
+       << " max_spikes=" << int(Dataset->MaxSpikesPerFeature)
+       << " rows=" << Dataset->MatrixData.GetRows()
+       << " cols=" << Dataset->MatrixData.GetCols();
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+  }
+
  Neuron = GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
  if(Neuron)
  {
@@ -1923,11 +1931,9 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
  Neuron->Reset();
  Neuron->InvalidateActiveComponentsCache();
 
- for(int f = 0; f < NumInputDendrite; ++f)
- {
-  if(NPulseGeneratorTransit *g = GetDatasetGenerator())
-   g->DisconnectAll("Output");
- }
+ // Keep non-synapse fan-out (e.g. PatternResponseAnalyzer stimulus tap).
+ // RelinkDendriteSynapsesToDataset() already detaches the target synapse input
+ // before creating the fresh Generator1 -> ExcSynapse link.
 
  for(int pulse_k = 0; pulse_k < NumInputDendrite; pulse_k++)
  {
@@ -1954,11 +1960,7 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
  }
 
  // Cold-start wake-pass: rebuild single cable then relink all pulse synapses.
- for(int f = 0; f < NumInputDendrite; ++f)
- {
-  if(NPulseGeneratorTransit *g = GetDatasetGenerator())
-   g->DisconnectAll("Output");
- }
+ // Preserve external listeners on Generator1.Output across the wake-pass.
  {
   std::vector<int> chain(1, ChainLengthMax());
   Neuron->NumDendriteMembranePartsVec = chain;
@@ -2106,8 +2108,15 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
   Dataset->Init();
  if(Neuron && !Neuron->IsInit())
   Neuron->Init();
- if(Dataset)
-  Dataset->Reset();
+ if (EnableDebug.GetData() && RDK::GetLogger() && Dataset)
+ {
+  std::ostringstream oss;
+  oss << "BuildStructure end: DatasetMatrix dims samples=" << int(Dataset->NumSamples)
+      << " max_spikes=" << int(Dataset->MaxSpikesPerFeature)
+      << " rows=" << Dataset->MatrixData.GetRows()
+      << " cols=" << Dataset->MatrixData.GetCols();
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+ }
  return res;
  }
  catch (const UException &ex)
@@ -2519,11 +2528,7 @@ bool NNeuronTimeLearnerBranch::ApplyPendingDendriteLengthChanges(void)
  if(!Neuron)
   return false;
 
- for(int f = 0; f < NumInputDendrite; ++f)
- {
-  if(NPulseGeneratorTransit *g = GetDatasetGenerator())
-   g->DisconnectAll("Output");
- }
+ // Preserve external listeners on Generator1.Output while retargeting synapses.
 
  {
   std::vector<int> chain(1, ChainLengthMax());
@@ -3732,7 +3737,6 @@ bool NNeuronTimeLearnerBranch::ACalculate(void)
    DendriteNeuronAmplitude.Assign(1 + NumInputDendrite, 1, 0.0);
   if(SomaNeuronAmplitude.GetRows() < 1 + NumInputDendrite)
    SomaNeuronAmplitude.Assign(1 + NumInputDendrite, 1, 0.0);
-
   DendriteNeuronAmplitude(0, 0) = 0;
   for(int i = 0; i < NumInputDendrite; i++)
   {
