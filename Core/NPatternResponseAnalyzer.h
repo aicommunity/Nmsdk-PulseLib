@@ -25,6 +25,9 @@ UProperty<std::vector<MDMatrix<double> >, NPatternResponseAnalyzer, ptInput | pt
 UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> LearnerComponentName;
 
 UProperty<double, NPatternResponseAnalyzer, ptPubParameter> PostPatternWindow;
+ /// Extra watch after PostPatternWindow for late LTZone spikes (until this delay
+ /// after last stim, or until the next trial starts). Must be >= PostPatternWindow.
+ UProperty<double, NPatternResponseAnalyzer, ptPubParameter> LateResponseWindow;
 UProperty<double, NPatternResponseAnalyzer, ptPubParameter> PulseDetectThreshold;
 UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> SavePath;
 UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> FileName;
@@ -34,7 +37,10 @@ UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> Enable;
 UProperty<int, NPatternResponseAnalyzer, ptPubState> TrialIndex;
 UProperty<int, NPatternResponseAnalyzer, ptOutput | ptPubState> LastFired;
 UProperty<int, NPatternResponseAnalyzer, ptOutput | ptPubState> LastMatch;
+UProperty<int, NPatternResponseAnalyzer, ptOutput | ptPubState> LastLateFired;
+UProperty<std::string, NPatternResponseAnalyzer, ptOutput | ptPubState> LastErrorClass;
 UProperty<double, NPatternResponseAnalyzer, ptOutput | ptPubState> LastNeuronDelay;
+UProperty<double, NPatternResponseAnalyzer, ptOutput | ptPubState> LastLateNeuronDelay;
 UProperty<MDMatrix<double>, NPatternResponseAnalyzer, ptOutput | ptPubState> LastIsi;
 
 NPatternResponseAnalyzer(void);
@@ -51,6 +57,9 @@ virtual bool ACalculate(void);
 
 bool EnsureCsvReady(void);
 void CloseTrial(double now);
+void BeginTrial(double now);
+void ResetTrialState(void);
+static const char *ClassifyError(int target, int fired, int late_fired);
 bool DetectRisingEdge(const std::vector<MDMatrix<double> > &inputs,
                       std::vector<double> &prev_values) const;
 double ReadScalar(const MDMatrix<double> &m) const;
@@ -58,15 +67,19 @@ double ReadTargetClass(void) const;
 void UpdateTrialMetrics(double now);
 void ReadSomaAmplitudes(double soma_out[4], double &soma_sum) const;
 double ReadLtzPotential(void) const;
+double EffectiveLateWindow(void) const;
 
 bool trial_active_;
+bool trial_window_closed_;
 bool playback_stopped_;
 bool csv_header_written_;
 int trial_target_class_;
 int trial_neuron_fired_;
+int trial_late_fired_;
 double trial_t_first_stim_;
 double trial_t_last_stim_;
 double trial_t_neuron_;
+double trial_t_late_neuron_;
 double trial_ltz_potential_max_;
 double trial_soma_amp_max_[4];
 double trial_soma_amp_sum_max_;
