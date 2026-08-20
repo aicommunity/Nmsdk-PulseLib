@@ -177,6 +177,10 @@ public:
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> ExperimentMode;
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableDebug;
 
+ /// When true: each tip Exc@L[k] also drives InhSynapse1 on segment L[k]+1
+ /// (same Generator). Cable grows to max(L)+1. Mute links Exc+Inh; Done → 2N.
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableNextSegmentInhibition;
+
 protected:
  int OldNumInputDendrite;
 
@@ -346,6 +350,7 @@ public:
  bool SetResistanceAdjustGain(const double &value);
  bool SetTipSynapseResistance(const std::vector<double> &value);
  bool SetExperimentMode(const bool &value);
+ bool SetEnableNextSegmentInhibition(const bool &value);
  bool SetDendriteLength(const std::vector<int> &value);
  bool SetInitialSomaPotential(const std::vector<double> &value);
  bool SetNumSynapse(const std::vector<int> &value);
@@ -392,8 +397,15 @@ protected:
  /// Remove Generator1.Output links to every branch ExcSynapse1 (keeps StimulusInputs tap).
  void DisconnectGeneratorFromBranchExcSynapses(void);
  void DetachBranchExcSynapseAtSegment(int segment_index1);
+ void DetachBranchInhSynapseAtSegment(int segment_index1);
+ NPulseSynapseCommon* GetNextSegInhSynapse(int dendrite_index0) const;
+ bool EnsureNextSegInhSynapseOnSegment(int segment_index1);
+ bool RelinkNextSegInhToDataset(int dendrite_index0, bool wire_now);
+ void EnsureNextSegInhSynapsesForAllTips(void);
  void RebuildGeneratorSynapseLinks(bool all_on, int active_pulse);
  int CountGeneratorToBranchExcSynapseLinks(void) const;
+ int CountGeneratorToBranchInhSynapseLinks(void) const;
+ int CountGeneratorTipLinks(void) const;
  void EnforceSegmentMonotonicity(int changed_pulse);
  double MeanStoredPeakRel(int after_pulse_exclusive) const;
  bool PulseLengthAndAmpDone(int pulse_k) const;
@@ -415,9 +427,10 @@ protected:
  void UpdateIterLTZPotential(void);
  void UpdateIterSomaPeak(void);
  void CalibrateFixedLTZThresholdFromTraining(void);
- /// Mute-trained tip R assumes one active synapse; recognition fires all N on one cable → R*=N.
+ /// Mute-trained tip R assumes one active synapse; recognition fires all N on one
+ /// cable → R *= N*(Initial/I_ref) for amp-eq (esp. untuned proximal tip).
  void ScaleTipResistancesForParallelActivation(void);
- /// After R*=N + all tips live: measure unconstrained peak and set FixedLTZ.
+ /// After parallel R scale + all tips live: measure unconstrained peak and set FixedLTZ.
  void CalibrateFixedLTZThresholdFromParallelPeak(void);
  void FinalizeAfterParallelCalibration(void);
  bool IsParallelCalibrationPhase(void) const;
