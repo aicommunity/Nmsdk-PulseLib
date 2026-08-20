@@ -1004,6 +1004,120 @@ bool NNeuronTimeLearnerBranch::LinkSynapseToDataset(NPulseSynapseCommon *synapse
  return ok;
 }
 
+void NNeuronTimeLearnerBranch::DetachBranchExcSynapseAtSegment(int segment_index1)
+{
+ if(!Neuron || segment_index1 < 1)
+  return;
+ const std::string syn_rel = MakeBranchExcSynapsePath(segment_index1, 1);
+ const std::string syn_path = std::string("Neuron.") + syn_rel;
+ BreakLink(DatasetGeneratorPath(), "Output", syn_path, "Input", -1);
+ if(NPulseSynapseCommon *syn = Neuron->GetComponentL<NPulseSynapseCommon>(syn_rel, true))
+ {
+  syn->Input.DetachFrom();
+  syn->DisconnectAllItems();
+ }
+}
+
+void NNeuronTimeLearnerBranch::DisconnectGeneratorFromBranchExcSynapses(void)
+{
+ if(!Neuron)
+  return;
+ int lmax = ChainLengthMax();
+ const int max_cfg = MaxDendriteLength.GetData();
+ if(max_cfg > lmax)
+  lmax = max_cfg;
+ for(int i = 0; i < NumInputDendrite - 1 && i < int(DendriteLength.size()); ++i)
+ {
+  if(DendriteLength[static_cast<size_t>(i)] > lmax)
+   lmax = DendriteLength[static_cast<size_t>(i)];
+ }
+ for(int i = 0; i < NumInputDendrite - 1 && i < int(OldDendriteLength.size()); ++i)
+ {
+  if(OldDendriteLength[static_cast<size_t>(i)] > lmax)
+   lmax = OldDendriteLength[static_cast<size_t>(i)];
+ }
+ for(int seg = 1; seg <= lmax; ++seg)
+  DetachBranchExcSynapseAtSegment(seg);
+}
+
+int NNeuronTimeLearnerBranch::CountGeneratorToBranchExcSynapseLinks(void) const
+{
+ if(!Neuron)
+  return 0;
+ int lmax = ChainLengthMax();
+ const int max_cfg = MaxDendriteLength.GetData();
+ if(max_cfg > lmax)
+  lmax = max_cfg;
+ for(int i = 0; i < NumInputDendrite && i < int(DendriteLength.size()); ++i)
+ {
+  if(DendriteLength[static_cast<size_t>(i)] > lmax)
+   lmax = DendriteLength[static_cast<size_t>(i)];
+ }
+ int count = 0;
+ for(int seg = 1; seg <= lmax; ++seg)
+ {
+  if(NPulseSynapseCommon *syn = Neuron->GetComponentL<NPulseSynapseCommon>(
+       MakeBranchExcSynapsePath(seg, 1), true))
+  {
+   if(syn->Input.IsConnected())
+    ++count;
+  }
+ }
+ return count;
+}
+
+void NNeuronTimeLearnerBranch::RebuildGeneratorSynapseLinks(bool all_on, int active_pulse)
+{
+ if(!Dataset)
+  return;
+ DisconnectGeneratorFromBranchExcSynapses();
+ const int n = NumInputDendrite.GetData();
+ if(all_on)
+ {
+  for(int f = 0; f < n; ++f)
+  {
+   if(NPulseSynapseCommon *syn = GetTipSynapse(f))
+    LinkSynapseToDataset(syn);
+  }
+ }
+ else if(active_pulse >= 0 && active_pulse < n)
+ {
+  if(NPulseSynapseCommon *syn = GetTipSynapse(active_pulse))
+   LinkSynapseToDataset(syn);
+ }
+ if(Neuron)
+  Neuron->InvalidateActiveComponentsCache();
+}
+
+void NNeuronTimeLearnerBranch::EnforceSegmentMonotonicity(int changed_pulse)
+{
+ const int n = NumInputDendrite.GetData();
+ if(n < 2)
+  return;
+ const int ref = n - 1;
+ for(int k = 0; k < n - 1; ++k)
+ {
+  if(changed_pulse >= 0 && k != changed_pulse)
+   continue;
+  if(k >= int(DendStatus.size()) || k >= int(DendriteLength.size()))
+   continue;
+  if(ref < int(DendriteLength.size()) && DendriteLength[static_cast<size_t>(k)]
+     <= DendriteLength[static_cast<size_t>(ref)])
+   DendStatus[static_cast<size_t>(k)] = 1;
+  if(k + 1 < n && k + 1 < int(DendriteLength.size())
+     && DendriteLength[static_cast<size_t>(k)] <= DendriteLength[static_cast<size_t>(k + 1)])
+   DendStatus[static_cast<size_t>(k)] = 1;
+  for(int j = 0; j < n; ++j)
+  {
+   if(j == k || j >= int(DendriteLength.size()))
+    continue;
+   if(DendriteLength[static_cast<size_t>(k)] == DendriteLength[static_cast<size_t>(j)]
+      && k < j)
+    DendStatus[static_cast<size_t>(k)] = 1;
+  }
+ }
+}
+
 void NNeuronTimeLearnerBranch::ApplyPulseGeneratorMute(void)
 {
  if(!Dataset)
@@ -1011,30 +1125,9 @@ void NNeuronTimeLearnerBranch::ApplyPulseGeneratorMute(void)
  const int n = NumInputDendrite.GetData();
  const bool all_on = (!IsNeedToTrain.GetData()) || (TrainingPhase.GetData() == kPhaseDone);
  const int active = ActivePulseIndex;
- // Pulses on the same segment share ExcSynapse1. Disconnect unique synapses
- // first, then link the active one last so a later mute-off cannot undo it.
- for(int f = 0; f < n; ++f)
- {
-  NPulseSynapseCommon *syn = GetTipSynapse(f);
-  if(!syn)
-   continue;
-  syn->Input.DetachFrom();
-  syn->DisconnectAllItems();
- }
- if(all_on)
- {
-  for(int f = 0; f < n; ++f)
-  {
-   NPulseSynapseCommon *syn = GetTipSynapse(f);
-   if(syn && !syn->Input.IsConnected())
-    LinkSynapseToDataset(syn);
-  }
- }
- else if(active >= 0 && active < n)
- {
-  if(NPulseSynapseCommon *syn = GetTipSynapse(active))
-   LinkSynapseToDataset(syn);
- }
+ RebuildGeneratorSynapseLinks(all_on, active);
+ const int link_count = CountGeneratorToBranchExcSynapseLinks();
+ const int expect = all_on ? n : ((active >= 0 && active < n) ? 1 : 0);
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
@@ -1046,13 +1139,16 @@ void NNeuronTimeLearnerBranch::ApplyPulseGeneratorMute(void)
    oss << ((all_on || (active >= 0 && f == active)) ? 1 : 0);
   }
   NPulseSynapseCommon *active_syn = (active >= 0 && active < n) ? GetTipSynapse(active) : NULL;
-  oss << "] connected=" << ((active_syn && active_syn->Input.IsConnected()) ? 1 : 0);
+  oss << "] connected=" << ((active_syn && active_syn->Input.IsConnected()) ? 1 : 0)
+      << " gen_links=" << link_count << " expect=" << expect;
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
  }
- if(Neuron)
+ if(link_count != expect && RDK::GetLogger())
  {
-  Neuron->InvalidateActiveComponentsCache();
-  Neuron->Reset();
+  std::ostringstream oss;
+  oss << "ApplyPulseGeneratorMute: link count mismatch got=" << link_count
+      << " expect=" << expect << " all_on=" << (all_on ? 1 : 0);
+  RDK::GetLogger()->LogMessageEx(RDK_EX_WARNING, "NNeuronTimeLearnerBranch", oss.str());
  }
 }
 
@@ -1061,10 +1157,10 @@ bool NNeuronTimeLearnerBranch::RelinkDendriteSynapsesToDataset(int dendrite_inde
  if(!Neuron || dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
   return true;
 
- // Do not detach other segments: several pulses share one cable, and mute
- // chooses which unique ExcSynapse1 is driven. TimeLearner's proximal-detach
- // is safe only because each pulse owns a private dendrite.
- UEPtr<NPulseMembrane> membr = GetInputMembraneForPulse(dendrite_index0);
+ const int tip_seg = PulseAttachPos(dendrite_index0);
+
+ UEPtr<NPulseMembrane> membr = Neuron->GetComponentL<NPulseMembrane>(
+  MakeBranchDendriteName(tip_seg), true);
  if(!membr)
   return false;
 
@@ -1078,7 +1174,8 @@ bool NNeuronTimeLearnerBranch::RelinkDendriteSynapsesToDataset(int dendrite_inde
  if(!membr->IsInit())
   membr->Init();
 
- NPulseSynapseCommon *synapse = GetTipSynapse(dendrite_index0);
+ NPulseSynapseCommon *synapse = membr->GetComponentL<NPulseSynapseCommon>(
+  std::string("ExcSynapse1"), true);
  if(!synapse)
   return false;
  if(IsParametricNormalization())
@@ -1093,6 +1190,14 @@ bool NNeuronTimeLearnerBranch::RelinkDendriteSynapsesToDataset(int dendrite_inde
  else if(NumSynapse[dendrite_index0] > 1)
   synapse->Resistance = SynapseResistanceStep;
 
+ const bool wire_now = (!IsNeedToTrain.GetData()) || (TrainingPhase.GetData() == kPhaseDone);
+ if(wire_now)
+ {
+  if(!LinkSynapseToDataset(synapse))
+   return false;
+  if(!synapse->Input.IsConnected())
+   return false;
+ }
  return true;
 }
 
@@ -2499,6 +2604,9 @@ bool NNeuronTimeLearnerBranch::ApplyPendingDendriteLengthChanges(void)
   DendriteLength[i] += direction * delta;
   LastLengthDelta = delta;
   LastLengthDeltaDendrite = i;
+  if(i < int(OldDendriteLength.size()) && OldDendriteLength[i] != DendriteLength[i])
+   DetachBranchExcSynapseAtSegment(OldDendriteLength[i]);
+  EnforceSegmentMonotonicity(i);
   changed.push_back(i);
  }
 
@@ -3249,8 +3357,22 @@ bool NNeuronTimeLearnerBranch::EndOfLearning(void)
  SetIsNeedToTrain(false);
  IsNeedToTrain = false;
  ApplyPulseGeneratorMute(); // recognition: reconnect all tip synapses after Done
+ const int link_count = CountGeneratorToBranchExcSynapseLinks();
  if (EnableDebug.GetData() && RDK::GetLogger())
-  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", "phase -> Done");
+ {
+  std::ostringstream oss;
+  oss << "phase -> Done len=[";
+  for(int i = 0; i < NumInputDendrite && i < int(DendriteLength.size()); ++i)
+  {
+   if(i) oss << ',';
+   oss << DendriteLength[static_cast<size_t>(i)];
+  }
+  oss << "] gen_links=" << link_count << " expect=" << NumInputDendrite.GetData();
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+ }
+ if(link_count != NumInputDendrite.GetData())
+  LogMessageEx(RDK_EX_WARNING, "NNeuronTimeLearnerBranch",
+   "EndOfLearning: Generator link count != NumInputDendrite");
  return true;
 }
 
@@ -3605,6 +3727,17 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
         && fabs(Dissynchronization[static_cast<size_t>(k)]) <= tol);
    if(length_ok && AllSynapsesNormalized())
    {
+    const int ref = n - 1;
+    bool seg_ok = true;
+    if(k < ref && k < int(DendriteLength.size()) && ref < int(DendriteLength.size())
+       && DendriteLength[static_cast<size_t>(k)] <= DendriteLength[static_cast<size_t>(ref)])
+     seg_ok = false;
+    if(k + 1 < n && k < int(DendriteLength.size())
+       && k + 1 < int(DendriteLength.size())
+       && DendriteLength[static_cast<size_t>(k)] <= DendriteLength[static_cast<size_t>(k + 1)])
+     seg_ok = false;
+    if(seg_ok)
+    {
     if(int(StoredPeakRel.size()) != n)
      StoredPeakRel.assign(static_cast<size_t>(n), 0.0);
     StoredPeakRel[static_cast<size_t>(k)] =
@@ -3617,6 +3750,19 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
      std::ostringstream oss;
      oss << "FinishTrainingIteration: pulse " << k << " synced+norm StoredPeakRel="
          << StoredPeakRel[static_cast<size_t>(k)] << " nextActive=" << ActivePulseIndex;
+     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+    }
+    }
+    else if (EnableDebug.GetData() && RDK::GetLogger())
+    {
+     std::ostringstream oss;
+     oss << "FinishTrainingIteration: pulse " << k << " sync blocked seg=[";
+     for(int pi = 0; pi < n && pi < int(DendriteLength.size()); ++pi)
+     {
+      if(pi) oss << ',';
+      oss << DendriteLength[static_cast<size_t>(pi)];
+     }
+     oss << "]";
      RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
     }
    }

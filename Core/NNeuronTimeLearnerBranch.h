@@ -384,6 +384,12 @@ protected:
  int ChainLengthMax(void) const;
  NPulseMembrane* GetInputMembraneForPulse(int pulse_k) const;
  void ApplyPulseGeneratorMute(void);
+ /// Remove Generator1.Output links to every branch ExcSynapse1 (keeps StimulusInputs tap).
+ void DisconnectGeneratorFromBranchExcSynapses(void);
+ void DetachBranchExcSynapseAtSegment(int segment_index1);
+ void RebuildGeneratorSynapseLinks(bool all_on, int active_pulse);
+ int CountGeneratorToBranchExcSynapseLinks(void) const;
+ void EnforceSegmentMonotonicity(int changed_pulse);
  double MeanStoredPeakRel(int after_pulse_exclusive) const;
  bool PulseLengthAndAmpDone(int pulse_k) const;
  bool SetTipSynapseResistanceOnComponent(int dendrite_index0, double r);
