@@ -80,6 +80,7 @@ std::string MakeBranchExcSynapsePath(const int attach_pos, const int synapse_ind
 const int kPhaseSync = 0;
 const int kPhaseNormalize = 1;
 const int kPhaseDone = 2;
+const int kPhaseCalibrateLtz = 3;
 }
 
 std::string NNeuronTimeLearnerBranch::DatasetGeneratorPath(int feature_index)
@@ -392,6 +393,19 @@ void NNeuronTimeLearnerBranch::UpdateIterLTZPotential(void)
  }
 }
 
+void NNeuronTimeLearnerBranch::UpdateIterSomaPeak(void)
+{
+ if(!IterationActive || !Neuron)
+  return;
+ UEPtr<NPulseMembrane> soma =
+  Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(), true);
+ if(!soma)
+  return;
+ const double amp = soma->SumPotential(0, 0);
+ if(amp > IterMaxSomaPotential)
+  IterMaxSomaPotential = amp;
+}
+
 void NNeuronTimeLearnerBranch::CalibrateFixedLTZThresholdFromTraining(void)
 {
  if(!AutoCalibrateFixedLTZThreshold.GetData())
@@ -431,6 +445,120 @@ void NNeuronTimeLearnerBranch::CalibrateFixedLTZThresholdFromTraining(void)
       << " thr=" << thr;
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
  }
+}
+
+bool NNeuronTimeLearnerBranch::IsParallelCalibrationPhase(void) const
+{
+ return TrainingPhase.GetData() == kPhaseCalibrateLtz;
+}
+
+void NNeuronTimeLearnerBranch::ScaleTipResistancesForParallelActivation(void)
+{
+ const int n = NumInputDendrite.GetData();
+ if(n <= 1 || ParallelResistanceScaled)
+  return;
+ if(!IsParametricNormalization())
+  return;
+
+ std::vector<double> tips = TipSynapseResistance.GetData();
+ if(int(tips.size()) != n)
+  tips.resize(static_cast<size_t>(n), SynapseResistanceBase.GetData());
+
+ for(int i = 0; i < n; ++i)
+ {
+  const double r_old = tips[static_cast<size_t>(i)];
+  const double r_new = ClampResistance(r_old * double(n));
+  tips[static_cast<size_t>(i)] = r_new;
+  SetTipSynapseResistanceOnComponent(i, r_new);
+ }
+ TipSynapseResistance.SetDataDirect(tips);
+ ParallelResistanceScaled = true;
+
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "ScaleTipR×N: N=" << n << " tips=[";
+  for(int i = 0; i < n; ++i)
+  {
+   if(i) oss << ',';
+   oss << tips[static_cast<size_t>(i)];
+  }
+  oss << "]";
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+ }
+}
+
+void NNeuronTimeLearnerBranch::CalibrateFixedLTZThresholdFromParallelPeak(void)
+{
+ // Prefer continuous soma peak (full coincident EPSP); windowed MaxIterSomaAmp
+ // often latches an early partial peak and underestimates recognition amplitude.
+ double peak = IterMaxSomaPotential;
+ if(IterLTZTrackingActive)
+  peak = std::max(peak, IterMaxLTZPotential);
+ for(size_t i = 0; i < MaxIterSomaAmp.size(); ++i)
+  peak = std::max(peak, MaxIterSomaAmp[i]);
+
+ if(peak <= 1e-9)
+ {
+  if(EnableDebug.GetData() && RDK::GetLogger())
+   RDK::GetLogger()->LogMessageEx(RDK_EX_WARNING, "NNeuronTimeLearnerBranch",
+    "CalibrateFixedLTZ(parallel): skip (no peak)");
+  return;
+ }
+
+ double thr;
+ if(CalibrateLTZThresholdMode.GetData() == kCalibratePeakFraction)
+  thr = peak * CalibrateLTZThresholdFraction.GetData();
+ else if(IterLTZTrackingActive && IterMaxLTZPotential > IterMinLTZPotential + 1e-9)
+  thr = IterMinLTZPotential
+   + CalibrateLTZThresholdFraction.GetData() * (IterMaxLTZPotential - IterMinLTZPotential);
+ else
+  thr = peak * CalibrateLTZThresholdFraction.GetData();
+
+ const double tmin = CalibrateLTZThresholdMin.GetData();
+ const double tmax = CalibrateLTZThresholdMax.GetData();
+ thr = std::max(tmin, std::min(tmax, thr));
+ // Keep thr strictly below measured peak so the trained pattern still fires.
+ if(thr >= peak)
+  thr = std::max(tmin, peak * 0.999);
+
+ FixedLTZThreshold.SetDataDirect(thr);
+ CalibratedFixedLTZThreshold.SetDataDirect(thr);
+ UseFixedLTZThreshold = true;
+ LTZThreshold.SetDataDirect(thr);
+ SetLTZThreshold(thr);
+
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "CalibrateFixedLTZ(parallel): peak=" << peak
+      << " somaMax=" << IterMaxSomaPotential
+      << " ltzMax=" << IterMaxLTZPotential
+      << " fraction=" << CalibrateLTZThresholdFraction.GetData()
+      << " thr=" << thr;
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+ }
+}
+
+void NNeuronTimeLearnerBranch::FinalizeAfterParallelCalibration(void)
+{
+ CalibrateFixedLTZThresholdFromParallelPeak();
+ TrainingPhase = kPhaseDone;
+ CanChangeDendLength = false;
+ SetIsNeedToTrain(false);
+ IsNeedToTrain = false;
+ ApplyPulseGeneratorMute();
+ const int link_count = CountGeneratorToBranchExcSynapseLinks();
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "phase -> Done (after CalibrateLtz) FixedLTZ=" << FixedLTZThreshold.GetData()
+      << " gen_links=" << link_count << " expect=" << NumInputDendrite.GetData();
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+ }
+ if(link_count != NumInputDendrite.GetData())
+  LogMessageEx(RDK_EX_WARNING, "NNeuronTimeLearnerBranch",
+   "FinalizeAfterParallelCalibration: Generator link count != NumInputDendrite");
 }
 
 void NNeuronTimeLearnerBranch::ApplyLoadedAnchorProperties(void)
@@ -1123,7 +1251,9 @@ void NNeuronTimeLearnerBranch::ApplyPulseGeneratorMute(void)
  if(!Dataset)
   return;
  const int n = NumInputDendrite.GetData();
- const bool all_on = (!IsNeedToTrain.GetData()) || (TrainingPhase.GetData() == kPhaseDone);
+ const bool all_on = (!IsNeedToTrain.GetData())
+  || (TrainingPhase.GetData() == kPhaseDone)
+  || (TrainingPhase.GetData() == kPhaseCalibrateLtz);
  const int active = ActivePulseIndex;
  RebuildGeneratorSynapseLinks(all_on, active);
  const int link_count = CountGeneratorToBranchExcSynapseLinks();
@@ -1190,7 +1320,9 @@ bool NNeuronTimeLearnerBranch::RelinkDendriteSynapsesToDataset(int dendrite_inde
  else if(NumSynapse[dendrite_index0] > 1)
   synapse->Resistance = SynapseResistanceStep;
 
- const bool wire_now = (!IsNeedToTrain.GetData()) || (TrainingPhase.GetData() == kPhaseDone);
+ const bool wire_now = (!IsNeedToTrain.GetData())
+  || (TrainingPhase.GetData() == kPhaseDone)
+  || (TrainingPhase.GetData() == kPhaseCalibrateLtz);
  if(wire_now)
  {
   if(!LinkSynapseToDataset(synapse))
@@ -1340,8 +1472,10 @@ NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
  IterMinLTZPotential = std::numeric_limits<double>::max();
  IterMaxLTZPotential = 0.0;
  IterLTZTrackingActive = false;
+ IterMaxSomaPotential = 0.0;
  LastSyncedMinLTZ = 0.0;
  LastSyncedMaxLTZ = 0.0;
+ ParallelResistanceScaled = false;
 }
 
 
@@ -1418,6 +1552,7 @@ bool NNeuronTimeLearnerBranch::ResetToUntrained(void)
   InitialSomaPotential.assign(NumInputDendrite, 0.0);
   TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
  }
+ ParallelResistanceScaled = false;
  // Prefer setter path for LTZ; SetDataDirect(true) alone left FixedLTZ on the
  // membrane and the neuron fired through the whole training run.
  TrainingPhase.SetDataDirect(kPhaseSync);
@@ -1511,6 +1646,7 @@ bool NNeuronTimeLearnerBranch::SetIsNeedToTrain(const bool &value)
   TrainingPhase = kPhaseSync;
   CanChangeDendLength = true;
   HasPrevPeakSnapshot = false;
+  ParallelResistanceScaled = false;
   ResizeSyncVectors(NumInputDendrite.GetData());
   SetLTZThreshold(TrainingLTZThreshold.GetData());
   LTZThreshold.SetDataDirect(TrainingLTZThreshold.GetData());
@@ -2298,16 +2434,18 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  TrainingLTZThreshold = 100;
  UseFixedLTZThreshold = false;
  AutoCalibrateFixedLTZThreshold = false;
- CalibrateLTZThresholdMode = kCalibrateGapFraction;
- CalibrateLTZThresholdFraction = 0.85;
+ CalibrateLTZThresholdMode = kCalibratePeakFraction;
+ CalibrateLTZThresholdFraction = 0.99;
  CalibrateLTZThresholdMin = 0.0115;
- CalibrateLTZThresholdMax = 0.05;
+ CalibrateLTZThresholdMax = 1.0;
  CalibratedFixedLTZThreshold = 0.0;
  IterMinLTZPotential = std::numeric_limits<double>::max();
  IterMaxLTZPotential = 0.0;
  IterLTZTrackingActive = false;
  LastSyncedMinLTZ = 0.0;
  LastSyncedMaxLTZ = 0.0;
+ ParallelResistanceScaled = false;
+ IterMaxSomaPotential = 0.0;
 
  InputPattern.Resize(NumInputDendrite, 1);
  AdditionalInputPattern.Resize(NumInputDendrite, 1);
@@ -2796,7 +2934,9 @@ bool NNeuronTimeLearnerBranch::MeasureMaxPotentialAndTime(void)
   if(i < int(PeakLocked.size()) && PeakLocked[i])
    continue;
 
-  if(i < ActivePulseIndex && IsNeedToTrain.GetData() && TrainingPhase.GetData() != kPhaseDone)
+  if(i < ActivePulseIndex && IsNeedToTrain.GetData()
+     && TrainingPhase.GetData() != kPhaseDone
+     && TrainingPhase.GetData() != kPhaseCalibrateLtz)
   {
    if(i < int(PeakLocked.size()))
     PeakLocked[i] = true;
@@ -3331,8 +3471,10 @@ bool NNeuronTimeLearnerBranch::EndOfLearning(void)
 {
  if(TrainingPhase == kPhaseDone)
   return true;
+ if(TrainingPhase == kPhaseCalibrateLtz)
+  return false;
 
- // Joint train: Done only when lengths synced and synapse amps normalized.
+ // Joint train: enter parallel calibrate only when lengths synced and amps normalized.
  if(!AllDendritesSynced() || !AllSynapsesNormalized())
   return false;
 
@@ -3350,30 +3492,33 @@ bool NNeuronTimeLearnerBranch::EndOfLearning(void)
  Neuron->TrainingSynapsisNum.Resize(NumInputDendrite, 1);
  Neuron->TrainingSynapsisNum = temp;
 
+ // Optional legacy path (muted sync LTZ); Branch recognition uses parallel peak.
  CalibrateFixedLTZThresholdFromTraining();
 
- TrainingPhase = kPhaseDone;
+ // Mute-trained tip R is for a single active synapse; recognition drives all N
+ // tips on one cable — scale R by N so each contributes ~1/N conductance.
+ ScaleTipResistancesForParallelActivation();
+
+ TrainingPhase = kPhaseCalibrateLtz;
  CanChangeDendLength = false;
- SetIsNeedToTrain(false);
- IsNeedToTrain = false;
- ApplyPulseGeneratorMute(); // recognition: reconnect all tip synapses after Done
- const int link_count = CountGeneratorToBranchExcSynapseLinks();
- if (EnableDebug.GetData() && RDK::GetLogger())
+ // Keep TrainingLTZ so unconstrained peak can be measured without early spikes.
+ SetLTZThreshold(TrainingLTZThreshold.GetData());
+ LTZThreshold.SetDataDirect(TrainingLTZThreshold.GetData());
+ ApplyPulseGeneratorMute(); // all tip synapses live for calibrate burst
+
+ if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
-  oss << "phase -> Done len=[";
-  for(int i = 0; i < NumInputDendrite && i < int(DendriteLength.size()); ++i)
+  oss << "phase -> CalibrateLtz (R×N applied) tips=[";
+  for(int i = 0; i < NumInputDendrite && i < int(TipSynapseResistance.size()); ++i)
   {
    if(i) oss << ',';
-   oss << DendriteLength[static_cast<size_t>(i)];
+   oss << TipSynapseResistance[static_cast<size_t>(i)];
   }
-  oss << "] gen_links=" << link_count << " expect=" << NumInputDendrite.GetData();
+  oss << "] gen_links=" << CountGeneratorToBranchExcSynapseLinks();
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
  }
- if(link_count != NumInputDendrite.GetData())
-  LogMessageEx(RDK_EX_WARNING, "NNeuronTimeLearnerBranch",
-   "EndOfLearning: Generator link count != NumInputDendrite");
- return true;
+ return false;
 }
 
 
@@ -3443,6 +3588,7 @@ void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
  IterMinLTZPotential = std::numeric_limits<double>::max();
  IterMaxLTZPotential = 0.0;
  IterLTZTrackingActive = false;
+ IterMaxSomaPotential = 0.0;
 
  // Structure changes are applied in FinishTrainingIteration (during the inter-burst
  // gap). Changing length here would Reset() the neuron after pulse 0 and break timing.
@@ -3494,6 +3640,22 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
  }
 
  ComputePeakRelAndDelay();
+
+ // Parallel recognition calibration burst: measure unconstrained peak → FixedLTZ → Done.
+ if(TrainingPhase == kPhaseCalibrateLtz)
+ {
+  FinalizeAfterParallelCalibration();
+  CommitPrevPeakSnapshot();
+  PrevFirstImpulseTime = FirstImpulseTime;
+  HasPrevIteration = true;
+  IterationActive = false;
+  ActiveMeasureSoma = -1;
+  WaitingPeakAfterLastPulse = false;
+  IsFirstBeat = true;
+  UpdateNormTraces();
+  CountIteration++;
+  return;
+ }
 
  if(TrainingPhase != kPhaseDone && IsNeedToTrain)
  {
@@ -3810,6 +3972,7 @@ bool NNeuronTimeLearnerBranch::Training(void)
    BeginTrainingIteration(now);
    MeasureMaxPotentialAndTime();
    UpdateIterLTZPotential();
+   UpdateIterSomaPeak();
   }
   return true;
  }
@@ -3838,12 +4001,15 @@ bool NNeuronTimeLearnerBranch::Training(void)
 
  MeasureMaxPotentialAndTime();
  UpdateIterLTZPotential();
+ UpdateIterSomaPeak();
 
  const double last_pulse = FirstImpulseTime
   + ((NumInputDendrite > 0 && !ExpectedPulseRelTimes.empty())
      ? ExpectedPulseRelTimes[NumInputDendrite - 1] : 0.0);
  bool all_locked = true;
- const int lock_from = (IsNeedToTrain.GetData() && TrainingPhase.GetData() != kPhaseDone)
+ const int lock_from = (IsNeedToTrain.GetData()
+  && TrainingPhase.GetData() != kPhaseDone
+  && TrainingPhase.GetData() != kPhaseCalibrateLtz)
   ? std::max(0, ActivePulseIndex) : 0;
  if(PeakLocked.empty())
   all_locked = false;
@@ -3858,12 +4024,24 @@ bool NNeuronTimeLearnerBranch::Training(void)
 
  // Wait until every soma locked its first post-pulse max, or effective gap.
  // Do not cut shortly after the last ISI — long dendrites need more settle time.
+ // CalibrateLtz must wait the full cable settle: early all_locked truncates before
+ // the coincident distal peak and underestimates FixedLTZ (~0.022 vs ~0.07).
  bool finished = false;
  const double settle = SettleMarginSec();
- if(all_locked && now >= last_pulse + std::max(0.01, settle * 0.25))
-  finished = true;
- if((now - FirstImpulseTime) >= EffectiveIterationGapSec())
-  finished = true;
+ if(TrainingPhase == kPhaseCalibrateLtz)
+ {
+  const double calibrate_wait = last_pulse + settle
+   - FirstImpulseTime + 0.05;
+  if((now - FirstImpulseTime) >= std::max(EffectiveIterationGapSec(), calibrate_wait))
+   finished = true;
+ }
+ else
+ {
+  if(all_locked && now >= last_pulse + std::max(0.01, settle * 0.25))
+   finished = true;
+  if((now - FirstImpulseTime) >= EffectiveIterationGapSec())
+   finished = true;
+ }
 
  if(finished)
   FinishTrainingIteration();

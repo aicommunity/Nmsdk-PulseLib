@@ -91,22 +91,22 @@ public:
  /// Force FixedLTZThreshold
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> UseFixedLTZThreshold;
 
- /// After EndOfLearning: set FixedLTZThreshold from last synced training LTZ min/max
+ /// Legacy: set FixedLTZ from last muted sync LTZ min/max (Branch prefers parallel peak)
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> AutoCalibrateFixedLTZThreshold;
 
- /// 0 = gap_fraction (min + f*(max-min)); 1 = peak_fraction (max*f)
+ /// 0 = gap_fraction (min + f*(max-min)); 1 = peak_fraction (max*f). Branch Done uses peak_fraction.
  UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> CalibrateLTZThresholdMode;
 
- /// Fraction for gap_fraction or peak_fraction calibration
+ /// Fraction for gap_fraction or peak_fraction calibration (Branch default 0.99 of parallel peak)
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> CalibrateLTZThresholdFraction;
 
  /// Lower clamp for calibrated threshold
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> CalibrateLTZThresholdMin;
 
- /// Upper clamp for calibrated threshold
+ /// Upper clamp for calibrated threshold (Branch default 1.0 — peak can exceed 0.05)
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> CalibrateLTZThresholdMax;
 
- /// Result of last AutoCalibrateFixedLTZThreshold (0 if not calibrated)
+ /// Result of last FixedLTZ calibration (0 if not calibrated)
  UProperty<double, NNeuronTimeLearnerBranch, ptPubState> CalibratedFixedLTZThreshold;
 
  /// Neuron output copy
@@ -299,9 +299,14 @@ protected:
  double IterMinLTZPotential;
  double IterMaxLTZPotential;
  bool IterLTZTrackingActive;
+ /// Continuous max soma SumPotential during current iteration (parallel LTZ calibrate)
+ double IterMaxSomaPotential;
  /// Snapshot from last iteration where AllDendritesSynced()
  double LastSyncedMinLTZ;
  double LastSyncedMaxLTZ;
+
+ /// True after TipSynapseResistance was scaled by N for parallel recognition
+ bool ParallelResistanceScaled;
 
  static constexpr int kCalibrateGapFraction = 0;
  static constexpr int kCalibratePeakFraction = 1;
@@ -408,7 +413,14 @@ protected:
  void ApplyActiveLtzThreshold(void);
  double ReadLTZonePotential(void) const;
  void UpdateIterLTZPotential(void);
+ void UpdateIterSomaPeak(void);
  void CalibrateFixedLTZThresholdFromTraining(void);
+ /// Mute-trained tip R assumes one active synapse; recognition fires all N on one cable → R*=N.
+ void ScaleTipResistancesForParallelActivation(void);
+ /// After R*=N + all tips live: measure unconstrained peak and set FixedLTZ.
+ void CalibrateFixedLTZThresholdFromParallelPeak(void);
+ void FinalizeAfterParallelCalibration(void);
+ bool IsParallelCalibrationPhase(void) const;
  void UpdateNormTraces(void);
  bool PatternRecognition(void);
  bool LearningAdditionalPattern_1_4(MDMatrix<double> second_pattern);
