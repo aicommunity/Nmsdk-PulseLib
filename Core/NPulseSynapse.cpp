@@ -72,7 +72,10 @@ bool NPulseSynapse::SetDissociationTC(const double &value)
  if(value <= 0)
   return false;
 
- Ready=false;
+ // Do not clear Ready: mid-structure ApplyElementDefaults (and live tweaks)
+ // must keep synapses calculable. Refresh discrete TC when TimeStep is set.
+ if(TimeStep != 0)
+  VDissociationTC = value * TimeStep;
 
  return true;
 }

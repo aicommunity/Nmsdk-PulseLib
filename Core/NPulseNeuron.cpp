@@ -46,7 +46,10 @@ NPulseNeuron::NPulseNeuron(void)
   NumDendriteMembranePartsVec("NumDendriteMembranePartsVec",this,&NPulseNeuron::SetNumDendriteMembranePartsVec),
   TrainingPattern("TrainingPattern",this,&NPulseNeuron::SetTrainingPattern),
   TrainingDendIndexes("TrainingDendIndexes",this,&NPulseNeuron::SetTrainingDendIndexes),
-  TrainingSynapsisNum("TrainingSynapsisNum",this,&NPulseNeuron::SetTrainingSynapsisNum)
+  TrainingSynapsisNum("TrainingSynapsisNum",this,&NPulseNeuron::SetTrainingSynapsisNum),
+  UseElementDefaults("UseElementDefaults",this,&NPulseNeuron::SetUseElementDefaults),
+  MembraneCapacity("MembraneCapacity",this,&NPulseNeuron::SetMembraneCapacity),
+  SynapseDissociationTC("SynapseDissociationTC",this,&NPulseNeuron::SetSynapseDissociationTC)
 {
  PosGenerator=0;
  NegGenerator=0;
@@ -156,6 +159,28 @@ bool NPulseNeuron::SetInhGeneratorClassName(const std::string &value)
  Ready=false;
  return true;
 }
+
+bool NPulseNeuron::SetUseElementDefaults(const bool &value)
+{
+ (void)value;
+ // Do not clear Ready: Cap/TC are applied in ApplyElementDefaults after ABuild.
+ return true;
+}
+
+bool NPulseNeuron::SetMembraneCapacity(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetSynapseDissociationTC(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
 
 /// „исло участков мембраны тела нейрона
 bool NPulseNeuron::SetNumSomaMembraneParts(const int &value)
@@ -743,6 +768,58 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  return true;
 }
 
+void NPulseNeuron::ApplyElementDefaults(void)
+{
+ if(!UseElementDefaults.GetData())
+  return;
+
+ const double cap = MembraneCapacity.GetData();
+ const double dissoc = SynapseDissociationTC.GetData();
+ if(cap <= 0.0 && dissoc <= 0.0)
+  return;
+
+ for(size_t mi = 0; mi < Membranes.size(); ++mi)
+ {
+  NPulseMembraneCommon *mcommon = Membranes[mi];
+  if(!mcommon)
+   continue;
+  if(mcommon->GetName() == "LTMembrane")
+   continue;
+
+  NPulseMembrane *membr = dynamic_cast<NPulseMembrane*>(mcommon);
+  if(!membr)
+   continue;
+
+  if(cap > 0.0)
+  {
+   UEPtr<UContainer> exc_c = membr->GetComponent("ExcChannel", true);
+   if(NPulseChannel *exc = dynamic_cast<NPulseChannel*>((UContainer*)exc_c))
+    exc->Capacity = cap;
+   UEPtr<UContainer> inh_c = membr->GetComponent("InhChannel", true);
+   if(NPulseChannel *inh = dynamic_cast<NPulseChannel*>((UContainer*)inh_c))
+    inh->Capacity = cap;
+  }
+
+  if(dissoc > 0.0)
+  {
+   const int nexc = int(membr->NumExcitatorySynapses);
+   const int ninh = int(membr->NumInhibitorySynapses);
+   for(int i = 0; i < nexc; ++i)
+   {
+    UEPtr<UContainer> sc = membr->GetComponent(std::string("ExcSynapse")+sntoa(i+1), true);
+    if(NPulseSynapse *syn = dynamic_cast<NPulseSynapse*>((UContainer*)sc))
+     syn->DissociationTC = dissoc;
+   }
+   for(int i = 0; i < ninh; ++i)
+   {
+    UEPtr<UContainer> sc = membr->GetComponent(std::string("InhSynapse")+sntoa(i+1), true);
+    if(NPulseSynapse *syn = dynamic_cast<NPulseSynapse*>((UContainer*)sc))
+     syn->DissociationTC = dissoc;
+   }
+  }
+ }
+}
+
 // ¬осстановление настроек по умолчанию и сброс процесса счета
 bool NPulseNeuron::ADefault(void)
 {
@@ -760,6 +837,9 @@ bool NPulseNeuron::ADefault(void)
  TrainingPattern.Resize(0,0);
  TrainingDendIndexes.Resize(0,0);
  TrainingSynapsisNum.Resize(0,0);
+ UseElementDefaults = false;
+ MembraneCapacity = 0.0;
+ SynapseDissociationTC = 0.0;
 
  return true;
 }
@@ -799,6 +879,7 @@ bool NPulseNeuron::ABuild(void)
  if(!NPulseNeuronCommon::ABuild())
   return false;
 
+ ApplyElementDefaults();
  return true;
 }
 

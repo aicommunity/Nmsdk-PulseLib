@@ -81,6 +81,16 @@ UProperty<MDMatrix<int>, NPulseNeuron, ptPubParameter> TrainingDendIndexes;
 /// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
 UProperty<MDMatrix<int>, NPulseNeuron, ptPubParameter> TrainingSynapsisNum;
 
+/// Opt-in: after BuildStructure, override child channel Capacity / synapse DissociationTC.
+/// Default false — existing UploadClass / saved models keep class defaults.
+UProperty<bool, NPulseNeuron, ptPubParameter> UseElementDefaults;
+
+/// When UseElementDefaults and value > 0: Capacity on Soma/Dendrite Exc/Inh channels.
+UProperty<double, NPulseNeuron, ptPubParameter> MembraneCapacity;
+
+/// When UseElementDefaults and value > 0: DissociationTC on Soma/Dendrite Exc/Inh synapses.
+UProperty<double, NPulseNeuron, ptPubParameter> SynapseDissociationTC;
+
 
 protected:
 NConstGenerator *PosGenerator,*NegGenerator;
@@ -126,6 +136,10 @@ bool SetExcGeneratorClassName(const std::string &value);
 
 /// Имя класса источника задающего сигнала для тормозного ионного механизма
 bool SetInhGeneratorClassName(const std::string &value);
+
+bool SetUseElementDefaults(const bool &value);
+bool SetMembraneCapacity(const double &value);
+bool SetSynapseDissociationTC(const double &value);
 
 /// Число участков мембраны тела нейрона
 bool SetNumSomaMembraneParts(const int &value);
@@ -239,6 +253,9 @@ bool BuildStructure(const string &membraneclass, const string &ltzonemembranecla
 					const string &ltzone_class, const string &pos_gen_class,
 					const string &neg_gen_class, int num_soma_membranes, int dendrite_mode,
 					int dendrite_length, const vector<int> &dendrite_length_vec, int num_stimulates, int num_arresting);
+
+/// Apply MembraneCapacity / SynapseDissociationTC to Soma+Dendrite children (not LTMembrane).
+void ApplyElementDefaults(void);
 
 // Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);

@@ -1100,6 +1100,40 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->LTZone->Threshold=0.0117;
  UploadClass("NSPNeuronGen",n);
 
+
+ // Fast-response grid: DissociationTC x MembraneCapacity (opt-in UseElementDefaults).
+ // Names without '_'. Does not alter NSPNeuronGen (flag stays false).
+ {
+  struct FastCell { const char *name; double dissoc; double cap; };
+  static const FastCell kFast[] = {
+   {"NSPNeuronGenD005C5e10", 0.005, 5e-10},
+   {"NSPNeuronGenD005C25e11", 0.005, 5e-10},
+   {"NSPNeuronGenD002C1e9", 0.002, 1e-9},
+   {"NSPNeuronGenD002C5e10", 0.002, 5e-10},
+   {"NSPNeuronGenD002C25e11", 0.002, 2.5e-10},
+   {"NSPNeuronGenD001C1e9", 0.001, 1e-9},
+   {"NSPNeuronGenD001C5e10", 0.001, 5e-10},
+   {"NSPNeuronGenD001C25e11", 0.001, 2.5e-10},
+  };
+  const int fast_n = int(sizeof(kFast) / sizeof(kFast[0]));
+  for(int fi = 0; fi < fast_n; ++fi)
+  {
+   n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+   n->LTMembraneClassName="";
+   n->MembraneClassName="NPMembraneBio";
+   n->LTZoneClassName="NPulseLTZoneThreshold";
+   n->Build();
+   n->LTZone->Threshold=0.0117;
+   n->UseElementDefaults=true;
+   n->SynapseDissociationTC=kFast[fi].dissoc;
+   n->MembraneCapacity=kFast[fi].cap;
+   n->Build();
+   n->LTZone->Threshold=0.0117;
+   UploadClass(kFast[fi].name, n);
+  }
+ }
+
+
  {
   const char *preinh_mem_names[] = {
    "NPMembraneBioPreinh0_5", "NPMembraneBioPreinh", "NPMembraneBioPreinh2_0",
