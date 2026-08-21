@@ -3154,8 +3154,12 @@ bool NNeuronTimeLearnerBranch::MeasureMaxPotentialAndTime(void)
    (DendriteLength[i] > 1) ? (DendriteLength[i] - 1) * EstDelayPerSeg : 0.0);
   const double expected_i = (i < int(ExpectedPulseRelTimes.size()))
    ? ExpectedPulseRelTimes[static_cast<size_t>(i)] : 0.0;
-  const double margin = std::max(PeakMeasureMargin.GetData(),
-   0.5 * double(kMaxLengthStep) * EstDelayPerSeg);
+  // Short-span: honor XML PeakMeasureMargin when tighter than cable floor.
+  const double cable_floor = 0.5 * double(kMaxLengthStep) * EstDelayPerSeg;
+  const double peak_xml = PeakMeasureMargin.GetData();
+  const double margin = (peak_xml > 1e-12 && peak_xml < cable_floor)
+   ? peak_xml
+   : std::max(peak_xml, cable_floor);
   double t_lo_rel = expected_i + delay_est - margin;
   double t_hi_rel = expected_i + delay_est + margin;
   if(t_lo_rel < 0.0)

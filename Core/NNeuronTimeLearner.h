@@ -268,7 +268,7 @@ protected:
 
  static constexpr double kMinMeasurableSomaAmp = 1e-6;
  static constexpr double kMinSettle = 0.08;
- static constexpr double kDelayPerSegDefault = 0.01;
+ static constexpr double kDelayPerSegDefault = 0.005;
  static constexpr double kGapSlack = 0.05;
  static constexpr int kNoImproveLimit = 2;
  static constexpr double kResistanceAdjustGainDefault = 0.4;
