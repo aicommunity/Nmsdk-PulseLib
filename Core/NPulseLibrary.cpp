@@ -148,7 +148,6 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
 
 
 
-
  cont=new NPulseLTZoneThreshold;
  cont->SetName("LTZone");
  cont->Default();
@@ -193,6 +192,22 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->SetName("CLTZone");
  cont->Default();
  UploadClass("NCSimpleLTZone",cont);
+
+ // Axons base/delay after LTZone; Segment/Chain registered later after NPMembraneBio + PosCGenerator
+ cont=new NAperiodicLink;
+ cont->SetName("AperiodicLink");
+ cont->Default();
+ UploadClass("NAperiodicLink",cont);
+
+ cont=new NAxoneCommon;
+ cont->SetName("AxoneCommon");
+ cont->Default();
+ UploadClass("NAxoneCommon",cont);
+
+ cont=new NAxoneDelay;
+ cont->SetName("AxoneDelay");
+ cont->Default();
+ UploadClass("NAxoneDelay",cont);
 
  cont=new NPulseChannel;
  cont->SetName("PChannel");
@@ -489,6 +504,22 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  cont->SetName("PNeuronPosCGenerator");
  dynamic_cast<NConstGenerator*>(cont)->Amplitude=1;
  UploadClass("NPNeuronPosCGenerator",cont);
+
+ // Regenerative axon segment/chain need NPMembraneBio + PosCGenerator (UploadClass calls Build)
+ cont=new NAxoneSegment;
+ cont->SetName("AxoneSegment");
+ cont->Default();
+ UploadClass("NAxoneSegment",cont);
+
+ cont=new NAxoneChain;
+ cont->SetName("AxoneChain");
+ cont->Default();
+ UploadClass("NAxoneChain",cont);
+
+ cont=new NAxoneChainAndDelay;
+ cont->SetName("AxoneChainAndDelay");
+ cont->Default();
+ UploadClass("NAxoneChainAndDelay",cont);
 
  cont=dynamic_pointer_cast<UContainer>(dynamic_cast<UStorage*>(storage)->TakeObject("NCGenerator"));
  cont->SetName("PNeuronNegCGenerator");

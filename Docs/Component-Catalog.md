@@ -56,6 +56,15 @@
   - [`NSource`](Components/NSource.md)
   - [`NReceptor`](Components/NReceptor.md) — *Используется в:* `Bin/Configs/!OldConfigs/NReceptor/`
 
+## Аксоны
+*Статус:* в сборке PulseLib, `UploadClass` в `NPulseLibrary`. См. [Architecture.md](Architecture.md) §8a. Smoke: `Bin/Configs/SpikeSamples/NeuralElements/Axone*`.
+- [`NAxoneCommon`](Components/NAxoneCommon.md) — база Input/Output 1×1
+- [`NAxoneDelay`](Components/NAxoneDelay.md) — задержка (default 1 мс)
+- [`NAperiodicLink`](Components/NAperiodicLink.md) — апериодическое звено
+- [`NAxoneSegment`](Components/NAxoneSegment.md) — сегмент LTZone ± инерция
+- [`NAxoneChain`](Components/NAxoneChain.md) — цепочка сегментов
+- [`NAxoneChainAndDelay`](Components/NAxoneChainAndDelay.md) — Segment↔Delay (миелин-подобная схема)
+
 ## Классификаторы / Рефлексы / Предсказатели / Эффекторы / Логика / Решатель
 - Классификаторы:
   - [`NClassifier`](Components/NClassifier.md)
@@ -330,6 +339,15 @@ The full list of registrations (`Core/NPulseLibrary.cpp`) is very large. Below i
   - [`NPDelay`](Components/NPDelay.md)
   - [`NSource`](Components/NSource.md)
   - [`NReceptor`](Components/NReceptor.md) — *Used in:* `Bin/Configs/!OldConfigs/NReceptor/`
+
+## Axons
+*Status:* built into PulseLib, `UploadClass` in `NPulseLibrary`. See [Architecture.md](Architecture.md) §8a. Smoke: `Bin/Configs/SpikeSamples/NeuralElements/Axone*`.
+- [`NAxoneCommon`](Components/NAxoneCommon.md) — base Input/Output 1×1
+- [`NAxoneDelay`](Components/NAxoneDelay.md) — delay (default 1 ms)
+- [`NAperiodicLink`](Components/NAperiodicLink.md) — aperiodic link
+- [`NAxoneSegment`](Components/NAxoneSegment.md) — LTZone segment ± inertia
+- [`NAxoneChain`](Components/NAxoneChain.md) — segment chain
+- [`NAxoneChainAndDelay`](Components/NAxoneChainAndDelay.md) — Segment↔Delay (myelin-like)
 
 ## Classifiers / Reflexes / Predictors / Effectors / Logic / Solver
 

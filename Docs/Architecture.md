@@ -128,6 +128,21 @@ flowchart TB
 
 - **NPulseDelay** - задержка импульсов
 
+#### 8a. Аксоны
+
+Компоненты передачи сигнала от выхода LTZone нейрона дальше по сети. Зарегистрированы в `NPulseLibrary` (`UploadClass`), входят в сборку PulseLib. Внутренняя структура — `BuildStructure` + `AddMissingComponent` (как у `NPulseNeuron`).
+
+- **NAxoneCommon** — база (`Input`/`Output` 1×1)
+- **NAxoneDelay** — феноменологическая задержка (default 0.001 с)
+- **NAperiodicLink** — апериодическое (инерционное) звено
+- **NAxoneSegment** — регенеративный узел: `Inertial` (Bias=-1) + `Soma` (`NPMembraneBio`) + `PosGenerator`(+1) + `LTZone` + feedback
+- **NAxoneChain** — структурная цепочка сегментов (`NumSegments`, классы мембраны/LTZone/Pos)
+- **NAxoneChainAndDelay** — узлы (Segment) + междоузлия (Delay)
+
+Passive cable для аксона **не** вводится (см. дендритный `NPulseChannelCable`).
+
+Smoke-конфиги: `Bin/Configs/SpikeSamples/NeuralElements/Axone*`.
+
 #### 9. Рецепторы и источники
 
 - **NReceptor** - рецептор, компонент для приема внешних сигналов
@@ -442,6 +457,17 @@ The library is structured around spiking neuron models, synapses (including STDP
 #### 8. Delays
 
 - **NPulseDelay** - pulse delay
+
+#### 8a. Axons
+
+Signal path after neuron LTZone. Sources: `Core/NAxone*.cpp`, `NAperiodicLink.cpp`; registered in `NPulseLibrary` (`UploadClass`).
+
+- **NAxoneCommon**, **NAxoneDelay**, **NAperiodicLink**, **NAxoneSegment**, **NAxoneChain**, **NAxoneChainAndDelay**
+- Regenerative node: Inertial (Bias=-1) + Soma (NPMembraneBio) + PosGenerator(+1) + LTZone feedback
+- Structure via `BuildStructure` + `AddMissingComponent` (same pattern as `NPulseNeuron`)
+- No separate passive-cable axon (see dendritic `NPulseChannelCable`)
+
+Smoke configs: `Bin/Configs/SpikeSamples/NeuralElements/Axone*`.
 
 #### 9. Receptors and Sources
 
