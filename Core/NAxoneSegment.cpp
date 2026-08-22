@@ -155,7 +155,9 @@ bool NAxoneSegment::BuildStructure(void)
    std::string("NAxoneSegment::BuildStructure failed to create LTZone: ")+ltz_class);
   return false;
  }
- LTZone->SetCoord(MVector<double,3>(16.0, 4.5, 0.0));
+ LTZone->SetCoord(MVector<double,3>(14.0, 4.5, 0.0));
+ LTZone->Threshold = 0.0115;
+ LTZone->ThresholdOff = 0.0;
 
  NPulseChannelCommon *exc = Soma->GetPosChannel(0);
  NPulseChannelCommon *inh = Soma->GetNegChannel(0);

@@ -174,8 +174,8 @@ bool NAxoneChain::BuildStructure(void)
    return false;
   }
   PropagateSegmentParams(seg);
-  // Compact segment width ~18 (LTZone at x=16); small gap between nodes
-  const double seg_pitch = 20.0;
+  // Compact segment width ~16 (LTZone at x=14); 0.5-block gap (2) between nodes
+  const double seg_pitch = 18.0;
   seg->SetCoord(MVector<double,3>((i - 1) * seg_pitch, 0.0, 0.0));
  }
 

@@ -177,8 +177,8 @@ bool NAxoneChainAndDelay::BuildStructure(void)
    return false;
   }
   PropagateSegmentParams(seg);
-  // Equal gaps: [Segment ~18][gap 2][Delay ~4][gap 2][Segment ...]
-  const double seg_w = 18.0;
+  // Equal gaps: [Segment ~16][gap 2][Delay ~4][gap 2][Segment ...]
+  const double seg_w = 16.0;
   const double del_w = 4.0;
   const double gap = 2.0;
   const double period = seg_w + gap + del_w + gap;
