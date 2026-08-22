@@ -66,6 +66,11 @@ bool BuildStructure(void);
 void PropagateSegmentParams(UEPtr<NAxoneSegment> seg);
 std::string SegmentName(int index_1based) const;
 std::string DelayName(int index_1based) const;
+
+void ApplyDiagramLayout(void);
+
+public:
+virtual bool Build(void);
 };
 
 }

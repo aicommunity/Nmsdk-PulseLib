@@ -65,6 +65,13 @@ virtual bool ACalculate(void);
 
 /// Inertial + PosGenerator + Soma + LTZone via AddMissingComponent
 bool BuildStructure(void);
+
+public:
+/// Re-apply diagram coords/threshold (also when Ready skips full Build).
+void ApplyDiagramLayout(void);
+
+public:
+virtual bool Build(void);
 };
 
 }

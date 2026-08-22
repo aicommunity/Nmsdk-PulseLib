@@ -158,6 +158,40 @@ bool NAxoneChainAndDelay::ABuild(void)
  return BuildStructure();
 }
 
+bool NAxoneChainAndDelay::Build(void)
+{
+ ApplyDiagramLayout();
+ return UContainer::Build();
+}
+
+void NAxoneChainAndDelay::ApplyDiagramLayout(void)
+{
+ const int n = NumNodes.GetData();
+ if(n < 1)
+  return;
+ const double seg_w = 16.0;
+ const double del_w = 4.0;
+ const double gap = 2.0;
+ const double period = seg_w + gap + del_w + gap;
+ for(int i=1;i<=n;++i)
+ {
+  UEPtr<NAxoneSegment> seg =
+   dynamic_pointer_cast<NAxoneSegment>(GetComponent(SegmentName(i), true));
+  if(seg)
+  {
+   seg->SetCoord(MVector<double,3>((i - 1) * period, 0.0, 0.0));
+   seg->ApplyDiagramLayout();
+  }
+  if(i < n)
+  {
+   UEPtr<NAxoneDelay> d =
+    dynamic_pointer_cast<NAxoneDelay>(GetComponent(DelayName(i), true));
+   if(d)
+    d->SetCoord(MVector<double,3>((i - 1) * period + seg_w + gap, 4.5, 0.0));
+  }
+ }
+}
+
 bool NAxoneChainAndDelay::BuildStructure(void)
 {
  bool res=true;
@@ -177,12 +211,6 @@ bool NAxoneChainAndDelay::BuildStructure(void)
    return false;
   }
   PropagateSegmentParams(seg);
-  // Equal gaps: [Segment ~16][gap 2][Delay ~4][gap 2][Segment ...]
-  const double seg_w = 16.0;
-  const double del_w = 4.0;
-  const double gap = 2.0;
-  const double period = seg_w + gap + del_w + gap;
-  seg->SetCoord(MVector<double,3>((i - 1) * period, 0.0, 0.0));
 
   if(i < n)
   {
@@ -196,9 +224,10 @@ bool NAxoneChainAndDelay::BuildStructure(void)
     return false;
    }
    d->DelayTime = InternodeDelayTime.GetData();
-   d->SetCoord(MVector<double,3>((i - 1) * period + seg_w + gap, 4.5, 0.0));
   }
  }
+
+ ApplyDiagramLayout();
 
  for(int i=n+1;;++i)
  {
@@ -233,6 +262,7 @@ bool NAxoneChainAndDelay::BuildStructure(void)
 
 bool NAxoneChainAndDelay::AReset(void)
 {
+ ApplyDiagramLayout();
  return NAxoneCommon::AReset();
 }
 

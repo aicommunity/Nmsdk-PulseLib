@@ -14,7 +14,7 @@
 1. `Inertial` (`NAperiodicLink`, `Bias=-1`) — вход сегмента
 2. `PosGenerator` (`NPNeuronPosCGenerator`, Amplitude=+1)
 3. `Soma` (`NPMembraneBio`)
-4. `LTZone` (`NPulseLTZoneThreshold`, `Threshold=0.0115`, `ThresholdOff=0`)
+4. `LTZone` (`NPulseLTZoneThreshold`, `Threshold=0.03`, `ThresholdOff=0`)
 
 Линки:
 
@@ -33,7 +33,7 @@ Feed-in: `Calculate()` пишет `Input` → `Inertial.Input`. Feed-out: `ACalc
 | `LTZoneClassName` | NPulseLTZoneThreshold | Класс LTZone |
 | `PosGeneratorClassName` | NPNeuronPosCGenerator | Класс +1 генератора |
 
-При `BuildStructure` для `NPulseLTZoneThreshold` выставляется `Threshold=0.0115` (как в StructTrain / `NPMembraneBio`), не дефолт класса `1e-5`.
+При `BuildStructure` / `ApplyDiagramLayout` для `NPulseLTZoneThreshold` выставляется `Threshold=0.03`: у минимального сегмента (Inertial→Soma, без синапсов) пик LTZ на первом шаге ~0.025, поэтому порог StructTrain `0.0115` даёт мгновенное срабатывание в такт генератору.
 
 ## Источники
 

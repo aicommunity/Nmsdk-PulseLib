@@ -20,6 +20,12 @@ See file license.txt for more information
 
 namespace NMSDK {
 
+namespace {
+// Minimal segment (Inertial→Soma, no synapses): first-step LTZ potential ~0.025.
+// StructTrain neuron default 0.0115 is too low here and syncs with the generator.
+const double kAxoneSegmentLTZThreshold = 0.03;
+}
+
 NAxoneSegment::NAxoneSegment(void)
  : MembraneClassName("MembraneClassName",this,&NAxoneSegment::SetMembraneClassName),
    LTZoneClassName("LTZoneClassName",this,&NAxoneSegment::SetLTZoneClassName),
@@ -96,6 +102,37 @@ bool NAxoneSegment::ABuild(void)
  return BuildStructure();
 }
 
+bool NAxoneSegment::Build(void)
+{
+ ApplyDiagramLayout();
+ return UContainer::Build();
+}
+
+void NAxoneSegment::ApplyDiagramLayout(void)
+{
+ if(!Inertial)
+  Inertial = dynamic_pointer_cast<NAperiodicLink>(GetComponent("Inertial", true));
+ if(!PosGenerator)
+  PosGenerator = dynamic_pointer_cast<NConstGenerator>(GetComponent("PosGenerator", true));
+ if(!Soma)
+  Soma = dynamic_pointer_cast<NPulseMembrane>(GetComponent("Soma", true));
+ if(!LTZone)
+  LTZone = dynamic_pointer_cast<NLTZone>(GetComponent("LTZone", true));
+
+ if(Inertial)
+  Inertial->SetCoord(MVector<double,3>(2.0, 6.5, 0.0));
+ if(PosGenerator)
+  PosGenerator->SetCoord(MVector<double,3>(2.0, 2.0, 0.0));
+ if(Soma)
+  Soma->SetCoord(MVector<double,3>(8.0, 4.5, 0.0));
+ if(LTZone)
+ {
+  LTZone->SetCoord(MVector<double,3>(14.0, 4.5, 0.0));
+  LTZone->Threshold = kAxoneSegmentLTZThreshold;
+  LTZone->ThresholdOff = 0.0;
+ }
+}
+
 bool NAxoneSegment::BuildStructure(void)
 {
  bool res=true;
@@ -123,7 +160,6 @@ bool NAxoneSegment::BuildStructure(void)
    "NAxoneSegment::BuildStructure failed to create Inertial (NAperiodicLink)");
   return false;
  }
- Inertial->SetCoord(MVector<double,3>(2.0, 6.5, 0.0));
 
  PosGenerator = AddMissingComponent<NConstGenerator>("PosGenerator", pos_class);
  if(!PosGenerator)
@@ -132,7 +168,6 @@ bool NAxoneSegment::BuildStructure(void)
    std::string("NAxoneSegment::BuildStructure failed to create PosGenerator: ")+pos_class);
   return false;
  }
- PosGenerator->SetCoord(MVector<double,3>(2.0, 2.0, 0.0));
 
  Soma = AddMissingComponent<NPulseMembrane>("Soma", membr_class);
  if(!Soma)
@@ -141,7 +176,6 @@ bool NAxoneSegment::BuildStructure(void)
    std::string("NAxoneSegment::BuildStructure failed to create Soma: ")+membr_class);
   return false;
  }
- Soma->SetCoord(MVector<double,3>(8.0, 4.5, 0.0));
  if(!Soma->Build())
  {
   LogMessage(RDK_EX_WARNING, "NAxoneSegment::BuildStructure: Soma->Build failed");
@@ -155,9 +189,8 @@ bool NAxoneSegment::BuildStructure(void)
    std::string("NAxoneSegment::BuildStructure failed to create LTZone: ")+ltz_class);
   return false;
  }
- LTZone->SetCoord(MVector<double,3>(14.0, 4.5, 0.0));
- LTZone->Threshold = 0.0115;
- LTZone->ThresholdOff = 0.0;
+
+ ApplyDiagramLayout();
 
  NPulseChannelCommon *exc = Soma->GetPosChannel(0);
  NPulseChannelCommon *inh = Soma->GetNegChannel(0);
@@ -188,6 +221,7 @@ bool NAxoneSegment::BuildStructure(void)
 
 bool NAxoneSegment::AReset(void)
 {
+ ApplyDiagramLayout();
  return NAxoneCommon::AReset();
 }
 

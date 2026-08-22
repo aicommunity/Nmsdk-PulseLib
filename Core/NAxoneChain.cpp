@@ -155,6 +155,29 @@ bool NAxoneChain::ABuild(void)
  return BuildStructure();
 }
 
+bool NAxoneChain::Build(void)
+{
+ ApplyDiagramLayout();
+ return UContainer::Build();
+}
+
+void NAxoneChain::ApplyDiagramLayout(void)
+{
+ const int n = NumSegments.GetData();
+ if(n < 1)
+  return;
+ const double seg_pitch = 18.0;
+ for(int i=1;i<=n;++i)
+ {
+  UEPtr<NAxoneSegment> seg =
+   dynamic_pointer_cast<NAxoneSegment>(GetComponent(SegmentName(i), true));
+  if(!seg)
+   continue;
+  seg->SetCoord(MVector<double,3>((i - 1) * seg_pitch, 0.0, 0.0));
+  seg->ApplyDiagramLayout();
+ }
+}
+
 bool NAxoneChain::BuildStructure(void)
 {
  bool res=true;
@@ -174,10 +197,9 @@ bool NAxoneChain::BuildStructure(void)
    return false;
   }
   PropagateSegmentParams(seg);
-  // Compact segment width ~16 (LTZone at x=14); 0.5-block gap (2) between nodes
-  const double seg_pitch = 18.0;
-  seg->SetCoord(MVector<double,3>((i - 1) * seg_pitch, 0.0, 0.0));
  }
+
+ ApplyDiagramLayout();
 
  for(int i=n+1;;++i)
  {
@@ -203,6 +225,7 @@ bool NAxoneChain::BuildStructure(void)
 
 bool NAxoneChain::AReset(void)
 {
+ ApplyDiagramLayout();
  return NAxoneCommon::AReset();
 }
 
