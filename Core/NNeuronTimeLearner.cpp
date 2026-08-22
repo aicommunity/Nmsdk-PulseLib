@@ -1849,6 +1849,9 @@ bool NNeuronTimeLearner::BuildStructure()
    {
     tip->NumExcitatorySynapses = NumSynapse[numdend];
     tip->Build();
+    // tip->Build creates synapses from Membrane.SynapseClassName (Bio Dissoc);
+    // re-apply neuron UED Cap/Dissoc overrides.
+    Neuron->ApplyElementDefaults();
     if(!tip->GetActivity())
      tip->SetActivity(true);
     if(!tip->IsInit())
@@ -2441,6 +2444,7 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
   {
    tip->NumExcitatorySynapses = NumSynapse[i];
    tip->Build();
+   Neuron->ApplyElementDefaults();
   }
   if(!tip->GetActivity())
    tip->SetActivity(true);
@@ -2479,6 +2483,7 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
     {
      tip->NumExcitatorySynapses = NumSynapse[d];
      tip->Build();
+     Neuron->ApplyElementDefaults();
      if(!tip->GetActivity())
       tip->SetActivity(true);
      if(!tip->IsInit())
@@ -2527,6 +2532,7 @@ bool NNeuronTimeLearner::ChangeSynapseNumber(int num)
     {
      dendrite->NumExcitatorySynapses = 1;
      dendrite->Build();
+     Neuron->ApplyElementDefaults();
     }
    }
   }
@@ -2567,6 +2573,7 @@ bool NNeuronTimeLearner::ChangeSynapseNumber(int num)
 
  dendrite->NumExcitatorySynapses = NumSynapse[num];
  dendrite->Build();
+ Neuron->ApplyElementDefaults();
 
  if (SynapseStatus[num] == 1)
  {

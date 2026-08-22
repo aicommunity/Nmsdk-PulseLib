@@ -1191,6 +1191,22 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   }
  }
 
+ // Preinh k=2.5 + FastResponse pair (DissociationTC=0.002, Capacity=2.5e-10).
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBioPreinh2_5";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.002;
+  n->MembraneCapacity=2.5e-10;
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenPreinh2_5D002C25e11", n);
+ }
+
  // Создаем мелкий нейрон с биологически правдоподобными параметрами
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";

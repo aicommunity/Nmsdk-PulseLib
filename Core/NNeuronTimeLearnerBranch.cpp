@@ -3054,6 +3054,7 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseNumber(int num)
     {
      dendrite->NumExcitatorySynapses = 1;
      dendrite->Build();
+     Neuron->ApplyElementDefaults();
     }
    }
   }
@@ -3093,6 +3094,7 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseNumber(int num)
 
  dendrite->NumExcitatorySynapses = NumSynapse[num];
  dendrite->Build();
+ Neuron->ApplyElementDefaults();
 
  if (SynapseStatus[num] == 1)
  {

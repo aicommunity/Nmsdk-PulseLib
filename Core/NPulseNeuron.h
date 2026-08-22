@@ -243,6 +243,11 @@ virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // Скрытые методы управления счетом
 // --------------------------
 // --------------------------
+public:
+/// Apply MembraneCapacity / SynapseDissociationTC to Soma+Dendrite children (not LTMembrane).
+/// Safe to call after tip/dendrite Build() that recreates Bio-default synapses.
+void ApplyElementDefaults(void);
+
 protected:
 /// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
 /// dendrite_mode принимает 2 значения:
@@ -253,9 +258,6 @@ bool BuildStructure(const string &membraneclass, const string &ltzonemembranecla
 					const string &ltzone_class, const string &pos_gen_class,
 					const string &neg_gen_class, int num_soma_membranes, int dendrite_mode,
 					int dendrite_length, const vector<int> &dendrite_length_vec, int num_stimulates, int num_arresting);
-
-/// Apply MembraneCapacity / SynapseDissociationTC to Soma+Dendrite children (not LTMembrane).
-void ApplyElementDefaults(void);
 
 // Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
