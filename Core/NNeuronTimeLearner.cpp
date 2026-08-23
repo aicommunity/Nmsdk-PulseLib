@@ -3002,6 +3002,30 @@ bool NNeuronTimeLearner::ChangeSynapseStatus(int num)
 
 bool NNeuronTimeLearner::PatternRecognition(void)
 {
+ if(!Neuron)
+  return true;
+
+ if(TrainingPhase.GetData() != kPhaseDone)
+  return true;
+
+ const double ltz = ReadLTZonePotential();
+ if(ltz > IterMaxLTZPotential)
+  IterMaxLTZPotential = ltz;
+
+ if(InputPattern.GetRows() > 0 && Neuron->TrainingPattern.GetRows() > 0)
+ {
+  const bool order_match =
+   CompareInputPatterns(Neuron->TrainingPattern, InputPattern, 1e-5);
+  if(EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "PatternRecognition: order_match=" << (order_match ? 1 : 0)
+       << " ltz_peak=" << IterMaxLTZPotential
+       << " FixedLTZ=" << FixedLTZThreshold.GetData();
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
+ }
+
  return true;
 }
 

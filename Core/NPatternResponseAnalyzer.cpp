@@ -49,6 +49,7 @@ NPatternResponseAnalyzer::NPatternResponseAnalyzer(void)
   FileName("FileName", this),
   AppendMode("AppendMode", this),
   Enable("Enable", this),
+  MatchMode("MatchMode", this),
   TrialIndex("TrialIndex", this),
   LastFired("LastFired", this),
   LastMatch("LastMatch", this),
@@ -100,6 +101,7 @@ bool NPatternResponseAnalyzer::ADefault(void)
  FileName = "results.csv";
  AppendMode = false;
  Enable = true;
+ MatchMode = 0;
  LearnerComponentName = "NeuronTimeLearner";
  TrialIndex = 0;
  LastFired = 0;
@@ -320,6 +322,44 @@ bool NPatternResponseAnalyzer::EnsureCsvReady(void)
  return true;
 }
 
+bool NPatternResponseAnalyzer::IsIsiTemplateMatch(void) const
+{
+ if(!GetOwner())
+  return false;
+
+ const std::string learner_name = std::string(LearnerComponentName);
+ UEPtr<NNeuronTimeLearner> learner =
+  GetOwner()->GetComponentL<NNeuronTimeLearner>(learner_name, true);
+ if(!learner)
+  return false;
+
+ UEPtr<NPulseNeuron> neuron =
+  learner->GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
+ if(!neuron)
+  return false;
+
+ const MDMatrix<double> &ref = neuron->TrainingPattern;
+ if(ref.GetRows() < 1 || trial_stim_times_.size() < 2)
+  return false;
+
+ const int n_gap = int(trial_stim_times_.size()) - 1;
+ int ref_off = 0;
+ if(ref.GetRows() == n_gap + 1)
+  ref_off = 1;
+ if(ref.GetRows() != n_gap + ref_off)
+  return false;
+
+ const double eps = 1e-5;
+ for(int i = 0; i < n_gap; ++i)
+ {
+  const double trial_isi = trial_stim_times_[static_cast<size_t>(i + 1)]
+                         - trial_stim_times_[static_cast<size_t>(i)];
+  if(fabs(trial_isi - ref(i + ref_off, 0)) > eps)
+   return false;
+ }
+ return true;
+}
+
 void NPatternResponseAnalyzer::BeginTrial(double now)
 {
  trial_active_ = true;
@@ -350,7 +390,14 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
  const int fired = trial_neuron_fired_;
  const int late = trial_late_fired_;
  const int target = trial_target_class_;
- const int match = (target != 0) ? fired : (fired ? 0 : 1);
+ int match;
+ if(MatchMode.GetData() == 1)
+ {
+  const bool isi_ok = IsIsiTemplateMatch();
+  match = (target != 0) ? (isi_ok ? 1 : 0) : (isi_ok ? 0 : 1);
+ }
+ else
+  match = (target != 0) ? fired : (fired ? 0 : 1);
  const char *err = ClassifyError(target, fired, late);
 
  LastFired.SetDataDirect(fired);

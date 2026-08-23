@@ -34,6 +34,9 @@ UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> FileName;
 UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> AppendMode;
 UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> Enable;
 
+/// 0 = LTZ rising-edge match (default); 1 = ISI template vs trial-0 training pattern
+UProperty<int, NPatternResponseAnalyzer, ptPubParameter> MatchMode;
+
 UProperty<int, NPatternResponseAnalyzer, ptPubState> TrialIndex;
 UProperty<int, NPatternResponseAnalyzer, ptOutput | ptPubState> LastFired;
 UProperty<int, NPatternResponseAnalyzer, ptOutput | ptPubState> LastMatch;
@@ -56,6 +59,7 @@ virtual bool AReset(void);
 virtual bool ACalculate(void);
 
 bool EnsureCsvReady(void);
+bool IsIsiTemplateMatch(void) const;
 void CloseTrial(double now);
 void BeginTrial(double now);
 void ResetTrialState(void);
