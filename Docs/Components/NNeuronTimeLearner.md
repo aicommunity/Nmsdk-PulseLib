@@ -33,7 +33,11 @@
 | `AutoCalibrateFixedLTZThreshold` | После Done: выставить `FixedLTZThreshold` по min/max LTZ последней synced-итерации |
 | `CalibrateLTZThresholdMode` | 0 = gap_fraction (`min + f*(max-min)`), 1 = peak_fraction (`max*f`) |
 | `CalibrateLTZThresholdFraction` | Доля (default 0.85) |
-| `CalibratedFixedLTZThreshold` | Результат калибровки (state) |
+| `CalibratedFixedLTZThreshold` | Результат калибровки (state); при `-S` также отражается в `FixedLTZThreshold` в XML |
+
+### Sync / inference (SelectivityLtzCalibrate)
+
+После train веса и `FixedLTZThreshold` берутся из **Train/Parameters_00.xml**, не из Train Model (Model может содержать устаревшие L). Test: `merge_train_model.py` + `UseFixedLTZThreshold=1`. Подробнее: [`SelectivityLtzCalibrate/ALGORITHM.md`](../../../../Bin/Configs/SpikeSamples/StructTrain/SelectivityLtzCalibrate/ALGORITHM.md).
 
 ### Критерий длины (coincidence)
 
