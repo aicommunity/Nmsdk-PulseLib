@@ -49,7 +49,12 @@ NPulseNeuron::NPulseNeuron(void)
   TrainingSynapsisNum("TrainingSynapsisNum",this,&NPulseNeuron::SetTrainingSynapsisNum),
   UseElementDefaults("UseElementDefaults",this,&NPulseNeuron::SetUseElementDefaults),
   MembraneCapacity("MembraneCapacity",this,&NPulseNeuron::SetMembraneCapacity),
-  SynapseDissociationTC("SynapseDissociationTC",this,&NPulseNeuron::SetSynapseDissociationTC)
+  SynapseDissociationTC("SynapseDissociationTC",this,&NPulseNeuron::SetSynapseDissociationTC),
+  ExcMembraneResistance("ExcMembraneResistance",this,&NPulseNeuron::SetExcMembraneResistance),
+  InhMembraneResistance("InhMembraneResistance",this,&NPulseNeuron::SetInhMembraneResistance),
+  ExcSynapseResistance("ExcSynapseResistance",this,&NPulseNeuron::SetExcSynapseResistance),
+  InhSynapseResistance("InhSynapseResistance",this,&NPulseNeuron::SetInhSynapseResistance),
+  SynapseSecretionTC("SynapseSecretionTC",this,&NPulseNeuron::SetSynapseSecretionTC)
 {
  PosGenerator=0;
  NegGenerator=0;
@@ -175,6 +180,41 @@ bool NPulseNeuron::SetMembraneCapacity(const double &value)
 }
 
 bool NPulseNeuron::SetSynapseDissociationTC(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetExcMembraneResistance(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetInhMembraneResistance(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetExcSynapseResistance(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetInhSynapseResistance(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetSynapseSecretionTC(const double &value)
 {
  if(value < 0.0)
   return false;
@@ -775,7 +815,14 @@ void NPulseNeuron::ApplyElementDefaults(void)
 
  const double cap = MembraneCapacity.GetData();
  const double dissoc = SynapseDissociationTC.GetData();
- if(cap <= 0.0 && dissoc <= 0.0)
+ const double secr = SynapseSecretionTC.GetData();
+ const double exc_rm = ExcMembraneResistance.GetData();
+ const double inh_rm = InhMembraneResistance.GetData();
+ const double exc_rsyn = ExcSynapseResistance.GetData();
+ const double inh_rsyn = InhSynapseResistance.GetData();
+ if(cap <= 0.0 && dissoc <= 0.0 && secr <= 0.0
+    && exc_rm <= 0.0 && inh_rm <= 0.0
+    && exc_rsyn <= 0.0 && inh_rsyn <= 0.0)
   return;
 
  for(size_t mi = 0; mi < Membranes.size(); ++mi)
@@ -790,17 +837,33 @@ void NPulseNeuron::ApplyElementDefaults(void)
   if(!membr)
    continue;
 
-  if(cap > 0.0)
+  if(cap > 0.0 || exc_rm > 0.0 || inh_rm > 0.0)
   {
    UEPtr<UContainer> exc_c = membr->GetComponent("ExcChannel", true);
    if(NPulseChannel *exc = dynamic_cast<NPulseChannel*>((UContainer*)exc_c))
-    exc->Capacity = cap;
+   {
+    if(cap > 0.0)
+     exc->Capacity = cap;
+    if(exc_rm > 0.0)
+    {
+     exc->Resistance = exc_rm;
+     exc->RestingResistance = exc_rm;
+    }
+   }
    UEPtr<UContainer> inh_c = membr->GetComponent("InhChannel", true);
    if(NPulseChannel *inh = dynamic_cast<NPulseChannel*>((UContainer*)inh_c))
-    inh->Capacity = cap;
+   {
+    if(cap > 0.0)
+     inh->Capacity = cap;
+    if(inh_rm > 0.0)
+    {
+     inh->Resistance = inh_rm;
+     inh->RestingResistance = inh_rm;
+    }
+   }
   }
 
-  if(dissoc > 0.0)
+  if(dissoc > 0.0 || secr > 0.0 || exc_rsyn > 0.0 || inh_rsyn > 0.0)
   {
    const int nexc = int(membr->NumExcitatorySynapses);
    const int ninh = int(membr->NumInhibitorySynapses);
@@ -808,13 +871,27 @@ void NPulseNeuron::ApplyElementDefaults(void)
    {
     UEPtr<UContainer> sc = membr->GetComponent(std::string("ExcSynapse")+sntoa(i+1), true);
     if(NPulseSynapse *syn = dynamic_cast<NPulseSynapse*>((UContainer*)sc))
-     syn->DissociationTC = dissoc;
+    {
+     if(dissoc > 0.0)
+      syn->DissociationTC = dissoc;
+     if(secr > 0.0)
+      syn->SecretionTC = secr;
+     if(exc_rsyn > 0.0)
+      syn->Resistance = exc_rsyn;
+    }
    }
    for(int i = 0; i < ninh; ++i)
    {
     UEPtr<UContainer> sc = membr->GetComponent(std::string("InhSynapse")+sntoa(i+1), true);
     if(NPulseSynapse *syn = dynamic_cast<NPulseSynapse*>((UContainer*)sc))
-     syn->DissociationTC = dissoc;
+    {
+     if(dissoc > 0.0)
+      syn->DissociationTC = dissoc;
+     if(secr > 0.0)
+      syn->SecretionTC = secr;
+     if(inh_rsyn > 0.0)
+      syn->Resistance = inh_rsyn;
+    }
    }
   }
  }
@@ -840,6 +917,11 @@ bool NPulseNeuron::ADefault(void)
  UseElementDefaults = false;
  MembraneCapacity = 0.0;
  SynapseDissociationTC = 0.0;
+ ExcMembraneResistance = 0.0;
+ InhMembraneResistance = 0.0;
+ ExcSynapseResistance = 0.0;
+ InhSynapseResistance = 0.0;
+ SynapseSecretionTC = 0.0;
 
  return true;
 }

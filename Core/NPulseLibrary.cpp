@@ -1207,6 +1207,130 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   UploadClass("NSPNeuronGenPreinh2_5D002C25e11", n);
  }
 
+ // AsymRm Pack A: Dissoc/Secr=0.001, C=2.5e-11, Exc Rm=1e7 / Inh Rm=1e8,
+ // Exc Rsyn=8.6e7 / Inh Rsyn=8.6e8 (Inh τ ≈ 10× Exc at same C).
+ // Call ApplyElementDefaults directly: second Build() is a no-op while Ready.
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBio";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001;
+  n->SynapseSecretionTC=0.001;
+  n->MembraneCapacity=2.5e-11;
+  n->ExcMembraneResistance=1e7;
+  n->InhMembraneResistance=1e8;
+  n->ExcSynapseResistance=8.6e7;
+  n->InhSynapseResistance=8.6e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenAsymRmD001C25e12", n);
+ }
+
+ // Preinh k=2.5 + AsymRm Pack A.
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBioPreinh2_5";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001;
+  n->SynapseSecretionTC=0.001;
+  n->MembraneCapacity=2.5e-11;
+  n->ExcMembraneResistance=1e7;
+  n->InhMembraneResistance=1e8;
+  n->ExcSynapseResistance=8.6e7;
+  n->InhSynapseResistance=8.6e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenPreinh2_5AsymRmD001C25e12", n);
+ }
+
+ // AsymRm Pack B: C=1e-11, ExcRm=1e7, ExcRsyn=5e7, Inh=10×.
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBio";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001;
+  n->SynapseSecretionTC=0.001;
+  n->MembraneCapacity=1e-11;
+  n->ExcMembraneResistance=1e7;
+  n->InhMembraneResistance=1e8;
+  n->ExcSynapseResistance=5e7;
+  n->InhSynapseResistance=5e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenAsymRmD001C1e11", n);
+ }
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBioPreinh2_5";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001;
+  n->SynapseSecretionTC=0.001;
+  n->MembraneCapacity=1e-11;
+  n->ExcMembraneResistance=1e7;
+  n->InhMembraneResistance=1e8;
+  n->ExcSynapseResistance=5e7;
+  n->InhSynapseResistance=5e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenPreinh2_5AsymRmD001C1e11", n);
+ }
+
+ // AsymRm Pack C: C=2.5e-11, ExcRm=5e6, ExcRsyn=8.6e7, Inh=10×.
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBio";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001;
+  n->SynapseSecretionTC=0.001;
+  n->MembraneCapacity=2.5e-11;
+  n->ExcMembraneResistance=5e6;
+  n->InhMembraneResistance=5e7;
+  n->ExcSynapseResistance=8.6e7;
+  n->InhSynapseResistance=8.6e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenAsymRmD001C25e12Rm5e6", n);
+ }
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBioPreinh2_5";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001;
+  n->SynapseSecretionTC=0.001;
+  n->MembraneCapacity=2.5e-11;
+  n->ExcMembraneResistance=5e6;
+  n->InhMembraneResistance=5e7;
+  n->ExcSynapseResistance=8.6e7;
+  n->InhSynapseResistance=8.6e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenPreinh2_5AsymRmD001C25e12Rm5e6", n);
+ }
+
  // Создаем мелкий нейрон с биологически правдоподобными параметрами
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
