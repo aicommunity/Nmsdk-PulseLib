@@ -2304,6 +2304,14 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
 
  for(int i = 0; i < NumInputDendrite - 1; ++i)
  {
+  const bool peak_valid = (i < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(i)];
+  const bool length_settled = (i < int(DendLastAbsDt.size()))
+   && DendLastAbsDt[static_cast<size_t>(i)] <= SyncTolerance.GetData();
+  if(peak_valid && length_settled)
+  {
+   DendStatus[i] = 0;
+   continue;
+  }
   if(!DendStatus[i])
    continue;
   if((DendStatus[i] == -1) && (DendriteLength[i] < 2))
@@ -2813,6 +2821,8 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
  const double delay_len = DelayLenOf(num);
  const double delay_use = DelayUseOf(num, expected_k, delay_k);
  const bool meas_agrees = (fabs(delay_use - delay_k) < 1e-15);
+ const double measured_dt = needed - delay_k;
+ const bool peak_synced = num_valid && (fabs(measured_dt) <= SyncTolerance.GetData());
  const double dt = needed - delay_use;
  const double prev_dt = (num < int(PrevDissynchronization.size()))
   ? PrevDissynchronization[num] : 0.0;
@@ -2876,6 +2886,28 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
        << " amp=" << MaxIterSomaAmp[num]
        << " init=" << InitialSomaPotential[num]
        << " syn=" << NumSynapse[num];
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
+  return true;
+ }
+
+ // Measured peak already within SyncTolerance: do not grow/shrink on cable-model
+ // disagreement (prevents L oscillation between adjacent segment counts).
+ if(peak_synced)
+ {
+  DendStatus[num] = 0;
+  if(num < int(DendLastAbsDt.size()))
+   DendLastAbsDt[static_cast<size_t>(num)] = fabs(measured_dt);
+  Dissynchronization[num] = measured_dt;
+  if(num < int(NoImproveCount.size()))
+   NoImproveCount[static_cast<size_t>(num)] = 0;
+  if (EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "ChangeDendriteStatus: num=" << num
+       << " peak_synced hold L measured_dt=" << measured_dt
+       << " cable_dt=" << dt << " delay_len=" << delay_len
+       << " delay_meas=" << delay_k;
    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
   }
   return true;
