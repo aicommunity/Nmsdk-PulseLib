@@ -196,6 +196,24 @@ void NNeuronTimeLearner::UpdateNormTraces(void)
   const double initial = (i < int(InitialSomaPotential.size())) ? InitialSomaPotential[i] : 0.0;
   const double amp = (i < int(MaxIterSomaAmp.size())) ? MaxIterSomaAmp[i] : 0.0;
   amp_dt(0, i) = initial - amp;
+  if(EnableDebug.GetData() && RDK::GetLogger() && fabs(amp_dt(0, i)) > 5.0)
+  {
+   const double tip_r = (i < int(TipSynapseResistance.size())) ? TipSynapseResistance[i] : 0.0;
+   const int L = (i < int(DendriteLength.size())) ? DendriteLength[i] : -1;
+   const int peak_seen = (i < int(PeakSeen.size()) && PeakSeen[i]) ? 1 : 0;
+   const int peak_locked = (i < int(PeakLocked.size()) && PeakLocked[i]) ? 1 : 0;
+   std::ostringstream oss;
+   oss << "AmpDtAudit UpdateNormTraces: i=" << i
+       << " initial=" << initial
+       << " amp=" << amp
+       << " amp_dt=" << amp_dt(0, i)
+       << " TipR=" << tip_r
+       << " DendriteLength=" << L
+       << " PeakSeen=" << peak_seen
+       << " PeakLocked=" << peak_locked
+       << " CountIteration=" << CountIteration;
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
  }
  AmpDtTrace = amp_dt;
 
@@ -641,6 +659,35 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  double dt = InitialSomaPotential[num] - MaxIterSomaAmp[num];
  const double eps = kAmpNormEps;
 
+ if(EnableDebug.GetData() && RDK::GetLogger() && fabs(dt) > 5.0)
+ {
+  const double amp = (num < int(MaxIterSomaAmp.size())) ? MaxIterSomaAmp[num] : 0.0;
+  const double initial = (num < int(InitialSomaPotential.size())) ? InitialSomaPotential[num] : 0.0;
+  double r_old_dbg = SynapseResistanceBase.GetData();
+  if(num < int(TipSynapseResistance.size()))
+   r_old_dbg = TipSynapseResistance[static_cast<size_t>(num)];
+  const bool length_settled_dbg = (num < int(DendLastAbsDt.size())
+   && DendLastAbsDt[static_cast<size_t>(num)] <= SyncTolerance.GetData())
+   || ((num < int(DendBestEffortSynced.size()))
+       && DendBestEffortSynced[static_cast<size_t>(num)]);
+  const bool ready_for_r_tune_dbg = length_settled_dbg
+   && (num < int(DendStatus.size())) && !DendStatus[num];
+  const bool same_pattern_dbg =
+   (fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001);
+  const int L = (num < int(DendriteLength.size())) ? DendriteLength[num] : -1;
+  std::ostringstream oss;
+  oss << "AmpDtAudit ChangeSynapseResistanceStatus: num=" << num
+      << " dt=" << dt
+      << " initial=" << initial
+      << " amp=" << amp
+      << " r_old=" << r_old_dbg
+      << " length_settled=" << (length_settled_dbg ? 1 : 0)
+      << " ready_for_r_tune=" << (ready_for_r_tune_dbg ? 1 : 0)
+      << " same_pattern=" << (same_pattern_dbg ? 1 : 0)
+      << " DendriteLength=" << L;
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
+
  // Auto-estimate cable attenuation gamma from observed amp/Initial at L>1.
  if(MaxIterSomaAmp[num] > kMinMeasurableSomaAmp && InitialSomaPotential[num] > 0.0
     && num < int(DendriteLength.size()) && DendriteLength[num] > 1)
@@ -678,6 +725,22 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  else if(same_pattern && (fabs(dt) <= eps))
  {
   ResistanceStatus[num] = 0;
+ }
+ // Pathological peak/amp: |Initial-MaxAmp| huge — TipR damped-P drives R to Rmax.
+ // Skip TipR update; leave ResistanceStatus unchanged (AmpDtAudit evidence 2026-09-08).
+ else if(fabs(dt) > 5.0)
+ {
+  if(EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "AmpDtAudit skip TipR update: num=" << num
+       << " dt=" << dt
+       << " initial=" << initial
+       << " amp=" << amp
+       << " r_old=" << r_old
+       << " ResistanceStatus=" << ResistanceStatus[num];
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
  }
  // Do not stop on partial ampDt improvement: keep damped-P until |dt|<=eps
  // (or no-improve / Rmin escapes). The old "dt got smaller" settle left dend0
@@ -2708,6 +2771,29 @@ bool NNeuronTimeLearner::MeasureMaxPotentialAndTime(void)
      if(i == 0 || SynapseResistanceBase.GetData() <= 0.0)
       SynapseResistanceBase = synapse->Resistance;
     }
+   }
+
+   if(EnableDebug.GetData() && RDK::GetLogger()
+      && (currentsomaamp > 10.0
+          || (InitialSomaPotential[i] > 1e-9
+              && currentsomaamp > 50.0 * InitialSomaPotential[i])))
+   {
+    const int L = (i < int(DendriteLength.size())) ? DendriteLength[i] : -1;
+    const double initial = (i < int(InitialSomaPotential.size()))
+     ? InitialSomaPotential[i] : 0.0;
+    std::ostringstream oss;
+    oss << "AmpDtAudit MeasureMaxPotentialAndTime: i=" << i
+        << " L=" << L
+        << " now=" << now
+        << " t_lo_rel=" << t_lo_rel
+        << " t_hi_rel=" << t_hi_rel
+        << " expected_i=" << expected_i
+        << " delay_est=" << delay_est
+        << " margin=" << margin
+        << " currentsomaamp=" << currentsomaamp
+        << " MaxIterSomaAmp=" << MaxIterSomaAmp[i]
+        << " InitialSomaPotential=" << initial;
+    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
    }
   }
   else if(i < int(PeakSeen.size()) && PeakSeen[i]
