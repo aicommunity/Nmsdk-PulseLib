@@ -45,6 +45,8 @@ UProperty<std::string, NPatternResponseAnalyzer, ptOutput | ptPubState> LastErro
 UProperty<double, NPatternResponseAnalyzer, ptOutput | ptPubState> LastNeuronDelay;
 UProperty<double, NPatternResponseAnalyzer, ptOutput | ptPubState> LastLateNeuronDelay;
 UProperty<MDMatrix<double>, NPatternResponseAnalyzer, ptOutput | ptPubState> LastIsi;
+UProperty<int, NPatternResponseAnalyzer, ptOutput | ptPubState> LastSpikeCount;
+UProperty<std::string, NPatternResponseAnalyzer, ptOutput | ptPubState> LastResponseClass;
 
 NPatternResponseAnalyzer(void);
 virtual ~NPatternResponseAnalyzer(void);
@@ -64,6 +66,10 @@ void CloseTrial(double now);
 void BeginTrial(double now);
 void ResetTrialState(void);
 static const char *ClassifyError(int target, int fired, int late_fired);
+static std::string ClassifyResponseMorphology(
+    const std::vector<double> &spike_rel_times,
+    const std::vector<double> &stim_times);
+void RecordNeuronSpike(double now);
 bool DetectRisingEdge(const std::vector<MDMatrix<double> > &inputs,
                       std::vector<double> &prev_values) const;
 double ReadScalar(const MDMatrix<double> &m) const;
@@ -89,9 +95,13 @@ double trial_soma_amp_max_[4];
 double trial_soma_amp_sum_max_;
 NPulseLTZoneCommon *ltz_source_;
 std::vector<double> trial_stim_times_;
+std::vector<double> trial_neuron_spike_times_;
 std::vector<double> prev_stimulus_;
 std::vector<double> prev_neuron_;
 std::string csv_full_path_;
+static constexpr size_t kMaxSpikeTimesCsv = 16;
+static constexpr double kBurstIsiMax = 0.005;
+static constexpr double kPerStimWindowFloor = 0.003;
 };
 
 }

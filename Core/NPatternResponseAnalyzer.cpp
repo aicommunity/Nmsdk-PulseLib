@@ -32,8 +32,72 @@ const char *kCsvHeader =
  "trial,target_class,stim_count,isi0,isi1,isi2,isi3,"
  "neuron_fired,neuron_t_rel,match,"
  "late_fired,late_t_rel,error_class,"
- "ltz_potential_max,soma_amp_0,soma_amp_1,soma_amp_2,soma_amp_3,soma_amp_sum\n";
+ "ltz_potential_max,soma_amp_0,soma_amp_1,soma_amp_2,soma_amp_3,soma_amp_sum,"
+ "neuron_spike_count,neuron_spike_times,response_class\n";
 
+}
+
+std::string NPatternResponseAnalyzer::ClassifyResponseMorphology(
+    const std::vector<double> &spike_rel_times,
+    const std::vector<double> &stim_times)
+{
+ const size_t spike_count = spike_rel_times.size();
+ if(spike_count == 0)
+  return "single"; // silence — not a morphology fault by itself
+
+ bool burst = false;
+ if(spike_count >= 2)
+ {
+  for(size_t i = 1; i < spike_count; ++i)
+  {
+   if(spike_rel_times[i] - spike_rel_times[i - 1] <= kBurstIsiMax + 1e-12)
+   {
+    burst = true;
+    break;
+   }
+  }
+ }
+
+ bool per_stim = false;
+ const size_t stim_count = stim_times.size();
+ if(stim_count >= 3 && spike_count >= stim_count)
+  per_stim = true;
+ else if(stim_count >= 1 && spike_count >= 1)
+ {
+  double min_isi = kPerStimWindowFloor;
+  if(stim_count >= 2)
+  {
+   min_isi = stim_times[1] - stim_times[0];
+   for(size_t i = 2; i < stim_count; ++i)
+    min_isi = std::min(min_isi, stim_times[i] - stim_times[i - 1]);
+  }
+  const double win = std::max(2.0 * min_isi, kPerStimWindowFloor);
+  size_t covered = 0;
+  for(size_t s = 0; s < stim_count; ++s)
+  {
+   const double t0 = stim_times[s] - stim_times[0];
+   for(size_t k = 0; k < spike_count; ++k)
+   {
+    if(spike_rel_times[k] + 1e-12 >= t0 && spike_rel_times[k] <= t0 + win + 1e-12)
+    {
+     ++covered;
+     break;
+    }
+   }
+  }
+  const size_t need = static_cast<size_t>(std::ceil(0.75 * double(stim_count)));
+  per_stim = covered >= need;
+ }
+
+ if(burst && per_stim)
+  return "multi";
+ if(burst)
+  return "burst";
+ if(per_stim)
+  return "per_stim";
+ if(spike_count == 1)
+  return "single";
+ return "multi";
 }
 
 NPatternResponseAnalyzer::NPatternResponseAnalyzer(void)
@@ -58,6 +122,8 @@ NPatternResponseAnalyzer::NPatternResponseAnalyzer(void)
   LastNeuronDelay("LastNeuronDelay", this),
   LastLateNeuronDelay("LastLateNeuronDelay", this),
   LastIsi("LastIsi", this),
+  LastSpikeCount("LastSpikeCount", this),
+  LastResponseClass("LastResponseClass", this),
   trial_active_(false),
   trial_window_closed_(false),
   playback_stopped_(false),
@@ -111,6 +177,8 @@ bool NPatternResponseAnalyzer::ADefault(void)
  LastNeuronDelay = -1.0;
  LastLateNeuronDelay = -1.0;
  LastIsi.Resize(0, 0);
+ LastSpikeCount = 0;
+ LastResponseClass = "single";
  ResetTrialState();
  playback_stopped_ = false;
  csv_header_written_ = false;
@@ -121,11 +189,21 @@ bool NPatternResponseAnalyzer::ADefault(void)
  return true;
 }
 
+void NPatternResponseAnalyzer::RecordNeuronSpike(double now)
+{
+ if(!trial_active_)
+  return;
+ if(trial_neuron_spike_times_.size() >= kMaxSpikeTimesCsv)
+  return;
+ trial_neuron_spike_times_.push_back(now);
+}
+
 void NPatternResponseAnalyzer::ResetTrialState(void)
 {
  trial_active_ = false;
  trial_window_closed_ = false;
  trial_stim_times_.clear();
+ trial_neuron_spike_times_.clear();
  trial_neuron_fired_ = 0;
  trial_late_fired_ = 0;
  trial_t_first_stim_ = 0.0;
@@ -376,6 +454,7 @@ void NPatternResponseAnalyzer::BeginTrial(double now)
  trial_soma_amp_max_[2] = trial_soma_amp_max_[3] = 0.0;
  trial_soma_amp_sum_max_ = 0.0;
  trial_stim_times_.clear();
+ trial_neuron_spike_times_.clear();
  trial_stim_times_.push_back(now);
 }
 
@@ -400,10 +479,20 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
   match = (target != 0) ? fired : (fired ? 0 : 1);
  const char *err = ClassifyError(target, fired, late);
 
+ std::vector<double> spike_rel;
+ spike_rel.reserve(trial_neuron_spike_times_.size());
+ for(size_t i = 0; i < trial_neuron_spike_times_.size(); ++i)
+  spike_rel.push_back(trial_neuron_spike_times_[i] - trial_t_first_stim_);
+ const std::string resp =
+  ClassifyResponseMorphology(spike_rel, trial_stim_times_);
+ const int spike_count = int(trial_neuron_spike_times_.size());
+
  LastFired.SetDataDirect(fired);
  LastMatch.SetDataDirect(match);
  LastLateFired.SetDataDirect(late);
  LastErrorClass.SetDataDirect(std::string(err));
+ LastSpikeCount.SetDataDirect(spike_count);
+ LastResponseClass.SetDataDirect(resp);
  if(fired && trial_t_neuron_ >= 0.0 && trial_t_first_stim_ >= 0.0)
   LastNeuronDelay.SetDataDirect(trial_t_neuron_ - trial_t_first_stim_);
  else
@@ -463,7 +552,15 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
      if(i < 3)
       out << ',';
     }
-    out << ',' << trial_soma_amp_sum_max_ << '\n';
+    out << ',' << trial_soma_amp_sum_max_ << ','
+        << spike_count << ',';
+    for(size_t i = 0; i < spike_rel.size(); ++i)
+    {
+     if(i)
+      out << ';';
+     out << spike_rel[i];
+    }
+    out << ',' << resp << '\n';
    }
   }
  }
@@ -485,6 +582,8 @@ bool NPatternResponseAnalyzer::AReset(void)
  LastNeuronDelay = -1.0;
  LastLateNeuronDelay = -1.0;
  LastIsi.Resize(0, 0);
+ LastSpikeCount = 0;
+ LastResponseClass = "single";
  ResetTrialState();
  playback_stopped_ = false;
  prev_stimulus_.clear();
@@ -529,11 +628,15 @@ bool NPatternResponseAnalyzer::ACalculate(void)
   {
    neu_edge = DetectRisingEdge(neuron, prev_neuron_);
    neu_checked = true;
-   if(!trial_neuron_fired_ && !trial_late_fired_ && neu_edge)
+   if(neu_edge)
    {
-    trial_late_fired_ = 1;
-    trial_t_late_neuron_ = now;
-    UpdateTrialMetrics(now);
+    RecordNeuronSpike(now);
+    if(!trial_neuron_fired_ && !trial_late_fired_)
+    {
+     trial_late_fired_ = 1;
+     trial_t_late_neuron_ = now;
+     UpdateTrialMetrics(now);
+    }
    }
    CloseTrial(now);
    BeginTrial(now);
@@ -553,12 +656,18 @@ bool NPatternResponseAnalyzer::ACalculate(void)
   if(!neu_checked)
    neu_edge = DetectRisingEdge(neuron, prev_neuron_);
 
+  if(neu_edge)
+   RecordNeuronSpike(now);
+
   if(!trial_window_closed_)
   {
-   if(!trial_neuron_fired_ && neu_edge && now <= trial_t_last_stim_ + post_win)
+   if(neu_edge && now <= trial_t_last_stim_ + post_win)
    {
-    trial_t_neuron_ = now;
-    trial_neuron_fired_ = 1;
+    if(!trial_neuron_fired_)
+    {
+     trial_t_neuron_ = now;
+     trial_neuron_fired_ = 1;
+    }
     UpdateTrialMetrics(now);
    }
    if(now >= trial_t_last_stim_ + post_win)
@@ -566,29 +675,40 @@ bool NPatternResponseAnalyzer::ACalculate(void)
     trial_window_closed_ = true;
     if(trial_neuron_fired_)
     {
-     // In-window decision is complete — no late subclass needed.
+     // Keep trial open until post window end so later spikes are counted;
+     // close now that the window boundary is reached.
      CloseTrial(now);
     }
-    else if(!trial_late_fired_ && neu_edge && now > trial_t_last_stim_ + post_win)
+    else if(neu_edge && now > trial_t_last_stim_ + post_win)
     {
-     trial_late_fired_ = 1;
-     trial_t_late_neuron_ = now;
-     UpdateTrialMetrics(now);
-     CloseTrial(now);
+     if(!trial_late_fired_)
+     {
+      trial_late_fired_ = 1;
+      trial_t_late_neuron_ = now;
+      UpdateTrialMetrics(now);
+     }
+     // Do not close on first late spike — wait until late_win to count bursts.
     }
    }
   }
   else if(!trial_neuron_fired_)
   {
-   if(!trial_late_fired_ && neu_edge)
+   if(neu_edge)
    {
-    trial_late_fired_ = 1;
-    trial_t_late_neuron_ = now;
-    UpdateTrialMetrics(now);
-    CloseTrial(now);
+    if(!trial_late_fired_)
+    {
+     trial_late_fired_ = 1;
+     trial_t_late_neuron_ = now;
+     UpdateTrialMetrics(now);
+    }
    }
-   else if(now >= trial_t_last_stim_ + late_win)
+   if(now >= trial_t_last_stim_ + late_win)
     CloseTrial(now);
+  }
+  else if(now >= trial_t_last_stim_ + post_win)
+  {
+   // Fired in-window but somehow still active: close at post boundary.
+   CloseTrial(now);
   }
  }
 
