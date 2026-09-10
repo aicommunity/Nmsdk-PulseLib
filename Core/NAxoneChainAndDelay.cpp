@@ -211,6 +211,15 @@ bool NAxoneChainAndDelay::BuildStructure(void)
    return false;
   }
   PropagateSegmentParams(seg);
+  // UContainer::Build walks existing children before ABuild; segments
+  // created here must Build() explicitly (same pattern as Soma in NAxoneSegment).
+  if(!seg->Build())
+  {
+   LogMessage(RDK_EX_WARNING,
+    std::string("NAxoneChainAndDelay::BuildStructure: ")+seg_name+
+    std::string("->Build failed"));
+   return false;
+  }
 
   if(i < n)
   {
@@ -224,6 +233,13 @@ bool NAxoneChainAndDelay::BuildStructure(void)
     return false;
    }
    d->DelayTime = InternodeDelayTime.GetData();
+   if(!d->Build())
+   {
+    LogMessage(RDK_EX_WARNING,
+     std::string("NAxoneChainAndDelay::BuildStructure: ")+d_name+
+     std::string("->Build failed"));
+    return false;
+   }
   }
  }
 

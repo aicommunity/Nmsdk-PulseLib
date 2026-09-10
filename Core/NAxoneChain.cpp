@@ -197,6 +197,14 @@ bool NAxoneChain::BuildStructure(void)
    return false;
   }
   PropagateSegmentParams(seg);
+  // UContainer::Build walks existing children before ABuild; segments
+  // created here must Build() explicitly (same pattern as Soma in NAxoneSegment).
+  if(!seg->Build())
+  {
+   LogMessage(RDK_EX_WARNING,
+    std::string("NAxoneChain::BuildStructure: ")+name+std::string("->Build failed"));
+   return false;
+  }
  }
 
  ApplyDiagramLayout();
