@@ -116,7 +116,7 @@ NNeuronLearner::~NNeuronLearner(void)
 
 
 // --------------------------
-// Методы упраления параметрами
+// Методы управления параметрами
 // --------------------------
 
 /// Установка режима сборки структуры нейрона
@@ -218,7 +218,7 @@ bool NNeuronLearner::SetIsNeedToTrain(const bool &value)
  return true;
 }
 
-/// Установка режима работы (обучение, распознование) нейрона:
+/// Установка режима работы (обучение, распознавание) нейрона:
 /// при поднятом флаге IsNeedToTrain происходит обучение, иначе - распознавание
 /// 0 - аналог работы NeuronTrainer: после того, как нейрон изучил пример,
 /// автоматически опускается флаг IsNeedToTrain, затем происходит распознавание
@@ -284,7 +284,7 @@ bool NNeuronLearner::SetMaxDendriteLength(const int &value)
   if (DendriteLength.empty())
    return true;
 
-  // Если найдётся дендрит длинее, чем теперь разрешено,
+  // Если найдётся дендрит длиннее, чем теперь разрешено,
   // то укоротим дендрит до текущей максимальной возможной длины
   if (DendriteLength[i] > value)
   {
@@ -333,7 +333,7 @@ bool NNeuronLearner::SetMaxDendriteLength(const int &value)
     if(!synapse)
      continue;
 
-    // Добаляем связь между текущим генератором и синапсом
+    // Добавляем связь между текущим генератором и синапсом
     bool res = CreateLink(MakeLearnerSourceName(i + 1), "Output", synapse->GetLongName(this), "Input");
 
     if(!res || k == 0)
@@ -399,7 +399,7 @@ bool NNeuronLearner::SetSynapseResistanceStep(const double &value)
 {
 
  // Меняем сопротивления у существующих нарощенных синапсов
- // Предполгается, что такие синапсы есть только на входных сегментах дендритов
+ // Предполагается, что такие синапсы есть только на входных сегментах дендритов
  if (NumSynapse.empty() || !Neuron)
   return true;
 
@@ -429,7 +429,7 @@ bool NNeuronLearner::SetExperimentMode(const bool &value)
  }
  else
  {
-  ExperimentNum.SetDataDirect(1);  // По умлочанию включаем 1-й эксперимент
+  ExperimentNum.SetDataDirect(1);  // По умолчанию включаем 1-й эксперимент
   EpochCur = 1;
  }
  IsFirstFileStep = true;
@@ -675,7 +675,7 @@ for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
  Neuron->Reset();
  // Neuron->GetStorage()->FreeObjectsStorage();
 
- // Добаляем связи между генераторами и синапсами, меняем сопротивление синапсов
+ // Добавляем связи между генераторами и синапсами, меняем сопротивление синапсов
  for(int numdend = 0; numdend < NumInputDendrite; numdend++)
  {
   // Находим входной сегмент дендрита
@@ -841,7 +841,7 @@ bool NNeuronLearner::ADefault(void)
  NumSynapse.assign(NumInputDendrite, 1);
 
  CountIteration = 0;
- ExperimentNum = 0;  // номер по умлочанию, эксперимента нет
+ ExperimentNum = 0;  // номер по умолчанию, эксперимента нет
  EpochCur = 0;
  CanChangeDendLength = true;
 
@@ -869,7 +869,7 @@ bool NNeuronLearner::ADefault(void)
  // как и синапсы
  SynapseStatus.assign(NumInputDendrite, 0);
 
- //  DEBUG-  ( )
+ // Выключаем DEBUG-логирование (по умолчанию)
  EnableDebug = false;
 
  return true;
@@ -1081,7 +1081,7 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
 // dendrite->GetStorage()->FreeObjectsStorage();
 
 
- // Добаляем связи между текущим генератором и синапсами на новом дендрите
+ // Добавляем связи между текущим генератором и синапсами на новом дендрите
  for (int i = 0; i < NumSynapse[num]; i++)
  {
   NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
@@ -1445,7 +1445,7 @@ bool NNeuronLearner::PatternRecognition(void)
 /// До использования функции нейрон полностью обучается первому примеру. Далее в ф-ии последовательно изучает дополнительный.
 /// Каждая эпоха обучения строится следующим образом: на первой итерации эпохи происходит изменение числа сегментов в дендритах и
 /// числа синапсов, на других 4-х итерациях происходит изменение только числа синапсов, чтобы в конце каждой эпохи
-/// число синапсов соответствовало числу сегментов в деднритах, далее распознавание примеров из файла input_data.txt
+/// число синапсов соответствовало числу сегментов в дендритах, далее распознавание примеров из файла input_data.txt
 bool NNeuronLearner::LearningAdditionalPattern_1_4(MDMatrix<double> additional_pattern)
 {
  // Обучение дополнительному примеру
