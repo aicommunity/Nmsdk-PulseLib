@@ -55,11 +55,11 @@ double GetSafeIterationLength(const double spikes_frequency, const int time_step
  const double kMinIterationLength = 1.0e-6;
  if(spikes_frequency <= 0.0 || time_step <= 0)
   return kMinIterationLength;
-
+ 
  const double raw_length = (1.0 / spikes_frequency) - (1.0 / static_cast<double>(time_step));
  if(raw_length < kMinIterationLength)
   return kMinIterationLength;
-
+ 
  return raw_length;
 }
 }
@@ -100,7 +100,7 @@ NNeuronLearner::NNeuronLearner(void):
  OldNumInputDendrite = 0;
  Generators.clear();
  Neuron = NULL;
-
+ 
  // Флаг необходимости открыть файл с входными данными
  IsFirstFileStep = true;
 }
@@ -154,21 +154,21 @@ bool NNeuronLearner::ZeroingTrainingPattern(void)
  // Паттерн, которому обучен нейрон
  MDMatrix<double> zero;
  zero.Assign(NumInputDendrite, 1, 0.0);
- if (Neuron)
+ if(Neuron)
   Neuron->TrainingPattern = zero;
-
+ 
  // Информация о структуре
  MDMatrix<int> temp;
  temp.Assign(NumInputDendrite, 1, 1);
- if (Neuron)
+ if(Neuron)
  {
   // Количество сегментов в дендритах
   Neuron->TrainingDendIndexes = temp;
   // Количество синапсов на входных сегментах дендритов
   Neuron->TrainingSynapsisNum = temp;
  }
-
-
+ 
+ 
  return true;
 }
 
@@ -178,17 +178,17 @@ bool NNeuronLearner::SetLTZThreshold(const double &value)
  UEPtr<NPulseNeuron> n_in = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
  if(!n_in)
   return true;
-
+ 
  UEPtr<NLTZone> ltzone = n_in->GetComponentL<NLTZone>("LTZone");//GetLTZone();
  if(!ltzone)
   return true;
-
+ 
  ltzone->Threshold = value;
  if(fabs(value - FixedLTZThreshold) > 0.000001)
  {
   UseFixedLTZThreshold = false;
  }
-
+ 
  return true;
 }
 
@@ -199,10 +199,10 @@ bool NNeuronLearner::SetIsNeedToTrain(const bool &value)
  {
   ZeroingTrainingPattern();
  }
-
+ 
  CountIteration = 0;  // Обнуляем счетчик итераций
  IsFirstBeat = true;
-
+ 
  // При поднятии флага надо установить порогу LTZone учебное значение
  if(value)
  {
@@ -235,7 +235,7 @@ bool NNeuronLearner::SetCalculateMode(const int &value)
 
  CountIteration = 0;  // Обнуляем счетчик итераций
  IsFirstBeat = true;
-
+ 
  return true;
 }
 
@@ -258,9 +258,9 @@ bool NNeuronLearner::SetSpikesFrequency(const double &value)
   Generators[i]->Frequency = value;
   Generators[i]->Reset();
  }
-
+ 
  return true;
- }
+}
 
 /// Установка числа входных дендритов
 bool NNeuronLearner::SetNumInputDendrite(const int &value)
@@ -277,25 +277,25 @@ bool NNeuronLearner::SetMaxDendriteLength(const int &value)
 {
  if(value < 1)
   return false;
-
+ 
  // Проверяем в нейроне соответствие новому условию
- for (int i = 0; i < NumInputDendrite; i++)
+ for(int i = 0; i < NumInputDendrite; i++)
  {
-  if (DendriteLength.empty())
+  if(DendriteLength.empty())
    return true;
-
+  
   // Если найдётся дендрит длиннее, чем теперь разрешено,
   // то укоротим дендрит до текущей максимальной возможной длины
-  if (DendriteLength[i] > value)
+  if(DendriteLength[i] > value)
   {
    DendriteLength[i] = value;
-
+   
    // Удаляем связи генератора
    Generators[i]->DisconnectAll("Output");
-
-   if (!Neuron)
+   
+   if(!Neuron)
     return true;
-
+   
    // Обновляем информацию в нейроне о длинах дендритов
    if(Neuron->StructureBuildMode != 2)
    {
@@ -311,13 +311,13 @@ bool NNeuronLearner::SetMaxDendriteLength(const int &value)
    // Neuron->GetStorage()->FreeObjectsStorage();
    Neuron->Reset();
    // Neuron->GetStorage()->FreeObjectsStorage();
-
+   
    // Находим последний фрагмент дендрита
    UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>(
     MakeLearnerDendriteName(i + 1, DendriteLength[i]), true);
    if(!dendrite)
     return true;
-
+   
    // Меняем число синапсов на дендрите. Устанавливается то же, что и было
    dendrite->NumExcitatorySynapses = NumSynapse[i];
 //   dendrite->GetStorage()->FreeObjectsStorage();
@@ -332,19 +332,19 @@ bool NNeuronLearner::SetMaxDendriteLength(const int &value)
         std::string("ExcSynapse") + sntoa(k + 1), true);
     if(!synapse)
      continue;
-
+    
     // Добавляем связь между текущим генератором и синапсом
     bool res = CreateLink(MakeLearnerSourceName(i + 1), "Output", synapse->GetLongName(this), "Input");
-
+    
     if(!res || k == 0)
      continue;
-
+    
     synapse->Resistance = SynapseResistanceStep;
    }
    Neuron->Reset();
   }
  }
-
+ 
  return true;
 }
 
@@ -356,7 +356,7 @@ bool NNeuronLearner::SetInputPattern(const MDMatrix<double> &value)
   Generators[i]->Delay = Delay + value[i];
   Generators[i]->Reset();
  }
-
+ 
  // Поднимаем флаг первого такта итерации
  IsFirstBeat = true;
  // При смене паттерна обнуляем счётчик итераций
@@ -390,7 +390,7 @@ bool NNeuronLearner::SetUseFixedLTZThreshold(const bool &value)
   SetLTZThreshold(FixedLTZThreshold.GetData());
   LTZThreshold.SetDataDirect(FixedLTZThreshold.GetData());
  }
-
+ 
  return true;
 }
 
@@ -400,9 +400,9 @@ bool NNeuronLearner::SetSynapseResistanceStep(const double &value)
 
  // Меняем сопротивления у существующих нарощенных синапсов
  // Предполагается, что такие синапсы есть только на входных сегментах дендритов
- if (NumSynapse.empty() || !Neuron)
+ if(NumSynapse.empty() || !Neuron)
   return true;
-
+ 
  for(int numdend = 1; numdend <= NumInputDendrite; numdend++)
  {
   for(int numsyn = 2; numsyn <= NumSynapse[numdend - 1]; numsyn++)
@@ -411,7 +411,7 @@ bool NNeuronLearner::SetSynapseResistanceStep(const double &value)
    MakeLearnerExcSynapsePath(numdend, DendriteLength[numdend - 1], numsyn), true);
    if(!synapse)
     continue;
-
+   
    synapse->Resistance = value;
   }
  }
@@ -440,18 +440,18 @@ bool NNeuronLearner::SetExperimentMode(const bool &value)
 bool NNeuronLearner::SetDendriteLength(const std::vector<int> &value)
 {
  OldDendriteLength = DendriteLength;
-
+ 
  // Нормализуем размер DendriteLength относительно текущего NumInputDendrite.
  // Сам вектор уже обновлён свойством до вызова сеттера, поэтому работаем
  // с текущим содержимым DendriteLength, а не с параметром value.
- if (DendriteLength.size() != static_cast<size_t>(NumInputDendrite))
+ if(DendriteLength.size() != static_cast<size_t>(NumInputDendrite))
  {
-  if (DendriteLength.size() < static_cast<size_t>(NumInputDendrite))
+  if(DendriteLength.size() < static_cast<size_t>(NumInputDendrite))
    DendriteLength.resize(NumInputDendrite, 1);
   else
    DendriteLength.resize(NumInputDendrite);
  }
-
+ 
  Ready = false;
  return true;
 }
@@ -463,11 +463,11 @@ bool NNeuronLearner::SetInitialSomaPotential(const std::vector<double> &value)
 {
  // InitialSomaPotential уже содержит данные, скопированные из value до вызова сеттера.
  // Здесь гарантируем согласованный размер с NumInputDendrite.
- if (InitialSomaPotential.size() != static_cast<size_t>(NumInputDendrite))
+ if(InitialSomaPotential.size() != static_cast<size_t>(NumInputDendrite))
  {
   std::vector<double> normalized(NumInputDendrite, 0.0);
   const size_t copyCount = std::min(normalized.size(), value.size());
-  for (size_t i = 0; i < copyCount; ++i)
+  for(size_t i = 0; i < copyCount; ++i)
    normalized[i] = value[i];
   // Важно: чтобы избежать рекурсии через SetData, используем SetDataDirect.
   InitialSomaPotential.SetDataDirect(normalized);
@@ -480,9 +480,9 @@ bool NNeuronLearner::SetNumSynapse(const std::vector<int> &value)
 {
  // NumSynapse уже обновлён свойством. Нормализуем размер, чтобы он совпадал
  // с текущим числом входных дендритов.
- if (NumSynapse.size() != static_cast<size_t>(NumInputDendrite))
+ if(NumSynapse.size() != static_cast<size_t>(NumInputDendrite))
  {
-  if (NumSynapse.size() < static_cast<size_t>(NumInputDendrite))
+  if(NumSynapse.size() < static_cast<size_t>(NumInputDendrite))
    NumSynapse.resize(NumInputDendrite, 1);
   else
    NumSynapse.resize(NumInputDendrite);
@@ -499,12 +499,12 @@ bool NNeuronLearner::SetExperimentNum(const int &value)
  CalculateMode.SetDataDirect(1);
  SetCalculateMode(1);
  IsFirstFileStep = true;
- if (value == 1)
+ if(value == 1)
  {
   IsNeedToTrain.SetDataDirect(false);
   SetIsNeedToTrain(false);
  }
- if (value == 2)
+ if(value == 2)
  {
   IsNeedToTrain.SetDataDirect(true);
   SetIsNeedToTrain(true);
@@ -582,26 +582,26 @@ bool NNeuronLearner::BuildStructure()
  
  // Устанавливаем количество сом
  Neuron->NumSomaMembraneParts = NumInputDendrite;
-
+ 
  // Перед настройкой дендритов синхронизируем размер векторов,
  // завязанных на NumInputDendrite, чтобы избежать выхода за границы
  // при последующей работе с DendriteLength/OldDendriteLength.
- if (DendriteLength.size() != static_cast<size_t>(NumInputDendrite))
+ if(DendriteLength.size() != static_cast<size_t>(NumInputDendrite))
  {
-  if (DendriteLength.size() < static_cast<size_t>(NumInputDendrite))
+  if(DendriteLength.size() < static_cast<size_t>(NumInputDendrite))
    DendriteLength.resize(NumInputDendrite, 1);
   else
    DendriteLength.resize(NumInputDendrite);
  }
-
- if (OldDendriteLength.size() != static_cast<size_t>(NumInputDendrite))
+ 
+ if(OldDendriteLength.size() != static_cast<size_t>(NumInputDendrite))
  {
-  if (OldDendriteLength.size() < static_cast<size_t>(NumInputDendrite))
+  if(OldDendriteLength.size() < static_cast<size_t>(NumInputDendrite))
    OldDendriteLength.resize(NumInputDendrite, 1);
   else
    OldDendriteLength.resize(NumInputDendrite);
  }
-
+ 
  // Устанавливаем количество и длину дендритов
  if(Neuron->StructureBuildMode != 2)
  {
@@ -631,76 +631,76 @@ for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
   Generators[i]->SetCoord(MVector<double,3>(6.7, 1.67 + i * 2, 0));
   Generators[i]->Frequency = SpikesFrequency;
  }
-
+ 
  // Разрываем выходные связи генераторов
  for(int i = 0; i < NumInputDendrite; i++)
  {
   Generators[i]->DisconnectAll("Output");
  }
-
+ 
  // Массив количества синапсов на дендрите
  // При необходимости меняем размер
- if (NumInputDendrite != NumSynapse.size())
+ if(NumInputDendrite != NumSynapse.size())
   NumSynapse.resize(NumInputDendrite, 1);
-
+ 
  // Устанавливаем на дендритах необходиме количество синапсов
- for (int i = 0; i < NumInputDendrite; i++)
+ for(int i = 0; i < NumInputDendrite; i++)
  {
   // Удаляем избыточные синапсы на сегменте дендрита, который раньше был входным
-  if ((i < OldDendriteLength.size()) && (i < DendriteLength.size()) && (OldDendriteLength[i] < DendriteLength[i]))
+  if((i < OldDendriteLength.size()) && (i < DendriteLength.size()) && (OldDendriteLength[i] < DendriteLength[i]))
   {
    UEPtr<NPulseMembrane> previnputsegmentofdendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(i + 1) +
-                                                                              "_" + sntoa(OldDendriteLength[i]), true);
+    "_" + sntoa(OldDendriteLength[i]), true);
    if(previnputsegmentofdendrite)
    {
     previnputsegmentofdendrite->NumExcitatorySynapses = 1;
     previnputsegmentofdendrite->Build();
    }
   }
-
+  
   // Находим входной сегмент дендрита
   UEPtr<NPulseMembrane> inputsegmentofdendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(i + 1) +
-                                                                            + "_" + sntoa(DendriteLength[i]), true);
+   + "_" + sntoa(DendriteLength[i]), true);
   if(!inputsegmentofdendrite)
    continue;
-
+  
   // Меняем число синапсов на дендрите. Устанавливается то же, что и было
   inputsegmentofdendrite->NumExcitatorySynapses = NumSynapse[i];
 //  dendrite->GetStorage()->FreeObjectsStorage();
   inputsegmentofdendrite->Build();
 //  dendrite->GetStorage()->FreeObjectsStorage();
  }
-
+ 
  // Neuron->GetStorage()->FreeObjectsStorage();
  Neuron->Reset();
  // Neuron->GetStorage()->FreeObjectsStorage();
-
+ 
  // Добавляем связи между генераторами и синапсами, меняем сопротивление синапсов
  for(int numdend = 0; numdend < NumInputDendrite; numdend++)
  {
   // Находим входной сегмент дендрита
   UEPtr<NPulseMembrane> segmentofdendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(numdend + 1) +
-                                                                            + "_" + sntoa(DendriteLength[numdend]), true);
+   + "_" + sntoa(DendriteLength[numdend]), true);
   // Для каждого синапса
   for(int numsyn = 0; numsyn < NumSynapse[numdend]; numsyn++)
   {
    NPulseSynapseCommon *synapse = segmentofdendrite->GetComponentL<NPulseSynapseCommon>(
        std::string("ExcSynapse") + sntoa(numsyn + 1), true);
-
+   
    if(!synapse)
    {
     LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, std::string("Can't create link because synapse not exists: "));
     continue;
    }
-
+   
    // Меняем сопротивление
    if(numsyn != 0)
     synapse->Resistance = SynapseResistanceStep;
-
+   
    // Устанавливаем связь
-   if (!CheckLink("Source" + sntoa(numdend + 1), "Output", synapse->GetLongName(this), "Input"))
+   if(!CheckLink("Source" + sntoa(numdend + 1), "Output", synapse->GetLongName(this), "Input"))
     res &= CreateLink("Source" + sntoa(numdend + 1), "Output", synapse->GetLongName(this), "Input");
-
+   
    if(!res)
     continue;
   }
@@ -708,14 +708,14 @@ for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
  // Neuron->GetStorage()->FreeObjectsStorage();
  Neuron->Reset();
  // Neuron->GetStorage()->FreeObjectsStorage();
-
+ 
  // Задаём размеры и начальные значения параметров обучения
  IsFirstBeat = true; // Флаг первого такта в рамках итерации расчёта нейрона
  // Максимальная суммарная амплитуда нейрона, снятая на дендрите
  DendriteNeuronAmplitude.Assign(1 + NumInputDendrite, 1, 0.0);
  // Максимальная суммарная амплитуда нейрона, снятая на соме
  SomaNeuronAmplitude.Assign(1 + NumInputDendrite, 1, 0.0);
-
+ 
  // Для первой итерации устанавливаем,
  // что все дендриты не должны расти
  DendStatus.assign(NumInputDendrite, 0);
@@ -725,7 +725,7 @@ for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
 // Массив значений потенциалов на выходах дендритов при их единичной длине
 {
  std::vector<double> cur = InitialSomaPotential; // локальная копия текущих значений
- if (cur.size() != static_cast<size_t>(NumInputDendrite))
+ if(cur.size() != static_cast<size_t>(NumInputDendrite))
  {
   // сохраняем первые элементы, просто меняя размер
   cur.resize(NumInputDendrite, 0.0);
@@ -743,18 +743,18 @@ for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
  Dissynchronization[NumInputDendrite - 1] = 0.0;
  // Разница между текущей амплитудой на соме и исходной
  AmpDifference.assign(NumInputDendrite, 0.0);
-
-
+ 
+ 
  InputPattern.Resize(NumInputDendrite, 1, 0.0);
  PrevInputPattern.Assign(NumInputDendrite, 1, -1.0);  // Начальное значение предыдущего паттерна
  AdditionalInputPattern.Resize(NumInputDendrite, 1, 0.0);
  return true;
  }
- catch (const UException &ex)
+ catch(const UException &ex)
  {
   try
   {
-   if (RDK::GetLogger())
+   if(RDK::GetLogger())
    {
     std::ostringstream oss;
     oss << "NNeuronLearner::BuildStructure: UException number=" << ex.GetNumber()
@@ -765,14 +765,16 @@ for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
     RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronLearner", oss.str(), ex.GetNumber());
    }
   }
-  catch (...) {}
+  catch(...)
+  {
+  }
   throw;
  }
- catch (const std::exception &ex)
+ catch(const std::exception &ex)
  {
   try
   {
-   if (RDK::GetLogger())
+   if(RDK::GetLogger())
    {
     std::ostringstream oss;
    oss << "NNeuronLearner::BuildStructure: std::exception what=" << ex.what()
@@ -784,19 +786,23 @@ for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
     RDK::GetLogger()->LogMessage(RDK_EX_ERROR, oss.str());
    }
   }
-  catch (...) {}
+  catch(...)
+  {
+  }
   throw;
  }
- catch (...)
+ catch(...)
  {
   try
   {
-   if (RDK::GetLogger())
+   if(RDK::GetLogger())
    {
     RDK::GetLogger()->LogMessage(RDK_EX_ERROR, "NNeuronLearner::BuildStructure: unknown exception");
    }
   }
-  catch (...) {}
+  catch(...)
+  {
+  }
   throw;
  }
 }
@@ -818,38 +824,38 @@ bool NNeuronLearner::ADefault(void)
  NumInputDendrite = 1;
  OldNumInputDendrite = 0;
  MaxDendriteLength = 100;
-
+ 
  // Настройки порога
  LTZThreshold = 100;
  FixedLTZThreshold = 0.0115;
  TrainingLTZThreshold = 100;
  UseFixedLTZThreshold = false;
-
+ 
  // Паттерны
  InputPattern.Resize(NumInputDendrite, 1);
  AdditionalInputPattern.Resize(NumInputDendrite, 1);
  PrevInputPattern.Assign(NumInputDendrite, 1, -1.0);
-
+ 
  // Для графиков
  DendriteNeuronAmplitude.Assign(NumInputDendrite, 1, 0.0);
  SomaNeuronAmplitude.Assign(NumInputDendrite, 1, 0.0);
  Output.Assign(NumInputDendrite, 1, 0.0);
-
+ 
  SynapseResistanceStep = 1.0e9;
  DendriteLength.assign(NumInputDendrite, 1);
  OldDendriteLength.assign(NumInputDendrite, 1);
  NumSynapse.assign(NumInputDendrite, 1);
-
+ 
  CountIteration = 0;
  ExperimentNum = 0;  // номер по умолчанию, эксперимента нет
  EpochCur = 0;
  CanChangeDendLength = true;
-
+ 
  IsWritten = false; // Флаг позволяющий записать выходные данные в файл
-
+ 
  // Задаём размеры и начальные значения параметров обучения
  IsFirstBeat = true; // Флаг первого такта в рамках итерации расчёта нейрона
-
+ 
  // Максимальная суммарная амплитуда нейрона, снятая на дендрите
  DendriteNeuronAmplitude.Assign(NumInputDendrite + 1, 1, 0.0);
  // Максимальная суммарная амплитуда нейрона, снятая на соме
@@ -863,15 +869,15 @@ bool NNeuronLearner::ADefault(void)
  Dissynchronization.assign(NumInputDendrite, 1.0 / SpikesFrequency + 0.001);
  // Разница между текущей амплитудой на соме и исходной
  AmpDifference.assign(NumInputDendrite, 0.0);
-
+ 
  // Для первой итерации устанавливаем, что все дендриты не должны расти
  DendStatus.assign(NumInputDendrite, 0);
  // как и синапсы
  SynapseStatus.assign(NumInputDendrite, 0);
-
+ 
  // Выключаем DEBUG-логирование (по умолчанию)
  EnableDebug = false;
-
+ 
  return true;
 }
 
@@ -888,7 +894,7 @@ bool NNeuronLearner::ABuild(void)
   if(!res)
    return false;
  }
-
+ 
  return true;
 }
 
@@ -912,13 +918,13 @@ bool NNeuronLearner::AReset(void)
  UEPtr<NPulseNeuron> n_in = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
  if(!n_in)
   return true;
-
+ 
  UEPtr<NLTZone> ltzone = n_in->GetComponentL<NLTZone>("LTZone");
  if(!ltzone)
   return true;
-
+ 
  ltzone->Threshold = LTZThreshold;
-
+ 
  // Задаём воходной паттерн на генераторах
  for(size_t i = 0; i < Generators.size(); i++)
  {
@@ -927,7 +933,7 @@ bool NNeuronLearner::AReset(void)
   Generators[i]->Reset();
  }
  Output.ToZero();
-
+ 
  return true;
 }
 
@@ -957,11 +963,11 @@ bool NNeuronLearner::CompareInputPatterns(MDMatrix<double> prev_input_pattern, M
 bool NNeuronLearner::ChangeDendriteLength(int num)
 {
  bool res(true); // Переменная для возвращения результата функции
-
+ 
  // Если не нужно менять длину дендритов - ничего не делаем
  if(!DendStatus[num])
  {
-  if (EnableDebug.GetData() && RDK::GetLogger())
+  if(EnableDebug.GetData() && RDK::GetLogger())
   {
    std::ostringstream oss;
    oss << "ChangeDendriteLength: num=" << num
@@ -970,14 +976,14 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
   }
   return true;
  }
-
-
+ 
+ 
  // Если требуется удалить единственный оставшийся блок дендрита, то
  // считаем, что достигнута оптимальная длина дендрита
  if((DendStatus[num] == -1) && (DendriteLength[num] < 2))
  {
   DendStatus[num] = 0;
-  if (EnableDebug.GetData() && RDK::GetLogger())
+  if(EnableDebug.GetData() && RDK::GetLogger())
   {
    std::ostringstream oss;
    oss << "ChangeDendriteLength: num=" << num
@@ -986,8 +992,8 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
   }
   return true;
  }
-
-
+ 
+ 
  // Необходимо увеличить длину дендрита
  if(DendStatus[num] == 1)
  {
@@ -995,7 +1001,7 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
   if(DendriteLength[num] >= MaxDendriteLength)
   {
    DendStatus[num] = 0;
-   if (EnableDebug.GetData() && RDK::GetLogger())
+   if(EnableDebug.GetData() && RDK::GetLogger())
    {
     std::ostringstream oss;
     oss << "ChangeDendriteLength: num=" << num
@@ -1006,13 +1012,13 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
    return true;
   }
  }
-
-
+ 
+ 
  // Изменяем информацию о числе дендритов в NeuronLearner
  OldDendriteLength[num] = DendriteLength[num];
  DendriteLength[num] += DendStatus[num];
-
- if (EnableDebug.GetData() && RDK::GetLogger())
+ 
+ if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
   oss << "ChangeDendriteLength: num=" << num
@@ -1021,12 +1027,12 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
       << " DendStatus=" << DendStatus[num];
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
  }
-
-
+ 
+ 
  // Удаляем связи генератора с синапсами
  Generators[num]->DisconnectAll("Output");
-
-
+ 
+ 
  // Изменяем информацию о числе участков дендритов в модели нейрона
  if(Neuron->StructureBuildMode != 2)
  {
@@ -1044,35 +1050,35 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
   // Neuron->GetStorage()->FreeObjectsStorage();
   Neuron->Reset();
   // Neuron->GetStorage()->FreeObjectsStorage();
-
+  
   // Убеждаемся, что длина изменилась корректно
   int templength = Neuron->NumDendriteMembranePartsVec[num];
   if(DendriteLength[num] != templength)
   {
    LogMessageEx(RDK_EX_WARNING, __FUNCTION__, "Incorrect dendtic length after INCREASE. Need " +
-                sntoa(DendriteLength[num]) + " current length " + sntoa(templength));
+    sntoa(DendriteLength[num]) + " current length " + sntoa(templength));
   }
  }
-
-
+ 
+ 
  // Если добавился дендрит, то на предыдущем нужно оставить только 1 синапс
  if((DendStatus[num] == 1) && (DendriteLength[num] > 1))
  {
   UEPtr<NPulseMembrane> prevdendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(num + 1) +
-                                                                             "_" + sntoa(DendriteLength[num] - 1), true);
+   "_" + sntoa(DendriteLength[num] - 1), true);
   if(!prevdendrite)
    return true;
-
+  
   prevdendrite->NumExcitatorySynapses = 1;
 //  prevdendrite->GetStorage()->FreeObjectsStorage();
   prevdendrite->Build();
 //  prevdendrite->GetStorage()->FreeObjectsStorage();
  }
-
-
+ 
+ 
  // Изменяем количество синапсов в новом дендрите
  UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(num + 1) +
-                                                                         "_" + sntoa(DendriteLength[num]), true);
+  "_" + sntoa(DendriteLength[num]), true);
  if(!dendrite)
   return true;
  dendrite->NumExcitatorySynapses = NumSynapse[num];
@@ -1082,25 +1088,25 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
 
 
  // Добавляем связи между текущим генератором и синапсами на новом дендрите
- for (int i = 0; i < NumSynapse[num]; i++)
+ for(int i = 0; i < NumSynapse[num]; i++)
  {
   NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
       std::string("ExcSynapse") + sntoa(i + 1), true);
   if(!synapse)
    return true;
-
+  
   res &= CreateLink("Source" + sntoa(num + 1), "Output", synapse->GetLongName(this), "Input");
   if(!res)
    return true;
-
+  
   if(i > 0)
    synapse->Resistance = SynapseResistanceStep;
  }
-
+ 
  // Neuron->GetStorage()->FreeObjectsStorage();
  Neuron->Reset();
  // Neuron->GetStorage()->FreeObjectsStorage();
-
+ 
  return true;
 }
 
@@ -1109,11 +1115,11 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
 bool NNeuronLearner::ChangeSynapseNumber(int num)
 {
  bool res(true); // Переменная для возвращения результата функции
-
+ 
  // Если не нужно менять число синапсов - ничего не делаем
  if(!SynapseStatus[num])
  {
-  if (EnableDebug.GetData() && RDK::GetLogger())
+  if(EnableDebug.GetData() && RDK::GetLogger())
   {
    std::ostringstream oss;
    oss << "ChangeSynapseNumber: num=" << num
@@ -1122,13 +1128,13 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
   }
   return true;
  }
-
+ 
  // Если требуется удалить единственный оставшийся синапс, то
  // считаем, что достигнуто оптимальное количество синапсов
  if((SynapseStatus[num] == -1) && (NumSynapse[num] < 2))
  {
   SynapseStatus[num] = 0;
-  if (EnableDebug.GetData() && RDK::GetLogger())
+  if(EnableDebug.GetData() && RDK::GetLogger())
   {
    std::ostringstream oss;
    oss << "ChangeSynapseNumber: num=" << num
@@ -1137,11 +1143,11 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
   }
   return true;
  }
-
+ 
  // Изменяем информацию о количестве синапсов в NeuronLearner
  NumSynapse[num] += SynapseStatus[num];
-
- if (EnableDebug.GetData() && RDK::GetLogger())
+ 
+ if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
   oss << "ChangeSynapseNumber: num=" << num
@@ -1149,15 +1155,15 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
       << " SynapseStatus=" << SynapseStatus[num];
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
  }
-
+ 
  // Находим последний фрагмент дендрита
  UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>("Dendrite" + sntoa(num + 1) +
-                                                                        "_" + sntoa(DendriteLength[num]), true);
+  "_" + sntoa(DendriteLength[num]), true);
  if(!dendrite)
   return true;
-
+ 
  // Если надо удалить синапс, то прежде разрываем его связи
- if (SynapseStatus[num] == -1)
+ if(SynapseStatus[num] == -1)
  {
   // NumSynapse[num] already decremented above; disconnect the synapse that will be removed (old last = newCount+1).
   NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
@@ -1165,7 +1171,7 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
   if(synapse)
    synapse->DisconnectAll();
  }
-
+ 
  // Изменяем количество синапсов в дендрите
  dendrite->NumExcitatorySynapses = NumSynapse[num];
 // dendrite->GetStorage()->FreeObjectsStorage();
@@ -1173,28 +1179,28 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
 // dendrite->GetStorage()->FreeObjectsStorage();
 
  // Если добавился синапс
- if (SynapseStatus[num] == 1)
+ if(SynapseStatus[num] == 1)
  {
   NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
       std::string("ExcSynapse") + sntoa(NumSynapse[num]), true);
   if(!synapse)
    return true;
-
+  
   // Меняем у него сопротивление
   synapse->Resistance = SynapseResistanceStep;
-
+  
   // Создаём связь
-  if (!CheckLink("Source" + sntoa(num + 1), "Output", synapse->GetLongName(this), "Input"))
+  if(!CheckLink("Source" + sntoa(num + 1), "Output", synapse->GetLongName(this), "Input"))
    res &= CreateLink("Source" + sntoa(num + 1), "Output", synapse->GetLongName(this), "Input");
-
+  
   if(!res)
    return true;
  }
-
+ 
  // Neuron->GetStorage()->FreeObjectsStorage();
  Neuron->Reset();
  // Neuron->GetStorage()->FreeObjectsStorage();
-
+ 
  return true;
 }
 
@@ -1206,27 +1212,27 @@ bool NNeuronLearner::MeasureMaxPotentialAndTime(void)
 {
  // Текущее значение амплитуды сомы
  double currentsomaamp;
-
+ 
  // Для каждой сомы ищем максимальную амплитуду
  for(int i = 0; i < NumInputDendrite; i++)
  {
   // Находим сому
   UEPtr<NPulseMembrane> soma = Neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i+1),true);
-
+  
   if(!soma)
    return true;
-
+  
   // Снимаем амплитуду
   currentsomaamp = soma->SumPotential(0,0);
-
+  
   // Проверяем условие на максимум
   if(currentsomaamp >= MaxIterSomaAmp[i])
   {
    // Запоминаем новые значения максимума и его времени
    MaxIterSomaAmp[i] = currentsomaamp;
    TimeOfMaxIterSomaAmp[i] = Environment->GetTime().GetDoubleTime();
-
-   if (EnableDebug.GetData() && RDK::GetLogger())
+   
+   if(EnableDebug.GetData() && RDK::GetLogger())
    {
     std::ostringstream oss;
     oss << "MeasureMaxPotentialAndTime: soma=" << i
@@ -1234,7 +1240,7 @@ bool NNeuronLearner::MeasureMaxPotentialAndTime(void)
         << " t=" << TimeOfMaxIterSomaAmp[i];
     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
    }
-
+   
    // Для начального участка дендрита запоминаем выходную амплитуду
    if(DendriteLength[i] == 1 && NumSynapse[i] && currentsomaamp > InitialSomaPotential[i])
     InitialSomaPotential[i] = currentsomaamp;
@@ -1250,7 +1256,7 @@ bool NNeuronLearner::ChangeDendriteStatus(int num)
 {
  // Текущий рассинхронизация сигналов на калибровочном дендрите и текущем
  double dt = TimeOfMaxIterSomaAmp[NumInputDendrite - 1] - TimeOfMaxIterSomaAmp[num];
-
+ 
  // Считаем, что длина оптимальна, если:
  // 1. рассинхронизация нулевая
  // 2. при одинаковых предыдущем и текущем паттернах рассинхронизация сменила знак
@@ -1260,7 +1266,7 @@ bool NNeuronLearner::ChangeDendriteStatus(int num)
  {
   DendStatus[num] = 0;
  }
- else if ((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001)
+ else if((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001)
           && ((((dt / fabs(dt)) * (Dissynchronization[num] / fabs(Dissynchronization[num])) < 0)
           && (fabs(dt) <= fabs(Dissynchronization[num]))) || (DendStatus[num] == 0)))
  {
@@ -1275,11 +1281,11 @@ bool NNeuronLearner::ChangeDendriteStatus(int num)
   else if(dt < 0)
    DendStatus[num] = -1;
  }
-
+ 
  // Запоминаем рассинхронизацию
  Dissynchronization[num] = dt;
-
- if (EnableDebug.GetData() && RDK::GetLogger())
+ 
+ if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
   oss << "ChangeDendriteStatus: num=" << num
@@ -1290,7 +1296,7 @@ bool NNeuronLearner::ChangeDendriteStatus(int num)
       << " Input=" << InputPattern[num];
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
  }
-
+ 
  return true;
 }
 
@@ -1301,13 +1307,13 @@ bool NNeuronLearner::ChangeSynapseStatus(int num)
 {
  // Разница исходной амплитуды на соме и текущей
  double dt = InitialSomaPotential[num] - MaxIterSomaAmp[num];
-
+ 
  // Надстройка для эксперимента с обучением второму примеру - необходимо, чтобы
  // определялось соответствующее число синапсов для каждого промежуточного числа дендритов
  int dendstatus = DendStatus[num];
- if (ExperimentNum == 2 && !CanChangeDendLength)
+ if(ExperimentNum == 2 && !CanChangeDendLength)
   DendStatus[num] = 0;
-
+ 
  // Считаем, что количество синапсов оптимально, если
  // при одинаковых предыдущем и текущем паттернах и уже нулевом статусе дендрита:
  // 1. уже стоит нулевой статус у синапса
@@ -1318,12 +1324,12 @@ bool NNeuronLearner::ChangeSynapseStatus(int num)
  {
   SynapseStatus[num] = 0;
  }
- else if ((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001) && !DendStatus[num]
+ else if((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001) && !DendStatus[num]
           && (fabs(dt) <= 0.000005))
  {
   SynapseStatus[num] = 0;
  }
- else if ((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001) && !DendStatus[num]
+ else if((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001) && !DendStatus[num]
           && ((dt / fabs(dt)) * (AmpDifference[num] / fabs(AmpDifference[num])) < 0)
           && (fabs(dt) <= fabs(AmpDifference[num])))
  {
@@ -1338,13 +1344,13 @@ bool NNeuronLearner::ChangeSynapseStatus(int num)
   else if(dt < 0.0)
    SynapseStatus[num] = -1;
  }
-
+ 
  // Запоминаем рассинхронизацию
  AmpDifference[num] = dt;
-
+ 
  DendStatus[num] = dendstatus;
-
- if (EnableDebug.GetData() && RDK::GetLogger())
+ 
+ if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
   oss << "ChangeSynapseStatus: num=" << num
@@ -1355,7 +1361,7 @@ bool NNeuronLearner::ChangeSynapseStatus(int num)
       << " MaxIterSomaAmp=" << MaxIterSomaAmp[num];
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
  }
-
+ 
  return true;
 }
 
@@ -1370,7 +1376,7 @@ bool NNeuronLearner::PatternRecognition(void)
   Fout.open(Environment->GetCurrentDataDir()+"output_data"+sntoa(EpochCur)+".txt");
   Inputs.Assign(NumInputDendrite, 1, 0.0);  // Входные данные
   Outputs.assign(NumInputDendrite, 0);  // Выходные данные
-
+  
   // Записываем информацию о структуре нейрона, которой осуществляется распознавание
   Fout << "Структура нейрона, при которой происходит распознавание:" << std::endl;
   for(int i = 0; i < NumInputDendrite; i++)  // длины дендритов
@@ -1385,7 +1391,7 @@ bool NNeuronLearner::PatternRecognition(void)
   Fout << "Результаты распознавания:" << std::endl;
   IsFirstFileStep = false;
  }
-
+ 
  // Установка нового входного примера для распознавания
  // Обязательно устанавливаем при поднятом флаге первого такта. Так паттерн
  // будет заменён после полного окончания предыдущей итерации и перед началом новой
@@ -1393,7 +1399,7 @@ bool NNeuronLearner::PatternRecognition(void)
  {
   StartIterTime = Environment->GetTime().GetDoubleTime();
   IterLength = GetSafeIterationLength(SpikesFrequency.GetData(), TimeStep);
-
+  
   // Если достигли конца файла - завершаем режим распознавания
   if(Fin.eof())
   {
@@ -1401,7 +1407,7 @@ bool NNeuronLearner::PatternRecognition(void)
    Fout.close();
    IsFirstFileStep = true;
   }
-
+  
   // (конец файла не достигнут - продолжение распознавания)
   // Считываем входной пример из файла
   for(int i = 0; i < NumInputDendrite; i++)
@@ -1410,7 +1416,7 @@ bool NNeuronLearner::PatternRecognition(void)
    Fin >> in;
    Inputs[i] = in;
   }
-
+  
   // Устанавливаем пример для распознавания
   InputPattern = Inputs;
   SetInputPattern(Inputs);
@@ -1418,7 +1424,7 @@ bool NNeuronLearner::PatternRecognition(void)
   IsWritten = false;
   IsFirstBeat = false;
  }
-
+ 
  // Снимаем результат распознавания входного примера
  UEPtr<NPulseNeuron> neuron = this->GetComponent<NPulseNeuron>(std::string("Neuron"), true);
  if(!neuron)
@@ -1428,7 +1434,7 @@ bool NNeuronLearner::PatternRecognition(void)
   return true;
  if(ltzone->Output(0,0) > 0.001)
   Outputs[0]= 1;
-
+ 
  // Записываем результат распознавания в выходной файл
  double currentitertime = Environment->GetTime().GetDoubleTime() - StartIterTime;
  if((currentitertime - IterLength >= 0) && !IsWritten)
@@ -1437,7 +1443,7 @@ bool NNeuronLearner::PatternRecognition(void)
   IsWritten = true;
   IsFirstBeat = true;
  }
-
+ 
  return true;
 }
 
@@ -1449,18 +1455,18 @@ bool NNeuronLearner::PatternRecognition(void)
 bool NNeuronLearner::LearningAdditionalPattern_1_4(MDMatrix<double> additional_pattern)
 {
  // Обучение дополнительному примеру
- if (IsNeedToTrain)
+ if(IsNeedToTrain)
  {
   if(IsFirstBeat)
   {
    // Установка паттерна обучения при первом вхождении в функцию
-   if (CountIteration == 0 && EpochCur == 1)
+   if(CountIteration == 0 && EpochCur == 1)
    {
     InputPattern = additional_pattern;
     SetInputPattern(InputPattern);
    }
    // После 5 итерации переходим к распознаванию
-   if (CountIteration >= 5)
+   if(CountIteration >= 5)
    {
     IsFirstFileStep = true;
     IsNeedToTrain = false;
@@ -1477,14 +1483,14 @@ bool NNeuronLearner::LearningAdditionalPattern_1_4(MDMatrix<double> additional_p
  {
   // Распознавание паттернов из файла
   PatternRecognition();
-
+  
   // Когда закончено распознавание паттернов из файла (поднятый IsFirstFileStep
   // - косвенный признак этого), необходимо либо перейти к обучению
   // дополнительному примеру, либо завершить эксперимент
-  if (IsFirstFileStep)
+  if(IsFirstFileStep)
   {
    // Если полностью изучили дополнительный пример - завершаем эксперимент
-   if (EndOfLearning())
+   if(EndOfLearning())
    {
     ExperimentMode = false;
     SetExperimentMode(false);
@@ -1499,7 +1505,7 @@ bool NNeuronLearner::LearningAdditionalPattern_1_4(MDMatrix<double> additional_p
     PrevInputPattern = additional_pattern;
     InputPattern = additional_pattern;
     SetInputPattern(additional_pattern);
-    for (int i = 0; i < NumInputDendrite - 1; i++)
+    for(int i = 0; i < NumInputDendrite - 1; i++)
     {
      SynapseStatus[i] = 1;
     }
@@ -1507,7 +1513,7 @@ bool NNeuronLearner::LearningAdditionalPattern_1_4(MDMatrix<double> additional_p
    }
   }
  }
-
+ 
  return true;
 }
 
@@ -1517,57 +1523,57 @@ bool NNeuronLearner::IncrementalLearning(MDMatrix<double> initial_pattern, MDMat
 {
  if(!IsFirstBeat)
   return true;
-
+ 
  // Установка паттерна для обучения при первом вхождении в функцию
- if (CountIteration == 0 && EpochCur == 1)
+ if(CountIteration == 0 && EpochCur == 1)
  {
   InputPattern = additional_pattern;
   SetInputPattern(additional_pattern);
   Fout.open(Environment->GetCurrentDataDir()+"output_data"+sntoa(EpochCur)+".txt");
  }
-
+ 
  // После 5 итерации меняем входной паттерн на исходный,
  // чтобы вычислить для него сумму потенциалов
- if (CountIteration == 5)
+ if(CountIteration == 5)
  {
   // (пока ещё не была обнулена MaxIterSomaAmp)
   // Вычисляем сумму максимумов потенциалов для предыдущей итерации,
   // те для паттерна additional_pattern
-  for (int k = 0; k < NumInputDendrite; k++)
+  for(int k = 0; k < NumInputDendrite; k++)
   {
    SumMaxIterSomaAmp += MaxIterSomaAmp[k];
   }
-
+  
   InputPattern = initial_pattern;
   SetInputPattern(initial_pattern);
   CountIteration = 5;  // устанавливаем значение, тк SetInputPattern() его обнулила
  }
-
+ 
  // Проверка условия оптимальности
- else if (CountIteration == 6)
+ else if(CountIteration == 6)
  {
   // Добавляем сумму максимумов потенциалов для предыдущей итерации,
   // те для паттерна initial_pattern
   double suminitialpattern = 0;
-  for (int k = 0; k < NumInputDendrite; k++)
+  for(int k = 0; k < NumInputDendrite; k++)
   {
    suminitialpattern += MaxIterSomaAmp[k];
   }
   SumMaxIterSomaAmp += suminitialpattern;
-
+  
   // Записываем измерения для additional_pattern, initial_pattern и суммы
   Fout << "Итерация обучения" + sntoa(EpochCur) + ":" << "\t" << SumMaxIterSomaAmp;
   Fout << "\t" << suminitialpattern << "\t" << SumMaxIterSomaAmp << std::endl;
-
+  
   // Структура лучше описывает оба примера, продолжаем в том же направлении
-  if (SumMaxIterSomaAmp > PrevSumMaxIterSomaAmp)
+  if(SumMaxIterSomaAmp > PrevSumMaxIterSomaAmp)
   {
    PrevInputPattern = additional_pattern;
   InputPattern = additional_pattern;
    SetInputPattern(InputPattern);
    CanChangeDendLength = true;
    EpochCur++;
-   for (int i = 0; i < NumInputDendrite - 1; i++)
+   for(int i = 0; i < NumInputDendrite - 1; i++)
    {
     SynapseStatus[i] = 1;
    }
@@ -1577,17 +1583,17 @@ bool NNeuronLearner::IncrementalLearning(MDMatrix<double> initial_pattern, MDMat
   {
    Fout.close();
   }
-
+ 
  PrevSumMaxIterSomaAmp = SumMaxIterSomaAmp;
   SumMaxIterSomaAmp = 0;
  }
-
+ 
  // После 1 итерации обучения не меняем длины дендритов
  else if(CountIteration >= 1)
  {
   CanChangeDendLength = false;
  }
-
+ 
  return true;
 }
 
@@ -1597,13 +1603,14 @@ bool NNeuronLearner::IncrementalLearning(MDMatrix<double> initial_pattern, MDMat
 /// 3 эксперимент - IncrementalLearning() - Инкрементное обучение
 bool NNeuronLearner::Experiment(void)
 {
- switch (ExperimentNum) {
+ switch(ExperimentNum)
+ {
  case 1:  // Распознавание данных из файла
  {
   PatternRecognition();
   // Когда закончено распознавание паттернов из файла (поднятый IsFirstFileStep
   // - косвенный признак этого), завершаем эксперимент
-  if (IsFirstFileStep)
+  if(IsFirstFileStep)
   {
    ExperimentMode = false;
    SetExperimentMode(false);
@@ -1646,13 +1653,13 @@ bool NNeuronLearner::EndOfLearning(void)
    break;
   }
  }
-
+ 
  // Если нейрон уже изучил паттерн, то обновляем информацию
  if(istrained)
  {
   // Паттерн, которому обучен нейрон
   Neuron->TrainingPattern = InputPattern;
-
+  
   // Длины дендритов
   MDMatrix<int> temp;
   temp.Resize(NumInputDendrite, 1);
@@ -1662,7 +1669,7 @@ bool NNeuronLearner::EndOfLearning(void)
   }
   Neuron->TrainingDendIndexes.Resize(NumInputDendrite, 1);
   Neuron->TrainingDendIndexes = temp;
-
+  
   // Количество синапсов на входных участках дендритов
   for(int i = 0; i < NumInputDendrite; i++)
   {
@@ -1670,13 +1677,13 @@ bool NNeuronLearner::EndOfLearning(void)
   }
   Neuron->TrainingSynapsisNum.Resize(NumInputDendrite, 1);
   Neuron->TrainingSynapsisNum = temp;
-
+  
   SetIsNeedToTrain(false);
   IsNeedToTrain = false;
-
+  
   return true;
  }
-
+ 
  return false;
 }
 
@@ -1690,15 +1697,15 @@ bool NNeuronLearner::Training(void)
  // Если 0 режим обучения и не 0 итерация, то можем завершить обучение
  if(!CalculateMode && (CountIteration > 0))
  {
-  if (EndOfLearning())
+  if(EndOfLearning())
    return true;
  }
-
-
+ 
+ 
  // Действия только для первого такта итерации
  if(IsFirstBeat)
  {
-  if (EnableDebug.GetData() && RDK::GetLogger())
+  if(EnableDebug.GetData() && RDK::GetLogger())
   {
    std::ostringstream oss;
    oss << "Training: iteration=" << CountIteration
@@ -1707,31 +1714,31 @@ bool NNeuronLearner::Training(void)
        << " CalculateMode=" << CalculateMode.GetData()
        << " IsNeedToTrain=" << (IsNeedToTrain.GetData() ? 1 : 0);
    oss << " DendriteLength=[";
-   for (size_t i = 0; i < DendriteLength.size(); ++i)
+   for(size_t i = 0; i < DendriteLength.size(); ++i)
    {
     oss << DendriteLength[i];
-    if (i + 1 < DendriteLength.size())
+    if(i + 1 < DendriteLength.size())
      oss << ",";
    }
    oss << "] NumSynapse=[";
-   for (size_t i = 0; i < NumSynapse.size(); ++i)
+   for(size_t i = 0; i < NumSynapse.size(); ++i)
    {
     oss << NumSynapse[i];
-    if (i + 1 < NumSynapse.size())
+    if(i + 1 < NumSynapse.size())
      oss << ",";
    }
    oss << "]";
    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner", oss.str());
   }
-
+  
   // Измеряем время начала текущей итерации и вычисляем её длительность
   StartIterTime = Environment->GetTime().GetDoubleTime();
   IterLength = GetSafeIterationLength(SpikesFrequency.GetData(), TimeStep);
-
+  
   // Обнуляем максимальные амплитуды выходного сигнала на сомах для данной итерации
   MaxIterSomaAmp.assign(NumInputDendrite, 0.0);
   TimeOfMaxIterSomaAmp.assign(NumInputDendrite, 0.0);
-
+  
   // Изменяем структуру нейрона
   for(int i = 0; i < NumInputDendrite - 1; i++)
   {
@@ -1741,22 +1748,22 @@ bool NNeuronLearner::Training(void)
    // Изменяем число синапсов по значению статуса
    ChangeSynapseNumber(i);
   }
-
+  
   IsFirstBeat = false;
-
+  
   // Досрочно завершаем такт
   return true;
  }
-
-
+ 
+ 
  // Вычисляем амплитуду потенциала на соме, чтобы найти максимум и его время
  MeasureMaxPotentialAndTime();
-
-
+ 
+ 
  // Действия при завершении итерации
  // Текущая длительность итерации - сколько прошло времени от начала итерации
  double currentitertime = Environment->GetTime().GetDoubleTime() - StartIterTime;
-
+ 
  if(currentitertime - IterLength >= 0)
  {
   // Меняем статусы всех дендритов и синапсов, кроме калибровочных
@@ -1767,13 +1774,13 @@ bool NNeuronLearner::Training(void)
    // Запоминаем текущий паттерн перед началом следующей итерации
    PrevInputPattern[i] = InputPattern[i];
   }
-
+  
   // Поднимаем для следующей итерации флаг первого такта
   IsFirstBeat = true;
   // Увеличиваем счётчик итераций.
   CountIteration++;
  }
-
+ 
  return true;
 }
 
@@ -1789,7 +1796,7 @@ bool NNeuronLearner::ACalculate(void)
   // Если нет нейрона, то ничего делать не надо
   if(!Neuron)
    return true;
-
+  
   // Вычисляем значения потенциалов на дендритах и сомах
   DendriteNeuronAmplitude(0, 0) = 0;
   for(int i = 0; i < NumInputDendrite; i++)
@@ -1798,11 +1805,11 @@ bool NNeuronLearner::ACalculate(void)
     Neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i + 1)+"_1", true);
    if(!dendrite)
     return true;
-
+   
    DendriteNeuronAmplitude(i + 1, 0) = dendrite->SumPotential(0, 0);
    DendriteNeuronAmplitude(0, 0) += dendrite->SumPotential(0, 0);
   }
-
+  
   SomaNeuronAmplitude(0, 0) = 0;
   for(int i = 0; i < NumInputDendrite; i++)
   {
@@ -1810,11 +1817,11 @@ bool NNeuronLearner::ACalculate(void)
     Neuron->GetComponentL<NPulseMembrane>("Soma"+sntoa(i + 1), true);
    if(!soma)
     return true;
-
+   
    SomaNeuronAmplitude(i + 1, 0) = soma->SumPotential(0, 0);
    SomaNeuronAmplitude(0, 0) += soma->SumPotential(0, 0);
   }
-
+  
   // Если 0 режим обучения и не 0 итерация, то можем завершить обучение
   if(!CalculateMode && (CountIteration > 0))
   {
@@ -1830,13 +1837,13 @@ bool NNeuronLearner::ACalculate(void)
      break;
     }
    }
-
+   
    // Если нейрон уже изучил паттерн, то обновляем информацию
    if(istrained)
    {
     // Паттерн, которому обучен нейрон
     Neuron->TrainingPattern = InputPattern;
-
+    
     // Длины дендритов
     MDMatrix<int> temp;
     temp.Resize(NumInputDendrite, 1);
@@ -1846,7 +1853,7 @@ bool NNeuronLearner::ACalculate(void)
     }
     Neuron->TrainingDendIndexes.Resize(NumInputDendrite, 1);
     Neuron->TrainingDendIndexes = temp;
-
+    
     // Количество синапсов на входных участках дендритов
     for(int i = 0; i < NumInputDendrite; i++)
     {
@@ -1854,25 +1861,25 @@ bool NNeuronLearner::ACalculate(void)
     }
     Neuron->TrainingSynapsisNum.Resize(NumInputDendrite, 1);
     Neuron->TrainingSynapsisNum = temp;
-
+    
     SetIsNeedToTrain(false);
     IsNeedToTrain = false;
-
+    
     // Досрочно завершаем этот такт
     return true;
    }
   }
-
+  
   // Функция для работы с файлами.
   // Осуществляет чтение входных данных из файла,
   // Обработку результатов и запись результатов в файл
   if(ExperimentMode)
    Experiment();
-
+  
   // В функции происходит обучение нейрона
-  if (IsNeedToTrain)
+  if(IsNeedToTrain)
   {
-   if (EnableDebug.GetData() && RDK::GetLogger())
+   if(EnableDebug.GetData() && RDK::GetLogger())
    {
     std::ostringstream oss;
     oss << "ACalculate: call Training, iteration=" << CountIteration
@@ -1883,18 +1890,18 @@ bool NNeuronLearner::ACalculate(void)
    }
    Training();
   }
-
+  
   // Подаём информацию с выхода нейрона на выход NNeuronLearner
   if(Neuron)
    Output = Neuron->Output;
-
+  
   return true;
  }
- catch (const UException &ex)
+ catch(const UException &ex)
  {
   try
   {
-   if (RDK::GetLogger())
+   if(RDK::GetLogger())
    {
     std::ostringstream oss;
     oss << "NNeuronLearner::ACalculate: UException number=" << ex.GetNumber()
@@ -1905,33 +1912,39 @@ bool NNeuronLearner::ACalculate(void)
     RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronLearner", oss.str(), ex.GetNumber());
    }
   }
-  catch (...) {}
+  catch(...)
+  {
+  }
   throw;
  }
- catch (const std::exception &ex)
+ catch(const std::exception &ex)
  {
   try
   {
-   if (RDK::GetLogger())
+   if(RDK::GetLogger())
    {
     std::ostringstream oss;
     oss << "NNeuronLearner::ACalculate: std::exception what=" << ex.what();
     RDK::GetLogger()->LogMessage(RDK_EX_ERROR, oss.str());
    }
   }
-  catch (...) {}
+  catch(...)
+  {
+  }
   throw;
  }
- catch (...)
+ catch(...)
  {
   try
   {
-   if (RDK::GetLogger())
+   if(RDK::GetLogger())
    {
     RDK::GetLogger()->LogMessage(RDK_EX_ERROR, "NNeuronLearner::ACalculate: unknown exception");
    }
   }
-  catch (...) {}
+  catch(...)
+  {
+  }
   throw;
  }
 }
