@@ -21,6 +21,33 @@ See file license.txt for more information
 
 namespace NMSDK {
 
+namespace {
+// Default Modern Diagram layout (Dendrite1_85 exemplar for N=1).
+// Synapses in a left column; channel to the right at mid-Y of that column.
+constexpr double kMemSynX0     = 0.3;
+constexpr double kMemChannelX  = 7.3;   // kMemSynX0 + 7
+constexpr double kMemExcRowY0  = 1.6;
+constexpr double kMemInhRowY0  = 5.25;
+constexpr double kMemSynPitchY = 3.5;
+
+inline MVector<double,3> membraneSynapseCoord(double rowY0, int index)
+{
+ return MVector<double,3>(kMemSynX0, rowY0 + index * kMemSynPitchY, 0.0);
+}
+
+inline MVector<double,3> membraneChannelCoord(double rowY0, int numSynapses)
+{
+ const int n = numSynapses > 0 ? numSynapses : 1;
+ return MVector<double,3>(kMemChannelX, rowY0 + (n - 1) * kMemSynPitchY * 0.5, 0.0);
+}
+
+inline double membraneInhRowY0(int numExcSynapses)
+{
+ const int nExc = numExcSynapses > 0 ? numExcSynapses : 0;
+ return std::max(kMemInhRowY0, kMemExcRowY0 + nExc * kMemSynPitchY);
+}
+} // namespace
+
 // Методы
 // --------------------------
 // Конструкторы и деструкторы
@@ -332,6 +359,9 @@ bool NPulseMembrane::ABuild(void)
  UEPtr<NPulseChannelCommon> inh_channel;
  bool res=true;
 
+ const int num_exc = int(NumExcitatorySynapses);
+ const int num_inh = int(NumInhibitorySynapses);
+
  if(!ExcChannelClassName->empty())
  {
   exc_channel=AddMissingComponent<NPulseChannelCommon>("ExcChannel", ExcChannelClassName);
@@ -343,7 +373,7 @@ bool NPulseMembrane::ABuild(void)
   }
 //  ExcitatoryChannels.resize(1);
 //  ExcitatoryChannels[0]=exc_channel;
-  exc_channel->SetCoord(MVector<double,3>(5,4,0));
+  exc_channel->SetCoord(membraneChannelCoord(kMemExcRowY0, num_exc));
 
   int old_ex_synapses=int(ExcitatorySynapses.size());
 
@@ -368,7 +398,7 @@ bool NPulseMembrane::ABuild(void)
    synapse->Type = -1;
 //   ExcitatorySynapses.push_back(synapse);
    res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
-   synapse->SetCoord(MVector<double,3>(5+i*6,1.7,0));
+   synapse->SetCoord(membraneSynapseCoord(kMemExcRowY0, i));
    synapse->RebuildInternalLinks();
   }
  }
@@ -385,7 +415,8 @@ bool NPulseMembrane::ABuild(void)
 
 //  InhibitoryChannels.resize(1);
 //  InhibitoryChannels[0]=inh_channel;
-  inh_channel->SetCoord(MVector<double,3>(5,8,0));
+  const double inh_y0 = membraneInhRowY0(num_exc);
+  inh_channel->SetCoord(membraneChannelCoord(inh_y0, num_inh));
 
   int old_in_synapses=int(InhibitorySynapses.size());
   for(int i=NumInhibitorySynapses;i<old_in_synapses;i++)
@@ -411,7 +442,7 @@ bool NPulseMembrane::ABuild(void)
 
  //  InhibitorySynapses.push_back(synapse);
    res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInputs");
-   synapse->SetCoord(MVector<double,3>(5+i*6,10.6,0));
+   synapse->SetCoord(membraneSynapseCoord(inh_y0, i));
    synapse->RebuildInternalLinks();
   }
  }
