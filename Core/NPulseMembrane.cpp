@@ -25,7 +25,9 @@ namespace {
 // Default Modern Diagram layout (Dendrite1_85 exemplar for N=1).
 // Synapses in a left column; channel to the right at mid-Y of that column.
 constexpr double kMemSynX0     = 0.3;
-constexpr double kMemChannelX  = 7.3;   // kMemSynX0 + 7
+constexpr double kMemBlockW    = 7.0;   // ~one diagram card width in Coord
+// Was Syn→Channel ΔX≈7; add 1.5 blocks so multi-synapse links stay readable.
+constexpr double kMemChannelX  = kMemSynX0 + kMemBlockW + 1.5 * kMemBlockW; // 17.8
 constexpr double kMemExcRowY0  = 1.6;
 constexpr double kMemInhRowY0  = 5.25;
 constexpr double kMemSynPitchY = 3.5;

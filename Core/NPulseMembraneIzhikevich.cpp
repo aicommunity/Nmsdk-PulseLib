@@ -25,7 +25,9 @@ namespace NMSDK {
 
 namespace {
 // Keep in sync with NPulseMembrane::ABuild diagram layout.
-constexpr double kMemChannelX  = 7.3;
+constexpr double kMemSynX0     = 0.3;
+constexpr double kMemBlockW    = 7.0;
+constexpr double kMemChannelX  = kMemSynX0 + kMemBlockW + 1.5 * kMemBlockW; // 17.8
 constexpr double kMemExcRowY0  = 1.6;
 constexpr double kMemInhRowY0  = 5.25;
 constexpr double kMemSynPitchY = 3.5;
