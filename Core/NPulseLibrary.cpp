@@ -1274,6 +1274,27 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   UploadClass("NSPNeuronGenAsymRmD001C1e9", n);
  }
 
+ // Preinh k=2.5 + AsymRm Pack A at C=1e-9 (span25 last-pulse recipe twin of C1e9).
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBioPreinh2_5";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001;
+  n->SynapseSecretionTC=0.001;
+  n->MembraneCapacity=1e-9;
+  n->ExcMembraneResistance=1e7;
+  n->InhMembraneResistance=1e8;
+  n->ExcSynapseResistance=8.6e7;
+  n->InhSynapseResistance=8.6e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenPreinh2_5AsymRmD001C1e9", n);
+ }
+
  // Preinh k=2.5 + AsymRm Pack A.
  {
   n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
