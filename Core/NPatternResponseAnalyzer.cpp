@@ -661,7 +661,16 @@ bool NPatternResponseAnalyzer::ACalculate(void)
 
   if(!trial_window_closed_)
   {
-   if(neu_edge && now <= trial_t_last_stim_ + post_win)
+   // In-window match only after the full multi-pulse pattern's last stim.
+   // Mid-pattern LTZone edges stay in neuron_spike_* / morphology but must not
+   // set neuron_fired (avoids early-spike false PASS on short spans).
+   static constexpr size_t kMinStimForInWindowFire = 4;
+   const bool pattern_complete =
+    trial_stim_times_.size() >= kMinStimForInWindowFire
+    || trial_stim_times_.size() == 1;
+   const bool after_last_stim = (now + 1e-12 >= trial_t_last_stim_);
+   if(neu_edge && pattern_complete && after_last_stim
+      && now <= trial_t_last_stim_ + post_win)
    {
     if(!trial_neuron_fired_)
     {

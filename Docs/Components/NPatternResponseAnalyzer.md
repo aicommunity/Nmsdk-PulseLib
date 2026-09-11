@@ -14,7 +14,7 @@
 
 ### Окна детекта
 
-1. **`PostPatternWindow`** (default 0.5 с после последнего стимула) — «вовремя». Первый rising-edge в этом окне задаёт `neuron_fired` / `match`. Trial **не** закрывается на первом спайке: окно додерживается до конца Post, чтобы посчитать все спайки.
+1. **`PostPatternWindow`** (default 0.5 с после последнего стимула) — «вовремя». Rising-edge **после последнего стимула** полного паттерна (≥4 стимула, либо одиночный стимул) задаёт `neuron_fired` / `match`. Mid-pattern edges учитываются в `neuron_spike_count` / morphology, но **не** в `neuron_fired` (защита от early-spike false PASS на коротких span). Trial **не** закрывается на первом спайке: окно додерживается до конца Post, чтобы посчитать все спайки.
 2. **`LateResponseWindow`** (default 1.5 с после последнего стимула, ≥ PostPatternWindow) — если in-window тишина, наблюдаем дальше до конца Late (или старта следующего паттерна). Первый late edge → `late_fired=1`; последующие late edge тоже учитываются в `neuron_spike_count`.
 3. Доп. стимулы **внутри** открытого PostPatternWindow дописываются в тот же trial (мульти-импульсный паттерн).
 

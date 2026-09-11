@@ -2830,10 +2830,15 @@ bool NNeuronTimeLearner::MeasureMaxPotentialAndTime(void)
   // Allow a little early membrane peak; do not clamp lo up to expected_i.
   if(i + 1 < int(ExpectedPulseRelTimes.size()))
   {
-   // Do not enter the next pulse's expected peak band.
-   const double next_peak = ExpectedPulseRelTimes[static_cast<size_t>(i + 1)] + delay_est;
-   if(t_hi_rel > next_peak - 0.002)
-    t_hi_rel = next_peak - 0.002;
+   // Do not enter the next pulse's expected peak band (use next dendrite delay).
+   const double next_delay = std::max(0.0,
+    (DendriteLength[i + 1] > 1)
+     ? (DendriteLength[i + 1] - 1) * EstDelayPerSeg : 0.0);
+   const double next_peak =
+    ExpectedPulseRelTimes[static_cast<size_t>(i + 1)] + next_delay;
+   const double gap_guard = std::min(0.002, std::max(1e-4, 0.25 * EstDelayPerSeg));
+   if(t_hi_rel > next_peak - gap_guard)
+    t_hi_rel = next_peak - gap_guard;
   }
   else
   {
@@ -3101,8 +3106,31 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
  
  // Measured peak already within SyncTolerance: do not grow/shrink on cable-model
  // disagreement (prevents L oscillation between adjacent segment counts).
+ // Exception: if an adjacent L strictly reduces |needed - delay_len|, prefer it
+ // (short-span FORMULA_OFF / PEAK_PREFERS_L_ACTUAL cleanup).
  if(peak_synced)
  {
+  const int L = DendriteLength[num];
+  const double d_cur = fabs(needed - delay_len);
+  double d_m1 = 1e99;
+  double d_p1 = 1e99;
+  if(L > 1)
+   d_m1 = fabs(needed - double(L - 2) * EstDelayPerSeg);
+  if(L < MaxDendriteLength.GetData())
+   d_p1 = fabs(needed - double(L) * EstDelayPerSeg);
+  const double improve_eps = std::max(1e-9, 0.05 * SyncTolerance.GetData());
+  if(d_m1 + improve_eps < d_cur)
+  {
+   DendStatus[num] = -1;
+   Dissynchronization[num] = needed - double(L - 2) * EstDelayPerSeg;
+   return true;
+  }
+  if(d_p1 + improve_eps < d_cur)
+  {
+   DendStatus[num] = 1;
+   Dissynchronization[num] = needed - double(L) * EstDelayPerSeg;
+   return true;
+  }
   DendStatus[num] = 0;
   if(num < int(DendLastAbsDt.size()))
    DendLastAbsDt[static_cast<size_t>(num)] = fabs(measured_dt);
