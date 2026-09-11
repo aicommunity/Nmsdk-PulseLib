@@ -110,7 +110,7 @@ void NNeuronTimeLearner::ResizeSyncVectors(int n)
  DendBestEffortSynced.assign(static_cast<size_t>(n), false);
  ActiveDendrite = 0;
  HasPrevPeakSnapshot = false;
- EstDelayPerSeg = kDelayPerSegDefault;
+ // Keep EstDelayPerSeg (XML seed / EMA); do not wipe on resize.
  LastLengthDelta = 0;
  LastLengthDeltaDendrite = -1;
  if(int(ResistanceStatus.size()) != n)
@@ -1170,6 +1170,7 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  SyncTolerance("SyncTolerance", this, &NNeuronTimeLearner::SetSyncTolerance),
  PeakMeasureMargin("PeakMeasureMargin", this, &NNeuronTimeLearner::SetPeakMeasureMargin),
  DelayAgreeMarginMin("DelayAgreeMarginMin", this, &NNeuronTimeLearner::SetDelayAgreeMarginMin),
+ EstDelayPerSeg("EstDelayPerSeg", this, &NNeuronTimeLearner::SetEstDelayPerSeg),
  TrainingPhase("TrainingPhase", this),
  ResetToUntrainedState("ResetToUntrainedState", this, &NNeuronTimeLearner::SetResetToUntrainedState),
  ExperimentNum("ExperimentNum", this, &NNeuronTimeLearner::SetExperimentNum),
@@ -1776,16 +1777,24 @@ bool NNeuronTimeLearner::SetPeakMeasureMargin(const double &value)
  return true;
 }
 
-/// Floor for DelayUseOf agree margin (sec)
-bool NNeuronTimeLearner::SetDelayAgreeMarginMin(const double &value)
-{
- if(value < 0.0)
-  return false;
- return true;
-}
+ /// Floor for DelayUseOf agree margin (sec)
+ bool NNeuronTimeLearner::SetDelayAgreeMarginMin(const double &value)
+ {
+  if(value < 0.0)
+   return false;
+  return true;
+ }
 
-/// One-shot request to reset to untrained structure/state
-bool NNeuronTimeLearner::SetResetToUntrainedState(const bool &value)
+ /// Cable delay per segment (sec); must stay positive for length steps
+ bool NNeuronTimeLearner::SetEstDelayPerSeg(const double &value)
+ {
+  if(value <= 0.0)
+   return false;
+  return true;
+ }
+
+ /// One-shot request to reset to untrained structure/state
+ bool NNeuronTimeLearner::SetResetToUntrainedState(const bool &value)
 {
  (void)value;
  return true;
@@ -2244,6 +2253,7 @@ bool NNeuronTimeLearner::ADefault(void)
  SyncTolerance = 0.02;
  PeakMeasureMargin = 0.06;
  DelayAgreeMarginMin = 0.03;
+ EstDelayPerSeg = kDelayPerSegDefault;
  TrainingPhase = kPhaseSync;
  ResetToUntrainedState = false;
  HasUntrainedSnapshot = false;
@@ -3049,7 +3059,7 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
  {
   const double observed = (fabs(prev_dt) - fabs(dt)) / double(applied_delta);
   if(observed > 1e-4 && observed < 1.0)
-   EstDelayPerSeg = 0.7 * EstDelayPerSeg + 0.3 * observed;
+   EstDelayPerSeg = 0.7 * EstDelayPerSeg.GetData() + 0.3 * observed;
  }
  if(had_length_apply && IsParametricNormalization())
  {

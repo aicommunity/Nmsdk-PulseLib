@@ -183,6 +183,9 @@ public:
  
  /// Floor for DelayUseOf agree_margin: max(SyncTolerance, DelayAgreeMarginMin) (sec)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> DelayAgreeMarginMin;
+
+ /// Cable delay per segment (sec); seed from XML for short-span; EMA-refined when |dt| improves
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> EstDelayPerSeg;
  
  /// 0 - joint train (length+synapses); 1 - legacy unused; 2 - Done
  UProperty<int, NNeuronTimeLearner, ptPubState> TrainingPhase;
@@ -328,9 +331,6 @@ protected:
  
  /// Accepted without |dt|≤tol (amp-collapse / no-improve stop)
  std::vector<bool> DendBestEffortSynced;
- 
- /// Estimated cable delay per segment (sec); refined from observed |Δdt|/ΔL
- double EstDelayPerSeg;
  
  /// Last length delta applied for EstDelayPerSeg update
  int LastLengthDelta;
@@ -586,6 +586,9 @@ public: // Methods
  
  /// Floor for DelayUseOf agree margin (sec)
  bool SetDelayAgreeMarginMin(const double &value);
+
+ /// Cable delay per segment seed / runtime estimate (sec)
+ bool SetEstDelayPerSeg(const double &value);
  
  /// One-shot request to reset to untrained structure/state
  bool SetResetToUntrainedState(const bool &value);

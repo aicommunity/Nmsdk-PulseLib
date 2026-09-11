@@ -1252,6 +1252,28 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   UploadClass("NSPNeuronGenAsymRmD001C25e11", n);
  }
 
+ // AsymRm + PhaseA-scale C=1e-9 (τ≈10 мс). DIAG: C25e11 still mid-pattern;
+ // match Bio/PhaseA membrane integration for span25 last-pulse crown.
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBio";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001;
+  n->SynapseSecretionTC=0.001;
+  n->MembraneCapacity=1e-9;
+  n->ExcMembraneResistance=1e7;
+  n->InhMembraneResistance=1e8;
+  n->ExcSynapseResistance=8.6e7;
+  n->InhSynapseResistance=8.6e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenAsymRmD001C1e9", n);
+ }
+
  // Preinh k=2.5 + AsymRm Pack A.
  {
   n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
