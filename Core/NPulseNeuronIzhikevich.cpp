@@ -37,8 +37,12 @@ NPulseNeuronIzhikevich* NPulseNeuronIzhikevich::New(void)
 /// Создает структуру простого нейрона
 void NPulseNeuronIzhikevich::CreateSimpleNeuron(void)
 {
- AddMissingComponent<NPulseMembraneIzhikevich>("PulseMembrane", "NPulseMembraneIzhikevich");
- AddMissingComponent<NPulseLTZoneIzhikevich>("LTZone", "NPulseLTZoneIzhikevich");
+ auto membr = AddMissingComponent<NPulseMembraneIzhikevich>("PulseMembrane", "NPulseMembraneIzhikevich");
+ auto ltz = AddMissingComponent<NPulseLTZoneIzhikevich>("LTZone", "NPulseLTZoneIzhikevich");
+ if(membr)
+  membr->SetCoord(MVector<double,3>(8.0, 4.0, 0.0));
+ if(ltz)
+  ltz->SetCoord(MVector<double,3>(16.0, 4.0, 0.0));
 
  bool res=CreateLink("LTZone","Output","PulseMembrane","InputFeedbackSignal");
  res&=CreateLink("PulseMembrane.PosChannel","Output","LTZone","InputChannels");

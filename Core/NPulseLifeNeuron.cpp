@@ -135,6 +135,8 @@ bool NPulseLifeNeuron::ABuild(void)
  bool res(true);
 
  UEPtr<NNeuronLife> nlife=AddMissingComponent<NNeuronLife>("NeuronLife","NNeuronLife",&NeuronLife);
+ if(nlife)
+  nlife->SetCoord(MVector<double,3>(8.0, 4.0, 0.0));
  if(LTZone)
   res&=CreateLink(LTZone->GetLongName(this),"Output",nlife->GetLongName(this),"Input1");
 

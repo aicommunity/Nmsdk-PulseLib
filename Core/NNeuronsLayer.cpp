@@ -182,7 +182,7 @@ bool NNeuronsLayer::BuildStructure(int structure_build_mode, const string &neuro
 	 {
 	  ind = i*neurons_width + j;
 	  neuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron")+sntoa(ind+1), neurons_class_name);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
-	  neuron->SetCoord(MVector<double,3>(8.7+j*7,1.67+i*2,0));
+	  neuron->SetCoord(MVector<double,3>(8.7+j*10,1.67+i*2,0));
 	 }
  }
 

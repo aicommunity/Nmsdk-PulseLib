@@ -30,6 +30,13 @@ See file license.txt for more information
 
 namespace NMSDK {
 
+namespace {
+constexpr double kDendritePitchX = 11.0;  // was 8.0 — wider for Modern Diagram cards
+constexpr double kSomaRowPitchY  = 2.0;
+constexpr double kNeuronBaseX   = 12.7;
+constexpr double kNeuronBaseY   = 4.67;
+} // namespace
+
 // ћетоды
 // --------------------------
 //  онструкторы и деструкторы
@@ -531,7 +538,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
     std::string("Failed to create LTZone with class: ")+ltzone_class);
   return false;
  }
- ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*8,4.67,0));
+ ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*kDendritePitchX,kNeuronBaseY,0));
 
  UEPtr<UNet> gen_pos,gen_neg;
  if(!ExcGeneratorClassName->empty())
@@ -645,7 +652,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
      std::string("Failed to create LTMembrane with class: ")+ltzonemembraneclass);
    return false;
   }
-  ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*8,4.67,0));
+  ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*kDendritePitchX,kNeuronBaseY,0));
   // Ensure channels exist: TakeObject prototypes may be Ready with empty Channels[].
   if(!ltmembr->GetComponent("ExcChannel", true) || ltmembr->GetNumChannels() == 0)
   {
@@ -687,7 +694,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
      std::string("Failed to create Soma")+sntoa(i+1)+std::string(" with class: ")+membraneclass);
    return false;
   }
-  membr->SetCoord(MVector<double,3>(12.7+dendrite_length*8,4.67+i*2,0));
+  membr->SetCoord(MVector<double,3>(kNeuronBaseX+dendrite_length*kDendritePitchX,kNeuronBaseY+i*kSomaRowPitchY,0));
   // Ensure channels exist before CreateLink (TakeObject may be Ready w/o Channels).
   if(!membr->GetComponent("ExcChannel", true) || membr->GetNumChannels() == 0)
   {
@@ -750,7 +757,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
       std::string("Failed to create Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1)+std::string(" with class: ")+membraneclass);
     return false;
    }
-   membr->SetCoord(MVector<double,3>(12.7+(dendrite_length-j-1)*8,4.67+i*2,0));
+   membr->SetCoord(MVector<double,3>(kNeuronBaseX+(dendrite_length-j-1)*kDendritePitchX,kNeuronBaseY+i*kSomaRowPitchY,0));
    // New distal segments need real Channels[] before cable/PosNeg links.
    // TakeObject prototypes can be Ready with ExcChannel child but empty Channels.
    if(!membr->GetComponent("ExcChannel", true) || membr->GetNumChannels() == 0)

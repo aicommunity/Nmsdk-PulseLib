@@ -80,7 +80,15 @@ bool NPulseMembraneIzhikevich::ABuild(void)
  if(!NPulseMembrane::ABuild())
   return false;
 
- AddMissingComponent<NPulseChannelIzhikevich>("PosChannel", "NPulseChannelIzhikevich");
+ auto pos = AddMissingComponent<NPulseChannelIzhikevich>("PosChannel", "NPulseChannelIzhikevich");
+ if(pos)
+  pos->SetCoord(MVector<double,3>(5.0, 4.0, 0.0));
+
+ // Align Exc/Inh channels and synapses with NPulseMembrane diagram layout
+ if(auto exc = GetComponent("ExcChannel", true))
+  exc->SetCoord(MVector<double,3>(5.0, 4.0, 0.0));
+ if(auto inh = GetComponent("InhChannel", true))
+  inh->SetCoord(MVector<double,3>(5.0, 8.0, 0.0));
 
  return true;
 }
