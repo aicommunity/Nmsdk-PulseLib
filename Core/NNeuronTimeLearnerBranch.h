@@ -198,7 +198,37 @@ public:
  
  /// Enable detailed DEBUG logging of sync/norm steps
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableDebug;
- 
+
+ /// When true, after sync+amp Done run PostTune (tip-resistance + silent mid)
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnablePostTrainTuning;
+
+ /// 0=Off 1=CanonRmin 2=FlatLastR 3=KeepDone 4=SearchSynthetic
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> PostTrainTipResistanceMode;
+
+ /// Silent-mid FixedLTZ after tip tune
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnablePostTrainMidThreshold;
+
+ /// 0=Auto(soma) 1=Ltz 2=Soma
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> PostTrainMidMetric;
+
+ /// Floor / first tips for CanonRmin (default 2e7)
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> TipResistanceCanonFloor;
+
+ /// Last tip for CanonRmin / FlatLastR (default 8.6e7)
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> TipResistanceCanonLast;
+
+ /// LTZ threshold during PostTune probes
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> PostTrainSilentThreshold;
+
+ /// Max synthetic foils
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> PostTrainSyntheticFoilCount;
+
+ /// SearchSynthetic iteration budget
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> PostTrainTipSearchIters;
+
+ /// True after PostTune finished (pub state)
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubState> PostTrainTuneComplete;
+
  /// When true: each tip Exc@L[k] also drives InhSynapse1 on segment L[k]+1
  /// (same Generator). Cable grows to max(L)+1. Mute links Exc+Inh; Done → 2N.
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableNextSegmentInhibition;
@@ -474,6 +504,36 @@ protected:
  
  /// True after TipSynapseResistance was scaled by N for parallel recognition
  bool ParallelResistanceScaled;
+
+ /// PostTune: synthetic patterns (target first)
+ std::vector<std::vector<double> > PostTunePatterns;
+
+ /// PostTune: probe metrics aligned with PostTunePatterns
+ std::vector<double> PostTuneMetrics;
+
+ /// TipR snapshot at end of Normalize (KeepDone / Search fallback)
+ std::vector<double> PostTuneTipSnapshot;
+
+ /// Current synthetic pattern index
+ int PostTunePatternIndex;
+
+ /// SearchSynthetic pass counter
+ int PostTuneSearchPass;
+
+ /// SearchSynthetic current tip index
+ int PostTuneSearchTip;
+
+ /// SearchSynthetic multiplier index (0=0.5, 1=1.0, 2=2.0)
+ int PostTuneSearchMult;
+
+ /// Best gap seen during SearchSynthetic
+ double PostTuneBestGap;
+
+ /// TipR for best gap
+ std::vector<double> PostTuneBestTips;
+
+ /// TipR under evaluation during SearchSynthetic
+ std::vector<double> PostTuneTrialTips;
  
  static constexpr int kCalibrateGapFraction = 0;
  
@@ -812,6 +872,24 @@ protected:
  
  /// Branch: true during parallel recognition calibrate
  bool IsParallelCalibrationPhase(void) const;
+
+ /// Enter PostTune after EndOfLearning gates (Need stays true)
+ void EnterPostTunePhase(void);
+
+ /// Apply TipR mode + Exc sync; snapshot for KeepDone
+ void ApplyPostTrainTipMode(bool use_snapshot_only);
+
+ /// Push PostTunePatterns[index] into InputPattern + Dataset
+ bool PushPostTunePattern(int index);
+
+ /// Handle FinishTrainingIteration while TrainingPhase==PostTune
+ void HandlePostTuneFinishIteration(void);
+
+ /// Write FixedLTZ from probe metrics and clear Need → Done
+ void FinalizePostTuneMid(void);
+
+ /// Probe metric for mid: LTZ peak or soma peak
+ double ReadPostTuneProbeMetric(void) const;
  
  /// Publish AmpDt / TipR / length traces for watchers
  void UpdateNormTraces(void);

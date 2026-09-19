@@ -202,6 +202,36 @@ public:
  /// Enable detailed DEBUG logging of sync/norm steps
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> EnableDebug;
 
+ /// When true, after sync+amp Done run PostTune (tip-resistance + silent mid)
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> EnablePostTrainTuning;
+
+ /// 0=Off 1=CanonRmin 2=FlatLastR 3=KeepDone 4=SearchSynthetic
+ UProperty<int, NNeuronTimeLearner, ptPubParameter> PostTrainTipResistanceMode;
+
+ /// Silent-mid FixedLTZ after tip tune
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> EnablePostTrainMidThreshold;
+
+ /// 0=Auto(ltz) 1=Ltz 2=Soma
+ UProperty<int, NNeuronTimeLearner, ptPubParameter> PostTrainMidMetric;
+
+ /// Floor / first tips for CanonRmin (default 2e7)
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> TipResistanceCanonFloor;
+
+ /// Last tip for CanonRmin / FlatLastR (default 8.6e7)
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> TipResistanceCanonLast;
+
+ /// LTZ threshold during PostTune probes
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> PostTrainSilentThreshold;
+
+ /// Max synthetic foils
+ UProperty<int, NNeuronTimeLearner, ptPubParameter> PostTrainSyntheticFoilCount;
+
+ /// SearchSynthetic iteration budget
+ UProperty<int, NNeuronTimeLearner, ptPubParameter> PostTrainTipSearchIters;
+
+ /// True after PostTune finished (pub state)
+ UProperty<bool, NNeuronTimeLearner, ptPubState> PostTrainTuneComplete;
+
 protected:
  /// Previous NumInputDendrite (resize / rebuild)
  int OldNumInputDendrite;
@@ -411,7 +441,7 @@ protected:
  
  /// Absolute |Initial-amp| tolerance for parametric amp Done (was 5e-6; cold runs
  /// often stall ~6e-6 on one dendrite and never clear IsNeedToTrain).
- static constexpr double kAmpNormEps = 1e-5;
+ static constexpr int kAmpNormEps = 1e-5;
  
  static constexpr double kAmpOscillationBand = 0.005;
  
@@ -455,6 +485,36 @@ protected:
  
  /// LTZ max from last fully synced iteration
  double LastSyncedMaxLTZ;
+
+ /// PostTune: synthetic patterns (target first)
+ std::vector<std::vector<double> > PostTunePatterns;
+
+ /// PostTune: probe metrics aligned with PostTunePatterns
+ std::vector<double> PostTuneMetrics;
+
+ /// TipR snapshot at end of Normalize (KeepDone / Search fallback)
+ std::vector<double> PostTuneTipSnapshot;
+
+ /// Current synthetic pattern index
+ int PostTunePatternIndex;
+
+ /// SearchSynthetic pass counter
+ int PostTuneSearchPass;
+
+ /// SearchSynthetic current tip index
+ int PostTuneSearchTip;
+
+ /// SearchSynthetic multiplier index (0=0.5, 1=1.0, 2=2.0)
+ int PostTuneSearchMult;
+
+ /// Best gap seen during SearchSynthetic
+ double PostTuneBestGap;
+
+ /// TipR for best gap
+ std::vector<double> PostTuneBestTips;
+
+ /// TipR under evaluation during SearchSynthetic
+ std::vector<double> PostTuneTrialTips;
  
  static constexpr int kCalibrateGapFraction = 0;
  
@@ -717,6 +777,24 @@ protected:
  
  /// Track IterMin/Max LTZ for this iteration
  void UpdateIterLTZPotential(void);
+
+ /// Enter PostTune after EndOfLearning gates (Need stays true)
+ void EnterPostTunePhase(void);
+
+ /// Apply TipR mode + Exc sync; snapshot for KeepDone
+ void ApplyPostTrainTipMode(bool use_snapshot_only);
+
+ /// Push PostTunePatterns[index] into InputPattern + Dataset
+ bool PushPostTunePattern(int index);
+
+ /// Handle FinishTrainingIteration while TrainingPhase==PostTune
+ void HandlePostTuneFinishIteration(void);
+
+ /// Write FixedLTZ from probe metrics and clear Need → Done
+ void FinalizePostTuneMid(void);
+
+ /// Probe metric for mid: LTZ peak or soma sum
+ double ReadPostTuneProbeMetric(void) const;
  
  /// Set FixedLTZ from last synced LTZ min/max
  void CalibrateFixedLTZThresholdFromTraining(void);
