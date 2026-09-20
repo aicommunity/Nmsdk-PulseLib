@@ -40,6 +40,26 @@ static std::string PatternKey(const std::vector<double> &isi)
  return oss.str();
 }
 
+static void PushUniquePattern(
+ std::vector<std::vector<double> > &out,
+ std::set<std::string> &seen,
+ const std::vector<double> &p,
+ const std::vector<double> &target,
+ int max_foils)
+{
+ if(int(out.size()) - 1 >= max_foils)
+  return;
+ if(PatternSum(p) <= 1e-15)
+  return;
+ if(PatternsEqual(p, target))
+  return;
+ const std::string key = PatternKey(p);
+ if(seen.count(key))
+  return;
+ seen.insert(key);
+ out.push_back(p);
+}
+
 std::vector<std::vector<double> > BuildSyntheticPatterns(
  const std::vector<double> &target_isi,
  int foil_cap)
@@ -102,20 +122,122 @@ std::vector<std::vector<double> > BuildSyntheticPatterns(
 
  const int max_foils = (foil_cap > 0) ? foil_cap : 8;
  for(size_t c = 0; c < candidates.size(); ++c)
+  PushUniquePattern(out, seen, candidates[c], target, max_foils);
+ return out;
+}
+
+std::vector<std::vector<double> > BuildRecognitionProbePatterns(
+ const std::vector<double> &target_isi,
+ int foil_cap)
+{
+ std::vector<std::vector<double> > out;
+ const int n = int(target_isi.size());
+ if(n < 1)
+  return out;
+
+ std::vector<double> target = target_isi;
+ for(int i = 0; i < n; ++i)
  {
-  if(int(out.size()) - 1 >= max_foils)
-   break;
-  std::vector<double> &p = candidates[c];
-  if(PatternSum(p) <= 1e-15)
-   continue;
-  if(PatternsEqual(p, target))
-   continue;
-  const std::string key = PatternKey(p);
-  if(seen.count(key))
-   continue;
-  seen.insert(key);
-  out.push_back(p);
+  if(target[static_cast<size_t>(i)] < 0.0)
+   target[static_cast<size_t>(i)] = 0.0;
  }
+ out.push_back(target);
+
+ const int max_foils = (foil_cap > 0) ? foil_cap : 8;
+ std::set<std::string> seen;
+ seen.insert(PatternKey(target));
+
+ if(n == 1)
+  return out;
+
+ const double onset = target[0];
+ double body = 0.0;
+ for(int i = 1; i < n; ++i)
+  body += target[static_cast<size_t>(i)];
+ if(body <= 1e-15)
+ {
+  // Degenerate target: fall back to legacy synthetic (no scale preferred later).
+  return BuildSyntheticPatterns(target_isi, foil_cap);
+ }
+
+ // AsymRm pack A body-mass fractions for N=4 (phase8 silent mid set).
+ // onset fixed; remaining mass redistributed. Matches EXP_span*ms_packA_* MatrixData.
+ if(n == 4)
+ {
+  static const double kPackABodyFrac[7][3] = {
+   {0.5, 1.0 / 3.0, 1.0 / 6.0},           // reverse body
+   {1.0 / 3.0, 1.0 / 6.0, 0.5},           // mid swap
+   {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0},     // equal
+   {1.0 / 24.0, 11.0 / 24.0, 0.5},        // squeeze early
+   {0.5, 11.0 / 24.0, 1.0 / 24.0},        // squeeze late
+   {1.0 / 12.0, 1.0 / 12.0, 5.0 / 6.0},   // mass on last
+   {5.0 / 6.0, 1.0 / 12.0, 1.0 / 12.0},   // mass on first body
+  };
+  for(int f = 0; f < 7; ++f)
+  {
+   std::vector<double> p(4, 0.0);
+   p[0] = onset;
+   p[1] = body * kPackABodyFrac[f][0];
+   p[2] = body * kPackABodyFrac[f][1];
+   p[3] = body * kPackABodyFrac[f][2];
+   PushUniquePattern(out, seen, p, target, max_foils);
+  }
+  return out;
+ }
+
+ // General N: fixed-onset permutations of body + equal + extremes.
+ {
+  std::vector<double> body_vals(target.begin() + 1, target.end());
+  std::sort(body_vals.begin(), body_vals.end());
+  do
+  {
+   std::vector<double> p(static_cast<size_t>(n), 0.0);
+   p[0] = onset;
+   for(int i = 1; i < n; ++i)
+    p[static_cast<size_t>(i)] = body_vals[static_cast<size_t>(i - 1)];
+   PushUniquePattern(out, seen, p, target, max_foils);
+   if(int(out.size()) - 1 >= max_foils)
+    return out;
+  } while(std::next_permutation(body_vals.begin(), body_vals.end()));
+ }
+
+ {
+  std::vector<double> equal(static_cast<size_t>(n), 0.0);
+  equal[0] = onset;
+  const double slot = body / double(n - 1);
+  for(int i = 1; i < n; ++i)
+   equal[static_cast<size_t>(i)] = slot;
+  PushUniquePattern(out, seen, equal, target, max_foils);
+ }
+
+ {
+  std::vector<double> last_heavy(static_cast<size_t>(n), 0.0);
+  last_heavy[0] = onset;
+  const double tiny = body / double(12 * (n - 1));
+  double used = 0.0;
+  for(int i = 1; i + 1 < n; ++i)
+  {
+   last_heavy[static_cast<size_t>(i)] = tiny;
+   used += tiny;
+  }
+  last_heavy[static_cast<size_t>(n - 1)] = body - used;
+  PushUniquePattern(out, seen, last_heavy, target, max_foils);
+ }
+
+ {
+  std::vector<double> first_heavy(static_cast<size_t>(n), 0.0);
+  first_heavy[0] = onset;
+  const double tiny = body / double(12 * (n - 1));
+  double used = 0.0;
+  for(int i = 2; i < n; ++i)
+  {
+   first_heavy[static_cast<size_t>(i)] = tiny;
+   used += tiny;
+  }
+  first_heavy[1] = body - used;
+  PushUniquePattern(out, seen, first_heavy, target, max_foils);
+ }
+
  return out;
 }
 

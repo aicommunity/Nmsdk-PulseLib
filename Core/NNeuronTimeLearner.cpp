@@ -21,11 +21,13 @@ See file license.txt for more information
 #endif
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <fstream>
 #include <limits>
 #include <sstream>
 #include "NNeuronTimeLearner.h"
 #include "NNeuronPostTrainTune.h"
+#include "NPatternResponseAnalyzer.h"
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseLTZoneCommon.h"
 #include "../../Rdk/Deploy/Include/rdk_cpp_init.h"
@@ -1225,6 +1227,13 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  PostTuneSearchTip = 0;
  PostTuneSearchMult = 0;
  PostTuneBestGap = -1e300;
+ PostTuneFreeRunActive = false;
+ PostTuneInferenceMidPending = false;
+ PostTuneInferenceMidDone = false;
+ PostTuneLiveSomaMax = 0.0;
+ PostTuneLastDatasetIter = -1;
+ PostTuneFreeRunStartTime = -1.0;
+ PostTuneHaveSavedMatrix = false;
 }
 
 
@@ -1414,6 +1423,7 @@ bool NNeuronTimeLearner::SetIsNeedToTrain(const bool &value)
   PostTuneBestGap = -1e300;
   PostTunePatterns.clear();
   PostTuneMetrics.clear();
+  PostTuneTargetIsi.clear();
   PostTuneTrialTips.clear();
   SetLTZThreshold(TrainingLTZThreshold.GetData());
   LTZThreshold.SetDataDirect(TrainingLTZThreshold.GetData());
@@ -2348,9 +2358,17 @@ bool NNeuronTimeLearner::ADefault(void)
  PostTuneBestGap = -1e300;
  PostTunePatterns.clear();
  PostTuneMetrics.clear();
+ PostTuneTargetIsi.clear();
  PostTuneTipSnapshot.clear();
  PostTuneBestTips.clear();
  PostTuneTrialTips.clear();
+ PostTuneFreeRunActive = false;
+ PostTuneInferenceMidPending = false;
+ PostTuneInferenceMidDone = false;
+ PostTuneLiveSomaMax = 0.0;
+ PostTuneLastDatasetIter = -1;
+ PostTuneFreeRunStartTime = -1.0;
+ PostTuneHaveSavedMatrix = false;
  
  CountIteration = 0;
  ExperimentNum = 0;
@@ -3630,8 +3648,195 @@ bool NNeuronTimeLearner::PushPostTunePattern(int index)
  InputPattern.SetDataDirect(matrix);
  if(!SyncInputPatternToDataset(&matrix))
   return false;
+ if(Dataset)
+ {
+  Dataset->Reset();
+  if(NPulseGeneratorTransit *g = GetDatasetGenerator())
+   g->Reset();
+ }
+ if(Neuron)
+  Neuron->Reset();
+ PrevPulseCounter = 0;
+ PrevGenOutput = 0.0;
+ HasPrevIteration = false;
+ IterationActive = false;
  PostTunePatternIndex = index;
+ PostTuneLiveSomaMax = 0.0;
  return true;
+}
+
+double NNeuronTimeLearner::ReadPostTuneLiveMetric(void) const
+{
+ if(!Neuron)
+  return 0.0;
+ const int mode = PostTrainMidMetric.GetData();
+ const bool use_soma = (mode == PostTrainTune::kMidMetricSoma);
+ if(use_soma)
+ {
+  double sum = 0.0;
+  for(int i = 0; i < NumInputDendrite; ++i)
+  {
+   UEPtr<NPulseMembrane> soma =
+    Neuron->GetComponentL<NPulseMembrane>(MakeLearnerSomaName(i + 1), true);
+   if(soma)
+    sum += soma->SumPotential(0, 0);
+  }
+  return sum;
+ }
+ return ReadLTZonePotential();
+}
+
+bool NNeuronTimeLearner::SetupPostTuneFreeRunProbes(void)
+{
+ if(!Dataset || PostTunePatterns.empty())
+  return false;
+
+ const int n = NumInputDendrite.GetData();
+ const int ns = int(PostTunePatterns.size());
+ if(n < 1 || ns < 1)
+  return false;
+
+ MDMatrix<double> matrix;
+ matrix.Resize(ns * n, 1, 0.0);
+ for(int s = 0; s < ns; ++s)
+ {
+  const std::vector<double> &isi = PostTunePatterns[static_cast<size_t>(s)];
+  for(int i = 0; i < n; ++i)
+  {
+   double v = (i < int(isi.size())) ? isi[static_cast<size_t>(i)] : 0.0;
+   if(v < 0.0)
+    v = 0.0;
+   matrix(s * n + i, 0) = v;
+  }
+ }
+
+ PostTuneFreeRunActive = true;
+ PostTuneMetrics.assign(static_cast<size_t>(ns), 0.0);
+ PostTuneLiveSomaMax = 0.0;
+ PostTuneLastDatasetIter = -1;
+ PostTuneFreeRunStartTime = Environment
+  ? Environment->GetTime().GetDoubleTime() : 0.0;
+ IterationActive = false;
+
+ Dataset->PulseGeneratorClassName = PulseGeneratorClassName;
+ if(Dataset->MaxSpikesPerFeature != n)
+  Dataset->SetMaxSpikesPerFeature(n);
+ if(!Dataset->SetMatrixData(matrix))
+ {
+  PostTuneFreeRunActive = false;
+  LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
+   "SetupPostTuneFreeRunProbes: SetMatrixData failed");
+  return false;
+ }
+ Dataset->MatrixClasses.Resize(1, ns, 0);
+ Dataset->MatrixClasses(0, 0) = 1;
+ for(int s = 1; s < ns; ++s)
+  Dataset->MatrixClasses(0, s) = 0;
+ Dataset->Delay = EffectiveDatasetDelaySec();
+ Dataset->AdvanceSampleAfterBurst = true;
+ Dataset->LoopSamples = false;
+ if(!PostTuneInferenceMidPending)
+ {
+  if(!Dataset->Build())
+  {
+   LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
+    "SetupPostTuneFreeRunProbes: Dataset->Build returned false");
+   PostTuneFreeRunActive = false;
+   return false;
+  }
+  for(int d = 0; d < n; ++d)
+  {
+   if(!RelinkDendriteSynapsesToDataset(d))
+   {
+    PostTuneFreeRunActive = false;
+    return false;
+   }
+   if(IsParametricNormalization() && d < int(TipSynapseResistance.size()))
+    SetTipSynapseResistanceOnComponent(d, TipSynapseResistance[d]);
+  }
+  ApplyPostTrainTipMode(false);
+ }
+ Dataset->StateGeneration = 2;
+ Dataset->Reset();
+ if(NPulseGeneratorTransit *g = GetDatasetGenerator())
+  g->Reset();
+ if(Neuron)
+  Neuron->Reset();
+ Dataset->StateGeneration = 2;
+
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "SetupPostTuneFreeRunProbes: samples=" << ns
+      << " spikes=" << n
+      << " delay=" << double(Dataset->Delay)
+      << " state_gen=" << int(Dataset->StateGeneration);
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
+ return true;
+}
+
+void NNeuronTimeLearner::UpdatePostTuneFreeRunPeak(void)
+{
+ if(!PostTuneFreeRunActive)
+  return;
+ if(PostTrainTuneComplete.GetData() && !PostTuneInferenceMidPending)
+  return;
+ if(!Dataset || !Neuron)
+  return;
+
+ const double amp = ReadPostTuneLiveMetric();
+ if(amp > PostTuneLiveSomaMax)
+  PostTuneLiveSomaMax = amp;
+
+ const int ns = int(PostTuneMetrics.size());
+ const int iter = int(Dataset->Iteration);
+ if(PostTuneLastDatasetIter < 0)
+ {
+  PostTuneLastDatasetIter = iter;
+ }
+ else if(iter != PostTuneLastDatasetIter)
+ {
+  const int prev = PostTuneLastDatasetIter;
+  if(prev >= 0 && prev < ns)
+   PostTuneMetrics[static_cast<size_t>(prev)] = PostTuneLiveSomaMax;
+  PostTuneLiveSomaMax = amp;
+  PostTuneLastDatasetIter = iter;
+ }
+
+ const bool playback_done = (int(Dataset->StateGeneration) == 0);
+ bool timed_out = false;
+ if(!playback_done && Environment && PostTuneFreeRunStartTime >= 0.0)
+ {
+  const double now = Environment->GetTime().GetDoubleTime();
+  const double budget = double(std::max(1, ns))
+   * (EffectiveDatasetDelaySec() + PatternSpanSec() + SettleMarginSec() + 0.5);
+  if(now - PostTuneFreeRunStartTime > budget)
+   timed_out = true;
+ }
+
+ if(!playback_done && !timed_out)
+  return;
+
+ const int last = std::max(0, PostTuneLastDatasetIter);
+ if(last < ns && PostTuneLiveSomaMax > PostTuneMetrics[static_cast<size_t>(last)])
+  PostTuneMetrics[static_cast<size_t>(last)] = PostTuneLiveSomaMax;
+
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "PostTuneFreeRun done playback=" << (playback_done ? 1 : 0)
+      << " timeout=" << (timed_out ? 1 : 0) << " metrics=[";
+  for(size_t i = 0; i < PostTuneMetrics.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << PostTuneMetrics[i];
+  }
+  oss << "]";
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
+
+ FinalizePostTuneMid();
 }
 
 void NNeuronTimeLearner::EnterPostTunePhase(void)
@@ -3643,14 +3848,14 @@ void NNeuronTimeLearner::EnterPostTunePhase(void)
 
  PostTunePatterns.clear();
  PostTuneMetrics.clear();
- std::vector<double> target_isi(static_cast<size_t>(n), 0.0);
+ PostTuneTargetIsi.assign(static_cast<size_t>(n), 0.0);
  for(int i = 0; i < n; ++i)
  {
   if(InputPattern.GetRows() > i && InputPattern.GetCols() > 0)
-   target_isi[static_cast<size_t>(i)] = InputPattern(i, 0);
+   PostTuneTargetIsi[static_cast<size_t>(i)] = InputPattern(i, 0);
  }
- PostTunePatterns = PostTrainTune::BuildSyntheticPatterns(
-  target_isi, PostTrainSyntheticFoilCount.GetData());
+ PostTunePatterns = PostTrainTune::BuildRecognitionProbePatterns(
+  PostTuneTargetIsi, PostTrainSyntheticFoilCount.GetData());
  PostTuneMetrics.assign(PostTunePatterns.size(), 0.0);
 
  const int mode = PostTrainTipResistanceMode.GetData();
@@ -3660,6 +3865,10 @@ void NNeuronTimeLearner::EnterPostTunePhase(void)
  PostTuneBestGap = -1e300;
  PostTuneBestTips.clear();
  PostTuneTrialTips.clear();
+ PostTuneFreeRunActive = false;
+ PostTuneLiveSomaMax = 0.0;
+ PostTuneLastDatasetIter = -1;
+ PostTuneFreeRunStartTime = -1.0;
  if(mode == PostTrainTune::kPostTipSearchSynthetic)
   PostTuneTrialTips = PostTrainTune::MakeCanonRminVector(
    n, TipResistanceCanonFloor.GetData(), TipResistanceCanonLast.GetData());
@@ -3676,13 +3885,27 @@ void NNeuronTimeLearner::EnterPostTunePhase(void)
  LTZThreshold.SetDataDirect(silent);
  UseFixedLTZThreshold.SetDataDirect(true);
 
- PushPostTunePattern(0);
+ // Canon/Flat/Keep/Off: free-run multi-sample Dataset like Test silent mid.
+ if(mode != PostTrainTune::kPostTipSearchSynthetic)
+ {
+  if(!SetupPostTuneFreeRunProbes())
+  {
+   PostTuneFreeRunActive = false;
+   PushPostTunePattern(0);
+  }
+ }
+ else
+ {
+  PostTuneFreeRunActive = false;
+  PushPostTunePattern(0);
+ }
 
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
   oss << "phase -> PostTune mode=" << mode
       << " patterns=" << PostTunePatterns.size()
+      << " free_run=" << (PostTuneFreeRunActive ? 1 : 0)
       << " silent=" << silent << " tips=[";
   for(int i = 0; i < n && i < int(TipSynapseResistance.size()); ++i)
   {
@@ -3696,19 +3919,97 @@ void NNeuronTimeLearner::EnterPostTunePhase(void)
 
 void NNeuronTimeLearner::FinalizePostTuneMid(void)
 {
+ const bool inference = !IsNeedToTrain.GetData()
+  && TrainingPhase.GetData() == kPhaseDone;
+ if(PostTrainTuneComplete.GetData() && TrainingPhase.GetData() == kPhaseDone
+    && FixedLTZThreshold.GetData() < 0.9 && !PostTuneInferenceMidPending
+    && !PostTuneFreeRunActive)
+  return;
+
  double mid = FixedLTZThreshold.GetData();
  double gap = 0.0;
+ bool landscape_ok = false;
  if(EnablePostTrainMidThreshold.GetData() && !PostTuneMetrics.empty())
  {
   const double tgt = PostTuneMetrics[0];
   std::vector<double> foils;
+  landscape_ok = true;
   for(size_t i = 1; i < PostTuneMetrics.size(); ++i)
+  {
    foils.push_back(PostTuneMetrics[i]);
+   if(PostTuneMetrics[i] + 1e-12 >= tgt)
+    landscape_ok = false;
+  }
   PostTrainTune::ComputeMidThreshold(tgt, foils, mid, gap);
+  if(gap < 1e-4)
+   landscape_ok = false;
+  // Train free-run often mismatches Test landscape; keep silent for inference mid.
+  if(!inference && !landscape_ok)
+   mid = PostTrainSilentThreshold.GetData();
   FixedLTZThreshold.SetDataDirect(mid);
   CalibratedFixedLTZThreshold.SetDataDirect(mid);
   AutoCalibrateFixedLTZThreshold.SetDataDirect(false);
   UseFixedLTZThreshold.SetDataDirect(true);
+ }
+
+ PostTuneFreeRunActive = false;
+ PostTuneLiveSomaMax = 0.0;
+ PostTuneLastDatasetIter = -1;
+ PostTuneFreeRunStartTime = -1.0;
+ PostTuneInferenceMidPending = false;
+
+ if(!PostTuneTargetIsi.empty() && !inference)
+ {
+  const int n = NumInputDendrite.GetData();
+  MDMatrix<double> matrix;
+  matrix.Resize(n, 1, 0.0);
+  for(int i = 0; i < n; ++i)
+  {
+   const double v = (i < int(PostTuneTargetIsi.size()))
+    ? PostTuneTargetIsi[static_cast<size_t>(i)] : 0.0;
+   matrix(i, 0) = (v < 0.0) ? 0.0 : v;
+  }
+  InputPattern.SetDataDirect(matrix);
+  SyncInputPatternToDataset(&matrix);
+ }
+ else if(inference && Dataset)
+ {
+  if(PostTuneHaveSavedMatrix)
+  {
+   Dataset->SetMatrixData(PostTuneSavedMatrix);
+   Dataset->SetMatrixClasses(PostTuneSavedClasses);
+   Dataset->LoopSamples = false;
+   Dataset->AdvanceSampleAfterBurst = true;
+   Dataset->Iteration.SetDataDirect(0);
+   Dataset->StateGeneration = 2;
+   Dataset->Reset();
+   if(NPulseGeneratorTransit *g = GetDatasetGenerator())
+    g->Reset();
+   if(Neuron)
+    Neuron->Reset();
+   for(int d = 0; d < NumInputDendrite; ++d)
+    RelinkDendriteSynapsesToDataset(d);
+   PostTuneHaveSavedMatrix = false;
+  }
+  if(Environment)
+  {
+   std::string csv = Environment->GetCurrentDataDir();
+   if(!csv.empty() && csv.back() != '/' && csv.back() != '\\')
+    csv.push_back('/');
+   csv += "SelectivityLog/results.csv";
+   std::remove(csv.c_str());
+  }
+  if(UEPtr<UContainer> parent = GetOwner())
+  {
+   if(UEPtr<NPatternResponseAnalyzer> ana =
+       parent->GetComponentL<NPatternResponseAnalyzer>(
+        std::string("PatternResponseAnalyzer"), true))
+   {
+    ana->Reset();
+    ana->Enable = true;
+    ana->TrialIndex = 0;
+   }
+  }
  }
 
  PostTrainTuneComplete = true;
@@ -3716,16 +4017,187 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
  CanChangeDendLength = false;
  SetLTZThreshold(FixedLTZThreshold.GetData());
  LTZThreshold.SetDataDirect(FixedLTZThreshold.GetData());
- SetIsNeedToTrain(false);
- IsNeedToTrain.SetDataDirect(false);
+ if(!inference)
+ {
+  SetIsNeedToTrain(false);
+  IsNeedToTrain.SetDataDirect(false);
+ }
+ else
+  PostTuneInferenceMidDone = true;
 
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
   oss << "phase -> Done (PostTune) mid=" << mid << " gap=" << gap
-      << " FixedLTZ=" << FixedLTZThreshold.GetData();
+      << " landscape_ok=" << (landscape_ok ? 1 : 0)
+      << " inference=" << (inference ? 1 : 0)
+      << " FixedLTZ=" << FixedLTZThreshold.GetData()
+      << " probes=" << PostTuneMetrics.size();
+  if(!PostTuneMetrics.empty())
+  {
+   oss << " metrics=[";
+   for(size_t i = 0; i < PostTuneMetrics.size(); ++i)
+   {
+    if(i) oss << ',';
+    oss << PostTuneMetrics[i];
+   }
+   oss << "]";
+  }
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
  }
+ {
+  std::string path;
+  if(Environment)
+   path = Environment->GetCurrentDataDir();
+  if(!path.empty())
+  {
+   if(path.back() != '/' && path.back() != '\\')
+    path.push_back('/');
+   path += "posttune_complete.flag";
+   std::ofstream flag(path.c_str(), std::ios::trunc);
+   if(flag)
+   {
+    flag << "mid=" << mid << " gap=" << gap
+         << " landscape_ok=" << (landscape_ok ? 1 : 0)
+         << " inference=" << (inference ? 1 : 0)
+         << " FixedLTZ=" << FixedLTZThreshold.GetData() << "\n";
+    if(!PostTuneMetrics.empty())
+    {
+     flag << "metrics=";
+     for(size_t i = 0; i < PostTuneMetrics.size(); ++i)
+      flag << (i ? "," : "") << PostTuneMetrics[i];
+     flag << "\n";
+    }
+   }
+  }
+ }
+}
+
+bool NNeuronTimeLearner::MaybeStartInferenceMidProbes(void)
+{
+ if(PostTuneInferenceMidDone || PostTuneFreeRunActive)
+  return PostTuneFreeRunActive;
+ if(IsNeedToTrain.GetData())
+  return false;
+ if(!EnablePostTrainTuning.GetData() || !EnablePostTrainMidThreshold.GetData())
+  return false;
+ if(FixedLTZThreshold.GetData() < 0.9)
+  return false;
+ {
+  const std::vector<double> tips = TipSynapseResistance.GetData();
+  const int n = NumInputDendrite.GetData();
+  if(n < 1 || int(tips.size()) < n)
+   return false;
+  const double floor_r = TipResistanceCanonFloor.GetData();
+  const double last_r = TipResistanceCanonLast.GetData();
+  bool canon = true;
+  bool flat = true;
+  for(int i = 0; i < n; ++i)
+  {
+   const double t = tips[static_cast<size_t>(i)];
+   if(i + 1 < n)
+   {
+    if(std::fabs(t - floor_r) > 1e5)
+     canon = false;
+   }
+   else if(std::fabs(t - last_r) > 1e5)
+    canon = false;
+   if(std::fabs(t - last_r) > 1e5)
+    flat = false;
+  }
+  if(!canon && !flat)
+   return false;
+ }
+
+ const int n = NumInputDendrite.GetData();
+ PostTuneTargetIsi.assign(static_cast<size_t>(n), 0.0);
+ if(Dataset && Dataset->MaxSpikesPerFeature.GetData() == n
+    && Dataset->MatrixData.GetRows() >= n)
+ {
+  for(int i = 0; i < n; ++i)
+   PostTuneTargetIsi[static_cast<size_t>(i)] = Dataset->MatrixData(i, 0);
+ }
+ else
+ {
+  for(int i = 0; i < n; ++i)
+  {
+   if(InputPattern.GetRows() > i && InputPattern.GetCols() > 0)
+    PostTuneTargetIsi[static_cast<size_t>(i)] = InputPattern(i, 0);
+  }
+ }
+ PostTunePatterns = PostTrainTune::BuildRecognitionProbePatterns(
+  PostTuneTargetIsi, PostTrainSyntheticFoilCount.GetData());
+ PostTuneMetrics.assign(PostTunePatterns.size(), 0.0);
+ PostTuneInferenceMidPending = true;
+ PostTuneHaveSavedMatrix = false;
+ if(Dataset)
+ {
+  PostTuneSavedMatrix = Dataset->MatrixData.GetData();
+  PostTuneSavedClasses = Dataset->MatrixClasses.GetData();
+  PostTuneHaveSavedMatrix = (PostTuneSavedMatrix.GetRows() > 0);
+ }
+ if(UEPtr<UContainer> parent = GetOwner())
+ {
+  if(UEPtr<NPatternResponseAnalyzer> ana =
+      parent->GetComponentL<NPatternResponseAnalyzer>(
+       std::string("PatternResponseAnalyzer"), true))
+   ana->Enable = false;
+ }
+ TrainingPhase = kPhaseDone;
+ const double silent = PostTrainSilentThreshold.GetData();
+ SetLTZThreshold(silent);
+ LTZThreshold.SetDataDirect(silent);
+ UseFixedLTZThreshold.SetDataDirect(true);
+
+ if(PostTuneHaveSavedMatrix && Dataset)
+ {
+  const int nspikes = NumInputDendrite.GetData();
+  const int max_spikes = Dataset->MaxSpikesPerFeature.GetData() > 0
+   ? int(Dataset->MaxSpikesPerFeature) : nspikes;
+  const int ns = PostTuneSavedMatrix.GetRows() / std::max(1, max_spikes);
+  if(ns >= 2)
+  {
+   PostTuneMetrics.assign(static_cast<size_t>(ns), 0.0);
+   PostTuneFreeRunActive = true;
+   PostTuneLiveSomaMax = 0.0;
+   PostTuneLastDatasetIter = -1;
+   PostTuneFreeRunStartTime = Environment
+    ? Environment->GetTime().GetDoubleTime() : 0.0;
+   Dataset->SetMatrixData(PostTuneSavedMatrix);
+   Dataset->SetMatrixClasses(PostTuneSavedClasses);
+   Dataset->Delay = EffectiveDatasetDelaySec();
+   Dataset->AdvanceSampleAfterBurst = true;
+   Dataset->LoopSamples = false;
+   Dataset->Iteration.SetDataDirect(0);
+   Dataset->StateGeneration = 2;
+   Dataset->Reset();
+   if(NPulseGeneratorTransit *g = GetDatasetGenerator())
+    g->Reset();
+   Dataset->StateGeneration = 2;
+   if(EnableDebug.GetData() && RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "InferenceMid: Matrix free_run samples=" << ns;
+    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+   }
+   return true;
+  }
+ }
+
+ if(!SetupPostTuneFreeRunProbes())
+ {
+  PostTuneInferenceMidPending = false;
+  PostTuneFreeRunActive = false;
+  PostTuneInferenceMidDone = true;
+  return false;
+ }
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "InferenceMid: start free_run patterns=" << PostTunePatterns.size();
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
+ return true;
 }
 
 void NNeuronTimeLearner::HandlePostTuneFinishIteration(void)
@@ -3740,7 +4212,6 @@ void NNeuronTimeLearner::HandlePostTuneFinishIteration(void)
   return;
  }
 
- // Full pattern set probed for current tip vector.
  double mid = 0.0;
  double gap = 0.0;
  if(!PostTuneMetrics.empty())
@@ -3763,7 +4234,6 @@ void NNeuronTimeLearner::HandlePostTuneFinishIteration(void)
 
   const int n = NumInputDendrite.GetData();
   const int max_pass = std::max(1, PostTrainTipSearchIters.GetData());
-  // Advance search: skip mult=1 (current) after first tip setup.
   ++PostTuneSearchMult;
   if(PostTuneSearchMult > 2)
   {
@@ -3793,7 +4263,6 @@ void NNeuronTimeLearner::HandlePostTuneFinishIteration(void)
    return;
   }
 
-  // Search exhausted: keep best, or fall back to Normalize snapshot if gap<=0.
   if(PostTuneBestGap <= 0.0 && !PostTuneTipSnapshot.empty())
   {
    PostTuneTrialTips = PostTuneTipSnapshot;
@@ -4166,6 +4635,12 @@ bool NNeuronTimeLearner::Training(void)
 {
  if(!CalculateMode && (CountIteration > 0) && TrainingPhase == kPhaseDone)
   return true;
+
+ if(TrainingPhase.GetData() == kPhasePostTune && PostTuneFreeRunActive)
+ {
+  UpdatePostTuneFreeRunPeak();
+  return true;
+ }
  
  if(!Neuron || !Dataset)
   return true;
@@ -4273,6 +4748,11 @@ bool NNeuronTimeLearner::ACalculate(void)
    SomaNeuronAmplitude(i + 1, 0) = soma->SumPotential(0, 0);
    SomaNeuronAmplitude(0, 0) += soma->SumPotential(0, 0);
   }
+
+  if(PostTuneFreeRunActive)
+   UpdatePostTuneFreeRunPeak();
+  else if(!IsNeedToTrain.GetData())
+   MaybeStartInferenceMidProbes();
   
   // Only evaluate Done between bursts: BeginTrainingIteration zeros MaxIterSomaAmp,
   // which would falsely trip the dead-tip escape in AllSynapsesNormalized mid-burst.

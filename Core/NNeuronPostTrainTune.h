@@ -20,8 +20,15 @@ inline constexpr int kMidMetricAuto = 0;
 inline constexpr int kMidMetricLtz = 1;
 inline constexpr int kMidMetricSoma = 2;
 
-/// Build target + synthetic foils from one ISI column (length N). Target is first.
+/// Legacy synthetic foils (shifts / scale / zero-one). Kept for SearchSynthetic.
 std::vector<std::vector<double> > BuildSyntheticPatterns(
+ const std::vector<double> &target_isi,
+ int foil_cap);
+
+/// Recognition foils matching AsymRm pack A / phase8 silent mid:
+/// fixed onset, body mass redistributed (N=4 uses pack-A fraction table).
+/// Prefer this for PostTune mid (not scale ×0.5/×2).
+std::vector<std::vector<double> > BuildRecognitionProbePatterns(
  const std::vector<double> &target_isi,
  int foil_cap);
 

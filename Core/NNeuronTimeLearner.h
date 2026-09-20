@@ -486,11 +486,14 @@ protected:
  /// LTZ max from last fully synced iteration
  double LastSyncedMaxLTZ;
 
- /// PostTune: synthetic patterns (target first)
+ /// PostTune: probe patterns (target first; recognition / pack-A style)
  std::vector<std::vector<double> > PostTunePatterns;
 
  /// PostTune: probe metrics aligned with PostTunePatterns
  std::vector<double> PostTuneMetrics;
+
+ /// Training ISI saved at EnterPostTune; restored after probes
+ std::vector<double> PostTuneTargetIsi;
 
  /// TipR snapshot at end of Normalize (KeepDone / Search fallback)
  std::vector<double> PostTuneTipSnapshot;
@@ -515,6 +518,29 @@ protected:
 
  /// TipR under evaluation during SearchSynthetic
  std::vector<double> PostTuneTrialTips;
+
+ /// PostTune mid: free-run Dataset samples (Test-parity) instead of Training FSM
+ bool PostTuneFreeRunActive;
+
+ /// Inference mid on Test after TipR-only Train (silent FixedLTZ)
+ bool PostTuneInferenceMidPending;
+
+ /// Inference mid already finished this process
+ bool PostTuneInferenceMidDone;
+
+ /// Live peak metric during free-run (LTZ or soma sum)
+ double PostTuneLiveSomaMax;
+
+ /// Dataset->Iteration of current free-run sample
+ int PostTuneLastDatasetIter;
+
+ /// Wall time when free-run started (timeout)
+ double PostTuneFreeRunStartTime;
+
+ /// Saved Test Matrix during inference mid
+ MDMatrix<double> PostTuneSavedMatrix;
+ MDMatrix<int> PostTuneSavedClasses;
+ bool PostTuneHaveSavedMatrix;
  
  static constexpr int kCalibrateGapFraction = 0;
  
@@ -784,6 +810,12 @@ protected:
  /// Apply TipR mode + Exc sync; snapshot for KeepDone
  void ApplyPostTrainTipMode(bool use_snapshot_only);
 
+ /// Stack PostTunePatterns into Dataset and measure like Test silent mid
+ bool SetupPostTuneFreeRunProbes(void);
+
+ /// Tick free-run peak tracker; FinalizePostTuneMid when done
+ void UpdatePostTuneFreeRunPeak(void);
+
  /// Push PostTunePatterns[index] into InputPattern + Dataset
  bool PushPostTunePattern(int index);
 
@@ -792,6 +824,12 @@ protected:
 
  /// Write FixedLTZ from probe metrics and clear Need → Done
  void FinalizePostTuneMid(void);
+
+ /// On Test: free-run Matrix as-is when TipR posttuned and FixedLTZ silent
+ bool MaybeStartInferenceMidProbes(void);
+
+ /// Live free-run metric (LTZ Auto/Ltz; soma sum if Soma)
+ double ReadPostTuneLiveMetric(void) const;
 
  /// Probe metric for mid: LTZ peak or soma sum
  double ReadPostTuneProbeMetric(void) const;
