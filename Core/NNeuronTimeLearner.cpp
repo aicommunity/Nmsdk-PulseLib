@@ -4083,33 +4083,11 @@ bool NNeuronTimeLearner::MaybeStartInferenceMidProbes(void)
   return false;
  if(FixedLTZThreshold.GetData() < 0.9)
   return false;
- {
-  const std::vector<double> tips = TipSynapseResistance.GetData();
-  const int n = NumInputDendrite.GetData();
-  if(n < 1 || int(tips.size()) < n)
-   return false;
-  const double floor_r = TipResistanceCanonFloor.GetData();
-  const double last_r = TipResistanceCanonLast.GetData();
-  bool canon = true;
-  bool flat = true;
-  for(int i = 0; i < n; ++i)
-  {
-   const double t = tips[static_cast<size_t>(i)];
-   if(i + 1 < n)
-   {
-    if(std::fabs(t - floor_r) > 1e5)
-     canon = false;
-   }
-   else if(std::fabs(t - last_r) > 1e5)
-    canon = false;
-   if(std::fabs(t - last_r) > 1e5)
-    flat = false;
-  }
-  if(!canon && !flat)
-   return false;
- }
+ // TipR already fixed by PostTune (Canon/Flat/KeepDone/Search) — no shape gate.
 
  const int n = NumInputDendrite.GetData();
+ if(n < 1)
+  return false;
  PostTuneTargetIsi.assign(static_cast<size_t>(n), 0.0);
  if(Dataset && Dataset->MaxSpikesPerFeature.GetData() == n
     && Dataset->MatrixData.GetRows() >= n)
