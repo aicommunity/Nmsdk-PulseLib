@@ -1759,6 +1759,7 @@ NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
  PostTuneSearchTip = 0;
  PostTuneSearchMult = -1;
  PostTuneBestGap = -1e300;
+ PostTuneSearchReverted = false;
  PostTuneFreeRunActive = false;
  PostTuneInferenceMidPending = false;
  PostTuneInferenceMidDone = false;
@@ -1961,6 +1962,7 @@ bool NNeuronTimeLearnerBranch::SetIsNeedToTrain(const bool &value)
   PostTuneSearchTip = 0;
   PostTuneSearchMult = -1;
   PostTuneBestGap = -1e300;
+ PostTuneSearchReverted = false;
   PostTunePatterns.clear();
   PostTuneMetrics.clear();
   PostTuneTargetIsi.clear();
@@ -2870,6 +2872,7 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  PostTuneSearchTip = 0;
  PostTuneSearchMult = -1;
  PostTuneBestGap = -1e300;
+ PostTuneSearchReverted = false;
  PostTunePatterns.clear();
  PostTuneMetrics.clear();
  PostTuneTargetIsi.clear();
@@ -4171,9 +4174,6 @@ void NNeuronTimeLearnerBranch::UpdatePostTuneFreeRunPeak(void)
 {
  if(!PostTuneFreeRunActive)
   return;
- // Train PostTune: block after complete. Inference mid: allow while pending.
- if(PostTrainTuneComplete.GetData() && !PostTuneInferenceMidPending)
-  return;
  if(!Dataset || !Neuron)
   return;
 
@@ -4405,6 +4405,7 @@ void NNeuronTimeLearnerBranch::EnterPostTunePhase(void)
  PostTuneSearchTip = 0;
  PostTuneSearchMult = -1;
  PostTuneBestGap = -1e300;
+ PostTuneSearchReverted = false;
  PostTuneBestTips.clear();
  PostTuneTrialTips.clear();
  PostTuneFreeRunActive = false;
@@ -4615,7 +4616,21 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
     flag << "mid=" << mid << " gap=" << gap
          << " landscape_ok=" << (landscape_ok ? 1 : 0)
          << " inference=" << (inference ? 1 : 0)
-         << " FixedLTZ=" << FixedLTZThreshold.GetData() << "\n";
+         << " FixedLTZ=" << FixedLTZThreshold.GetData();
+    if(PostTrainTipResistanceMode.GetData()
+       == PostTrainTune::kPostTipSearchSynthetic)
+     flag << " search_reverted=" << (PostTuneSearchReverted ? 1 : 0);
+    flag << "\n";
+    {
+     const std::vector<double> tipr = TipSynapseResistance.GetData();
+     if(!tipr.empty())
+     {
+      flag << "tipr=";
+      for(size_t i = 0; i < tipr.size(); ++i)
+       flag << (i ? " " : "") << tipr[i];
+      flag << "\n";
+     }
+    }
     if(!PostTuneMetrics.empty())
     {
      flag << "metrics=";
@@ -4625,7 +4640,7 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
     }
    }
   }
- }
+}
 }
 
 bool NNeuronTimeLearnerBranch::MaybeStartInferenceMidProbes(void)
@@ -4635,7 +4650,12 @@ bool NNeuronTimeLearnerBranch::MaybeStartInferenceMidProbes(void)
  if(IsNeedToTrain.GetData())
   return false;
  if(!EnablePostTrainTuning.GetData() || !EnablePostTrainMidThreshold.GetData())
+ {
+  if(RDK::GetLogger())
+   RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch",
+    "MaybeStartInferenceMid: skip (PostTrainTuning/MidThreshold off)");
   return false;
+ }
  if(FixedLTZThreshold.GetData() < 0.9)
   return false;
  // TipR already fixed by PostTune (Canon/Flat/KeepDone/Search) — no shape gate.
@@ -4713,12 +4733,12 @@ bool NNeuronTimeLearnerBranch::MaybeStartInferenceMidProbes(void)
    // (extra Reset dropped target peak ~0.07145 vs analyzer ~0.07186).
    Dataset->StateGeneration = 2;
    ApplyPulseGeneratorMute();
-   if(EnableDebug.GetData() && RDK::GetLogger())
+   if(RDK::GetLogger())
    {
     std::ostringstream oss;
     oss << "InferenceMid: Matrix free_run samples=" << ns
         << " tip_links=" << CountGeneratorTipLinks();
-    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+    RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
    }
    return true;
   }
@@ -4728,15 +4748,17 @@ bool NNeuronTimeLearnerBranch::MaybeStartInferenceMidProbes(void)
  {
   PostTuneInferenceMidPending = false;
   PostTuneFreeRunActive = false;
-  PostTuneInferenceMidDone = true;
+  if(RDK::GetLogger())
+   RDK::GetLogger()->LogMessage(RDK_EX_ERROR, "NNeuronTimeLearnerBranch",
+    "InferenceMid: SetupPostTuneFreeRunProbes failed (will retry)");
   return false;
  }
- if(EnableDebug.GetData() && RDK::GetLogger())
+ if(RDK::GetLogger())
  {
   std::ostringstream oss;
   oss << "InferenceMid: start free_run patterns=" << PostTunePatterns.size()
       << " tip_links=" << CountGeneratorTipLinks();
-  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+  RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
  }
  return true;
 }
@@ -4808,13 +4830,27 @@ void NNeuronTimeLearnerBranch::HandlePostTuneFinishIteration(void)
   {
    PostTuneTrialTips = PostTuneTipSnapshot;
    ApplyPostTrainTipMode(true);
+   PostTuneSearchReverted = true;
+   if(RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "SearchSynthetic: revert_to_snapshot BestGap=" << PostTuneBestGap;
+    RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
+   }
   }
   else if(!PostTuneBestTips.empty())
   {
    PostTuneTrialTips = PostTuneBestTips;
    ApplyPostTrainTipMode(false);
+   PostTuneSearchReverted = false;
+   if(RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "SearchSynthetic: apply_best_tips gap=" << PostTuneBestGap;
+    RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
+   }
   }
- }
+}
 
  FinalizePostTuneMid();
 }

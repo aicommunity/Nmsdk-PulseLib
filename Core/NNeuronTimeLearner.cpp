@@ -1227,6 +1227,7 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  PostTuneSearchTip = 0;
  PostTuneSearchMult = 0;
  PostTuneBestGap = -1e300;
+ PostTuneSearchReverted = false;
  PostTuneFreeRunActive = false;
  PostTuneInferenceMidPending = false;
  PostTuneInferenceMidDone = false;
@@ -1421,6 +1422,7 @@ bool NNeuronTimeLearner::SetIsNeedToTrain(const bool &value)
   PostTuneSearchTip = 0;
   PostTuneSearchMult = 0;
   PostTuneBestGap = -1e300;
+ PostTuneSearchReverted = false;
   PostTunePatterns.clear();
   PostTuneMetrics.clear();
   PostTuneTargetIsi.clear();
@@ -2356,6 +2358,7 @@ bool NNeuronTimeLearner::ADefault(void)
  PostTuneSearchTip = 0;
  PostTuneSearchMult = 0;
  PostTuneBestGap = -1e300;
+ PostTuneSearchReverted = false;
  PostTunePatterns.clear();
  PostTuneMetrics.clear();
  PostTuneTargetIsi.clear();
@@ -2418,6 +2421,14 @@ bool NNeuronTimeLearner::ABuild(void)
   if(!res)
    return false;
  }
+ // TipR-only Train left silent FixedLTZ: hold Dataset until inference mid runs
+ // (parity with NNeuronTimeLearnerBranch::ABuild).
+ if(!IsNeedToTrain.GetData()
+    && EnablePostTrainTuning.GetData()
+    && EnablePostTrainMidThreshold.GetData()
+    && FixedLTZThreshold.GetData() >= 0.9
+    && Dataset)
+  Dataset->StateGeneration = 0;
  return true;
 }
 
@@ -3780,8 +3791,6 @@ void NNeuronTimeLearner::UpdatePostTuneFreeRunPeak(void)
 {
  if(!PostTuneFreeRunActive)
   return;
- if(PostTrainTuneComplete.GetData() && !PostTuneInferenceMidPending)
-  return;
  if(!Dataset || !Neuron)
   return;
 
@@ -3835,6 +3844,13 @@ void NNeuronTimeLearner::UpdatePostTuneFreeRunPeak(void)
   oss << "]";
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
  }
+ {
+  std::ofstream dbg("/tmp/posttune_infer_mid_dbg.txt", std::ios::app);
+  if(dbg)
+   dbg << "FreeRun done playback=" << (playback_done ? 1 : 0)
+       << " timeout=" << (timed_out ? 1 : 0)
+       << " ns=" << ns << " lastIter=" << last << "\n";
+ }
 
  FinalizePostTuneMid();
 }
@@ -3863,6 +3879,7 @@ void NNeuronTimeLearner::EnterPostTunePhase(void)
  PostTuneSearchTip = 0;
  PostTuneSearchMult = -1;
  PostTuneBestGap = -1e300;
+ PostTuneSearchReverted = false;
  PostTuneBestTips.clear();
  PostTuneTrialTips.clear();
  PostTuneFreeRunActive = false;
@@ -4060,7 +4077,21 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
     flag << "mid=" << mid << " gap=" << gap
          << " landscape_ok=" << (landscape_ok ? 1 : 0)
          << " inference=" << (inference ? 1 : 0)
-         << " FixedLTZ=" << FixedLTZThreshold.GetData() << "\n";
+         << " FixedLTZ=" << FixedLTZThreshold.GetData();
+    if(PostTrainTipResistanceMode.GetData()
+       == PostTrainTune::kPostTipSearchSynthetic)
+     flag << " search_reverted=" << (PostTuneSearchReverted ? 1 : 0);
+    flag << "\n";
+    {
+     const std::vector<double> tipr = TipSynapseResistance.GetData();
+     if(!tipr.empty())
+     {
+      flag << "tipr=";
+      for(size_t i = 0; i < tipr.size(); ++i)
+       flag << (i ? " " : "") << tipr[i];
+      flag << "\n";
+     }
+    }
     if(!PostTuneMetrics.empty())
     {
      flag << "metrics=";
@@ -4069,20 +4100,72 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
      flag << "\n";
     }
    }
+   {
+    std::ofstream dbg("/tmp/posttune_infer_mid_dbg.txt", std::ios::app);
+    if(dbg)
+     dbg << "Finalize wrote flag path=" << path
+         << " mid=" << mid << " inference=" << (inference ? 1 : 0)
+         << " ok=" << (flag ? 1 : 0) << "\n";
+   }
+  }
+  else
+  {
+   std::ofstream dbg("/tmp/posttune_infer_mid_dbg.txt", std::ios::app);
+   if(dbg)
+    dbg << "Finalize NO CurrentDataDir mid=" << mid
+        << " inference=" << (inference ? 1 : 0) << "\n";
   }
  }
 }
 
 bool NNeuronTimeLearner::MaybeStartInferenceMidProbes(void)
 {
+ auto diag = [this](const char *msg) {
+  std::string path;
+  if(Environment)
+   path = Environment->GetCurrentDataDir();
+  if(path.empty())
+   path = "/tmp/";
+  if(path.back() != '/' && path.back() != '\\')
+   path.push_back('/');
+  path += "posttune_mid_dbg.txt";
+  std::ofstream dbg(path.c_str(), std::ios::app);
+  if(dbg)
+   dbg << msg
+       << " Need=" << (IsNeedToTrain.GetData() ? 1 : 0)
+       << " TuneEn=" << (EnablePostTrainTuning.GetData() ? 1 : 0)
+       << " MidEn=" << (EnablePostTrainMidThreshold.GetData() ? 1 : 0)
+       << " FixedLTZ=" << FixedLTZThreshold.GetData()
+       << " MidDone=" << (PostTuneInferenceMidDone ? 1 : 0)
+       << " FreeRun=" << (PostTuneFreeRunActive ? 1 : 0)
+       << "\n";
+ };
+
  if(PostTuneInferenceMidDone || PostTuneFreeRunActive)
+ {
+  if(PostTuneFreeRunActive)
+   diag("MaybeStart: already FreeRun");
   return PostTuneFreeRunActive;
+ }
  if(IsNeedToTrain.GetData())
+ {
+  diag("MaybeStart: skip Need=1");
   return false;
+ }
  if(!EnablePostTrainTuning.GetData() || !EnablePostTrainMidThreshold.GetData())
+ {
+  diag("MaybeStart: skip tuning/mid off");
+  if(RDK::GetLogger())
+   RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearner",
+    "MaybeStartInferenceMid: skip (PostTrainTuning/MidThreshold off)");
   return false;
+ }
  if(FixedLTZThreshold.GetData() < 0.9)
+ {
+  diag("MaybeStart: skip FixedLTZ<0.9");
   return false;
+ }
+ diag("MaybeStart: enter");
  // TipR already fixed by PostTune (Canon/Flat/KeepDone/Search) — no shape gate.
 
  const int n = NumInputDendrite.GetData();
@@ -4113,6 +4196,23 @@ bool NNeuronTimeLearner::MaybeStartInferenceMidProbes(void)
   PostTuneSavedMatrix = Dataset->MatrixData.GetData();
   PostTuneSavedClasses = Dataset->MatrixClasses.GetData();
   PostTuneHaveSavedMatrix = (PostTuneSavedMatrix.GetRows() > 0);
+ }
+ {
+  std::string dpath;
+  if(Environment)
+   dpath = Environment->GetCurrentDataDir();
+  if(!dpath.empty())
+  {
+   if(dpath.back() != '/' && dpath.back() != '\\')
+    dpath.push_back('/');
+   dpath += "posttune_mid_dbg.txt";
+   std::ofstream dbg(dpath.c_str(), std::ios::app);
+   if(dbg)
+    dbg << "savedMatrix rows=" << PostTuneSavedMatrix.GetRows()
+        << " have=" << (PostTuneHaveSavedMatrix ? 1 : 0)
+        << " maxSpikes=" << (Dataset ? int(Dataset->MaxSpikesPerFeature) : -1)
+        << "\n";
+  }
  }
  if(UEPtr<UContainer> parent = GetOwner())
  {
@@ -4152,11 +4252,25 @@ bool NNeuronTimeLearner::MaybeStartInferenceMidProbes(void)
    if(NPulseGeneratorTransit *g = GetDatasetGenerator())
     g->Reset();
    Dataset->StateGeneration = 2;
-   if(EnableDebug.GetData() && RDK::GetLogger())
+   {
+    std::string dpath;
+    if(Environment)
+     dpath = Environment->GetCurrentDataDir();
+    if(!dpath.empty())
+    {
+     if(dpath.back() != '/' && dpath.back() != '\\')
+      dpath.push_back('/');
+     dpath += "posttune_mid_dbg.txt";
+     std::ofstream dbg(dpath.c_str(), std::ios::app);
+     if(dbg)
+      dbg << "Matrix free_run ns=" << ns << "\n";
+    }
+   }
+   if(RDK::GetLogger())
    {
     std::ostringstream oss;
     oss << "InferenceMid: Matrix free_run samples=" << ns;
-    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+    RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearner", oss.str());
    }
    return true;
   }
@@ -4166,14 +4280,17 @@ bool NNeuronTimeLearner::MaybeStartInferenceMidProbes(void)
  {
   PostTuneInferenceMidPending = false;
   PostTuneFreeRunActive = false;
-  PostTuneInferenceMidDone = true;
+  // Do not mark MidDone: allow retry next tick; log loudly.
+  if(RDK::GetLogger())
+   RDK::GetLogger()->LogMessage(RDK_EX_ERROR, "NNeuronTimeLearner",
+    "InferenceMid: SetupPostTuneFreeRunProbes failed (will retry)");
   return false;
  }
- if(EnableDebug.GetData() && RDK::GetLogger())
+ if(RDK::GetLogger())
  {
   std::ostringstream oss;
   oss << "InferenceMid: start free_run patterns=" << PostTunePatterns.size();
-  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearner", oss.str());
  }
  return true;
 }
@@ -4245,13 +4362,27 @@ void NNeuronTimeLearner::HandlePostTuneFinishIteration(void)
   {
    PostTuneTrialTips = PostTuneTipSnapshot;
    ApplyPostTrainTipMode(true);
+   PostTuneSearchReverted = true;
+   if(RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "SearchSynthetic: revert_to_snapshot BestGap=" << PostTuneBestGap;
+    RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearner", oss.str());
+   }
   }
   else if(!PostTuneBestTips.empty())
   {
    PostTuneTrialTips = PostTuneBestTips;
    ApplyPostTrainTipMode(false);
+   PostTuneSearchReverted = false;
+   if(RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "SearchSynthetic: apply_best_tips gap=" << PostTuneBestGap;
+    RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearner", oss.str());
+   }
   }
- }
+}
 
  FinalizePostTuneMid();
 }
@@ -4700,16 +4831,63 @@ bool NNeuronTimeLearner::ACalculate(void)
 {
  try
  {
+  {
+   static bool s_acal_logged = false;
+   if(!s_acal_logged)
+   {
+    s_acal_logged = true;
+    std::string path;
+    if(Environment)
+     path = Environment->GetCurrentDataDir();
+    if(path.empty())
+     path = "/tmp/";
+    if(path.back() != '/' && path.back() != '\\')
+     path.push_back('/');
+    path += "posttune_mid_dbg.txt";
+    std::ofstream dbg(path.c_str(), std::ios::app);
+    if(dbg)
+     dbg << "ACalculate: enter Neuron=" << (Neuron ? 1 : 0)
+         << " Need=" << (IsNeedToTrain.GetData() ? 1 : 0)
+         << " FixedLTZ=" << FixedLTZThreshold.GetData()
+         << " EnvDir=" << (Environment ? Environment->GetCurrentDataDir() : "")
+         << "\n";
+   }
+  }
   if(!Neuron)
    return true;
   
   DendriteNeuronAmplitude(0, 0) = 0;
   for(int i = 0; i < NumInputDendrite; i++)
   {
+   // Proximal tip is segment 1; fall back to distal tip by DendriteLength
+   // when Model was loaded without StructureBuildMode rebuild.
    UEPtr<NPulseMembrane> dendrite =
     Neuron->GetComponentL<NPulseMembrane>(MakeLearnerDendriteName(i + 1, 1), true);
+   if(!dendrite && i < int(DendriteLength.size()) && DendriteLength[i] > 1)
+    dendrite = Neuron->GetComponentL<NPulseMembrane>(
+     MakeLearnerDendriteName(i + 1, DendriteLength[i]), true);
    if(!dendrite)
+   {
+    static bool s_dend_logged = false;
+    if(!s_dend_logged)
+    {
+     s_dend_logged = true;
+     std::string path;
+     if(Environment)
+      path = Environment->GetCurrentDataDir();
+     if(!path.empty())
+     {
+      if(path.back() != '/' && path.back() != '\\')
+       path.push_back('/');
+      path += "posttune_mid_dbg.txt";
+      std::ofstream dbg(path.c_str(), std::ios::app);
+      if(dbg)
+       dbg << "ACalculate: dendrite null i=" << i
+           << " name=" << MakeLearnerDendriteName(i + 1, 1) << "\n";
+     }
+    }
     return true;
+   }
    
    DendriteNeuronAmplitude(i + 1, 0) = dendrite->SumPotential(0, 0);
    DendriteNeuronAmplitude(0, 0) += dendrite->SumPotential(0, 0);
@@ -4730,7 +4908,28 @@ bool NNeuronTimeLearner::ACalculate(void)
   if(PostTuneFreeRunActive)
    UpdatePostTuneFreeRunPeak();
   else if(!IsNeedToTrain.GetData())
+  {
+   // One-shot breadcrumb: prove ACalculate reaches mid gate.
+   static bool s_mid_tick_logged = false;
+   if(!s_mid_tick_logged && FixedLTZThreshold.GetData() >= 0.9)
+   {
+    s_mid_tick_logged = true;
+    std::string path;
+    if(Environment)
+     path = Environment->GetCurrentDataDir();
+    if(!path.empty())
+    {
+     if(path.back() != '/' && path.back() != '\\')
+      path.push_back('/');
+     path += "posttune_mid_dbg.txt";
+     std::ofstream dbg(path.c_str(), std::ios::app);
+     if(dbg)
+      dbg << "ACalculate: calling MaybeStart FixedLTZ="
+          << FixedLTZThreshold.GetData() << "\n";
+    }
+   }
    MaybeStartInferenceMidProbes();
+  }
   
   // Only evaluate Done between bursts: BeginTrainingIteration zeros MaxIterSomaAmp,
   // which would falsely trip the dead-tip escape in AllSynapsesNormalized mid-burst.

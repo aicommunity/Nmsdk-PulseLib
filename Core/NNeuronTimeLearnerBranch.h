@@ -532,6 +532,9 @@ protected:
  /// Best gap seen during SearchSynthetic
  double PostTuneBestGap;
 
+ /// SearchSynthetic ended with BestGap<=0 → TipR restored from snapshot
+ bool PostTuneSearchReverted;
+
  /// TipR for best gap
  std::vector<double> PostTuneBestTips;
 
