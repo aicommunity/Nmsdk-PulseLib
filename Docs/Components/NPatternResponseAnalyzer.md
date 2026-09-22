@@ -1,51 +1,38 @@
-# NPatternResponseAnalyzer — избирательность паттерна
+# NPatternResponseAnalyzer — измерение ответов на паттерны
 
 ## RU
 
-### Назначение
+`NPatternResponseAnalyzer` регистрирует rising-edge стимулов и выхода нейрона. Wiring: `StimulusInputs←DatasetMatrix.Generator1.Output`, `NeuronOutputs←Neuron.LTZone.Output`, `TargetClassInput←DatasetMatrix.CurrentClass`.
 
-**Класс**: `NPatternResponseAnalyzer` — сопоставляет стимульный паттерн (rising-edge на входах генератора) с ответом нейрона (LTZone) и меткой класса сэмпла. Записывает trial-строки в CSV.
+### Фактическая реализация на 2026-09-22
 
-### Wiring (`TimeNeuronTimeLearner/Test`)
+`PostPatternWindow` (default 0.5 с) отсчитывается от последнего *наблюдавшегося* стимула. Код считает паттерн полным при числе стимулов 1 или >=4. Это не подтверждает, что последний стимул сэмпла уже поступил: ранний fire после первого стимула может остаться установленным. N=2/3 не поддерживается этой проверкой корректно.
 
-- `StimulusInputs` ← `DatasetMatrix.Generator1.Output`
-- `NeuronOutputs` ← `Neuron.LTZone.Output`
-- `TargetClassInput` ← `DatasetMatrix.CurrentClass`
+При своевременном fire trial закрывается в конце PostPatternWindow. Только при отсутствии такого fire наблюдение продолжается до `LateResponseWindow` (default 1.5 с, не меньше Post) либо нового trial. Дополнительные стимулы внутри Post добавляются к текущему trial. Явного sample-end/id нет. Метка класса обновляется из текущего входа и может измениться до закрытия предыдущего trial.
 
-### Окна детекта
+### CSV и метрики
 
-1. **`PostPatternWindow`** (default 0.5 с после последнего стимула) — «вовремя». Rising-edge **после последнего стимула** полного паттерна (≥4 стимула, либо одиночный стимул) задаёт `neuron_fired` / `match`. Mid-pattern edges учитываются в `neuron_spike_count` / morphology, но **не** в `neuron_fired` (защита от early-spike false PASS на коротких span). Trial **не** закрывается на первом спайке: окно додерживается до конца Post, чтобы посчитать все спайки.
-2. **`LateResponseWindow`** (default 1.5 с после последнего стимула, ≥ PostPatternWindow) — если in-window тишина, наблюдаем дальше до конца Late (или старта следующего паттерна). Первый late edge → `late_fired=1`; последующие late edge тоже учитываются в `neuron_spike_count`.
-3. Доп. стимулы **внутри** открытого PostPatternWindow дописываются в тот же trial (мульти-импульсный паттерн).
+Поля: `trial,target_class,stim_count,isi0..isi3,neuron_fired,neuron_t_rel,match,late_fired,late_t_rel,error_class,ltz_potential_max,soma_amp_0..3,soma_amp_sum,neuron_spike_count,neuron_spike_times,response_class`.
 
-### CSV
+- `match` учитывает только in-window `neuron_fired`; late в нём не учтён.
+- `neuron_spike_count` считает rising-edge, пока trial открыт; список `neuron_spike_times` хранит до 16 времён относительно первого стимула. После закрытия оставшаяся часть late-окна уже не наблюдается для этого trial.
+- `response_class`: single/burst/per_stim/multi. Текущий per_stim допускает повторное использование одного спайка для нескольких пересекающихся окон.
+- Python `ok_audit` не равен идеальной избирательности. Strict использует fire/late-флаги и может пропустить ранний одиночный ответ foil, хотя spike_count>0.
 
-```text
-trial,target_class,stim_count,isi0,isi1,isi2,isi3,
-neuron_fired,neuron_t_rel,match,
-late_fired,late_t_rel,error_class,
-ltz_potential_max,soma_amp_0,soma_amp_1,soma_amp_2,soma_amp_3,soma_amp_sum,
-neuron_spike_count,neuron_spike_times,response_class
-```
-
-- `match` — только по in-window (`neuron_fired`): target→нужен fire, nontarget→тишина. **Не** учитывает `late_*` (legacy).
-- `error_class`: `ok` / `fn` / `fp` / `late_fn` / `late_fp`
-- `neuron_spike_count` / `neuron_spike_times` — все rising-edge за trial (относительные к первому стимулу, `;`-разделитель, до 16)
-- `response_class`: `single` | `burst` | `per_stim` | `multi`
-
-**Audit gate:** success требует single-spike (`response_class=single` при fire) и strict-учёт late как FA/FN. Пачка / ответ на каждый стимул паттерна = брак параметров модели или гиперпараметров (L, синапсы), не «частичный успех».
+Нужный критерий эксперимента: один target-спайк после реального последнего стимула, отсутствие любых foil-спайков за одинаковый полный интервал наблюдения. Текущий код этот критерий не гарантирует. [Доказательства и план исправления](../../../../Docs/Audit/TimeLearner-2026-09-22/README.md).
 
 ### Свойства
 
 | Имя | Смысл |
-|-----|--------|
-| `PostPatternWindow` | Окно (сек) после последнего стимула для `neuron_fired` / `match` |
-| `LateResponseWindow` | Окно (сек) после последнего стимула для late (≥ Post) |
-| `PulseDetectThreshold` | Порог rising-edge (default 0) |
-| `SavePath` / `FileName` | Каталог и файл CSV относительно data dir проекта |
-| `AppendMode` | false — пересоздать CSV на Reset |
-| `LastFired`, `LastMatch`, `LastLateFired`, `LastErrorClass`, `LastNeuronDelay`, `LastLateNeuronDelay`, `LastIsi`, `LastSpikeCount`, `LastResponseClass` | Состояние последнего закрытого trial |
+|-----|-------|
+| PostPatternWindow / LateResponseWindow | Окна в секундах |
+| PulseDetectThreshold | Порог rising-edge, default 0 |
+| SavePath / FileName | Путь CSV относительно data dir |
+| AppendMode | false: пересоздание CSV при Reset |
+| Enable | Включение анализа |
+| TrialIndex, LastFired, LastMatch, LastLateFired, LastErrorClass | Результат последнего закрытого trial |
+| LastNeuronDelay, LastLateNeuronDelay, LastIsi, LastSpikeCount, LastResponseClass | Времена, ISI и морфология последнего trial |
 
-### Favorites
+## EN
 
-`StimulusInputs`, `NeuronOutputs`, `TargetClassInput`, `PostPatternWindow`, `LateResponseWindow`, `SavePath`, `FileName`, `Enable`, `TrialIndex`, `LastFired`, `LastMatch`, `LastLateFired`, `LastErrorClass`, `LastSpikeCount`, `LastResponseClass`.
+The current implementation uses observed stimulus count (1 or >=4) as a completion heuristic, closes timely trials before the late window ends, and reads a mutable class label. CSV fire flags and Python audit passes therefore do not guarantee a single response after the actual final stimulus or silence on every foil. See the linked audit before treating these measurements as validated selectivity.

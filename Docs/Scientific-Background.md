@@ -109,24 +109,11 @@ STDP — механизм синаптической пластичности, �
 
 **Использование в конфигурациях:** `Bin/Configs/User/CognitiveNavigation/`
 
-#### 4. Долгосрочная пластичность (LT-зоны)
+#### 4. Низкопороговая зона (LTZone)
 
-**Компоненты PulseLib:** `NPulseLTZoneThreshold`, `NPLTZone`, `NPulseLTZoneIzhikevich`
+LT означает low threshold: зона формирования выхода/инициации спайка. `NPulseLTZoneThreshold` использует порог потенциала; `NPulseLTZoneIzhikevich` относится к соответствующей динамической модели. `NPLTZone` — регистрация семейства LT-зон. Это не реализация LTP/LTD и не самостоятельный механизм изменения синаптических весов.
 
-**Научная основа:**
-
-LT-зоны моделируют механизмы долгосрочной потенциации (LTP) и долгосрочной депрессии (LTD), которые лежат в основе формирования памяти.
-
-**Ключевые публикации:**
-- Bliss, T. V., & Lomo, T. (1973). "Long-lasting potentiation of synaptic transmission in the dentate area of the anaesthetized rabbit following stimulation of the perforant path." Journal of Physiology, 232(2), 331-356.
-- Malenka, R. C., & Bear, M. F. (2004). "LTP and LTD: An embarrassment of riches." Neuron, 44(5), 5-21.
-
-**Связь с компонентами:**
-- `NPulseLTZoneThreshold` реализует LT-зону с пороговым механизмом активации
-- Порог (`Threshold`) определяет минимальную активность для активации пластичности
-- Временная константа (`TimeConstant`) определяет скорость накопления активности
-
-**Использование в конфигурациях:** `Bin/Configs/User/CognitiveNavigation/`, `Bin/Configs/!OldConfigs/NM-Neurons/`
+Параметры зависят от конкретного класса: нельзя приписывать общий TimeConstant всем LT-зонам. См. [NPulseLTZoneThreshold](Components/NPulseLTZoneThreshold.md), [NPLTZone](Components/NPLTZone.md) и [обзор API](API-Overview.md). Общая роль порога в спайковых моделях изложена в [Neuronal Dynamics, section 1.3](https://neuronaldynamics.epfl.ch/online/Ch1.S3.html); это концептуальный источник, а не доказательство эквивалентности реализации биологическому нейрону.
 
 #### 4a. Аксональная проводимость
 
@@ -317,12 +304,9 @@ This document describes the scientific concepts and publications underlying the 
 - Neurotransmitter diffusion in synaptic cleft
 - Compartmental neuron model
 
-#### 4. Long-Term Plasticity (LT-Zones)
+#### 4. Low-threshold zones (LTZone)
 
-**PulseLib Components:** `NPulseLTZoneThreshold`, `NPLTZone`
-
-**Key Publications:**
-- Bliss, T. V., & Lomo, T. (1973). "Long-lasting potentiation of synaptic transmission in the dentate area of the anaesthetized rabbit following stimulation of the perforant path." Journal of Physiology, 232(2), 331-356.
+LT means low threshold. These components produce neuron output/spikes from their specific activation or membrane model; they do not implement LTP/LTD merely by being LT-zones. Threshold and time-dependent behavior must be checked in the selected concrete class. See [NPulseLTZoneThreshold](Components/NPulseLTZoneThreshold.md) and [NPLTZone](Components/NPLTZone.md).
 
 #### 4a. Axonal conduction
 

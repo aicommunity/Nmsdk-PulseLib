@@ -1,11 +1,14 @@
 ## RU
 
+**Сверка 2026-09-22:** EnablePostTrainTuning=true и AutoScaleIterationGap=true по умолчанию. gap=span+settle+slack; dataset delay=settle+slack; при AutoScale=0 берётся max с заданным значением. Калибровка на Test Matrix не является независимым тестом. [Контракт и ограничения](../../../../Bin/Configs/SpikeSamples/StructTrain/AUDIT_2026-09-22.md).
+
+
 ## NNeuronTimeLearner — обучение временному паттерну
 
 **Класс**: `NNeuronTimeLearner` — контейнер (`UNet`) с внутренним `NPulseNeuron` и дочерним `NDatasetMatrix`.
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronTimeLearner", ...)`.
 **База кода**: копия/адаптация [`NNeuronLearner`](NNeuronLearner.md).
-**Алгоритм (подробно)**: [`Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearner/ALGORITHM.md`](../../../../Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearner/ALGORITHM.md).
+**Алгоритм (подробно)**: [`Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearner/ALGORITHM.md`](../../../../Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearner/Train/ALGORITHM.md).
 **Вариант с одним дендритом**: [`NNeuronTimeLearnerBranch`](NNeuronTimeLearnerBranch.md).
 
 ### Идея
@@ -14,7 +17,7 @@
 
 - Импульс `k` влияет на рост только дендрита `k` (пик измеряется на `Soma{k+1}`).
 - **Последний** дендрит (`N−1`) — опора синхронизации: его длина не наращивается, к времени его пика подстраиваются дендриты `0..N-2`.
-- **Joint train** (фаза 0): в одной пачке — подбор длины активного дендрита (round-robin) плюс нормализация амплитуд (parametric R по умолчанию). Фаза 1 в коде **не выставляется**. Done (`TrainingPhase=2`) при `AllDendritesSynced() ∧ AllSynapsesNormalized()`.
+- **Joint train** (фаза 0): в одной пачке — подбор длины активного дендрита (round-robin) плюс нормализация амплитуд (parametric R по умолчанию). Фаза 1 в коде **не выставляется**. Переход к завершению использует `AllDendritesSynced() ∧ AllSynapsesNormalized()`; эти предикаты допускают best-effort выходы. При включённом PostTune перед Done выполняется фаза 3. Done не доказывает точную синхронизацию или избирательность.
 
 ### Ключевые параметры
 
@@ -27,7 +30,7 @@
 | `SyncTolerance` | Допуск одновременности пиков (сек); default **0.02** |
 | `PeakMeasureMargin` | Полуокно поиска пика вокруг `Expected[i]+cable delay` (default 0.06) |
 | `DelayAgreeMarginMin` | Пол agree в `DelayUseOf`: `max(SyncTolerance, DelayAgreeMarginMin)` (default 0.03) |
-| `TrainingPhase` | **0** joint train (длина+амплитуда); **1** legacy unused; **2** Done |
+| `TrainingPhase` | **0** joint train (длина+амплитуда); **1** legacy unused; **2** Done; **3** PostTune |
 | `NormalizationMode` | **0** structural (±`NumSynapse`); **1** parametric tip R (default) |
 | `TrainingLTZThreshold` / `FixedLTZThreshold` | Порог при обучении / после |
 | `AutoCalibrateFixedLTZThreshold` | После Done: выставить `FixedLTZThreshold` по min/max LTZ последней synced-итерации |
@@ -53,7 +56,7 @@ dt = needed - delay_use
 
 ### Lifecycle
 
-- **ADefault** — defaults (`IterationGap=0.5`, `SyncTolerance=0.02`, `NormalizationMode=1`, высокий `TrainingLTZThreshold=100`). `SyncTolerance=1e-6` не ловит дискретные пики при `DefaultTimeStep≈2e-3`.
+- **ADefault** — defaults (`IterationGap=0.5`, `SyncTolerance=0.02`, `NormalizationMode=1`, высокий `TrainingLTZThreshold=100`). `SyncTolerance=1e-6` не ловит дискретные пики при `DefaultTimeStep=2000` (2000 шагов/с, dt=0.0005 с).
 - **ABuild** → `BuildStructure`: `Neuron` (`NumSomaMembraneParts=N`, независимые длины) + `DatasetMatrix`, fan-out `Generator1` на все дистальные `ExcSynapse`.
 - **ACalculate** → амплитуды; при `IsNeedToTrain` — `Training()`. Done проверяется **между** пачками.
 

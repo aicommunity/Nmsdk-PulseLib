@@ -12,7 +12,7 @@
 
 ### CSNM — formula stub
 
-Кратко по [Literature-References.md](../Literature-References.md) ([C], публ. 7) и [`CSNM-Models.md`](../../../Bin/Docs/SpikeSamples/CSNM-Models.md):
+Кратко по [Literature-References.md](../Literature-References.md) ([C], публ. 7) и [`CSNM-Models.md`](../../../../Bin/Docs/SpikeSamples/CSNM-Models.md):
 
 - Кабельное уравнение (непрерывная форма): \(\lambda^2 \frac{\partial^2 V}{\partial x^2} = \tau_m \frac{\partial V}{\partial t} + V\), где \(\lambda = \sqrt{r_m/r_i}\), \(\tau_m = r_m c_m\).
 - Ориентиры сегмента (точечный режим сравнения с CSNM): длина ~200 мкм, диаметр ~20 мкм.
@@ -411,7 +411,7 @@ for (int step = 0; step < 10000; step++) {
 
 ### CSNM formula stub
 
-From [Literature-References.md](../Literature-References.md) ([C], pub. 7) and [`CSNM-Models.md`](../../../Bin/Docs/SpikeSamples/CSNM-Models.md):
+From [Literature-References.md](../Literature-References.md) ([C], pub. 7) and [`CSNM-Models.md`](../../../../Bin/Docs/SpikeSamples/CSNM-Models.md):
 
 - Cable equation: \(\lambda^2 \frac{\partial^2 V}{\partial x^2} = \tau_m \frac{\partial V}{\partial t} + V\), with \(\lambda = \sqrt{r_m/r_i}\), \(\tau_m = r_m c_m\).
 - Segment orientation (point-neuron comparison): length ~200 µm, diameter ~20 µm.

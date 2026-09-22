@@ -20,7 +20,7 @@ Name=Имя проекта
 Description=Описание проекта
 
 [Engine]
-TimeStep=2000          # Шаг моделирования в микросекундах
+TimeStep=2000          # Частота: 2000 шагов/с, dt = 0.0005 с
 Libraries=PulseLib     # Используемые библиотеки
 ```
 
@@ -108,7 +108,7 @@ Libraries=PulseLib     # Используемые библиотеки
 **Типичные компоненты:**
 - `NPulseNeuronIzhikevich`, `NPHebbNeuron`, `NSPNeuronGen`
 - `NPGenerator` — генераторы входных сигналов
-- `NPLTZone` — зоны долгосрочной пластичности
+- `NPLTZone` — низкопороговые зоны формирования выхода нейрона
 
 #### Эксперименты по обучению (STDP)
 
@@ -147,7 +147,7 @@ Libraries=PulseLib     # Используемые библиотеки
 - `NSPNeuronGen` — нейроны с настраиваемой структурой
 - `NPMembraneBio`, `NPExcChannelBio`, `NPInhChannelBio` — биоинспирированные компоненты
 - `NPulseGeneratorTransit` — генераторы входных сигналов (Forward, Back, Left, Right, Danger)
-- `NPulseLTZoneThreshold` — LT-зоны для долгосрочной памяти
+- `NPulseLTZoneThreshold` — низкопороговые зоны генерации спайка
 
 **Особенности:**
 - Сложная иерархическая структура (сома, дендриты, LT-зоны)
@@ -260,7 +260,7 @@ Libraries=PulseLib     # Используемые библиотеки
 
 **Порог (`Threshold`):**
 - Обычно 1e-6 - 1e-4
-- Определяет минимальную активность для активации долгосрочной пластичности
+- Определяет минимальную активность для генерации выходного спайка
 
 **Временная константа (`TimeConstant`):**
 - Обычно 0.001-0.1 секунды
@@ -324,7 +324,7 @@ Text description of the project, its purpose, and network architecture.
 **Typical components:**
 - `NPulseNeuronIzhikevich`, `NPHebbNeuron`, `NSPNeuronGen`
 - `NPGenerator` — input signal generators
-- `NPLTZone` — long-term plasticity zones
+- `NPLTZone` — low-threshold zones producing the neuron output
 
 #### Learning Experiments (STDP)
 

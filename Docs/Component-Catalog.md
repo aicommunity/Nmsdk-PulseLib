@@ -1,5 +1,7 @@
 # Nmsdk-PulseLib — Component Catalog
 
+[Temporal / AsymRm registration variants](Components/TemporalNeuronVariants.md)
+
 ## RU
 
 Полный список регистраций (`Core/NPulseLibrary.cpp`) очень велик. Ниже — группировка с кратким назначением и типами сигналов. Для полного набора см. исходник `NPulseLibrary.cpp`.

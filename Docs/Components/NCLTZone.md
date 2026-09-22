@@ -4,7 +4,7 @@
 
 ### Назначение
 
-**Класс**: `NCLTZone` — классическая LT-зона (долговременная пластичность) для классических нейронов/каналов.  
+**Класс**: `NCLTZone` — классическая LT-зона (формирование выхода нейрона) для классических нейронов/каналов.\
 **Префикс**: `NC` — **C**ontinuous (непрерывный, классический), компонент с непрерывными входами/выходами; `LT` — **L**ow **T**hreshold (низкопороговая зона).  
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NCLTZone", ...)`.  
 **Storage-инстансы**: `ClassName = "NCLTZone"` в `Bin/Configs/*/Model_*.xml`.
@@ -13,7 +13,7 @@
 
 `NLTZone` реализует базовую LT-зону с пороговыми значениями для определения момента генерации сигнала.
 
-**Использование:** LT-зона для классических нейронов, долговременная пластичность
+**Использование:** LT-зона для классических нейронов, формирование выхода нейрона
 
 ### UML-диаграмма классов
 
@@ -87,13 +87,13 @@ ltZone->Build();
 
 ### Purpose
 
-**Class**: `NCLTZone` — classic LT-zone (long-term plasticity) for classic neurons/channels.  
+**Class**: `NCLTZone` — classic LT-zone (low threshold) for classic neurons/channels.\
 **Registration**: `NPulseLibrary.cpp` → `UploadClass("NCLTZone", ...)`.  
 **Instances**: `ClassName = "NCLTZone"` in `Bin/Configs/*/Model_*.xml`.
 
 `NCLTZone` is a configuration variant or alias of the base class `NLTZone` for classic (non-spiking) neurons and channels. When creating a component with `ClassName = "NCLTZone"`, an instance of `NLTZone` with parameters optimized for classic models is created.
 
-**Usage:** LT-zone for classic neurons, long-term plasticity
+**Usage:** LT-zone for classic neurons, neuron output generation
 
 ### UML Class Diagram
 
