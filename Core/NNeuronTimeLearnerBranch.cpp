@@ -4529,7 +4529,12 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
   }
   // Train in-process free-run often underestimates Test SB=2 peaks (~0.066 vs ~0.072)
   // and can invert foils. Keep silent thr so Test inference mid can run.
-  if(!inference && !landscape_ok)
+  // Search: always leave silent on Train — Test recomputes mid (phase8 skip-tipr-mid).
+  // Inference: never lock a failed landscape mid (would skip Test re-probe).
+  if(!landscape_ok
+     || (!inference
+         && PostTrainTipResistanceMode.GetData()
+            == PostTrainTune::kPostTipSearchSynthetic))
    mid = PostTrainSilentThreshold.GetData();
   FixedLTZThreshold = mid;
   CalibratedFixedLTZThreshold = mid;
@@ -4607,13 +4612,15 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
  SetLTZThreshold(FixedLTZThreshold.GetData());
  LTZThreshold = FixedLTZThreshold.GetData();
  ApplyPulseGeneratorMute();
+ // Always mark mid-done after Finalize: Train must not start a second
+ // "inference" free-run in the leftover sim window (overwrites silent thr and
+ // breaks phase8 skip-tipr-mid). Test loads a fresh process.
+ PostTuneInferenceMidDone = true;
  if(!inference)
  {
   SetIsNeedToTrain(false);
   IsNeedToTrain = false;
  }
- else
-  PostTuneInferenceMidDone = true;
 
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
