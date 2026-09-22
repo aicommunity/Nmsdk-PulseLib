@@ -4041,8 +4041,8 @@ double NNeuronTimeLearnerBranch::ReadPostTuneProbeMetric(void) const
  const bool use_ltz = (mode == PostTrainTune::kMidMetricLtz);
  if(use_ltz)
   return std::max(IterMaxLTZPotential, PostTuneLiveSomaMax);
- // Auto/Soma: continuous soma (Training + ACalculate live max), same idea as
- // CalibrateFixedLTZ parallel peak / Test analyzer soma_amp_sum.
+ // Auto/Soma: shared-soma continuous amp — same quantity as analyzer CSV
+ // soma_amp_sum (SomaNeuronAmplitude row0), not sum of MaxIterSomaAmp[].
  double peak = std::max(IterMaxSomaPotential, PostTuneLiveSomaMax);
  for(size_t i = 0; i < MaxIterSomaAmp.size(); ++i)
   peak = std::max(peak, MaxIterSomaAmp[i]);
@@ -4187,6 +4187,7 @@ void NNeuronTimeLearnerBranch::UpdatePostTuneFreeRunPeak(void)
  if(!Dataset || !Neuron)
   return;
 
+ // Shared soma amp (analyzer soma_amp_sum = SomaNeuronAmplitude row0).
  UEPtr<NPulseMembrane> soma =
   Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(), true);
  const double amp = soma ? soma->SumPotential(0, 0) : 0.0;
@@ -4828,9 +4829,14 @@ void NNeuronTimeLearnerBranch::HandlePostTuneFinishIteration(void)
   }
   else if(!landscape_ok && RDK::GetLogger())
   {
+   int foils_above = 0;
+   for(size_t i = 0; i < foils.size(); ++i)
+    if(foils[i] + 1e-12 >= tgt)
+     ++foils_above;
    std::ostringstream oss;
    oss << "SearchSynthetic: skip_candidate landscape_ok=0 gap=" << gap
-       << " BestGap=" << PostTuneBestGap;
+       << " BestGap=" << PostTuneBestGap
+       << " tgt=" << tgt << " foils_above=" << foils_above;
    RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
   }
 
@@ -4886,7 +4892,8 @@ void NNeuronTimeLearnerBranch::HandlePostTuneFinishIteration(void)
    if(RDK::GetLogger())
    {
     std::ostringstream oss;
-    oss << "SearchSynthetic: apply_best_tips gap=" << PostTuneBestGap;
+    oss << "SearchSynthetic: apply_best_tips gap=" << PostTuneBestGap
+       << " metric=sum";
     RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
    }
   }
@@ -5493,7 +5500,8 @@ bool NNeuronTimeLearnerBranch::ACalculate(void)
     const double amp = (i < int(MaxIterSomaAmp.size())) ? MaxIterSomaAmp[i] : 0.0;
     SomaNeuronAmplitude(i + 1, 0) = amp;
    }
-  // Continuous soma max for PostTune / inference mid free-run.
+  // Continuous shared-soma max for PostTune / inference mid free-run
+  // (CSV soma_amp_sum tracks SomaNeuronAmplitude row0).
   if(PostTuneFreeRunActive && soma_amp > PostTuneLiveSomaMax)
     PostTuneLiveSomaMax = soma_amp;
  }
