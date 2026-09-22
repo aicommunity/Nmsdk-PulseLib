@@ -4511,6 +4511,22 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
   PostTrainTune::ComputeMidThreshold(tgt, foils, mid, gap);
   if(gap < 1e-4)
    landscape_ok = false;
+  // Search BestTips from trial probes can look OK but fail recognition free-run:
+  // fall back to KeepDone/ScaleTipR snapshot and silent thr for Test mid.
+  if(!inference && !landscape_ok
+     && PostTrainTipResistanceMode.GetData() == PostTrainTune::kPostTipSearchSynthetic
+     && !PostTuneSearchReverted && !PostTuneTipSnapshot.empty())
+  {
+   PostTuneTrialTips = PostTuneTipSnapshot;
+   ApplyPostTrainTipMode(true);
+   PostTuneSearchReverted = true;
+   if(RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "SearchSynthetic: free_run_reject_best revert_to_snapshot gap=" << gap;
+    RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
+   }
+  }
   // Train in-process free-run often underestimates Test SB=2 peaks (~0.066 vs ~0.072)
   // and can invert foils. Keep silent thr so Test inference mid can run.
   if(!inference && !landscape_ok)
@@ -4893,11 +4909,17 @@ void NNeuronTimeLearnerBranch::HandlePostTuneFinishIteration(void)
    {
     std::ostringstream oss;
     oss << "SearchSynthetic: apply_best_tips gap=" << PostTuneBestGap
-       << " metric=sum";
+        << " metric=soma";
     RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
    }
   }
- }
+
+  // Trial-loop landscape ≠ Test free-run. Recalibrate mid via free-run; if BestTips
+  // fails landscape there, FinalizePostTuneMid reverts to KeepDone snapshot.
+  PostTuneMetrics.assign(PostTunePatterns.size(), 0.0);
+  if(SetupPostTuneFreeRunProbes())
+   return;
+  }
 
  FinalizePostTuneMid();
 }
