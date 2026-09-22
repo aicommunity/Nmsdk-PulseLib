@@ -117,22 +117,29 @@ double NNeuronTimeLearnerBranch::SettleMarginSec() const
   if(DendriteLength[i] > max_len)
    max_len = DendriteLength[i];
  }
- const double from_len = kDelayPerSegDefault * double(max_len);
+ const double dps = (EstDelayPerSeg > 0.0) ? EstDelayPerSeg : kDelayPerSegDefault;
+ const double from_len = dps * double(max_len);
  return std::max(kMinSettle, from_len);
 }
 
 /// Effective IterationGap including slack (sec)
 double NNeuronTimeLearnerBranch::EffectiveIterationGapSec() const
 {
+ const double phys = PatternSpanSec() + SettleMarginSec() + kGapSlack;
+ if(AutoScaleIterationGap.GetData())
+  return phys;
  const double configured = IterationGap.GetData() > 0.0 ? IterationGap.GetData() : 0.5;
- return std::max(configured, PatternSpanSec() + SettleMarginSec() + kGapSlack);
+ return std::max(configured, phys);
 }
 
 /// Effective Dataset delay used between bursts (sec)
 double NNeuronTimeLearnerBranch::EffectiveDatasetDelaySec() const
 {
+ const double phys = SettleMarginSec() + kGapSlack;
+ if(AutoScaleIterationGap.GetData())
+  return phys;
  const double configured = Delay.GetData() > 0.0 ? Delay.GetData() : 0.5;
- return std::max(configured, SettleMarginSec() + kGapSlack);
+ return std::max(configured, phys);
 }
 
 /// Resize PeakRel / Delay / status vectors to n
@@ -1701,6 +1708,7 @@ NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
  InitialSomaPotential("InitialSomaPotential", this, &NNeuronTimeLearnerBranch::SetInitialSomaPotential),
  NumSynapse("NumSynapse", this, &NNeuronTimeLearnerBranch::SetNumSynapse),
  IterationGap("IterationGap", this, &NNeuronTimeLearnerBranch::SetIterationGap),
+ AutoScaleIterationGap("AutoScaleIterationGap", this),
  SyncTolerance("SyncTolerance", this, &NNeuronTimeLearnerBranch::SetSyncTolerance),
  PeakMeasureMargin("PeakMeasureMargin", this, &NNeuronTimeLearnerBranch::SetPeakMeasureMargin),
  DelayAgreeMarginMin("DelayAgreeMarginMin", this, &NNeuronTimeLearnerBranch::SetDelayAgreeMarginMin),
@@ -2000,8 +2008,9 @@ bool NNeuronTimeLearnerBranch::SetCalculateMode(const int &value)
 /// Set DatasetMatrix.Delay (pause between bursts, sec)
 bool NNeuronTimeLearnerBranch::SetDelay(const double &value)
 {
+ (void)value;
  if(Dataset)
-  Dataset->Delay = std::max(value > 0.0 ? value : 0.5, SettleMarginSec() + kGapSlack);
+  Dataset->Delay = EffectiveDatasetDelaySec();
  return true;
 }
 
@@ -2809,6 +2818,7 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  OldNumInputDendrite = 0;
  MaxDendriteLength = 100;
  IterationGap = 0.5;
+ AutoScaleIterationGap = true;
  // ~1 model step (DefaultTimeStep often 2e-3 s); 1e-6 never matched discrete peaks
  SyncTolerance = 0.02;
  PeakMeasureMargin = 0.06;
@@ -4383,6 +4393,14 @@ bool NNeuronTimeLearnerBranch::RebuildCableForPostTuneProbes(void)
 void NNeuronTimeLearnerBranch::EnterPostTunePhase(void)
 {
  const int n = NumInputDendrite.GetData();
+ const int mode = PostTrainTipResistanceMode.GetData();
+ // Search revert fallback = KeepDone-quality TipR (parallel scale), not Canon.
+ // Canon has weak br100 selectivity; ScaleTipR matches posttune_off / keep recipe.
+ if(mode == PostTrainTune::kPostTipSearchSynthetic)
+ {
+  ParallelResistanceScaled = false;
+  ScaleTipResistancesForParallelActivation();
+ }
  PostTuneTipSnapshot = TipSynapseResistance.GetData();
  if(int(PostTuneTipSnapshot.size()) != n)
   PostTuneTipSnapshot.resize(static_cast<size_t>(n), SynapseResistanceBase.GetData());
@@ -4400,7 +4418,6 @@ void NNeuronTimeLearnerBranch::EnterPostTunePhase(void)
   PostTuneTargetIsi, PostTrainSyntheticFoilCount.GetData());
  PostTuneMetrics.assign(PostTunePatterns.size(), 0.0);
 
- const int mode = PostTrainTipResistanceMode.GetData();
  PostTuneSearchPass = 0;
  PostTuneSearchTip = 0;
  PostTuneSearchMult = -1;
@@ -4737,8 +4754,20 @@ bool NNeuronTimeLearnerBranch::MaybeStartInferenceMidProbes(void)
    {
     std::ostringstream oss;
     oss << "InferenceMid: Matrix free_run samples=" << ns
-        << " tip_links=" << CountGeneratorTipLinks();
+        << " tip_links=" << CountGeneratorTipLinks()
+        << " delay=" << double(Dataset->Delay)
+        << " gapEff=" << EffectiveIterationGapSec()
+        << " auto_gap=" << (AutoScaleIterationGap.GetData() ? 1 : 0);
     RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
+   }
+   {
+    std::ofstream dbg("/tmp/posttune_freerun_dbg.txt", std::ios::app);
+    if(dbg)
+     dbg << "inference_mid ns=" << ns
+         << " delay=" << double(Dataset->Delay)
+         << " gapEff=" << EffectiveIterationGapSec()
+         << " auto_gap=" << (AutoScaleIterationGap.GetData() ? 1 : 0)
+         << "\n";
    }
    return true;
   }
@@ -4777,10 +4806,10 @@ void NNeuronTimeLearnerBranch::HandlePostTuneFinishIteration(void)
 
  double mid = 0.0;
  double gap = 0.0;
+ std::vector<double> foils;
  if(!PostTuneMetrics.empty())
  {
   const double tgt = PostTuneMetrics[0];
-  std::vector<double> foils;
   for(size_t i = 1; i < PostTuneMetrics.size(); ++i)
    foils.push_back(PostTuneMetrics[i]);
   PostTrainTune::ComputeMidThreshold(tgt, foils, mid, gap);
@@ -4789,10 +4818,20 @@ void NNeuronTimeLearnerBranch::HandlePostTuneFinishIteration(void)
  const int mode = PostTrainTipResistanceMode.GetData();
  if(mode == PostTrainTune::kPostTipSearchSynthetic)
  {
-  if(gap > PostTuneBestGap)
+  const double tgt = PostTuneMetrics.empty() ? 0.0 : PostTuneMetrics[0];
+  const bool landscape_ok = !PostTuneMetrics.empty()
+   && PostTrainTune::LandscapeOk(tgt, foils);
+  if(landscape_ok && gap > PostTuneBestGap)
   {
    PostTuneBestGap = gap;
    PostTuneBestTips = TipSynapseResistance.GetData();
+  }
+  else if(!landscape_ok && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "SearchSynthetic: skip_candidate landscape_ok=0 gap=" << gap
+       << " BestGap=" << PostTuneBestGap;
+   RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
   }
 
   const int n = NumInputDendrite.GetData();
@@ -4826,7 +4865,8 @@ void NNeuronTimeLearnerBranch::HandlePostTuneFinishIteration(void)
    return;
   }
 
-  if(PostTuneBestGap <= 0.0 && !PostTuneTipSnapshot.empty())
+  if((PostTuneBestTips.empty() || PostTuneBestGap <= 0.0)
+     && !PostTuneTipSnapshot.empty())
   {
    PostTuneTrialTips = PostTuneTipSnapshot;
    ApplyPostTrainTipMode(true);
@@ -4850,7 +4890,7 @@ void NNeuronTimeLearnerBranch::HandlePostTuneFinishIteration(void)
     RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
    }
   }
-}
+ }
 
  FinalizePostTuneMid();
 }
@@ -4941,6 +4981,8 @@ void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
       << " N=" << NumInputDendrite.GetData()
       << " gap=" << IterationGap.GetData()
       << " gapEff=" << EffectiveIterationGapSec()
+      << " gapPhys=" << (PatternSpanSec() + SettleMarginSec() + kGapSlack)
+      << " auto_gap=" << (AutoScaleIterationGap.GetData() ? 1 : 0)
       << " delay=" << Delay.GetData()
       << " span=" << PatternSpanSec()
       << " settle=" << SettleMarginSec()

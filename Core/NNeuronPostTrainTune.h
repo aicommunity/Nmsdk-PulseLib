@@ -39,6 +39,20 @@ void ComputeMidThreshold(
  double &mid_out,
  double &gap_out);
 
+/// True iff every foil is strictly below tgt (usable Search BestTips landscape).
+inline bool LandscapeOk(
+ double tgt,
+ const std::vector<double> &foil_metrics,
+ double eps = 1e-12)
+{
+ for(size_t i = 0; i < foil_metrics.size(); ++i)
+ {
+  if(foil_metrics[i] + eps >= tgt)
+   return false;
+ }
+ return true;
+}
+
 std::vector<double> MakeCanonRminVector(int n, double floor_r, double last_r);
 std::vector<double> MakeFlatLastVector(int n, double last_r);
 

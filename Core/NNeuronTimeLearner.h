@@ -174,6 +174,9 @@ public:
  
  /// Min time after first impulse of previous iteration before next may start (sec) — parameter t
  UProperty<double, NNeuronTimeLearner, ptPubParameter> IterationGap;
+
+ /// When true, EffectiveIterationGap/Delay ignore XML floor and use span+settle+slack
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> AutoScaleIterationGap;
  
  /// |dt| below this => dendrite considered synchronized (sec)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> SyncTolerance;
@@ -427,7 +430,7 @@ protected:
  
  static constexpr double kMinMeasurableSomaAmp = 1e-6;
  
- static constexpr double kMinSettle = 0.08;
+ static constexpr double kMinSettle = 0.20;
  
  static constexpr double kDelayPerSegDefault = 0.005;
  
