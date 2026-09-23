@@ -4,11 +4,13 @@
 
 `NPatternResponseAnalyzer` регистрирует rising-edge стимулов и выхода нейрона. Wiring: `StimulusInputs←DatasetMatrix.Generator1.Output`, `NeuronOutputs←Neuron.LTZone.Output`, `TargetClassInput←DatasetMatrix.CurrentClass`.
 
-### Фактическая реализация на 2026-09-22
+### Фактическая реализация (после A01–A04)
 
-`PostPatternWindow` (default 0.5 с) отсчитывается от последнего *наблюдавшегося* стимула. Код считает паттерн полным при числе стимулов 1 или >=4. Это не подтверждает, что последний стимул сэмпла уже поступил: ранний fire после первого стимула может остаться установленным. N=2/3 не поддерживается этой проверкой корректно.
+Analyzer берёт expected stim count / class / sample id из soft-linked `DatasetMatrix` (через `LearnerComponentName`). Паттерн полон при `observed >= expected`; без dataset — legacy fallback `1 || >=4`.
 
-При своевременном fire trial закрывается в конце PostPatternWindow. Только при отсутствии такого fire наблюдение продолжается до `LateResponseWindow` (default 1.5 с, не меньше Post) либо нового trial. Дополнительные стимулы внутри Post добавляются к текущему trial. Явного sample-end/id нет. Метка класса обновляется из текущего входа и может измениться до закрытия предыдущего trial.
+In-window `neuron_fired` только после complete и в `PostPatternWindow`. Наблюдение для всех trial длится до `last_stim + LateResponseWindow` (`trial_observe_until_`). Метка класса фиксируется в `BeginTrial` и не перечитывается. Coincident stim/neuron: Close → Begin → attribute once.
+
+`response_class` per_stim — injective (один spike ≤ одно окно). Python metrics v2 считают любой foil-spike как FP.
 
 ### CSV и метрики
 
