@@ -1727,6 +1727,7 @@ NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
  PostTrainSyntheticFoilCount("PostTrainSyntheticFoilCount", this),
  PostTrainTipSearchIters("PostTrainTipSearchIters", this),
  PostTrainTuneComplete("PostTrainTuneComplete", this),
+ PostTuneResult("PostTuneResult", this),
  EnableNextSegmentInhibition("EnableNextSegmentInhibition", this,
   &NNeuronTimeLearnerBranch::SetEnableNextSegmentInhibition)
 {
@@ -4038,15 +4039,32 @@ bool NNeuronTimeLearnerBranch::EndOfLearning(void)
 double NNeuronTimeLearnerBranch::ReadPostTuneProbeMetric(void) const
 {
  const int mode = PostTrainMidMetric.GetData();
- const bool use_ltz = (mode == PostTrainTune::kMidMetricLtz);
- if(use_ltz)
-  return std::max(IterMaxLTZPotential, PostTuneLiveSomaMax);
+ if(mode == PostTrainTune::kMidMetricLtz)
+  return IterMaxLTZPotential;
  // Auto/Soma: shared-soma continuous amp — same quantity as analyzer CSV
  // soma_amp_sum (SomaNeuronAmplitude row0), not sum of MaxIterSomaAmp[].
  double peak = std::max(IterMaxSomaPotential, PostTuneLiveSomaMax);
  for(size_t i = 0; i < MaxIterSomaAmp.size(); ++i)
   peak = std::max(peak, MaxIterSomaAmp[i]);
  return peak;
+}
+
+double NNeuronTimeLearnerBranch::ReadPostTuneLiveMetric(void) const
+{
+ const int mode = PostTrainMidMetric.GetData();
+ if(mode == PostTrainTune::kMidMetricLtz)
+ {
+  if(Neuron)
+  {
+   if(UEPtr<NPulseLTZoneCommon> ltz =
+       Neuron->GetComponentL<NPulseLTZoneCommon>(std::string("LTZone"), true))
+    return ltz->Potential.GetData();
+  }
+  return IterMaxLTZPotential;
+ }
+ UEPtr<NPulseMembrane> soma =
+  Neuron ? Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(), true) : UEPtr<NPulseMembrane>();
+ return soma ? soma->SumPotential(0, 0) : PostTuneLiveSomaMax;
 }
 
 void NNeuronTimeLearnerBranch::ApplyPostTrainTipMode(bool use_snapshot_only)
@@ -4187,10 +4205,7 @@ void NNeuronTimeLearnerBranch::UpdatePostTuneFreeRunPeak(void)
  if(!Dataset || !Neuron)
   return;
 
- // Shared soma amp (analyzer soma_amp_sum = SomaNeuronAmplitude row0).
- UEPtr<NPulseMembrane> soma =
-  Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(), true);
- const double amp = soma ? soma->SumPotential(0, 0) : 0.0;
+ const double amp = ReadPostTuneLiveMetric();
  if(amp > PostTuneLiveSomaMax)
   PostTuneLiveSomaMax = amp;
 
@@ -4227,6 +4242,9 @@ void NNeuronTimeLearnerBranch::UpdatePostTuneFreeRunPeak(void)
  const int last = std::max(0, PostTuneLastDatasetIter);
  if(last < ns && PostTuneLiveSomaMax > PostTuneMetrics[static_cast<size_t>(last)])
   PostTuneMetrics[static_cast<size_t>(last)] = PostTuneLiveSomaMax;
+
+ if(timed_out)
+  PostTuneResult = PostTrainTune::kResultTimeout;
 
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
@@ -4501,15 +4519,19 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
  {
   const double tgt = PostTuneMetrics[0];
   std::vector<double> foils;
-  landscape_ok = true;
   for(size_t i = 1; i < PostTuneMetrics.size(); ++i)
-  {
    foils.push_back(PostTuneMetrics[i]);
-   if(PostTuneMetrics[i] + 1e-12 >= tgt)
-    landscape_ok = false;
+  const bool metrics_ok = PostTrainTune::MetricsFinite(tgt, foils);
+  landscape_ok = metrics_ok && PostTrainTune::LandscapeOk(tgt, foils);
+  if(metrics_ok)
+   PostTrainTune::ComputeMidThreshold(tgt, foils, mid, gap);
+  else
+  {
+   mid = PostTrainSilentThreshold.GetData();
+   gap = 0.0;
+   PostTuneResult = PostTrainTune::kResultInvalidMetrics;
   }
-  PostTrainTune::ComputeMidThreshold(tgt, foils, mid, gap);
-  if(gap < 1e-4)
+  if(metrics_ok && gap < 1e-4)
    landscape_ok = false;
   // Search BestTips from trial probes can look OK but fail recognition free-run:
   // fall back to KeepDone/ScaleTipR snapshot and silent thr for Test mid.
@@ -4520,6 +4542,7 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
    PostTuneTrialTips = PostTuneTipSnapshot;
    ApplyPostTrainTipMode(true);
    PostTuneSearchReverted = true;
+   PostTuneMetrics.clear();
    if(RDK::GetLogger())
    {
     std::ostringstream oss;
@@ -4531,11 +4554,20 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
   // and can invert foils. Keep silent thr so Test inference mid can run.
   // Search: always leave silent on Train — Test recomputes mid (phase8 skip-tipr-mid).
   // Inference: never lock a failed landscape mid (would skip Test re-probe).
-  if(!landscape_ok
+  if(!metrics_ok || !landscape_ok
      || (!inference
          && PostTrainTipResistanceMode.GetData()
             == PostTrainTune::kPostTipSearchSynthetic))
    mid = PostTrainSilentThreshold.GetData();
+  if(PostTuneResult.GetData() == PostTrainTune::kResultNone)
+  {
+   if(!metrics_ok)
+    PostTuneResult = PostTrainTune::kResultInvalidMetrics;
+   else if(!landscape_ok)
+    PostTuneResult = PostTrainTune::kResultNonSeparable;
+   else
+    PostTuneResult = PostTrainTune::kResultSuccess;
+  }
   FixedLTZThreshold = mid;
   CalibratedFixedLTZThreshold = mid;
   AutoCalibrateFixedLTZThreshold = false;
@@ -4657,6 +4689,7 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
     flag << "mid=" << mid << " gap=" << gap
          << " landscape_ok=" << (landscape_ok ? 1 : 0)
          << " inference=" << (inference ? 1 : 0)
+         << " result=" << int(PostTuneResult.GetData())
          << " FixedLTZ=" << FixedLTZThreshold.GetData();
     if(PostTrainTipResistanceMode.GetData()
        == PostTrainTune::kPostTipSearchSynthetic)
@@ -4933,6 +4966,11 @@ void NNeuronTimeLearnerBranch::HandlePostTuneFinishIteration(void)
   PostTuneMetrics.assign(PostTunePatterns.size(), 0.0);
   if(SetupPostTuneFreeRunProbes())
    return;
+  PostTuneResult = PostTrainTune::kResultSetupFailure;
+  if(RDK::GetLogger())
+   RDK::GetLogger()->LogMessage(RDK_EX_ERROR, "NNeuronTimeLearnerBranch",
+    "PostTune: SetupPostTuneFreeRunProbes failed after Search — Complete=false");
+  return;
   }
 
  FinalizePostTuneMid();

@@ -247,12 +247,24 @@ void ComputeMidThreshold(
  double &mid_out,
  double &gap_out)
 {
+ if(!std::isfinite(tgt))
+ {
+  mid_out = tgt;
+  gap_out = 0.0;
+  return;
+ }
  std::vector<double> below;
  double max_any = 0.0;
  bool have_any = false;
  for(size_t i = 0; i < foil_metrics.size(); ++i)
  {
   const double s = foil_metrics[i];
+  if(!std::isfinite(s))
+  {
+   mid_out = tgt;
+   gap_out = 0.0;
+   return;
+  }
   if(!have_any || s > max_any)
   {
    max_any = s;
@@ -274,7 +286,8 @@ void ComputeMidThreshold(
   foil = have_any ? max_any : 0.0;
   mid_out = tgt * 0.99;
  }
- gap_out = tgt - foil;
+ // Separability gap always vs global max foil (including above tgt).
+ gap_out = have_any ? (tgt - max_any) : (tgt - foil);
 }
 
 std::vector<double> MakeCanonRminVector(int n, double floor_r, double last_r)

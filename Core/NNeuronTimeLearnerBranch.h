@@ -232,6 +232,9 @@ public:
  /// True after PostTune finished (pub state)
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubState> PostTrainTuneComplete;
 
+ /// PostTrainTune result code (PostTrainTune::kResult*); Complete ≠ PASS
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubState> PostTuneResult;
+
  /// When true: each tip Exc@L[k] also drives InhSynapse1 on segment L[k]+1
  /// (same Generator). Cable grows to max(L)+1. Mute links Exc+Inh; Done → 2N.
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableNextSegmentInhibition;
@@ -934,6 +937,7 @@ protected:
 
  /// Probe metric for mid: LTZ peak or soma peak
  double ReadPostTuneProbeMetric(void) const;
+ double ReadPostTuneLiveMetric(void) const;
  
  /// Publish AmpDt / TipR / length traces for watchers
  void UpdateNormTraces(void);

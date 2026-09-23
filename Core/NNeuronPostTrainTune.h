@@ -20,6 +20,14 @@ inline constexpr int kMidMetricAuto = 0;
 inline constexpr int kMidMetricLtz = 1;
 inline constexpr int kMidMetricSoma = 2;
 
+/// PostTuneResult pub-state codes (Complete ≠ quality PASS).
+inline constexpr int kResultNone = 0;
+inline constexpr int kResultSuccess = 1;
+inline constexpr int kResultNonSeparable = 2;
+inline constexpr int kResultSetupFailure = 3;
+inline constexpr int kResultTimeout = 4;
+inline constexpr int kResultInvalidMetrics = 5;
+
 /// Legacy synthetic foils (shifts / scale / zero-one). Kept for SearchSynthetic.
 std::vector<std::vector<double> > BuildSyntheticPatterns(
  const std::vector<double> &target_isi,
@@ -39,12 +47,26 @@ void ComputeMidThreshold(
  double &mid_out,
  double &gap_out);
 
-/// True iff every foil is strictly below tgt (usable Search BestTips landscape).
+inline bool MetricsFinite(double tgt, const std::vector<double> &foil_metrics)
+{
+ if(!std::isfinite(tgt))
+  return false;
+ for(size_t i = 0; i < foil_metrics.size(); ++i)
+ {
+  if(!std::isfinite(foil_metrics[i]))
+   return false;
+ }
+ return true;
+}
+
+/// True iff every foil is finite and strictly below tgt (usable landscape).
 inline bool LandscapeOk(
  double tgt,
  const std::vector<double> &foil_metrics,
  double eps = 1e-12)
 {
+ if(!MetricsFinite(tgt, foil_metrics))
+  return false;
  for(size_t i = 0; i < foil_metrics.size(); ++i)
  {
   if(foil_metrics[i] + eps >= tgt)

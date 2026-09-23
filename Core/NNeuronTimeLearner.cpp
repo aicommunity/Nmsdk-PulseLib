@@ -1200,7 +1200,8 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  PostTrainSilentThreshold("PostTrainSilentThreshold", this),
  PostTrainSyntheticFoilCount("PostTrainSyntheticFoilCount", this),
  PostTrainTipSearchIters("PostTrainTipSearchIters", this),
- PostTrainTuneComplete("PostTrainTuneComplete", this)
+ PostTrainTuneComplete("PostTrainTuneComplete", this),
+ PostTuneResult("PostTuneResult", this)
 {
  OldNumInputDendrite = 0;
  InitialSomaPotential.SetCheckEquals(false);
@@ -3961,19 +3962,32 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
  {
   const double tgt = PostTuneMetrics[0];
   std::vector<double> foils;
-  landscape_ok = true;
   for(size_t i = 1; i < PostTuneMetrics.size(); ++i)
-  {
    foils.push_back(PostTuneMetrics[i]);
-   if(PostTuneMetrics[i] + 1e-12 >= tgt)
-    landscape_ok = false;
-  }
-  PostTrainTune::ComputeMidThreshold(tgt, foils, mid, gap);
-  if(gap < 1e-4)
-   landscape_ok = false;
-  // Train free-run often mismatches Test landscape; keep silent for inference mid.
-  if(!inference && !landscape_ok)
+  const bool metrics_ok = PostTrainTune::MetricsFinite(tgt, foils);
+  landscape_ok = metrics_ok && PostTrainTune::LandscapeOk(tgt, foils);
+  if(metrics_ok)
+   PostTrainTune::ComputeMidThreshold(tgt, foils, mid, gap);
+  else
+  {
    mid = PostTrainSilentThreshold.GetData();
+   gap = 0.0;
+   PostTuneResult = PostTrainTune::kResultInvalidMetrics;
+  }
+  if(metrics_ok && gap < 1e-4)
+   landscape_ok = false;
+  // Silent on bad landscape for Train and inference (A08).
+  if(!metrics_ok || !landscape_ok)
+   mid = PostTrainSilentThreshold.GetData();
+  if(PostTuneResult.GetData() == PostTrainTune::kResultNone)
+  {
+   if(!metrics_ok)
+    PostTuneResult = PostTrainTune::kResultInvalidMetrics;
+   else if(!landscape_ok)
+    PostTuneResult = PostTrainTune::kResultNonSeparable;
+   else
+    PostTuneResult = PostTrainTune::kResultSuccess;
+  }
   FixedLTZThreshold.SetDataDirect(mid);
   CalibratedFixedLTZThreshold.SetDataDirect(mid);
   AutoCalibrateFixedLTZThreshold.SetDataDirect(false);
@@ -4088,6 +4102,7 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
     flag << "mid=" << mid << " gap=" << gap
          << " landscape_ok=" << (landscape_ok ? 1 : 0)
          << " inference=" << (inference ? 1 : 0)
+         << " result=" << int(PostTuneResult.GetData())
          << " FixedLTZ=" << FixedLTZThreshold.GetData();
     if(PostTrainTipResistanceMode.GetData()
        == PostTrainTune::kPostTipSearchSynthetic)
@@ -4418,6 +4433,16 @@ void NNeuronTimeLearner::HandlePostTuneFinishIteration(void)
     RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearner", oss.str());
    }
   }
+
+  // Port Branch: recalibrate mid via free-run after Search selection.
+  PostTuneMetrics.assign(PostTunePatterns.size(), 0.0);
+  if(SetupPostTuneFreeRunProbes())
+   return;
+  PostTuneResult = PostTrainTune::kResultSetupFailure;
+  if(RDK::GetLogger())
+   RDK::GetLogger()->LogMessage(RDK_EX_ERROR, "NNeuronTimeLearner",
+    "PostTune: SetupPostTuneFreeRunProbes failed after Search — Complete=false");
+  return;
  }
 
  FinalizePostTuneMid();

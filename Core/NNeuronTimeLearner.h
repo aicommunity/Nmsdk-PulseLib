@@ -235,6 +235,9 @@ public:
  /// True after PostTune finished (pub state)
  UProperty<bool, NNeuronTimeLearner, ptPubState> PostTrainTuneComplete;
 
+ /// PostTrainTune result code (PostTrainTune::kResult*); Complete ≠ PASS
+ UProperty<int, NNeuronTimeLearner, ptPubState> PostTuneResult;
+
 protected:
  /// Previous NumInputDendrite (resize / rebuild)
  int OldNumInputDendrite;
