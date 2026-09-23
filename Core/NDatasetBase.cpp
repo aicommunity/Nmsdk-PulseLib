@@ -457,5 +457,69 @@ bool NDatasetBase::ACalculate(void)
     return false;
 }
 
+int NDatasetBase::GetCurrentSampleId() const
+{
+    if(LastPlayedIteration >= 0)
+        return LastPlayedIteration;
+    return int(Iteration);
+}
+
+int NDatasetBase::CountScheduledSpikes(int sample, int feature) const
+{
+    const int max_spikes = int(MaxSpikesPerFeature);
+    const int features = int(NumFeatures);
+    if(sample < 0 || sample >= int(NumSamples) || feature < 0 || feature >= features)
+        return 0;
+    if(max_spikes < 1)
+        return 0;
+    if(MatrixData.GetCols() <= feature)
+        return 0;
+    const int base = SampleSlotRow(sample, 0);
+    if(MatrixData.GetRows() < base + max_spikes)
+        return 0;
+    int count = 0;
+    for(int s = 0; s < max_spikes; ++s)
+    {
+        if(MatrixData(base + s, feature) >= 0.0)
+            ++count;
+    }
+    return count;
+}
+
+double NDatasetBase::GetExpectedLastSpikeAbsRel(int sample, int feature) const
+{
+    const int max_spikes = int(MaxSpikesPerFeature);
+    const int features = int(NumFeatures);
+    if(sample < 0 || sample >= int(NumSamples) || feature < 0 || feature >= features)
+        return 0.0;
+    if(max_spikes < 1)
+        return 0.0;
+    if(MatrixData.GetCols() <= feature)
+        return 0.0;
+    const int base = SampleSlotRow(sample, 0);
+    if(MatrixData.GetRows() < base + max_spikes)
+        return 0.0;
+    double t = 0.0;
+    double last = 0.0;
+    bool any = false;
+    for(int s = 0; s < max_spikes; ++s)
+    {
+        const double d = MatrixData(base + s, feature);
+        if(d < 0.0)
+            continue;
+        t += d;
+        last = t;
+        any = true;
+    }
+    return any ? last : 0.0;
+}
+
+int NDatasetBase::GetSampleClass(int sample) const
+{
+    if(sample < 0 || MatrixClasses.GetRows() < 1 || MatrixClasses.GetCols() <= sample)
+        return 0;
+    return MatrixClasses(0, sample);
+}
+
 }
 #endif

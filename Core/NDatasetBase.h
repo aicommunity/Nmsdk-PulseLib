@@ -141,6 +141,18 @@ double SampleBurstEndRel;
 
 /// Last Iteration value used for playback schedule
 int LastPlayedIteration;
+
+public:
+/// Sample id currently (or last) playing; prefers LastPlayedIteration when set
+int GetCurrentSampleId() const;
+double GetSampleStartTime() const { return SampleStartTime; }
+double GetSampleBurstEndRel() const { return SampleBurstEndRel; }
+/// Count MatrixData slots with ISI >= 0 for sample/feature (skips -1)
+int CountScheduledSpikes(int sample, int feature = 0) const;
+/// Cumulative abs time of last scheduled spike relative to sample start
+double GetExpectedLastSpikeAbsRel(int sample, int feature = 0) const;
+/// Class label from MatrixClasses (not live CurrentClass)
+int GetSampleClass(int sample) const;
 };
 
 }

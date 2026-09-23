@@ -11,6 +11,7 @@ namespace NMSDK {
 
 class NPulseLTZoneCommon;
 class NNeuronTimeLearner;
+class NDatasetBase;
 
 using namespace RDK;
 
@@ -23,6 +24,8 @@ UProperty<std::vector<MDMatrix<double> >, NPatternResponseAnalyzer, ptInput | pt
 UProperty<std::vector<MDMatrix<double> >, NPatternResponseAnalyzer, ptInput | ptPubState> SomaAmplitudeInput;
 
 UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> LearnerComponentName;
+UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> DatasetComponentName;
+UProperty<int, NPatternResponseAnalyzer, ptPubParameter> StimulusFeatureIndex;
 
 UProperty<double, NPatternResponseAnalyzer, ptPubParameter> PostPatternWindow;
  /// Extra watch after PostPatternWindow for late LTZone spikes (until this delay
@@ -65,6 +68,11 @@ bool IsIsiTemplateMatch(void) const;
 void CloseTrial(double now);
 void BeginTrial(double now);
 void ResetTrialState(void);
+void ResolveDatasetSourceIfNeeded(void);
+void AppendStim(double now);
+void AttributeNeuronToActiveTrial(double now);
+void MaybeClassifyFire(double now, double post_win);
+bool IsPatternComplete() const;
 static const char *ClassifyError(int target, int fired, int late_fired);
 static std::string ClassifyResponseMorphology(
     const std::vector<double> &spike_rel_times,
@@ -84,6 +92,8 @@ bool trial_window_closed_;
 bool playback_stopped_;
 bool csv_header_written_;
 int trial_target_class_;
+int trial_sample_id_;
+int trial_expected_stims_;
 int trial_neuron_fired_;
 int trial_late_fired_;
 double trial_t_first_stim_;
@@ -93,7 +103,13 @@ double trial_t_late_neuron_;
 double trial_ltz_potential_max_;
 double trial_soma_amp_max_[4];
 double trial_soma_amp_sum_max_;
+double trial_sample_start_abs_;
+double trial_expected_last_stim_abs_;
+double trial_observe_until_;
+bool trial_pattern_complete_;
+bool trial_neu_edge_consumed_;
 NPulseLTZoneCommon *ltz_source_;
+NDatasetBase *dataset_source_;
 std::vector<double> trial_stim_times_;
 std::vector<double> trial_neuron_spike_times_;
 std::vector<double> prev_stimulus_;
