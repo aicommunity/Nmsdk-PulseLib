@@ -3,7 +3,6 @@
 
 #include "NPatternResponseAnalyzer.h"
 #include "NNeuronTimeLearner.h"
-#include "NNeuronTimeLearnerBranch.h"
 #include "NDatasetBase.h"
 #include "NDatasetMatrix.h"
 #include "NPulseLTZoneCommon.h"
@@ -75,21 +74,27 @@ std::string NPatternResponseAnalyzer::ClassifyResponseMorphology(
     min_isi = std::min(min_isi, stim_times[i] - stim_times[i - 1]);
   }
   const double win = std::max(2.0 * min_isi, kPerStimWindowFloor);
-  size_t covered = 0;
+  // Injective matching: each spike covers at most one stim window.
+  std::vector<bool> spike_used(spike_count, false);
+  size_t matched = 0;
   for(size_t s = 0; s < stim_count; ++s)
   {
    const double t0 = stim_times[s] - stim_times[0];
    for(size_t k = 0; k < spike_count; ++k)
    {
-    if(spike_rel_times[k] + 1e-12 >= t0 && spike_rel_times[k] <= t0 + win + 1e-12)
+    if(spike_used[k])
+     continue;
+    if(spike_rel_times[k] + 1e-12 >= t0
+       && spike_rel_times[k] <= t0 + win + 1e-12)
     {
-     ++covered;
+     spike_used[k] = true;
+     ++matched;
      break;
     }
    }
   }
   const size_t need = static_cast<size_t>(std::ceil(0.75 * double(stim_count)));
-  per_stim = covered >= need;
+  per_stim = matched >= need;
  }
 
  if(burst && per_stim)
