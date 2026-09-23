@@ -4672,6 +4672,13 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
       flag << "\n";
      }
     }
+    if(!PostTuneTipSnapshot.empty())
+    {
+     flag << "tipr_snapshot=";
+     for(size_t i = 0; i < PostTuneTipSnapshot.size(); ++i)
+      flag << (i ? " " : "") << PostTuneTipSnapshot[i];
+     flag << "\n";
+    }
     if(!PostTuneMetrics.empty())
     {
      flag << "metrics=";
