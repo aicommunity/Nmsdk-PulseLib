@@ -18,8 +18,8 @@ In-window `neuron_fired` только после complete и в `PostPatternWind
 
 - `match` учитывает только in-window `neuron_fired`; late в нём не учтён.
 - `neuron_spike_count` считает rising-edge, пока trial открыт; список `neuron_spike_times` хранит до 16 времён относительно первого стимула. После закрытия оставшаяся часть late-окна уже не наблюдается для этого trial.
-- `response_class`: single/burst/per_stim/multi. Текущий per_stim допускает повторное использование одного спайка для нескольких пересекающихся окон.
-- Python `ok_audit` не равен идеальной избирательности. Strict использует fire/late-флаги и может пропустить ранний одиночный ответ foil, хотя spike_count>0.
+- `response_class`: single/burst/per_stim/multi. per_stim — взаимно однозначное сопоставление spike↔stim.
+- Python `ok_audit` (metrics_version=2) считает любой foil-spike FP; `ok_audit_legacy` сохраняет прежнюю семантику флагов где нужно.
 
 Нужный критерий эксперимента: один target-спайк после реального последнего стимула, отсутствие любых foil-спайков за одинаковый полный интервал наблюдения. Текущий код этот критерий не гарантирует. [Доказательства и план исправления](../../../../Docs/Audit/TimeLearner-2026-09-22/README.md).
 

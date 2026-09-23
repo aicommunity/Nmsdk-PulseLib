@@ -3612,9 +3612,10 @@ bool NNeuronTimeLearner::EndOfLearning(void)
 double NNeuronTimeLearner::ReadPostTuneProbeMetric(void) const
 {
  const int mode = PostTrainMidMetric.GetData();
+ // Soma: same physical signal as free-run (simultaneous SumPotential across dendrites).
  if(mode == PostTrainTune::kMidMetricSoma)
-  return ReadPostTuneLiveMetric(); // max(sum) over time uses LiveMetric peaks via free-run;
- // for iteration path LiveMetric is instantaneous; prefer live sum for Soma contract.
+  return ReadPostTuneLiveMetric();
+ // Auto and LTZ → LTZ peak
  return IterMaxLTZPotential;
 }
 
