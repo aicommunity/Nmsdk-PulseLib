@@ -277,6 +277,11 @@ bool NPatternResponseAnalyzer::ABuild(void)
   const std::string learner_name = std::string(LearnerComponentName);
   const std::string ds_name = std::string(DatasetComponentName);
   UEPtr<UContainer> learner_c = parent->GetComponentL(learner_name, true);
+  // StructTrain Branch clones name the learner NeuronTimeLearnerBranch.
+  if(!learner_c)
+   learner_c = parent->GetComponentL(std::string("NeuronTimeLearnerBranch"), true);
+  if(!learner_c)
+   learner_c = parent->GetComponentL(std::string("NeuronTimeLearner"), true);
   if(learner_c)
   {
    if(UEPtr<NPulseNeuron> neuron =
@@ -289,12 +294,31 @@ bool NPatternResponseAnalyzer::ABuild(void)
    if(UEPtr<NDatasetMatrix> ds =
        learner_c->GetComponentL<NDatasetMatrix>(ds_name, true))
     dataset_source_ = ds.Get();
+   if(!dataset_source_)
+   {
+    if(UEPtr<NDatasetMatrix> ds =
+        learner_c->GetComponentL<NDatasetMatrix>(std::string("DatasetMatrix"), true))
+     dataset_source_ = ds.Get();
+   }
   }
   if(!dataset_source_)
   {
    if(UEPtr<NDatasetMatrix> ds =
        parent->GetComponentL<NDatasetMatrix>(ds_name, true))
     dataset_source_ = ds.Get();
+  }
+  if(!dataset_source_)
+  {
+   // Last resort: DatasetMatrix nested under a sibling learner.
+   if(UEPtr<NDatasetMatrix> ds = parent->GetComponentL<NDatasetMatrix>(
+           std::string("NeuronTimeLearnerBranch.DatasetMatrix"), true))
+    dataset_source_ = ds.Get();
+   if(!dataset_source_)
+   {
+    if(UEPtr<NDatasetMatrix> ds = parent->GetComponentL<NDatasetMatrix>(
+            std::string("NeuronTimeLearner.DatasetMatrix"), true))
+     dataset_source_ = ds.Get();
+   }
   }
  }
  return true;
@@ -549,8 +573,9 @@ bool NPatternResponseAnalyzer::IsPatternComplete() const
 {
  if(trial_expected_stims_ > 0)
   return int(trial_stim_times_.size()) >= trial_expected_stims_;
- // Legacy fallback without dataset: single-stim or >=4 observed.
- return trial_stim_times_.size() == 1 || trial_stim_times_.size() >= 4;
+ // Legacy without dataset: never treat the first stim as a complete pattern (A01).
+ // Historical packA-class patterns without a bound dataset need >=4 observed stims.
+ return trial_stim_times_.size() >= 4;
 }
 
 void NPatternResponseAnalyzer::AttributeNeuronToActiveTrial(double now)
