@@ -1202,7 +1202,8 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   n->UseElementDefaults=true;
   n->SynapseDissociationTC=0.002;
   n->MembraneCapacity=2.5e-10;
-  n->Build();
+  // Second Build() is a no-op while Ready — apply Cap/TC to children explicitly.
+  n->ApplyElementDefaults();
   n->LTZone->Threshold=0.0117;
   UploadClass("NSPNeuronGenPreinh2_5D002C25e11", n);
  }

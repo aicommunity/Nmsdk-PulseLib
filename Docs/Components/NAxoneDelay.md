@@ -16,7 +16,7 @@ Default `DelayTime = 0.001` (≈ длительность спайка). Pass-th
 
 | Свойство | Default | Описание |
 |----------|---------|----------|
-| `DelayTime` | 0.001 | Задержка [с]; целое N = `int(DelayTime*TimeStep)`; фактическая задержка при N>0 сейчас (N+1) тактов |
+| `DelayTime` | 0.001 | Задержка [с]; целое N = `int(DelayTime*TimeStep)`; фактическая задержка при N>0 — **N** тактов (дробная часть отбрасывается) |
 
 ## Источники
 
@@ -26,4 +26,4 @@ Default `DelayTime = 0.001` (≈ длительность спайка). Pass-th
 
 ## EN
 
-Registered as `NAxoneDelay` in `NPulseLibrary.cpp`. The current buffer loop delays by N+1 ticks when N=int(DelayTime*TimeStep)>0; TimeStep is a frequency in steps/s. At 2000 steps/s, DelayTime=0.001 produces 1.5 ms, not 1 ms. See the [audit](../../../../Docs/Audit/TimeLearner-2026-09-22/README.md).
+Registered as `NAxoneDelay` in `NPulseLibrary.cpp`. Buffer length is N=`int(DelayTime*TimeStep)` ticks (TimeStep is frequency in steps/s). At 2000 steps/s, DelayTime=0.001 produces 1 ms (2 ticks). Fractional DelayTime*TimeStep is truncated.

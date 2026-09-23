@@ -83,7 +83,7 @@ bool NAxoneDelay::ACalculate(void)
  }
 
  int s = int(buffer.size());
- if((s-1)<desired_buffer_length)
+ if(s<desired_buffer_length)
  {
   buffer.push_front(Input);
   Output.ToZero();
