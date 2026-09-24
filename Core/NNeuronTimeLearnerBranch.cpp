@@ -136,10 +136,14 @@ double NNeuronTimeLearnerBranch::EffectiveIterationGapSec() const
 double NNeuronTimeLearnerBranch::EffectiveDatasetDelaySec() const
 {
  const double phys = SettleMarginSec() + kGapSlack;
- if(AutoScaleIterationGap.GetData())
-  return phys;
- const double configured = Delay.GetData() > 0.0 ? Delay.GetData() : 0.5;
- return std::max(configured, phys);
+ const double late_bound = 1.5 + 0.05;
+ double base = phys;
+ if(!AutoScaleIterationGap.GetData())
+ {
+  const double configured = Delay.GetData() > 0.0 ? Delay.GetData() : 0.5;
+  base = std::max(configured, phys);
+ }
+ return std::max(base, late_bound);
 }
 
 /// Resize PeakRel / Delay / status vectors to n
@@ -1776,6 +1780,9 @@ NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
  PostTuneLastDatasetIter = -1;
  PostTuneFreeRunStartTime = -1.0;
  PostTuneHaveSavedMatrix = false;
+ PostTuneRunInvalid = false;
+ PostTuneRunTerminal = PostTrainTune::kResultNone;
+ PostTuneResult = PostTrainTune::kResultNone;
 }
 
 
@@ -1974,8 +1981,12 @@ bool NNeuronTimeLearnerBranch::SetIsNeedToTrain(const bool &value)
  PostTuneSearchReverted = false;
   PostTunePatterns.clear();
   PostTuneMetrics.clear();
+  PostTuneSampleState.clear();
   PostTuneTargetIsi.clear();
   PostTuneTrialTips.clear();
+  PostTuneRunInvalid = false;
+  PostTuneRunTerminal = PostTrainTune::kResultNone;
+  PostTuneResult = PostTrainTune::kResultNone;
   ResizeSyncVectors(NumInputDendrite.GetData());
   SetLTZThreshold(TrainingLTZThreshold.GetData());
   LTZThreshold.SetDataDirect(TrainingLTZThreshold.GetData());
@@ -4124,10 +4135,13 @@ bool NNeuronTimeLearnerBranch::SetupPostTuneFreeRunProbes(void)
 
  PostTuneFreeRunActive = true;
  PostTuneMetrics.assign(static_cast<size_t>(ns), 0.0);
+ PostTuneSampleState.assign(static_cast<size_t>(ns), PostTrainTune::SampleMetricState());
  PostTuneLiveSomaMax = 0.0;
  PostTuneLastDatasetIter = -1;
  PostTuneFreeRunStartTime = Environment
   ? Environment->GetTime().GetDoubleTime() : 0.0;
+ PostTuneRunInvalid = false;
+ PostTuneRunTerminal = PostTrainTune::kResultNone;
  IterationActive = false;
 
  Dataset->PulseGeneratorClassName = PulseGeneratorClassName;
@@ -4205,26 +4219,55 @@ void NNeuronTimeLearnerBranch::UpdatePostTuneFreeRunPeak(void)
  if(!Dataset || !Neuron)
   return;
 
- const double amp = ReadPostTuneLiveMetric();
- if(amp > PostTuneLiveSomaMax)
-  PostTuneLiveSomaMax = amp;
-
  const int ns = int(PostTuneMetrics.size());
+ if(ns < 1)
+  return;
+ if(int(PostTuneSampleState.size()) != ns)
+  PostTuneSampleState.assign(static_cast<size_t>(ns), PostTrainTune::SampleMetricState());
+
+ const double amp = ReadPostTuneLiveMetric();
  const int iter = int(Dataset->Iteration);
- if(PostTuneLastDatasetIter < 0)
+ int curr = PostTuneLastDatasetIter;
+ if(curr < 0)
  {
-  PostTuneLastDatasetIter = iter;
+  curr = (iter >= 0 && iter < ns) ? iter : 0;
+  PostTuneLastDatasetIter = curr;
  }
- else if(iter != PostTuneLastDatasetIter)
+ else if(iter != PostTuneLastDatasetIter && iter >= 0 && iter < ns)
  {
-  const int prev = PostTuneLastDatasetIter;
-  if(prev >= 0 && prev < ns)
-   PostTuneMetrics[static_cast<size_t>(prev)] = PostTuneLiveSomaMax;
-  PostTuneLiveSomaMax = amp;
-  PostTuneLastDatasetIter = iter;
+  // Commit previous sample peak
+  PostTrainTune::SampleMetricState &prev = PostTuneSampleState[static_cast<size_t>(curr)];
+  if(prev.finite_ok && prev.observed)
+  {
+   PostTuneMetrics[static_cast<size_t>(curr)] = PostTuneLiveSomaMax;
+   prev.peak = PostTuneLiveSomaMax;
+   prev.finished = true;
+  }
+  else
+  {
+   PostTuneRunInvalid = true;
+   prev.finished = false;
+  }
+  PostTuneLiveSomaMax = 0.0;
+  curr = iter;
+  PostTuneLastDatasetIter = curr;
+ }
+ else if(curr < 0 || curr >= ns)
+  curr = 0;
+
+ PostTrainTune::SampleMetricState &S = PostTuneSampleState[static_cast<size_t>(curr)];
+ if(!std::isfinite(amp))
+ {
+  PostTuneRunInvalid = true;
+  S.finite_ok = false;
+ }
+ else
+ {
+  S.observed = true;
+  if(amp > PostTuneLiveSomaMax)
+   PostTuneLiveSomaMax = amp;
  }
 
- // Finished: Dataset stops after last burst+Delay when LoopSamples=false.
  const bool playback_done = (int(Dataset->StateGeneration) == 0);
  bool timed_out = false;
  if(!playback_done && Environment && PostTuneFreeRunStartTime >= 0.0)
@@ -4239,18 +4282,40 @@ void NNeuronTimeLearnerBranch::UpdatePostTuneFreeRunPeak(void)
  if(!playback_done && !timed_out)
   return;
 
- const int last = std::max(0, PostTuneLastDatasetIter);
- if(last < ns && PostTuneLiveSomaMax > PostTuneMetrics[static_cast<size_t>(last)])
-  PostTuneMetrics[static_cast<size_t>(last)] = PostTuneLiveSomaMax;
+ // Commit last sample
+ {
+  PostTrainTune::SampleMetricState &last = PostTuneSampleState[static_cast<size_t>(curr)];
+  if(last.finite_ok && last.observed)
+  {
+   if(PostTuneLiveSomaMax > PostTuneMetrics[static_cast<size_t>(curr)])
+    PostTuneMetrics[static_cast<size_t>(curr)] = PostTuneLiveSomaMax;
+   last.peak = PostTuneMetrics[static_cast<size_t>(curr)];
+   last.finished = true;
+  }
+  else
+  {
+   PostTuneRunInvalid = true;
+   last.finished = false;
+  }
+ }
 
  if(timed_out)
+ {
+  PostTuneRunTerminal = PostTrainTune::kResultTimeout;
   PostTuneResult = PostTrainTune::kResultTimeout;
+  for(int i = 0; i < ns; ++i)
+  {
+   if(!PostTuneSampleState[static_cast<size_t>(i)].finished)
+    PostTuneRunInvalid = true;
+  }
+ }
 
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
   oss << "PostTuneFreeRun done playback=" << (playback_done ? 1 : 0)
-      << " timeout=" << (timed_out ? 1 : 0) << " metrics=[";
+      << " timeout=" << (timed_out ? 1 : 0)
+      << " invalid=" << (PostTuneRunInvalid ? 1 : 0) << " metrics=[";
   for(size_t i = 0; i < PostTuneMetrics.size(); ++i)
   {
    if(i) oss << ',';
@@ -4259,23 +4324,10 @@ void NNeuronTimeLearnerBranch::UpdatePostTuneFreeRunPeak(void)
   oss << "]";
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
  }
- {
-  std::ofstream dbg("/tmp/posttune_freerun_dbg.txt", std::ios::app);
-  if(dbg)
-  {
-   dbg << "done playback=" << (playback_done ? 1 : 0)
-       << " timeout=" << (timed_out ? 1 : 0)
-       << " iter=" << PostTuneLastDatasetIter
-       << " state=" << int(Dataset->StateGeneration)
-       << " metrics=";
-   for(size_t i = 0; i < PostTuneMetrics.size(); ++i)
-    dbg << (i ? "," : "") << PostTuneMetrics[i];
-   dbg << "\n";
-  }
- }
 
  FinalizePostTuneMid();
 }
+
 
 bool NNeuronTimeLearnerBranch::PushPostTunePattern(int index)
 {
@@ -4448,6 +4500,10 @@ void NNeuronTimeLearnerBranch::EnterPostTunePhase(void)
  PostTuneLiveSomaMax = 0.0;
  PostTuneLastDatasetIter = -1;
  PostTuneFreeRunStartTime = -1.0;
+ PostTuneSampleState.clear();
+ PostTuneRunInvalid = false;
+ PostTuneRunTerminal = PostTrainTune::kResultNone;
+ PostTuneResult = PostTrainTune::kResultNone;
  if(mode == PostTrainTune::kPostTipSearchSynthetic)
   PostTuneTrialTips = PostTrainTune::MakeCanonRminVector(
    n, TipResistanceCanonFloor.GetData(), TipResistanceCanonLast.GetData());
@@ -4515,8 +4571,28 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
  double mid = FixedLTZThreshold.GetData();
  double gap = 0.0;
  bool landscape_ok = false;
+ const bool have_sample_state = !PostTuneSampleState.empty();
+ const bool run_bad = PostTuneRunInvalid
+  || PostTuneRunTerminal == PostTrainTune::kResultTimeout
+  || PostTuneRunTerminal == PostTrainTune::kResultSetupFailure
+  || (have_sample_state && !PostTrainTune::AllSamplesValid(PostTuneSampleState));
+
  if(EnablePostTrainMidThreshold.GetData() && !PostTuneMetrics.empty())
  {
+  if(run_bad)
+  {
+   mid = PostTrainSilentThreshold.GetData();
+   gap = 0.0;
+   landscape_ok = false;
+   if(PostTuneRunTerminal == PostTrainTune::kResultTimeout)
+    PostTuneResult = PostTrainTune::kResultTimeout;
+   else if(PostTuneRunTerminal == PostTrainTune::kResultSetupFailure)
+    PostTuneResult = PostTrainTune::kResultSetupFailure;
+   else
+    PostTuneResult = PostTrainTune::kResultInvalidMetrics;
+  }
+  else
+  {
   const double tgt = PostTuneMetrics[0];
   std::vector<double> foils;
   for(size_t i = 1; i < PostTuneMetrics.size(); ++i)
@@ -4529,7 +4605,6 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
   {
    mid = PostTrainSilentThreshold.GetData();
    gap = 0.0;
-   PostTuneResult = PostTrainTune::kResultInvalidMetrics;
   }
   if(metrics_ok && gap < 1e-4)
    landscape_ok = false;
@@ -4543,6 +4618,10 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
    ApplyPostTrainTipMode(true);
    PostTuneSearchReverted = true;
    PostTuneMetrics.clear();
+   PostTuneSampleState.clear();
+   PostTuneRunInvalid = false;
+   PostTuneRunTerminal = PostTrainTune::kResultNone;
+   PostTuneResult = PostTrainTune::kResultNone;
    if(RDK::GetLogger())
    {
     std::ostringstream oss;
@@ -4559,14 +4638,13 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
          && PostTrainTipResistanceMode.GetData()
             == PostTrainTune::kPostTipSearchSynthetic))
    mid = PostTrainSilentThreshold.GetData();
-  if(PostTuneResult.GetData() == PostTrainTune::kResultNone)
-  {
-   if(!metrics_ok)
-    PostTuneResult = PostTrainTune::kResultInvalidMetrics;
-   else if(!landscape_ok)
-    PostTuneResult = PostTrainTune::kResultNonSeparable;
-   else
-    PostTuneResult = PostTrainTune::kResultSuccess;
+  // Always assign Result for THIS attempt (R04).
+  if(!metrics_ok)
+   PostTuneResult = PostTrainTune::kResultInvalidMetrics;
+  else if(!landscape_ok)
+   PostTuneResult = PostTrainTune::kResultNonSeparable;
+  else
+   PostTuneResult = PostTrainTune::kResultSuccess;
   }
   FixedLTZThreshold = mid;
   CalibratedFixedLTZThreshold = mid;
@@ -4579,6 +4657,8 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
  PostTuneLastDatasetIter = -1;
  PostTuneFreeRunStartTime = -1.0;
  PostTuneInferenceMidPending = false;
+ PostTuneRunInvalid = false;
+ PostTuneRunTerminal = PostTrainTune::kResultNone;
 
  // Restore training / Test Matrix ISI (probes must not leave foil MatrixData).
  if(!PostTuneTargetIsi.empty() && !inference)
@@ -5576,8 +5656,8 @@ bool NNeuronTimeLearnerBranch::ACalculate(void)
    }
   // Continuous shared-soma max for PostTune / inference mid free-run
   // (CSV soma_amp_sum tracks SomaNeuronAmplitude row0).
-  if(PostTuneFreeRunActive && soma_amp > PostTuneLiveSomaMax)
-    PostTuneLiveSomaMax = soma_amp;
+  // R05: do NOT write soma into PostTuneLiveSomaMax here — UpdatePostTuneFreeRunPeak
+  // accumulates the mode-selected ReadPostTuneLiveMetric only.
  }
 
  if(PostTuneFreeRunActive)

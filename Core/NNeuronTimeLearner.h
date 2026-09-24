@@ -19,6 +19,7 @@ See file license.txt for more information
 #include "NDatasetMatrix.h"
 #include "NPulseGenerator.h"
 #include "NPulseNeuron.h"
+#include "NNeuronPostTrainTune.h"
 #include "../../../Rdk/Deploy/Include/rdk.h"
 #include <iostream>
 #include <fstream>
@@ -497,6 +498,15 @@ protected:
 
  /// PostTune: probe metrics aligned with PostTunePatterns
  std::vector<double> PostTuneMetrics;
+
+ /// Per-sample observed/finished/finite for free-run (R03)
+ std::vector<PostTrainTune::SampleMetricState> PostTuneSampleState;
+
+ /// Free-run invalidated by NaN/Inf or incomplete samples
+ bool PostTuneRunInvalid;
+
+ /// Terminal reason before Finalize (Timeout/SetupFailure); None if clean end
+ int PostTuneRunTerminal;
 
  /// Training ISI saved at EnterPostTune; restored after probes
  std::vector<double> PostTuneTargetIsi;

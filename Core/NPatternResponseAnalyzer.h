@@ -74,6 +74,8 @@ void AttributeNeuronToActiveTrial(double now);
 void MaybeClassifyFire(double now, double post_win);
 bool IsPatternComplete() const;
 static const char *ClassifyError(int target, int fired, int late_fired);
+static const char *ClassifyErrorEx(int target, int fired, int late_fired,
+                                   bool incomplete, bool censored);
 static std::string ClassifyResponseMorphology(
     const std::vector<double> &spike_rel_times,
     const std::vector<double> &stim_times);
@@ -108,6 +110,10 @@ double trial_expected_last_stim_abs_;
 double trial_observe_until_;
 bool trial_pattern_complete_;
 bool trial_neu_edge_consumed_;
+bool trial_censored_;
+bool trial_incomplete_;
+double pending_neu_time_;
+bool pending_neu_valid_;
 NPulseLTZoneCommon *ltz_source_;
 NDatasetBase *dataset_source_;
 std::vector<double> trial_stim_times_;

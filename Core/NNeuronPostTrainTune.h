@@ -28,6 +28,29 @@ inline constexpr int kResultSetupFailure = 3;
 inline constexpr int kResultTimeout = 4;
 inline constexpr int kResultInvalidMetrics = 5;
 
+/// Per-sample free-run observation (0 amp ≠ unobserved).
+struct SampleMetricState
+{
+ double peak;
+ bool observed;
+ bool finished;
+ bool finite_ok;
+ SampleMetricState()
+  : peak(0.0), observed(false), finished(false), finite_ok(true) {}
+};
+
+inline bool AllSamplesValid(const std::vector<SampleMetricState> &states)
+{
+ if(states.empty())
+  return false;
+ for(size_t i = 0; i < states.size(); ++i)
+ {
+  if(!states[i].finished || !states[i].observed || !states[i].finite_ok)
+   return false;
+ }
+ return true;
+}
+
 /// Legacy synthetic foils (shifts / scale / zero-one). Kept for SearchSynthetic.
 std::vector<std::vector<double> > BuildSyntheticPatterns(
  const std::vector<double> &target_isi,
