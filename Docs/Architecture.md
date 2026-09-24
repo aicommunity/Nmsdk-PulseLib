@@ -111,7 +111,7 @@ flowchart TB
 
 #### 6. Зоны
 
-- **NPulseLTZone** - зона долгосрочной потенциации (Long-Term)
+- **NPulseLTZone** - низкопороговая зона (low-threshold zone)
 - **NPulseLTZoneCommon** - общая реализация зоны
 - **NPulseLTZoneIzhikevich** - зона для модели Ижикевича
 
@@ -441,7 +441,7 @@ The library is structured around spiking neuron models, synapses (including STDP
 
 #### 6. Zones
 
-- **NPulseLTZone** - long-term potentiation zone (Long-Term)
+- **NPulseLTZone** - low-threshold zone
 - **NPulseLTZoneCommon** - common zone implementation
 - **NPulseLTZoneIzhikevich** - zone for Izhikevich model
 
