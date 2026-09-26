@@ -53,6 +53,9 @@ public:
  
  /// Флаг необходимости обучения некоторому паттерну
  UProperty<bool, NNeuronLearner, ptPubParameter> IsNeedToTrain;
+
+ /// Оценить начальные длины дендритов через Auto_Preset при первом обучении свежей структуры
+ UProperty<bool, NNeuronLearner, ptPubParameter> UseAutoPreset;
  
  /// Время задержки начала обучения относительно старта системы (сек)
  UProperty<double, NNeuronLearner, ptPubParameter> Delay;
@@ -132,6 +135,9 @@ public:
 protected:
  /// Старое значение числа входных дендритов
  int OldNumInputDendrite;
+
+ /// Auto_Preset запускается не более одного раза за жизненный цикл объекта
+ bool AutoPresetApplied;
  
  /// Генераторы импульсов
  std::vector<UEPtr<NPulseGeneratorTransit> > Generators;
@@ -261,6 +267,9 @@ public: // Методы
  
  /// Установка (поднятие или опускание) флага необходимости обучения некоторому паттерну
  bool SetIsNeedToTrain(const bool &value);
+
+ /// Установка флага начальной оценки длины дендритов
+ bool SetUseAutoPreset(const bool &value);
  
  /// Установка времени задержки начала обучения относительно старта системы (сек)
  bool SetDelay(const double &value);
@@ -363,6 +372,9 @@ protected:
  
  /// Осуществляет сборку структуры в соответствии с выбранными значениями параметров
  bool BuildStructure();
+
+ /// Оценивает начальную структуру и пересобирает нейрон, если включён UseAutoPreset
+ bool ApplyAutoPresetToFreshNeuron();
  
  /// Восстановление настроек по умолчанию и сброс процесса счета
  virtual bool ADefault(void);

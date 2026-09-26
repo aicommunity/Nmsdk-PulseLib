@@ -2,26 +2,28 @@
 
 ## NNeuronLearner — обучающийся нейрон
 
-**Класс**: `NNeuronLearner` — нейрон с функциями самообучения.
+**Класс**: `NNeuronLearner` — компонент `UNet`, который собирает генераторы и внутренний импульсный нейрон, затем выполняет структурное обучение.
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLearner", ...)`.
 **Storage**: `ClassName = "NNeuronLearner"`.
 
+> **Проверенный контракт текущего исходника:** обучаются структура дендритов и количество входных синапсов; параметры нейрона и уже имеющихся синапсов не оптимизируются. Новому синапсу задаётся `SynapseResistanceStep`, а тренировочный порог временно берётся из `TrainingLTZThreshold`. В режиме 0 компонент автоматически сбрасывает `IsNeedToTrain` после сходимости структурных статусов, а режим 1 оставляет управление этим флагом внешнему коду. Последний вход обычно является калибровочным и не меняет длину или число синапсов. `UseAutoPreset` выключен по умолчанию и оценивает только начальные длины при первом обучении свежей структуры; см. [аудит и воспроизводимые примеры](../Analysis/NNeuronStructuralTrainingAudit.md).
+
 ### Lifecycle
-- **ADefault**: параметры обучения.
-- **ABuild**: подключение входов/синапсов.
-- **AReset**: сброс состояния/весов.
-- **ACalculate**: шаг расчёта + обновление по правилу обучения.
+- **ADefault**: значения свойств и состояния обучения.
+- **ABuild**: построение внутреннего нейрона и генераторов.
+- **AReset**: сброс динамики и генераторов; при `UseAutoPreset=1` здесь однократно оцениваются начальные длины холодной структуры.
+- **ACalculate**: расчёт амплитуд и один шаг структурного обучения.
 
 ### I/O
-- Вход: сигналы/ошибка (при наличии).
-- Выход: активность/обновлённые веса (внутренне).
+- Вход: TTFS-задержки из `InputPattern` и параметры внутреннего нейрона.
+- Выход: `Output`, амплитуды сомы/дендритов и сохранённые параметры обученной структуры.
 
 ```mermaid
 classDiagram
-    NNeuron <|-- NNeuronLearner
+    UNet <|-- NNeuronLearner
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+Пояснение: `NNeuronLearner` — сетевой контейнер с внутренними генераторами и обучаемым нейроном.
 
 ```mermaid
 sequenceDiagram
@@ -132,7 +134,7 @@ graph TB
 ```
 
 **Зависимости:**
-- **Базовый класс**: `NNeuron`
+- **Базовый класс**: `UNet`
 - **Внутренние компоненты**: нейрон (`NPulseNeuron`), генераторы импульсов (`NPulseGeneratorTransit`)
 - **Внешние компоненты**: входной паттерн (источник `InputPattern`), целевой компонент (получатель обученного нейрона)
 
@@ -325,11 +327,11 @@ flowchart TD
 
 ### Purpose
 
-**Class**: `NNeuronLearner` — self-learning neuron applying its learning rule during calculation.
+**Class**: `NNeuronLearner` — a `UNet` component that builds input generators and an internal spiking neuron for structural learning.
 **Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLearner", ...)`.
 **Instances**: `ClassName = "NNeuronLearner"` in configs.
 
-`NNeuronLearner` is a neuron with self-learning capabilities that applies learning rules during calculation. It supports pattern recognition, incremental learning, and additional pattern learning.
+`NNeuronLearner` changes dendrite lengths and input synapse counts; it does not optimize the neuron's numerical model parameters. `CalculateMode=0` clears `IsNeedToTrain` when the structural statuses converge, while mode 1 leaves that flag under external control. The last input is normally the calibration input and its structure is held fixed. `UseAutoPreset` is off by default and estimates only initial lengths for a fresh structure. See the [audit and replay examples](../Analysis/NNeuronStructuralTrainingAudit.md).
 
 **Usage:** Self-learning neurons, pattern recognition, incremental learning experiments
 
@@ -337,10 +339,11 @@ flowchart TD
 
 ```mermaid
 classDiagram
-    NNeuron <|-- NNeuronLearner
+    UNet <|-- NNeuronLearner
     class NNeuronLearner {
         +StructureBuildMode : int
         +CalculateMode : int
+        +UseAutoPreset : bool
         +NumInputDendrite : int
         +DendriteNeuronAmplitude : MDMatrix~double~
         +SomaNeuronAmplitude : MDMatrix~double~
@@ -469,7 +472,7 @@ graph TB
 
 - `ADefault()` — setting default parameters
 - `ABuild()` — building learner structure
-- `AReset()` — resetting state/weights
+- `AReset()` — resetting runtime state and input generators
 - `ACalculate()` — calculation step + training rule update
 - `Training()` — training execution
 - `PatternRecognition()` — pattern recognition

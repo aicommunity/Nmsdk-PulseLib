@@ -21,6 +21,7 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Core/NPulseLTZoneCommon.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseNeuron.h"
 #include "../../Rdk/Deploy/Include/rdk_cpp_init.h"
+#include <cmath>
 #include <sstream>
 //#include <QString>
 //#include <QDateTime>
@@ -1542,12 +1543,17 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 			if(!dend_status[i])
 			 continue;
 
-			// Если амплитуда меньше начальной - добавляем синапсы дальше
-			if(max_iter_dend_amp[i] < InitialDendritePotential[i] + 0.000005)
+			const double amplitude_difference = max_iter_dend_amp[i] - InitialDendritePotential[i];
+			if(std::fabs(amplitude_difference) <= 1.0e-6)
+			{
+				dend_status[i] = 0;
+			}
+			// Если амплитуда меньше начальной - добавляем синапсы дальше.
+			else if(amplitude_difference < 0.0)
 			{
 				dend_status[i] = 2;
 			}
-			// В противном случае - удаляем синапс
+			// Если амплитуда больше начальной - удаляем синапс.
 			else
 			{
 				dend_status[i] = -2;

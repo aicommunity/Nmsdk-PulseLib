@@ -20,9 +20,13 @@ See file license.txt for more information
 #define NOMINMAX
 #endif
 #include <algorithm>
+#include <cmath>
 #include <sstream>
 #include "NNeuronLearner.h"
+#include "AutoPreset.h"
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
+#include "../../Nmsdk-PulseLib/Core/NPulseChannel.h"
+#include "../../Nmsdk-PulseLib/Core/NPulseChannelCable.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseLTZoneCommon.h"
 #include "../../Rdk/Deploy/Include/rdk_cpp_init.h"
 
@@ -76,6 +80,7 @@ NNeuronLearner::NNeuronLearner(void):
  SynapseClassName("SynapseClassName",this,&NNeuronLearner::SetSynapseClassName),
  CalculateMode("CalculateMode",this, &NNeuronLearner::SetCalculateMode),
  IsNeedToTrain("IsNeedToTrain",this,&NNeuronLearner::SetIsNeedToTrain),
+ UseAutoPreset("UseAutoPreset",this,&NNeuronLearner::SetUseAutoPreset),
  Delay("Delay",this,&NNeuronLearner::SetDelay),
  SpikesFrequency("SpikesFrequency",this,&NNeuronLearner::SetSpikesFrequency),
  NumInputDendrite("NumInputDendrite",this,&NNeuronLearner::SetNumInputDendrite),
@@ -98,6 +103,7 @@ NNeuronLearner::NNeuronLearner(void):
  EnableDebug("EnableDebug", this, &NNeuronLearner::SetEnableDebug)
 {
  OldNumInputDendrite = 0;
+ AutoPresetApplied = false;
  Generators.clear();
  Neuron = NULL;
  
@@ -215,6 +221,12 @@ bool NNeuronLearner::SetIsNeedToTrain(const bool &value)
   SetLTZThreshold(FixedLTZThreshold.GetData());
   LTZThreshold.SetDataDirect(FixedLTZThreshold.GetData());
  }
+ return true;
+}
+
+bool NNeuronLearner::SetUseAutoPreset(const bool & /*value*/)
+{
+ Ready = false;
  return true;
 }
 
@@ -576,6 +588,17 @@ bool NNeuronLearner::BuildStructure()
  bool res(true);
  try
  {
+ // Preserve a configured input pattern across structural rebuilds. It is also
+ // used to estimate the initial topology when UseAutoPreset is enabled.
+ std::vector<double> configured_input_pattern;
+ if(InputPattern.GetCols() > 0)
+ {
+  const int copy_count = std::min(NumInputDendrite.GetData(), InputPattern.GetRows());
+  configured_input_pattern.resize(static_cast<size_t>(std::max(0, copy_count)), 0.0);
+  for(int i = 0; i < copy_count; ++i)
+   configured_input_pattern[static_cast<size_t>(i)] = InputPattern(i, 0);
+ }
+
  // Cоздаём нейрон
  Neuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron"), NeuronClassName);
  Neuron->SetCoord(MVector<double,3>(8.7 + 1 * 7, 1.67, 0));
@@ -746,6 +769,8 @@ for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
  
  
  InputPattern.Resize(NumInputDendrite, 1, 0.0);
+ for(size_t i = 0; i < configured_input_pattern.size() && i < static_cast<size_t>(NumInputDendrite); ++i)
+  InputPattern(static_cast<int>(i), 0) = configured_input_pattern[i];
  PrevInputPattern.Assign(NumInputDendrite, 1, -1.0);  // Начальное значение предыдущего паттерна
  AdditionalInputPattern.Resize(NumInputDendrite, 1, 0.0);
  return true;
@@ -824,6 +849,8 @@ bool NNeuronLearner::ADefault(void)
  NumInputDendrite = 1;
  OldNumInputDendrite = 0;
  MaxDendriteLength = 100;
+ UseAutoPreset = false;
+ AutoPresetApplied = false;
  
  // Настройки порога
  LTZThreshold = 100;
@@ -914,6 +941,12 @@ void NNeuronLearner::UpdateComputationOrder(void)
 /// Сброс процесса счета
 bool NNeuronLearner::AReset(void)
 {
+ if(UseAutoPreset && !AutoPresetApplied && IsNeedToTrain)
+ {
+  if(!ApplyAutoPresetToFreshNeuron())
+   return false;
+ }
+
  // Устанавливаем значение порога по умолчанию
  UEPtr<NPulseNeuron> n_in = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
  if(!n_in)
@@ -934,6 +967,190 @@ bool NNeuronLearner::AReset(void)
  }
  Output.ToZero();
  
+ return true;
+}
+
+bool NNeuronLearner::ApplyAutoPresetToFreshNeuron()
+{
+ if(AutoPresetApplied || !UseAutoPreset || !IsNeedToTrain)
+  return true;
+
+ // Estimate only for a cold one-segment/one-synapse topology. Saved or
+ // incrementally learned structures are deliberately left unchanged.
+ bool is_fresh = DendriteLength.size() == static_cast<size_t>(NumInputDendrite)
+              && NumSynapse.size() == static_cast<size_t>(NumInputDendrite);
+ for(int i = 0; is_fresh && i < NumInputDendrite; ++i)
+  is_fresh = DendriteLength[static_cast<size_t>(i)] == 1
+          && NumSynapse[static_cast<size_t>(i)] == 1;
+
+ if(!is_fresh)
+ {
+  AutoPresetApplied = true;
+  if(RDK::GetLogger())
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronLearner::ApplyAutoPresetToFreshNeuron",
+    "Skipped: the configured topology is not a fresh one-segment/one-synapse structure.");
+  return true;
+ }
+
+ AutoPresetApplied = true;
+ std::string failure;
+ std::vector<int> estimated_lengths(static_cast<size_t>(NumInputDendrite), 1);
+
+ if(NumInputDendrite < 1)
+  failure = "NumInputDendrite must be positive";
+ else if(InputPattern.GetRows() != NumInputDendrite || InputPattern.GetCols() != 1)
+  failure = "InputPattern shape does not match NumInputDendrite x 1";
+ else if(!Neuron || Neuron->StructureBuildMode != 2)
+  failure = "the neuron must use per-dendrite StructureBuildMode=2";
+ else if(Generators.size() != static_cast<size_t>(NumInputDendrite))
+  failure = "input generators are not ready";
+
+ std::vector<double> pattern;
+ std::vector<double> membrane_time_constants;
+ double pulse_length = 0.0;
+ if(failure.empty())
+ {
+  pattern.resize(static_cast<size_t>(NumInputDendrite));
+  membrane_time_constants.resize(static_cast<size_t>(NumInputDendrite));
+  for(int i = 0; i < NumInputDendrite; ++i)
+  {
+   const double delay = InputPattern(i, 0);
+   if(!std::isfinite(delay))
+   {
+    failure = "InputPattern contains a non-finite delay";
+    break;
+   }
+   pattern[static_cast<size_t>(i)] = delay;
+
+   UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>(
+    MakeLearnerDendriteName(i + 1, 1), true);
+   if(!dendrite)
+   {
+    failure = "an initial dendrite membrane is missing";
+    break;
+   }
+
+   UEPtr<NPulseChannel> exc_channel = dendrite->GetComponentL<NPulseChannel>("ExcChannel", true);
+   if(exc_channel)
+   {
+    membrane_time_constants[static_cast<size_t>(i)] =
+     exc_channel->Resistance.GetData() * exc_channel->Capacity.GetData();
+   }
+   else
+   {
+    UEPtr<NPulseChannelCable> cable_channel =
+     dendrite->GetComponentL<NPulseChannelCable>("ExcChannel", true);
+    if(!cable_channel)
+    {
+     failure = "the excitatory membrane channel does not expose an RC time constant";
+     break;
+    }
+    membrane_time_constants[static_cast<size_t>(i)] =
+     cable_channel->CableMembraneResistance.GetData() * cable_channel->Cm.GetData();
+   }
+
+   if(!std::isfinite(membrane_time_constants[static_cast<size_t>(i)])
+      || membrane_time_constants[static_cast<size_t>(i)] <= 0.0)
+   {
+    failure = "an excitatory membrane RC time constant is not positive and finite";
+    break;
+   }
+  }
+ }
+
+ if(failure.empty())
+ {
+  if(!Generators[0])
+   failure = "the first input generator is missing";
+  else
+   pulse_length = Generators[0]->PulseLength.GetData();
+  if(failure.empty() && (!std::isfinite(pulse_length) || pulse_length < 0.0))
+   failure = "the input pulse length is invalid";
+  for(size_t i = 1; failure.empty() && i < Generators.size(); ++i)
+  {
+   if(!Generators[i]
+      || !std::isfinite(Generators[i]->PulseLength.GetData())
+      || std::fabs(Generators[i]->PulseLength.GetData() - pulse_length) > 1.0e-12)
+    failure = "input generators use different pulse lengths";
+  }
+ }
+
+ if(failure.empty())
+ {
+  const double maximum_delay = *std::max_element(pattern.begin(), pattern.end());
+  for(size_t i = 0; i < pattern.size(); ++i)
+  {
+   const double bias = maximum_delay - pattern[i];
+   if(bias < 0.0 || (bias != 0.0 && bias < pulse_length))
+   {
+    failure = "input delay spread is shorter than the input pulse length";
+    break;
+   }
+  }
+ }
+
+ if(failure.empty())
+ {
+  try
+  {
+   Auto_Preset estimator;
+   estimator.setFirstState(pattern, membrane_time_constants, pulse_length);
+   const gParam estimate = estimator.getResult();
+   if(estimate.recomDendriteLength.size() != static_cast<size_t>(NumInputDendrite))
+    failure = "Auto_Preset returned an invalid number of dendrite lengths";
+   else
+   {
+    const int max_length = std::max(1, MaxDendriteLength.GetData());
+    for(int i = 0; i < NumInputDendrite; ++i)
+    {
+     const double length = estimate.recomDendriteLength[static_cast<size_t>(i)];
+     if(!std::isfinite(length))
+     {
+      failure = "Auto_Preset returned a non-finite dendrite length";
+      break;
+     }
+     const double bounded_length = std::max(1.0, std::min(static_cast<double>(max_length), length));
+     estimated_lengths[static_cast<size_t>(i)] = static_cast<int>(std::round(bounded_length));
+    }
+    // The last input is the synchronization reference in NNeuronLearner.
+    estimated_lengths.back() = 1;
+   }
+  }
+  catch(const std::exception &ex)
+  {
+   failure = std::string("Auto_Preset failed: ") + ex.what();
+  }
+  catch(...)
+  {
+   failure = "Auto_Preset failed with an unknown exception";
+  }
+ }
+
+ if(!failure.empty())
+ {
+  std::fill(estimated_lengths.begin(), estimated_lengths.end(), 1);
+  if(RDK::GetLogger())
+   RDK::GetLogger()->LogMessageEx(RDK_EX_WARNING, "NNeuronLearner::ApplyAutoPresetToFreshNeuron",
+    std::string("Initial dendrite estimate failed; using lengths of 1: ") + failure);
+ }
+ else if(RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "Auto_Preset initial DendriteLength=[";
+  for(size_t i = 0; i < estimated_lengths.size(); ++i)
+  {
+   if(i) oss << ',';
+   oss << estimated_lengths[i];
+  }
+  oss << "] (NumSynapse unchanged).";
+  RDK::GetLogger()->LogMessageEx(RDK_EX_INFO, "NNeuronLearner::ApplyAutoPresetToFreshNeuron", oss.str());
+ }
+
+ // The cold-start topology before estimation has one segment per dendrite.
+ OldDendriteLength.assign(static_cast<size_t>(NumInputDendrite), 1);
+ DendriteLength.SetDataDirect(estimated_lengths);
+ if(failure.empty() && !BuildStructure())
+  return false;
  return true;
 }
 

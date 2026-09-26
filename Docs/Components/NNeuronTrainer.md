@@ -2,26 +2,28 @@
 
 ## NNeuronTrainer — тренер нейронов
 
-**Класс**: `NNeuronTrainer` — обучает нейроны по заданному правилу/данным.
+**Класс**: `NNeuronTrainer` — компонент `UNet`, который обучает внутренний импульсный нейрон структурной синхронизацией.
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronTrainer", ...)`.
 **Storage**: `ClassName = "NNeuronTrainer"`.
 
+> **Проверенный контракт текущего исходника:** основной реализованный алгоритм — `CalculateMode=6`; значения 4 и 5 проходят в эту же ветку, поскольку соответствующие прежние тела закомментированы. Обучение меняет длины дендритов и количество возбуждающих синапсов. Параметры нейрона и уже имеющихся синапсов не оптимизируются; новому синапсу присваивается `SynapseResistanceStep`, а тренировочный порог берётся из `TrainingLTZThreshold`. Подробности о пороге сходимости и replay примерах: [аудит структурного обучения](../Analysis/NNeuronStructuralTrainingAudit.md).
+
 ### Lifecycle
-- **ADefault**: параметры обучения.
-- **ABuild**: подключение целевых нейронов/данных.
-- **AReset**: сброс состояния обучения.
-- **ACalculate**: обновление нейронов по правилу.
+- **ADefault**: значения свойств и состояния тренировки.
+- **ABuild**: построение внутреннего нейрона и генераторов.
+- **AReset**: сброс состояния обучения и генераторов.
+- **ACalculate**: синхронизация дендритов с паттерном, затем нормализация числа синапсов.
 
 ### I/O
-- Вход: данные/ошибки/активность нейронов.
-- Выход: обновлённые веса/состояния (внутренне), метрики обучения.
+- Вход: временной паттерн, заданный задержками генераторов.
+- Выход: `Output`, амплитуды и структурное состояние внутреннего нейрона.
 
 ```mermaid
 classDiagram
-    UComponent <|-- NNeuronTrainer
+    UNet <|-- NNeuronTrainer
 ```
 
-Пояснение: диаграмма классов показывает место компонента в иерархии и ключевые связи.
+Пояснение: `NNeuronTrainer` — сетевой контейнер с внутренними генераторами и обучаемым нейроном.
 
 ```mermaid
 sequenceDiagram
@@ -31,7 +33,7 @@ sequenceDiagram
     Data-->>T: samples/errors
     N-->>T: activity
     T->>T: ACalculate()
-    T-->>N: updated weights
+    T-->>N: structural updates
 ```
 
 Пояснение: диаграмма последовательности показывает типовой сценарий взаимодействия и порядок вызовов.
@@ -40,7 +42,7 @@ sequenceDiagram
 flowchart LR
     data[Training data] --> tr[NNeuronTrainer]
     act[Neurons activity] --> tr
-    tr --> upd[Updated weights]
+    tr --> upd[Updated dendrite and synapse structure]
 ```
 
 Пояснение: блок-схема показывает поток данных/сигналов (входы → компонент → выходы).
@@ -65,20 +67,19 @@ stateDiagram-v2
     CheckTrain -->|Да| Training: Режим обучения
     CheckTrain -->|Нет| Ready: Обучение завершено
     Training --> CheckMode{CalculateMode?}
-    CheckMode -->|0| MaximizeAmp: Максимизация амплитуды
-    CheckMode -->|6| CalculateProcess: CalculateProcess()
-    MaximizeAmp --> CheckNewDend{is_new_dend?}
-    CheckNewDend -->|Да| SelectDendrite: Выбор следующего дендрита
-    CheckNewDend -->|Нет| CheckNewIter{is_new_iteration?}
-    CheckNewIter -->|Да| GrowDendrite: Наращивание дендрита
-    CheckNewIter -->|Нет| MeasureAmp: Измерение амплитуды
-    SelectDendrite --> MeasureAmp
-    GrowDendrite --> MeasureAmp
+    CheckMode -->|0| NoUpdate: Расчёт не обучает структуру
+    CheckMode -->|1..6| SomaSync: Синхронизация сом
+    SomaSync -->|Синхронизация завершена| SynapseNorm: Нормализация синапсов
+    SomaSync -->|Иначе| MeasureAmp: Измерение амплитуд сом
     MeasureAmp --> CheckIterTime: Проверка времени итерации
-    CheckIterTime --> CheckAmpIncrease: Проверка увеличения амплитуды
-    CheckAmpIncrease -->|Да| GrowDendrite: Продолжить рост
-    CheckAmpIncrease -->|Нет| SelectDendrite: Перейти к следующему дендриту
-    CalculateProcess --> Ready: Шаг завершен
+    CheckIterTime -->|Итерация завершена| UpdateDendrite: Рост или фиксация дендрита
+    CheckIterTime -->|Идёт итерация| Ready: Шаг расчёта завершён
+    UpdateDendrite --> Ready
+    SynapseNorm -->|Итерация завершена| UpdateSynapse: Добавить, удалить или зафиксировать синапс
+    SynapseNorm -->|Идёт итерация| Ready
+    UpdateSynapse --> Ready
+    NoUpdate --> Ready
+    Ready --> Ready: Повторять, пока статусы не сойдутся
     Ready --> Resetting: Reset()
     Resetting --> Ready: Состояния сброшены
 ```
@@ -96,13 +97,10 @@ stateDiagram-v2
 - **Ready** — готов к выполнению расчетов
 - **Calculating** — выполняется расчет тренера
 - **Training** — режим обучения
-- **MaximizeAmp** — максимизация амплитуды нейрона
-- **CalculateProcess** — процесс расчета (режим 6)
-- **CheckNewDend** — проверка необходимости нового дендрита
-- **SelectDendrite** — выбор следующего дендрита для обучения
-- **CheckNewIter** — проверка необходимости новой итерации
-- **GrowDendrite** — наращивание длины дендрита
-- **MeasureAmp** — измерение амплитуды нейрона
+- **SomaSync** — режим 6: синхронизация откликов сом ростом/фиксацией дендритов
+- **SynapseNorm** — сравнение амплитуд и структурная нормализация синапсов
+- **MeasureAmp** — измерение амплитуд сом
+- **UpdateDendrite / UpdateSynapse** — применение статусов роста и нормализации
 - **CheckIterTime** — проверка времени итерации
 - **CheckAmpIncrease** — проверка увеличения амплитуды
 - **Resetting** — выполняется сброс состояний
@@ -136,7 +134,7 @@ graph TB
 ```
 
 **Зависимости:**
-- **Базовый класс**: `UComponent`
+- **Базовый класс**: `UNet`
 - **Внутренние компоненты**: нейрон (`NPulseNeuron`), генераторы импульсов (`NPulseGeneratorTransit`)
 - **Внешние компоненты**: входной паттерн (источник `InputPattern`), целевой компонент (получатель обученного нейрона)
 
@@ -160,19 +158,19 @@ Name = NeuronTrainer1
 
 ### Purpose
 
-**Class**: `NNeuronTrainer` — trains neurons using provided training data/errors.
+**Class**: `NNeuronTrainer` — a `UNet` component that structurally trains an internal spiking neuron by synchronizing dendritic responses.
 **Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronTrainer", ...)`.
 **Instances**: `ClassName = "NNeuronTrainer"` in configs.
 
-`NNeuronTrainer` updates neurons using provided training data/errors and neuron activity. It supports various training modes including amplitude maximization and dendrite growth.
+The active implementation is mode 6. Saved modes 4 and 5 fall through to mode 6 because their former bodies are commented out. Training changes dendrite lengths and excitatory synapse counts; it does not optimize numerical neuron parameters. See the [audit and replay examples](../Analysis/NNeuronStructuralTrainingAudit.md).
 
-**Usage:** Training neurons with specific patterns, optimizing neuron responses
+**Usage:** Structural training of neurons with time-coded input patterns
 
 ### UML Class Diagram
 
 ```mermaid
 classDiagram
-    UComponent <|-- NNeuronTrainer
+    UNet <|-- NNeuronTrainer
     class NNeuronTrainer {
         +StructureBuildMode : int
         +CalculateMode : int
@@ -205,8 +203,8 @@ sequenceDiagram
         Trainer->>Trainer: Check IsNeedToTrain
         alt Training mode
             Trainer->>Neuron: Calculate()
-            Trainer->>Trainer: MaximizeAmp / CalculateProcess
-            Trainer->>Trainer: Update weights/structure
+        Trainer->>Trainer: Synchronize soma responses / normalize synapses
+            Trainer->>Trainer: Update structure
         end
     end
 ```
