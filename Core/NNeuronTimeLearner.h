@@ -448,7 +448,10 @@ protected:
  
  /// Absolute |Initial-amp| tolerance for parametric amp Done (was 5e-6; cold runs
  /// often stall ~6e-6 on one dendrite and never clear IsNeedToTrain).
- static constexpr int kAmpNormEps = 1e-5;
+ /// Must stay floating-point: integral narrowing of 1e-5 yields 0 (TL-01).
+ static constexpr double kAmpNormEps = 1e-5;
+ static_assert(kAmpNormEps > 0.0, "classic amp-norm epsilon must stay positive");
+ static_assert(kAmpNormEps == 1e-5, "classic amp-norm epsilon must remain 1e-5");
  
  static constexpr double kAmpOscillationBand = 0.005;
  
