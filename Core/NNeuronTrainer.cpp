@@ -473,6 +473,18 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 		}
 		neuron->Reset();
 	}
+	else
+	{
+		// Rebind the runtime pointer when a saved, already-trained neuron is
+		// loaded. This member is not serialized, but CalculateProcess() uses it
+		// even when structural training is disabled.
+		neuron = GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
+		if(!neuron)
+		{
+			LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "Trained neuron component is missing.");
+			return false;
+		}
+	}
 
 	// Добаляем связи между генератором и синапсами
 	if(!neuron)
@@ -496,9 +508,16 @@ bool NNeuronTrainer::AReset(void)
  if(!n_in)
   return true;
 
- UEPtr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone");
+ // Component pointers are runtime-only and are not restored from saved model
+ // data. Rebind before the trainer's next calculation after a project reset.
+ neuron = n_in;
+
+ UEPtr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone", true);
  if(!ltzone)
-  return true;
+ {
+  LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "Neuron LTZone component is missing after reset.");
+  return false;
+ }
 
  ltzone->Threshold = LTZThreshold;
 

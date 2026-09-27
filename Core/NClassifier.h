@@ -269,6 +269,9 @@ bool TreatDataFromFile(void);
 ///         
 bool BuildStructure(void);
 
+/// Rebuild the class OR somas and their lateral inhibitory links.
+bool RebuildOutputLayer(void);
+
 //        
 virtual bool ADefault(void);
 

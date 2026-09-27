@@ -240,11 +240,11 @@ bool NPCAClassifier::BuildStructure(int structure_build_mode, const string &matr
         //Создаем связи между блоком матрицы и PCA
         res&=CreateLink("Source","CurrentLine","PCA","EncodingData");
         if(!res)
-         return true;
+         return false;
 
         res&=CreateLink("Source","FullMatrix","PCA","TrainingData");
         if(!res)
-         return true;
+         return false;
       }
      return true;
 }
@@ -298,112 +298,102 @@ SpikeClassifier->SetActivity(false);
 // Выполняет расчет этого объекта
 bool NPCAClassifier::ACalculate(void)
 {
-    if(!IsLastStep)
+    if(IsLastStep)
+        return true;
+
+    const int calibration_dendrite = IsCalibrativeDendrite ? 1 : 0;
+
+    if(IsFirstStep)
     {
-        int cd = (IsCalibrativeDendrite)? 1 : 0; //проверка на наличие калибровочного дендрита
+        std::string file_dir;
+        if(GetEnvironment())
+            file_dir = GetEnvironment()->GetCurrentDataDir();
 
-        if(IsFirstStep)
+        fout.open(file_dir + OutputFile.GetData());
+
+        const int row_count = MatrixSourceTimeSeries->FullMatrix.GetRows();
+        if(row_count <= 0)
         {
-            std::string file_dir;
-            if(GetEnvironment())
-            file_dir=GetEnvironment()->GetCurrentDataDir();
-
-            // Открываем файл для записи данных
-            std::string output_file = OutputFile;
-            output_file = file_dir + output_file;
-            fout.open(output_file);
-
-            //Определяем размер выходной матрицы
-            results.Resize(MatrixSourceTimeSeries->FullMatrix.GetRows(),OutComponents + cd);
-            //Формируем матрицы максимумов и минимумов для каждого признака
-            max_el.Resize(1, OutComponents,-1000000000.0);
-            min_el.Resize(1, OutComponents,1000000000.0);
-
-            SpikeClassifier->SetActivity(false);
-            SpikeClassifier->Reset();
-
-            IsFirstStep = false;
+            LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "PCA classifier received an empty time-series matrix.");
+            return false;
         }
-        //Формируем матрицу с данными
-        if(MatrixSourceTimeSeries->CurrentLineIndex < MatrixSourceTimeSeries->FullMatrix.GetRows())
+
+        results.Resize(row_count, OutComponents + calibration_dendrite);
+        max_el.Resize(1, OutComponents, -1000000000.0);
+        min_el.Resize(1, OutComponents, 1000000000.0);
+
+        SpikeClassifier->SetActivity(false);
+        SpikeClassifier->Reset();
+        IsFirstStep = false;
+    }
+
+    const int row_count = MatrixSourceTimeSeries->FullMatrix.GetRows();
+    const int source_line_index = MatrixSourceTimeSeries->CurrentLineIndex.GetData();
+    const int current_row = source_line_index - 1;
+
+    // CurrentLineIndex is one-based. Include row_count itself: it is the
+    // final valid source row, not an end-of-stream marker.
+    if(current_row < 0 || current_row >= row_count)
+        return true;
+
+    for(int component_idx = 0; component_idx < OutComponents; component_idx++)
+    {
+        const double result_value = PCA->PCAResult(0, component_idx);
+        results(current_row, component_idx) = result_value;
+        if(result_value > max_el(0, component_idx))
+            max_el(0, component_idx) = result_value;
+        if(result_value < min_el(0, component_idx))
+            min_el(0, component_idx) = result_value;
+    }
+
+    if(IsCalibrativeDendrite)
+        results(current_row, OutComponents) = TimeWindowSize;
+
+    // Normalize and hand off only after the final source row has been copied.
+    if(current_row + 1 < row_count)
+        return true;
+
+    for(int row_idx = 0; row_idx < row_count; row_idx++)
+    {
+        for(int component_idx = 0; component_idx < OutComponents; component_idx++)
         {
-            // Кэшируем значение индекса для оптимизации (вызывается в цикле)
-            const int currentLineIndex = MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1;
-            for(int i = 0; i < OutComponents; i++) //пока строка не закончилась
-            {
-                const double resultValue = PCA->PCAResult(0,i);
-                results(currentLineIndex, i) = resultValue;
-                //Ищем максимальный и минимальный элемент по строке
-                if (resultValue > max_el(0, i))
-                {
-                    max_el(0, i) = resultValue;
-                }
-                if (resultValue < min_el(0, i))
-                {
-                    min_el(0, i) = resultValue;
-                }
-            }
-            //Добавляем значение калибровочного дендрита при необходимости
-            if(IsCalibrativeDendrite)
-            {
-                results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, OutComponents) = TimeWindowSize;
-            }
-
-            return true;
-        }
-        else
-        {
-            //Нормализум строку
-            for(int i = 0; i < MatrixSourceTimeSeries->FullMatrix.GetRows(); i++)
-            {
-                for(int j = 0; j < OutComponents; j++)
-                {
-                    if(fabs(max_el(0,j)-min_el(0,j)) > 0.000001)
-                    {
-                        results(i,j) = (results(i,j)-min_el(0,j))*TimeWindowSize/(max_el(0,j)-min_el(0,j));
-                    }
-                     else
-                        results(i,j) = 0;
-                }
-                if(IsCalibrativeDendrite)
-                {
-                    results(MatrixSourceTimeSeries->CurrentLineIndex.GetData() - 1, OutComponents) = TimeWindowSize;
-                }
-            }
-
-            string b = ""; //пустая строка
-            MDMatrix<double> res; //матрица с данными для тренировочного набора
-            res.Resize(1, OutComponents+cd); //размер матрицы
-            for(int i = 0; i < MatrixSourceTimeSeries->FullMatrix.GetRows(); i++)
-            {
-                //формируем строку
-                for(int j = 0; j < OutComponents + cd; j++)
-                {
-                    string q = std::to_string(results(i, j));
-                    b = b+q+"\t";
-                }
-                //записываем строку в файл
-                fout << b << std::endl;
-                b="";
-                if (TrainingPatternInx == i) //сравниваем индекс строки обучающего набора
-                                             //с индексом текущей строки
-                    for(int j = 0; j < OutComponents + cd; j++)
-                        res(0,j) = results(i,j);
-                SpikeClassifier->TrainingPatterns = res; //записываем строку в обучающий набор данных
-            }
-            fout.close(); //закрываем файл
-
-            //Активным остается третий блок
-            SpikeClassifier->SetActivity(true);
-            MatrixSourceTimeSeries->SetActivity(false);
-            PCA->SetActivity(false);
-
-            IsLastStep = true;
-            return true;
+            const double range = max_el(0, component_idx) - min_el(0, component_idx);
+            if(fabs(range) > 0.000001)
+                results(row_idx, component_idx) =
+                    (results(row_idx, component_idx) - min_el(0, component_idx)) * TimeWindowSize / range;
+            else
+                results(row_idx, component_idx) = 0.0;
         }
     }
-    else
-        return true;
+
+    MDMatrix<double> training_pattern;
+    training_pattern.Resize(1, OutComponents + calibration_dendrite);
+    if(TrainingPatternInx < 0 || TrainingPatternInx >= row_count)
+    {
+        LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "TrainingPatternInx is outside the PCA result matrix.");
+        return false;
+    }
+
+    for(int row_idx = 0; row_idx < row_count; row_idx++)
+    {
+        std::string line;
+        for(int component_idx = 0; component_idx < OutComponents + calibration_dendrite; component_idx++)
+            line += std::to_string(results(row_idx, component_idx)) + "\t";
+        fout << line << std::endl;
+
+        if(TrainingPatternInx == row_idx)
+            for(int component_idx = 0; component_idx < OutComponents + calibration_dendrite; component_idx++)
+                training_pattern(0, component_idx) = results(row_idx, component_idx);
+    }
+
+    SpikeClassifier->TrainingPatterns = training_pattern;
+    fout.close();
+
+    SpikeClassifier->SetActivity(true);
+    MatrixSourceTimeSeries->SetActivity(false);
+    PCA->SetActivity(false);
+    IsLastStep = true;
+    return true;
 
 // --------------------------
 }

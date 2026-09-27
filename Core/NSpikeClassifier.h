@@ -104,6 +104,10 @@ protected:
  //     
  int OldNumInputDendrite;
 
+ // Whether the current trained neurons already have the classifier's
+ // lateral-inhibition topology attached.
+ bool LateralInhibitionBuilt;
+
  //  
  std::vector<UEPtr<NPulseGeneratorTransit> > generators;
  //  () 
@@ -235,6 +239,10 @@ virtual bool ADelComponent(UEPtr<UContainer> comp);
 protected:
 ///         
 bool BuildStructure(void);
+
+/// Remove and rebuild the lateral-inhibition links between class neurons.
+bool BuildLateralInhibition(void);
+void ClearLateralInhibition(void);
 
 //     .
 //      ,

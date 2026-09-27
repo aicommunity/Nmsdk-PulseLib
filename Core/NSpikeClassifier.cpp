@@ -52,6 +52,7 @@ NSpikeClassifier::NSpikeClassifier(void)
 {
  OldNumNeurons=0;
  OldNumInputDendrite=0;
+ LateralInhibitionBuilt=false;
  generators.clear();
  trainers.clear();
 
@@ -354,9 +355,13 @@ bool NSpikeClassifier::ADelComponent(UEPtr<UContainer> comp)
 // Сброс процесса счета.
 bool NSpikeClassifier::AReset(void)
 {
+ LateralInhibitionBuilt=false;
+ ClearLateralInhibition();
  for(size_t i = 0; i < trainers.size(); i++)
  {
 //  trainers[i]->IsNeedToTrain = IsNeedToTrain;
+	if(!IsNeedToTrain)
+		trainers[i]->LTZThreshold = FixedLTZThreshold;
 
 /*  UEPtr<NPulseGeneratorTransit> generator;
   for(int j = 0; j < NumInputDendrite; j++)
@@ -399,6 +404,7 @@ bool NSpikeClassifier::AReset(void)
 // Восстановление настроек по умолчанию и сброс процесса счета
 bool NSpikeClassifier::ADefault(void)
 {
+ LateralInhibitionBuilt=false;
  StructureBuildMode=1;
  PulseGeneratorClassName="NPulseGeneratorTransit";
  NeuronTrainerClassName="NNeuronTrainer";
@@ -490,10 +496,10 @@ bool NSpikeClassifier::BuildStructure(void)
 	 {
 	  trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(j+1)),true);
 	  if(!trainer)
-	   return true;
+	   return false;
 	  gen_in = trainer->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(i+1)),true);
 	  if(!gen_in)
-	   return true;
+	   return false;
 
 	  gen_in->UseTransitSignal=(IsNeedToTrain.GetData())? false : true;
 
@@ -501,12 +507,109 @@ bool NSpikeClassifier::BuildStructure(void)
 	  bool res(true);
 	  res&=CreateLink("Source"+sntoa(i+1),"Output",gen_in->GetLongName(this),"Input");
 	  if(!res)
-	   return true;
+	   return false;
 	 }
-	}
+	 }
  }
 
  return true;
+}
+
+void NSpikeClassifier::ClearLateralInhibition(void)
+{
+	for(int target_idx = 0; target_idx < NumNeurons; target_idx++)
+	{
+		UEPtr<NPulseNeuron> neuron = GetComponentL<NPulseNeuron>(
+		    std::string("NeuronTrainer")+sntoa(target_idx+1)+".Neuron", true);
+		if(!neuron)
+			continue;
+
+		for(int dendrite_idx = 0; dendrite_idx < NumInputDendrite; dendrite_idx++)
+		{
+			UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>(
+			    std::string("Soma")+sntoa(dendrite_idx+1), true);
+			if(!soma)
+				continue;
+
+			const int num_inhibitory_synapses = soma->NumInhibitorySynapses.GetData();
+			for(int synapse_idx = 1; synapse_idx <= num_inhibitory_synapses; synapse_idx++)
+			{
+				UEPtr<NPulseSynapseCommon> synapse = soma->GetComponentL<NPulseSynapseCommon>(
+				    std::string("InhSynapse")+sntoa(synapse_idx), true);
+				if(!synapse)
+					continue;
+				synapse->Input.DetachFrom();
+				synapse->DisconnectAllItems();
+			}
+		}
+	}
+}
+
+bool NSpikeClassifier::BuildLateralInhibition(void)
+{
+	// Build the required one-synapse-per-competitor fan-in on every input soma.
+	for(int target_idx = 0; target_idx < NumNeurons; target_idx++)
+	{
+		UEPtr<NPulseNeuron> neuron = GetComponentL<NPulseNeuron>(
+		    std::string("NeuronTrainer")+sntoa(target_idx+1)+".Neuron", true);
+		if(!neuron)
+			return false;
+
+		for(int dendrite_idx = 0; dendrite_idx < NumInputDendrite; dendrite_idx++)
+		{
+			UEPtr<NPulseMembrane> soma = neuron->GetComponentL<NPulseMembrane>(
+			    std::string("Soma")+sntoa(dendrite_idx+1), true);
+			if(!soma)
+				return false;
+
+			soma->NumInhibitorySynapses = NumNeurons - 1;
+			if(!soma->Reset())
+				return false;
+		}
+	}
+
+	ClearLateralInhibition();
+
+	std::vector<int> inhibitory_synapse_counter(NumNeurons, 1);
+	for(int source_idx = 0; source_idx < NumNeurons; source_idx++)
+	{
+		UEPtr<NNeuronTrainer> source_trainer = GetComponentL<NNeuronTrainer>(
+		    std::string("NeuronTrainer")+sntoa(source_idx+1), true);
+		if(!source_trainer)
+			return false;
+		UEPtr<NPulseNeuron> source_neuron = source_trainer->GetComponentL<NPulseNeuron>("Neuron", true);
+		if(!source_neuron)
+			return false;
+		UEPtr<NLTZone> source_ltz = source_neuron->GetComponentL<NLTZone>("LTZone", true);
+		if(!source_ltz)
+			return false;
+
+		for(int target_idx = 0; target_idx < NumNeurons; target_idx++)
+		{
+			if(source_idx == target_idx)
+				continue;
+
+			UEPtr<NPulseNeuron> target_neuron = GetComponentL<NPulseNeuron>(
+			    std::string("NeuronTrainer")+sntoa(target_idx+1)+".Neuron", true);
+			if(!target_neuron)
+				return false;
+
+			for(int dendrite_idx = 0; dendrite_idx < NumInputDendrite; dendrite_idx++)
+			{
+				UEPtr<NPulseMembrane> soma = target_neuron->GetComponentL<NPulseMembrane>(
+				    std::string("Soma")+sntoa(dendrite_idx+1), true);
+				if(!soma)
+					return false;
+				UEPtr<NPulseSynapseCommon> synapse = soma->GetComponentL<NPulseSynapseCommon>(
+				    std::string("InhSynapse")+sntoa(inhibitory_synapse_counter[target_idx]), true);
+				if(!synapse || !CreateLink(source_ltz->GetLongName(this), "Output", synapse->GetLongName(this), "Input"))
+					return false;
+			}
+			++inhibitory_synapse_counter[target_idx];
+		}
+	}
+
+	return true;
 }
 
 // Обеспечивает сборку внутренней структуры объекта
@@ -537,7 +640,7 @@ bool NSpikeClassifier::TreatDataFromFile(void)
 	{
         // Открываем файл для чтения данных
         fin.open(Environment->GetCurrentDataDir()+"input_data.txt");
-		// Открываем файл для записи данных
+        // Открываем файл для записи данных
         fout.open(Environment->GetCurrentDataDir()+"output_data.txt");
         // Флаг начала итерации
 		is_first_iter = true;
@@ -565,15 +668,15 @@ bool NSpikeClassifier::TreatDataFromFile(void)
 		}
 		for(int i = 0; i < NumInputDendrite; i++)
 		{
-			double in;
-			fin >> in;
-			/*if(fin.eof())
+			double in = 0.0;
+			if(!(fin >> in))
 			{
 				fin.close();
-                fout.close();
+				fout.close();
+				IsFirstFileStep = true;
 				DataFromFile = false;
 				return true;
-			} */
+			}
 			inputs(i,0) = in;
 		}
         InputPattern = inputs;
@@ -630,6 +733,12 @@ bool NSpikeClassifier::ACalculate(void)
 	// Процесс обучения
 	if(IsNeedToTrain)
 	{
+	 if(LateralInhibitionBuilt)
+	 {
+	  ClearLateralInhibition();
+	  LateralInhibitionBuilt=false;
+	 }
+
 	 bool is_trained(true);
 
 	 // Проверяем обученность всех нейронов
@@ -668,57 +777,10 @@ bool NSpikeClassifier::ACalculate(void)
 		generator->UseTransitSignal = true;
 	   }
 
-       // Обратные связи между нейронами с возможностью обучения
-       UEPtr<NPulseNeuron> neuron;
-       UEPtr<NPulseMembrane> soma;
-       UEPtr<NPulseSynapse> synapse;
-       UEPtr<NLTZone> ltzone;
-       std::vector<int> inh_synapse_counter;
-       inh_synapse_counter.assign(NumNeurons,1);
-       for(int neuron_idx = 0; neuron_idx < NumNeurons; neuron_idx++)
-       {
-        trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(neuron_idx+1)),true);
-        if(!trainer)
-         return true;
-
-        neuron  = trainer->GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
-        if(!neuron)
-         return true;
-
-        ltzone = neuron->GetComponentL<NLTZone>("LTZone");
-        if(!ltzone)
-         return true;
-
-        for(int j = 0; j < NumNeurons; j++)
-        {
-         if(neuron_idx==j)
-          continue;
-
-         neuron  = GetComponentL<NPulseNeuron>(std::string("NeuronTrainer"+sntoa(j+1)+".Neuron"),true);
-         if(!neuron)
-          return true;
-
-         for(int n = 0; n < NumInputDendrite; n++)
-         {
-          soma = neuron->GetComponentL<NPulseMembrane>(std::string("Soma"+sntoa(n+1)),true);
-          if(!soma)
-           return true;
-
-         soma->NumInhibitorySynapses=NumNeurons-1;
-          soma->Reset();
-          synapse = soma->GetComponentL<NPulseSynapse>(std::string("InhSynapse")+RDK::sntoa(inh_synapse_counter[j]),true);
-          if(!synapse)
-           return true;
-
-          bool res(true);
-          res&=CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
-          if(!res)
-           return true;
-         }
-         ++inh_synapse_counter[j];
-        }
-       }
 	  }
+	  if(!BuildLateralInhibition())
+	   return false;
+	  LateralInhibitionBuilt=true;
 	 }
 
 	 return true;
@@ -745,6 +807,8 @@ bool NSpikeClassifier::ACalculate(void)
 	 if(!is_trained)
 	 {
 	  IsNeedToTrain = true;
+	  ClearLateralInhibition();
+	  LateralInhibitionBuilt=false;
 
 	  // Переводим все генераторы в режим генерации
       for(int i = 0; i < NumNeurons; i++)
@@ -764,6 +828,13 @@ bool NSpikeClassifier::ACalculate(void)
 	  }
 
 	  return true;
+	 }
+
+	 if(!LateralInhibitionBuilt)
+	 {
+	  if(!BuildLateralInhibition())
+	   return false;
+	  LateralInhibitionBuilt=true;
 	 }
 
 		// Функция для работы с файлами.

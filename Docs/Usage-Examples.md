@@ -26,6 +26,8 @@
 
 **Структурное обучение:** прежде чем запускать `SpikeTrainer`, `SpikeAnsTrainer` или `SpikeIrisClassifier`, сверьте сохранённые флаги в README конфигураций. В текущих исходниках `NNeuronTrainer` значения `CalculateMode=4/5` попадают в рабочую ветку 6, а `SpikeTrainer` хранит `IsNeedToTrain=0`. Реплей на копиях конфигов, описание `NNeuronLearner`/`NNeuronTrainer` и ограничения исторических данных собраны в [NNeuronStructuralTrainingAudit.md](Analysis/NNeuronStructuralTrainingAudit.md) и [NNeuronTrainingReplay](../../../Bin/Configs/SpikeSamples/StructTrain/_repro/NNeuronTrainingReplay/README.md).
 
+Поведение классификаторов, тормозную конкуренцию и семантику многобитных ответов см. в [StructuralClassifiersAudit.md](Analysis/StructuralClassifiersAudit.md).
+
 **Дополнительно (OldConfigs/User):** `Bin/Configs/!OldConfigs/STDP-Simple-01/`, `Bin/Configs/!OldConfigs/OldExperiments/IzhikevichTest/`, `Bin/Configs/!OldConfigs/SpikeClassifier/`
 
 Эти проекты можно запустить напрямую в Nmsdk Engine и модифицировать параметры для экспериментов.
