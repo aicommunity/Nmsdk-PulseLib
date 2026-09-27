@@ -138,6 +138,9 @@ protected:
 
  /// Auto_Preset запускается не более одного раза за жизненный цикл объекта
  bool AutoPresetApplied;
+
+ /// После Auto_Preset сначала нужно измерить новую структуру до проверки сходимости
+ bool AutoPresetAwaitingEvaluation;
  
  /// Генераторы импульсов
  std::vector<UEPtr<NPulseGeneratorTransit> > Generators;

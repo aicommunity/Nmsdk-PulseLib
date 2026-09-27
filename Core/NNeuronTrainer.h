@@ -132,6 +132,9 @@ protected:
  std::vector<double> InitialDendritePotential;
  //     
  std::vector<int> SynapseNum;
+ // Difference from the target amplitude on the prior synapse-normalization iteration.
+ std::vector<double> PreviousSynapseAmplitudeDifference;
+ std::vector<bool> HasPreviousSynapseAmplitudeDifference;
 
  //    
  int dend_counter;

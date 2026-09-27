@@ -196,6 +196,8 @@ bool NNeuronTrainer::SetNeedToTrain(const bool &value)
   is_synchronizated=false;
   OldNumInputDendrite=0;
   generators.clear();
+  PreviousSynapseAmplitudeDifference.clear();
+  HasPreviousSynapseAmplitudeDifference.clear();
   is_first_iter=true;
   neuron = NULL;
   thresh_first_iter=true;
@@ -409,8 +411,10 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 	DendriteLength.assign(num_input_dendrite,0);
 	// Массив выходов дендритов при единичной их длине
 	InitialDendritePotential.assign(num_input_dendrite,0);
-	// Массив количества синапсов на дендрите
-	SynapseNum.assign(num_input_dendrite,1);
+ // Массив количества синапсов на дендрите
+ SynapseNum.assign(num_input_dendrite,1);
+ PreviousSynapseAmplitudeDifference.assign(num_input_dendrite, 0.0);
+ HasPreviousSynapseAmplitudeDifference.assign(num_input_dendrite, false);
 
 	// Вычисляем индекс дендрита, на который входной сигнал пришёл последним
 	// и устанавливаем длину данного дендрита равной 1
@@ -1463,6 +1467,18 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 
 				synapse->Resistance = SynapseResistanceStep;
 
+				// Rebuilding an existing membrane can add this synapse after the
+				// container's normal initialization pass. Initialize it explicitly
+				// so it participates in the next neuron calculation.
+				if(!synapse->IsInit())
+				 synapse->Init();
+				if(!synapse->IsInit())
+				{
+				 LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+				     "Failed to initialize synapse " + synapse->GetLongName(this));
+				 return false;
+				}
+
 				neuron->Reset();
 			}
 			// Удаляем синапс
@@ -1544,7 +1560,13 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 			 continue;
 
 			const double amplitude_difference = max_iter_dend_amp[i] - InitialDendritePotential[i];
-			if(std::fabs(amplitude_difference) <= 1.0e-6)
+			// Synapse count is discrete; the target may lie between neighboring structures.
+			const bool amplitude_crossed_target =
+				HasPreviousSynapseAmplitudeDifference[i] &&
+				(amplitude_difference * PreviousSynapseAmplitudeDifference[i] < 0.0) &&
+				(std::fabs(amplitude_difference) <=
+				 std::fabs(PreviousSynapseAmplitudeDifference[i]));
+			if(std::fabs(amplitude_difference) <= kThresholdEpsilon || amplitude_crossed_target)
 			{
 				dend_status[i] = 0;
 			}
@@ -1558,6 +1580,8 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 			{
 				dend_status[i] = -2;
 			}
+			PreviousSynapseAmplitudeDifference[i] = amplitude_difference;
+			HasPreviousSynapseAmplitudeDifference[i] = true;
 
 			if (EnableDebug && RDK::GetLogger())
 			{
@@ -1565,6 +1589,8 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 				oss << "SomaSynapseNormalization: iter done; i=" << i
 					<< " max_iter_dend_amp=" << max_iter_dend_amp[i]
 					<< " InitialDendritePotential=" << (i < (int)InitialDendritePotential.size() ? InitialDendritePotential[i] : 0.0)
+					<< " amplitude_difference=" << amplitude_difference
+					<< " amplitude_crossed_target=" << (amplitude_crossed_target ? 1 : 0)
 					<< " dend_status=" << dend_status[i];
 				RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
 			}

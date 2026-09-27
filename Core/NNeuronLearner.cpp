@@ -104,6 +104,7 @@ NNeuronLearner::NNeuronLearner(void):
 {
  OldNumInputDendrite = 0;
  AutoPresetApplied = false;
+ AutoPresetAwaitingEvaluation = false;
  Generators.clear();
  Neuron = NULL;
  
@@ -851,6 +852,7 @@ bool NNeuronLearner::ADefault(void)
  MaxDendriteLength = 100;
  UseAutoPreset = false;
  AutoPresetApplied = false;
+ AutoPresetAwaitingEvaluation = false;
  
  // Настройки порога
  LTZThreshold = 100;
@@ -902,9 +904,6 @@ bool NNeuronLearner::ADefault(void)
  // как и синапсы
  SynapseStatus.assign(NumInputDendrite, 0);
  
- // Выключаем DEBUG-логирование (по умолчанию)
- EnableDebug = false;
- 
  return true;
 }
 
@@ -941,12 +940,6 @@ void NNeuronLearner::UpdateComputationOrder(void)
 /// Сброс процесса счета
 bool NNeuronLearner::AReset(void)
 {
- if(UseAutoPreset && !AutoPresetApplied && IsNeedToTrain)
- {
-  if(!ApplyAutoPresetToFreshNeuron())
-   return false;
- }
-
  // Устанавливаем значение порога по умолчанию
  UEPtr<NPulseNeuron> n_in = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
  if(!n_in)
@@ -1318,6 +1311,18 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
   
   if(i > 0)
    synapse->Resistance = SynapseResistanceStep;
+
+  // Synapses added to an already initialized dendrite are not initialized by
+  // AddComponent(). Without Init(), Calculate() returns before ACalculate2(),
+  // so the new synapse is present in the model and linked but never emits.
+  if(!synapse->IsInit())
+   synapse->Init();
+  if(!synapse->IsInit())
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+       "Failed to initialize synapse " + synapse->GetLongName(this));
+   return false;
+  }
  }
  
  // Neuron->GetStorage()->FreeObjectsStorage();
@@ -1412,9 +1417,21 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
   
   if(!res)
    return true;
+
+  // A component added to an already initialized dendrite is not initialized
+  // automatically. Make the new synapse calculable before resetting the
+  // neuron; otherwise its serialized links exist while Calculate() skips it.
+  if(!synapse->IsInit())
+   synapse->Init();
+  if(!synapse->IsInit())
+  {
+   LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+       "Failed to initialize synapse " + synapse->GetLongName(this));
+   return false;
+  }
  }
- 
- // Neuron->GetStorage()->FreeObjectsStorage();
+
+  // Neuron->GetStorage()->FreeObjectsStorage();
  Neuron->Reset();
  // Neuron->GetStorage()->FreeObjectsStorage();
  
@@ -1911,8 +1928,19 @@ bool NNeuronLearner::EndOfLearning(void)
 // Каждый такой вызов функции называем тактом
 bool NNeuronLearner::Training(void)
 {
+ // Первый проход на исходной структуре нужен для измерения амплитуд,
+ // относительно которых ChangeSynapseStatus подбирает число синапсов.
+ // После него Auto_Preset может изменить длины дендритов, не оставляя
+ // InitialSomaPotential равным нулю для удлинённых ветвей.
+ if(IsFirstBeat && CountIteration > 0 && UseAutoPreset && !AutoPresetApplied && IsNeedToTrain)
+ {
+  if(!ApplyAutoPresetToFreshNeuron())
+   return false;
+  AutoPresetAwaitingEvaluation = true;
+ }
+
  // Если 0 режим обучения и не 0 итерация, то можем завершить обучение
- if(!CalculateMode && (CountIteration > 0))
+ if(!AutoPresetAwaitingEvaluation && !CalculateMode && (CountIteration > 0))
  {
   if(EndOfLearning())
    return true;
@@ -1991,6 +2019,9 @@ bool NNeuronLearner::Training(void)
    // Запоминаем текущий паттерн перед началом следующей итерации
    PrevInputPattern[i] = InputPattern[i];
   }
+
+  // Только теперь статусы относятся к измеренной структуре после Auto_Preset.
+  AutoPresetAwaitingEvaluation = false;
   
   // Поднимаем для следующей итерации флаг первого такта
   IsFirstBeat = true;
@@ -2040,7 +2071,7 @@ bool NNeuronLearner::ACalculate(void)
   }
   
   // Если 0 режим обучения и не 0 итерация, то можем завершить обучение
-  if(!CalculateMode && (CountIteration > 0))
+  if(!AutoPresetAwaitingEvaluation && !CalculateMode && (CountIteration > 0))
   {
    // Проверяем обученность нейрона предыдущему импульсу
    bool istrained = true;

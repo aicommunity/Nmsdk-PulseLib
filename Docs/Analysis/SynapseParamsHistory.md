@@ -34,7 +34,7 @@
   - `PulseAmplitude` — амплитуда спайка:
     - по умолчанию: `1.0`.
   - `Resistance` — сопротивление синапса:
-    - по умолчанию: `1.0e8` (`100000000`; 100 МОм) — см. историю ниже.
+    - по умолчанию в `NPulseSynapseCommon::ADefault()`: `10` Ом; класс `NPulseSynapse` затем задаёт собственное значение сопротивления.
   - `Weight` — вес синапса:
     - по умолчанию: `1.0`.
 
@@ -79,7 +79,7 @@ UploadClass("NPSynapseBio",syn);
 - `Resistance = 2e7 * 4.3 = 8.6e7` Ом (86 МОм).
 - `DissociationTC = 0.005` с (5 мс).
 - Остальные параметры берутся из `NPulseSynapse::ADefault()`:
-  - `SecretionTC = 0.002` (см. историю, п. 4.1);
+  - `SecretionTC = 0.001` в текущей библиотеке; это унаследованное значение `NPulseSynapse::ADefault()`;
   - `PulseAmplitude = 1.0`;
   - `UsePulseSignal = true`;
   - `UsePresynapticInhibition = false`;
@@ -99,14 +99,14 @@ UploadClass("NPSynapseBio",syn);
 | Класс              | Базовый класс         | Параметр         | Значение по умолчанию / конфигурации         | Источник                    |
 |--------------------|------------------------|------------------|----------------------------------------------|-----------------------------|
 | `NPulseSynapseCommon` | `UNet`             | `PulseAmplitude` | `1.0`                                        | `NPulseSynapseCommon::ADefault` |
-| `NPulseSynapseCommon` | `UNet`             | `Resistance`     | `1.0e8` (100 МОм)                            | см. историю, п. 4.1         |
+| `NPulseSynapseCommon` | `UNet`             | `Resistance`     | `10` Ом                                       | `NPulseSynapseCommon::ADefault` |
 | `NPulseSynapseCommon` | `UNet`             | `Weight`         | `1.0`                                        | `NPulseSynapseCommon::ADefault` |
-| `NPulseSynapse`    | `NPulseSynapseCommon` | `SecretionTC`    | `0.002` с                                    | commit `5f3f06d`            |
-| `NPulseSynapse`    | `NPulseSynapseCommon` | `DissociationTC` | `0.002` с                                    | commit `5f3f06d`            |
-| `NPulseSynapse`    | `NPulseSynapseCommon` | `Resistance`     | `1.0e8` (100 МОм)                            | commit `5f3f06d`            |
+| `NPulseSynapse`    | `NPulseSynapseCommon` | `SecretionTC`    | `0.001` с                                    | `NPulseSynapse::ADefault`   |
+| `NPulseSynapse`    | `NPulseSynapseCommon` | `DissociationTC` | `0.01` с                                     | `NPulseSynapse::ADefault`   |
+| `NPulseSynapse`    | `NPulseSynapseCommon` | `Resistance`     | `1.0e9` (1 ГОм)                              | `NPulseSynapse::ADefault`   |
 | `NPSynapseBio`     | `NPulseSynapse`       | `Resistance`     | `8.6e7` (86 МОм)                             | `NPulseLibrary.cpp` / `NPSynapseBio.md` |
 | `NPSynapseBio`     | `NPulseSynapse`       | `DissociationTC` | `0.005` с (5 мс)                             | `NPulseLibrary.cpp` / `NPSynapseBio.md` |
-| `NPSynapseBio`     | `NPulseSynapse`       | `SecretionTC`    | `0.002` с (наследуется)                      | `NPulseSynapse::ADefault`   |
+| `NPSynapseBio`     | `NPulseSynapse`       | `SecretionTC`    | `0.001` с (наследуется)                      | `NPulseSynapse::ADefault`   |
 | `NPSynapseBio`     | `NPulseSynapse`       | `PulseAmplitude` | `1.0`                                        | наследуется                  |
 
 Для обучения важно, что **эффективный синаптический ток** в Bio‑конфигурации пропорционален:
@@ -213,15 +213,14 @@ UploadClass("NPSynapseBio",syn);
 1. **Все обучающие цепочки в TestTrain используют один и тот же тип синапса — `NPSynapseBio`.**  
    Он конфигурируется в `NPulseLibrary.cpp` один раз и затем применяется во всех `NPMembraneBio` и во всех нейронах типа `NSPNeuronGen`.
 
-2. **Численные параметры Bio‑синапса (`Resistance = 8.6e7`, `DissociationTC = 0.005`, `SecretionTC = 0.002`) были заданы в 2021 году и остаются неизменными.**  
-   Это означает, что наблюдаемое сегодня поведение (в т.ч. слабая зависимость амплитуды от числа синапсов и отсутствие явного сигнала к остановке роста) **не является следствием недавних изменений именно в `NPSynapseBio`**.
+2. **Bio-класс явно задаёт `Resistance=8.6e7` и `DissociationTC=0.005`; `SecretionTC` наследуется от базового `NPulseSynapse`.**
+   В текущей библиотеке его эффективное значение — `0.001`. Во время временного изменения базового класса в 2022 году новые экземпляры Bio-класса наследовали `0.002`; при этом уже сериализованные синапсы в конфиге могли сохранять собственные старые значения.
 
-3. **Изменения 2022 года в `NPulseSynapse` (commit `5f3f06d`) ускорили и упростили базовую модель медиатора, но `NPSynapseBio` продолжает переопределять часть параметров.**  
-   В частности, базовый `Resistance` теперь `1.0e8`, а у Bio‑синапса — `8.6e7`, то есть Bio‑синапсы стали даже **чуть более проводящими** относительно базы, чем до коммита.
+3. **Для стандартного `NPSynapse` параметры вновь создаваемых элементов отличаются от периода исторических опытов.**
+   В HEAD это `Resistance=1e9`, `SecretionTC=0.001`, `DissociationTC=0.01`; в период между `5f3f06d` и `0be546f` было `1e8`, `0.002`, `0.002`. Для `NPSynapseBio` изменялось унаследованное `SecretionTC`, а явные Bio-переопределения сопротивления и диссоциации оставались прежними.
 
-4. **С точки зрения регрессий, связать текущее поведение обучения (бесконечный рост числа синапсов) с изменениями параметров синапсов сложно.**  
-   Гораздо сильнее на это влияет критерий в `SomaSynapseNormalization` (Trainer) / `ChangeSynapseStatus` (Learner), который использует сравнение `max_iter_dend_amp` с `InitialDendritePotential` + небольшой `eps`.  
-   При текущем наборе RC‑параметров добавление синапсов изменяет амплитуду **слишком слабо**, так что разность остаётся в пределах допуска и алгоритм никогда не переключается в режим «удалять синапсы».
+4. **Для воспроизведения архивных обучений важны и критерий остановки, и параметры новых синапсов.**
+   В `NNeuronTrainer` прежний допуск-only критерий мог не остановиться между двумя соседними целыми структурами; в актуальном коде добавлено обнаружение пересечения цели. Отдельно стандарт `NPSynapse` был изменён после даты исторических отчётов и влияет на элементы, создаваемые при росте структуры.
 
 5. **Практический вывод:**  
    если цель — добиться устойчивой остановки роста числа синапсов и большей чувствительности амплитуды к их количеству, то:
@@ -266,7 +265,7 @@ Brief profile:
   - `PulseAmplitude` — spike amplitude:
     - default: `1.0`.
   - `Resistance` — synapse resistance:
-    - default: `1.0e8` (`100000000`; 100 MΩ) — see history below.
+    - default in `NPulseSynapseCommon::ADefault()`: `10` Ω; `NPulseSynapse` overrides it with its own value.
   - `Weight` — synapse weight:
     - default: `1.0`.
 
@@ -311,7 +310,7 @@ From this and the `NPSynapseBio.md` document:
 - `Resistance = 2e7 * 4.3 = 8.6e7` Ω (86 MΩ).
 - `DissociationTC = 0.005` s (5 ms).
 - Remaining parameters are taken from `NPulseSynapse::ADefault()`:
-  - `SecretionTC = 0.002` (see history, § 4.1);
+  - `SecretionTC = 0.001` in the current library, inherited from `NPulseSynapse::ADefault()`;
   - `PulseAmplitude = 1.0`;
   - `UsePulseSignal = true`;
   - `UsePresynapticInhibition = false`;
@@ -331,14 +330,14 @@ Summary table for the Training chain (`NSPNeuronGen` → `NPMembraneBio` → `NP
 | Class              | Base class         | Parameter         | Default / configuration value         | Source                    |
 |--------------------|------------------------|------------------|----------------------------------------------|-----------------------------|
 | `NPulseSynapseCommon` | `UNet`             | `PulseAmplitude` | `1.0`                                        | `NPulseSynapseCommon::ADefault` |
-| `NPulseSynapseCommon` | `UNet`             | `Resistance`     | `1.0e8` (100 MΩ)                            | see history, § 4.1         |
+| `NPulseSynapseCommon` | `UNet`             | `Resistance`     | `10` Ω                                       | `NPulseSynapseCommon::ADefault` |
 | `NPulseSynapseCommon` | `UNet`             | `Weight`         | `1.0`                                        | `NPulseSynapseCommon::ADefault` |
-| `NPulseSynapse`    | `NPulseSynapseCommon` | `SecretionTC`    | `0.002` s                                    | commit `5f3f06d`            |
-| `NPulseSynapse`    | `NPulseSynapseCommon` | `DissociationTC` | `0.002` s                                    | commit `5f3f06d`            |
-| `NPulseSynapse`    | `NPulseSynapseCommon` | `Resistance`     | `1.0e8` (100 MΩ)                            | commit `5f3f06d`            |
+| `NPulseSynapse`    | `NPulseSynapseCommon` | `SecretionTC`    | `0.001` s                                    | `NPulseSynapse::ADefault`   |
+| `NPulseSynapse`    | `NPulseSynapseCommon` | `DissociationTC` | `0.01` s                                     | `NPulseSynapse::ADefault`   |
+| `NPulseSynapse`    | `NPulseSynapseCommon` | `Resistance`     | `1.0e9` (1 GΩ)                               | `NPulseSynapse::ADefault`   |
 | `NPSynapseBio`     | `NPulseSynapse`       | `Resistance`     | `8.6e7` (86 MΩ)                             | `NPulseLibrary.cpp` / `NPSynapseBio.md` |
 | `NPSynapseBio`     | `NPulseSynapse`       | `DissociationTC` | `0.005` s (5 ms)                             | `NPulseLibrary.cpp` / `NPSynapseBio.md` |
-| `NPSynapseBio`     | `NPulseSynapse`       | `SecretionTC`    | `0.002` s (inherited)                      | `NPulseSynapse::ADefault`   |
+| `NPSynapseBio`     | `NPulseSynapse`       | `SecretionTC`    | `0.001` s (inherited)                      | `NPulseSynapse::ADefault`   |
 | `NPSynapseBio`     | `NPulseSynapse`       | `PulseAmplitude` | `1.0`                                        | inherited                  |
 
 For training, it is important that the **effective synaptic current** in the Bio configuration is proportional to:
@@ -445,15 +444,14 @@ That is:
 1. **All training chains in TestTrain use the same synapse type — `NPSynapseBio`.**  
    It is configured once in `NPulseLibrary.cpp` and then applied in all `NPMembraneBio` instances and in all neurons of type `NSPNeuronGen`.
 
-2. **The numerical parameters of the Bio synapse (`Resistance = 8.6e7`, `DissociationTC = 0.005`, `SecretionTC = 0.002`) were set in 2021 and remain unchanged.**  
-   This means that the behavior observed today (including weak dependence of amplitude on the number of synapses and the absence of an explicit signal to stop growth) **is not a consequence of recent changes specifically in `NPSynapseBio`**.
+2. **The Bio class explicitly sets `Resistance=8.6e7` and `DissociationTC=0.005`; `SecretionTC` is inherited from base `NPulseSynapse`.**
+   In the current library it is `0.001`. During the temporary 2022 base-class change, newly created Bio instances inherited `0.002`; serialized synapses in an existing model could retain their earlier values.
 
-3. **The 2022 changes in `NPulseSynapse` (commit `5f3f06d`) accelerated and simplified the base mediator model, but `NPSynapseBio` continues to override some parameters.**  
-   In particular, the base `Resistance` is now `1.0e8`, while the Bio synapse has `8.6e7`, meaning Bio synapses became even **slightly more conductive** relative to the base than before the commit.
+3. **Defaults for newly created standard `NPSynapse` elements differ from those in the historical experiments.**
+   HEAD uses `Resistance=1e9`, `SecretionTC=0.001`, `DissociationTC=0.01`; between `5f3f06d` and `0be546f` the values were `1e8`, `0.002`, `0.002`. For `NPSynapseBio`, `SecretionTC` inherited that temporary change, while its explicit resistance and dissociation overrides stayed fixed.
 
-4. **From a regression perspective, linking current training behavior (unbounded synapse count growth) to synapse parameter changes is difficult.**  
-   The criterion in `SomaSynapseNormalization` (Trainer) / `ChangeSynapseStatus` (Learner), which compares `max_iter_dend_amp` with `InitialDendritePotential` + a small `eps`, has a much stronger influence on this.  
-   With the current RC parameter set, adding synapses changes amplitude **too weakly**, so the difference remains within tolerance and the algorithm never switches to "remove synapses" mode.
+4. **Reproducing the archived training requires accounting for both the stop criterion and defaults used to create new synapses.**
+   The old tolerance-only `NNeuronTrainer` criterion could fail to stop between two neighboring integer structures; the current code now detects target crossing. Separately, the standard `NPSynapse` defaults changed after the archived report date and affect synapses created during structural growth.
 
 5. **Practical conclusion:**  
    if the goal is to achieve stable stopping of synapse count growth and greater amplitude sensitivity to their number, then:
