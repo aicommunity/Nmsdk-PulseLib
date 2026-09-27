@@ -378,6 +378,9 @@ protected:
 
  /// Оценивает начальную структуру и пересобирает нейрон, если включён UseAutoPreset
  bool ApplyAutoPresetToFreshNeuron();
+
+ /// Инициализирует сегменты дендритов, добавленные после первой сборки нейрона
+ bool InitializeDendriteSubtrees(const int dendrite_index = -1);
  
  /// Восстановление настроек по умолчанию и сброс процесса счета
  virtual bool ADefault(void);

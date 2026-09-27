@@ -732,6 +732,9 @@ for(int i = NumInputDendrite; i < OldNumInputDendrite; i++)
  // Neuron->GetStorage()->FreeObjectsStorage();
  Neuron->Reset();
  // Neuron->GetStorage()->FreeObjectsStorage();
+
+ if(!InitializeDendriteSubtrees())
+  return false;
  
  // Задаём размеры и начальные значения параметров обучения
  IsFirstBeat = true; // Флаг первого такта в рамках итерации расчёта нейрона
@@ -904,6 +907,93 @@ bool NNeuronLearner::ADefault(void)
  // как и синапсы
  SynapseStatus.assign(NumInputDendrite, 0);
  
+ return true;
+}
+
+/// Инициализирует новый сегмент дендрита вместе с каналом и синапсами.
+/// Reset() перестраивает контейнер, но не вызывает Init() для компонентов,
+/// которые были добавлены после первичной инициализации нейрона.
+bool NNeuronLearner::InitializeDendriteSubtrees(const int dendrite_index)
+{
+ if(!Neuron)
+  return false;
+
+ const int first_dendrite = (dendrite_index >= 0) ? dendrite_index : 0;
+ const int end_dendrite = (dendrite_index >= 0) ? dendrite_index + 1 : NumInputDendrite;
+ if(first_dendrite < 0 || end_dendrite > NumInputDendrite)
+  return false;
+
+ for(int current_dendrite = first_dendrite; current_dendrite < end_dendrite; ++current_dendrite)
+ {
+  int dendrite_length = Neuron->NumDendriteMembraneParts;
+  if(Neuron->StructureBuildMode == 2)
+  {
+   if(current_dendrite >= static_cast<int>(Neuron->NumDendriteMembranePartsVec.size()))
+    return false;
+   dendrite_length = Neuron->NumDendriteMembranePartsVec[static_cast<size_t>(current_dendrite)];
+  }
+
+  for(int segment_index = 1; segment_index <= dendrite_length; ++segment_index)
+  {
+   UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>(
+       MakeLearnerDendriteName(current_dendrite + 1, segment_index), true);
+   if(!dendrite)
+   {
+    LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+        std::string("Missing dendrite segment: ") +
+        MakeLearnerDendriteName(current_dendrite + 1, segment_index));
+    return false;
+   }
+
+   if(!dendrite->IsInit())
+    dendrite->Init();
+
+   UEPtr<NPulseChannelCommon> exc_channel =
+       dendrite->GetComponentL<NPulseChannelCommon>("ExcChannel", true);
+   if(!exc_channel)
+   {
+    LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+        std::string("Missing excitatory channel in dendrite subtree: ") +
+        MakeLearnerDendriteName(current_dendrite + 1, segment_index));
+    return false;
+   }
+   if(!exc_channel->IsInit())
+    exc_channel->Init();
+
+   for(int synapse_index = 1; synapse_index <= dendrite->NumExcitatorySynapses; ++synapse_index)
+   {
+    UEPtr<NPulseSynapseCommon> synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
+        std::string("ExcSynapse") + sntoa(synapse_index), true);
+    if(!synapse)
+    {
+     LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+         std::string("Missing excitatory synapse in dendrite subtree: ") +
+         MakeLearnerDendriteName(current_dendrite + 1, segment_index) +
+         ".ExcSynapse" + sntoa(synapse_index));
+     return false;
+    }
+    if(!synapse->IsInit())
+     synapse->Init();
+    if(!synapse->IsInit())
+    {
+     LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+         std::string("Failed to initialize excitatory synapse in dendrite subtree: ") +
+         MakeLearnerDendriteName(current_dendrite + 1, segment_index) +
+         ".ExcSynapse" + sntoa(synapse_index));
+     return false;
+    }
+   }
+
+   if(!dendrite->IsInit() || !exc_channel->IsInit())
+   {
+    LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+        std::string("Failed to initialize dendrite subtree: ") +
+        MakeLearnerDendriteName(current_dendrite + 1, segment_index));
+    return false;
+   }
+  }
+ }
+
  return true;
 }
 
@@ -1328,6 +1418,9 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
  // Neuron->GetStorage()->FreeObjectsStorage();
  Neuron->Reset();
  // Neuron->GetStorage()->FreeObjectsStorage();
+
+ if(!InitializeDendriteSubtrees(Neuron->StructureBuildMode == 2 ? num : -1))
+  return false;
  
  return true;
 }

@@ -1764,6 +1764,30 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
                  res&=CreateLink(MakeSourceName(i+1),"Output",synapse->GetLongName(this),"Input");
                  if(!res)
                   LogMessageEx(RDK_EX_WARNING,__FUNCTION__,std::string("Falied create link: ")+MakeSourceName(i+1)+":Output -> "+synapse->GetLongName(this)+":Input");
+                 else
+                 {
+                  // Dendrite growth creates a new membrane subtree after the
+                  // neuron's initial Init() pass. Initialize the whole subtree
+                  // so both its channel and synapse participate in calculation.
+                  UEPtr<NPulseMembrane> dendrite=neuron->GetComponentL<NPulseMembrane>(
+                      "Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
+                  if(dendrite && !dendrite->IsInit())
+                   dendrite->Init();
+                  UEPtr<NPulseChannelCommon> exc_channel;
+                  if(dendrite)
+                   exc_channel=dendrite->GetComponentL<NPulseChannelCommon>("ExcChannel",true);
+                  if(exc_channel && !exc_channel->IsInit())
+                   exc_channel->Init();
+                  if(!synapse->IsInit())
+                   synapse->Init();
+                  if(!dendrite || !dendrite->IsInit() || !exc_channel ||
+                     !exc_channel->IsInit() || !synapse->IsInit())
+                  {
+                   LogMessageEx(RDK_EX_ERROR,__FUNCTION__,
+                       std::string("Failed to initialize newly grown dendrite synapse: ")+synapse->GetLongName(this));
+                   return false;
+                  }
+                 }
                 }
 				// Удаляем связь между текущим генератором и старым синапсом
 				synapse=neuron->GetComponentL<NPulseSynapse>(MakeExcSynapsePath(i+1, DendriteLength[i]-1, 1),true);
