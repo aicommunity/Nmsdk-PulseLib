@@ -96,6 +96,9 @@ UProperty<bool,NSpikeClassifier, ptPubParameter> UseTransitSignal;
 ///        
 UProperty<bool, NSpikeClassifier, ptPubParameter> DataFromFile;
 
+/// Enable class-to-class lateral inhibition (enabled by default).
+UProperty<bool, NSpikeClassifier, ptPubParameter> UseLateralInhibition;
+
 
 protected:
 
@@ -199,6 +202,7 @@ bool SetUseTransitSignal(const bool &value);
 
 //        
 bool SetDataFromFile(const bool &value);
+bool SetUseLateralInhibition(const bool &value);
 // --------------------------
 
 // --------------------------

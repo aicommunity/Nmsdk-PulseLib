@@ -48,7 +48,8 @@ NSpikeClassifier::NSpikeClassifier(void)
   TrainingLTZThreshold("TrainingLTZThreshold",this,&NSpikeClassifier::SetTrainingLTZThreshold),
   UseFixedLTZThreshold("UseFixedLTZThreshold",this,&NSpikeClassifier::SetUseFixedLTZThreshold),
   UseTransitSignal("UseTransitSignal",this,&NSpikeClassifier::SetUseTransitSignal),
-  DataFromFile("DataFromFile",this,&NSpikeClassifier::SetDataFromFile)
+  DataFromFile("DataFromFile",this,&NSpikeClassifier::SetDataFromFile),
+  UseLateralInhibition("UseLateralInhibition",this,&NSpikeClassifier::SetUseLateralInhibition)
 {
  OldNumNeurons=0;
  OldNumInputDendrite=0;
@@ -311,6 +312,16 @@ bool NSpikeClassifier::SetDataFromFile(const bool &value)
 
  return true;
 }
+
+bool NSpikeClassifier::SetUseLateralInhibition(const bool &value)
+{
+	if(!value && LateralInhibitionBuilt)
+	{
+		ClearLateralInhibition();
+		LateralInhibitionBuilt=false;
+	}
+	return true;
+}
 // --------------------------
 
 // --------------------------
@@ -424,6 +435,7 @@ bool NSpikeClassifier::ADefault(void)
  TrainingPatterns.Assign(1,1,0.0);
  InputPattern.Assign(1,1,0.0);
  DataFromFile = false;
+ UseLateralInhibition = true;
 
  return true;
 }
@@ -778,9 +790,12 @@ bool NSpikeClassifier::ACalculate(void)
 	   }
 
 	  }
-	  if(!BuildLateralInhibition())
-	   return false;
-	  LateralInhibitionBuilt=true;
+	  if(UseLateralInhibition)
+	  {
+	   if(!BuildLateralInhibition())
+	    return false;
+	   LateralInhibitionBuilt=true;
+	  }
 	 }
 
 	 return true;
@@ -830,11 +845,16 @@ bool NSpikeClassifier::ACalculate(void)
 	  return true;
 	 }
 
-	 if(!LateralInhibitionBuilt)
+	 if(UseLateralInhibition && !LateralInhibitionBuilt)
 	 {
 	  if(!BuildLateralInhibition())
 	   return false;
 	  LateralInhibitionBuilt=true;
+	 }
+	 else if(!UseLateralInhibition && LateralInhibitionBuilt)
+	 {
+	  ClearLateralInhibition();
+	  LateralInhibitionBuilt=false;
 	 }
 
 		// Функция для работы с файлами.

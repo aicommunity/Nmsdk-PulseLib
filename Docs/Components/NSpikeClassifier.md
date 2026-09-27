@@ -18,6 +18,8 @@
 
 В режиме `DataFromFile=true` `TreatDataFromFile()` ведёт отдельный флаг для каждого нейрона и устанавливает его, если `LTZone.Output > 1e-5` хотя бы на одном шаге окна образца. В конце окна записывается строка из всех флагов. Поэтому несколько единиц — это несколько нейронов, активировавшихся в окне; код не ранжирует их и не выбирает одного. Экспериментальный анализ должен считать такой ответ неоднозначным, а не применять к битам `argmax`.
 
+Бит отражает только факт активности нейрона за всё окно: один и несколько спайков одного нейрона кодируются одинаково. Поэтому корректный одиночный бит сам по себе не доказывает, что победитель выдал ровно один спайк. `NNeuronTrainer` также не проверяет число спайков при завершении структурного обучения; для оценки пачечной разрядки нужно анализировать фронты `LTZone.Output` отдельно (см. [аудит динамики классификаторов](../Analysis/StructuralClassifiersAudit.md)).
+
 ### UML-диаграмма классов
 
 ```mermaid
@@ -510,6 +512,8 @@ for (int step = 0; step < 1000; step++) {
 There is no explicit `argmax` or winner-class property in `NSpikeClassifier`. Once all trainers finish, `ACalculate()` links each neuron's `LTZone.Output` to inhibitory synapses on the somas of the other neurons. The intended single response is expected to emerge from this lateral inhibition.
 
 With `DataFromFile=true`, `TreatDataFromFile()` maintains one flag per neuron and sets it when `LTZone.Output > 1e-5` at any step in the sample window. It writes all flags at the end of that window. Multiple ones therefore mean multiple neurons were active during the window; C++ does not rank them or select one. Experiment analysis must report such a row as ambiguous instead of applying `argmax` to the flags.
+
+The bit records only whether a neuron was active at any point in the whole window: one spike and a burst from the same neuron are encoded identically. A single active bit therefore does not prove that the winner emitted exactly one spike. `NNeuronTrainer` also does not check spike count when structural training finishes; burst firing must be measured by counting `LTZone.Output` rising edges separately (see the [classifier dynamics audit](../Analysis/StructuralClassifiersAudit.md)).
 
 **Usage:** Spike pattern classification, pattern recognition
 

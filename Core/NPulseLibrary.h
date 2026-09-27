@@ -73,6 +73,7 @@ See file license.txt for more information
 #include "NNeuronTimeLearner.h"
 #include "NNeuronTimeLearnerBranch.h"
 #include "NPatternResponseAnalyzer.h"
+#include "NClassifierDynamicsRecorder.h"
 #include "NNeuronsLayer.h"
 #include "NPulsePerseptron.h"
 #include "NNeuronTrainer.h"

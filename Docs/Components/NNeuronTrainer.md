@@ -6,7 +6,7 @@
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronTrainer", ...)`.
 **Storage**: `ClassName = "NNeuronTrainer"`.
 
-> **Проверенный контракт текущего исходника:** основной реализованный алгоритм — `CalculateMode=6`; значения 4 и 5 проходят в эту же ветку, поскольку соответствующие прежние тела закомментированы. Обучение меняет длины дендритов и количество возбуждающих синапсов. Параметры нейрона и уже имеющихся синапсов не оптимизируются; новому синапсу присваивается `SynapseResistanceStep`, а тренировочный порог берётся из `TrainingLTZThreshold`. Подробности о пороге сходимости и replay примерах: [аудит структурного обучения](../Analysis/NNeuronStructuralTrainingAudit.md).
+> **Проверенный контракт текущего исходника:** основной реализованный алгоритм — `CalculateMode=6`; значения 4 и 5 проходят в эту же ветку, поскольку соответствующие прежние тела закомментированы. Обучение меняет длины дендритов и количество возбуждающих синапсов. Параметры нейрона и уже имеющихся синапсов не оптимизируются; новому синапсу присваивается `SynapseResistanceStep`, а тренировочный порог берётся из `TrainingLTZThreshold`. `IsNeedToTrain=false` означает сходимость структурных статусов, но не подтверждает, что выход LTZone дал хотя бы один импульс, и не гарантирует ровно один. В режиме 6 критерий нормализации сравнивает пиковую амплитуду с `InitialDendritePotential`; число фронтов LTZone и верхний предел числа синапсов не используются. Свежесобранный `NSPNeuron/NPLTZone` на синтетическом паттерне завершил обучение с нулём фронтов; точный subtree классификатора `NSPNeuron/NPulseLTZoneThreshold` после обучения дал четыре. Подробности и клоны: [аудит структурного обучения](../Analysis/NNeuronStructuralTrainingAudit.md).
 
 После изменения структуры Trainer явно вызывает `Init()` для добавленного синапса или нового дерева дендрита вместе с каналами и синапсами. Это необходимо, потому что `Reset()` сам по себе не инициализирует компоненты, созданные после первичной сборки. Формулы и критерии обучения при этом не меняются.
 
@@ -559,6 +559,8 @@ flowchart TD
 
 Together `SomaSynchronizePattern` and `SomaSynapseNormalization` implement two-stage structural training:
 first dendrite length tuning by soma peak time, then synapse count tuning by soma output amplitude.
+
+The mode 6 convergence test does not count LTZone edges. `IsNeedToTrain = false` therefore means that the structural status criteria converged; it does not certify one output spike (or any output spike). There is no active maximum-synapse-count property. See the [synthetic Trainer replay](../Analysis/NNeuronStructuralTrainingAudit.md) for the zero-edge standard `NSPNeuron/NPLTZone` case, the burst from the classifier's saved `NPulseLTZoneThreshold` subtree, and the per-structure synapse controls.
 
 ### References
 

@@ -1,5 +1,9 @@
 # NPCAClassifier — классификатор PCA
 
+> **Фактическая семантика текущего кода:** `NPCAClassifier` не реализует многоклассовое обучение. Он загружает временную матрицу, применяет PCA и нормализацию, записывает обработанные строки в `OutputFile`, а затем передаёт **одну** строку с нулевым индексом `TrainingPatternInx` вложенному `NSpikeClassifier`. Ответ и его биты имеют тот же смысл, что у `NSpikeClassifier`; класс не выбирает победителя через `argmax`. В `Bin/Configs` отдельного примера `NPCAClassifier` пока нет, поэтому это описание подтверждено аудитом кода, но не полноценным replay-конфигом.
+
+Подробности аудита и ограничения воспроизводимых опытов: [аудит структурных классификаторов](../Analysis/StructuralClassifiersAudit.md).
+
 ## RU
 
 ### Назначение
@@ -253,7 +257,7 @@ graph TB
 
 - **`TimeWindowSize`** (double) — размер временного окна (сек). Значение по умолчанию: зависит от реализации
 
-- **`TrainingPatternInx`** (int) — индекс обучающего паттерна. Значение по умолчанию: зависит от реализации
+- **`TrainingPatternInx`** (int) — нулевой индекс единственной строки матрицы PCA, которую компонент передаёт вложенному `NSpikeClassifier`. Это не индекс класса. Значение по умолчанию: `0`.
 
 ### Методы
 
@@ -284,7 +288,7 @@ graph TB
 - **IsCalibrativeDendrite**: false (без калибровочного дендрита), true (с калибровочным дендритом)
 - **ColCount**: количество столбцов данных
 - **TimeWindowSize**: размер временного окна
-- **TrainingPatternInx**: индекс обучающего паттерна
+- **TrainingPatternInx**: zero-based row index of the one PCA vector sent to the nested `NSpikeClassifier`; it is not a class index.
 
 **Особенности:**
 - PCA-анализ: снижение размерности признаков перед классификацией
@@ -313,7 +317,7 @@ graph TB
 
 `NPCAClassifier` implements classifier that uses PCA for feature dimensionality reduction and subsequent classification. Inherits from `UNet` and integrates components: `UMatrixSourceTimeSeries`, `UCRPrincipalComponentAnalysis`, and `NSpikeClassifier`.
 
-**Usage:** Classification with PCA, feature dimensionality reduction
+**Usage:** PCA preprocessing followed by recognition of one selected vector with the nested `NSpikeClassifier`; this wrapper does not expose a multiclass PCA interface.
 
 ### UML Class Diagram
 
@@ -435,7 +439,7 @@ graph TB
 - `OutputFile` — output file name
 - `ColCount` — number of columns
 - `TimeWindowSize` — time window size
-- `TrainingPatternInx` — training pattern index
+- `TrainingPatternInx` — zero-based row index of the single vector forwarded to the nested classifier (not a class label)
 
 ### Methods
 

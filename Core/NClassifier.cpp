@@ -19,6 +19,7 @@ See file license.txt for more information
 #include "NClassifier.h"
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseLTZoneCommon.h"
+#include "../../Nmsdk-PulseLib/Core/NPulseMembrane.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseNeuron.h"
 //#include <QString>
 //#include <QDateTime>
@@ -52,7 +53,8 @@ NClassifier::NClassifier(void)
   UseTransitSignal("UseTransitSignal",this,&NClassifier::SetUseTransitSignal),
   NumClasses("NumClasses",this,&NClassifier::SetNumClasses),
   SizeTrainingSet("SizeTrainingSet",this,&NClassifier::SetSizeTrainingSet),
-  DataFromFile("DataFromFile",this,&NClassifier::SetDataFromFile)
+  DataFromFile("DataFromFile",this,&NClassifier::SetDataFromFile),
+  UseLateralInhibition("UseLateralInhibition",this,&NClassifier::SetUseLateralInhibition)
 {
  OldNumClasses=0;
  OldNumInputDendrite=0;
@@ -377,6 +379,12 @@ bool NClassifier::SetDataFromFile(const bool &value)
 
  return true;
 }
+
+bool NClassifier::SetUseLateralInhibition(const bool &value)
+{
+	Ready=false;
+	return true;
+}
 // --------------------------
 
 // --------------------------
@@ -509,6 +517,7 @@ bool NClassifier::ADefault(void)
 	TrainingPatterns.Assign(1,1,0.0);
 	InputPattern.Assign(1,1,0.0);
 	DataFromFile = false;
+	UseLateralInhibition = true;
 
 	return true;
 }
@@ -694,7 +703,7 @@ bool NClassifier::BuildStructure(void)
 		}
 
 		// Обратные связи между нейронами ИЛИ
-        for(int i = 0; i < NumClasses; i++)
+        for(int i = 0; UseLateralInhibition && i < NumClasses; i++)
 		{
             UEPtr<NPulseNeuron> logical_or_neuron = GetComponentL<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)),true);
             if(!logical_or_neuron)
@@ -762,6 +771,8 @@ bool NClassifier::RebuildOutputLayer(void)
 		soma->NumInhibitorySynapses = NumClasses - 1;
 		if(!soma->Reset())
 			return false;
+		if(!InitializeOutputSoma(soma))
+			return false;
 
 		// Remove links restored from serialized classifiers before reconnecting
 		// the class-example inputs and the lateral inhibition fan-in.
@@ -803,7 +814,7 @@ bool NClassifier::RebuildOutputLayer(void)
 		}
 	}
 
-	for(int target_idx = 0; target_idx < NumClasses; target_idx++)
+	for(int target_idx = 0; UseLateralInhibition && target_idx < NumClasses; target_idx++)
 	{
 		UEPtr<NPulseNeuron> target = GetComponentL<NPulseNeuron>(
 		    std::string("OrNeuron")+sntoa(target_idx+1), true);
@@ -831,6 +842,71 @@ bool NClassifier::RebuildOutputLayer(void)
 			    std::string("InhSynapse")+sntoa(inhibitory_synapse_idx++), true);
 			if(!synapse || !CreateLink(ltzone->GetLongName(this), "Output", synapse->GetLongName(this), "Input"))
 				return false;
+		}
+	}
+
+	return true;
+}
+
+// Soma::Reset() can rebuild its channels and synapses after the application's
+// initial component Init() pass. Explicitly initialize the complete output
+// soma subtree before the classifier starts driving its inhibitory synapses.
+bool NClassifier::InitializeOutputSoma(UEPtr<NPulseMembrane> soma)
+{
+	if(!soma)
+		return false;
+
+	if(!soma->IsInit())
+		soma->Init();
+	if(!soma->IsInit())
+	{
+		LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "Failed to initialize classifier output soma.");
+		return false;
+	}
+
+	const char *channel_names[] = {"ExcChannel", "InhChannel"};
+	for(size_t i = 0; i < sizeof(channel_names) / sizeof(channel_names[0]); ++i)
+	{
+		UEPtr<NPulseChannelCommon> channel = soma->GetComponentL<NPulseChannelCommon>(channel_names[i], true);
+		if(channel && !channel->IsInit())
+			channel->Init();
+		if(channel && !channel->IsInit())
+		{
+			LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+			             std::string("Failed to initialize output channel ") + channel_names[i] + ".");
+			return false;
+		}
+	}
+
+	for(int synapse_index = 1; synapse_index <= SizeTrainingSet; ++synapse_index)
+	{
+		UEPtr<NPulseSynapseCommon> synapse = soma->GetComponentL<NPulseSynapseCommon>(
+		    std::string("ExcSynapse") + sntoa(synapse_index), true);
+		if(!synapse)
+			return false;
+		if(!synapse->IsInit())
+			synapse->Init();
+		if(!synapse->IsInit())
+		{
+			LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+			             std::string("Failed to initialize output synapse ") + synapse->GetLongName(this));
+			return false;
+		}
+	}
+
+	for(int synapse_index = 1; synapse_index < NumClasses; ++synapse_index)
+	{
+		UEPtr<NPulseSynapseCommon> synapse = soma->GetComponentL<NPulseSynapseCommon>(
+		    std::string("InhSynapse") + sntoa(synapse_index), true);
+		if(!synapse)
+			return false;
+		if(!synapse->IsInit())
+			synapse->Init();
+		if(!synapse->IsInit())
+		{
+			LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+			             std::string("Failed to initialize lateral synapse ") + synapse->GetLongName(this));
+			return false;
 		}
 	}
 

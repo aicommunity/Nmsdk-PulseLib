@@ -108,6 +108,8 @@ UProperty<int,NClassifier, ptPubParameter> SizeTrainingSet;
 
 ///        
 UProperty<bool, NClassifier, ptPubParameter> DataFromFile;
+/// Enable class-to-class lateral inhibition in the output OR layer.
+UProperty<bool, NClassifier, ptPubParameter> UseLateralInhibition;
 
 protected:
 
@@ -222,6 +224,8 @@ bool SetSizeTrainingSet(const int &value);
 
 //        
 bool SetDataFromFile(const bool &value);
+bool SetUseLateralInhibition(const bool &value);
+bool InitializeOutputSoma(UEPtr<NPulseMembrane> soma);
 
 // --------------------------
 

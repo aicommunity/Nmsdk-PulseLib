@@ -6,7 +6,7 @@
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLearner", ...)`.
 **Storage**: `ClassName = "NNeuronLearner"`.
 
-> **Проверенный контракт текущего исходника:** обучаются структура дендритов и количество входных синапсов; параметры нейрона и уже имеющихся синапсов не оптимизируются. Новому синапсу задаётся `SynapseResistanceStep`, а тренировочный порог временно берётся из `TrainingLTZThreshold`. В режиме 0 компонент автоматически сбрасывает `IsNeedToTrain` после сходимости структурных статусов, а режим 1 оставляет управление этим флагом внешнему коду. Последний вход обычно является калибровочным и не меняет длину или число синапсов. `UseAutoPreset` выключен по умолчанию и оценивает только начальные длины при первом обучении свежей структуры; см. [аудит и воспроизводимые примеры](../Analysis/NNeuronStructuralTrainingAudit.md).
+> **Проверенный контракт текущего исходника:** обучаются структура дендритов и количество входных синапсов; параметры нейрона и уже имеющихся синапсов не оптимизируются. Новому синапсу задаётся `SynapseResistanceStep`, а тренировочный порог временно берётся из `TrainingLTZThreshold`. В режиме 0 компонент автоматически сбрасывает `IsNeedToTrain` после сходимости структурных статусов, а режим 1 оставляет управление этим флагом внешнему коду. Этот статус не означает, что выход LTZone дал хотя бы один импульс, и не гарантирует ровно один фронт за входной паттерн. Последний вход обычно является калибровочным и не меняет длину или число синапсов. `UseAutoPreset` выключен по умолчанию и оценивает только начальные длины при первом обучении свежей структуры; см. [аудит и воспроизводимые примеры](../Analysis/NNeuronStructuralTrainingAudit.md).
 
 После `Reset()` Learner отдельно инициализирует новое дерево дендрита при холодной сборке, изменении длины или числа синапсов. Поэтому новые мембраны, каналы и синапсы участвуют в расчёте сразу, а не только после следующей загрузки XML-модели.
 
@@ -333,7 +333,7 @@ flowchart TD
 **Registration**: `NPulseLibrary.cpp` → `UploadClass("NNeuronLearner", ...)`.
 **Instances**: `ClassName = "NNeuronLearner"` in configs.
 
-`NNeuronLearner` changes dendrite lengths and input synapse counts; it does not optimize the neuron's numerical model parameters. `CalculateMode=0` clears `IsNeedToTrain` when the structural statuses converge, while mode 1 leaves that flag under external control. The last input is normally the calibration input and its structure is held fixed. `UseAutoPreset` is off by default and estimates only initial lengths for a fresh structure. See the [audit and replay examples](../Analysis/NNeuronStructuralTrainingAudit.md).
+`NNeuronLearner` changes dendrite lengths and input synapse counts; it does not optimize the neuron's numerical model parameters. `CalculateMode=0` clears `IsNeedToTrain` when the structural statuses converge, while mode 1 leaves that flag under external control. This status does not mean that LTZone emitted a spike and does not guarantee exactly one edge per pattern. The last input is normally the calibration input and its structure is held fixed. `UseAutoPreset` is off by default and estimates only initial lengths for a fresh structure. See the [audit and replay examples](../Analysis/NNeuronStructuralTrainingAudit.md).
 
 **Usage:** Self-learning neurons, pattern recognition, incremental learning experiments
 
