@@ -1,6 +1,6 @@
 # NPCAClassifier — классификатор PCA
 
-> **Фактическая семантика текущего кода:** `NPCAClassifier` не реализует многоклассовое обучение. Он загружает временную матрицу, применяет PCA и нормализацию, записывает обработанные строки в `OutputFile`, а затем передаёт **одну** строку с нулевым индексом `TrainingPatternInx` вложенному `NSpikeClassifier`. Ответ и его биты имеют тот же смысл, что у `NSpikeClassifier`; класс не выбирает победителя через `argmax`. В `Bin/Configs` отдельного примера `NPCAClassifier` пока нет, поэтому это описание подтверждено аудитом кода, но не полноценным replay-конфигом.
+> **Фактическая семантика текущего кода:** `NPCAClassifier` не реализует многоклассовое обучение. Он загружает временную матрицу, применяет PCA и нормализацию, записывает обработанные строки в `OutputFile`, а затем передаёт **одну** строку с нулевым индексом `TrainingPatternInx` вложенному `NSpikeClassifier`. Ответ и его биты имеют тот же смысл, что у `NSpikeClassifier`; класс не выбирает победителя через `argmax`. Старый `!OldConfigs/PCATest` содержит только источник временных рядов и PCA. Отдельный воспроизводимый клон с `NPCAClassifier` находится в `Bin/Configs/SpikeSamples/StructTrain/_repro/ClassifierDynamicsAudit_20260928/NPCAClassifier_OnePatternReplay_InitFix_20260928`.
 
 Подробности аудита и ограничения воспроизводимых опытов: [аудит структурных классификаторов](../Analysis/StructuralClassifiersAudit.md).
 
@@ -110,7 +110,9 @@ sequenceDiagram
 **Жизненный цикл:**
 1. **Инициализация**: Установка параметров классификатора PCA
 2. **Сборка структуры**: Создание источника временных рядов, PCA-компонента, классификатора по спайкам
-3. **Расчет**: Загрузка данных, применение PCA, классификация, запись результатов
+3. **Начало расчета после сброса**: включение и инициализация источника и PCA; если матрица еще пуста, компонент ждет следующий шаг, не помечая запуск ошибочным
+4. **Расчет**: чтение очередной строки источника, применение PCA, передача выбранной строки вложенному классификатору и запись результатов
+5. **Повторный запуск сохраненного проекта**: `AReset()` очищает состояние прохода, сбрасывает `IsLastStep`, включает источник/PCA и снова переводит вложенный классификатор в режим чтения входа из файла
 
 ### UML-диаграмма состояний
 
@@ -295,6 +297,14 @@ graph TB
 - Классификация по спайкам: использование `NSpikeClassifier` для финальной классификации
 - Запись результатов: автоматическая запись результатов классификации в файл
 
+### Исправление и проверка повторного запуска
+
+Ранее восстановленный после завершенного запуска проект мог сохранять `Source.Activity=0` и `PCA.Activity=0`, тогда как `NPCAClassifier` оставался активен. На первом шаге обертка видела пустой `FullMatrix` и завершалась ошибкой до того, как источник успевал загрузить файл. Кроме того, `AReset()` не сбрасывал `IsLastStep` и не восстанавливал состояние внутренних компонентов.
+
+Теперь `AReset()` сбрасывает обе фазы прохода, включает и инициализирует источник/PCA, включает чтение файла у вложенного `NSpikeClassifier` и временно отключает этот классификатор до подготовки данных. `ACalculate()` повторно обеспечивает включение/инициализацию источника/PCA и ожидает появление матрицы. Повторный Release-прогон клона с сохраненными выключенными source/PCA обработал все 80 строк и завершился без ошибок модели; вложенный Trainer дошел до `IsNeedToTrain=0`. LTZone зафиксировал 12 восходящих фронтов на повторяющихся циклах ответа — по одному внутри цикла, а не многократные фронты одного цикла.
+
+Клон выбирает только одну строку PCA с `TrainingPatternInx=0`, поэтому это проверка однопаттернового режима и повторного запуска, а не тест точности многоклассового PCA-классификатора. Команда повтора: `NeuroModelerConsole.exe -c Project.ini -s -t 60 -x -S` из каталога клона. Сводка, трасса и состояние модели приведены в его `README.md` и в [аудите](../Analysis/StructuralClassifiersAudit.md).
+
 ## Источники
 
 См. [Literature-References.md](../Literature-References.md): **1**, **6**, **8**, **9**, **10**.
@@ -318,6 +328,8 @@ graph TB
 `NPCAClassifier` implements classifier that uses PCA for feature dimensionality reduction and subsequent classification. Inherits from `UNet` and integrates components: `UMatrixSourceTimeSeries`, `UCRPrincipalComponentAnalysis`, and `NSpikeClassifier`.
 
 **Usage:** PCA preprocessing followed by recognition of one selected vector with the nested `NSpikeClassifier`; this wrapper does not expose a multiclass PCA interface.
+
+The legacy `Bin/Configs/!OldConfigs/PCATest` contains only the time-series source and PCA. A runnable `NPCAClassifier` replay clone is available at `Bin/Configs/SpikeSamples/StructTrain/_repro/ClassifierDynamicsAudit_20260928/NPCAClassifier_OnePatternReplay_InitFix_20260928`.
 
 ### UML Class Diagram
 
@@ -461,6 +473,12 @@ graph TB
 - Time series processing: processes time series data
 - Spike classification: uses spike classifier after PCA
 - File I/O: supports data loading from files and result writing
+
+### Repeat-run behavior and verified replay
+
+A saved post-run project can leave the source and PCA inactive while the wrapper remains active. Previously the wrapper checked an empty matrix immediately and failed before the source could load its file; `AReset()` also left the last-step flag and child activities in their post-run state. The current reset restores both phases, initializes and activates the source/PCA, enables file input in the nested classifier, and parks that classifier while the PCA rows are collected. `ACalculate()` waits through the initial empty-matrix step.
+
+A Release replay of the saved-state clone above processed all 80 rows and reached `IsNeedToTrain=0` without model errors. It recorded 12 LTZone rising edges, one in each repeated response cycle. This verifies the one-selected-vector wrapper and replay lifecycle, not multiclass accuracy. Reproduce with `NeuroModelerConsole.exe -c Project.ini -s -t 60 -x -S` from the clone directory; see its `README.md` and the [classifier audit](../Analysis/StructuralClassifiersAudit.md).
 
 **Typical parameter values:**
 - **MatrixSourceTimeSeriesClassName**: "UMatrixSourceTimeSeries" (time series source)

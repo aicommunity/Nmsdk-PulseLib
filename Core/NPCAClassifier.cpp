@@ -255,6 +255,15 @@ bool NPCAClassifier::AReset(void)
 {
   counter = 0;
   IsFirstStep = true;
+  IsLastStep = false;
+  // A saved model can contain the post-run state (source/PCA off, classifier
+  // on). Restore the preparation phase before child calculation begins.
+  MatrixSourceTimeSeries->SetActivity(true);
+  PCA->SetActivity(true);
+  MatrixSourceTimeSeries->Init();
+  PCA->Init();
+  SpikeClassifier->DataFromFile = true;
+  SpikeClassifier->SetActivity(false);
 return true;
 }
 
@@ -290,8 +299,8 @@ bool NPCAClassifier::ABuild(void)
   if(!res)
    return false;
  }
-SpikeClassifier->DataFromFile = true;
-SpikeClassifier->SetActivity(false);
+ SpikeClassifier->DataFromFile = true;
+ SpikeClassifier->SetActivity(false);
  return true;
 }
 
@@ -305,18 +314,24 @@ bool NPCAClassifier::ACalculate(void)
 
     if(IsFirstStep)
     {
+        // A restored project may keep these children inactive after an earlier
+        // completed pass. Wake them before checking FullMatrix; the source may
+        // need one calculation step to load it, so wait instead of treating
+        // that initial empty state as a failed PCA input.
+        MatrixSourceTimeSeries->SetActivity(true);
+        PCA->SetActivity(true);
+        MatrixSourceTimeSeries->Init();
+        PCA->Init();
+
+        const int row_count = MatrixSourceTimeSeries->FullMatrix.GetRows();
+        if(row_count <= 0)
+            return true;
+
         std::string file_dir;
         if(GetEnvironment())
             file_dir = GetEnvironment()->GetCurrentDataDir();
 
         fout.open(file_dir + OutputFile.GetData());
-
-        const int row_count = MatrixSourceTimeSeries->FullMatrix.GetRows();
-        if(row_count <= 0)
-        {
-            LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "PCA classifier received an empty time-series matrix.");
-            return false;
-        }
 
         results.Resize(row_count, OutComponents + calibration_dendrite);
         max_el.Resize(1, OutComponents, -1000000000.0);
