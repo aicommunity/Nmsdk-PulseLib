@@ -20,9 +20,7 @@ class Auto_Preset
     void findRecommendedT();
 
   public:
-    void setFirstState(const std::vector<double>&  pattern, double T, double tau);
-    void setFirstState(const std::vector<double>&  pattern, double R, double C, double tau);
-    void setFirstState(const std::vector<double>&  pattern, const std::vector<double>&  VectorT, double tau);
-    gParam getResult() const;
+    void setFirstState(const PushParam& param);
+    GetRecParam getResult() const;
 };
 

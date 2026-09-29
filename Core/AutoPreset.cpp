@@ -6,12 +6,7 @@ bool Auto_Preset::validation(const std::vector<double>& pattern)
 {
   bool err = false;
 
-  if (pattern.size() == 0) {
-    // добавить вывод ошибки
-    std::cout << "pattern == 0!" <<'\n';
-    err = true;
-  }
-  else if (tau < 0.0) {
+  if (tau < 0.0) {
     // добавить вывод ошибки
     std::cout << "tau < 0!" <<'\n';
     err = true;
@@ -29,15 +24,12 @@ bool Auto_Preset::validation(const std::vector<double>& pattern)
     for (std::size_t i = 0; i < pattern.size(); i++)
     {
       t_bias[i] = t_max - pattern[i];
-
     }
 
-
     for (std::size_t i = 0; i < dendrite.size(); i++)
-
     {
       if (T[i] <= 0.0) {
-
+        // добавить вывод ошибки
         std::cout << "error: T_" << i << " <= 0!" <<'\n';
         err = true;
       }
@@ -94,58 +86,68 @@ void Auto_Preset::findRecommendedT()
 {
   for(std::size_t i = 0; i < dendrite.size(); i++)
   {
-    if(dendrite[i] >= 2)
-    {
+    if(dendrite[i] >= 2){
       recom_T[i] = -tau /( (dendrite[i] - 1.0) * std::log( 1.0 - (tau / t_bias[i]) ) );
     }
-    else
-    {
+    else{
       recom_T[i] = T[i];
     }
   }
 }
 
 //--------------------- Публичные---------------------------
-void Auto_Preset::setFirstState(const std::vector<double>& pattern, double T, double tau)
-{
-  this->T.assign(pattern.size(), T);
-  this->tau = tau;
 
-  if (validation(pattern) == true){
-    findDendriteLength();
-    findRecommendedT();
+
+// Инициализация
+void Auto_Preset::setFirstState(const PushParam& param)
+{
+  this->T.clear();
+
+  //Проверяем наличие tau
+  if (param.tau.has_value()) {
+    this->tau = param.tau.value();
+    }
+  else {
+    throw std::invalid_argument("Параметр tau не задан");
   }
+
+  //  Проверка наличия и запоненности Pattern
+  if (!param.pattern.has_value() || param.pattern.value().empty()) {
+    throw std::invalid_argument("Патерн не передан или пуст");
+  }
+
+  // Если вектор T заполнен используем его
+  if (param.vectorT.has_value() && !param.vectorT.value().empty()) {
+    this->T = param.vectorT.value();
+  }
+  // Проверяем передан ли T, если да используем его
+  else if (param.T.has_value()){
+    this->T.assign(param.pattern.value().size(), param.T.value());
+  }
+  // Если переданы R и C
+  else if (param.R.has_value() && param.C.has_value()){
+    double calculated_T = param.R.value() * param.C.value();
+    this->T.assign(param.pattern.value().size(), calculated_T);
+  }
+  // Все поля определяющие T пусты
+  else{
+  }
+
+  if (!validation(param.pattern.value())) {
+    //throw std::invalid_argument("Invalid pattern data");
+  }
+
+  findDendriteLength();
+  findRecommendedT();
+
 }
 
-
-void Auto_Preset::setFirstState(const std::vector<double>& pattern, double R, double C, double tau)
+GetRecParam Auto_Preset::getResult() const
 {
-  this->T.assign(pattern.size(), R*C);
-  this->tau = tau;
-
-  if (validation(pattern) == true){
-    findDendriteLength();
-    findRecommendedT();
-  }
-}
-
-
-void Auto_Preset::setFirstState(const std::vector<double>& pattern, const std::vector<double>& VectorT, double tau)
-{
-  this->T = VectorT;
-  this->tau = tau;
-
-  if (validation(pattern) == true){
-    findDendriteLength();
-    findRecommendedT();
-  }
-}
-
-gParam Auto_Preset::getResult() const
-{
-  gParam result;
+  GetRecParam result;
   result.recomDendriteLength = dendrite;
   result.recom_T = recom_T;
   return result;
 }
+
 
