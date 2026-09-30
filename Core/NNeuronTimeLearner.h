@@ -419,6 +419,9 @@ protected:
  /// Consecutive no-improve resistance steps
  std::vector<int> NoImproveResistanceCount;
  
+ /// Consecutive |ampDt|>5 TipR-skip hits (escape after kNoImproveResistanceLimit)
+ std::vector<int> AmpDtSkipCount;
+ 
  /// Effective gain used in last R update
  std::vector<double> EffectiveResistanceGain;
  

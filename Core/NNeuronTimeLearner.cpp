@@ -141,6 +141,8 @@ void NNeuronTimeLearner::ResizeSyncVectors(int n)
   PrevResistanceRatio.assign(static_cast<size_t>(n), 1.0);
  if(int(NoImproveResistanceCount.size()) != n)
   NoImproveResistanceCount.assign(static_cast<size_t>(n), 0);
+ if(int(AmpDtSkipCount.size()) != n)
+  AmpDtSkipCount.assign(static_cast<size_t>(n), 0);
  if(int(EffectiveResistanceGain.size()) != n)
  {
   const double g = (ResistanceAdjustGain.GetData() > 0.0)
@@ -771,9 +773,14 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   ResistanceStatus[num] = 0;
  }
  // Pathological peak/amp: |Initial-MaxAmp| huge — TipR damped-P drives R to Rmax.
- // Skip TipR update; leave ResistanceStatus unchanged (AmpDtAudit evidence 2026-09-08).
+ // Skip TipR update for a few hits; after kNoImproveResistanceLimit escapes with a
+ // clamp-step toward Rmin (dt>0) / away (dt<0) so mid-band cannot stall forever.
  else if(fabs(dt) > 5.0)
  {
+  if(num < int(AmpDtSkipCount.size()))
+   AmpDtSkipCount[static_cast<size_t>(num)]++;
+  const int skip_n = (num < int(AmpDtSkipCount.size()))
+   ? AmpDtSkipCount[static_cast<size_t>(num)] : 0;
   if(EnableDebug.GetData() && RDK::GetLogger())
   {
    std::ostringstream oss;
@@ -782,8 +789,24 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
        << " initial=" << initial
        << " amp=" << amp
        << " r_old=" << r_old
+       << " skip_n=" << skip_n
        << " ResistanceStatus=" << ResistanceStatus[num];
    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
+  if(skip_n >= kNoImproveResistanceLimit)
+  {
+   const double step = std::max(kResistanceSettleRatio, 0.05);
+   double r_new = r_old;
+   if(dt > 0.0)
+    r_new = ClampResistance(r_old * (1.0 - step));
+   else
+    r_new = ClampResistance(r_old * (1.0 + step));
+   ApplyComputedResistance(num, r_old, r_new, kResistanceAdjustGainDefault);
+   if(num < int(AmpDtSkipCount.size()))
+    AmpDtSkipCount[static_cast<size_t>(num)] = 0;
+   if(num < int(NoImproveResistanceCount.size()))
+    NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+   ResistanceStatus[num] = 1;
   }
  }
  // Do not stop on partial ampDt improvement: keep damped-P until |dt|<=eps
@@ -791,6 +814,8 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  // stuck with ampDt~1e-3 after a single R step.
  else if(fabs(dt) > eps)
  {
+  if(num < int(AmpDtSkipCount.size()))
+   AmpDtSkipCount[static_cast<size_t>(num)] = 0;
   double eff_gain = kResistanceAdjustGainDefault;
   double r_new = r_old;
   if(amp > kMinMeasurableSomaAmp && initial > 0.0)
@@ -837,8 +862,30 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
    else if(ResistanceStatus[num])
     NoImproveResistanceCount[static_cast<size_t>(num)]++;
+   // Amp near target but TipR mid-band (fs25 keep-slog): NoImprove alone used to
+   // clear ResistanceStatus and freeze R≈3.5e7 forever. Walk toward Rmin instead.
    if(NoImproveResistanceCount[static_cast<size_t>(num)] >= kNoImproveResistanceLimit)
-    ResistanceStatus[num] = 0;
+   {
+    const double rmin = ResistanceMin.GetData();
+    if(r_old > rmin * (1.0 + 1e-6) && fabs(dt) <= kAmpOscillationBand)
+    {
+     const double step = std::max(kResistanceSettleRatio, 0.05);
+     const double r_force = ClampResistance(r_old * (1.0 - step));
+     ApplyComputedResistance(num, r_old, r_force, eff_gain);
+     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+     ResistanceStatus[num] = 1;
+     if(EnableDebug.GetData() && RDK::GetLogger())
+     {
+      std::ostringstream oss;
+      oss << "AmpDtAudit midband→Rmin: num=" << num
+          << " dt=" << dt
+          << " R " << r_old << " -> " << r_force;
+      RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+     }
+    }
+    else
+     ResistanceStatus[num] = 0;
+   }
   }
   
   if(num < int(PrevAmpError.size()))
@@ -1351,6 +1398,7 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
  PrevAmpError.assign(NumInputDendrite, 0.0);
  PrevResistanceRatio.assign(NumInputDendrite, 1.0);
  NoImproveResistanceCount.assign(NumInputDendrite, 0);
+ AmpDtSkipCount.assign(NumInputDendrite, 0);
  EffectiveResistanceGain.assign(NumInputDendrite, kResistanceAdjustGainDefault);
  AttenuationGamma = kAttenuationGammaAuto;
  if(IsParametricNormalization())
@@ -2418,6 +2466,7 @@ bool NNeuronTimeLearner::ADefault(void)
  PrevAmpError.assign(NumInputDendrite, 0.0);
  PrevResistanceRatio.assign(NumInputDendrite, 1.0);
  NoImproveResistanceCount.assign(NumInputDendrite, 0);
+ AmpDtSkipCount.assign(NumInputDendrite, 0);
  EffectiveResistanceGain.assign(NumInputDendrite, kResistanceAdjustGainDefault);
  EnableDebug = false;
  ResizeSyncVectors(NumInputDendrite.GetData());
@@ -2546,6 +2595,10 @@ bool NNeuronTimeLearner::AReset(void)
    NoImproveResistanceCount.assign(NumInputDendrite.GetData(), 0);
   else
    std::fill(NoImproveResistanceCount.begin(), NoImproveResistanceCount.end(), 0);
+  if(int(AmpDtSkipCount.size()) != NumInputDendrite.GetData())
+   AmpDtSkipCount.assign(NumInputDendrite.GetData(), 0);
+  else
+   std::fill(AmpDtSkipCount.begin(), AmpDtSkipCount.end(), 0);
   if(DendBestEffortSynced.size() != DendLastAbsDt.size())
    DendBestEffortSynced.assign(DendLastAbsDt.size(), false);
   else
