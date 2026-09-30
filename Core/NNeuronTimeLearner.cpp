@@ -818,7 +818,29 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
    AmpDtSkipCount[static_cast<size_t>(num)] = 0;
   double eff_gain = kResistanceAdjustGainDefault;
   double r_new = r_old;
-  if(amp > kMinMeasurableSomaAmp && initial > 0.0)
+  const double rmin = ResistanceMin.GetData();
+  // fs25 keep-slog: amp already near Initial while TipR sits mid-band (~3.5e7).
+  // damped-P with oscillating sign of dt walks R sideways; force Rmin descent.
+  const bool midband_walk = (r_old > rmin * (1.0 + 1e-6))
+   && (fabs(dt) <= kAmpOscillationBand);
+  if(midband_walk)
+  {
+   const double step = std::max(kResistanceSettleRatio, 0.05);
+   r_new = ClampResistance(r_old * (1.0 - step));
+   ApplyComputedResistance(num, r_old, r_new, eff_gain);
+   if(num < int(NoImproveResistanceCount.size()))
+    NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+   ResistanceStatus[num] = 1;
+   if(EnableDebug.GetData() && RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "AmpDtAudit midband→Rmin: num=" << num
+        << " dt=" << dt
+        << " R " << r_old << " -> " << r_new;
+    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+   }
+  }
+  else if(amp > kMinMeasurableSomaAmp && initial > 0.0)
    r_new = ComputeDampedTipResistance(num, r_old, amp, initial, dt, eff_gain);
   else
   {
@@ -830,6 +852,8 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
     r_new = ClampResistance(r_old * (1.0 + 0.15 * eff_gain));
   }
   
+  if(!midband_walk)
+  {
   // Near the target, damped-P steps shrink below settle ratio and ampDt can
   // freeze just above eps (seen: dend2 stuck at ~6e-6). Force a minimal R step.
   if(r_old > 0.0 && fabs(r_new - r_old) < kResistanceSettleRatio * r_old)
@@ -866,7 +890,6 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
    // clear ResistanceStatus and freeze R≈3.5e7 forever. Walk toward Rmin instead.
    if(NoImproveResistanceCount[static_cast<size_t>(num)] >= kNoImproveResistanceLimit)
    {
-    const double rmin = ResistanceMin.GetData();
     if(r_old > rmin * (1.0 + 1e-6) && fabs(dt) <= kAmpOscillationBand)
     {
      const double step = std::max(kResistanceSettleRatio, 0.05);
@@ -887,6 +910,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
      ResistanceStatus[num] = 0;
    }
   }
+  } // !midband_walk
   
   if(num < int(PrevAmpError.size()))
    PrevAmpError[static_cast<size_t>(num)] = dt;
