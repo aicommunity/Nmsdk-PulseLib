@@ -465,6 +465,9 @@ protected:
  
  static constexpr double kAmpOscillationBand = 0.005;
  
+ /// Allow LastAbsDt up to this × SyncTolerance when TipR already @Rmin (AmpNorm b).
+ static constexpr double kRminLengthTolFactor = 2.0;
+ 
  static constexpr double kGainOvershootFactor = 0.5;
  
  static constexpr double kGainUndershootFactor = 1.5;

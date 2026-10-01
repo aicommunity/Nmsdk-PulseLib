@@ -3888,17 +3888,23 @@ bool NNeuronTimeLearnerBranch::AllSynapsesNormalized(void) const
  if(IsParametricNormalization())
  {
   const double rmin = ResistanceMin.GetData();
+  const double tol = SyncTolerance.GetData();
   for(int i = 0; i < n_check; i++)
   {
    // Reverse train: only the active pulse is tuned; lower indices are not started
    // yet and higher indices are already committed — muted bursts must not re-gate Done.
    if(i != ActivePulseIndex)
     continue;
-   
+
+   const bool at_r_min = (i < int(TipSynapseResistance.size()))
+    && (TipSynapseResistance[static_cast<size_t>(i)] <= rmin * (1.0 + 1e-6));
    const bool length_ok = (i < int(DendLastAbsDt.size())
-    && DendLastAbsDt[static_cast<size_t>(i)] <= SyncTolerance.GetData())
+    && DendLastAbsDt[static_cast<size_t>(i)] <= tol)
     || ((i < int(DendBestEffortSynced.size()))
-        && DendBestEffortSynced[static_cast<size_t>(i)]);
+        && DendBestEffortSynced[static_cast<size_t>(i)])
+    // AmpNorm(b): TipR@Rmin with LastAbsDt slightly above tight SyncTol
+    || (at_r_min && (i < int(DendLastAbsDt.size()))
+        && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * kRminLengthTolFactor));
    
    if(i < int(ResistanceStatus.size()) && ResistanceStatus[i])
    {
@@ -3916,8 +3922,6 @@ bool NNeuronTimeLearnerBranch::AllSynapsesNormalized(void) const
    if(amp_ok)
     continue;
    
-   const bool at_r_min = (i < int(TipSynapseResistance.size()))
-    && (TipSynapseResistance[static_cast<size_t>(i)] <= rmin * (1.0 + 1e-6));
    const bool dt_positive = (i < int(InitialSomaPotential.size()))
     && (i < int(MaxIterSomaAmp.size()))
     && (InitialSomaPotential[i] > MaxIterSomaAmp[i] + eps);
