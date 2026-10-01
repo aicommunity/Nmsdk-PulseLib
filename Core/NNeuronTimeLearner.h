@@ -466,6 +466,9 @@ protected:
  
  static constexpr int kNoImproveResistanceLimit = 3;
  
+ /// Allow LastAbsDt up to this × SyncTolerance when TipR already @Rmin (AmpNorm b).
+ static constexpr double kRminLengthTolFactor = 2.0;
+ 
  static constexpr double kAmpCollapseRatio = 0.35;
  
  static constexpr int kMaxLengthStep = 8;

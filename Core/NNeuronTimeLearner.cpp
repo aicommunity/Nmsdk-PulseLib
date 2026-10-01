@@ -3536,6 +3536,7 @@ bool NNeuronTimeLearner::AllDendritesSynced(void) const
   return false;
  
  const double tol = SyncTolerance.GetData();
+ const double rmin = ResistanceMin.GetData();
  for(int i = 0; i < n - 1; i++)
  {
   const bool best_effort = (i < int(DendBestEffortSynced.size()))
@@ -3544,6 +3545,11 @@ bool NNeuronTimeLearner::AllDendritesSynced(void) const
    continue;
   const bool length_ok = (i < int(DendLastAbsDt.size()))
    && (DendLastAbsDt[static_cast<size_t>(i)] <= tol);
+  const bool at_r_min = (i < int(TipSynapseResistance.size()))
+   && (TipSynapseResistance[static_cast<size_t>(i)] <= rmin * (1.0 + 1e-6));
+  const bool rmin_length_ok = at_r_min
+   && (i < int(DendLastAbsDt.size()))
+   && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * kRminLengthTolFactor);
   const bool dead_tip = (i < int(MaxIterSomaAmp.size()))
    && (MaxIterSomaAmp[i] < kMinMeasurableSomaAmp);
   // Dead tip: PeakRel invalid, but cable |needed-delay_len| already within tol.
@@ -3551,7 +3557,7 @@ bool NNeuronTimeLearner::AllDendritesSynced(void) const
    continue;
   if(i < int(SomaPeakValid.size()) && !SomaPeakValid[static_cast<size_t>(i)])
    return false;
-  if(!length_ok)
+  if(!length_ok && !rmin_length_ok)
    return false;
  }
  return true;
@@ -3568,12 +3574,19 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
  if(IsParametricNormalization())
  {
   const double rmin = ResistanceMin.GetData();
+  const double tol = SyncTolerance.GetData();
   for(int i = 0; i < n_check; i++)
   {
+   const bool at_r_min = (i < int(TipSynapseResistance.size()))
+    && (TipSynapseResistance[static_cast<size_t>(i)] <= rmin * (1.0 + 1e-6));
    const bool length_ok = (i < int(DendLastAbsDt.size())
-    && DendLastAbsDt[static_cast<size_t>(i)] <= SyncTolerance.GetData())
+    && DendLastAbsDt[static_cast<size_t>(i)] <= tol)
     || ((i < int(DendBestEffortSynced.size()))
-        && DendBestEffortSynced[static_cast<size_t>(i)]);
+        && DendBestEffortSynced[static_cast<size_t>(i)])
+    // AmpNorm(b) asym50: TipR@Rmin with LastAbsDt slightly above tight SyncTol
+    // (e.g. 0.0031 vs 0.00208) must not block EOL forever.
+    || (at_r_min && (i < int(DendLastAbsDt.size()))
+        && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * kRminLengthTolFactor));
    
    if(i < int(ResistanceStatus.size()) && ResistanceStatus[i])
    {
@@ -3591,8 +3604,6 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
    if(amp_ok)
     continue;
    
-   const bool at_r_min = (i < int(TipSynapseResistance.size()))
-    && (TipSynapseResistance[static_cast<size_t>(i)] <= rmin * (1.0 + 1e-6));
    const bool dt_positive = (i < int(InitialSomaPotential.size()))
     && (i < int(MaxIterSomaAmp.size()))
     && (InitialSomaPotential[i] > MaxIterSomaAmp[i] + eps);
