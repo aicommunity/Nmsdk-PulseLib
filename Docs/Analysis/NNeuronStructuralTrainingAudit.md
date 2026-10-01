@@ -34,6 +34,14 @@
 
 При сборке структуры `NNeuronLearner` сохраняет заданный `InputPattern`. Ранее повторная сборка обнуляла этот вход, что мешало передать паттерн в оценщик до начала обучения.
 
+### Совместимость с обновлённым интерфейсом `Auto_Preset` (01.10.2026)
+
+В ревизии `Nmsdk-PulseLib` `1e5b9d1` старые перегрузки `setFirstState(...)` заменены на `setFirstState(const PushParam&)`, а результат `gParam` — на `GetRecParam`. Интеграция Learner обновлена: оценщику передаются `pattern`, вектор мембранных RC-констант через `vectorT` и длительность импульса через `tau`; из результата по-прежнему используются только `recomDendriteLength`, а `recom_T` игнорируется.
+
+После изменения пересобраны Release-цели `Nmsdk-PulseLib.core` и `NeuroModelerConsole`. Отдельный C++ smoke-вызов нового API с параметрами seed-паттерна (`pattern=[0.01,0.02,0.03,0.04]`, `vectorT=[0.01,0.01,0.01,0.01]`, `tau=0.001`) вернул рекомендуемые длины `[4,3,2,1]`. Свежий клон с `UseAutoPreset=1` запущен на 12 модельных секунд: в сохранённых `Model_00.xml` и `Parameters_00.xml` находятся `DendriteLength=[4,3,2,1]`, `NumSynapse=[9,7,4,1]`, ненулевые `InitialSomaPotential≈0.0157814` и `IsNeedToTrain=0`. Подробности и клон для повтора: [`TestTrain_LearnerOnly_AutoPreset_InterfaceCheck_20261001`](../../../../Bin/Configs/SpikeSamples/StructTrain/_repro/NNeuronTrainingReplay/TestTrain_LearnerOnly_AutoPreset_InterfaceCheck_20261001/README.md).
+
+Консоль сохранила модель и параметры, но вернула код 1. Записанный вывод содержит `Could not create logging file: Invalid argument`; точную причину ненулевого кода завершения не установили, поэтому его нельзя считать успешным exit code. Из-за отсутствия glog-файла путь Learner не оставил прямого сообщения, что оценка была применена, поэтому smoke-вызов `Auto_Preset` отдельно проверяет именно новые поля API и возвращаемый вектор.
+
 ### Почему AutoPreset преждевременно объявлял сходимость и что исправлено
 
 В свежей конфигурации целевая `InitialSomaPotential` сначала равна нулю. Если удлинить дендрит до первого измерения амплитуды, `ChangeSynapseStatus()` не получает корректную цель и может выставить нулевой статус на единственном синапсе. Поскольку `EndOfLearning()` трактует нулевые статусы как готовую структуру, Learner записывает обученные матрицы и сбрасывает `IsNeedToTrain`, хотя амплитуды ещё не сравнивались.

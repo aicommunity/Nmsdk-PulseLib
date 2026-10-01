@@ -1177,8 +1177,12 @@ bool NNeuronLearner::ApplyAutoPresetToFreshNeuron()
   try
   {
    Auto_Preset estimator;
-   estimator.setFirstState(pattern, membrane_time_constants, pulse_length);
-   const gParam estimate = estimator.getResult();
+   PushParam preset_input;
+   preset_input.pattern = pattern;
+   preset_input.vectorT = membrane_time_constants;
+   preset_input.tau = pulse_length;
+   estimator.setFirstState(preset_input);
+   const GetRecParam estimate = estimator.getResult();
    if(estimate.recomDendriteLength.size() != static_cast<size_t>(NumInputDendrite))
     failure = "Auto_Preset returned an invalid number of dendrite lengths";
    else
