@@ -143,6 +143,8 @@ void NNeuronTimeLearner::ResizeSyncVectors(int n)
   NoImproveResistanceCount.assign(static_cast<size_t>(n), 0);
  if(int(AmpDtSkipCount.size()) != n)
   AmpDtSkipCount.assign(static_cast<size_t>(n), 0);
+ if(int(RmaxDwellCount.size()) != n)
+  RmaxDwellCount.assign(static_cast<size_t>(n), 0);
  if(int(EffectiveResistanceGain.size()) != n)
  {
   const double g = (ResistanceAdjustGain.GetData() > 0.0)
@@ -705,7 +707,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  double dt = InitialSomaPotential[num] - MaxIterSomaAmp[num];
  const double eps = kAmpNormEps;
  
- if(EnableDebug.GetData() && RDK::GetLogger() && fabs(dt) > 5.0)
+ if(EnableDebug.GetData() && RDK::GetLogger() && fabs(dt) > kPathologicalAmpDt)
  {
   const double amp = (num < int(MaxIterSomaAmp.size())) ? MaxIterSomaAmp[num] : 0.0;
   const double initial = (num < int(InitialSomaPotential.size())) ? InitialSomaPotential[num] : 0.0;
@@ -732,7 +734,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
       << " same_pattern=" << (same_pattern_dbg ? 1 : 0)
       << " DendriteLength=" << L;
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
- }
+}
  
  // Auto-estimate cable attenuation gamma from observed amp/Initial at L>1.
  if(MaxIterSomaAmp[num] > kMinMeasurableSomaAmp && InitialSomaPotential[num] > 0.0
@@ -775,7 +777,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  // Pathological peak/amp: |Initial-MaxAmp| huge — TipR damped-P drives R to Rmax.
  // Skip TipR update for a few hits; after kNoImproveResistanceLimit escapes with a
  // clamp-step toward Rmin (dt>0) / away (dt<0) so mid-band cannot stall forever.
- else if(fabs(dt) > 5.0)
+ else if(fabs(dt) > kPathologicalAmpDt)
  {
   if(num < int(AmpDtSkipCount.size()))
    AmpDtSkipCount[static_cast<size_t>(num)]++;
@@ -795,7 +797,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   }
   if(skip_n >= kNoImproveResistanceLimit)
   {
-   const double step = std::max(kResistanceSettleRatio, 0.05);
+   const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
    double r_new = r_old;
    if(dt > 0.0)
     r_new = ClampResistance(r_old * (1.0 - step));
@@ -819,13 +821,47 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   double eff_gain = kResistanceAdjustGainDefault;
   double r_new = r_old;
   const double rmin = ResistanceMin.GetData();
+  const double rmax = ResistanceMax.GetData();
+  // W3: dwell at ResistanceMax → bounded recovery in error-correction direction.
+  if(rmax > 0.0 && r_old >= rmax * (1.0 - 1e-9))
+  {
+   if(num < int(RmaxDwellCount.size()))
+    RmaxDwellCount[static_cast<size_t>(num)]++;
+  }
+  else if(num < int(RmaxDwellCount.size()))
+   RmaxDwellCount[static_cast<size_t>(num)] = 0;
+  const int rmax_dwell = (num < int(RmaxDwellCount.size()))
+   ? RmaxDwellCount[static_cast<size_t>(num)] : 0;
+  if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6))
+  {
+   const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
+   // Prefer lowering R when amp is below target (dt>0) or collapsed; else hold step down
+   // only when dwell proves stuck at ceiling (matrix D).
+   r_new = ClampResistance(r_old * (1.0 - step));
+   ApplyComputedResistance(num, r_old, r_new, eff_gain);
+   if(num < int(RmaxDwellCount.size()))
+    RmaxDwellCount[static_cast<size_t>(num)] = 0;
+   if(num < int(NoImproveResistanceCount.size()))
+    NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+   ResistanceStatus[num] = 1;
+   if(EnableDebug.GetData() && RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "AmpDtAudit RmaxDwell→Rmin: num=" << num
+        << " dt=" << dt
+        << " R " << r_old << " -> " << r_new;
+    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+   }
+  }
   // fs25 keep-slog: amp already near Initial while TipR sits mid-band (~3.5e7).
   // damped-P with oscillating sign of dt walks R sideways; force Rmin descent.
+  else
+  {
   const bool midband_walk = (r_old > rmin * (1.0 + 1e-6))
    && (fabs(dt) <= kAmpOscillationBand);
   if(midband_walk)
   {
-   const double step = std::max(kResistanceSettleRatio, 0.05);
+   const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
    r_new = ClampResistance(r_old * (1.0 - step));
    ApplyComputedResistance(num, r_old, r_new, eff_gain);
    if(num < int(NoImproveResistanceCount.size()))
@@ -886,21 +922,25 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
    else if(ResistanceStatus[num])
     NoImproveResistanceCount[static_cast<size_t>(num)]++;
-   // Amp near target but TipR mid-band (fs25 keep-slog): NoImprove alone used to
-   // clear ResistanceStatus and freeze R≈3.5e7 forever. Walk toward Rmin instead.
+   // W2 B1: NoImprove>=limit must not freeze Status=0 while R>Rmin.
+   // Keep error direction: dt>0 → lower R, dt<0 → raise R.
    if(NoImproveResistanceCount[static_cast<size_t>(num)] >= kNoImproveResistanceLimit)
    {
-    if(r_old > rmin * (1.0 + 1e-6) && fabs(dt) <= kAmpOscillationBand)
+    if(r_old > rmin * (1.0 + 1e-6))
     {
-     const double step = std::max(kResistanceSettleRatio, 0.05);
-     const double r_force = ClampResistance(r_old * (1.0 - step));
+     const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
+     double r_force = r_old;
+     if(dt >= 0.0)
+      r_force = ClampResistance(r_old * (1.0 - step));
+     else
+      r_force = ClampResistance(r_old * (1.0 + step));
      ApplyComputedResistance(num, r_old, r_force, eff_gain);
      NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
      ResistanceStatus[num] = 1;
      if(EnableDebug.GetData() && RDK::GetLogger())
      {
       std::ostringstream oss;
-      oss << "AmpDtAudit midband→Rmin: num=" << num
+      oss << "AmpDtAudit NoImprove→step: num=" << num
           << " dt=" << dt
           << " R " << r_old << " -> " << r_force;
       RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
@@ -911,6 +951,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
    }
   }
   } // !midband_walk
+  } // !rmax_dwell recovery
   
   if(num < int(PrevAmpError.size()))
    PrevAmpError[static_cast<size_t>(num)] = dt;
@@ -1423,6 +1464,7 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
  PrevResistanceRatio.assign(NumInputDendrite, 1.0);
  NoImproveResistanceCount.assign(NumInputDendrite, 0);
  AmpDtSkipCount.assign(NumInputDendrite, 0);
+ RmaxDwellCount.assign(NumInputDendrite, 0);
  EffectiveResistanceGain.assign(NumInputDendrite, kResistanceAdjustGainDefault);
  AttenuationGamma = kAttenuationGammaAuto;
  if(IsParametricNormalization())
@@ -2491,6 +2533,7 @@ bool NNeuronTimeLearner::ADefault(void)
  PrevResistanceRatio.assign(NumInputDendrite, 1.0);
  NoImproveResistanceCount.assign(NumInputDendrite, 0);
  AmpDtSkipCount.assign(NumInputDendrite, 0);
+ RmaxDwellCount.assign(NumInputDendrite, 0);
  EffectiveResistanceGain.assign(NumInputDendrite, kResistanceAdjustGainDefault);
  EnableDebug = false;
  ResizeSyncVectors(NumInputDendrite.GetData());
@@ -2623,6 +2666,10 @@ bool NNeuronTimeLearner::AReset(void)
    AmpDtSkipCount.assign(NumInputDendrite.GetData(), 0);
   else
    std::fill(AmpDtSkipCount.begin(), AmpDtSkipCount.end(), 0);
+  if(int(RmaxDwellCount.size()) != NumInputDendrite.GetData())
+   RmaxDwellCount.assign(NumInputDendrite.GetData(), 0);
+  else
+   std::fill(RmaxDwellCount.begin(), RmaxDwellCount.end(), 0);
   if(DendBestEffortSynced.size() != DendLastAbsDt.size())
    DendBestEffortSynced.assign(DendLastAbsDt.size(), false);
   else
@@ -3588,7 +3635,9 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
     || (at_r_min && (i < int(DendLastAbsDt.size()))
         && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * kRminLengthTolFactor));
    
-   if(i < int(ResistanceStatus.size()) && ResistanceStatus[i])
+   // W1 E2: TipR@Rmin + length_ok — do not block Done on pending ResistanceStatus.
+   if(i < int(ResistanceStatus.size()) && ResistanceStatus[i]
+      && !(at_r_min && length_ok))
    {
     if(length_ok && i < int(NoImproveResistanceCount.size())
        && NoImproveResistanceCount[static_cast<size_t>(i)] >= kNoImproveResistanceLimit)
@@ -3607,6 +3656,9 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
    const bool dt_positive = (i < int(InitialSomaPotential.size()))
     && (i < int(MaxIterSomaAmp.size()))
     && (InitialSomaPotential[i] > MaxIterSomaAmp[i] + eps);
+   const double abs_dt = (i < int(InitialSomaPotential.size())
+    && i < int(MaxIterSomaAmp.size()))
+    ? fabs(InitialSomaPotential[i] - MaxIterSomaAmp[i]) : 0.0;
    const bool dead_tip = (i < int(MaxIterSomaAmp.size()))
     && (MaxIterSomaAmp[i] < kMinMeasurableSomaAmp);
    // Require a real peak attempt this burst (PeakSeen): freshly zeroed MaxAmp at
@@ -3615,6 +3667,9 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
    if(dead_tip && length_ok && peak_attempted)
     continue;
    if(at_r_min && dt_positive && length_ok)
+    continue;
+   // W1 E4: at Rmin with amp near target (|dt|<=osc_band), including mild overshoot.
+   if(at_r_min && length_ok && abs_dt <= kAmpOscillationBand)
     continue;
    
    const bool oscillation_ok =
@@ -3676,7 +3731,35 @@ bool NNeuronTimeLearner::EndOfLearning(void)
   return false;
  
  // Joint train: Done only when lengths synced and synapse amps normalized.
- if(!AllDendritesSynced() || !AllSynapsesNormalized())
+ const bool synced = AllDendritesSynced();
+ const bool normalized = AllSynapsesNormalized();
+ if(EnableDebug.GetData() && RDK::GetLogger() && (!synced || !normalized))
+ {
+  std::ostringstream oss;
+  oss << "EolGateAudit synced=" << (synced ? 1 : 0)
+      << " normalized=" << (normalized ? 1 : 0)
+      << " phase=" << TrainingPhase
+      << " need=" << (IsNeedToTrain.GetData() ? 1 : 0);
+  const int n = std::max(0, NumInputDendrite.GetData() - 1);
+  for(int i = 0; i < n; ++i)
+  {
+   const double tip = (i < int(TipSynapseResistance.size()))
+    ? TipSynapseResistance[static_cast<size_t>(i)] : 0.0;
+   const double dt = (i < int(InitialSomaPotential.size())
+    && i < int(MaxIterSomaAmp.size()))
+    ? (InitialSomaPotential[i] - MaxIterSomaAmp[i]) : 0.0;
+   const double last_dt = (i < int(DendLastAbsDt.size()))
+    ? DendLastAbsDt[static_cast<size_t>(i)] : -1.0;
+   const int res_st = (i < int(ResistanceStatus.size())) ? ResistanceStatus[i] : -1;
+   const int no_imp = (i < int(NoImproveResistanceCount.size()))
+    ? NoImproveResistanceCount[static_cast<size_t>(i)] : -1;
+   oss << " | d" << i << " TipR=" << tip << " dt=" << dt
+       << " LastAbsDt=" << last_dt << " ResSt=" << res_st
+       << " NoImp=" << no_imp;
+  }
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
+ if(!synced || !normalized)
   return false;
  
  Neuron->TrainingPattern = InputPattern;

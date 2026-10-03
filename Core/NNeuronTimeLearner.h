@@ -422,6 +422,9 @@ protected:
  /// Consecutive |ampDt|>5 TipR-skip hits (escape after kNoImproveResistanceLimit)
  std::vector<int> AmpDtSkipCount;
  
+ /// Consecutive hits with TipR at ResistanceMax (W3 dwell escape)
+ std::vector<int> RmaxDwellCount;
+ 
  /// Effective gain used in last R update
  std::vector<double> EffectiveResistanceGain;
  
@@ -465,6 +468,12 @@ protected:
  static constexpr double kUndershootBoostRatio = 2.0;
  
  static constexpr int kNoImproveResistanceLimit = 3;
+ 
+ /// |Initial-MaxAmp| above this skips damped-P (pathological amp); named for W2.
+ static constexpr double kPathologicalAmpDt = 5.0;
+ 
+ /// Relative TipR step toward Rmin on mid-band / NoImprove recovery (was 0.05).
+ static constexpr double kMidbandRminStep = 0.15;
  
  /// Allow LastAbsDt up to this × SyncTolerance when TipR already @Rmin (AmpNorm b).
  static constexpr double kRminLengthTolFactor = 2.0;

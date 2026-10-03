@@ -432,6 +432,9 @@ protected:
  /// Consecutive no-improve resistance steps
  std::vector<int> NoImproveResistanceCount;
  
+ /// Consecutive hits with TipR at ResistanceMax (W3 dwell escape)
+ std::vector<int> RmaxDwellCount;
+ 
  /// Effective gain used in last R update
  std::vector<double> EffectiveResistanceGain;
  
@@ -475,6 +478,10 @@ protected:
  static constexpr double kUndershootBoostRatio = 2.0;
  
  static constexpr int kNoImproveResistanceLimit = 3;
+ 
+ static constexpr double kPathologicalAmpDt = 5.0;
+ 
+ static constexpr double kMidbandRminStep = 0.15;
  
  static constexpr double kAmpCollapseRatio = 0.35;
  
