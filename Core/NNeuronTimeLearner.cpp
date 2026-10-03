@@ -822,7 +822,9 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   double r_new = r_old;
   const double rmin = ResistanceMin.GetData();
   const double rmax = ResistanceMax.GetData();
-  // W3: dwell at ResistanceMax → bounded recovery in error-correction direction.
+  const bool at_r_min = (r_old <= rmin * (1.0 + 1e-6));
+  if(int(RmaxDwellCount.size()) != NumInputDendrite.GetData())
+   RmaxDwellCount.assign(NumInputDendrite.GetData(), 0);
   if(rmax > 0.0 && r_old >= rmax * (1.0 - 1e-9))
   {
    if(num < int(RmaxDwellCount.size()))
@@ -832,8 +834,18 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
    RmaxDwellCount[static_cast<size_t>(num)] = 0;
   const int rmax_dwell = (num < int(RmaxDwellCount.size()))
    ? RmaxDwellCount[static_cast<size_t>(num)] : 0;
-  // Escape only when dt supports lowering R (amp below target / collapsed).
-  if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
+  // W1 E: TipR@Rmin with overshoot (dt<0) — must raise R.
+  if(at_r_min && dt < -eps)
+  {
+   const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
+   r_new = ClampResistance(r_old * (1.0 + step));
+   ApplyComputedResistance(num, r_old, r_new, eff_gain);
+   if(num < int(NoImproveResistanceCount.size()))
+    NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+   ResistanceStatus[num] = 1;
+  }
+  // W3: escape prolonged ResistanceMax dwell when dt supports lowering R.
+  else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
      && dt >= 0.0)
   {
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
@@ -853,8 +865,6 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
    }
   }
-  // fs25 keep-slog: amp already near Initial while TipR sits mid-band (~3.5e7).
-  // damped-P with oscillating sign of dt walks R sideways; force Rmin descent.
   else
   {
   const bool midband_walk = (r_old > rmin * (1.0 + 1e-6))
@@ -862,13 +872,22 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   if(midband_walk)
   {
    // Preserve error direction: never force Rmin on overshoot (dt<0).
+   // Do NOT reset NoImprove here — fs25 mid-band sign-flip + reset left TipR
+   // oscillating ~3e7 forever; accumulate then floor to Rmin when dt>=0.
+   if(num < int(NoImproveResistanceCount.size()))
+    NoImproveResistanceCount[static_cast<size_t>(num)]++;
+   const int mid_n = (num < int(NoImproveResistanceCount.size()))
+    ? NoImproveResistanceCount[static_cast<size_t>(num)] : 0;
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
-   if(dt >= 0.0)
+   if(dt >= 0.0 && mid_n >= kNoImproveResistanceLimit)
+    r_new = ClampResistance(rmin); // CanonRmin floor when amp already near
+   else if(dt >= 0.0)
     r_new = ClampResistance(r_old * (1.0 - step));
    else
     r_new = ClampResistance(r_old * (1.0 + step));
    ApplyComputedResistance(num, r_old, r_new, eff_gain);
-   if(num < int(NoImproveResistanceCount.size()))
+   if(dt >= 0.0 && mid_n >= kNoImproveResistanceLimit
+      && num < int(NoImproveResistanceCount.size()))
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
    ResistanceStatus[num] = 1;
    if(EnableDebug.GetData() && RDK::GetLogger())
@@ -876,6 +895,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
     std::ostringstream oss;
     oss << "AmpDtAudit midband→step: num=" << num
         << " dt=" << dt
+        << " mid_n=" << mid_n
         << " R " << r_old << " -> " << r_new;
     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
    }

@@ -476,7 +476,8 @@ protected:
  static constexpr double kMidbandRminStep = 0.15;
  
  /// Allow LastAbsDt up to this × SyncTolerance when TipR already @Rmin (AmpNorm b).
- static constexpr double kRminLengthTolFactor = 2.0;
+ /// SoftCold E (asym100/fs50): LastAbsDt~0.004–0.006 with tol~0.002 blocked Done at factor 2.
+ static constexpr double kRminLengthTolFactor = 4.0;
  
  static constexpr double kAmpCollapseRatio = 0.35;
  

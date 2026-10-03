@@ -1001,6 +1001,7 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
   double r_new = r_old;
   const double rmin = ResistanceMin.GetData();
   const double rmax = ResistanceMax.GetData();
+  const bool at_r_min = (r_old <= rmin * (1.0 + 1e-6));
   if(int(RmaxDwellCount.size()) != NumInputDendrite.GetData())
    RmaxDwellCount.assign(NumInputDendrite.GetData(), 0);
   if(rmax > 0.0 && r_old >= rmax * (1.0 - 1e-9))
@@ -1012,8 +1013,18 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
    RmaxDwellCount[static_cast<size_t>(num)] = 0;
   const int rmax_dwell = (num < int(RmaxDwellCount.size()))
    ? RmaxDwellCount[static_cast<size_t>(num)] : 0;
+  // W1 E Branch: TipR@Rmin with overshoot — raise R (error direction).
+  if(at_r_min && dt < -eps)
+  {
+   const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
+   r_new = ClampResistance(r_old * (1.0 + step));
+   ApplyComputedResistance(num, r_old, r_new, eff_gain);
+   if(num < int(NoImproveResistanceCount.size()))
+    NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+   ResistanceStatus[num] = 1;
+  }
   // W3 Branch: escape prolonged ResistanceMax dwell only if dt supports lower R.
-  if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
+  else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
      && dt >= 0.0)
   {
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
