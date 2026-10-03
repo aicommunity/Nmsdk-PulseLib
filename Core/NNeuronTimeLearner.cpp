@@ -832,11 +832,11 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
    RmaxDwellCount[static_cast<size_t>(num)] = 0;
   const int rmax_dwell = (num < int(RmaxDwellCount.size()))
    ? RmaxDwellCount[static_cast<size_t>(num)] : 0;
-  if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6))
+  // Escape only when dt supports lowering R (amp below target / collapsed).
+  if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
+     && dt >= 0.0)
   {
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
-   // Prefer lowering R when amp is below target (dt>0) or collapsed; else hold step down
-   // only when dwell proves stuck at ceiling (matrix D).
    r_new = ClampResistance(r_old * (1.0 - step));
    ApplyComputedResistance(num, r_old, r_new, eff_gain);
    if(num < int(RmaxDwellCount.size()))
@@ -861,8 +861,12 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
    && (fabs(dt) <= kAmpOscillationBand);
   if(midband_walk)
   {
+   // Preserve error direction: never force Rmin on overshoot (dt<0).
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
-   r_new = ClampResistance(r_old * (1.0 - step));
+   if(dt >= 0.0)
+    r_new = ClampResistance(r_old * (1.0 - step));
+   else
+    r_new = ClampResistance(r_old * (1.0 + step));
    ApplyComputedResistance(num, r_old, r_new, eff_gain);
    if(num < int(NoImproveResistanceCount.size()))
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
@@ -870,7 +874,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
    if(EnableDebug.GetData() && RDK::GetLogger())
    {
     std::ostringstream oss;
-    oss << "AmpDtAudit midband→Rmin: num=" << num
+    oss << "AmpDtAudit midband→step: num=" << num
         << " dt=" << dt
         << " R " << r_old << " -> " << r_new;
     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());

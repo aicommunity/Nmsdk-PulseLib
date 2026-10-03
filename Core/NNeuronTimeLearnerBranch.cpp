@@ -1012,8 +1012,9 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
    RmaxDwellCount[static_cast<size_t>(num)] = 0;
   const int rmax_dwell = (num < int(RmaxDwellCount.size()))
    ? RmaxDwellCount[static_cast<size_t>(num)] : 0;
-  // W3 Branch: escape prolonged ResistanceMax dwell.
-  if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6))
+  // W3 Branch: escape prolonged ResistanceMax dwell only if dt supports lower R.
+  if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
+     && dt >= 0.0)
   {
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
    r_new = ClampResistance(r_old * (1.0 - step));
@@ -1026,13 +1027,16 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
   }
   else
   {
-  // W2 Branch B4: near-band walk toward Rmin (base midband invariant).
+  // W2 Branch B4: near-band correction; never force Rmin on overshoot (dt<0).
   const bool midband_walk = (r_old > rmin * (1.0 + 1e-6))
    && (fabs(dt) <= kAmpOscillationBand);
   if(midband_walk)
   {
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
-   r_new = ClampResistance(r_old * (1.0 - step));
+   if(dt >= 0.0)
+    r_new = ClampResistance(r_old * (1.0 - step));
+   else
+    r_new = ClampResistance(r_old * (1.0 + step));
    ApplyComputedResistance(num, r_old, r_new, eff_gain);
    if(num < int(NoImproveResistanceCount.size()))
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
