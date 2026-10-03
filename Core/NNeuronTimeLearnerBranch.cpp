@@ -936,10 +936,16 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
   return true;
  }
  
+ const double tol_len = SyncTolerance.GetData();
+ const double rmin_ls = ResistanceMin.GetData();
+ const bool at_r_min_ls = (num < int(TipSynapseResistance.size()))
+  && (TipSynapseResistance[static_cast<size_t>(num)] <= rmin_ls * (1.0 + 1e-6));
  const bool length_settled = (num < int(DendLastAbsDt.size())
-  && DendLastAbsDt[static_cast<size_t>(num)] <= SyncTolerance.GetData())
+  && DendLastAbsDt[static_cast<size_t>(num)] <= tol_len)
   || ((num < int(DendBestEffortSynced.size()))
-      && DendBestEffortSynced[static_cast<size_t>(num)]);
+      && DendBestEffortSynced[static_cast<size_t>(num)])
+  || (at_r_min_ls && (num < int(DendLastAbsDt.size()))
+      && (DendLastAbsDt[static_cast<size_t>(num)] <= tol_len * kRminLengthTolFactor));
  if(!DendStatus[num] && length_settled
     && (num < int(MaxIterSomaAmp.size()))
     && (MaxIterSomaAmp[num] < kMinMeasurableSomaAmp))
