@@ -1027,22 +1027,9 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
   }
   else
   {
-  // W2 Branch B4: near-band correction; never force Rmin on overshoot (dt<0).
-  const bool midband_walk = (r_old > rmin * (1.0 + 1e-6))
-   && (fabs(dt) <= kAmpOscillationBand);
-  if(midband_walk)
-  {
-   const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
-   if(dt >= 0.0)
-    r_new = ClampResistance(r_old * (1.0 - step));
-   else
-    r_new = ClampResistance(r_old * (1.0 + step));
-   ApplyComputedResistance(num, r_old, r_new, eff_gain);
-   if(num < int(NoImproveResistanceCount.size()))
-    NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
-   ResistanceStatus[num] = 1;
-  }
-  else if(amp > kMinMeasurableSomaAmp && initial > 0.0)
+  // Branch: no per-tick midband→R walk (ActivePulse needs oscillation_ok /
+  // NoImprove≥limit to pass AllSynapsesNormalized and advance). B4 only.
+  if(amp > kMinMeasurableSomaAmp && initial > 0.0)
    r_new = ComputeDampedTipResistance(num, r_old, amp, initial, dt, eff_gain);
   else
   {
@@ -1054,8 +1041,6 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
     r_new = ClampResistance(r_old * (1.0 + 0.15 * eff_gain));
   }
   
-  if(!midband_walk)
-  {
   // Near the target, damped-P steps shrink below settle ratio and ampDt can
   // freeze just above eps (seen: dend2 stuck at ~6e-6). Force a minimal R step.
   if(r_old > 0.0 && fabs(r_new - r_old) < kResistanceSettleRatio * r_old)
@@ -1088,10 +1073,12 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
    else if(ResistanceStatus[num])
     NoImproveResistanceCount[static_cast<size_t>(num)]++;
-   // W2 B4: never freeze Status=0 while R>Rmin — bounded directional step.
+   // W2 B4 (Branch-specific): near-band → Status=0 so oscillation_ok can pass
+   // ActivePulse (keep-PASS br50_gen). Far from band with R>Rmin → one directional
+   // step (no perpetual Status=0 freeze that stalled br25_preinh mid TipR).
    if(NoImproveResistanceCount[static_cast<size_t>(num)] >= kNoImproveResistanceLimit)
    {
-    if(r_old > rmin * (1.0 + 1e-6))
+    if(r_old > rmin * (1.0 + 1e-6) && !near_target)
     {
      const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
      double r_force = r_old;
@@ -1107,7 +1094,6 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
      ResistanceStatus[num] = 0;
    }
   }
-  } // !midband_walk
   } // !rmax_dwell
   
   if(num < int(PrevAmpError.size()))
