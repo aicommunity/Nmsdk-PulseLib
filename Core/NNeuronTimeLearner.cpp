@@ -691,15 +691,20 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  
  const double tol_len = SyncTolerance.GetData();
  const double rmin_ls = ResistanceMin.GetData();
+ const double rmax_ls = ResistanceMax.GetData();
  const bool at_r_min_ls = (num < int(TipSynapseResistance.size()))
   && (TipSynapseResistance[static_cast<size_t>(num)] <= rmin_ls * (1.0 + 1e-6));
+ const bool at_r_max_ls = (rmax_ls > 0.0) && (num < int(TipSynapseResistance.size()))
+  && (TipSynapseResistance[static_cast<size_t>(num)] >= rmax_ls * (1.0 - 1e-9));
  // Match AmpNorm length_ok: at TipR@Rmin allow SyncTol×kRminLengthTolFactor so
  // overshoot@Rmin can still raise R (fs50 dend2 LastAbsDt~0.004 > tight tol).
+ // W3: same slack at TipR@Rmax so Rmax-dwell escape is not blocked by LastAbsDt
+ // slightly above SyncTol (phase6_480 ~0.016 with tip at 1e11).
  const bool length_settled = (num < int(DendLastAbsDt.size())
   && DendLastAbsDt[static_cast<size_t>(num)] <= tol_len)
   || ((num < int(DendBestEffortSynced.size()))
       && DendBestEffortSynced[static_cast<size_t>(num)])
-  || (at_r_min_ls && (num < int(DendLastAbsDt.size()))
+  || ((at_r_min_ls || at_r_max_ls) && (num < int(DendLastAbsDt.size()))
       && (DendLastAbsDt[static_cast<size_t>(num)] <= tol_len * kRminLengthTolFactor));
  if(!DendStatus[num] && length_settled
     && (num < int(MaxIterSomaAmp.size()))
@@ -852,9 +857,10 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
    ResistanceStatus[num] = 1;
   }
-  // W3: escape prolonged ResistanceMax dwell when dt supports lowering R.
-  else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
-     && dt >= 0.0)
+  // W3: leave prolonged ResistanceMax dwell. Prefer dt>=0 (undershoot); also
+  // escape when frozen at ceiling with overshoot (phase6 amp_dt≈−0.06) — raise
+  // is impossible at Rmax, so a bounded down-step re-opens the controller.
+  else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6))
   {
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
    r_new = ClampResistance(r_old * (1.0 - step));
@@ -867,7 +873,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
    if(EnableDebug.GetData() && RDK::GetLogger())
    {
     std::ostringstream oss;
-    oss << "AmpDtAudit RmaxDwell→Rmin: num=" << num
+    oss << "AmpDtAudit RmaxDwell→step: num=" << num
         << " dt=" << dt
         << " R " << r_old << " -> " << r_new;
     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());

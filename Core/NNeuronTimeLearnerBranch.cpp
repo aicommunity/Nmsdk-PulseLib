@@ -938,13 +938,16 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
  
  const double tol_len = SyncTolerance.GetData();
  const double rmin_ls = ResistanceMin.GetData();
+ const double rmax_ls = ResistanceMax.GetData();
  const bool at_r_min_ls = (num < int(TipSynapseResistance.size()))
   && (TipSynapseResistance[static_cast<size_t>(num)] <= rmin_ls * (1.0 + 1e-6));
+ const bool at_r_max_ls = (rmax_ls > 0.0) && (num < int(TipSynapseResistance.size()))
+  && (TipSynapseResistance[static_cast<size_t>(num)] >= rmax_ls * (1.0 - 1e-9));
  const bool length_settled = (num < int(DendLastAbsDt.size())
   && DendLastAbsDt[static_cast<size_t>(num)] <= tol_len)
   || ((num < int(DendBestEffortSynced.size()))
       && DendBestEffortSynced[static_cast<size_t>(num)])
-  || (at_r_min_ls && (num < int(DendLastAbsDt.size()))
+  || ((at_r_min_ls || at_r_max_ls) && (num < int(DendLastAbsDt.size()))
       && (DendLastAbsDt[static_cast<size_t>(num)] <= tol_len * kRminLengthTolFactor));
  if(!DendStatus[num] && length_settled
     && (num < int(MaxIterSomaAmp.size()))
@@ -1029,9 +1032,8 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
    ResistanceStatus[num] = 1;
   }
-  // W3 Branch: escape prolonged ResistanceMax dwell only if dt supports lower R.
-  else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
-     && dt >= 0.0)
+  // W3 Branch: leave prolonged ResistanceMax dwell (undershoot or frozen overshoot).
+  else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6))
   {
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
    r_new = ClampResistance(r_old * (1.0 - step));
