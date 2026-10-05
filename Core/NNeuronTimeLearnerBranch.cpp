@@ -1032,17 +1032,26 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
    ResistanceStatus[num] = 1;
   }
-  // W3 Branch: leave prolonged ResistanceMax dwell (undershoot or frozen overshoot).
+  // W3 Branch: Rmax dwell escape only on undershoot (dt>=0). Hold on overshoot.
   else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6))
   {
-   const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
-   r_new = ClampResistance(r_old * (1.0 - step));
-   ApplyComputedResistance(num, r_old, r_new, eff_gain);
-   if(num < int(RmaxDwellCount.size()))
-    RmaxDwellCount[static_cast<size_t>(num)] = 0;
-   if(num < int(NoImproveResistanceCount.size()))
-    NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
-   ResistanceStatus[num] = 1;
+   if(dt >= 0.0)
+   {
+    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
+    r_new = ClampResistance(r_old * (1.0 - step));
+    ApplyComputedResistance(num, r_old, r_new, eff_gain);
+    if(num < int(RmaxDwellCount.size()))
+     RmaxDwellCount[static_cast<size_t>(num)] = 0;
+    if(num < int(NoImproveResistanceCount.size()))
+     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+    ResistanceStatus[num] = 1;
+   }
+   else
+   {
+    if(num < int(RmaxDwellCount.size()))
+     RmaxDwellCount[static_cast<size_t>(num)] = kNoImproveResistanceLimit;
+    ResistanceStatus[num] = 1;
+   }
   }
   else
   {

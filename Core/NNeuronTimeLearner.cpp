@@ -857,26 +857,43 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
    ResistanceStatus[num] = 1;
   }
-  // W3: leave prolonged ResistanceMax dwell. Prefer dt>=0 (undershoot); also
-  // escape when frozen at ceiling with overshoot (phase6 amp_dt≈−0.06) — raise
-  // is impossible at Rmax, so a bounded down-step re-opens the controller.
+  // W3: leave prolonged ResistanceMax dwell only on undershoot (dt>=0).
+  // Overshoot at Rmax (dt<0) cannot raise R — do NOT step down (avoids
+  // 1e11↔0.85*Rmax oscillation with frozen negative amp_dt).
   else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6))
   {
-   const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
-   r_new = ClampResistance(r_old * (1.0 - step));
-   ApplyComputedResistance(num, r_old, r_new, eff_gain);
-   if(num < int(RmaxDwellCount.size()))
-    RmaxDwellCount[static_cast<size_t>(num)] = 0;
-   if(num < int(NoImproveResistanceCount.size()))
-    NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
-   ResistanceStatus[num] = 1;
-   if(EnableDebug.GetData() && RDK::GetLogger())
+   if(dt >= 0.0)
    {
-    std::ostringstream oss;
-    oss << "AmpDtAudit RmaxDwell→step: num=" << num
-        << " dt=" << dt
-        << " R " << r_old << " -> " << r_new;
-    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
+    r_new = ClampResistance(r_old * (1.0 - step));
+    ApplyComputedResistance(num, r_old, r_new, eff_gain);
+    if(num < int(RmaxDwellCount.size()))
+     RmaxDwellCount[static_cast<size_t>(num)] = 0;
+    if(num < int(NoImproveResistanceCount.size()))
+     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+    ResistanceStatus[num] = 1;
+    if(EnableDebug.GetData() && RDK::GetLogger())
+    {
+     std::ostringstream oss;
+     oss << "AmpDtAudit RmaxDwell→down dt>=0: num=" << num
+         << " dt=" << dt
+         << " R " << r_old << " -> " << r_new;
+     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+    }
+   }
+   else
+   {
+    if(num < int(RmaxDwellCount.size()))
+     RmaxDwellCount[static_cast<size_t>(num)] = kNoImproveResistanceLimit;
+    ResistanceStatus[num] = 1;
+    if(EnableDebug.GetData() && RDK::GetLogger())
+    {
+     std::ostringstream oss;
+     oss << "AmpDtAudit RmaxDwell overshoot hold dt<0: num=" << num
+         << " dt=" << dt
+         << " R=" << r_old;
+     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+    }
    }
   }
   else
