@@ -434,6 +434,12 @@ protected:
  
  /// Consecutive hits with TipR at ResistanceMax (W3 dwell escape)
  std::vector<int> RmaxDwellCount;
+
+ /// Armed: next length +ΔL is forced from Rmax overshoot (skip TipR feedforward)
+ std::vector<bool> RmaxOvershootLengthGrow;
+
+ /// Hold-entries at Rmax+dt<0 since last forced length grow (W3c cooldown)
+ std::vector<int> RmaxOvershootLengthCooldown;
  
  /// Effective gain used in last R update
  std::vector<double> EffectiveResistanceGain;
@@ -478,6 +484,9 @@ protected:
  static constexpr double kUndershootBoostRatio = 2.0;
  
  static constexpr int kNoImproveResistanceLimit = 3;
+
+ /// Amp hold-entries at Rmax overshoot between forced +1 length steps (W3c).
+ static constexpr int kRmaxOvershootLengthCooldown = kNoImproveResistanceLimit;
  
  static constexpr double kPathologicalAmpDt = 5.0;
  

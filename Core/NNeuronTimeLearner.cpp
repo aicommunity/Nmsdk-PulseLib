@@ -145,6 +145,10 @@ void NNeuronTimeLearner::ResizeSyncVectors(int n)
   AmpDtSkipCount.assign(static_cast<size_t>(n), 0);
  if(int(RmaxDwellCount.size()) != n)
   RmaxDwellCount.assign(static_cast<size_t>(n), 0);
+ if(int(RmaxOvershootLengthGrow.size()) != n)
+  RmaxOvershootLengthGrow.assign(static_cast<size_t>(n), false);
+ if(int(RmaxOvershootLengthCooldown.size()) != n)
+  RmaxOvershootLengthCooldown.assign(static_cast<size_t>(n), 0);
  if(int(EffectiveResistanceGain.size()) != n)
  {
   const double g = (ResistanceAdjustGain.GetData() > 0.0)
@@ -838,6 +842,10 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   const bool at_r_min = (r_old <= rmin * (1.0 + 1e-6));
   if(int(RmaxDwellCount.size()) != NumInputDendrite.GetData())
    RmaxDwellCount.assign(NumInputDendrite.GetData(), 0);
+  if(int(RmaxOvershootLengthGrow.size()) != NumInputDendrite.GetData())
+   RmaxOvershootLengthGrow.assign(NumInputDendrite.GetData(), false);
+  if(int(RmaxOvershootLengthCooldown.size()) != NumInputDendrite.GetData())
+   RmaxOvershootLengthCooldown.assign(NumInputDendrite.GetData(), 0);
   if(rmax > 0.0 && r_old >= rmax * (1.0 - 1e-9))
   {
    if(num < int(RmaxDwellCount.size()))
@@ -860,6 +868,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   // W3: leave prolonged ResistanceMax dwell only on undershoot (dt>=0).
   // Overshoot at Rmax (dt<0) cannot raise R — do NOT step down (avoids
   // 1e11↔0.85*Rmax oscillation with frozen negative amp_dt).
+  // W3c: request +1 DendriteLength (attenuation DOF) with cooldown.
   else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6))
   {
    if(dt >= 0.0)
@@ -886,12 +895,36 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
     if(num < int(RmaxDwellCount.size()))
      RmaxDwellCount[static_cast<size_t>(num)] = kNoImproveResistanceLimit;
     ResistanceStatus[num] = 1;
-    if(EnableDebug.GetData() && RDK::GetLogger())
+    // ChangeDendriteStatus(active) may have set DendStatus=-1 (cable prefer
+    // shorter L). Clear shrink while Rmax-overshoot hold so forced +ΔL is not
+    // undone on cooldown ticks before the next armed grow.
+    if(DendStatus[num] < 0)
+     DendStatus[num] = 0;
+    const int L = (num < int(DendriteLength.size())) ? DendriteLength[num] : 0;
+    const int maxL = MaxDendriteLength.GetData();
+    int &cooldown = RmaxOvershootLengthCooldown[static_cast<size_t>(num)];
+    cooldown++;
+    if(L < maxL && cooldown >= kRmaxOvershootLengthCooldown)
+    {
+     if(num < int(DendBestEffortSynced.size()))
+      DendBestEffortSynced[static_cast<size_t>(num)] = false;
+     DendStatus[num] = 1;
+     RmaxOvershootLengthGrow[static_cast<size_t>(num)] = true;
+     cooldown = 0;
+     if(EnableDebug.GetData() && RDK::GetLogger())
+     {
+      std::ostringstream oss;
+      oss << "AmpDtAudit RmaxOvershoot→length+ dt<0: num=" << num
+          << " dt=" << dt << " L=" << L << " R=" << r_old;
+      RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+     }
+    }
+    else if(EnableDebug.GetData() && RDK::GetLogger())
     {
      std::ostringstream oss;
      oss << "AmpDtAudit RmaxDwell overshoot hold dt<0: num=" << num
-         << " dt=" << dt
-         << " R=" << r_old;
+         << " dt=" << dt << " R=" << r_old
+         << " cooldown=" << cooldown;
      RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
     }
    }
@@ -1520,6 +1553,8 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
  NoImproveResistanceCount.assign(NumInputDendrite, 0);
  AmpDtSkipCount.assign(NumInputDendrite, 0);
  RmaxDwellCount.assign(NumInputDendrite, 0);
+ RmaxOvershootLengthGrow.assign(NumInputDendrite, false);
+ RmaxOvershootLengthCooldown.assign(NumInputDendrite, 0);
  EffectiveResistanceGain.assign(NumInputDendrite, kResistanceAdjustGainDefault);
  AttenuationGamma = kAttenuationGammaAuto;
  if(IsParametricNormalization())
@@ -2589,6 +2624,8 @@ bool NNeuronTimeLearner::ADefault(void)
  NoImproveResistanceCount.assign(NumInputDendrite, 0);
  AmpDtSkipCount.assign(NumInputDendrite, 0);
  RmaxDwellCount.assign(NumInputDendrite, 0);
+ RmaxOvershootLengthGrow.assign(NumInputDendrite, false);
+ RmaxOvershootLengthCooldown.assign(NumInputDendrite, 0);
  EffectiveResistanceGain.assign(NumInputDendrite, kResistanceAdjustGainDefault);
  EnableDebug = false;
  ResizeSyncVectors(NumInputDendrite.GetData());
@@ -2725,6 +2762,14 @@ bool NNeuronTimeLearner::AReset(void)
    RmaxDwellCount.assign(NumInputDendrite.GetData(), 0);
   else
    std::fill(RmaxDwellCount.begin(), RmaxDwellCount.end(), 0);
+  if(int(RmaxOvershootLengthGrow.size()) != NumInputDendrite.GetData())
+   RmaxOvershootLengthGrow.assign(NumInputDendrite.GetData(), false);
+  else
+   std::fill(RmaxOvershootLengthGrow.begin(), RmaxOvershootLengthGrow.end(), false);
+  if(int(RmaxOvershootLengthCooldown.size()) != NumInputDendrite.GetData())
+   RmaxOvershootLengthCooldown.assign(NumInputDendrite.GetData(), 0);
+  else
+   std::fill(RmaxOvershootLengthCooldown.begin(), RmaxOvershootLengthCooldown.end(), 0);
   if(DendBestEffortSynced.size() != DendLastAbsDt.size())
    DendBestEffortSynced.assign(DendLastAbsDt.size(), false);
   else
@@ -2790,7 +2835,10 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
   const bool peak_valid = (i < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(i)];
   const bool length_settled = (i < int(DendLastAbsDt.size()))
    && DendLastAbsDt[static_cast<size_t>(i)] <= SyncTolerance.GetData();
-  if(peak_valid && length_settled)
+  const bool rmax_overshoot_grow = (i < int(RmaxOvershootLengthGrow.size()))
+   && RmaxOvershootLengthGrow[static_cast<size_t>(i)];
+  // W3c: forced Rmax-overshoot grow must not be cleared by settle.
+  if(peak_valid && length_settled && !rmax_overshoot_grow)
   {
    DendStatus[i] = 0;
    continue;
@@ -2805,6 +2853,8 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
   if((DendStatus[i] == 1) && (DendriteLength[i] >= MaxDendriteLength))
   {
    DendStatus[i] = 0;
+   if(i < int(RmaxOvershootLengthGrow.size()))
+    RmaxOvershootLengthGrow[static_cast<size_t>(i)] = false;
    continue;
   }
   
@@ -2846,6 +2896,21 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
      max_delta = 1;
     if(delta > max_delta)
      delta = max_delta;
+   }
+  }
+  // W3c: forced overshoot grow is exactly +1 segment even when Dissync≈0.
+  if(rmax_overshoot_grow && direction > 0)
+   delta = 1;
+  // W3c: never shrink while TipR is pegged at ResistanceMax — cable-model
+  // prefer-shorter would undo attenuation DOF and re-freeze overshoot.
+  if(direction < 0 && i < int(TipSynapseResistance.size()))
+  {
+   const double rmax_ap = ResistanceMax.GetData();
+   if(rmax_ap > 0.0
+      && TipSynapseResistance[static_cast<size_t>(i)] >= rmax_ap * (1.0 - 1e-9))
+   {
+    DendStatus[i] = 0;
+    continue;
    }
   }
   
@@ -2998,8 +3063,29 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
   if(d < 0 || d >= int(DendriteLength.size()) || d >= int(OldDendriteLength.size()))
    continue;
   const int deltaL = DendriteLength[static_cast<size_t>(d)] - OldDendriteLength[static_cast<size_t>(d)];
-  FeedforwardResistanceOnLengthGrow(d, deltaL);
- }
+  const bool rmax_overshoot_grow = (d < int(RmaxOvershootLengthGrow.size()))
+   && RmaxOvershootLengthGrow[static_cast<size_t>(d)];
+  if(rmax_overshoot_grow)
+  {
+   // Keep TipR at ResistanceMax — feedforward would drop R and re-open oscillation.
+   const double rmax = ResistanceMax.GetData();
+   SetTipSynapseResistanceOnComponent(d, rmax);
+   if(d < int(ResistanceStatus.size()))
+    ResistanceStatus[static_cast<size_t>(d)] = 1;
+   RmaxOvershootLengthGrow[static_cast<size_t>(d)] = false;
+   if(d < int(RmaxOvershootLengthCooldown.size()))
+    RmaxOvershootLengthCooldown[static_cast<size_t>(d)] = 0;
+   if(EnableDebug.GetData() && RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "AmpDtAudit RmaxOvershoot length applied +dL=" << deltaL
+        << " dend=" << d << " keep Rmax=" << rmax;
+    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+   }
+  }
+  else
+   FeedforwardResistanceOnLengthGrow(d, deltaL);
+}
  
  if(gen)
   gen->Reset();
