@@ -1023,22 +1023,32 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
   RmaxDwellCount[static_cast<size_t>(num)] = 0;
  const int rmax_dwell_w3 = (num < int(RmaxDwellCount.size()))
   ? RmaxDwellCount[static_cast<size_t>(num)] : 0;
- // W3d Branch: TipR@Rmax + overshoot length escape independent of ready_for_r_tune.
- const bool w3d_rmax_overshoot =
-  at_r_max_w3 && (dt < -eps) && (r_old > rmin_w3 * (1.0 + 1e-6))
+ // Branch twin: TipR@Rmax ceiling escapes independent of ready.
+ // Same invariants as base: never TipR-down on overshoot@Rmax (anti-bounce).
+ const int L_w3 = (num < int(DendriteLength.size())) ? DendriteLength[num] : 0;
+ const int maxL_w3 = MaxDendriteLength.GetData();
+ const bool pending_grow_w3 =
+  (num < int(RmaxOvershootLengthGrow.size())
+   && RmaxOvershootLengthGrow[static_cast<size_t>(num)])
+  || (DendStatus[num] == 1);
+ const bool at_ceiling_dwell =
+  at_r_max_w3 && (r_old > rmin_w3 * (1.0 + 1e-6))
   && (rmax_dwell_w3 >= kNoImproveResistanceLimit);
- if(w3d_rmax_overshoot)
+ bool escaped_rmax_this_call = false;
+ const double rmax_escape_step =
+  std::max(kMidbandRminStep, kResistanceSettleRatio);
+
+ // W3d: overshoot + room to grow L.
+ if(at_ceiling_dwell && (dt < -eps) && (L_w3 < maxL_w3))
  {
   if(num < int(RmaxDwellCount.size()))
    RmaxDwellCount[static_cast<size_t>(num)] = kNoImproveResistanceLimit;
   ResistanceStatus[num] = 1;
   if(DendStatus[num] < 0)
    DendStatus[num] = 0;
-  const int L = (num < int(DendriteLength.size())) ? DendriteLength[num] : 0;
-  const int maxL = MaxDendriteLength.GetData();
   int &cooldown = RmaxOvershootLengthCooldown[static_cast<size_t>(num)];
   cooldown++;
-  if(L < maxL && cooldown >= kRmaxOvershootLengthCooldown)
+  if(cooldown >= kRmaxOvershootLengthCooldown)
   {
    if(num < int(DendBestEffortSynced.size()))
     DendBestEffortSynced[static_cast<size_t>(num)] = false;
@@ -1046,11 +1056,34 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
    RmaxOvershootLengthGrow[static_cast<size_t>(num)] = true;
    cooldown = 0;
   }
+  escaped_rmax_this_call = true;
  }
- 
+ // Overshoot @Rmax with L exhausted: HOLD TipR (anti-bounce).
+ else if(at_ceiling_dwell && (dt < -eps) && (L_w3 >= maxL_w3))
+ {
+  if(num < int(RmaxDwellCount.size()))
+   RmaxDwellCount[static_cast<size_t>(num)] = kNoImproveResistanceLimit;
+  ResistanceStatus[num] = 1;
+  escaped_rmax_this_call = true;
+ }
+ // W3e: undershoot @Rmax without ready_for_r_tune (min L = MaxL/2 keep guard).
+ else if(at_ceiling_dwell && (dt >= 0.0) && !pending_grow_w3 && (DendStatus[num] == 0)
+         && (L_w3 >= (maxL_w3 * kRmaxUndershootMinLengthFactorNum)
+                        / kRmaxUndershootMinLengthFactorDen))
+ {
+  const double r_new = ClampResistance(r_old * (1.0 - rmax_escape_step));
+  ApplyComputedResistance(num, r_old, r_new, kResistanceAdjustGainDefault);
+  if(num < int(RmaxDwellCount.size()))
+   RmaxDwellCount[static_cast<size_t>(num)] = 0;
+  if(num < int(NoImproveResistanceCount.size()))
+   NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+  ResistanceStatus[num] = 1;
+  escaped_rmax_this_call = true;
+ }
+
  if(!ready_for_r_tune)
  {
-  if(!w3d_rmax_overshoot)
+  if(!escaped_rmax_this_call)
    ResistanceStatus[num] = (fabs(dt) > eps) ? 1 : 0;
  }
  else if(same_pattern && (fabs(dt) <= eps))
@@ -1077,8 +1110,10 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
    ResistanceStatus[num] = 1;
   }
-  // W3 Branch: Rmax dwell escape only on undershoot (dt>=0). Overshoot → W3d.
-  else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
+  // W3 Branch: Rmax dwell escape only on undershoot (dt>=0).
+  // Skip if W3e already stepped TipR this Finish.
+  else if(!escaped_rmax_this_call
+          && rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
           && dt >= 0.0)
   {
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
@@ -1090,9 +1125,9 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
     NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
    ResistanceStatus[num] = 1;
   }
-  else if(w3d_rmax_overshoot)
+  else if(escaped_rmax_this_call)
   {
-   // Overshoot escape already armed this call; skip R steps.
+   // W3d/W3e/W3f already handled TipR@Rmax this call; skip R steps.
   }
   else
   {

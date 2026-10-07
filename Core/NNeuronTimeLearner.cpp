@@ -810,24 +810,34 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   RmaxDwellCount[static_cast<size_t>(num)] = 0;
  const int rmax_dwell_w3 = (num < int(RmaxDwellCount.size()))
   ? RmaxDwellCount[static_cast<size_t>(num)] : 0;
- // W3d: TipR@Rmax + overshoot length escape must arm even when
- // !length_settled / DendStatus!=0 (D3: d1 LastAbsDt≈0.0855 > SyncTol×4=0.08
- // blocked W3c forever while TipR stayed at 1e11).
- const bool w3d_rmax_overshoot =
-  at_r_max_w3 && (dt < -eps) && (r_old > rmin_w3 * (1.0 + 1e-6))
+ // TipR@Rmax ceiling escapes independent of ready_for_r_tune.
+ // Invariants: (1) dt<0 && at_r_max → never TipR-down (hold; length only if L<MaxL);
+ // (2) L>=MaxL + overshoot → hold TipR (no paced down — sterile 1e11↔0.85 bounce);
+ // (3) undershoot TipR-down only when L>=MaxL/2 and never while length grow pending.
+ const int L_w3 = (num < int(DendriteLength.size())) ? DendriteLength[num] : 0;
+ const int maxL_w3 = MaxDendriteLength.GetData();
+ const bool pending_grow_w3 =
+  (num < int(RmaxOvershootLengthGrow.size())
+   && RmaxOvershootLengthGrow[static_cast<size_t>(num)])
+  || (DendStatus[num] == 1);
+ const bool at_ceiling_dwell =
+  at_r_max_w3 && (r_old > rmin_w3 * (1.0 + 1e-6))
   && (rmax_dwell_w3 >= kNoImproveResistanceLimit);
- if(w3d_rmax_overshoot)
+ bool escaped_rmax_this_call = false;
+ const double rmax_escape_step =
+  std::max(kMidbandRminStep, kResistanceSettleRatio);
+
+ // W3d: overshoot + room to grow L (UNCHANGED semantics vs W3d commit).
+ if(at_ceiling_dwell && (dt < -eps) && (L_w3 < maxL_w3))
  {
   if(num < int(RmaxDwellCount.size()))
    RmaxDwellCount[static_cast<size_t>(num)] = kNoImproveResistanceLimit;
   ResistanceStatus[num] = 1;
   if(DendStatus[num] < 0)
    DendStatus[num] = 0;
-  const int L = (num < int(DendriteLength.size())) ? DendriteLength[num] : 0;
-  const int maxL = MaxDendriteLength.GetData();
   int &cooldown = RmaxOvershootLengthCooldown[static_cast<size_t>(num)];
   cooldown++;
-  if(L < maxL && cooldown >= kRmaxOvershootLengthCooldown)
+  if(cooldown >= kRmaxOvershootLengthCooldown)
   {
    if(num < int(DendBestEffortSynced.size()))
     DendBestEffortSynced[static_cast<size_t>(num)] = false;
@@ -838,7 +848,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
    {
     std::ostringstream oss;
     oss << "AmpDtAudit RmaxOvershoot→length+ dt<0: num=" << num
-        << " dt=" << dt << " L=" << L << " R=" << r_old
+        << " dt=" << dt << " L=" << L_w3 << " R=" << r_old
         << " ready=" << (ready_for_r_tune ? 1 : 0)
         << " lastAbsDt="
         << ((num < int(DendLastAbsDt.size()))
@@ -855,11 +865,51 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
        << " ready=" << (ready_for_r_tune ? 1 : 0);
    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
   }
+  escaped_rmax_this_call = true;
  }
- 
+ // Overshoot @Rmax with L exhausted: HOLD TipR (anti-bounce; no paced down).
+ else if(at_ceiling_dwell && (dt < -eps) && (L_w3 >= maxL_w3))
+ {
+  if(num < int(RmaxDwellCount.size()))
+   RmaxDwellCount[static_cast<size_t>(num)] = kNoImproveResistanceLimit;
+  ResistanceStatus[num] = 1;
+  escaped_rmax_this_call = true;
+  if(EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "AmpDtAudit RmaxMaxL hold dt<0 (no TipR step): num=" << num
+       << " dt=" << dt << " L=" << L_w3 << " R=" << r_old;
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
+ }
+ // W3e: undershoot @Rmax without ready_for_r_tune (primary D-escape after length).
+ // Min-L guard: keep asym50 hit TipR@Rmax at L~49 (fires regression); D stuck L≳80.
+ else if(at_ceiling_dwell && (dt >= 0.0) && !pending_grow_w3 && (DendStatus[num] == 0)
+         && (L_w3 >= (maxL_w3 * kRmaxUndershootMinLengthFactorNum)
+                        / kRmaxUndershootMinLengthFactorDen))
+ {
+  const double r_new = ClampResistance(r_old * (1.0 - rmax_escape_step));
+  ApplyComputedResistance(num, r_old, r_new, kResistanceAdjustGainDefault);
+  if(num < int(RmaxDwellCount.size()))
+   RmaxDwellCount[static_cast<size_t>(num)] = 0;
+  if(num < int(NoImproveResistanceCount.size()))
+   NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+  ResistanceStatus[num] = 1;
+  escaped_rmax_this_call = true;
+  if(EnableDebug.GetData() && RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "AmpDtAudit RmaxUndershoot→down dt>=0 (pre-ready): num=" << num
+       << " dt=" << dt << " L=" << L_w3
+       << " R " << r_old << " -> " << r_new
+       << " ready=" << (ready_for_r_tune ? 1 : 0);
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+  }
+ }
+
  if(!ready_for_r_tune)
  {
-  if(!w3d_rmax_overshoot)
+  if(!escaped_rmax_this_call)
    ResistanceStatus[num] = (fabs(dt) > eps) ? 1 : 0;
  }
  else if(same_pattern && (fabs(dt) <= eps))
@@ -926,8 +976,10 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
    ResistanceStatus[num] = 1;
   }
   // W3: leave prolonged ResistanceMax dwell only on undershoot (dt>=0).
-  // Overshoot at Rmax (dt<0) is handled by W3d above (independent of ready).
-  else if(rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
+  // Skip if W3e already stepped TipR this Finish (avoid double down-step).
+  // Overshoot at Rmax is handled by W3d/W3f above (independent of ready).
+  else if(!escaped_rmax_this_call
+          && rmax_dwell >= kNoImproveResistanceLimit && r_old > rmin * (1.0 + 1e-6)
           && dt >= 0.0)
   {
    const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
@@ -947,9 +999,9 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
    }
   }
-  else if(w3d_rmax_overshoot)
+  else if(escaped_rmax_this_call)
   {
-   // Overshoot escape already armed this call; skip R steps.
+   // W3d/W3e/W3f already handled TipR@Rmax this call; skip R steps.
   }
   else
   {

@@ -477,6 +477,11 @@ protected:
 
  /// Amp hold-entries at Rmax overshoot between forced +1 length steps (W3c).
  static constexpr int kRmaxOvershootLengthCooldown = kNoImproveResistanceLimit;
+
+ /// W3e pre-ready TipR@Rmax undershoot down-step only after length has already
+ /// grown (keep asym50 hit Rmax at L~49 and regressed fires; D stuck at L≳80).
+ static constexpr int kRmaxUndershootMinLengthFactorNum = 1;
+ static constexpr int kRmaxUndershootMinLengthFactorDen = 2;
  
  /// |Initial-MaxAmp| above this skips damped-P (pathological amp); named for W2.
  static constexpr double kPathologicalAmpDt = 5.0;

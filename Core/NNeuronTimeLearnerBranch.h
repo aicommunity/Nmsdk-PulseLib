@@ -487,6 +487,10 @@ protected:
 
  /// Amp hold-entries at Rmax overshoot between forced +1 length steps (W3c).
  static constexpr int kRmaxOvershootLengthCooldown = kNoImproveResistanceLimit;
+
+ /// W3e pre-ready TipR@Rmax undershoot: min L vs MaxL (twin of base; keep guard).
+ static constexpr int kRmaxUndershootMinLengthFactorNum = 1;
+ static constexpr int kRmaxUndershootMinLengthFactorDen = 2;
  
  static constexpr double kPathologicalAmpDt = 5.0;
  
