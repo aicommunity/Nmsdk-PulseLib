@@ -4236,9 +4236,15 @@ bool NNeuronTimeLearnerBranch::EndOfLearning(void)
    const int no_imp = (i < int(NoImproveResistanceCount.size()))
     ? NoImproveResistanceCount[static_cast<size_t>(i)] : -1;
    const int pulse_ok = (i < int(PulseSynced.size()) && PulseSynced[static_cast<size_t>(i)]) ? 1 : 0;
+   const int peak_seen = (i < int(PeakSeen.size()) && PeakSeen[i]) ? 1 : 0;
+   const int best_effort = (i < int(DendBestEffortSynced.size())
+    && DendBestEffortSynced[static_cast<size_t>(i)]) ? 1 : 0;
+   const int soma_ok = (i < int(SomaPeakValid.size()) && SomaPeakValid[i]) ? 1 : 0;
    oss << " | d" << i << " TipR=" << tip << " dt=" << dt
        << " LastAbsDt=" << last_dt << " ResSt=" << res_st
-       << " NoImp=" << no_imp << " PulseSynced=" << pulse_ok;
+       << " NoImp=" << no_imp << " PulseSynced=" << pulse_ok
+       << " PeakSeen=" << peak_seen << " BestEffort=" << best_effort
+       << " SomaPeakValid=" << soma_ok;
   }
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
  }
