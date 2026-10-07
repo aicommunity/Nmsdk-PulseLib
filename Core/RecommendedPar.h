@@ -2,13 +2,15 @@
 #include <vector>
 #include <optional>
 
-struct GetRecParam
+struct GetRecParam  // убрать глаголы
 {
+    std::vector<double> peakErr; // Оценка расогласования расчитывается от внесённых параметров
+
     std::vector<double> recomDendriteLength;
     std::vector<double> recom_T;
 };
 
-struct PushParam
+struct PushParam    // убрать глаголы
 {
     std::optional<double> tau;
 
@@ -16,8 +18,8 @@ struct PushParam
 
     std::optional<double> R;
     std::optional<double> C;
-
     std::optional<double> T;
-
     std::optional<std::vector<double>> vectorT;
+
+    std::optional<std::vector<double>> dendriteLength;
 };
