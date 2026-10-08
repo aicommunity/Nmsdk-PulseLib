@@ -146,8 +146,8 @@ public:
  /// Reference tip synapse resistance at L==1 (typically 8.6e7)
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SynapseResistanceBase;
  
- /// Lower bound for tip Resistance in parametric mode
- UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> ResistanceMin;
+ /// Effective lower bound for tip Resistance, derived from target membrane resistance
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubState> ResistanceMin;
  
  /// Effective upper bound for tip Resistance, derived from target membrane resistance
  UProperty<double, NNeuronTimeLearnerBranch, ptPubState> ResistanceMax;
@@ -708,8 +708,6 @@ public: // Methods
  bool SetSynapseResistanceBase(const double &value);
  
  /// Lower bound for tip Resistance (parametric)
- bool SetResistanceMin(const double &value);
-
  /// Ratio Rs/Rm used to derive the observable ResistanceMax state
  bool SetMaxSynapseToMembraneResistanceRatio(const double &value);
 
@@ -790,7 +788,7 @@ protected:
   bool BuildStructure();
 
   /// Parametric-only Rm-derived limit and cold-start initialization helpers
-  bool UpdateResistanceMaxFromMembranes(void);
+  bool UpdateResistanceBoundsFromMembranes(void);
   double GetTargetMembraneResistance(int pulse_index0) const;
   bool InitializeColdTipResistancesFromMembranes(void);
   bool CheckResistanceLimitFailure(void);

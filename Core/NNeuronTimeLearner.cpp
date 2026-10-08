@@ -209,40 +209,50 @@ double NNeuronTimeLearner::GetTargetMembraneResistance(int dendrite_index0) cons
  return std::isfinite(resistance) && resistance > 0.0 ? resistance : 0.0;
 }
 
-/// Derive the global synaptic R ceiling from the most restrictive target Rm.
-bool NNeuronTimeLearner::UpdateResistanceMaxFromMembranes(void)
+/// Derive one global synaptic R interval from the target membrane resistances.
+/// The upper bound uses the smallest Rm and the lower bound the largest Rm.
+/// Both use the same configured ratio as reciprocal limits around Rm.
+bool NNeuronTimeLearner::UpdateResistanceBoundsFromMembranes(void)
 {
  if(!Neuron)
   return false;
 
  double min_membrane_r = std::numeric_limits<double>::max();
+ double max_membrane_r = 0.0;
  const int target_count = std::max(0, NumInputDendrite.GetData() - 1);
  for(int i = 0; i < target_count; ++i)
  {
   const double candidate = GetTargetMembraneResistance(i);
   if(std::isfinite(candidate) && candidate > 0.0)
+  {
    min_membrane_r = std::min(min_membrane_r, candidate);
+   max_membrane_r = std::max(max_membrane_r, candidate);
+  }
  }
 
  if(min_membrane_r == std::numeric_limits<double>::max())
  {
   if(RDK::GetLogger())
    RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
-    "ResistanceMax could not be derived: no positive NPulseChannel membrane resistance was found");
+    "Resistance bounds could not be derived: no positive NPulseChannel membrane resistance was found");
   return false;
  }
 
- const double ratio = MaxSynapseToMembraneResistanceRatio.GetData();
- if(!std::isfinite(ratio) || ratio <= 0.0)
+ const double max_ratio = MaxSynapseToMembraneResistanceRatio.GetData();
+ if(!std::isfinite(max_ratio) || max_ratio < 1.0)
   return false;
- const double derived_max = min_membrane_r * ratio;
- if(!std::isfinite(derived_max) || derived_max < ResistanceMin.GetData())
+ const double min_ratio = 1.0 / max_ratio;
+ const double derived_min = max_membrane_r / max_ratio;
+ const double derived_max = min_membrane_r * max_ratio;
+ if(!std::isfinite(derived_min) || !std::isfinite(derived_max)
+    || derived_min <= 0.0 || derived_max < derived_min)
  {
   if(RDK::GetLogger())
    RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
-    "ResistanceMax is below ResistanceMin; Rs/Rm bounds do not overlap");
+    "Derived ResistanceMin exceeds ResistanceMax; Rs/Rm bounds do not overlap");
   return false;
  }
+ ResistanceMin.SetDataDirect(derived_min);
  ResistanceMax.SetDataDirect(derived_max);
 
  // Loading a legacy Parameters_00.xml may still provide the former fixed value.
@@ -262,9 +272,12 @@ bool NNeuronTimeLearner::UpdateResistanceMaxFromMembranes(void)
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
-  oss << "ResistanceMax derived=" << derived_max
+  oss << "ResistanceBounds derived_min=" << derived_min
+      << " derived_max=" << derived_max
       << " minimum_target_membrane_R=" << min_membrane_r
-      << " ratio=" << ratio;
+      << " maximum_target_membrane_R=" << max_membrane_r
+      << " min_ratio=" << min_ratio
+      << " max_ratio=" << max_ratio;
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
  }
  return true;
@@ -530,7 +543,9 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";sync_tol=" << SyncTolerance.GetData()
         << ";amp_eps=" << kAmpNormEps
         << ";normalization_mode=" << NormalizationMode.GetData()
+        << ";rmin=" << ResistanceMin.GetData()
         << ";rmax=" << ResistanceMax.GetData()
+        << ";rs_rm_min=" << (1.0 / MaxSynapseToMembraneResistanceRatio.GetData())
         << ";rs_rm_limit=" << MaxSynapseToMembraneResistanceRatio.GetData()
         << ";rs_rm_initial=" << InitialSynapseToMembraneResistanceRatio.GetData()
         << ";w3_length_escape=" << (EnableRmaxLengthEscape.GetData() ? 1 : 0)
@@ -1760,7 +1775,7 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  SynapseResistanceStep("SynapseResistanceStep", this, &NNeuronTimeLearner::SetSynapseResistanceStep),
  NormalizationMode("NormalizationMode", this, &NNeuronTimeLearner::SetNormalizationMode),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
- ResistanceMin("ResistanceMin", this, &NNeuronTimeLearner::SetResistanceMin),
+ ResistanceMin("ResistanceMin", this),
 ResistanceMax("ResistanceMax", this),
 EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  MaxSynapseToMembraneResistanceRatio("MaxSynapseToMembraneResistanceRatio", this,
@@ -2265,11 +2280,14 @@ bool NNeuronTimeLearner::SetNormalizationMode(const int &value)
 {
  if(value != kNormStructural && value != kNormParametric)
   return false;
- // ResistanceMax is meaningful only while training tip resistance. A model
+ // Resistance bounds are meaningful only while training tip resistance. A model
  // built in the default parametric mode can be switched to structural mode
  // before its next Build; do not leave that derived parametric state visible.
  if(value == kNormStructural)
+ {
+  ResistanceMin.SetDataDirect(0.0);
   ResistanceMax.SetDataDirect(0.0);
+ }
  if(value == kNormParametric && Neuron)
  {
   std::vector<double> tips = TipSynapseResistance.GetData();
@@ -2313,36 +2331,10 @@ bool NNeuronTimeLearner::SetSynapseResistanceBase(const double &value)
  return true;
 }
 
-/// Lower bound for tip Resistance (parametric)
-bool NNeuronTimeLearner::SetResistanceMin(const double &value)
-{
- if(value <= 0.0)
-  return false;
- bool has_live_target_membrane = false;
- if(Neuron && IsParametricNormalization())
-  for(int i = 0; i < std::max(0, NumInputDendrite.GetData() - 1); ++i)
-   if(GetTargetMembraneResistance(i) > 0.0)
-   {
-    has_live_target_membrane = true;
-    break;
-   }
- if(has_live_target_membrane)
- {
-  const double previous = ResistanceMin.GetData();
-  ResistanceMin.SetDataDirect(value);
-  if(!UpdateResistanceMaxFromMembranes())
-  {
-   ResistanceMin.SetDataDirect(previous);
-   return false;
-  }
- }
- return true;
-}
-
 /// Validate the configured upper Rs/Rm limit used to compute ResistanceMax.
 bool NNeuronTimeLearner::SetMaxSynapseToMembraneResistanceRatio(const double &value)
 {
- if(!std::isfinite(value) || value <= 0.0)
+ if(!std::isfinite(value) || value < 1.0)
   return false;
  bool has_live_target_membrane = false;
  if(Neuron && IsParametricNormalization())
@@ -2356,7 +2348,7 @@ bool NNeuronTimeLearner::SetMaxSynapseToMembraneResistanceRatio(const double &va
  {
   const double previous = MaxSynapseToMembraneResistanceRatio.GetData();
   MaxSynapseToMembraneResistanceRatio.SetDataDirect(value);
-  if(!UpdateResistanceMaxFromMembranes())
+  if(!UpdateResistanceBoundsFromMembranes())
   {
    MaxSynapseToMembraneResistanceRatio.SetDataDirect(previous);
    return false;
@@ -2641,7 +2633,7 @@ bool NNeuronTimeLearner::BuildStructure()
   return false;
  }
  Neuron->Reset();
- if(IsParametricNormalization() && !UpdateResistanceMaxFromMembranes())
+ if(IsParametricNormalization() && !UpdateResistanceBoundsFromMembranes())
   return false;
  
  if(EnableDebug.GetData() && RDK::GetLogger())
@@ -3008,7 +3000,7 @@ bool NNeuronTimeLearner::ADefault(void)
  SynapseResistanceStep = 1.0e9;
  NormalizationMode = kNormParametric;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
- ResistanceMin = 1.0e6;
+ ResistanceMin.SetDataDirect(1.0e6);
  ResistanceMax.SetDataDirect(0.0);
  EnableRmaxLengthEscape = false;
  MaxSynapseToMembraneResistanceRatio = 1000.0;
@@ -3104,11 +3096,14 @@ bool NNeuronTimeLearner::ABuild(void)
  }
  if(IsParametricNormalization())
  {
-  if(Neuron && !UpdateResistanceMaxFromMembranes())
+  if(Neuron && !UpdateResistanceBoundsFromMembranes())
    return false;
  }
  else
+ {
+  ResistanceMin.SetDataDirect(0.0);
   ResistanceMax.SetDataDirect(0.0);
+ }
  // TipR-only Train left silent FixedLTZ: hold Dataset until inference mid runs
  // (parity with NNeuronTimeLearnerBranch::ABuild).
  if(!IsNeedToTrain.GetData()
@@ -3495,7 +3490,7 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
  
  Neuron->Reset();
  Neuron->InvalidateActiveComponentsCache();
- if(IsParametricNormalization() && !UpdateResistanceMaxFromMembranes())
+ if(IsParametricNormalization() && !UpdateResistanceBoundsFromMembranes())
   return false;
  
  for(int d = 0; d < NumInputDendrite; ++d)
@@ -4433,9 +4428,6 @@ void NNeuronTimeLearner::ApplyPostTrainTipMode(bool use_snapshot_only)
  const int mode = PostTrainTipResistanceMode.GetData();
  const double floor_r = TipResistanceCanonFloor.GetData();
  const double last_r = TipResistanceCanonLast.GetData();
-
- if(ResistanceMin.GetData() < floor_r)
-  ResistanceMin.SetDataDirect(floor_r);
 
  std::vector<double> tips;
  if(use_snapshot_only || mode == PostTrainTune::kPostTipKeepDone
