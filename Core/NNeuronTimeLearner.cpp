@@ -2265,6 +2265,11 @@ bool NNeuronTimeLearner::SetNormalizationMode(const int &value)
 {
  if(value != kNormStructural && value != kNormParametric)
   return false;
+ // ResistanceMax is meaningful only while training tip resistance. A model
+ // built in the default parametric mode can be switched to structural mode
+ // before its next Build; do not leave that derived parametric state visible.
+ if(value == kNormStructural)
+  ResistanceMax.SetDataDirect(0.0);
  if(value == kNormParametric && Neuron)
  {
   std::vector<double> tips = TipSynapseResistance.GetData();
