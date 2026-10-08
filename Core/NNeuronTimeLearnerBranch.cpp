@@ -3488,8 +3488,13 @@ bool NNeuronTimeLearnerBranch::ABuild(void)
   if(!res)
    return false;
  }
- if(IsParametricNormalization() && Neuron && !UpdateResistanceMaxFromMembranes())
-  return false;
+ if(IsParametricNormalization())
+ {
+  if(Neuron && !UpdateResistanceMaxFromMembranes())
+   return false;
+ }
+ else
+  ResistanceMax.SetDataDirect(0.0);
  // TipR-only Train left silent FixedLTZ: hold Dataset until inference mid runs.
  if(!IsNeedToTrain.GetData()
     && EnablePostTrainTuning.GetData()
