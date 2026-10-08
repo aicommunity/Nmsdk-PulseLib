@@ -974,6 +974,10 @@ protected:
  
  /// Publish AmpDt / TipR / length traces for watchers
  void UpdateNormTraces(void);
+
+ /// Append a read-only per-burst diagnostic record when EnableDebug is set.
+ void AppendTrainingIterationAudit(const std::vector<int> &lengths_before,
+                                   const char *kind = "iteration");
  
  /// Recognition pass over patterns from input file
  bool PatternRecognition(void);

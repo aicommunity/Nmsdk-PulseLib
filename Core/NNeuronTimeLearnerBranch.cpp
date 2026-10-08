@@ -382,6 +382,87 @@ void NNeuronTimeLearnerBranch::UpdateNormTraces(void)
  StimulusIterTrace = iter_m;
 }
 
+/// Persist read-only training evidence beside the active Train project.
+void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<int> &lengths_before,
+                                                           const char *kind)
+{
+ if(!EnableDebug.GetData() || !Environment)
+  return;
+
+ std::string data_dir = Environment->GetCurrentDataDir();
+ if(data_dir.empty())
+  return;
+ if(data_dir.back() != '/' && data_dir.back() != '\\')
+  data_dir.push_back('/');
+
+ std::ostringstream record;
+ record.precision(17);
+ record << "schema=1;kind=" << (kind ? kind : "iteration")
+        << ";trainer=branch;iter=" << CountIteration
+        << ";phase=" << TrainingPhase.GetData()
+        << ";need=" << (IsNeedToTrain.GetData() ? 1 : 0)
+        << ";active_dendrite=" << ActiveDendrite
+        << ";active_pulse=" << ActivePulseIndex
+        << ";pulse_index=" << PulseIndexInIter
+        << ";eol_sync=" << (AllDendritesSynced() ? 1 : 0)
+        << ";eol_amp=" << (AllSynapsesNormalized() ? 1 : 0)
+        << ";sync_tol=" << SyncTolerance.GetData()
+        << ";amp_eps=" << kAmpNormEps
+        << ";last_length_delta=" << LastLengthDelta
+        << ";last_length_dendrite=" << LastLengthDeltaDendrite;
+
+ std::vector<double> amp_dt;
+ const size_t n = std::max(InitialSomaPotential.size(), MaxIterSomaAmp.size());
+ amp_dt.reserve(n);
+ for(size_t i = 0; i < n; ++i)
+ {
+  const double initial = i < InitialSomaPotential.size() ? InitialSomaPotential[i] : 0.0;
+  const double amp = i < MaxIterSomaAmp.size() ? MaxIterSomaAmp[i] : 0.0;
+  amp_dt.push_back(initial - amp);
+ }
+
+ const auto append_vector = [&record](const char *name, const auto &values)
+ {
+  record << ';' << name << "=[";
+  for(size_t i = 0; i < values.size(); ++i)
+  {
+   if(i) record << ',';
+   record << values[i];
+  }
+  record << ']';
+ };
+ append_vector("peak_amp", MaxIterSomaAmp);
+ append_vector("peak_time", TimeOfMaxIterSomaAmp);
+ append_vector("peak_seen", PeakSeen);
+ append_vector("peak_valid", SomaPeakValid);
+ append_vector("peak_locked", PeakLocked);
+ append_vector("initial_amp", InitialSomaPotential.GetData());
+ append_vector("amp_dt", amp_dt);
+ append_vector("tip_r", TipSynapseResistance.GetData());
+ append_vector("res_status", ResistanceStatus);
+ append_vector("res_no_improve", NoImproveResistanceCount);
+ append_vector("effective_gain", EffectiveResistanceGain);
+ append_vector("length_before", lengths_before);
+ append_vector("length_after", DendriteLength.GetData());
+ append_vector("length_status", DendStatus);
+ append_vector("synapse_status", SynapseStatus);
+ append_vector("num_synapse", NumSynapse.GetData());
+ append_vector("last_abs_dt", DendLastAbsDt);
+ append_vector("best_effort", DendBestEffortSynced);
+ append_vector("pulse_synced", PulseSynced);
+ append_vector("stored_peak_rel", StoredPeakRel);
+ append_vector("peak_rel", PeakRel);
+ append_vector("delay_from_pulse", DelayFromPulse);
+ append_vector("expected_pulse_rel", ExpectedPulseRelTimes);
+ append_vector("prev_peak_valid", PrevPeakValid);
+ append_vector("prev_peak_rel", PrevPeakRel);
+ append_vector("prev_delay_from_pulse", PrevDelayFromPulse);
+
+ std::ofstream audit((data_dir + "TimeLearnerTrainingAudit.log").c_str(), std::ios::out | std::ios::app);
+ if(audit)
+  audit << record.str() << '\n';
+}
+
 /// True when every dendrite length is <= 1 (cold / untrained topology)
 bool NNeuronTimeLearnerBranch::StructureLooksUntrained(const std::vector<int> &lengths) const
 {
@@ -2081,7 +2162,9 @@ bool NNeuronTimeLearnerBranch::ResetToUntrained(void)
  }
  
  Ready = false;
- return BuildStructure();
+ const bool build_ok = BuildStructure();
+ AppendTrainingIterationAudit(DendriteLength.GetData(), "reset");
+ return build_ok;
 }
 
 /// Set active LTZone threshold on the neuron
@@ -5448,6 +5531,7 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
   WaitingPeakAfterLastPulse = false;
   IsFirstBeat = true;
   UpdateNormTraces();
+  AppendTrainingIterationAudit(DendriteLength.GetData());
   CountIteration++;
   return;
  }
@@ -5463,6 +5547,7 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
   WaitingPeakAfterLastPulse = false;
   IsFirstBeat = true;
   UpdateNormTraces();
+  AppendTrainingIterationAudit(DendriteLength.GetData());
   CountIteration++;
   return;
  }
@@ -5668,6 +5753,7 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
  }
  
  // Apply length then synapses in one inter-burst gap (tip after Build/relink).
+ const std::vector<int> audit_lengths_before = DendriteLength.GetData();
  if(TrainingPhase != kPhaseDone && IsNeedToTrain && CanChangeDendLength)
   ApplyPendingDendriteLengthChanges();
  if(TrainingPhase != kPhaseDone && IsNeedToTrain)
@@ -5753,6 +5839,7 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
  IsFirstBeat = true;
  
  UpdateNormTraces();
+ AppendTrainingIterationAudit(audit_lengths_before);
  CountIteration++;
  
  if(!CalculateMode)
