@@ -28,6 +28,7 @@ See file license.txt for more information
 #include "NNeuronTimeLearner.h"
 #include "NNeuronPostTrainTune.h"
 #include "NPatternResponseAnalyzer.h"
+#include "NPulseChannel.h"
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseLTZoneCommon.h"
 #include "../../Rdk/Deploy/Include/rdk_cpp_init.h"
@@ -55,6 +56,9 @@ const int kPhaseSync = 0;
 const int kPhaseNormalize = 1;
 const int kPhaseDone = 2;
 const int kPhasePostTune = 3;
+const int kPhaseFailed = 4;
+const int kFailureNone = 0;
+const int kFailureResistanceMax = 1;
 }
 
 /// Storage path of the DatasetMatrix generator
@@ -173,11 +177,213 @@ double NNeuronTimeLearner::ClampResistance(double r) const
 {
  const double rmin = ResistanceMin.GetData();
  const double rmax = ResistanceMax.GetData();
+ if(rmax <= 0.0)
+  return std::max(r, rmin); // before topology build, no derived upper bound exists yet
  if(r < rmin)
   return rmin;
  if(r > rmax)
   return rmax;
  return r;
+}
+
+/// Effective membrane resistance used by the excitatory channel at its target.
+/// FBResistance is deliberately excluded: it is used during feedback recharge,
+/// not as the resting membrane resistance Rm in the synapse/membrane ratio.
+double NNeuronTimeLearner::GetTargetMembraneResistance(int dendrite_index0) const
+{
+ if(!Neuron || dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite.GetData())
+  return 0.0;
+ const int length = dendrite_index0 < int(DendriteLength.size())
+  ? std::max(1, DendriteLength[static_cast<size_t>(dendrite_index0)]) : 1;
+ UEPtr<NPulseMembrane> membrane = Neuron->GetComponentL<NPulseMembrane>(
+  MakeLearnerDendriteName(dendrite_index0 + 1, length), true);
+ if(!membrane || membrane->GetNumPosChannels() == 0)
+  return 0.0;
+ NPulseChannel *channel = dynamic_cast<NPulseChannel*>(membrane->GetPosChannel(0));
+ if(!channel)
+  return 0.0;
+ const double resting = channel->RestingResistance.GetData();
+ if(std::isfinite(resting) && resting > 0.0)
+  return resting;
+ const double resistance = channel->Resistance.GetData();
+ return std::isfinite(resistance) && resistance > 0.0 ? resistance : 0.0;
+}
+
+/// Derive the global synaptic R ceiling from the most restrictive target Rm.
+bool NNeuronTimeLearner::UpdateResistanceMaxFromMembranes(void)
+{
+ if(!Neuron)
+  return false;
+
+ double min_membrane_r = std::numeric_limits<double>::max();
+ const int target_count = std::max(0, NumInputDendrite.GetData() - 1);
+ for(int i = 0; i < target_count; ++i)
+ {
+  const double candidate = GetTargetMembraneResistance(i);
+  if(std::isfinite(candidate) && candidate > 0.0)
+   min_membrane_r = std::min(min_membrane_r, candidate);
+ }
+
+ if(min_membrane_r == std::numeric_limits<double>::max())
+ {
+  if(RDK::GetLogger())
+   RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
+    "ResistanceMax could not be derived: no positive NPulseChannel membrane resistance was found");
+  return false;
+ }
+
+ const double ratio = MaxSynapseToMembraneResistanceRatio.GetData();
+ if(!std::isfinite(ratio) || ratio <= 0.0)
+  return false;
+ const double derived_max = min_membrane_r * ratio;
+ if(!std::isfinite(derived_max) || derived_max < ResistanceMin.GetData())
+ {
+  if(RDK::GetLogger())
+   RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
+    "ResistanceMax is below ResistanceMin; Rs/Rm bounds do not overlap");
+  return false;
+ }
+ ResistanceMax.SetDataDirect(derived_max);
+
+ // Loading a legacy Parameters_00.xml may still provide the former fixed value.
+ // Clamp its saved tips only after the live membrane topology supplies the new cap.
+ if(IsParametricNormalization())
+ {
+  std::vector<double> tips = TipSynapseResistance.GetData();
+  for(int i = 0; i < target_count && i < int(tips.size()); ++i)
+  {
+   tips[static_cast<size_t>(i)] = ClampResistance(tips[static_cast<size_t>(i)]);
+   if(NPulseSynapseCommon *synapse = GetTipSynapse(i))
+    synapse->Resistance = tips[static_cast<size_t>(i)];
+  }
+  TipSynapseResistance.SetDataDirect(tips);
+ }
+
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "ResistanceMax derived=" << derived_max
+      << " minimum_target_membrane_R=" << min_membrane_r
+      << " ratio=" << ratio;
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
+ return true;
+}
+
+/// Initialize only a cold training start; later training state remains untouched.
+bool NNeuronTimeLearner::InitializeColdTipResistancesFromMembranes(void)
+{
+ if(!IsParametricNormalization())
+  return true;
+ if(!Neuron)
+  return false;
+ const double ratio = InitialSynapseToMembraneResistanceRatio.GetData();
+ if(!std::isfinite(ratio) || ratio <= 0.0)
+  return false;
+
+ const int target_count = std::max(0, NumInputDendrite.GetData() - 1);
+ std::vector<double> tips = TipSynapseResistance.GetData();
+ if(tips.size() != static_cast<size_t>(NumInputDendrite.GetData()))
+  tips.resize(static_cast<size_t>(NumInputDendrite.GetData()), SynapseResistanceBase.GetData());
+ for(int i = 0; i < target_count; ++i)
+ {
+  const double rm = GetTargetMembraneResistance(i);
+  if(!std::isfinite(rm) || rm <= 0.0)
+  {
+   if(RDK::GetLogger())
+    RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
+     "Cold Rs initialization failed: target membrane Rm is unavailable");
+   return false;
+  }
+  const double initial_r = ClampResistance(rm * ratio);
+  if(!std::isfinite(initial_r) || initial_r <= 0.0
+     || !SetTipSynapseResistanceOnComponent(i, initial_r))
+   return false;
+  tips[static_cast<size_t>(i)] = initial_r;
+ }
+ TipSynapseResistance.SetDataDirect(tips);
+
+ // Keep the configured structural/fallback baseline untouched; only the live
+ // parametric tip values are initialized from Rm. Recapture the amp anchor.
+ InitialSomaPotential.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0.0);
+ UntrainedTipSynapseResistance = tips;
+
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "ColdTipResistanceInit: initial_Rs_Rm=" << ratio
+      << " tip_R=[";
+  for(int i = 0; i < target_count; ++i)
+  {
+   if(i) oss << ',';
+   oss << tips[static_cast<size_t>(i)];
+  }
+  oss << "] Rm=[";
+  for(int i = 0; i < target_count; ++i)
+  {
+   if(i) oss << ',';
+   oss << GetTargetMembraneResistance(i);
+  }
+  oss << "]";
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
+ }
+ return true;
+}
+
+/// Stop this training attempt when unresolved overshoot requires resistance beyond Rmax.
+bool NNeuronTimeLearner::CheckResistanceLimitFailure(void)
+{
+ if(!IsNeedToTrain.GetData() || TrainingPhase.GetData() == kPhaseDone
+    || TrainingPhase.GetData() == kPhasePostTune || !IsParametricNormalization())
+  return false;
+ // A capped amplitude cannot be judged until the independent timing objective
+ // has settled. Otherwise the pending length adjustment could still change it.
+ if(!AllDendritesSynced())
+  return false;
+
+ const double rmax = ResistanceMax.GetData();
+ if(rmax <= 0.0)
+  return false;
+ const int target_count = std::max(0, NumInputDendrite.GetData() - 1);
+ for(int i = 0; i < target_count; ++i)
+ {
+  if(i >= int(SomaPeakValid.size()) || !SomaPeakValid[static_cast<size_t>(i)]
+     || i >= int(InitialSomaPotential.size()) || i >= int(MaxIterSomaAmp.size()))
+   continue;
+  const double dt = InitialSomaPotential[static_cast<size_t>(i)]
+   - MaxIterSomaAmp[static_cast<size_t>(i)];
+  if(dt >= -kAmpNormEps)
+   continue;
+
+  double tip_r = i < int(TipSynapseResistance.size())
+   ? TipSynapseResistance[static_cast<size_t>(i)] : 0.0;
+  if(NPulseSynapseCommon *synapse = GetTipSynapse(i))
+   tip_r = synapse->Resistance.GetData();
+  if(tip_r < rmax * (1.0 - 1e-9))
+   continue;
+
+  const bool length_escape_exhausted = !EnableRmaxLengthEscape.GetData()
+   || (i < int(DendriteLength.size())
+       && DendriteLength[static_cast<size_t>(i)] >= MaxDendriteLength.GetData());
+  if(!length_escape_exhausted)
+   continue;
+
+  TrainingFailureReason.SetDataDirect(kFailureResistanceMax);
+  TrainingPhase.SetDataDirect(kPhaseFailed);
+  CanChangeDendLength = false;
+  if(RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "Training refused: unresolved amplitude overshoot at ResistanceMax"
+       << " dendrite=" << i << " tip_R=" << tip_r << " Rmax=" << rmax
+       << " amp_dt=" << dt << " length="
+       << (i < int(DendriteLength.size()) ? DendriteLength[static_cast<size_t>(i)] : -1)
+       << " W3=" << (EnableRmaxLengthEscape.GetData() ? 1 : 0);
+   RDK::GetLogger()->LogMessageEx(RDK_EX_WARNING, "NNeuronTimeLearner", oss.str());
+  }
+  return true;
+ }
+ return false;
 }
 
 /// Tip ExcSynapse1 for dendrite/pulse index (0-based)
@@ -323,6 +529,12 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";eol_amp=" << (AllSynapsesNormalized() ? 1 : 0)
         << ";sync_tol=" << SyncTolerance.GetData()
         << ";amp_eps=" << kAmpNormEps
+        << ";normalization_mode=" << NormalizationMode.GetData()
+        << ";rmax=" << ResistanceMax.GetData()
+        << ";rs_rm_limit=" << MaxSynapseToMembraneResistanceRatio.GetData()
+        << ";rs_rm_initial=" << InitialSynapseToMembraneResistanceRatio.GetData()
+        << ";w3_length_escape=" << (EnableRmaxLengthEscape.GetData() ? 1 : 0)
+        << ";failure_reason=" << TrainingFailureReason.GetData()
         << ";last_length_delta=" << LastLengthDelta
         << ";last_length_dendrite=" << LastLengthDeltaDendrite;
 
@@ -752,11 +964,20 @@ void NNeuronTimeLearner::FeedforwardResistanceOnLengthGrow(int dendrite_index0, 
 /// Decide pending parametric R change
 bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
 {
+ if((!IsParametricNormalization() || !EnableRmaxLengthEscape.GetData())
+    && num < int(RmaxOvershootLengthGrow.size())
+    && RmaxOvershootLengthGrow[static_cast<size_t>(num)])
+ {
+  RmaxOvershootLengthGrow[static_cast<size_t>(num)] = false;
+  if(num < int(DendStatus.size()))
+   DendStatus[static_cast<size_t>(num)] = 0;
+ }
  const int dendstatus = DendStatus[num];
  // W3c: forced Rmax-overshoot grow must survive until ApplyPending — do not
  // restore the pre-call DendStatus (usually 0 after FinishTrainingIteration).
  auto restore_dend_status = [&]() {
-  if(num < int(RmaxOvershootLengthGrow.size())
+  if(IsParametricNormalization() && EnableRmaxLengthEscape.GetData()
+     && num < int(RmaxOvershootLengthGrow.size())
      && RmaxOvershootLengthGrow[static_cast<size_t>(num)])
    DendStatus[num] = 1;
   else
@@ -785,7 +1006,8 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  const double rmax_ls = ResistanceMax.GetData();
  const bool at_r_min_ls = (num < int(TipSynapseResistance.size()))
   && (TipSynapseResistance[static_cast<size_t>(num)] <= rmin_ls * (1.0 + 1e-6));
- const bool at_r_max_ls = (rmax_ls > 0.0) && (num < int(TipSynapseResistance.size()))
+ const bool at_r_max_ls = IsParametricNormalization() && EnableRmaxLengthEscape.GetData()
+  && (rmax_ls > 0.0) && (num < int(TipSynapseResistance.size()))
   && (TipSynapseResistance[static_cast<size_t>(num)] >= rmax_ls * (1.0 - 1e-9));
  // Match AmpNorm length_ok: at TipR@Rmin allow SyncTol×kRminLengthTolFactor so
  // overshoot@Rmin can still raise R (fs50 dend2 LastAbsDt~0.004 > tight tol).
@@ -871,13 +1093,21 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  const bool ready_for_r_tune = length_settled && !DendStatus[num];
  const double rmin_w3 = ResistanceMin.GetData();
  const double rmax_w3 = ResistanceMax.GetData();
- const bool at_r_max_w3 = (rmax_w3 > 0.0 && r_old >= rmax_w3 * (1.0 - 1e-9));
+ const bool w3_enabled = IsParametricNormalization() && EnableRmaxLengthEscape.GetData();
+ const bool at_r_max_w3 = w3_enabled
+  && (rmax_w3 > 0.0 && r_old >= rmax_w3 * (1.0 - 1e-9));
  if(int(RmaxDwellCount.size()) != NumInputDendrite.GetData())
   RmaxDwellCount.assign(NumInputDendrite.GetData(), 0);
  if(int(RmaxOvershootLengthGrow.size()) != NumInputDendrite.GetData())
   RmaxOvershootLengthGrow.assign(NumInputDendrite.GetData(), false);
  if(int(RmaxOvershootLengthCooldown.size()) != NumInputDendrite.GetData())
   RmaxOvershootLengthCooldown.assign(NumInputDendrite.GetData(), 0);
+ if(!w3_enabled)
+ {
+  if(num < int(RmaxDwellCount.size())) RmaxDwellCount[static_cast<size_t>(num)] = 0;
+  if(num < int(RmaxOvershootLengthGrow.size())) RmaxOvershootLengthGrow[static_cast<size_t>(num)] = false;
+  if(num < int(RmaxOvershootLengthCooldown.size())) RmaxOvershootLengthCooldown[static_cast<size_t>(num)] = 0;
+ }
  // Track Rmax dwell even when !ready_for_r_tune (W3d needs it for escape).
  if(at_r_max_w3)
  {
@@ -886,7 +1116,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  }
  else if(num < int(RmaxDwellCount.size()))
   RmaxDwellCount[static_cast<size_t>(num)] = 0;
- const int rmax_dwell_w3 = (num < int(RmaxDwellCount.size()))
+ const int rmax_dwell_w3 = w3_enabled && (num < int(RmaxDwellCount.size()))
   ? RmaxDwellCount[static_cast<size_t>(num)] : 0;
  // TipR@Rmax ceiling escapes independent of ready_for_r_tune.
  // Invariants: (1) dt<0 && at_r_max → never TipR-down (hold; length only if L<MaxL);
@@ -1531,7 +1761,12 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  NormalizationMode("NormalizationMode", this, &NNeuronTimeLearner::SetNormalizationMode),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this, &NNeuronTimeLearner::SetResistanceMin),
- ResistanceMax("ResistanceMax", this, &NNeuronTimeLearner::SetResistanceMax),
+ResistanceMax("ResistanceMax", this),
+EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
+ MaxSynapseToMembraneResistanceRatio("MaxSynapseToMembraneResistanceRatio", this,
+  &NNeuronTimeLearner::SetMaxSynapseToMembraneResistanceRatio),
+ InitialSynapseToMembraneResistanceRatio("InitialSynapseToMembraneResistanceRatio", this,
+  &NNeuronTimeLearner::SetInitialSynapseToMembraneResistanceRatio),
  AttenuationGamma("AttenuationGamma", this, &NNeuronTimeLearner::SetAttenuationGamma),
  ResistanceAdjustGain("ResistanceAdjustGain", this, &NNeuronTimeLearner::SetResistanceAdjustGain),
  TipSynapseResistance("TipSynapseResistance", this, &NNeuronTimeLearner::SetTipSynapseResistance),
@@ -1545,6 +1780,7 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  DelayAgreeMarginMin("DelayAgreeMarginMin", this, &NNeuronTimeLearner::SetDelayAgreeMarginMin),
  EstDelayPerSeg("EstDelayPerSeg", this, &NNeuronTimeLearner::SetEstDelayPerSeg),
  TrainingPhase("TrainingPhase", this),
+ TrainingFailureReason("TrainingFailureReason", this),
  ResetToUntrainedState("ResetToUntrainedState", this, &NNeuronTimeLearner::SetResetToUntrainedState),
  ExperimentNum("ExperimentNum", this, &NNeuronTimeLearner::SetExperimentNum),
  ExperimentMode("ExperimentMode", this, &NNeuronTimeLearner::SetExperimentMode),
@@ -1693,6 +1929,7 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
  // Prefer setter path for LTZ; SetDataDirect(true) alone left FixedLTZ on the
  // membrane and the neuron fired through the whole training run.
  TrainingPhase.SetDataDirect(kPhaseSync);
+ TrainingFailureReason.SetDataDirect(kFailureNone);
  IsNeedToTrain.SetDataDirect(true);
  ApplyActiveLtzThreshold();
  OldDendriteLength = DendriteLength.GetData();
@@ -1748,8 +1985,10 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
  
  Ready = false;
  const bool build_ok = BuildStructure();
+ if(!build_ok || !InitializeColdTipResistancesFromMembranes())
+  return false;
  AppendTrainingIterationAudit(DendriteLength.GetData(), "reset");
- return build_ok;
+ return true;
 }
 
 /// Set active LTZone threshold on the neuron
@@ -1791,6 +2030,7 @@ bool NNeuronTimeLearner::SetIsNeedToTrain(const bool &value)
  if(value)
  {
   TrainingPhase = kPhaseSync;
+  TrainingFailureReason = kFailureNone;
   CanChangeDendLength = true;
   HasPrevPeakSnapshot = false;
   PostTrainTuneComplete = false;
@@ -2073,17 +2313,44 @@ bool NNeuronTimeLearner::SetResistanceMin(const double &value)
 {
  if(value <= 0.0)
   return false;
+ if(Neuron && IsParametricNormalization())
+ {
+  const double previous = ResistanceMin.GetData();
+  ResistanceMin.SetDataDirect(value);
+  if(!UpdateResistanceMaxFromMembranes())
+  {
+   ResistanceMin.SetDataDirect(previous);
+   return false;
+  }
+ }
  return true;
+}
+
+/// Validate the configured upper Rs/Rm limit used to compute ResistanceMax.
+bool NNeuronTimeLearner::SetMaxSynapseToMembraneResistanceRatio(const double &value)
+{
+ if(!std::isfinite(value) || value <= 0.0)
+  return false;
+ if(Neuron && IsParametricNormalization())
+ {
+  const double previous = MaxSynapseToMembraneResistanceRatio.GetData();
+  MaxSynapseToMembraneResistanceRatio.SetDataDirect(value);
+  if(!UpdateResistanceMaxFromMembranes())
+  {
+   MaxSynapseToMembraneResistanceRatio.SetDataDirect(previous);
+   return false;
+  }
+ }
+ return true;
+}
+
+/// Validate the cold-start Rs/Rm ratio. It takes effect on the next cold start.
+bool NNeuronTimeLearner::SetInitialSynapseToMembraneResistanceRatio(const double &value)
+{
+ return std::isfinite(value) && value > 0.0;
 }
 
 /// Upper bound for tip Resistance (parametric)
-bool NNeuronTimeLearner::SetResistanceMax(const double &value)
-{
- if(value <= 0.0)
-  return false;
- return true;
-}
-
 /// Cable attenuation gamma; <=0 = auto-estimate
 bool NNeuronTimeLearner::SetAttenuationGamma(const double &value)
 {
@@ -2353,6 +2620,8 @@ bool NNeuronTimeLearner::BuildStructure()
   return false;
  }
  Neuron->Reset();
+ if(IsParametricNormalization() && !UpdateResistanceMaxFromMembranes())
+  return false;
  
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
@@ -2687,6 +2956,7 @@ bool NNeuronTimeLearner::ADefault(void)
  DelayAgreeMarginMin = 0.03;
  EstDelayPerSeg = kDelayPerSegDefault;
  TrainingPhase = kPhaseSync;
+ TrainingFailureReason = kFailureNone;
  ResetToUntrainedState = false;
  HasUntrainedSnapshot = false;
  
@@ -2718,7 +2988,10 @@ bool NNeuronTimeLearner::ADefault(void)
  NormalizationMode = kNormParametric;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
  ResistanceMin = 1.0e6;
- ResistanceMax = 1.0e11;
+ ResistanceMax.SetDataDirect(0.0);
+ EnableRmaxLengthEscape = false;
+ MaxSynapseToMembraneResistanceRatio = 1000.0;
+ InitialSynapseToMembraneResistanceRatio = 1.0;
  AttenuationGamma = kAttenuationGammaAuto;
  ResistanceAdjustGain = kResistanceAdjustGainDefault;
  TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
@@ -2808,6 +3081,8 @@ bool NNeuronTimeLearner::ABuild(void)
   if(!res)
    return false;
  }
+ if(IsParametricNormalization() && Neuron && !UpdateResistanceMaxFromMembranes())
+  return false;
  // TipR-only Train left silent FixedLTZ: hold Dataset until inference mid runs
  // (parity with NNeuronTimeLearnerBranch::ABuild).
  if(!IsNeedToTrain.GetData()
@@ -2873,6 +3148,17 @@ bool NNeuronTimeLearner::AReset(void)
  {
   // Load / ordinary Reset: Parameters may keep IsNeedToTrain=1 with Fixed LTZ.
   ApplyActiveLtzThreshold();
+  bool initial_anchor_present = false;
+  for(size_t i = 0; i < InitialSomaPotential.size(); ++i)
+   if(InitialSomaPotential[i] > 0.0)
+   {
+    initial_anchor_present = true;
+    break;
+   }
+  if(IsNeedToTrain.GetData() && !initial_anchor_present
+     && StructureLooksUntrained(DendriteLength.GetData())
+     && !InitializeColdTipResistancesFromMembranes())
+   return false;
  }
  
  UEPtr<NPulseNeuron> n_in = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);
@@ -2989,7 +3275,9 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
   const bool peak_valid = (i < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(i)];
   const bool length_settled = (i < int(DendLastAbsDt.size()))
    && DendLastAbsDt[static_cast<size_t>(i)] <= SyncTolerance.GetData();
-  const bool rmax_overshoot_grow = (i < int(RmaxOvershootLengthGrow.size()))
+ const bool rmax_overshoot_grow = IsParametricNormalization()
+  && EnableRmaxLengthEscape.GetData()
+   && (i < int(RmaxOvershootLengthGrow.size()))
    && RmaxOvershootLengthGrow[static_cast<size_t>(i)];
   // W3c: forced Rmax-overshoot grow must not be cleared by settle.
   if(peak_valid && length_settled && !rmax_overshoot_grow)
@@ -3060,7 +3348,8 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
    delta = 1;
   // W3c: never shrink while TipR is pegged at ResistanceMax — cable-model
   // prefer-shorter would undo attenuation DOF and re-freeze overshoot.
-  if(direction < 0 && i < int(TipSynapseResistance.size()))
+  if(IsParametricNormalization() && EnableRmaxLengthEscape.GetData() && direction < 0
+     && i < int(TipSynapseResistance.size()))
   {
    const double rmax_ap = ResistanceMax.GetData();
    if(rmax_ap > 0.0
@@ -3180,6 +3469,8 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
  
  Neuron->Reset();
  Neuron->InvalidateActiveComponentsCache();
+ if(IsParametricNormalization() && !UpdateResistanceMaxFromMembranes())
+  return false;
  
  for(int d = 0; d < NumInputDendrite; ++d)
  {
@@ -3220,7 +3511,9 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
   if(d < 0 || d >= int(DendriteLength.size()) || d >= int(OldDendriteLength.size()))
    continue;
   const int deltaL = DendriteLength[static_cast<size_t>(d)] - OldDendriteLength[static_cast<size_t>(d)];
-  const bool rmax_overshoot_grow = (d < int(RmaxOvershootLengthGrow.size()))
+  const bool rmax_overshoot_grow = IsParametricNormalization()
+   && EnableRmaxLengthEscape.GetData()
+   && (d < int(RmaxOvershootLengthGrow.size()))
    && RmaxOvershootLengthGrow[static_cast<size_t>(d)];
   if(rmax_overshoot_grow)
   {
@@ -4023,6 +4316,8 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
 /// Finalize training (clear flag, calibrate LTZ)
 bool NNeuronTimeLearner::EndOfLearning(void)
 {
+ if(TrainingPhase == kPhaseFailed)
+  return true;
  if(TrainingPhase == kPhaseDone)
   return true;
  if(TrainingPhase == kPhasePostTune)
@@ -5326,11 +5621,17 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
   LastSyncedMaxLTZ = IterMaxLTZPotential;
  }
  
- // Apply length then synapses in one inter-burst gap (tip after Build/relink).
- const std::vector<int> audit_lengths_before = DendriteLength.GetData();
- if(TrainingPhase != kPhaseDone && IsNeedToTrain && CanChangeDendLength)
-  ApplyPendingDendriteLengthChanges();
- if(TrainingPhase != kPhaseDone && IsNeedToTrain)
+  // Detect the R ceiling from the just-measured peak before applying a new R
+  // step. Otherwise a step that reaches Rmax could be mistaken for a measured
+  // response at Rmax in this same iteration.
+  CheckResistanceLimitFailure();
+
+  // Apply length then synapses in one inter-burst gap (tip after Build/relink).
+  const std::vector<int> audit_lengths_before = DendriteLength.GetData();
+  if(TrainingPhase != kPhaseDone && TrainingPhase != kPhaseFailed
+     && IsNeedToTrain && CanChangeDendLength)
+   ApplyPendingDendriteLengthChanges();
+  if(TrainingPhase != kPhaseDone && TrainingPhase != kPhaseFailed && IsNeedToTrain)
  {
   for(int i = 0; i < NumInputDendrite; ++i)
   {
@@ -5350,8 +5651,8 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
  ActiveMeasureSoma = -1;
  WaitingPeakAfterLastPulse = false;
  IsFirstBeat = true;
- 
- UpdateNormTraces();
+
+  UpdateNormTraces();
  AppendTrainingIterationAudit(audit_lengths_before);
  CountIteration++;
  
@@ -5367,6 +5668,8 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
 /// One training step: detect pulses, measure, sync/norm
 bool NNeuronTimeLearner::Training(void)
 {
+ if(TrainingPhase == kPhaseFailed)
+  return true;
  if(!CalculateMode && (CountIteration > 0) && TrainingPhase == kPhaseDone)
   return true;
 
@@ -5487,6 +5790,11 @@ bool NNeuronTimeLearner::ACalculate(void)
   }
   if(!Neuron)
    return true;
+  if(TrainingPhase.GetData() == kPhaseFailed)
+  {
+   Output = Neuron->Output;
+   return true;
+  }
   
   DendriteNeuronAmplitude(0, 0) = 0;
   for(int i = 0; i < NumInputDendrite; i++)

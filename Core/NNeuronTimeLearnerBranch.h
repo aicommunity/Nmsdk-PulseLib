@@ -149,8 +149,17 @@ public:
  /// Lower bound for tip Resistance in parametric mode
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> ResistanceMin;
  
- /// Upper bound for tip Resistance in parametric mode
- UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> ResistanceMax;
+ /// Effective upper bound for tip Resistance, derived from target membrane resistance
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubState> ResistanceMax;
+
+ /// Enable W3: use dendrite length as an amplitude escape at the Rmax ceiling
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableRmaxLengthEscape;
+
+ /// Upper synapse/membrane resistance ratio used to derive ResistanceMax
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> MaxSynapseToMembraneResistanceRatio;
+
+ /// Initial Rs/Rm ratio assigned to each synapse at a cold training start
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> InitialSynapseToMembraneResistanceRatio;
  
  /// Cable attenuation gamma for feedforward R*=exp(-gamma*deltaL); <=0 = auto-estimate
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> AttenuationGamma;
@@ -190,6 +199,9 @@ public:
  
  /// 0 - joint train (length+synapses); 1 - legacy unused; 2 - Done
  UProperty<int, NNeuronTimeLearnerBranch, ptPubState> TrainingPhase;
+
+ /// 0 = no failure; 1 = unresolved amplitude error at the ResistanceMax ceiling
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubState> TrainingFailureReason;
  
  /// One-shot reset to initial untrained structure/state
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubState> ResetToUntrainedState;
@@ -697,11 +709,14 @@ public: // Methods
  
  /// Lower bound for tip Resistance (parametric)
  bool SetResistanceMin(const double &value);
+
+ /// Ratio Rs/Rm used to derive the observable ResistanceMax state
+ bool SetMaxSynapseToMembraneResistanceRatio(const double &value);
+
+ /// Ratio Rs/Rm used to initialize tips on a cold training start
+ bool SetInitialSynapseToMembraneResistanceRatio(const double &value);
  
- /// Upper bound for tip Resistance (parametric)
- bool SetResistanceMax(const double &value);
- 
- /// Cable attenuation gamma; <=0 = auto-estimate
+  /// Cable attenuation gamma; <=0 = auto-estimate
  bool SetAttenuationGamma(const double &value);
  
  /// P-regulator gain for parametric R step
@@ -771,8 +786,14 @@ protected:
  // Calculation / training
  // --------------------------
  
- /// Build Dataset + Neuron topology and tip links
- bool BuildStructure();
+  /// Build Dataset + Neuron topology and tip links
+  bool BuildStructure();
+
+  /// Parametric-only Rm-derived limit and cold-start initialization helpers
+  bool UpdateResistanceMaxFromMembranes(void);
+  double GetTargetMembraneResistance(int pulse_index0) const;
+  bool InitializeColdTipResistancesFromMembranes(void);
+  bool CheckResistanceLimitFailure(void);
  
  /// Hook before Build
  virtual bool ABeforeBuild(void);
