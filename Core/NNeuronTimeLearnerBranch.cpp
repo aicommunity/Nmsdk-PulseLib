@@ -2707,7 +2707,15 @@ bool NNeuronTimeLearnerBranch::SetResistanceMin(const double &value)
 {
  if(value <= 0.0)
   return false;
+ bool has_live_target_membrane = false;
  if(Neuron && IsParametricNormalization())
+  for(int i = 0; i < std::max(0, NumInputDendrite.GetData() - 1); ++i)
+   if(GetTargetMembraneResistance(i) > 0.0)
+   {
+    has_live_target_membrane = true;
+    break;
+   }
+ if(has_live_target_membrane)
  {
   const double previous = ResistanceMin.GetData();
   ResistanceMin.SetDataDirect(value);
@@ -2725,7 +2733,15 @@ bool NNeuronTimeLearnerBranch::SetMaxSynapseToMembraneResistanceRatio(const doub
 {
  if(!std::isfinite(value) || value <= 0.0)
   return false;
+ bool has_live_target_membrane = false;
  if(Neuron && IsParametricNormalization())
+  for(int i = 0; i < std::max(0, NumInputDendrite.GetData() - 1); ++i)
+   if(GetTargetMembraneResistance(i) > 0.0)
+   {
+    has_live_target_membrane = true;
+    break;
+   }
+ if(has_live_target_membrane)
  {
   const double previous = MaxSynapseToMembraneResistanceRatio.GetData();
   MaxSynapseToMembraneResistanceRatio.SetDataDirect(value);
