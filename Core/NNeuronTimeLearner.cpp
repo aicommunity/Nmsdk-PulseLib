@@ -283,66 +283,6 @@ bool NNeuronTimeLearner::UpdateResistanceBoundsFromMembranes(void)
  return true;
 }
 
-/// Initialize only a cold training start; later training state remains untouched.
-bool NNeuronTimeLearner::InitializeColdTipResistancesFromMembranes(void)
-{
- if(!IsParametricNormalization())
-  return true;
- if(!Neuron)
-  return false;
- const double ratio = InitialSynapseToMembraneResistanceRatio.GetData();
- if(!std::isfinite(ratio) || ratio <= 0.0)
-  return false;
-
- const int target_count = std::max(0, NumInputDendrite.GetData() - 1);
- std::vector<double> tips = TipSynapseResistance.GetData();
- if(tips.size() != static_cast<size_t>(NumInputDendrite.GetData()))
-  tips.resize(static_cast<size_t>(NumInputDendrite.GetData()), SynapseResistanceBase.GetData());
- for(int i = 0; i < target_count; ++i)
- {
-  const double rm = GetTargetMembraneResistance(i);
-  if(!std::isfinite(rm) || rm <= 0.0)
-  {
-   if(RDK::GetLogger())
-    RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
-     "Cold Rs initialization failed: target membrane Rm is unavailable");
-   return false;
-  }
-  const double initial_r = ClampResistance(rm * ratio);
-  if(!std::isfinite(initial_r) || initial_r <= 0.0
-     || !SetTipSynapseResistanceOnComponent(i, initial_r))
-   return false;
-  tips[static_cast<size_t>(i)] = initial_r;
- }
- TipSynapseResistance.SetDataDirect(tips);
-
- // Keep the configured structural/fallback baseline untouched; only the live
- // parametric tip values are initialized from Rm. Recapture the amp anchor.
- InitialSomaPotential.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0.0);
- UntrainedTipSynapseResistance = tips;
-
- if(EnableDebug.GetData() && RDK::GetLogger())
- {
-  std::ostringstream oss;
-  oss << "ColdTipResistanceInit: initial_Rs_Rm=" << ratio
-      << " tip_R=[";
-  for(int i = 0; i < target_count; ++i)
-  {
-   if(i) oss << ',';
-   oss << tips[static_cast<size_t>(i)];
-  }
-  oss << "] Rm=[";
-  for(int i = 0; i < target_count; ++i)
-  {
-   if(i) oss << ',';
-   oss << GetTargetMembraneResistance(i);
-  }
-  oss << "]";
-  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
- }
- return true;
-}
-
 /// Stop this training attempt when unresolved overshoot requires resistance beyond Rmax.
 bool NNeuronTimeLearner::CheckResistanceLimitFailure(void)
 {
@@ -547,7 +487,6 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";rmax=" << ResistanceMax.GetData()
         << ";rs_rm_min=" << (1.0 / MaxSynapseToMembraneResistanceRatio.GetData())
         << ";rs_rm_limit=" << MaxSynapseToMembraneResistanceRatio.GetData()
-        << ";rs_rm_initial=" << InitialSynapseToMembraneResistanceRatio.GetData()
         << ";w3_length_escape=" << (EnableRmaxLengthEscape.GetData() ? 1 : 0)
         << ";failure_reason=" << TrainingFailureReason.GetData()
         << ";last_length_delta=" << LastLengthDelta
@@ -1780,8 +1719,6 @@ ResistanceMax("ResistanceMax", this),
 EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  MaxSynapseToMembraneResistanceRatio("MaxSynapseToMembraneResistanceRatio", this,
   &NNeuronTimeLearner::SetMaxSynapseToMembraneResistanceRatio),
- InitialSynapseToMembraneResistanceRatio("InitialSynapseToMembraneResistanceRatio", this,
-  &NNeuronTimeLearner::SetInitialSynapseToMembraneResistanceRatio),
  AttenuationGamma("AttenuationGamma", this, &NNeuronTimeLearner::SetAttenuationGamma),
  ResistanceAdjustGain("ResistanceAdjustGain", this, &NNeuronTimeLearner::SetResistanceAdjustGain),
  TipSynapseResistance("TipSynapseResistance", this, &NNeuronTimeLearner::SetTipSynapseResistance),
@@ -2000,7 +1937,7 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
  
  Ready = false;
  const bool build_ok = BuildStructure();
- if(!build_ok || !InitializeColdTipResistancesFromMembranes())
+ if(!build_ok)
   return false;
  AppendTrainingIterationAudit(DendriteLength.GetData(), "reset");
  return true;
@@ -2355,12 +2292,6 @@ bool NNeuronTimeLearner::SetMaxSynapseToMembraneResistanceRatio(const double &va
   }
  }
  return true;
-}
-
-/// Validate the cold-start Rs/Rm ratio. It takes effect on the next cold start.
-bool NNeuronTimeLearner::SetInitialSynapseToMembraneResistanceRatio(const double &value)
-{
- return std::isfinite(value) && value > 0.0;
 }
 
 /// Upper bound for tip Resistance (parametric)
@@ -3004,7 +2935,6 @@ bool NNeuronTimeLearner::ADefault(void)
  ResistanceMax.SetDataDirect(0.0);
  EnableRmaxLengthEscape = false;
  MaxSynapseToMembraneResistanceRatio = 1000.0;
- InitialSynapseToMembraneResistanceRatio = 1.0;
  AttenuationGamma = kAttenuationGammaAuto;
  ResistanceAdjustGain = kResistanceAdjustGainDefault;
  TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
@@ -3169,17 +3099,6 @@ bool NNeuronTimeLearner::AReset(void)
  {
   // Load / ordinary Reset: Parameters may keep IsNeedToTrain=1 with Fixed LTZ.
   ApplyActiveLtzThreshold();
-  bool initial_anchor_present = false;
-  for(size_t i = 0; i < InitialSomaPotential.size(); ++i)
-   if(InitialSomaPotential[i] > 0.0)
-   {
-    initial_anchor_present = true;
-    break;
-   }
-  if(IsNeedToTrain.GetData() && !initial_anchor_present
-     && StructureLooksUntrained(DendriteLength.GetData())
-     && !InitializeColdTipResistancesFromMembranes())
-   return false;
  }
  
  UEPtr<NPulseNeuron> n_in = GetComponentL<NPulseNeuron>(std::string("Neuron"),true);

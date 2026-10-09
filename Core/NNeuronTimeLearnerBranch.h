@@ -158,8 +158,6 @@ public:
  /// Upper synapse/membrane resistance ratio used to derive ResistanceMax
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> MaxSynapseToMembraneResistanceRatio;
 
- /// Initial Rs/Rm ratio assigned to each synapse at a cold training start
- UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> InitialSynapseToMembraneResistanceRatio;
  
  /// Cable attenuation gamma for feedforward R*=exp(-gamma*deltaL); <=0 = auto-estimate
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> AttenuationGamma;
@@ -711,8 +709,6 @@ public: // Methods
  /// Ratio Rs/Rm used to derive the observable ResistanceMax state
  bool SetMaxSynapseToMembraneResistanceRatio(const double &value);
 
- /// Ratio Rs/Rm used to initialize tips on a cold training start
- bool SetInitialSynapseToMembraneResistanceRatio(const double &value);
  
   /// Cable attenuation gamma; <=0 = auto-estimate
  bool SetAttenuationGamma(const double &value);
@@ -787,10 +783,9 @@ protected:
   /// Build Dataset + Neuron topology and tip links
   bool BuildStructure();
 
-  /// Parametric-only Rm-derived limit and cold-start initialization helpers
+  /// Parametric-only Rm-derived resistance bounds helper
   bool UpdateResistanceBoundsFromMembranes(void);
   double GetTargetMembraneResistance(int pulse_index0) const;
-  bool InitializeColdTipResistancesFromMembranes(void);
   bool CheckResistanceLimitFailure(void);
  
  /// Hook before Build
