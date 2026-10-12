@@ -563,6 +563,7 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";sync_tol=" << SyncTolerance.GetData()
         << ";amp_eps=" << kAmpNormEps
         << ";normalization_mode=" << NormalizationMode.GetData()
+        << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";rmin=" << ResistanceMin.GetData()
         << ";rmax=" << ResistanceMax.GetData()
         << ";rs_rm_min=" << (1.0 / MaxSynapseToMembraneResistanceRatio.GetData())
