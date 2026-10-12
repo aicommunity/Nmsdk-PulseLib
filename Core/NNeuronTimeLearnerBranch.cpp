@@ -94,6 +94,7 @@ const int kPhasePostTune = 4;
 const int kPhaseFailed = 5;
 const int kFailureNone = 0;
 const int kFailureResistanceMax = 1;
+const int kFailureSegmentOrderMaxLength = 2;
 }
 
 /// Storage path of the DatasetMatrix generator
@@ -4042,7 +4043,7 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
   DendStatus[num] = 0;
   return true;
  }
- 
+
  const int ref = NumInputDendrite - 1;
  const bool num_valid = (num < int(SomaPeakValid.size())) && SomaPeakValid[num];
  const bool prev_ref_valid = (ref < int(PulseSynced.size()) && PulseSynced[static_cast<size_t>(ref)])
@@ -4104,6 +4105,47 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
        << " prev_ref_valid=" << (prev_ref_valid ? 1 : 0) << ")";
    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
   }
+  return true;
+ }
+
+ // A pulse can satisfy its local timing tolerance while violating the
+ // sequential cable-order invariant. Only force a length change after both
+ // the active peak and reference peak have passed the normal validity gate.
+ // Otherwise we would mutate the structure without a usable measurement.
+ const int order_ref = NumInputDendrite.GetData() - 1;
+ const bool segment_order_violation =
+  (order_ref >= 0 && order_ref < int(DendriteLength.size())
+   && DendriteLength[static_cast<size_t>(num)]
+      <= DendriteLength[static_cast<size_t>(order_ref)])
+  || (num + 1 < NumInputDendrite.GetData()
+      && num + 1 < int(DendriteLength.size())
+      && DendriteLength[static_cast<size_t>(num)]
+         <= DendriteLength[static_cast<size_t>(num + 1)]);
+ if(segment_order_violation)
+ {
+  if(DendriteLength[static_cast<size_t>(num)]
+     >= MaxDendriteLength.GetData())
+  {
+   TrainingFailureReason.SetDataDirect(kFailureSegmentOrderMaxLength);
+   TrainingPhase.SetDataDirect(kPhaseFailed);
+   CanChangeDendLength = false;
+   if(EnableDebug.GetData() && RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "Training refused: segment order cannot be restored at MaxDendriteLength"
+        << " pulse=" << num << " attach_length="
+        << DendriteLength[static_cast<size_t>(num)] << " next_length="
+        << (num + 1 < int(DendriteLength.size())
+            ? DendriteLength[static_cast<size_t>(num + 1)] : -1)
+        << " ref_length="
+        << (order_ref >= 0 && order_ref < int(DendriteLength.size())
+            ? DendriteLength[static_cast<size_t>(order_ref)] : -1);
+    RDK::GetLogger()->LogMessageEx(RDK_EX_WARNING,
+     "NNeuronTimeLearnerBranch", oss.str());
+   }
+   return true;
+  }
+  DendStatus[static_cast<size_t>(num)] = 1;
   return true;
  }
  

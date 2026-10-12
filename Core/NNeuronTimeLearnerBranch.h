@@ -198,7 +198,8 @@ public:
  /// 0 - joint train (length+synapses); 1 - legacy unused; 2 - Done
  UProperty<int, NNeuronTimeLearnerBranch, ptPubState> TrainingPhase;
 
- /// 0 = no failure; 1 = unresolved amplitude error at the ResistanceMax ceiling
+ /// 0 = no failure; 1 = unresolved amplitude error at ResistanceMax;
+ /// 2 = required segment order cannot be restored at MaxDendriteLength
  UProperty<int, NNeuronTimeLearnerBranch, ptPubState> TrainingFailureReason;
  
  /// One-shot reset to initial untrained structure/state
