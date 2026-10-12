@@ -563,6 +563,10 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";eol_amp=" << (AllSynapsesNormalized() ? 1 : 0)
         << ";sync_tol=" << SyncTolerance.GetData()
         << ";amp_eps=" << kAmpNormEps
+        << ";est_delay_per_seg=" << EstDelayPerSeg
+        << ";iteration_gap=" << IterationGap.GetData()
+        << ";effective_iteration_gap=" << EffectiveIterationGapSec()
+        << ";max_dendrite_length=" << MaxDendriteLength.GetData()
         << ";normalization_mode=" << NormalizationMode.GetData()
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";rmin=" << ResistanceMin.GetData()

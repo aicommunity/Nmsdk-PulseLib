@@ -482,8 +482,13 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";eol_amp=" << (AllSynapsesNormalized() ? 1 : 0)
         << ";sync_tol=" << SyncTolerance.GetData()
         << ";amp_eps=" << kAmpNormEps
+        << ";est_delay_per_seg=" << EstDelayPerSeg.GetData()
+        << ";iteration_gap=" << IterationGap.GetData()
+        << ";effective_iteration_gap=" << EffectiveIterationGapSec()
+        << ";max_dendrite_length=" << MaxDendriteLength.GetData()
         << ";normalization_mode=" << NormalizationMode.GetData()
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
+        << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
         << ";rmin=" << ResistanceMin.GetData()
         << ";rmax=" << ResistanceMax.GetData()
         << ";rs_rm_min=" << (1.0 / MaxSynapseToMembraneResistanceRatio.GetData())
@@ -1018,7 +1023,8 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
 }
  
  // Auto-estimate cable attenuation gamma from observed amp/Initial at L>1.
- if(MaxIterSomaAmp[num] > kMinMeasurableSomaAmp && InitialSomaPotential[num] > 0.0
+ if(AutoEstimateAttenuationGamma.GetData()
+    && MaxIterSomaAmp[num] > kMinMeasurableSomaAmp && InitialSomaPotential[num] > 0.0
     && num < int(DendriteLength.size()) && DendriteLength[num] > 1)
  {
   const double ratio = MaxIterSomaAmp[num] / InitialSomaPotential[num];
@@ -1721,6 +1727,7 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  MaxSynapseToMembraneResistanceRatio("MaxSynapseToMembraneResistanceRatio", this,
   &NNeuronTimeLearner::SetMaxSynapseToMembraneResistanceRatio),
  AttenuationGamma("AttenuationGamma", this, &NNeuronTimeLearner::SetAttenuationGamma),
+ AutoEstimateAttenuationGamma("AutoEstimateAttenuationGamma", this),
  ResistanceAdjustGain("ResistanceAdjustGain", this, &NNeuronTimeLearner::SetResistanceAdjustGain),
  TipSynapseResistance("TipSynapseResistance", this, &NNeuronTimeLearner::SetTipSynapseResistance),
  DendriteLength("DendriteLength", this, &NNeuronTimeLearner::SetDendriteLength),
@@ -1898,7 +1905,8 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
  RmaxOvershootLengthGrow.assign(NumInputDendrite, false);
  RmaxOvershootLengthCooldown.assign(NumInputDendrite, 0);
  EffectiveResistanceGain.assign(NumInputDendrite, kResistanceAdjustGainDefault);
- AttenuationGamma = kAttenuationGammaAuto;
+ if(AutoEstimateAttenuationGamma.GetData())
+  AttenuationGamma = kAttenuationGammaAuto;
  if(IsParametricNormalization())
   EnforceParametricSynapseCount();
  MaxIterSomaAmp.assign(NumInputDendrite, 0.0);
@@ -2937,6 +2945,7 @@ bool NNeuronTimeLearner::ADefault(void)
  EnableRmaxLengthEscape = false;
  MaxSynapseToMembraneResistanceRatio = 1000.0;
  AttenuationGamma = kAttenuationGammaAuto;
+ AutoEstimateAttenuationGamma = true;
  ResistanceAdjustGain = kResistanceAdjustGainDefault;
  TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
  DendriteLength.assign(NumInputDendrite, 1);
