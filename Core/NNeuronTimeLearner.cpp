@@ -489,6 +489,8 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";normalization_mode=" << NormalizationMode.GetData()
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
+        << ";freeze_tip_r_after_first_sync=" << (FreezeTipResistanceAfterFirstSync.GetData() ? 1 : 0)
+        << ";tip_r_frozen_after_sync=" << (TipResistanceFrozenAfterSync.GetData() ? 1 : 0)
         << ";rmin=" << ResistanceMin.GetData()
         << ";rmax=" << ResistanceMax.GetData()
         << ";rs_rm_min=" << (1.0 / MaxSynapseToMembraneResistanceRatio.GetData())
@@ -888,6 +890,8 @@ void NNeuronTimeLearner::FeedforwardResistanceOnLengthGrow(int dendrite_index0, 
   return;
  if(dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
   return;
+ if(ShouldFreezeTipResistanceAfterFirstSync())
+  return;
  
  double gamma = AttenuationGamma.GetData();
  if(gamma <= 0.0)
@@ -924,6 +928,13 @@ void NNeuronTimeLearner::FeedforwardResistanceOnLengthGrow(int dendrite_index0, 
 /// Decide pending parametric R change
 bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
 {
+ if(ShouldFreezeTipResistanceAfterFirstSync())
+ {
+  if(num >= 0 && num < int(ResistanceStatus.size()))
+   ResistanceStatus[static_cast<size_t>(num)] = 0;
+  return true;
+ }
+
  if((!IsParametricNormalization() || !EnableRmaxLengthEscape.GetData())
     && num < int(RmaxOvershootLengthGrow.size())
     && RmaxOvershootLengthGrow[static_cast<size_t>(num)])
@@ -1396,6 +1407,16 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
  return true;
 }
 
+/// Latch the diagnostic resistance freeze after global sync is first observed.
+bool NNeuronTimeLearner::ShouldFreezeTipResistanceAfterFirstSync(void)
+{
+ if(!FreezeTipResistanceAfterFirstSync.GetData())
+  return false;
+ if(!TipResistanceFrozenAfterSync.GetData() && AllDendritesSynced())
+  TipResistanceFrozenAfterSync = true;
+ return TipResistanceFrozenAfterSync.GetData();
+}
+
 /// Apply pending ResistanceStatus change
 bool NNeuronTimeLearner::ApplySynapseResistanceChange(int num)
 {
@@ -1728,6 +1749,8 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
   &NNeuronTimeLearner::SetMaxSynapseToMembraneResistanceRatio),
  AttenuationGamma("AttenuationGamma", this, &NNeuronTimeLearner::SetAttenuationGamma),
  AutoEstimateAttenuationGamma("AutoEstimateAttenuationGamma", this),
+ FreezeTipResistanceAfterFirstSync("FreezeTipResistanceAfterFirstSync", this),
+ TipResistanceFrozenAfterSync("TipResistanceFrozenAfterSync", this),
  ResistanceAdjustGain("ResistanceAdjustGain", this, &NNeuronTimeLearner::SetResistanceAdjustGain),
  TipSynapseResistance("TipSynapseResistance", this, &NNeuronTimeLearner::SetTipSynapseResistance),
  DendriteLength("DendriteLength", this, &NNeuronTimeLearner::SetDendriteLength),
@@ -1864,6 +1887,7 @@ bool NNeuronTimeLearner::ZeroingTrainingPattern(void)
 /// Restore Untrained* snapshots onto live structure
 bool NNeuronTimeLearner::ResetToUntrained(void)
 {
+ TipResistanceFrozenAfterSync.SetDataDirect(false);
  // Prefer a cold (L<=1) snapshot. StructTrain Parameters ship trained lengths
  // (49 41 25 1) + Initial — never restore that as "untrained".
  const bool snapshot_ok =
@@ -2946,6 +2970,8 @@ bool NNeuronTimeLearner::ADefault(void)
  MaxSynapseToMembraneResistanceRatio = 1000.0;
  AttenuationGamma = kAttenuationGammaAuto;
  AutoEstimateAttenuationGamma = true;
+ FreezeTipResistanceAfterFirstSync = false;
+ TipResistanceFrozenAfterSync = false;
  ResistanceAdjustGain = kResistanceAdjustGainDefault;
  TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
  DendriteLength.assign(NumInputDendrite, 1);
@@ -3068,6 +3094,7 @@ void NNeuronTimeLearner::UpdateComputationOrder(void)
 /// Reset runtime counters / iteration state
 bool NNeuronTimeLearner::AReset(void)
 {
+ TipResistanceFrozenAfterSync.SetDataDirect(false);
  ApplyLoadedAnchorProperties();
  
  // Snapshot only a cold topology (all L<=1). Trained samples (L=49 41 25 1 in

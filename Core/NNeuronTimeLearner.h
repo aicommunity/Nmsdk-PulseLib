@@ -164,6 +164,12 @@ public:
 
  /// Re-estimate AttenuationGamma from measured amplitude while training
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> AutoEstimateAttenuationGamma;
+
+ /// Diagnostic control: freeze tip resistance after the first globally synced iteration
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> FreezeTipResistanceAfterFirstSync;
+
+ /// Diagnostic state: tip resistance is frozen by the first-sync control
+ UProperty<bool, NNeuronTimeLearner, ptPubState> TipResistanceFrozenAfterSync;
  
  /// P-regulator gain for parametric R step (0..1], default 0.4
  UProperty<double, NNeuronTimeLearner, ptPubParameter> ResistanceAdjustGain;
@@ -838,6 +844,9 @@ protected:
  
  /// Decide pending parametric R change
  bool ChangeSynapseResistanceStatus(int num);
+
+ /// Latch the diagnostic resistance freeze after global sync is first observed
+ bool ShouldFreezeTipResistanceAfterFirstSync(void);
  
  /// Apply pending ResistanceStatus change
  bool ApplySynapseResistanceChange(int num);
