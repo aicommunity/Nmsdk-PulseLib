@@ -637,6 +637,21 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
  append_vector("prev_peak_rel", PrevPeakRel);
  append_vector("prev_delay_from_pulse", PrevDelayFromPulse);
 
+ const auto append_pattern_column = [&record](const char *name, const MDMatrix<double> &pattern)
+ {
+  record << ';' << name << "=[";
+  const int rows = pattern.GetRows();
+  const int cols = pattern.GetCols();
+  for(int i = 0; i < rows && cols > 0; ++i)
+  {
+   if(i) record << ',';
+   record << pattern(i, 0);
+  }
+  record << ']';
+ };
+ append_pattern_column("input_pattern", InputPattern.GetData());
+ append_pattern_column("prev_input_pattern", PrevInputPattern);
+
  std::ofstream audit((data_dir + "TimeLearnerTrainingAudit.log").c_str(), std::ios::out | std::ios::app);
  if(audit)
   audit << record.str() << '\n';
