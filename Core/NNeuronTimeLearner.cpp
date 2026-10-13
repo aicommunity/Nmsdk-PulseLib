@@ -37,6 +37,22 @@ See file license.txt for more information
 namespace NMSDK {
 
 namespace {
+double ClampNegativeDelayRoundoff(const double delay,
+                                  const double peak_time,
+                                  const double pulse_time)
+{
+ if(!std::isfinite(delay) || !std::isfinite(peak_time) || !std::isfinite(pulse_time))
+  return delay;
+
+ // Peak and pulse are absolute model times. Subtracting nearly equal values
+ // can produce a tiny negative delay when the peak is exactly at the pulse.
+ // Bound the correction by a few ULPs at this time scale so real early peaks
+ // remain negative and continue through the existing invalid-delay path.
+ const double time_scale = std::max(1.0, std::max(fabs(peak_time), fabs(pulse_time)));
+ const double roundoff = 4.0 * std::numeric_limits<double>::epsilon() * time_scale;
+ return (delay < 0.0 && delay >= -roundoff) ? 0.0 : delay;
+}
+
 std::string MakeLearnerSomaName(const int index1)
 {
  return std::string("Soma") + sntoa(index1);
@@ -3830,8 +3846,12 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
  const double expected_k = (num < int(ExpectedPulseRelTimes.size()))
   ? ExpectedPulseRelTimes[static_cast<size_t>(num)] : 0.0;
  const double needed = PrevPeakRel[static_cast<size_t>(ref)] - expected_k;
- const double delay_k = (num < int(DelayFromPulse.size()))
+ const double raw_delay_k = (num < int(DelayFromPulse.size()))
   ? DelayFromPulse[static_cast<size_t>(num)] : 0.0;
+ const double pulse_time = FirstImpulseTime + expected_k;
+ const double peak_time = (num < int(TimeOfMaxIterSomaAmp.size()))
+  ? TimeOfMaxIterSomaAmp[static_cast<size_t>(num)] : pulse_time + raw_delay_k;
+ const double delay_k = ClampNegativeDelayRoundoff(raw_delay_k, peak_time, pulse_time);
  if(delay_k < 0.0 || delay_k >= EffectiveIterationGapSec())
  {
   if(DendriteLength[num] <= DendriteLength[ref])
@@ -3840,7 +3860,8 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
   {
    std::ostringstream oss;
    oss << "ChangeDendriteStatus: num=" << num
-       << " bad delay_k=" << delay_k << " DendStatus=" << DendStatus[num];
+       << " bad delay_k=" << delay_k << " raw_delay_k=" << raw_delay_k
+       << " DendStatus=" << DendStatus[num];
    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
   }
   return true;
@@ -4009,6 +4030,8 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
       << " dt=" << dt
       << " needed=" << needed
       << " delay_meas=" << delay_k
+      << " delay_raw=" << raw_delay_k
+      << " roundoff_clamped=" << (delay_k != raw_delay_k ? 1 : 0)
       << " delay_len=" << delay_len
       << " delay_use=" << delay_use
       << " agrees=" << (meas_agrees ? 1 : 0)
