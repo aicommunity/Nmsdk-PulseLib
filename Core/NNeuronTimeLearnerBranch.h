@@ -161,6 +161,9 @@ public:
  
  /// Cable attenuation gamma for feedforward R*=exp(-gamma*deltaL); <=0 = auto-estimate
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> AttenuationGamma;
+
+ /// Re-estimate AttenuationGamma from measured amplitude while training
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> AutoEstimateAttenuationGamma;
  
  /// P-regulator gain for parametric R step (0..1], default 0.4
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> ResistanceAdjustGain;
