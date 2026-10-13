@@ -4125,6 +4125,51 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
  const bool num_valid = (num < int(SomaPeakValid.size())) && SomaPeakValid[num];
  const bool prev_ref_valid = (ref < int(PulseSynced.size()) && PulseSynced[static_cast<size_t>(ref)])
   || HasPrevPeakSnapshot;
+
+ // Keep the deterministic cable-order invariant independent from peak
+ // validity. On an invalid-peak path it may be repaired only after the
+ // existing best-effort gate proves amplitude collapse with all synapses
+ // exhausted; a model-derived timing estimate alone does not permit growth.
+ const int order_ref = NumInputDendrite.GetData() - 1;
+ const bool segment_order_violation = num >= 0
+  && num < int(DendriteLength.size())
+  && ((order_ref >= 0 && order_ref < int(DendriteLength.size())
+       && DendriteLength[static_cast<size_t>(num)]
+          <= DendriteLength[static_cast<size_t>(order_ref)])
+      || (num + 1 < NumInputDendrite.GetData()
+          && num + 1 < int(DendriteLength.size())
+          && DendriteLength[static_cast<size_t>(num)]
+             <= DendriteLength[static_cast<size_t>(num + 1)]));
+ const auto request_segment_order_repair = [&]()
+ {
+  if(!segment_order_violation)
+   return;
+
+  if(DendriteLength[static_cast<size_t>(num)]
+     >= MaxDendriteLength.GetData())
+  {
+   TrainingFailureReason.SetDataDirect(kFailureSegmentOrderMaxLength);
+   TrainingPhase.SetDataDirect(kPhaseFailed);
+   CanChangeDendLength = false;
+   if(EnableDebug.GetData() && RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "Training refused: segment order cannot be restored at MaxDendriteLength"
+        << " pulse=" << num << " attach_length="
+        << DendriteLength[static_cast<size_t>(num)] << " next_length="
+        << (num + 1 < int(DendriteLength.size())
+            ? DendriteLength[static_cast<size_t>(num + 1)] : -1)
+        << " ref_length="
+        << (order_ref >= 0 && order_ref < int(DendriteLength.size())
+            ? DendriteLength[static_cast<size_t>(order_ref)] : -1);
+    RDK::GetLogger()->LogMessageEx(RDK_EX_WARNING,
+     "NNeuronTimeLearnerBranch", oss.str());
+   }
+   return;
+  }
+
+  DendStatus[static_cast<size_t>(num)] = 1;
+ };
  
  if(!num_valid || !prev_ref_valid || num >= int(PeakRel.size())
     || ref >= int(PrevPeakRel.size()))
@@ -4160,6 +4205,8 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
       std::min(fabs(dt), SyncTolerance.GetData());
     if(num < int(DendBestEffortSynced.size()))
      DendBestEffortSynced[static_cast<size_t>(num)] = true;
+    if(amp_low && synapses_exhausted)
+     request_segment_order_repair();
     if(EnableDebug.GetData() && RDK::GetLogger())
     {
      std::ostringstream oss;
@@ -4185,46 +4232,12 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
   return true;
  }
 
- // A pulse can satisfy its local timing tolerance while violating the
- // sequential cable-order invariant. Only force a length change after both
- // the active peak and reference peak have passed the normal validity gate.
- // Otherwise we would mutate the structure without a usable measurement.
- const int order_ref = NumInputDendrite.GetData() - 1;
- const bool segment_order_violation =
-  (order_ref >= 0 && order_ref < int(DendriteLength.size())
-   && DendriteLength[static_cast<size_t>(num)]
-      <= DendriteLength[static_cast<size_t>(order_ref)])
-  || (num + 1 < NumInputDendrite.GetData()
-      && num + 1 < int(DendriteLength.size())
-      && DendriteLength[static_cast<size_t>(num)]
-         <= DendriteLength[static_cast<size_t>(num + 1)]);
+ // A locally valid timing measurement does not waive the sequential cable
+ // order invariant. Request the same structural repair used by the
+ // best-effort path above.
+ request_segment_order_repair();
  if(segment_order_violation)
- {
-  if(DendriteLength[static_cast<size_t>(num)]
-     >= MaxDendriteLength.GetData())
-  {
-   TrainingFailureReason.SetDataDirect(kFailureSegmentOrderMaxLength);
-   TrainingPhase.SetDataDirect(kPhaseFailed);
-   CanChangeDendLength = false;
-   if(EnableDebug.GetData() && RDK::GetLogger())
-   {
-    std::ostringstream oss;
-    oss << "Training refused: segment order cannot be restored at MaxDendriteLength"
-        << " pulse=" << num << " attach_length="
-        << DendriteLength[static_cast<size_t>(num)] << " next_length="
-        << (num + 1 < int(DendriteLength.size())
-            ? DendriteLength[static_cast<size_t>(num + 1)] : -1)
-        << " ref_length="
-        << (order_ref >= 0 && order_ref < int(DendriteLength.size())
-            ? DendriteLength[static_cast<size_t>(order_ref)] : -1);
-    RDK::GetLogger()->LogMessageEx(RDK_EX_WARNING,
-     "NNeuronTimeLearnerBranch", oss.str());
-   }
-   return true;
-  }
-  DendStatus[static_cast<size_t>(num)] = 1;
   return true;
- }
  
  const double expected_k = (num < int(ExpectedPulseRelTimes.size()))
   ? ExpectedPulseRelTimes[static_cast<size_t>(num)] : 0.0;
