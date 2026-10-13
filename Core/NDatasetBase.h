@@ -145,6 +145,8 @@ int LastPlayedIteration;
 public:
 /// Sample id currently (or last) playing; prefers LastPlayedIteration when set
 int GetCurrentSampleId() const;
+int GetNextSpikeIndex(int feature_index) const;
+double GetOneShotEndTime(int feature_index) const;
 double GetSampleStartTime() const { return SampleStartTime; }
 double GetSampleBurstEndRel() const { return SampleBurstEndRel; }
 /// Count MatrixData slots with ISI >= 0 for sample/feature (skips -1)

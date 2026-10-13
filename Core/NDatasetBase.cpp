@@ -464,6 +464,20 @@ int NDatasetBase::GetCurrentSampleId() const
     return int(Iteration);
 }
 
+int NDatasetBase::GetNextSpikeIndex(int feature_index) const
+{
+    if(feature_index < 0 || feature_index >= int(NextSpikeIndex.size()))
+        return -1;
+    return NextSpikeIndex[static_cast<size_t>(feature_index)];
+}
+
+double NDatasetBase::GetOneShotEndTime(int feature_index) const
+{
+    if(feature_index < 0 || feature_index >= int(OneShotEndTime.size()))
+        return 0.0;
+    return OneShotEndTime[static_cast<size_t>(feature_index)];
+}
+
 int NDatasetBase::CountScheduledSpikes(int sample, int feature) const
 {
     const int max_spikes = int(MaxSpikesPerFeature);

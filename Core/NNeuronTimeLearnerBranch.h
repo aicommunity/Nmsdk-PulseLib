@@ -348,6 +348,15 @@ protected:
  
  /// Time of MaxIterSomaAmp per channel
  std::vector<double> TimeOfMaxIterSomaAmp;
+
+ /// Read-only snapshot of model / dataset state when a training burst starts.
+ std::vector<double> AuditBurstStartDendritePotential;
+ double AuditBurstStartSomaPotential;
+ int AuditBurstStartDatasetSample;
+ int AuditBurstStartDatasetIteration;
+ double AuditBurstStartDatasetSampleTime;
+ std::vector<int> AuditBurstStartDatasetNextSpikeIndex;
+ std::vector<int> AuditBurstStartGeneratorPulseCounter;
  
  /// Per-dendrite sync error metric this iteration
  std::vector<double> Dissynchronization;

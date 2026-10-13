@@ -559,6 +559,16 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
 
  std::ostringstream record;
  record.precision(17);
+ const auto append_vector = [&record](const char *name, const auto &values)
+ {
+  record << ';' << name << "=[";
+  for(size_t i = 0; i < values.size(); ++i)
+  {
+   if(i) record << ',';
+   record << values[i];
+  }
+  record << ']';
+ };
  record << "schema=1;kind=" << (kind ? kind : "iteration")
         << ";trainer=branch;iter=" << CountIteration
         << ";phase=" << TrainingPhase.GetData()
@@ -587,6 +597,52 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";last_length_delta=" << LastLengthDelta
         << ";last_length_dendrite=" << LastLengthDeltaDendrite;
 
+ record << ";iteration_start_time=" << StartIterTime
+        << ";burst_first_pulse_time=" << FirstImpulseTime
+        << ";burst_start_soma_potential=" << AuditBurstStartSomaPotential
+        << ";burst_start_dataset_sample=" << AuditBurstStartDatasetSample
+        << ";burst_start_dataset_iteration=" << AuditBurstStartDatasetIteration
+        << ";burst_start_dataset_sample_time=" << AuditBurstStartDatasetSampleTime;
+ append_vector("burst_start_dendrite_potential", AuditBurstStartDendritePotential);
+ append_vector("burst_start_dataset_next_spike_index", AuditBurstStartDatasetNextSpikeIndex);
+ append_vector("burst_start_generator_pulse_counter", AuditBurstStartGeneratorPulseCounter);
+
+ if(Dataset)
+ {
+  record << ";dataset_state_generation=" << Dataset->StateGeneration.GetData()
+         << ";dataset_current_sample=" << Dataset->GetCurrentSampleId()
+         << ";dataset_iteration=" << Dataset->Iteration.GetData()
+         << ";dataset_num_samples=" << Dataset->NumSamples.GetData()
+         << ";dataset_sample_start_time=" << Dataset->GetSampleStartTime()
+         << ";dataset_burst_end_rel=" << Dataset->GetSampleBurstEndRel()
+         << ";dataset_delay=" << Dataset->Delay.GetData()
+         << ";dataset_advance_sample=" << (Dataset->AdvanceSampleAfterBurst.GetData() ? 1 : 0);
+  std::vector<int> next_spike_indices;
+  std::vector<double> one_shot_end_times;
+  next_spike_indices.reserve(static_cast<size_t>(Dataset->NumFeatures.GetData()));
+  one_shot_end_times.reserve(static_cast<size_t>(Dataset->NumFeatures.GetData()));
+  for(int i = 0; i < Dataset->NumFeatures.GetData(); ++i)
+  {
+   next_spike_indices.push_back(Dataset->GetNextSpikeIndex(i));
+   one_shot_end_times.push_back(Dataset->GetOneShotEndTime(i));
+  }
+  append_vector("dataset_next_spike_index", next_spike_indices);
+  append_vector("dataset_one_shot_end_time", one_shot_end_times);
+
+  std::vector<int> pulse_counters;
+  std::vector<double> generator_frequencies;
+  pulse_counters.reserve(Dataset->Generators.size());
+  generator_frequencies.reserve(Dataset->Generators.size());
+  for(size_t i = 0; i < Dataset->Generators.size(); ++i)
+  {
+   NPulseGeneratorTransit *generator = Dataset->Generators[i];
+   pulse_counters.push_back(generator ? generator->PulseCounter.GetData() : -1);
+   generator_frequencies.push_back(generator ? generator->Frequency.GetData() : -1.0);
+  }
+  append_vector("dataset_generator_pulse_counter", pulse_counters);
+  append_vector("dataset_generator_frequency", generator_frequencies);
+ }
+
  std::vector<double> amp_dt;
  const size_t n = std::max(InitialSomaPotential.size(), MaxIterSomaAmp.size());
  amp_dt.reserve(n);
@@ -597,16 +653,6 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
   amp_dt.push_back(initial - amp);
  }
 
- const auto append_vector = [&record](const char *name, const auto &values)
- {
-  record << ';' << name << "=[";
-  for(size_t i = 0; i < values.size(); ++i)
-  {
-   if(i) record << ',';
-   record << values[i];
-  }
-  record << ']';
- };
  append_vector("peak_amp", MaxIterSomaAmp);
  append_vector("peak_time", TimeOfMaxIterSomaAmp);
  append_vector("peak_seen", PeakSeen);
@@ -2246,6 +2292,11 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  AttenuationGammaByInput.SetCheckEquals(false);
  Dataset = NULL;
  Neuron = NULL;
+ StartIterTime = 0.0;
+ AuditBurstStartSomaPotential = 0.0;
+ AuditBurstStartDatasetSample = -1;
+ AuditBurstStartDatasetIteration = -1;
+ AuditBurstStartDatasetSampleTime = 0.0;
  IsFirstFileStep = true;
  HasUntrainedSnapshot = false;
  HasLoadedInitialSomaPotential = false;
@@ -5864,6 +5915,40 @@ void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
 {
  StartIterTime = now;
  FirstImpulseTime = now;
+ AuditBurstStartSomaPotential = 0.0;
+ AuditBurstStartDendritePotential.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0.0);
+ AuditBurstStartDatasetSample = Dataset ? Dataset->GetCurrentSampleId() : -1;
+ AuditBurstStartDatasetIteration = Dataset ? Dataset->Iteration.GetData() : -1;
+ AuditBurstStartDatasetSampleTime = Dataset ? Dataset->GetSampleStartTime() : 0.0;
+ AuditBurstStartDatasetNextSpikeIndex.clear();
+ if(Dataset)
+ {
+  AuditBurstStartDatasetNextSpikeIndex.reserve(static_cast<size_t>(Dataset->NumFeatures.GetData()));
+  for(int i = 0; i < Dataset->NumFeatures.GetData(); ++i)
+   AuditBurstStartDatasetNextSpikeIndex.push_back(Dataset->GetNextSpikeIndex(i));
+ }
+ AuditBurstStartGeneratorPulseCounter.clear();
+ if(Dataset)
+ {
+  AuditBurstStartGeneratorPulseCounter.reserve(Dataset->Generators.size());
+  for(size_t i = 0; i < Dataset->Generators.size(); ++i)
+  {
+   NPulseGeneratorTransit *generator = Dataset->Generators[i];
+   AuditBurstStartGeneratorPulseCounter.push_back(generator ? generator->PulseCounter.GetData() : -1);
+  }
+ }
+ if(Neuron)
+ {
+  UEPtr<NPulseMembrane> soma = Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(), true);
+  if(soma)
+   AuditBurstStartSomaPotential = soma->SumPotential(0, 0);
+  for(int i = 0; i < NumInputDendrite.GetData(); ++i)
+  {
+   NPulseMembrane *membrane = GetInputMembraneForPulse(i);
+   if(membrane && i < int(AuditBurstStartDendritePotential.size()))
+    AuditBurstStartDendritePotential[static_cast<size_t>(i)] = membrane->SumPotential(0, 0);
+  }
+ }
  MaxIterSomaAmp.assign(NumInputDendrite, 0.0);
  TimeOfMaxIterSomaAmp.assign(NumInputDendrite, 0.0);
  PulseIndexInIter = 0;
