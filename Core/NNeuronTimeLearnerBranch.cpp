@@ -95,6 +95,7 @@ const int kPhaseFailed = 5;
 const int kFailureNone = 0;
 const int kFailureResistanceMax = 1;
 const int kFailureSegmentOrderMaxLength = 2;
+const int kFailureInvalidPeakNoRecovery = 3;
 }
 
 /// Storage path of the DatasetMatrix generator
@@ -164,6 +165,7 @@ void NNeuronTimeLearnerBranch::ResizeSyncVectors(int n)
  PrevPeakValid.assign(static_cast<size_t>(n), false);
  DendLastAbsDt.assign(static_cast<size_t>(n), large_dt);
  NoImproveCount.assign(static_cast<size_t>(n), 0);
+ InvalidPeakNoActionCount.assign(static_cast<size_t>(n), 0);
  DendBestEffortSynced.assign(static_cast<size_t>(n), false);
  ActiveDendrite = n - 1;
  ActivePulseIndex = n - 1;
@@ -321,6 +323,7 @@ bool NNeuronTimeLearnerBranch::UpdateResistanceBoundsFromMembranes(void)
 bool NNeuronTimeLearnerBranch::CheckResistanceLimitFailure(void)
 {
  if(!IsNeedToTrain.GetData() || TrainingPhase.GetData() == kPhaseDone
+    || TrainingPhase.GetData() == kPhaseFailed
     || TrainingPhase.GetData() == kPhaseCalibrateLtz
     || TrainingPhase.GetData() == kPhasePostTune || !IsParametricNormalization())
   return false;
@@ -615,6 +618,7 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
  append_vector("res_status", ResistanceStatus);
  append_vector("res_no_improve", NoImproveResistanceCount);
  append_vector("amp_dt_skip_count", AmpDtSkipCount);
+ append_vector("invalid_peak_no_action_count", InvalidPeakNoActionCount);
  append_vector("attenuation_gamma_by_input", AttenuationGammaByInput.GetData());
  append_vector("effective_gain", EffectiveResistanceGain);
  append_vector("length_before", lengths_before);
@@ -3590,6 +3594,10 @@ bool NNeuronTimeLearnerBranch::AReset(void)
   const double large_dt = (IterationGap.GetData() > 0.0 ? IterationGap.GetData() : 0.5) + 0.001;
   std::fill(DendLastAbsDt.begin(), DendLastAbsDt.end(), large_dt);
   std::fill(NoImproveCount.begin(), NoImproveCount.end(), 0);
+  if(int(InvalidPeakNoActionCount.size()) != NumInputDendrite.GetData())
+   InvalidPeakNoActionCount.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0);
+  else
+   std::fill(InvalidPeakNoActionCount.begin(), InvalidPeakNoActionCount.end(), 0);
   if(int(NoImproveResistanceCount.size()) != NumInputDendrite.GetData())
    NoImproveResistanceCount.assign(NumInputDendrite.GetData(), 0);
   else
@@ -4197,9 +4205,54 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
    const bool synapses_exhausted = (num < int(NumSynapse.size()))
     && (NumSynapse[num] >= kMaxSynapsesPerDend);
    const bool model_ok = fabs(dt) <= SyncTolerance.GetData();
+
+   const double rmax = ResistanceMax.GetData();
+   const bool at_r_max = num < int(TipSynapseResistance.size())
+    && rmax > 0.0
+    && TipSynapseResistance[static_cast<size_t>(num)] >= rmax * (1.0 - 1e-9);
+   // W3 has a separate Rmax escape that may still change resistance without a
+   // valid peak. Do not call that state unrecoverable while the escape is armed.
+   const bool w3_may_recover = IsParametricNormalization()
+    && EnableRmaxLengthEscape.GetData() && at_r_max;
+   const bool no_legal_recovery = IsParametricNormalization() && amp_low
+    && !synapses_exhausted && !model_ok && !w3_may_recover;
+   if(int(InvalidPeakNoActionCount.size()) != NumInputDendrite.GetData())
+    InvalidPeakNoActionCount.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0);
+   if(no_legal_recovery)
+   {
+    int &stall_count = InvalidPeakNoActionCount[static_cast<size_t>(num)];
+    ++stall_count;
+    if(stall_count >= kInvalidPeakNoActionRefusalLimit)
+    {
+     TrainingFailureReason.SetDataDirect(kFailureInvalidPeakNoRecovery);
+     TrainingPhase.SetDataDirect(kPhaseFailed);
+     CanChangeDendLength = false;
+     if(EnableDebug.GetData() && RDK::GetLogger())
+     {
+      std::ostringstream oss;
+      oss << "Training refused: repeated invalid peak with no permitted recovery step"
+          << " pulse=" << num
+          << " TipR=" << TipSynapseResistance[static_cast<size_t>(num)]
+          << " Rmin=" << ResistanceMin.GetData()
+          << " amp=" << MaxIterSomaAmp[static_cast<size_t>(num)]
+          << " initial=" << InitialSomaPotential[static_cast<size_t>(num)]
+          << " model_dt=" << dt
+          << " sync_tol=" << SyncTolerance.GetData()
+          << " synapses=" << (num < int(NumSynapse.size()) ? NumSynapse[num] : -1)
+          << " consecutive=" << stall_count;
+      RDK::GetLogger()->LogMessageEx(RDK_EX_WARNING,
+       "NNeuronTimeLearnerBranch", oss.str());
+     }
+     return true;
+    }
+   }
+   else if(num < int(InvalidPeakNoActionCount.size()))
+    InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
    
    if((amp_low && synapses_exhausted) || model_ok)
    {
+    if(num < int(InvalidPeakNoActionCount.size()))
+     InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
     if(num < int(DendLastAbsDt.size()))
      DendLastAbsDt[static_cast<size_t>(num)] =
       std::min(fabs(dt), SyncTolerance.GetData());
@@ -4220,6 +4273,8 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
     return true;
    }
   }
+  else if(num < int(InvalidPeakNoActionCount.size()))
+   InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
   
   if(EnableDebug.GetData() && RDK::GetLogger())
   {
@@ -4231,6 +4286,9 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
   }
   return true;
  }
+
+ if(num < int(InvalidPeakNoActionCount.size()))
+  InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
 
  // A locally valid timing measurement does not waive the sequential cable
  // order invariant. Request the same structural repair used by the
@@ -5912,7 +5970,7 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
   return;
  }
  
- if(TrainingPhase != kPhaseDone && IsNeedToTrain)
+ if(TrainingPhase != kPhaseDone && TrainingPhase != kPhaseFailed && IsNeedToTrain)
  {
   ActivePulseIndex = SelectActiveDendrite();
   ActiveDendrite = ActivePulseIndex;
@@ -5948,8 +6006,11 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
   else
   {
    ChangeDendriteStatus(ActivePulseIndex);
-   RefreshDendLastAbsDtFromPrevAnchor();
-   ChangeSynapseStatus(ActivePulseIndex);
+   if(TrainingPhase != kPhaseFailed)
+   {
+    RefreshDendLastAbsDtFromPrevAnchor();
+    ChangeSynapseStatus(ActivePulseIndex);
+   }
   }
  }
  
@@ -6138,7 +6199,7 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
   const int k = ActivePulseIndex;
   const int n = NumInputDendrite.GetData();
   const double tol = SyncTolerance.GetData();
-  if(TrainingPhase != kPhaseDone && IsNeedToTrain
+  if(TrainingPhase != kPhaseDone && TrainingPhase != kPhaseFailed && IsNeedToTrain
      && k >= 0 && k < n - 1
      && k < int(PulseSynced.size()) && !PulseSynced[static_cast<size_t>(k)])
   {

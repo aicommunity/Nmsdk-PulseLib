@@ -208,7 +208,8 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  UProperty<int, NNeuronTimeLearnerBranch, ptPubState> TrainingPhase;
 
  /// 0 = no failure; 1 = unresolved amplitude error at ResistanceMax;
- /// 2 = required segment order cannot be restored at MaxDendriteLength
+ /// 2 = required segment order cannot be restored at MaxDendriteLength;
+ /// 3 = repeated invalid peak with no permitted recovery step
  UProperty<int, NNeuronTimeLearnerBranch, ptPubState> TrainingFailureReason;
  
  /// One-shot reset to initial untrained structure/state
@@ -398,6 +399,9 @@ protected:
  
  /// Accepted without |dt|≤tol (amp-collapse / no-improve stop)
  std::vector<bool> DendBestEffortSynced;
+
+ /// Consecutive parametric-mode bursts with no valid peak and no legal recovery step
+ std::vector<int> InvalidPeakNoActionCount;
  
  /// Estimated cable delay per segment (sec); refined from observed |Δdt|/ΔL
  double EstDelayPerSeg;
@@ -507,6 +511,9 @@ protected:
  static constexpr double kUndershootBoostRatio = 2.0;
  
  static constexpr int kNoImproveResistanceLimit = 3;
+
+ /// Repeated no-action invalid-peak bursts before reporting an explicit trainer refusal
+ static constexpr int kInvalidPeakNoActionRefusalLimit = 3;
 
  /// Amp hold-entries at Rmax overshoot between forced +1 length steps (W3c).
  static constexpr int kRmaxOvershootLengthCooldown = kNoImproveResistanceLimit;
