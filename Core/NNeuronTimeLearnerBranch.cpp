@@ -183,6 +183,10 @@ void NNeuronTimeLearnerBranch::ResizeSyncVectors(int n)
   PrevResistanceRatio.assign(static_cast<size_t>(n), 1.0);
  if(int(NoImproveResistanceCount.size()) != n)
   NoImproveResistanceCount.assign(static_cast<size_t>(n), 0);
+ if(int(AmpDtSkipCount.size()) != n)
+  AmpDtSkipCount.assign(static_cast<size_t>(n), 0);
+ if(int(AttenuationGammaByInput.size()) != n)
+  AttenuationGammaByInput.resize(static_cast<size_t>(n), AttenuationGamma.GetData());
  if(int(RmaxDwellCount.size()) != n)
   RmaxDwellCount.assign(static_cast<size_t>(n), 0);
  if(int(RmaxOvershootLengthGrow.size()) != n)
@@ -570,6 +574,7 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";normalization_mode=" << NormalizationMode.GetData()
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
+        << ";per_input_attenuation_gamma=" << (UsePerInputAttenuationGamma.GetData() ? 1 : 0)
         << ";rmin=" << ResistanceMin.GetData()
         << ";rmax=" << ResistanceMax.GetData()
         << ";rs_rm_min=" << (1.0 / MaxSynapseToMembraneResistanceRatio.GetData())
@@ -609,6 +614,8 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
  append_vector("tip_r", TipSynapseResistance.GetData());
  append_vector("res_status", ResistanceStatus);
  append_vector("res_no_improve", NoImproveResistanceCount);
+ append_vector("amp_dt_skip_count", AmpDtSkipCount);
+ append_vector("attenuation_gamma_by_input", AttenuationGammaByInput.GetData());
  append_vector("effective_gain", EffectiveResistanceGain);
  append_vector("length_before", lengths_before);
  append_vector("length_after", DendriteLength.GetData());
@@ -1043,12 +1050,23 @@ double NNeuronTimeLearnerBranch::ComputeModelTipResistance(int dendrite_index0) 
  if(dendrite_index0 >= 0 && dendrite_index0 < int(DendriteLength.size())
     && DendriteLength[static_cast<size_t>(dendrite_index0)] > 1)
  {
-  double gamma = AttenuationGamma.GetData();
-  if(gamma <= 0.0)
-   gamma = kAttenuationGammaFallback;
+  const double gamma = EffectiveAttenuationGamma(dendrite_index0);
   r *= std::exp(-gamma * double(DendriteLength[static_cast<size_t>(dendrite_index0)] - 1));
  }
  return ClampResistance(r);
+}
+
+/// Return the configured or per-input cable attenuation coefficient.
+double NNeuronTimeLearnerBranch::EffectiveAttenuationGamma(int dendrite_index0) const
+{
+ double gamma = AttenuationGamma.GetData();
+ if(UsePerInputAttenuationGamma.GetData()
+    && dendrite_index0 >= 0
+    && dendrite_index0 < int(AttenuationGammaByInput.size()))
+  gamma = AttenuationGammaByInput[static_cast<size_t>(dendrite_index0)];
+ if(gamma <= 0.0)
+  gamma = kAttenuationGammaFallback;
+ return gamma;
 }
 
 /// Damped P-step tip R from amp error
@@ -1135,9 +1153,7 @@ void NNeuronTimeLearnerBranch::FeedforwardResistanceOnLengthGrow(int dendrite_in
  if(dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
   return;
  
- double gamma = AttenuationGamma.GetData();
- if(gamma <= 0.0)
-  gamma = kAttenuationGammaFallback;
+ const double gamma = EffectiveAttenuationGamma(dendrite_index0);
  
  double r = SynapseResistanceBase.GetData();
  if(dendrite_index0 < int(TipSynapseResistance.size()))
@@ -1245,11 +1261,17 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
    const double gamma_obs = -std::log(ratio) / double(DendriteLength[num] - 1);
    if(gamma_obs > 1e-4 && gamma_obs < 1.0)
    {
-    const double cur_gamma = AttenuationGamma.GetData();
-    if(cur_gamma <= 0.0)
-     AttenuationGamma = gamma_obs;
+    const double cur_gamma = UsePerInputAttenuationGamma.GetData()
+     && num < int(AttenuationGammaByInput.size())
+     ? AttenuationGammaByInput[static_cast<size_t>(num)]
+     : AttenuationGamma.GetData();
+    const double next_gamma = (cur_gamma <= 0.0)
+     ? gamma_obs : 0.7 * cur_gamma + 0.3 * gamma_obs;
+    if(UsePerInputAttenuationGamma.GetData()
+       && num < int(AttenuationGammaByInput.size()))
+     AttenuationGammaByInput[static_cast<size_t>(num)] = next_gamma;
     else
-     AttenuationGamma = 0.7 * cur_gamma + 0.3 * gamma_obs;
+     AttenuationGamma = next_gamma;
    }
   }
  }
@@ -1351,18 +1373,48 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
 
  if(!ready_for_r_tune)
  {
+  if(num < int(AmpDtSkipCount.size()))
+   AmpDtSkipCount[static_cast<size_t>(num)] = 0;
   if(!escaped_rmax_this_call)
    ResistanceStatus[num] = (fabs(dt) > eps) ? 1 : 0;
  }
  else if(same_pattern && (fabs(dt) <= eps))
  {
+  if(num < int(AmpDtSkipCount.size()))
+   AmpDtSkipCount[static_cast<size_t>(num)] = 0;
   ResistanceStatus[num] = 0;
+ }
+ // Branch defines the same pathological amplitude threshold as Classic. A huge
+ // peak is not a meaningful P-controller sample: skip a few consecutive hits,
+ // then make one bounded directional step instead of multiplying TipR by an
+ // unbounded amplitude ratio (which can jump straight to ResistanceMax).
+ else if(fabs(dt) > kPathologicalAmpDt)
+ {
+  ResistanceStatus[num] = 0;
+  if(num < int(AmpDtSkipCount.size()))
+   AmpDtSkipCount[static_cast<size_t>(num)]++;
+  const int skip_n = (num < int(AmpDtSkipCount.size()))
+   ? AmpDtSkipCount[static_cast<size_t>(num)] : 0;
+  if(skip_n >= kNoImproveResistanceLimit)
+  {
+   const double step = std::max(kMidbandRminStep, kResistanceSettleRatio);
+   const double r_new = ClampResistance(r_old * (dt > 0.0
+    ? (1.0 - step) : (1.0 + step)));
+   ApplyComputedResistance(num, r_old, r_new, kResistanceAdjustGainDefault);
+   if(num < int(AmpDtSkipCount.size()))
+    AmpDtSkipCount[static_cast<size_t>(num)] = 0;
+   if(num < int(NoImproveResistanceCount.size()))
+    NoImproveResistanceCount[static_cast<size_t>(num)] = 0;
+   ResistanceStatus[num] = 1;
+  }
  }
  // Do not stop on partial ampDt improvement: keep damped-P until |dt|<=eps
  // (or no-improve / Rmin escapes). The old "dt got smaller" settle left dend0
- // stuck with ampDt~1e-3 after a single R step.
+ // stuck at ampDt~1e-3 after a single R step.
  else if(fabs(dt) > eps)
  {
+  if(num < int(AmpDtSkipCount.size()))
+   AmpDtSkipCount[static_cast<size_t>(num)] = 0;
   double eff_gain = kResistanceAdjustGainDefault;
   double r_new = r_old;
   const double rmin = rmin_w3;
@@ -1472,7 +1524,11 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
    PrevAmpError[static_cast<size_t>(num)] = dt;
  }
  else
+ {
+  if(num < int(AmpDtSkipCount.size()))
+   AmpDtSkipCount[static_cast<size_t>(num)] = 0;
   ResistanceStatus[num] = 0;
+ }
  
  ResistanceDifference[num] = dt;
  SynapseStatus[num] = 0;
@@ -2133,6 +2189,8 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
   &NNeuronTimeLearnerBranch::SetMaxSynapseToMembraneResistanceRatio),
  AttenuationGamma("AttenuationGamma", this, &NNeuronTimeLearnerBranch::SetAttenuationGamma),
  AutoEstimateAttenuationGamma("AutoEstimateAttenuationGamma", this),
+ UsePerInputAttenuationGamma("UsePerInputAttenuationGamma", this),
+ AttenuationGammaByInput("AttenuationGammaByInput", this),
  ResistanceAdjustGain("ResistanceAdjustGain", this, &NNeuronTimeLearnerBranch::SetResistanceAdjustGain),
  TipSynapseResistance("TipSynapseResistance", this, &NNeuronTimeLearnerBranch::SetTipSynapseResistance),
  DendriteLength("DendriteLength", this, &NNeuronTimeLearnerBranch::SetDendriteLength),
@@ -2166,6 +2224,7 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  OldNumInputDendrite = 0;
  InitialSomaPotential.SetCheckEquals(false);
  TipSynapseResistance.SetCheckEquals(false);
+ AttenuationGammaByInput.SetCheckEquals(false);
  Dataset = NULL;
  Neuron = NULL;
  IsFirstFileStep = true;
@@ -2312,12 +2371,14 @@ bool NNeuronTimeLearnerBranch::ResetToUntrained(void)
  PrevAmpError.assign(NumInputDendrite, 0.0);
  PrevResistanceRatio.assign(NumInputDendrite, 1.0);
  NoImproveResistanceCount.assign(NumInputDendrite, 0);
+ AmpDtSkipCount.assign(NumInputDendrite, 0);
  RmaxDwellCount.assign(NumInputDendrite, 0);
  RmaxOvershootLengthGrow.assign(NumInputDendrite, false);
  RmaxOvershootLengthCooldown.assign(NumInputDendrite, 0);
  EffectiveResistanceGain.assign(NumInputDendrite, kResistanceAdjustGainDefault);
  if(AutoEstimateAttenuationGamma.GetData())
   AttenuationGamma = kAttenuationGammaAuto;
+ AttenuationGammaByInput.assign(static_cast<size_t>(NumInputDendrite), AttenuationGamma.GetData());
  if(IsParametricNormalization())
   EnforceParametricSynapseCount();
  MaxIterSomaAmp.assign(NumInputDendrite, 0.0);
@@ -3334,6 +3395,8 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  MaxSynapseToMembraneResistanceRatio = 1000.0;
  AttenuationGamma = kAttenuationGammaAuto;
  AutoEstimateAttenuationGamma = true;
+ UsePerInputAttenuationGamma = false;
+ AttenuationGammaByInput.assign(NumInputDendrite, AttenuationGamma.GetData());
  ResistanceAdjustGain = kResistanceAdjustGainDefault;
  TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
  DendriteLength.assign(NumInputDendrite, 1);
@@ -3389,6 +3452,7 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  PrevAmpError.assign(NumInputDendrite, 0.0);
  PrevResistanceRatio.assign(NumInputDendrite, 1.0);
  NoImproveResistanceCount.assign(NumInputDendrite, 0);
+ AmpDtSkipCount.assign(NumInputDendrite, 0);
  RmaxDwellCount.assign(NumInputDendrite, 0);
  RmaxOvershootLengthGrow.assign(NumInputDendrite, false);
  RmaxOvershootLengthCooldown.assign(NumInputDendrite, 0);
@@ -3530,6 +3594,10 @@ bool NNeuronTimeLearnerBranch::AReset(void)
    NoImproveResistanceCount.assign(NumInputDendrite.GetData(), 0);
   else
    std::fill(NoImproveResistanceCount.begin(), NoImproveResistanceCount.end(), 0);
+  if(int(AmpDtSkipCount.size()) != NumInputDendrite.GetData())
+   AmpDtSkipCount.assign(NumInputDendrite.GetData(), 0);
+  else
+   std::fill(AmpDtSkipCount.begin(), AmpDtSkipCount.end(), 0);
   if(int(RmaxDwellCount.size()) != NumInputDendrite.GetData())
    RmaxDwellCount.assign(NumInputDendrite.GetData(), 0);
   else

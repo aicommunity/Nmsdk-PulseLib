@@ -164,6 +164,12 @@ public:
 
  /// Re-estimate AttenuationGamma from measured amplitude while training
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> AutoEstimateAttenuationGamma;
+
+/// Diagnostic option: keep the automatic attenuation estimate per input instead of sharing one scalar
+UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> UsePerInputAttenuationGamma;
+
+/// Runtime attenuation estimate associated with each input dendrite
+UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> AttenuationGammaByInput;
  
  /// P-regulator gain for parametric R step (0..1], default 0.4
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> ResistanceAdjustGain;
@@ -445,6 +451,9 @@ protected:
  
  /// Consecutive no-improve resistance steps
  std::vector<int> NoImproveResistanceCount;
+
+ /// Consecutive pathological amp-error samples skipped by the TipR controller
+ std::vector<int> AmpDtSkipCount;
  
  /// Consecutive hits with TipR at ResistanceMax (W3 dwell escape)
  std::vector<int> RmaxDwellCount;
@@ -921,6 +930,7 @@ protected:
  
  /// Scale tip R on length grow by exp(-gamma*deltaL)
  void FeedforwardResistanceOnLengthGrow(int dendrite_index0, int deltaL);
+ double EffectiveAttenuationGamma(int dendrite_index0) const;
  
  /// Force NumSynapse=1 in parametric mode
  void EnforceParametricSynapseCount(void);
