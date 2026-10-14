@@ -4482,8 +4482,12 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
    // valid peak. Do not call that state unrecoverable while the escape is armed.
    const bool w3_may_recover = IsParametricNormalization()
     && EnableRmaxLengthEscape.GetData() && at_r_max;
+   // Parametric normalization keeps the synapse count fixed, and resistance
+   // feedback cannot be computed from an invalid peak. Timing agreement alone
+   // therefore does not provide an amplitude-recovery step. Refuse after the
+   // bounded no-action window unless the explicit W3 escape is still armed.
    const bool no_legal_recovery = IsParametricNormalization() && amp_low
-    && !synapses_exhausted && !model_ok && !w3_may_recover;
+    && !w3_may_recover;
    if(int(InvalidPeakNoActionCount.size()) != NumInputDendrite.GetData())
     InvalidPeakNoActionCount.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0);
    if(no_legal_recovery)
@@ -4513,6 +4517,9 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
      }
      return true;
     }
+    // Keep the no-action count across bursts. The timing-only best-effort
+    // branch below cannot act on amplitude and would otherwise clear it again.
+    return true;
    }
    else if(num < int(InvalidPeakNoActionCount.size()))
     InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
