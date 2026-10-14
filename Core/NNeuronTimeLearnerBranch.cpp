@@ -97,6 +97,16 @@ const int kFailureNone = 0;
 const int kFailureResistanceMax = 1;
 const int kFailureSegmentOrderMaxLength = 2;
 const int kFailureInvalidPeakNoRecovery = 3;
+const int kFailureNoLinearStability = 4;
+const int kFailureNoMonotoneResistanceFloor = 5;
+const int kFailureInvalidIntegrationParameters = 6;
+
+bool IsIntegrationPreflightFailure(const int reason)
+{
+ return reason == kFailureNoLinearStability
+  || reason == kFailureNoMonotoneResistanceFloor
+  || reason == kFailureInvalidIntegrationParameters;
+}
 }
 
 /// Storage path of the DatasetMatrix generator
@@ -281,13 +291,96 @@ double NNeuronTimeLearnerBranch::GetTargetMembraneResistance(int pulse_index0) c
  return std::isfinite(resistance) && resistance > 0.0 ? resistance : 0.0;
 }
 
-/// Derive independent synaptic R intervals from each target membrane and the
-/// explicit NPulseChannel step's no-crossing stability bound. Scalar states
-/// summarize the interval intersection for older observers only.
+/// Validate fixed-step stability for every instantiated NPulseChannel. In
+/// parametric mode also derive independent synaptic R intervals from the
+/// no-crossing bound; structural mode only validates and never changes Rs.
 bool NNeuronTimeLearnerBranch::UpdateResistanceBoundsFromMembranes(void)
 {
  if(!Neuron)
   return false;
+ const auto clear_integration_failure = [this]()
+ {
+  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))
+  {
+   TrainingFailureReason.SetDataDirect(kFailureNone);
+   TrainingPhase.SetDataDirect(IsNeedToTrain.GetData() ? kPhaseSync : kPhaseDone);
+   CanChangeDendLength = IsNeedToTrain.GetData();
+  }
+ };
+
+ // Inspect every instantiated neuron membrane (soma, all dendrite segments,
+ // and LT membrane); a fast proximal or soma channel can be unstable even
+ // when the active branch tip is not.
+ int checked_channels = 0;
+ for(size_t membrane_index = 0; membrane_index < Neuron->GetNumMembranes(); ++membrane_index)
+ {
+  NPulseMembrane *membrane = Neuron->GetMembrane(membrane_index);
+  if(!membrane)
+   continue;
+  for(size_t channel_index = 0; channel_index < membrane->GetNumChannels(); ++channel_index)
+  {
+   NPulseChannel *channel = dynamic_cast<NPulseChannel*>(membrane->GetChannel(channel_index));
+   if(!channel)
+    continue; // Other channel families use a different integration equation.
+   ++checked_channels;
+   const double capacity = channel->Capacity.GetData();
+   const double frequency = channel->TimeStep.GetData();
+   const double channel_resistances[] = {
+    channel->Resistance.GetData(),
+    channel->RestingResistance.GetData(),
+    channel->FBResistance.GetData()
+   };
+   for(size_t mode = 0; mode < sizeof(channel_resistances) / sizeof(channel_resistances[0]); ++mode)
+   {
+    const double channel_r = channel_resistances[mode];
+    const TimeLearnerResistanceBounds::StepStabilityResult stability =
+     TimeLearnerResistanceBounds::AssessStepStability(capacity, channel_r, frequency);
+    if(stability.status == TimeLearnerResistanceBounds::StepStabilityStatus::InvalidInput)
+    {
+     TrainingFailureReason.SetDataDirect(kFailureInvalidIntegrationParameters);
+     TrainingPhase.SetDataDirect(kPhaseFailed);
+     CanChangeDendLength = false;
+     if(RDK::GetLogger())
+     {
+      std::ostringstream oss;
+      oss << "Invalid NPulseChannel integration parameters"
+          << " membrane=" << membrane->GetName()
+          << " channel=" << channel->GetName() << " mode=" << mode
+          << " capacity=" << capacity << " channel_R=" << channel_r
+          << " frequency=" << frequency;
+      RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearnerBranch", oss.str());
+     }
+     return false;
+    }
+    if(stability.status == TimeLearnerResistanceBounds::StepStabilityStatus::NoStrictLinearStabilityForAnyFiniteResistance)
+    {
+     TrainingFailureReason.SetDataDirect(kFailureNoLinearStability);
+     TrainingPhase.SetDataDirect(kPhaseFailed);
+     CanChangeDendLength = false;
+     if(RDK::GetLogger())
+     {
+      std::ostringstream oss;
+      oss << "Fixed integration step is not strictly linearly stable for any synaptic resistance"
+          << " membrane=" << membrane->GetName()
+          << " channel=" << channel->GetName() << " mode=" << mode
+          << " capacity=" << capacity << " channel_R=" << channel_r
+          << " frequency=" << frequency << " Q=" << stability.dimensionlessTimeScale
+          << " minimum_step_gain_at_G_zero=" << stability.minimumStepGainAtZeroConductance
+          << " requires Q>0.5 for K<2";
+      RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearnerBranch", oss.str());
+     }
+     return false;
+    }
+   }
+  }
+ }
+ if(checked_channels == 0)
+ {
+  TrainingFailureReason.SetDataDirect(kFailureInvalidIntegrationParameters);
+  TrainingPhase.SetDataDirect(kPhaseFailed);
+  CanChangeDendLength = false;
+  return false;
+ }
 
  std::vector<double> membrane_resistances;
  std::vector<double> stability_min_resistances;
@@ -314,12 +407,6 @@ bool NNeuronTimeLearnerBranch::UpdateResistanceBoundsFromMembranes(void)
    : TimeLearnerResistanceBounds::EffectiveConductanceCount(
       connected_synapses, channel->UseAverageSynapsis.GetData());
   double input_stability_floor = 0.0;
-  if(effective_synapses == 0)
-  {
-   membrane_resistances.push_back(candidate);
-   stability_min_resistances.push_back(input_stability_floor);
-   continue;
-  }
   const double channel_resistances[] = {
    channel->Resistance.GetData(),
    channel->RestingResistance.GetData(),
@@ -330,18 +417,25 @@ bool NNeuronTimeLearnerBranch::UpdateResistanceBoundsFromMembranes(void)
    const double channel_r = channel_resistances[mode];
    if(!std::isfinite(channel_r) || channel_r <= 0.0)
     continue;
+   if(!IsParametricNormalization() || effective_synapses == 0)
+    continue;
+
    const TimeLearnerResistanceBounds::FloorResult floor =
     TimeLearnerResistanceBounds::ComputeNoCrossingResistanceFloor(
      capacity, channel_r, frequency, effective_synapses);
    if(floor.status != TimeLearnerResistanceBounds::FloorStatus::Ok)
    {
+    TrainingFailureReason.SetDataDirect(kFailureNoMonotoneResistanceFloor);
+    TrainingPhase.SetDataDirect(kPhaseFailed);
+    CanChangeDendLength = false;
     if(RDK::GetLogger())
     {
      std::ostringstream oss;
-     oss << "No finite Rs/Rm floor can keep the explicit channel step from crossing equilibrium"
+     oss << "No finite Rs floor can keep the explicit channel step from crossing equilibrium"
          << " pulse=" << i << " mode=" << mode
          << " capacity=" << capacity << " channel_R=" << channel_r
          << " frequency=" << frequency << " Q=" << floor.dimensionlessTimeScale
+         << "; monotone no-crossing requires Q>1"
          << " connected_synapses=" << connected_synapses
          << " effective_synapses=" << effective_synapses;
      RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearnerBranch", oss.str());
@@ -350,8 +444,16 @@ bool NNeuronTimeLearnerBranch::UpdateResistanceBoundsFromMembranes(void)
    }
    input_stability_floor = std::max(input_stability_floor, floor.minimumResistance);
   }
+  if(effective_synapses == 0)
+   input_stability_floor = 0.0;
   membrane_resistances.push_back(candidate);
   stability_min_resistances.push_back(input_stability_floor);
+ }
+
+ if(!IsParametricNormalization())
+ {
+  clear_integration_failure();
+  return true;
  }
 
  if(membrane_resistances.empty())
@@ -412,6 +514,7 @@ bool NNeuronTimeLearnerBranch::UpdateResistanceBoundsFromMembranes(void)
       << " max_ratio=" << max_ratio;
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
  }
+ clear_integration_failure();
  return true;
 }
 
@@ -2885,9 +2988,17 @@ bool NNeuronTimeLearnerBranch::SetIsNeedToTrain(const bool &value)
  WaitingPeakAfterLastPulse = false;
  if(value)
  {
-  TrainingPhase = kPhaseSync;
-  TrainingFailureReason = kFailureNone;
-  CanChangeDendLength = true;
+  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))
+  {
+   TrainingPhase = kPhaseFailed;
+   CanChangeDendLength = false;
+  }
+  else
+  {
+   TrainingPhase = kPhaseSync;
+   TrainingFailureReason = kFailureNone;
+   CanChangeDendLength = true;
+  }
   HasPrevPeakSnapshot = false;
   ParallelResistanceScaled = false;
   PostTrainTuneComplete = false;
@@ -3461,7 +3572,7 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
   return false;
  }
  Neuron->Reset();
- if(IsParametricNormalization() && !UpdateResistanceBoundsFromMembranes())
+ if(!UpdateResistanceBoundsFromMembranes())
   return false;
  
  if(EnableDebug.GetData() && RDK::GetLogger())
@@ -3659,9 +3770,17 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
  PrevInputPattern.Assign(NumInputDendrite, 1, -1.0);
  AdditionalInputPattern.Resize(NumInputDendrite, 1, 0.0);
  
- TrainingPhase = IsNeedToTrain ? kPhaseSync : kPhaseDone;
- if(IsNeedToTrain.GetData())
-  CanChangeDendLength = true;
+ if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))
+ {
+  TrainingPhase = kPhaseFailed;
+  CanChangeDendLength = false;
+ }
+ else
+ {
+  TrainingPhase = IsNeedToTrain ? kPhaseSync : kPhaseDone;
+  if(IsNeedToTrain.GetData())
+   CanChangeDendLength = true;
+ }
  ApplyActiveLtzThreshold();
  IterationActive = false;
  HasPrevIteration = false;
@@ -3948,6 +4067,13 @@ bool NNeuronTimeLearnerBranch::ABuild(void)
 }
 
 /// Sources (generators) before Neuron — Dataset calc contract
+bool NNeuronTimeLearnerBranch::ABeforeCalculate(void)
+{
+ if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))
+  ForceSkipComponentCalculation();
+ return true;
+}
+
 void NNeuronTimeLearnerBranch::UpdateComputationOrder(void)
 {
  int position = 0;

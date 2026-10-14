@@ -12,7 +12,28 @@ enum class FloorStatus
 {
     Ok,
     InvalidInput,
+    NoFiniteLinearStabilityFloor,
     NoFiniteNoCrossingFloor
+};
+
+enum class StepStabilityStatus
+{
+    StrictLinearStabilityPossible,
+    NoStrictLinearStabilityForAnyFiniteResistance,
+    InvalidInput
+};
+
+struct StepStabilityResult
+{
+    StepStabilityStatus status;
+    double dimensionlessTimeScale;
+    double minimumStepGainAtZeroConductance;
+
+    StepStabilityResult()
+        : status(StepStabilityStatus::InvalidInput)
+        , dimensionlessTimeScale(0.0)
+        , minimumStepGainAtZeroConductance(0.0)
+    {}
 };
 
 struct FloorResult
@@ -106,6 +127,34 @@ inline int EffectiveConductanceCount(const int connectedSynapses, const bool use
     return useAverageSynapsis && connected > 0 ? 1 : connected;
 }
 
+/// Assess whether any synaptic resistance can make the explicit channel update
+/// strictly linearly stable. For nonnegative G the smallest possible step gain
+/// is the G->0 limit, K_min=1/Q where Q=C*R*f. Strict stability requires K<2,
+/// so Q must be greater than 0.5. This check is independent of learning mode
+/// and does not change synaptic resistance.
+inline StepStabilityResult AssessStepStability(
+    const double capacity,
+    const double channelResistance,
+    const double updateFrequency)
+{
+    StepStabilityResult result;
+    if (!std::isfinite(capacity) || capacity <= 0.0
+        || !std::isfinite(channelResistance) || channelResistance <= 0.0
+        || !std::isfinite(updateFrequency) || updateFrequency <= 0.0)
+        return result;
+
+    const double q = capacity * channelResistance * updateFrequency;
+    if (!std::isfinite(q) || q <= 0.0)
+        return result;
+
+    result.dimensionlessTimeScale = q;
+    result.minimumStepGainAtZeroConductance = 1.0 / q;
+    result.status = q > 0.5
+        ? StepStabilityStatus::StrictLinearStabilityPossible
+        : StepStabilityStatus::NoStrictLinearStabilityForAnyFiniteResistance;
+    return result;
+}
+
 /// Compute the Rs floor that keeps the explicit NPulseChannel update from
 /// crossing its instantaneous equilibrium, assuming each connected synapse
 /// contributes no more than normalizedMaxConductance / Rs.
@@ -113,7 +162,9 @@ inline int EffectiveConductanceCount(const int connectedSynapses, const bool use
 /// For Q = C*R*f and rho = Rs/R, the update coefficient is
 /// K = (1 + G*R)^2/Q. Requiring K<=1 gives
 /// Rs >= N*normalizedMaxConductance*R/(sqrt(Q)-1), which has a finite value
-/// only when Q>1. This is an integration-stability bound, not a learning rule.
+/// only when Q>1. Q<=0.5 is stricter: even the G->0 limit has K>=2, so no
+/// finite synaptic resistance can make the explicit step strictly stable.
+/// This is an integration-stability bound, not a learning rule.
 inline FloorResult ComputeNoCrossingResistanceFloor(
     const double capacity,
     const double channelResistance,
@@ -130,10 +181,17 @@ inline FloorResult ComputeNoCrossingResistanceFloor(
         || normalizedMaxConductance <= 0.0)
         return result;
 
-    const double q = capacity * channelResistance * updateFrequency;
-    if (!std::isfinite(q) || q <= 0.0)
+    const StepStabilityResult stability = AssessStepStability(
+        capacity, channelResistance, updateFrequency);
+    if (stability.status == StepStabilityStatus::InvalidInput)
         return result;
+    const double q = stability.dimensionlessTimeScale;
     result.dimensionlessTimeScale = q;
+    if (stability.status == StepStabilityStatus::NoStrictLinearStabilityForAnyFiniteResistance)
+    {
+        result.status = FloorStatus::NoFiniteLinearStabilityFloor;
+        return result;
+    }
     if (q <= 1.0)
     {
         result.status = FloorStatus::NoFiniteNoCrossingFloor;

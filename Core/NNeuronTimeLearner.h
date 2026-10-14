@@ -222,7 +222,7 @@ public:
  /// 0 - joint train (length+synapses); 1 - legacy unused; 2 - Done
  UProperty<int, NNeuronTimeLearner, ptPubState> TrainingPhase;
 
- /// 0 = no failure; 1 = unresolved amplitude error at the ResistanceMax ceiling
+ /// 0 = none; 1 = Rmax; 2 = no stable fixed step for any Rs; 3 = no monotone Rs floor; 4 = invalid channel integration parameters
  UProperty<int, NNeuronTimeLearner, ptPubState> TrainingFailureReason;
  
  /// One-shot reset to initial untrained structure/state
@@ -808,6 +808,9 @@ protected:
  
  /// Build after parameters; may call BuildStructure
  virtual bool ABuild(void);
+
+ /// Block child neuron/dataset calculation when integration preflight rejects the model.
+ virtual bool ABeforeCalculate(void);
  
  /// Sources (generators) before Neuron — Dataset calc contract
  void UpdateComputationOrder(void) override;
