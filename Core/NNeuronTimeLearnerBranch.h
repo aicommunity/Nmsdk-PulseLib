@@ -146,16 +146,28 @@ public:
  /// Reference tip synapse resistance at L==1 (typically 8.6e7)
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SynapseResistanceBase;
  
- /// Effective lower bound for tip Resistance, derived from target membrane resistance
+ /// Common-interval summary: greatest per-input minimum Rs; the optimizer clamps each tip independently.
  UProperty<double, NNeuronTimeLearnerBranch, ptPubState> ResistanceMin;
+
+ /// Most restrictive per-input minimum Rs/Rm ratio.
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubState> ResistanceMinRatio;
+
+ /// Effective lower Rs bound for each input, relative to that input's own membrane.
+ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> ResistanceMinByInput;
+
+ /// Effective upper Rs bound for each input, relative to that input's own membrane.
+ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> ResistanceMaxByInput;
+
+ /// Effective minimum Rs/Rm ratio for each input.
+ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> ResistanceMinRatioByInput;
  
- /// Effective upper bound for tip Resistance, derived from target membrane resistance
+ /// Common-interval summary: smallest per-input maximum Rs; may be below ResistanceMin when local intervals do not overlap.
  UProperty<double, NNeuronTimeLearnerBranch, ptPubState> ResistanceMax;
 
  /// Enable W3: use dendrite length as an amplitude escape at the Rmax ceiling
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableRmaxLengthEscape;
 
- /// Upper synapse/membrane resistance ratio used to derive ResistanceMax
+ /// Per-input upper Rs/Rm ratio; its reciprocal sets the configured lower ratio before the stability floor.
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> MaxSynapseToMembraneResistanceRatio;
 
  
@@ -866,7 +878,14 @@ protected:
  /// True when NormalizationMode == parametric
  bool IsParametricNormalization(void) const;
  
- /// Clamp R into [ResistanceMin, ResistanceMax]
+ /// Clamp R into the input-specific resistance interval.
+ double ClampResistance(int pulse_index0, double r) const;
+
+ /// Per-input bounds; scalar properties below are summary diagnostics only.
+ double GetResistanceMinForInput(int pulse_index0) const;
+ double GetResistanceMaxForInput(int pulse_index0) const;
+
+ /// Clamp R into the common interval summary (legacy callers only).
  double ClampResistance(double r) const;
  
  /// Tip ExcSynapse1 for dendrite/pulse index (0-based)
