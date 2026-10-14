@@ -669,6 +669,8 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";trainer=branch;iter=" << CountIteration
         << ";phase=" << TrainingPhase.GetData()
         << ";need=" << (IsNeedToTrain.GetData() ? 1 : 0)
+        << ";structure_build_mode=" << StructureBuildMode.GetData()
+        << ";neuron_present=" << (Neuron ? 1 : 0)
         << ";active_dendrite=" << ActiveDendrite
         << ";active_pulse=" << ActivePulseIndex
         << ";pulse_index=" << PulseIndexInIter
@@ -711,6 +713,42 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
  append_bounds("rmin_by_input", audit_rmin);
  append_bounds("rmax_by_input", audit_rmax);
  append_bounds("rs_rm_min_by_input", audit_ratio);
+
+ std::vector<int> target_channel_found;
+ std::vector<double> target_membrane_r;
+ std::vector<double> target_channel_r;
+ std::vector<double> target_resting_r;
+ std::vector<double> target_feedback_r;
+ std::vector<double> target_capacity;
+ std::vector<double> target_time_step;
+ const int target_count = std::max(0, NumInputDendrite.GetData() - 1);
+ target_channel_found.reserve(static_cast<size_t>(target_count));
+ target_membrane_r.reserve(static_cast<size_t>(target_count));
+ target_channel_r.reserve(static_cast<size_t>(target_count));
+ target_resting_r.reserve(static_cast<size_t>(target_count));
+ target_feedback_r.reserve(static_cast<size_t>(target_count));
+ target_capacity.reserve(static_cast<size_t>(target_count));
+ target_time_step.reserve(static_cast<size_t>(target_count));
+ for(int i = 0; i < target_count; ++i)
+ {
+  NPulseMembrane *membrane = GetInputMembraneForPulse(i);
+  NPulseChannel *channel = membrane && membrane->GetNumPosChannels() > 0
+   ? dynamic_cast<NPulseChannel*>(membrane->GetPosChannel(0)) : NULL;
+  target_channel_found.push_back(channel ? 1 : 0);
+  target_membrane_r.push_back(GetTargetMembraneResistance(i));
+  target_channel_r.push_back(channel ? channel->Resistance.GetData() : 0.0);
+  target_resting_r.push_back(channel ? channel->RestingResistance.GetData() : 0.0);
+  target_feedback_r.push_back(channel ? channel->FBResistance.GetData() : 0.0);
+  target_capacity.push_back(channel ? channel->Capacity.GetData() : 0.0);
+  target_time_step.push_back(channel ? channel->TimeStep.GetData() : 0.0);
+ }
+ append_vector("target_channel_found_by_input", target_channel_found);
+ append_vector("target_membrane_r_by_input", target_membrane_r);
+ append_vector("target_channel_r_by_input", target_channel_r);
+ append_vector("target_resting_r_by_input", target_resting_r);
+ append_vector("target_feedback_r_by_input", target_feedback_r);
+ append_vector("target_capacity_by_input", target_capacity);
+ append_vector("target_time_step_by_input", target_time_step);
 
  record << ";iteration_start_time=" << StartIterTime
         << ";burst_first_pulse_time=" << FirstImpulseTime
@@ -3876,12 +3914,18 @@ bool NNeuronTimeLearnerBranch::ABuild(void)
  {
   res = BuildStructure();
   if(!res)
+  {
+   AppendTrainingIterationAudit(DendriteLength.GetData(), "build_structure_failed");
    return false;
+  }
  }
  if(IsParametricNormalization())
  {
   if(Neuron && !UpdateResistanceBoundsFromMembranes())
+  {
+   AppendTrainingIterationAudit(DendriteLength.GetData(), "build_bounds_failed");
    return false;
+  }
  }
  else
  {
@@ -3899,6 +3943,7 @@ bool NNeuronTimeLearnerBranch::ABuild(void)
     && FixedLTZThreshold.GetData() >= 0.9
     && Dataset)
   Dataset->StateGeneration = 0;
+ AppendTrainingIterationAudit(DendriteLength.GetData(), "build_complete");
  return true;
 }
 
@@ -4021,6 +4066,8 @@ bool NNeuronTimeLearnerBranch::AReset(void)
  WaitingPeakAfterLastPulse = false;
  IsFirstBeat = true;
  ApplyPulseGeneratorMute();
+ AppendTrainingIterationAudit(DendriteLength.GetData(),
+  do_reset_untrained ? "reset_complete_untrained" : "reset_complete_loaded");
  return true;
 }
 
