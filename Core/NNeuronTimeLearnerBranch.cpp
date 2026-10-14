@@ -581,6 +581,8 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";sync_tol=" << SyncTolerance.GetData()
         << ";amp_eps=" << kAmpNormEps
         << ";est_delay_per_seg=" << EstDelayPerSeg
+        << ";burst_start_est_delay_per_seg=" << AuditBurstStartEstDelayPerSeg
+        << ";peak_measure_margin=" << PeakMeasureMargin.GetData()
         << ";iteration_gap=" << IterationGap.GetData()
         << ";effective_iteration_gap=" << EffectiveIterationGapSec()
         << ";max_dendrite_length=" << MaxDendriteLength.GetData()
@@ -606,6 +608,8 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
  append_vector("burst_start_dendrite_potential", AuditBurstStartDendritePotential);
  append_vector("burst_start_dataset_next_spike_index", AuditBurstStartDatasetNextSpikeIndex);
  append_vector("burst_start_generator_pulse_counter", AuditBurstStartGeneratorPulseCounter);
+ record << ";burst_start_component_state=" << AuditBurstStartComponentState
+        << ";burst_end_component_state=" << BuildAuditComponentStateSnapshot();
 
  if(Dataset)
  {
@@ -660,6 +664,8 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
  append_vector("peak_locked", PeakLocked);
  append_vector("initial_amp", InitialSomaPotential.GetData());
  append_vector("amp_dt", amp_dt);
+ append_vector("dissynchronization", Dissynchronization);
+ append_vector("prev_dissynchronization", PrevDissynchronization);
  append_vector("tip_r", TipSynapseResistance.GetData());
  append_vector("res_status", ResistanceStatus);
  append_vector("res_no_improve", NoImproveResistanceCount);
@@ -701,6 +707,197 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
  std::ofstream audit((data_dir + "TimeLearnerTrainingAudit.log").c_str(), std::ios::out | std::ios::app);
  if(audit)
   audit << record.str() << '\n';
+}
+
+/// Read-only snapshot of cable, channel, and synapse state for diagnosing
+/// repeat-to-repeat response changes. The value uses no semicolons, which
+/// keeps the outer audit record parseable.
+std::string NNeuronTimeLearnerBranch::BuildAuditComponentStateSnapshot(void) const
+{
+ std::ostringstream state;
+ state.precision(17);
+ if(!Neuron)
+  return "no_neuron";
+
+ const auto append_membrane = [&state](const std::string &name, NPulseMembrane *membrane)
+ {
+  state << name;
+  if(!membrane)
+  {
+   state << ":missing";
+   return;
+  }
+
+  state << ":sum=" << membrane->SumPotential(0, 0)
+        << ",channels=" << membrane->GetNumChannels();
+  for(size_t ci = 0; ci < membrane->GetNumChannels(); ++ci)
+  {
+   NPulseChannelCommon *channel = membrane->GetChannel(ci);
+   state << ",c" << ci << '=';
+   if(!channel)
+   {
+    state << "null";
+    continue;
+   }
+   state << channel->Output(0, 0)
+         << ':' << channel->SumChannelInput(0, 0)
+         << ':' << channel->SumSynapticInput(0, 0)
+         << ':' << (channel->IsNeuronActivated.GetData() ? 1 : 0);
+   NPulseChannel *bio_channel = dynamic_cast<NPulseChannel*>(channel);
+   if(bio_channel)
+   {
+    state << ":bio=" << bio_channel->channel_input
+          << ':' << bio_channel->Capacity.GetData()
+          << ':' << bio_channel->Resistance.GetData()
+          << ':' << bio_channel->FBResistance.GetData()
+          << ':' << bio_channel->RestingResistance.GetData()
+          << ':' << bio_channel->TimeConstant.GetData()
+          << ':' << bio_channel->NumConnectedSynapsis.GetData()
+          << ":channel_inputs=";
+    for(size_t ii = 0; ii < bio_channel->ChannelInputs->size(); ++ii)
+    {
+     if(ii) state << ':';
+     if(bio_channel->ChannelInputs[ii].GetSize() > 0)
+      state << bio_channel->ChannelInputs[ii](0, 0);
+     else
+      state << "empty";
+    }
+    state << ":synaptic_inputs=";
+    for(size_t ii = 0; ii < bio_channel->SynapticInputs->size(); ++ii)
+    {
+     if(ii) state << ':';
+     if(bio_channel->SynapticInputs[ii].GetSize() > 0)
+      state << bio_channel->SynapticInputs[ii](0, 0);
+     else
+      state << "empty";
+    }
+   }
+  }
+
+  const auto append_synapses = [&state](const char *prefix, int count,
+                                        NPulseMembrane *mem, bool excitatory)
+  {
+   state << ',' << prefix << count;
+   for(int si = 0; si < count; ++si)
+   {
+    NPulseSynapseCommon *synapse = excitatory
+     ? mem->GetExcitatorySynapses(static_cast<size_t>(si))
+     : mem->GetInhibitorySynapses(static_cast<size_t>(si));
+    state << ',' << prefix << si << '=';
+    if(!synapse)
+    {
+     state << "null";
+     continue;
+    }
+    state << synapse->Input(0, 0) << ':' << synapse->Output(0, 0)
+          << ':' << synapse->GetPreOutputForAudit()
+          << ':' << synapse->Resistance.GetData()
+          << ':' << synapse->Weight.GetData();
+   }
+  };
+  append_synapses("e", static_cast<int>(membrane->GetNumExcitatorySynapses()), membrane, true);
+  append_synapses("i", static_cast<int>(membrane->GetNumInhibitorySynapses()), membrane, false);
+ };
+
+ UEPtr<NPulseMembrane> soma = Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(), true);
+ append_membrane("s", soma.Get());
+ const int lmax = ChainLengthMax();
+ for(int seg = 1; seg <= lmax; ++seg)
+ {
+  state << '|';
+  UEPtr<NPulseMembrane> membrane = Neuron->GetComponentL<NPulseMembrane>(
+   MakeBranchDendriteName(seg), true);
+  append_membrane(std::string("d") + sntoa(seg), membrane.Get());
+ }
+ return state.str();
+}
+
+/// Persist read-only, per-tick state while a training burst is active.
+/// This is deliberately separate from training decisions and only runs with
+/// EnableDebug, for short diagnostic experiments that need event timing.
+void NNeuronTimeLearnerBranch::AppendTrainingDynamicsSample(double now, int new_pulses)
+{
+ if(!EnableDebug.GetData() || !Environment || !IterationActive)
+  return;
+ std::string data_dir = Environment->GetCurrentDataDir();
+ if(data_dir.empty())
+  return;
+ if(data_dir.back() != '/' && data_dir.back() != '\\')
+  data_dir.push_back('/');
+
+ std::ostringstream record;
+ record.precision(17);
+ const auto append_vector = [&record](const char *name, const auto &values)
+ {
+  record << ";" << name << "=[";
+  for(size_t i = 0; i < values.size(); ++i)
+  {
+   if(i) record << ',';
+   record << values[i];
+  }
+  record << ']';
+ };
+ record << "schema=1;trainer=branch;iter=" << CountIteration
+        << ";phase=" << TrainingPhase.GetData()
+        << ";now=" << now
+        << ";rel=" << (now - FirstImpulseTime)
+        << ";new_pulses=" << new_pulses
+        << ";pulse_index=" << PulseIndexInIter
+        << ";active_pulse=" << ActivePulseIndex
+        << ";est_delay_per_seg=" << EstDelayPerSeg
+        << ";peak_measure_margin=" << PeakMeasureMargin.GetData()
+        << ";dataset_sample=" << (Dataset ? Dataset->GetCurrentSampleId() : -1)
+        << ";dataset_iteration=" << (Dataset ? Dataset->Iteration.GetData() : -1)
+        << ";dataset_next_spike=[";
+ if(Dataset)
+ {
+  for(int i = 0; i < Dataset->NumFeatures.GetData(); ++i)
+  {
+   if(i) record << ',';
+   record << Dataset->GetNextSpikeIndex(i);
+  }
+ }
+ record << "];generator=[";
+ if(Dataset)
+ {
+  for(size_t i = 0; i < Dataset->Generators.size(); ++i)
+  {
+   if(i) record << ',';
+   NPulseGeneratorTransit *generator = Dataset->Generators[i];
+   if(!generator)
+   {
+    record << "null";
+    continue;
+   }
+   record << generator->PulseCounter.GetData() << ':'
+          << generator->OutputPotential(0, 0) << ':'
+          << generator->Frequency.GetData() << ':'
+          << generator->PulseLength.GetData();
+  }
+ }
+ record << "];soma=";
+ if(Neuron)
+ {
+  UEPtr<NPulseMembrane> soma = Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(), true);
+  record << (soma ? soma->SumPotential(0, 0) : -1.0);
+ }
+ else
+  record << -1.0;
+ append_vector("dendrite_length", DendriteLength);
+ append_vector("peak_amp", MaxIterSomaAmp);
+ append_vector("peak_time", TimeOfMaxIterSomaAmp);
+ append_vector("peak_seen", PeakSeen);
+ append_vector("peak_locked", PeakLocked);
+ append_vector("peak_window_lo_rel", AuditPeakWindowLoRel);
+ append_vector("peak_window_hi_rel", AuditPeakWindowHiRel);
+ append_vector("dissynchronization", Dissynchronization);
+ append_vector("prev_dissynchronization", PrevDissynchronization);
+ record << ";component_state=" << BuildAuditComponentStateSnapshot();
+
+ std::ofstream dynamics((data_dir + "TimeLearnerTrainingDynamics.log").c_str(),
+  std::ios::out | std::ios::app);
+ if(dynamics)
+  dynamics << record.str() << '\n';
 }
 
 /// True when every dendrite length is <= 1 (cold / untrained topology)
@@ -2294,6 +2491,7 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  Neuron = NULL;
  StartIterTime = 0.0;
  AuditBurstStartSomaPotential = 0.0;
+ AuditBurstStartEstDelayPerSeg = 0.0;
  AuditBurstStartDatasetSample = -1;
  AuditBurstStartDatasetIteration = -1;
  AuditBurstStartDatasetSampleTime = 0.0;
@@ -4057,6 +4255,8 @@ bool NNeuronTimeLearnerBranch::MeasureMaxPotentialAndTime(void)
   PeakLocked.assign(n, false);
  if(PeakSeen.size() != n)
   PeakSeen.assign(n, false);
+ AuditPeakWindowLoRel.assign(n, -1.0);
+ AuditPeakWindowHiRel.assign(n, -1.0);
  
  const double pattern_end = ExpectedPulseRelTimes.empty()
   ? 0.0 : ExpectedPulseRelTimes.back();
@@ -4114,6 +4314,8 @@ bool NNeuronTimeLearnerBranch::MeasureMaxPotentialAndTime(void)
   }
   if(t_hi_rel <= t_lo_rel + 1e-9)
    t_hi_rel = t_lo_rel + 0.01;
+  AuditPeakWindowLoRel[static_cast<size_t>(i)] = t_lo_rel;
+  AuditPeakWindowHiRel[static_cast<size_t>(i)] = t_hi_rel;
   
   if(now + 1e-12 < FirstImpulseTime + t_lo_rel)
    continue;
@@ -4361,7 +4563,21 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
  // best-effort path above.
  request_segment_order_repair();
  if(segment_order_violation)
+ {
+  // The next burst uses the before/after error to refine EstDelayPerSeg for
+  // this length change. Preserve the current measured/model error before the
+  // order-only early return; otherwise it remains stale (often IterationGap)
+  // and the estimator mistakes that stale value for improvement due to the
+  // structural repair.
+  const double order_expected_k = (num < int(ExpectedPulseRelTimes.size()))
+   ? ExpectedPulseRelTimes[static_cast<size_t>(num)] : 0.0;
+  const double order_needed = MeanStoredPeakRel(num) - order_expected_k;
+  const double order_delay_meas = (num < int(DelayFromPulse.size()))
+   ? DelayFromPulse[static_cast<size_t>(num)] : 0.0;
+  Dissynchronization[static_cast<size_t>(num)] =
+   order_needed - DelayUseOf(num, order_expected_k, order_delay_meas);
   return true;
+ }
  
  const double expected_k = (num < int(ExpectedPulseRelTimes.size()))
   ? ExpectedPulseRelTimes[static_cast<size_t>(num)] : 0.0;
@@ -5915,7 +6131,10 @@ void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
 {
  StartIterTime = now;
  FirstImpulseTime = now;
+ AuditBurstStartEstDelayPerSeg = EstDelayPerSeg;
  AuditBurstStartSomaPotential = 0.0;
+ AuditPeakWindowLoRel.assign(static_cast<size_t>(NumInputDendrite.GetData()), -1.0);
+ AuditPeakWindowHiRel.assign(static_cast<size_t>(NumInputDendrite.GetData()), -1.0);
  AuditBurstStartDendritePotential.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0.0);
  AuditBurstStartDatasetSample = Dataset ? Dataset->GetCurrentSampleId() : -1;
  AuditBurstStartDatasetIteration = Dataset ? Dataset->Iteration.GetData() : -1;
@@ -5928,6 +6147,7 @@ void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
    AuditBurstStartDatasetNextSpikeIndex.push_back(Dataset->GetNextSpikeIndex(i));
  }
  AuditBurstStartGeneratorPulseCounter.clear();
+ AuditBurstStartComponentState = BuildAuditComponentStateSnapshot();
  if(Dataset)
  {
   AuditBurstStartGeneratorPulseCounter.reserve(Dataset->Generators.size());
@@ -6409,6 +6629,7 @@ bool NNeuronTimeLearnerBranch::Training(void)
   if(new_pulses > 0 && can_start)
   {
    BeginTrainingIteration(now);
+   AppendTrainingDynamicsSample(now, new_pulses);
    MeasureMaxPotentialAndTime();
    UpdateIterLTZPotential();
    UpdateIterSomaPeak();
@@ -6441,6 +6662,7 @@ bool NNeuronTimeLearnerBranch::Training(void)
  MeasureMaxPotentialAndTime();
  UpdateIterLTZPotential();
  UpdateIterSomaPeak();
+ AppendTrainingDynamicsSample(now, new_pulses);
  
  const double last_pulse = FirstImpulseTime
   + ((NumInputDendrite > 0 && !ExpectedPulseRelTimes.empty())

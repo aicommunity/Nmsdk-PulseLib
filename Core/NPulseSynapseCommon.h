@@ -75,6 +75,8 @@ public: //
 // --------------------------
 NPulseSynapseCommon(void);
 virtual ~NPulseSynapseCommon(void);
+/// Read-only access to the intermediate synaptic state for audit logging.
+double GetPreOutputForAudit(void) const;
 // --------------------------
 
 protected:

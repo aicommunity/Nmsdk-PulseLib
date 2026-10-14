@@ -352,11 +352,15 @@ protected:
  /// Read-only snapshot of model / dataset state when a training burst starts.
  std::vector<double> AuditBurstStartDendritePotential;
  double AuditBurstStartSomaPotential;
+ double AuditBurstStartEstDelayPerSeg;
  int AuditBurstStartDatasetSample;
  int AuditBurstStartDatasetIteration;
  double AuditBurstStartDatasetSampleTime;
  std::vector<int> AuditBurstStartDatasetNextSpikeIndex;
  std::vector<int> AuditBurstStartGeneratorPulseCounter;
+ std::vector<double> AuditPeakWindowLoRel;
+ std::vector<double> AuditPeakWindowHiRel;
+ std::string AuditBurstStartComponentState;
  
  /// Per-dendrite sync error metric this iteration
  std::vector<double> Dissynchronization;
@@ -1022,6 +1026,8 @@ protected:
  /// Append a read-only per-burst diagnostic record when EnableDebug is set.
  void AppendTrainingIterationAudit(const std::vector<int> &lengths_before,
                                    const char *kind = "iteration");
+ void AppendTrainingDynamicsSample(double now, int new_pulses);
+ std::string BuildAuditComponentStateSnapshot(void) const;
  
  /// Recognition pass over patterns from input file
  bool PatternRecognition(void);

@@ -45,6 +45,11 @@ NPulseSynapseCommon::NPulseSynapseCommon(void)
 NPulseSynapseCommon::~NPulseSynapseCommon(void)
 {
 }
+
+double NPulseSynapseCommon::GetPreOutputForAudit(void) const
+{
+ return PreOutput.GetData();
+}
 // --------------------------
 
 
