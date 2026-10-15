@@ -901,6 +901,8 @@ protected:
  
  /// Branch: ExcSynapse index on the attach membrane
  int SynapseIndexOnMembrane(int pulse_k) const;
+ /// Number of physical ExcSynapses required at an attach segment.
+ int ExcSynapseCountAtSegment(int segment_index1) const;
  
  /// Branch: max cable length from DendriteLength
  int ChainLengthMax(void) const;
@@ -911,7 +913,7 @@ protected:
  /// Branch: mute generator links for sequential sync
  void ApplyPulseGeneratorMute(void);
  
- /// Remove Generator1.Output links to every branch ExcSynapse1 (keeps StimulusInputs tap).
+ /// Remove Generator1.Output links to every branch excitatory synapse (keeps StimulusInputs tap).
  void DisconnectGeneratorFromBranchExcSynapses(void);
  
  /// Branch: detach ExcSynapse at segment

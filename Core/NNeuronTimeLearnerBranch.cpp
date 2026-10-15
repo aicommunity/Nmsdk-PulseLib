@@ -588,8 +588,25 @@ int NNeuronTimeLearnerBranch::PulseAttachPos(int pulse_k) const
 int NNeuronTimeLearnerBranch::SynapseIndexOnMembrane(int pulse_k) const
 {
  (void)pulse_k;
- // One excitatory synapse per dendrite segment; active pulse selected by mute.
+ // ExcSynapse1 is the representative tip; structural multiplicity is managed per segment.
  return 1;
+}
+
+/// Branch structural multiplicity is shared by pulses attached to the same segment.
+int NNeuronTimeLearnerBranch::ExcSynapseCountAtSegment(int segment_index1) const
+{
+ if(IsParametricNormalization())
+  return 1;
+
+ int count = 1;
+ const int n = NumInputDendrite.GetData();
+ for(int pulse = 0; pulse < n && pulse < int(NumSynapse.size()); ++pulse)
+ {
+  if(PulseAttachPos(pulse) != segment_index1)
+   continue;
+  count = std::max(count, NumSynapse[static_cast<size_t>(pulse)]);
+ }
+ return std::min(kMaxSynapsesPerDend, std::max(1, count));
 }
 
 /// Branch: max cable length from DendriteLength
@@ -779,6 +796,7 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";pulse_index=" << PulseIndexInIter
         << ";eol_sync=" << (AllDendritesSynced() ? 1 : 0)
         << ";eol_amp=" << (AllSynapsesNormalized() ? 1 : 0)
+        << ";generator_exc_links=" << CountGeneratorToBranchExcSynapseLinks()
         << ";sync_tol=" << SyncTolerance.GetData()
         << ";amp_eps=" << kAmpNormEps
         << ";est_delay_per_seg=" << EstDelayPerSeg
@@ -2231,13 +2249,19 @@ void NNeuronTimeLearnerBranch::DetachBranchExcSynapseAtSegment(int segment_index
 {
  if(!Neuron || segment_index1 < 1)
   return;
- const std::string syn_rel = MakeBranchExcSynapsePath(segment_index1, 1);
- const std::string syn_path = std::string("Neuron.") + syn_rel;
- BreakLink(DatasetGeneratorPath(), "Output", syn_path, "Input", -1);
- if(NPulseSynapseCommon *syn = Neuron->GetComponentL<NPulseSynapseCommon>(syn_rel, true))
+ UEPtr<NPulseMembrane> membrane = Neuron->GetComponentL<NPulseMembrane>(
+  MakeBranchDendriteName(segment_index1), true);
+ const int count = membrane ? std::max(1, int(membrane->NumExcitatorySynapses)) : 1;
+ for(int synapse_index = 1; synapse_index <= count; ++synapse_index)
  {
-  syn->Input.DetachFrom();
-  syn->DisconnectAllItems();
+  const std::string syn_rel = MakeBranchExcSynapsePath(segment_index1, synapse_index);
+  const std::string syn_path = std::string("Neuron.") + syn_rel;
+  BreakLink(DatasetGeneratorPath(), "Output", syn_path, "Input", -1);
+  if(NPulseSynapseCommon *syn = Neuron->GetComponentL<NPulseSynapseCommon>(syn_rel, true))
+  {
+   syn->Input.DetachFrom();
+   syn->DisconnectAllItems();
+  }
  }
 }
 
@@ -2375,11 +2399,19 @@ int NNeuronTimeLearnerBranch::CountGeneratorToBranchExcSynapseLinks(void) const
  int count = 0;
  for(int seg = 1; seg <= lmax; ++seg)
  {
-  if(NPulseSynapseCommon *syn = Neuron->GetComponentL<NPulseSynapseCommon>(
-       MakeBranchExcSynapsePath(seg, 1), true))
+  UEPtr<NPulseMembrane> membrane = Neuron->GetComponentL<NPulseMembrane>(
+   MakeBranchDendriteName(seg), true);
+  if(!membrane)
+   continue;
+  const int synapse_count = std::max(0, int(membrane->NumExcitatorySynapses));
+  for(int synapse_index = 1; synapse_index <= synapse_count; ++synapse_index)
   {
-   if(syn->Input.IsConnected())
-    ++count;
+   if(NPulseSynapseCommon *syn = Neuron->GetComponentL<NPulseSynapseCommon>(
+        MakeBranchExcSynapsePath(seg, synapse_index), true))
+   {
+    if(syn->Input.IsConnected())
+     ++count;
+   }
   }
  }
  return count;
@@ -2432,24 +2464,43 @@ void NNeuronTimeLearnerBranch::RebuildGeneratorSynapseLinks(bool all_on, int act
  DisconnectGeneratorFromBranchExcSynapses();
  const int n = NumInputDendrite.GetData();
  const bool inh = EnableNextSegmentInhibition.GetData();
+ std::vector<int> active_segments;
  if(all_on)
  {
   for(int f = 0; f < n; ++f)
+   active_segments.push_back(PulseAttachPos(f));
+ }
+ else if(active_pulse >= 0 && active_pulse < n)
+  active_segments.push_back(PulseAttachPos(active_pulse));
+
+ std::sort(active_segments.begin(), active_segments.end());
+ active_segments.erase(std::unique(active_segments.begin(), active_segments.end()), active_segments.end());
+ for(int segment : active_segments)
+ {
+  UEPtr<NPulseMembrane> membrane = Neuron->GetComponentL<NPulseMembrane>(
+   MakeBranchDendriteName(segment), true);
+  if(membrane)
   {
-   if(NPulseSynapseCommon *syn = GetTipSynapse(f))
-    LinkSynapseToDataset(syn);
-   if(inh)
+   const int synapse_count = std::max(1, int(membrane->NumExcitatorySynapses));
+   for(int synapse_index = 1; synapse_index <= synapse_count; ++synapse_index)
    {
-    if(NPulseSynapseCommon *isyn = GetNextSegInhSynapse(f))
-     LinkSynapseToDataset(isyn);
+    NPulseSynapseCommon *syn = Neuron->GetComponentL<NPulseSynapseCommon>(
+     MakeBranchExcSynapsePath(segment, synapse_index), true);
+    if(syn)
+     LinkSynapseToDataset(syn);
    }
   }
  }
- else if(active_pulse >= 0 && active_pulse < n)
+
+ if(inh)
  {
-  if(NPulseSynapseCommon *syn = GetTipSynapse(active_pulse))
-   LinkSynapseToDataset(syn);
-  if(inh)
+  if(all_on)
+  {
+   for(int f = 0; f < n; ++f)
+    if(NPulseSynapseCommon *isyn = GetNextSegInhSynapse(f))
+     LinkSynapseToDataset(isyn);
+  }
+  else if(active_pulse >= 0 && active_pulse < n)
   {
    if(NPulseSynapseCommon *isyn = GetNextSegInhSynapse(active_pulse))
     LinkSynapseToDataset(isyn);
@@ -2502,10 +2553,22 @@ void NNeuronTimeLearnerBranch::ApplyPulseGeneratorMute(void)
  const int active = ActivePulseIndex;
  RebuildGeneratorSynapseLinks(all_on, active);
  const bool inh = EnableNextSegmentInhibition.GetData();
- const int links_per = inh ? 2 : 1;
+ int expected_exc_links = 0;
+ std::vector<int> expected_segments;
+ if(all_on)
+ {
+  for(int f = 0; f < n; ++f)
+   expected_segments.push_back(PulseAttachPos(f));
+ }
+ else if(active >= 0 && active < n)
+  expected_segments.push_back(PulseAttachPos(active));
+ std::sort(expected_segments.begin(), expected_segments.end());
+ expected_segments.erase(std::unique(expected_segments.begin(), expected_segments.end()), expected_segments.end());
+ for(int segment : expected_segments)
+  expected_exc_links += ExcSynapseCountAtSegment(segment);
+ const int expected_inh_links = inh ? (all_on ? n : ((active >= 0 && active < n) ? 1 : 0)) : 0;
  const int link_count = CountGeneratorTipLinks();
- const int expect = all_on ? (n * links_per)
-  : ((active >= 0 && active < n) ? links_per : 0);
+ const int expect = expected_exc_links + expected_inh_links;
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
   std::ostringstream oss;
@@ -2546,42 +2609,47 @@ bool NNeuronTimeLearnerBranch::RelinkDendriteSynapsesToDataset(int dendrite_inde
  if(!membr)
   return false;
  
- if(int(membr->NumExcitatorySynapses) != 1)
+ const int requested_synapses = ExcSynapseCountAtSegment(tip_seg);
+ if(int(membr->NumExcitatorySynapses) != requested_synapses)
  {
-  membr->NumExcitatorySynapses = 1;
+  membr->NumExcitatorySynapses = requested_synapses;
   membr->Build();
  }
  if(!membr->GetActivity())
   membr->SetActivity(true);
  if(!membr->IsInit())
   membr->Init();
- 
- NPulseSynapseCommon *synapse = membr->GetComponentL<NPulseSynapseCommon>(
-  std::string("ExcSynapse1"), true);
- if(!synapse)
-  return false;
- if(IsParametricNormalization())
- {
-  double r = SynapseResistanceBase.GetData();
-  if(dendrite_index0 < int(TipSynapseResistance.size()))
-   r = TipSynapseResistance[static_cast<size_t>(dendrite_index0)];
-  if(r <= 0.0)
-   r = kSynapseResistanceBioDefault;
-  synapse->Resistance = ClampResistance(dendrite_index0, r);
- }
- else if(NumSynapse[dendrite_index0] > 1)
-  synapse->Resistance = SynapseResistanceStep;
- 
+
  const bool wire_now = (!IsNeedToTrain.GetData())
   || (TrainingPhase.GetData() == kPhaseDone)
   || (TrainingPhase.GetData() == kPhaseCalibrateLtz)
   || (TrainingPhase.GetData() == kPhasePostTune);
- if(wire_now)
+
+ for(int synapse_index = 1; synapse_index <= requested_synapses; ++synapse_index)
  {
-  if(!LinkSynapseToDataset(synapse))
+  NPulseSynapseCommon *synapse = membr->GetComponentL<NPulseSynapseCommon>(
+   std::string("ExcSynapse") + sntoa(synapse_index), true);
+  if(!synapse)
    return false;
-  if(!synapse->Input.IsConnected())
-   return false;
+  if(IsParametricNormalization() && synapse_index == 1)
+  {
+   double r = SynapseResistanceBase.GetData();
+   if(dendrite_index0 < int(TipSynapseResistance.size()))
+    r = TipSynapseResistance[static_cast<size_t>(dendrite_index0)];
+   if(r <= 0.0)
+    r = kSynapseResistanceBioDefault;
+   synapse->Resistance = ClampResistance(dendrite_index0, r);
+  }
+  else if(synapse_index > 1 || NumSynapse[dendrite_index0] > 1)
+  synapse->Resistance = SynapseResistanceStep;
+
+  if(wire_now)
+  {
+   if(!LinkSynapseToDataset(synapse))
+    return false;
+   if(!synapse->Input.IsConnected())
+    return false;
+  }
  }
  if(EnableNextSegmentInhibition.GetData())
  {
@@ -4514,31 +4582,26 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseNumber(int num)
  if(!dendrite)
   return true;
  
- if(SynapseStatus[num] == -1)
+ const int requested_synapses = ExcSynapseCountAtSegment(PulseAttachPos(num));
+ const int previous_synapses = std::max(0, int(dendrite->NumExcitatorySynapses));
+ for(int synapse_index = requested_synapses + 1; synapse_index <= previous_synapses; ++synapse_index)
  {
-  NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
-   std::string("ExcSynapse") + sntoa(NumSynapse[num] + 1), true);
-  if(synapse)
+  if(NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
+       std::string("ExcSynapse") + sntoa(synapse_index), true))
    synapse->DisconnectAll();
  }
- 
- dendrite->NumExcitatorySynapses = NumSynapse[num];
+ dendrite->NumExcitatorySynapses = requested_synapses;
  dendrite->Build();
  Neuron->ApplyElementDefaults();
  
- if(SynapseStatus[num] == 1)
+ for(int synapse_index = 2; synapse_index <= requested_synapses; ++synapse_index)
  {
-  NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
-   std::string("ExcSynapse") + sntoa(NumSynapse[num]), true);
-  if(!synapse)
-   return true;
-  synapse->Resistance = SynapseResistanceStep;
-  res &= (synapse != 0);
-  if(num == ActivePulseIndex)
-   ApplyPulseGeneratorMute();
-  if(!res)
-   return true;
+  if(NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
+       std::string("ExcSynapse") + sntoa(synapse_index), true))
+   synapse->Resistance = SynapseResistanceStep;
  }
+
+ ApplyPulseGeneratorMute();
  
  Neuron->Reset();
  return true;
