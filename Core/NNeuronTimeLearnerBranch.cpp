@@ -764,7 +764,7 @@ void NNeuronTimeLearnerBranch::UpdateNormTraces(void)
 void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<int> &lengths_before,
                                                            const char *kind)
 {
- if(!EnableDebug.GetData() || !Environment)
+ if((!EnableDebug.GetData() && !EnableTrainingAudit.GetData()) || !Environment)
   return;
 
  std::string data_dir = Environment->GetCurrentDataDir();
@@ -2824,6 +2824,7 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  ExperimentNum("ExperimentNum", this, &NNeuronTimeLearnerBranch::SetExperimentNum),
  ExperimentMode("ExperimentMode", this, &NNeuronTimeLearnerBranch::SetExperimentMode),
  EnableDebug("EnableDebug", this, &NNeuronTimeLearnerBranch::SetEnableDebug),
+ EnableTrainingAudit("EnableTrainingAudit", this),
  EnablePostTrainTuning("EnablePostTrainTuning", this),
  PostTrainTipResistanceMode("PostTrainTipResistanceMode", this),
  EnablePostTrainMidThreshold("EnablePostTrainMidThreshold", this),
