@@ -1189,10 +1189,16 @@ void NNeuronTimeLearnerBranch::AppendTrainingDynamicsSample(double now, int new_
  append_vector("prev_dissynchronization", PrevDissynchronization);
  record << ";component_state=" << BuildAuditComponentStateSnapshot();
 
- std::ofstream dynamics((data_dir + "TimeLearnerTrainingDynamics.log").c_str(),
-  std::ios::out | std::ios::app);
- if(dynamics)
-  dynamics << record.str() << '\n';
+ // The detailed component snapshot can dwarf the compact training audit in
+ // long runs. Keep it behind the existing diagnostic flag; the compact C++
+ // iteration audit above remains enabled regardless of EnableDebug.
+ if(EnableDebug.GetData())
+ {
+  std::ofstream dynamics((data_dir + "TimeLearnerTrainingDynamics.log").c_str(),
+   std::ios::out | std::ios::app);
+  if(dynamics)
+   dynamics << record.str() << '\n';
+ }
 }
 
 /// True when every dendrite length is <= 1 (cold / untrained topology)
