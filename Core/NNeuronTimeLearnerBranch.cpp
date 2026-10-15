@@ -26,6 +26,7 @@ See file license.txt for more information
 #include <map>
 #include <sstream>
 #include "NNeuronTimeLearnerBranch.h"
+#include "NNeuronTimeLearnerScopedDefaults.h"
 #include "NNeuronPostTrainTune.h"
 #include "NNeuronTimeLearnerResistanceBounds.h"
 #include "NPatternResponseAnalyzer.h"
@@ -2668,7 +2669,7 @@ bool NNeuronTimeLearnerBranch::RelinkDendriteSynapsesToDataset(int dendrite_inde
     r = kSynapseResistanceBioDefault;
    synapse->Resistance = ClampResistance(dendrite_index0, r);
   }
-  else if(synapse_index > 1 || NumSynapse[dendrite_index0] > 1)
+  else if(synapse_index > 1)
   synapse->Resistance = SynapseResistanceStep;
 
   if(wire_now)
@@ -4591,7 +4592,7 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseNumber(int num)
     {
      dendrite->NumExcitatorySynapses = 1;
      dendrite->Build();
-     Neuron->ApplyElementDefaults();
+     ApplyElementDefaultsToMembrane(Neuron, dendrite.Get());
     }
    }
   }
@@ -4634,14 +4635,8 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseNumber(int num)
  }
  dendrite->NumExcitatorySynapses = requested_synapses;
  dendrite->Build();
- Neuron->ApplyElementDefaults();
- 
- for(int synapse_index = 2; synapse_index <= requested_synapses; ++synapse_index)
- {
-  if(NPulseSynapseCommon *synapse = dendrite->GetComponentL<NPulseSynapseCommon>(
-       std::string("ExcSynapse") + sntoa(synapse_index), true))
-   synapse->Resistance = SynapseResistanceStep;
- }
+ ApplyElementDefaultsToMembrane(Neuron, dendrite.Get());
+ SetAdditionalSynapseResistance(dendrite.Get(), SynapseResistanceStep.GetData());
 
  ApplyPulseGeneratorMute();
  

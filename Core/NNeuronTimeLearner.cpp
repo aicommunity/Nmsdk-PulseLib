@@ -26,6 +26,7 @@ See file license.txt for more information
 #include <limits>
 #include <sstream>
 #include "NNeuronTimeLearner.h"
+#include "NNeuronTimeLearnerScopedDefaults.h"
 #include "NNeuronPostTrainTune.h"
 #include "NNeuronTimeLearnerResistanceBounds.h"
 #include "NPatternResponseAnalyzer.h"
@@ -3882,7 +3883,8 @@ bool NNeuronTimeLearner::ChangeSynapseNumber(int num)
  
  dendrite->NumExcitatorySynapses = NumSynapse[num];
  dendrite->Build();
- Neuron->ApplyElementDefaults();
+ ApplyElementDefaultsToMembrane(Neuron, dendrite.Get());
+ SetAdditionalSynapseResistance(dendrite.Get(), SynapseResistanceStep.GetData());
  
  if(SynapseStatus[num] == 1)
  {
