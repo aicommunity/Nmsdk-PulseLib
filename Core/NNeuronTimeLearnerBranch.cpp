@@ -2159,6 +2159,19 @@ int NNeuronTimeLearnerBranch::SelectActiveDendrite() const
  return 0;
 }
 
+void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange()
+{
+ // A length or synapse-count edit changes the shared soma response. Previously
+ // committed peak times, best-effort sync decisions, and no-improve counters are
+ // no longer evidence for the edited model. Rebootstrap the reference from the
+ // next measured burst.
+ std::fill(PulseSynced.begin(), PulseSynced.end(), false);
+ std::fill(DendBestEffortSynced.begin(), DendBestEffortSynced.end(), false);
+ std::fill(NoImproveCount.begin(), NoImproveCount.end(), 0);
+ std::fill(InvalidPeakNoActionCount.begin(), InvalidPeakNoActionCount.end(), 0);
+ std::fill(DendLastAbsDt.begin(), DendLastAbsDt.end(), IterationGap.GetData() + 0.001);
+}
+
 /// Save current PeakRel/Delay as Prev* snapshot
 void NNeuronTimeLearnerBranch::CommitPrevPeakSnapshot(void)
 {
@@ -6941,6 +6954,7 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
 
   // Apply length then synapses in one inter-burst gap (tip after Build/relink).
   const std::vector<int> audit_lengths_before = DendriteLength.GetData();
+  const std::vector<int> audit_synapses_before = NumSynapse.GetData();
   if(TrainingPhase != kPhaseDone && TrainingPhase != kPhaseFailed
      && IsNeedToTrain && CanChangeDendLength)
    ApplyPendingDendriteLengthChanges();
@@ -7015,6 +7029,18 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
   }
   ApplyPulseGeneratorMute();
  }
+
+  const bool structural_model_changed = audit_lengths_before != DendriteLength.GetData()
+   || audit_synapses_before != NumSynapse.GetData();
+  if(structural_model_changed)
+  {
+   // The structural amplitude tracker has discarded measurements for this
+   // changed model. Reopen the corresponding sync sequence as well.
+   InvalidatePulseSyncAfterStructuralChange();
+   ActivePulseIndex = SelectActiveDendrite();
+   ActiveDendrite = ActivePulseIndex;
+   ApplyPulseGeneratorMute();
+  }
  
  // Snapshot this burst for next iteration's Prev* comparison (before CountIteration++).
  CommitPrevPeakSnapshot();
