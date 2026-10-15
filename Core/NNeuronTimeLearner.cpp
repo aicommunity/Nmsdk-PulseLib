@@ -705,6 +705,7 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";effective_iteration_gap=" << EffectiveIterationGapSec()
         << ";max_dendrite_length=" << MaxDendriteLength.GetData()
         << ";normalization_mode=" << NormalizationMode.GetData()
+        << ";accept_quantized_amp_under_target=" << (AcceptQuantizedAmpUnderTarget.GetData() ? 1 : 0)
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
         << ";freeze_tip_r_after_first_sync=" << (FreezeTipResistanceAfterFirstSync.GetData() ? 1 : 0)
@@ -771,6 +772,22 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
  append_vector("length_status", DendStatus);
  append_vector("synapse_status", SynapseStatus);
  append_vector("num_synapse", NumSynapse.GetData());
+ const std::vector<int> audit_num_synapse = NumSynapse.GetData();
+ const std::vector<int> audit_lengths = DendriteLength.GetData();
+ std::vector<int> quantized_lower_count(audit_num_synapse.size(), -1);
+ std::vector<int> quantized_accepted(audit_num_synapse.size(), 0);
+ for(size_t i = 0; i < audit_num_synapse.size(); ++i)
+ {
+  if(i >= audit_lengths.size() || i >= InitialSomaPotential.size())
+   continue;
+  const int length = audit_lengths[i];
+  const double target = InitialSomaPotential[i];
+  quantized_lower_count[i] = StructuralAmpTracker.AcceptedCount(i, length, target);
+  quantized_accepted[i] = StructuralAmpTracker.IsAccepted(
+   i, audit_num_synapse[i], length, target) ? 1 : 0;
+ }
+ append_vector("amp_quantized_lower_count", quantized_lower_count);
+ append_vector("amp_quantized_under_target", quantized_accepted);
  append_vector("last_abs_dt", DendLastAbsDt);
  append_vector("best_effort", DendBestEffortSynced);
  append_vector("peak_rel", PeakRel);
@@ -1975,6 +1992,7 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  StimulusIterTrace("StimulusIterTrace",this),
  SynapseResistanceStep("SynapseResistanceStep", this, &NNeuronTimeLearner::SetSynapseResistanceStep),
  NormalizationMode("NormalizationMode", this, &NNeuronTimeLearner::SetNormalizationMode),
+ AcceptQuantizedAmpUnderTarget("AcceptQuantizedAmpUnderTarget", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this),
  ResistanceMinRatio("ResistanceMinRatio", this),
@@ -3221,6 +3239,7 @@ bool NNeuronTimeLearner::ADefault(void)
  
  SynapseResistanceStep = 1.0e9;
  NormalizationMode = kNormParametric;
+ AcceptQuantizedAmpUnderTarget = false;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
  ResistanceMin.SetDataDirect(1.0e6);
  ResistanceMinRatio.SetDataDirect(0.0);
@@ -3282,6 +3301,8 @@ bool NNeuronTimeLearner::ADefault(void)
  Dissynchronization.assign(NumInputDendrite, IterationGap + 0.001);
  PrevDissynchronization = Dissynchronization;
  AmpDifference.assign(NumInputDendrite, 0.0);
+ StructuralAmpTracker.Reset(static_cast<size_t>(std::max(0, NumInputDendrite.GetData())),
+  kMaxSynapsesPerDend);
  SomaPeakValid.assign(NumInputDendrite, false);
  DendStatus.assign(NumInputDendrite, 0);
  SynapseStatus.assign(NumInputDendrite, 0);
@@ -3433,6 +3454,8 @@ bool NNeuronTimeLearner::AReset(void)
  IterationActive = false;
  HasPrevIteration = false;
  HasPrevPeakSnapshot = false;
+ StructuralAmpTracker.Reset(static_cast<size_t>(std::max(0, NumInputDendrite.GetData())),
+  kMaxSynapsesPerDend);
  if(int(DendLastAbsDt.size()) != NumInputDendrite.GetData())
   ResizeSyncVectors(NumInputDendrite.GetData());
  else
@@ -4335,6 +4358,24 @@ bool NNeuronTimeLearner::ChangeSynapseStatus(int num)
   DendStatus[num] = dendstatus;
   return true;
  }
+
+ const bool length_strictly_settled = !DendStatus[num]
+  && num < int(DendLastAbsDt.size())
+  && DendLastAbsDt[static_cast<size_t>(num)] <= SyncTolerance.GetData();
+ if(AcceptQuantizedAmpUnderTarget.GetData() && !IsParametricNormalization()
+    && num < int(DendriteLength.GetData().size())
+    && num < int(SomaPeakValid.size()) && SomaPeakValid[static_cast<size_t>(num)]
+    && length_strictly_settled
+    && StructuralAmpTracker.Observe(static_cast<size_t>(num), NumSynapse[num],
+       DendriteLength[num], InitialSomaPotential[num], MaxIterSomaAmp[num],
+       SomaPeakValid[static_cast<size_t>(num)], length_strictly_settled,
+       kAmpNormEps))
+ {
+  SynapseStatus[num] = 0;
+  AmpDifference[num] = dt;
+  DendStatus[num] = dendstatus;
+  return true;
+ }
  
  // Optimum only when dendrite length is settled (!DendStatus); otherwise amp
  // still drives SynapseStatus ±1 in parallel with length (NNeuronLearner-style).
@@ -4547,6 +4588,10 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
  {
   if(SynapseStatus[i])
    return false;
+  if(AcceptQuantizedAmpUnderTarget.GetData()
+     && StructuralAmpTracker.IsAccepted(static_cast<size_t>(i), NumSynapse[i],
+        DendriteLength[i], InitialSomaPotential[i]))
+   continue;
   const bool at_cap = (i < int(NumSynapse.size()))
    && (NumSynapse[i] >= kMaxSynapsesPerDend);
   const bool amp_ok = (i < int(InitialSomaPotential.size()))

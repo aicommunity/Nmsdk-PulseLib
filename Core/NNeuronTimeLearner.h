@@ -20,6 +20,7 @@ See file license.txt for more information
 #include "NPulseGenerator.h"
 #include "NPulseNeuron.h"
 #include "NNeuronPostTrainTune.h"
+#include "NNeuronTimeLearnerStructuralAmp.h"
 #include "../../../Rdk/Deploy/Include/rdk.h"
 #include <iostream>
 #include <fstream>
@@ -142,6 +143,10 @@ public:
  
  /// 0 = structural (grow NumSynapse); 1 = parametric (NumSynapse=1, tune tip Resistance)
  UProperty<int, NNeuronTimeLearner, ptPubParameter> NormalizationMode;
+
+ /// Mode 0 only: accept a stable lower integer synapse count when adjacent
+ /// counts repeatedly straddle the requested amplitude.
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> AcceptQuantizedAmpUnderTarget;
  
  /// Reference tip synapse resistance at L==1 (typically 8.6e7)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> SynapseResistanceBase;
@@ -366,6 +371,7 @@ protected:
  
  /// Amp vs InitialSomaPotential difference per dendrite
  std::vector<double> AmpDifference;
+ StructuralAmpQuantizationTracker StructuralAmpTracker;
  
  /// True if MaxIterSomaAmp[i] exceeded kMinMeasurableSomaAmp this iteration
  std::vector<bool> SomaPeakValid;
