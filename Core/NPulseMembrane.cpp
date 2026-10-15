@@ -357,6 +357,12 @@ bool NPulseMembrane::ABuild(void)
 {
  if(!Storage)
   return true;
+ // A membrane may be rebuilt while its owning neuron is already running,
+ // for example when a trainer grows the number of structural synapses.
+ // Components added in that situation are not covered by the owner's earlier
+ // Init() walk, so remember the live state and apply it to newly added children.
+ const bool activate_new_synapses = GetActivity();
+ const bool initialize_new_synapses = IsInit();
  UEPtr<NPulseChannelCommon> exc_channel;
  UEPtr<NPulseChannelCommon> inh_channel;
  bool res=true;
@@ -390,7 +396,10 @@ bool NPulseMembrane::ABuild(void)
 							  // по всем синапсам используя AddMissingComponent
   for(int i=0;i<NumExcitatorySynapses;i++)
   {
-   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("ExcSynapse")+sntoa(i+1), SynapseClassName);
+   const std::string synapse_name = std::string("ExcSynapse")+sntoa(i+1);
+   const bool synapse_existed = static_cast<bool>(
+    GetComponentL<NPulseSynapseCommon>(synapse_name, true));
+   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(synapse_name, SynapseClassName);
    if(!synapse)
    {
     LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
@@ -402,6 +411,12 @@ bool NPulseMembrane::ABuild(void)
    res&=CreateLink(synapse->GetName(),"Output","ExcChannel","SynapticInputs");
    synapse->SetCoord(membraneSynapseCoord(kMemExcRowY0, i));
    synapse->RebuildInternalLinks();
+   if(!synapse_existed && activate_new_synapses)
+   {
+    synapse->SetActivity(true);
+    if(initialize_new_synapses)
+     synapse->Init();
+   }
   }
  }
 
@@ -433,7 +448,10 @@ bool NPulseMembrane::ABuild(void)
 							  // по всем синапсам используя AddMissingComponent
   for(int i=0;i<NumInhibitorySynapses;i++)
   {
-   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(std::string("InhSynapse")+sntoa(i+1), SynapseClassName);
+   const std::string synapse_name = std::string("InhSynapse")+sntoa(i+1);
+   const bool synapse_existed = static_cast<bool>(
+    GetComponentL<NPulseSynapseCommon>(synapse_name, true));
+   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(synapse_name, SynapseClassName);
    if(!synapse)
    {
     LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
@@ -446,6 +464,12 @@ bool NPulseMembrane::ABuild(void)
    res&=CreateLink(synapse->GetName(),"Output","InhChannel","SynapticInputs");
    synapse->SetCoord(membraneSynapseCoord(inh_y0, i));
    synapse->RebuildInternalLinks();
+   if(!synapse_existed && activate_new_synapses)
+   {
+    synapse->SetActivity(true);
+    if(initialize_new_synapses)
+     synapse->Init();
+   }
   }
  }
 
