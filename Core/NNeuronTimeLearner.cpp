@@ -3665,6 +3665,10 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
  
  if(changed.empty())
   return true;
+
+ // A dendrite-length change can alter the shared soma peak for every input.
+ // Cached structural amplitude brackets must be re-measured on the new shape.
+ StructuralAmpTracker.InvalidateAll();
  
  if(EnableDebug.GetData() && RDK::GetLogger())
  {
@@ -3859,6 +3863,9 @@ bool NNeuronTimeLearner::ChangeSynapseNumber(int num)
  }
  
  NumSynapse[num] += SynapseStatus[num];
+ // Changing one input's synapse count changes the shared response of all
+ // other inputs, but preserves this input's own adjacent-count bracket.
+ StructuralAmpTracker.InvalidateOtherInputs(static_cast<size_t>(num));
  
  UEPtr<NPulseMembrane> dendrite = Neuron->GetComponentL<NPulseMembrane>(
   MakeLearnerDendriteName(num + 1, DendriteLength[num]), true);

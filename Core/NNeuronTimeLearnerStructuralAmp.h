@@ -26,6 +26,26 @@ public:
             inputs_[i].counts.assign(static_cast<size_t>(maxCount_ + 1), CountState());
     }
 
+    /// Invalidate every bracket when a structural change can alter all inputs'
+    /// measured peaks (for example, changing a dendrite length).
+    void InvalidateAll()
+    {
+        for (size_t i = 0; i < inputs_.size(); ++i)
+            ClearInput(inputs_[i]);
+    }
+
+    /// A synapse-count change changes the shared neuron response for the other
+    /// inputs. Preserve the changing input's own N/N+1 bracket, but invalidate
+    /// all other inputs' evidence.
+    void InvalidateOtherInputs(const size_t changedInput)
+    {
+        for (size_t i = 0; i < inputs_.size(); ++i)
+        {
+            if (i != changedInput)
+                ClearInput(inputs_[i]);
+        }
+    }
+
     /// Record one valid measurement at a settled length. A count becomes
     /// evidence only after repeated observations remain on the same side of
     /// the target. A mixed-side count is not usable until reset by a new
@@ -152,6 +172,12 @@ private:
         state.initialized = true;
         state.length = length;
         state.target = target;
+        state.counts.assign(static_cast<size_t>(maxCount_ + 1), CountState());
+    }
+
+    void ClearInput(InputState &state)
+    {
+        state = InputState();
         state.counts.assign(static_cast<size_t>(maxCount_ + 1), CountState());
     }
 
