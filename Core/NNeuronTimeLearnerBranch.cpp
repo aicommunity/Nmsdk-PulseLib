@@ -22,6 +22,7 @@ See file license.txt for more information
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <limits>
 #include <map>
 #include <sstream>
@@ -6038,6 +6039,7 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
 
  double mid = FixedLTZThreshold.GetData();
  double gap = 0.0;
+ double candidate_mid = std::numeric_limits<double>::quiet_NaN();
  bool landscape_ok = false;
  const bool have_sample_state = !PostTuneSampleState.empty();
  const bool run_bad = PostTuneRunInvalid
@@ -6068,7 +6070,11 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
   const bool metrics_ok = PostTrainTune::MetricsFinite(tgt, foils);
   landscape_ok = metrics_ok && PostTrainTune::LandscapeOk(tgt, foils);
   if(metrics_ok)
+  {
    PostTrainTune::ComputeMidThreshold(tgt, foils, mid, gap);
+   if(std::isfinite(mid))
+    candidate_mid = mid;
+  }
   else
   {
    mid = PostTrainSilentThreshold.GetData();
@@ -6086,6 +6092,7 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
    ApplyPostTrainTipMode(true);
    PostTuneSearchReverted = true;
    PostTuneMetrics.clear();
+   candidate_mid = std::numeric_limits<double>::quiet_NaN();
    PostTuneSampleState.clear();
    PostTuneRunInvalid = false;
    PostTuneRunTerminal = PostTrainTune::kResultNone;
@@ -6234,11 +6241,14 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
    std::ofstream flag(path.c_str(), std::ios::trunc);
    if(flag)
    {
-    flag << "mid=" << mid << " gap=" << gap
+    flag << std::setprecision(17)
+         << "mid=" << mid << " gap=" << gap
          << " landscape_ok=" << (landscape_ok ? 1 : 0)
          << " inference=" << (inference ? 1 : 0)
          << " result=" << int(PostTuneResult.GetData())
          << " FixedLTZ=" << FixedLTZThreshold.GetData();
+    if(std::isfinite(candidate_mid))
+     flag << " candidate_mid=" << candidate_mid;
     if(PostTrainTipResistanceMode.GetData()
        == PostTrainTune::kPostTipSearchSynthetic)
      flag << " search_reverted=" << (PostTuneSearchReverted ? 1 : 0);
