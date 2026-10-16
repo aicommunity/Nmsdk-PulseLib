@@ -222,9 +222,19 @@ double NNeuronTimeLearner::ClampResistance(int dendrite_index0, double r) const
 {
  const std::vector<double>& minima = ResistanceMinByInput.GetData();
  const std::vector<double>& maxima = ResistanceMaxByInput.GetData();
- if(dendrite_index0 < 0 || dendrite_index0 >= int(minima.size())
-    || dendrite_index0 >= int(maxima.size()))
+ if(dendrite_index0 < 0)
   return ClampResistance(r);
+ if(dendrite_index0 >= int(minima.size())
+    || dendrite_index0 >= int(maxima.size()))
+ {
+  // Per-input bounds are derived only after the neuron topology exists. During
+  // XML load, ResistanceMin may still contain a stale serialized state value;
+  // clamping a configured tip to it here would permanently change the cold
+  // start before the derived bounds can replace that value.
+  if(!std::isfinite(r) || r <= 0.0)
+   r = SynapseResistanceBase.GetData();
+  return r;
+ }
  const double rmin = minima[static_cast<size_t>(dendrite_index0)];
  const double rmax = maxima[static_cast<size_t>(dendrite_index0)];
  if(!std::isfinite(rmin) || !std::isfinite(rmax) || rmin <= 0.0 || rmax < rmin)
