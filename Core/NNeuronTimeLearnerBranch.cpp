@@ -27,6 +27,7 @@ See file license.txt for more information
 #include <map>
 #include <sstream>
 #include "NNeuronTimeLearnerBranch.h"
+#include "NNeuronTimeLearnerAmpReference.h"
 #include "NNeuronTimeLearnerScopedDefaults.h"
 #include "NNeuronPostTrainTune.h"
 #include "NNeuronTimeLearnerResistanceBounds.h"
@@ -4774,12 +4775,14 @@ bool NNeuronTimeLearnerBranch::MeasureMaxPotentialAndTime(void)
    if(i < int(PeakSeen.size()))
     PeakSeen[i] = true;
    
-  // Latch Initial only on L==1 (full short-cable peak). Updating at L>1 while
-  // Initial<=0 froze the anchor on the rising-edge sample after early growth.
-  // PostTune must not rewrite TipR / SynapseResistanceBase from measure windows.
-  if(TrainingPhase.GetData() != kPhasePostTune
-     && DendriteLength[i] <= 1 && NumSynapse[i]
-     && currentsomaamp > InitialSomaPotential[i])
+  // Keep the normalization reference tied to the original single-synapse
+  // short cable; added structural contacts must not move the target.
+  if(TimeLearnerAmpReference::ShouldCaptureSingleSynapsePeak(
+      TrainingPhase.GetData() != kPhasePostTune,
+      DendriteLength[i] <= 1,
+      NumSynapse[i],
+      currentsomaamp,
+      InitialSomaPotential[i]))
     InitialSomaPotential[i] = currentsomaamp;
    
    if(TrainingPhase.GetData() != kPhasePostTune
