@@ -2170,8 +2170,14 @@ void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange()
  // committed peak times, best-effort sync decisions, and no-improve counters are
  // no longer evidence for the edited model. Rebootstrap the reference from the
  // next measured burst.
+ // The pending one-step commands were derived from the pre-edit response. The
+ // anchor-rebootstrap burst can defer recalculating them, so carrying them over
+ // would repeatedly apply a stale length/count direction to the changed model.
  std::fill(PulseSynced.begin(), PulseSynced.end(), false);
  std::fill(DendBestEffortSynced.begin(), DendBestEffortSynced.end(), false);
+ std::fill(DendStatus.begin(), DendStatus.end(), 0);
+ std::fill(SynapseStatus.begin(), SynapseStatus.end(), 0);
+ std::fill(AmpDifference.begin(), AmpDifference.end(), 0.0);
  std::fill(NoImproveCount.begin(), NoImproveCount.end(), 0);
  std::fill(InvalidPeakNoActionCount.begin(), InvalidPeakNoActionCount.end(), 0);
  std::fill(DendLastAbsDt.begin(), DendLastAbsDt.end(), IterationGap.GetData() + 0.001);
