@@ -5185,14 +5185,19 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseStatus(int num)
  
  double dt = InitialSomaPotential[num] - MaxIterSomaAmp[num];
  
- // Dead tip after length sync: cannot restore amp — stop adding synapses.
+ // A sub-threshold peak does not prove that structural amplitude recovery is
+ // impossible: adding contacts is still the active control until the count cap.
+ // Treat the dead tip as terminal only after structural capacity is exhausted.
  const bool length_settled = (num < int(DendLastAbsDt.size())
   && DendLastAbsDt[static_cast<size_t>(num)] <= SyncTolerance.GetData())
   || ((num < int(DendBestEffortSynced.size()))
       && DendBestEffortSynced[static_cast<size_t>(num)]);
+ const bool synapses_exhausted = num < int(NumSynapse.size())
+  && NumSynapse[num] >= kMaxSynapsesPerDend;
  if(!DendStatus[num] && length_settled
     && (num < int(MaxIterSomaAmp.size()))
-    && (MaxIterSomaAmp[num] < kMinMeasurableSomaAmp))
+    && (MaxIterSomaAmp[num] < kMinMeasurableSomaAmp)
+    && synapses_exhausted)
  {
   SynapseStatus[num] = 0;
   AmpDifference[num] = dt;
@@ -5430,17 +5435,8 @@ bool NNeuronTimeLearnerBranch::AllSynapsesNormalized(void) const
    && (fabs(InitialSomaPotential[i] - MaxIterSomaAmp[i]) <= eps);
   if(amp_ok)
    continue;
-  const bool dead_tip = (i < int(MaxIterSomaAmp.size()))
-   && (MaxIterSomaAmp[i] < kMinMeasurableSomaAmp);
-  const bool peak_attempted = (i < int(PeakSeen.size())) && PeakSeen[static_cast<size_t>(i)];
-  const bool length_ok = (i < int(DendLastAbsDt.size())
-   && DendLastAbsDt[static_cast<size_t>(i)] <= SyncTolerance.GetData())
-   || ((i < int(DendBestEffortSynced.size()))
-       && DendBestEffortSynced[static_cast<size_t>(i)]);
-  if(dead_tip && length_ok && peak_attempted)
-   continue;
   if(at_cap)
-   continue; // best-effort amp after synapse cap
+   continue; // best-effort amp is accepted only after structural capacity is exhausted
   return false;
  }
  return true;
