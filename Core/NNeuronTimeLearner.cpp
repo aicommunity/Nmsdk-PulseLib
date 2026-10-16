@@ -5749,6 +5749,32 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
   }
  }
  
+ // Preserve the single-synapse amplitude reference before any structural
+ // update in this iteration can lengthen the cable. MeasureMaxPotentialAndTime
+ // may lock an earlier pulse without closing its own window after the active
+ // pulse advances; the completed iteration audit still carries the valid peak.
+ for(int i = 0; i < NumInputDendrite; ++i)
+ {
+  const bool window_closed = i < int(PeakLocked.size())
+   && PeakLocked[static_cast<size_t>(i)];
+  const bool peak_valid = i < int(SomaPeakValid.size())
+   && SomaPeakValid[static_cast<size_t>(i)];
+  const bool unit_length = i < int(DendriteLength.GetData().size())
+   && DendriteLength[static_cast<size_t>(i)] == 1;
+  const int synapse_count = i < int(NumSynapse.size())
+   ? NumSynapse[static_cast<size_t>(i)] : 0;
+  if(i < int(InitialSomaPotential.size()) && i < int(MaxIterSomaAmp.size())
+     && TimeLearnerAmpReference::ShouldCaptureFinalizedSingleSynapsePeakReference(
+         TrainingPhase.GetData() != kPhasePostTune,
+         unit_length,
+         synapse_count,
+         window_closed,
+         peak_valid,
+         MaxIterSomaAmp[static_cast<size_t>(i)],
+         InitialSomaPotential[static_cast<size_t>(i)]))
+   InitialSomaPotential[static_cast<size_t>(i)] = MaxIterSomaAmp[static_cast<size_t>(i)];
+ }
+
  ComputePeakRelAndDelay();
  
  if(TrainingPhase == kPhasePostTune)
