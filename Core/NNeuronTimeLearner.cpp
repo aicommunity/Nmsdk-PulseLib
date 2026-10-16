@@ -3983,7 +3983,20 @@ bool NNeuronTimeLearner::MeasureMaxPotentialAndTime(void)
    // Lock only after a real peak; otherwise leave unlocked so IterationGap
    // ends the wait while SomaPeakValid stays false (amp≈0 is not sync).
    if(i < int(PeakSeen.size()) && PeakSeen[i] && i < int(PeakLocked.size()))
+   {
     PeakLocked[i] = true;
+    // Capture the full maximum only after the measurement window closes.
+    // Freezing on the first positive sample records the rising edge, not the peak.
+    if(TimeLearnerAmpReference::ShouldCaptureFinalizedSingleSynapsePeakReference(
+        TrainingPhase.GetData() != kPhasePostTune,
+        DendriteLength[i] == 1,
+        NumSynapse[i],
+        true,
+        true,
+        MaxIterSomaAmp[i],
+        InitialSomaPotential[i]))
+     InitialSomaPotential[i] = MaxIterSomaAmp[i];
+   }
    continue;
   }
   
@@ -4003,15 +4016,6 @@ bool NNeuronTimeLearner::MeasureMaxPotentialAndTime(void)
    TimeOfMaxIterSomaAmp[i] = now;
    if(i < int(PeakSeen.size()))
     PeakSeen[i] = true;
-   
-   // Initialize the reference from the single-synapse short cable once.
-   if(TimeLearnerAmpReference::ShouldInitializeSingleSynapsePeakReference(
-       TrainingPhase.GetData() != kPhasePostTune,
-       DendriteLength[i] == 1,
-       NumSynapse[i],
-       currentsomaamp,
-       InitialSomaPotential[i]))
-    InitialSomaPotential[i] = currentsomaamp;
    
    if(DendriteLength[i] == 1 && NumSynapse[i] == 1 && IsParametricNormalization())
    {
