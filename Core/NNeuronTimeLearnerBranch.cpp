@@ -4775,9 +4775,8 @@ bool NNeuronTimeLearnerBranch::MeasureMaxPotentialAndTime(void)
    if(i < int(PeakSeen.size()))
     PeakSeen[i] = true;
    
-  // Keep the normalization reference tied to the original single-synapse
-  // short cable; added structural contacts must not move the target.
-  if(TimeLearnerAmpReference::ShouldCaptureSingleSynapsePeak(
+  // Initialize the reference from the single-synapse short cable once.
+  if(TimeLearnerAmpReference::ShouldInitializeSingleSynapsePeakReference(
       TrainingPhase.GetData() != kPhasePostTune,
       DendriteLength[i] <= 1,
       NumSynapse[i],
