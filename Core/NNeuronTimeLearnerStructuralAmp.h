@@ -204,6 +204,16 @@ private:
     std::vector<InputState> inputs_;
 };
 
+/// Return one structural step toward an already accepted lower count.
+/// The caller must hold the accepted count once the current count reaches it.
+inline int StructuralAmpQuantizedStepTowardLowerCount(const int currentCount,
+                                                       const int acceptedLowerCount)
+{
+    if (currentCount < 1 || acceptedLowerCount < 1 || currentCount <= acceptedLowerCount)
+        return 0;
+    return -1;
+}
+
 } // namespace NMSDK
 
 #endif // NNEURONTIMELEARNER_STRUCTURAL_AMP_H

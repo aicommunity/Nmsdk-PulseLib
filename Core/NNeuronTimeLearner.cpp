@@ -4392,16 +4392,25 @@ bool NNeuronTimeLearner::ChangeSynapseStatus(int num)
  if(AcceptQuantizedAmpUnderTarget.GetData() && !IsParametricNormalization()
     && num < int(DendriteLength.GetData().size())
     && num < int(SomaPeakValid.size()) && SomaPeakValid[static_cast<size_t>(num)]
-    && length_strictly_settled
-    && StructuralAmpTracker.Observe(static_cast<size_t>(num), NumSynapse[num],
-       DendriteLength[num], InitialSomaPotential[num], MaxIterSomaAmp[num],
-       SomaPeakValid[static_cast<size_t>(num)], length_strictly_settled,
-       kAmpNormEps))
+    && length_strictly_settled)
  {
-  SynapseStatus[num] = 0;
-  AmpDifference[num] = dt;
-  DendStatus[num] = dendstatus;
-  return true;
+  StructuralAmpTracker.Observe(static_cast<size_t>(num), NumSynapse[num],
+   DendriteLength[num], InitialSomaPotential[num], MaxIterSomaAmp[num],
+   SomaPeakValid[static_cast<size_t>(num)], length_strictly_settled,
+   kAmpNormEps);
+  const int accepted_lower_count = StructuralAmpTracker.AcceptedCount(
+   static_cast<size_t>(num), DendriteLength[num], InitialSomaPotential[num]);
+  if(accepted_lower_count > 0 && NumSynapse[num] >= accepted_lower_count)
+  {
+   // When a stable bracket is found while the model sits on the upper count,
+   // select the accepted lower count explicitly. The ordinary sign-reversal
+   // damping can otherwise hold the upper count and leave EOL false forever.
+   SynapseStatus[num] = StructuralAmpQuantizedStepTowardLowerCount(
+    NumSynapse[num], accepted_lower_count);
+   AmpDifference[num] = dt;
+   DendStatus[num] = dendstatus;
+   return true;
+  }
  }
  
  // Optimum only when dendrite length is settled (!DendStatus); otherwise amp
