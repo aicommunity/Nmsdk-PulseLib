@@ -133,7 +133,7 @@ flowchart TD
     dt = InitialSomaPotential[num] - MaxIterSomaAmp[num];
     ```
 
-    где `InitialSomaPotential[num]` — максимум амплитуды на соме при **единичной длине** дендрита и минимальном числе синапсов;
+    где `InitialSomaPotential[num]` в коде является наибольшим измеренным максимумом сомы, пока длина дендрита равна 1 и установлен хотя бы один синапс. Условие не ограничено `NumSynapse == 1`: пока дендрит остаётся единичной длины, добавление контактов может поднять этот эталон. Поэтому фиксированный эталон первого одиночного синапса текущим условием не гарантируется.
   - для экспериментального режима (`ExperimentNum == 2` и `!CanChangeDendLength`) временно «замораживает» изменение длины дендрита (обнуляя `DendStatus[num]`), чтобы подобрать оптимальное число синапсов при фиксированной длине;
   - при неизменном паттерне (`|PrevInputPattern[num] - InputPattern[num]| < eps`) и уже нулевом статусе дендрита рассматривает три случая оптимальности по амплитуде:
     - уже стоит нулевой статус у синапсов;
@@ -236,7 +236,7 @@ flowchart TD
   - на каждом такте вызывается `MeasureMaxPotentialAndTime()`:
     - для каждой сомы `SomaX` измеряется текущий потенциал;
     - если он превышает ранее зафиксированный максимум `MaxIterSomaAmp[i]`, обновляются и максимум, и время его достижения `TimeOfMaxIterSomaAmp[i]`;
-    - при этом для дендритов единичной длины (`DendriteLength[i] == 1`) `InitialSomaPotential[i]` захватывает наибольший из наблюдённых максимумов, формируя «эталонную» амплитуду.
+    - при этом для дендритов единичной длины (`DendriteLength[i] == 1`) с хотя бы одним синапсом `InitialSomaPotential[i]` захватывает наибольший из наблюдённых максимумов. Это high-water mark короткого кабеля; при росте числа контактов до удлинения дендрита он может измениться.
   - в конце итерации рассчитывается текущая длительность:
 
     ```cpp
@@ -833,7 +833,7 @@ The synapse count algorithm is logically symmetric to dendrite length growth and
     dt = InitialSomaPotential[num] - MaxIterSomaAmp[num];
     ```
 
-    where `InitialSomaPotential[num]` is the maximum soma amplitude at **unit** dendrite length and minimum synapse count;
+    where the current code treats `InitialSomaPotential[num]` as the largest measured soma peak while the dendrite has unit length and at least one synapse. The condition is not restricted to `NumSynapse == 1`: adding contacts before the dendrite grows can raise this reference. The current condition therefore does not guarantee a fixed reference from the first single synapse.
   - for experimental mode (`ExperimentNum == 2` and `!CanChangeDendLength`) temporarily "freezes" dendrite length change (zeroing `DendStatus[num]`) to tune optimal synapse count at fixed length;
   - with unchanged pattern (`|PrevInputPattern[num] - InputPattern[num]| < eps`) and already zero dendrite status, considers three amplitude optimality cases:
     - synapse status is already zero;
@@ -936,7 +936,7 @@ The structure training algorithm in `NNeuronLearner` is concentrated in method `
   - on each beat `MeasureMaxPotentialAndTime()` is called:
     - for each soma `SomaX` current potential is measured;
     - if it exceeds previously recorded maximum `MaxIterSomaAmp[i]`, both maximum and time of achievement `TimeOfMaxIterSomaAmp[i]` are updated;
-    - for unit-length dendrites (`DendriteLength[i] == 1`) `InitialSomaPotential[i]` captures the largest observed maximum, forming the "reference" amplitude.
+    - for unit-length dendrites (`DendriteLength[i] == 1`) with at least one synapse, `InitialSomaPotential[i]` captures the largest observed maximum. This is a short-cable high-water mark and can change when the contact count grows before the dendrite lengthens.
   - at iteration end current duration is computed:
 
     ```cpp
