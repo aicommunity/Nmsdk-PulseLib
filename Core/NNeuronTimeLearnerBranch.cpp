@@ -2054,7 +2054,12 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
    const bool reached_eps = (fabs(dt) <= eps);
    const bool near_target = (fabs(dt) <= kAmpOscillationBand)
     || (fabs(prev_res_dt) <= kAmpOscillationBand);
-   const bool meaningful_drop = (fabs(prev_res_dt) > eps)
+   // Across the target, a smaller |dt| can be one half of a repeated
+   // oscillation rather than progress. Keep accumulating the existing
+   // near-target no-improve evidence until the residual actually enters eps.
+   const bool same_error_side = (dt >= 0.0) == (prev_res_dt >= 0.0);
+   const bool meaningful_drop = (!near_target || same_error_side)
+    && (fabs(prev_res_dt) > eps)
     && (fabs(dt) < 0.5 * fabs(prev_res_dt));
    const bool any_drop = (fabs(dt) < fabs(prev_res_dt));
    if(reached_eps || meaningful_drop || (!near_target && any_drop))
