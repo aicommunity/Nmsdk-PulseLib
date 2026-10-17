@@ -174,7 +174,7 @@ UploadClass("NPHebbSynapse", cont);
 - **Effective parameters**:
   - Inherits:
     - `PulseAmplitude = 1.0`.
-    - `SecretionTC = 0.002` (HEAD).
+    - `SecretionTC = 0.001` (HEAD); this inherited value was temporarily `0.002` between commits `5f3f06d` and `0be546f`.
     - `TypicalPulseDuration = 0.001`.
     - `InhibitionCoeff = 0`.
     - `UsePresynapticInhibition = false`, `UsePulseSignal = true`.

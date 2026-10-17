@@ -19,6 +19,7 @@ See file license.txt for more information
 #include "NClassifier.h"
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseLTZoneCommon.h"
+#include "../../Nmsdk-PulseLib/Core/NPulseMembrane.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseNeuron.h"
 //#include <QString>
 //#include <QDateTime>
@@ -52,7 +53,8 @@ NClassifier::NClassifier(void)
   UseTransitSignal("UseTransitSignal",this,&NClassifier::SetUseTransitSignal),
   NumClasses("NumClasses",this,&NClassifier::SetNumClasses),
   SizeTrainingSet("SizeTrainingSet",this,&NClassifier::SetSizeTrainingSet),
-  DataFromFile("DataFromFile",this,&NClassifier::SetDataFromFile)
+  DataFromFile("DataFromFile",this,&NClassifier::SetDataFromFile),
+  UseLateralInhibition("UseLateralInhibition",this,&NClassifier::SetUseLateralInhibition)
 {
  OldNumClasses=0;
  OldNumInputDendrite=0;
@@ -377,6 +379,12 @@ bool NClassifier::SetDataFromFile(const bool &value)
 
  return true;
 }
+
+bool NClassifier::SetUseLateralInhibition(const bool &value)
+{
+	Ready=false;
+	return true;
+}
 // --------------------------
 
 // --------------------------
@@ -426,6 +434,12 @@ bool NClassifier::AReset(void)
 	{
 		for(size_t j = 0; j < groups_trainers[i].size(); j++)
 		{
+ // Serialized classifiers may already have IsNeedToTrain=false, so the
+ // child trainer setter need not run while loading. Restore its inference
+ // threshold after the trainer's own reset has completed.
+ if(!IsNeedToTrain)
+  groups_trainers[i][j]->LTZThreshold = FixedLTZThreshold;
+
  //			groups_trainers[i][j]->IsNeedToTrain = IsNeedToTrain;
 
  /*			UEPtr<NPulseGeneratorTransit> generator;
@@ -466,7 +480,13 @@ bool NClassifier::AReset(void)
 //		generators[i]->Reset();
 	}
 
-	return true;
+	if(StructureBuildMode != 2)
+		return true;
+
+	// Child neurons are reset before this method runs. Reapply the classifier
+	// output-layer topology after those resets, which can restore saved soma
+	// defaults and discard the class-to-class inhibitory synapses.
+	return RebuildOutputLayer();
 }
 
 // Восстановление настроек по умолчанию и сброс процесса счета
@@ -497,6 +517,7 @@ bool NClassifier::ADefault(void)
 	TrainingPatterns.Assign(1,1,0.0);
 	InputPattern.Assign(1,1,0.0);
 	DataFromFile = false;
+	UseLateralInhibition = true;
 
 	return true;
 }
@@ -599,15 +620,15 @@ bool NClassifier::BuildStructure(void)
 
 					trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1)),true);
 					if(!trainer)
-						return true;
+						return false;
 					gen_in = trainer->GetComponentL<NPulseGeneratorTransit>(std::string("Source"+sntoa(k+1)),true);
 					if(!gen_in)
-						return true;
+						return false;
 
 					bool res(true);
 					res&=CreateLink("Source"+sntoa(k+1),"Output",gen_in->GetLongName(this),"Input");
 					if(!res)
-						return true;
+						return false;
 				}
 			}
 		}
@@ -618,54 +639,79 @@ bool NClassifier::BuildStructure(void)
 		{
 			LogicalOrNeuron = AddMissingComponent<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)), NeuronClassName);
 			LogicalOrNeuron->SetCoord(MVector<double,3>(8.7+1*7+i*20+10,(1.67+SizeTrainingSet)/2,0));
+			// Finish the neuron's own structure before changing its soma synapse
+			// counts; resetting the whole neuron afterwards can rebuild that soma.
+			LogicalOrNeuron->Reset();
 
 			UEPtr<NPulseMembrane> soma = LogicalOrNeuron->GetComponentL<NPulseMembrane>("Soma1",true);
 			if(!soma)
-				return true;
+				return false;
 
-			// Добавляем возбуждающие синапсы для реализации функции "ИЛИ"
+			// Build the complete OR soma once, after the parent neuron is ready.
 			soma->NumExcitatorySynapses=*SizeTrainingSet;//soma->NumExcitatorySynapses+1;
-			soma->Build();
+			soma->NumInhibitorySynapses = NumClasses - 1;
+			soma->Reset();
 
-			//Связываем тренера с соответсвующими синапсами нейрона ИЛИ
+			// Rebuilding from a saved model can preserve connections to old
+			// same-name synapses. Replace those links for both OR input groups.
+			for(int j = 1; j <= SizeTrainingSet; j++)
+			{
+				UEPtr<NPulseSynapseCommon> excitatory_synapse = soma->GetComponentL<NPulseSynapseCommon>(
+				    std::string("ExcSynapse")+sntoa(j), true);
+				if(!excitatory_synapse)
+					return false;
+
+				excitatory_synapse->Input.DetachFrom();
+				excitatory_synapse->DisconnectAllItems();
+			}
+
+			// A saved classifier may already contain the older lateral links.
+			// Detach them before adding the current class-to-class connections.
+			for(int j = 1; j < NumClasses; j++)
+			{
+				UEPtr<NPulseSynapseCommon> inhibitory_synapse = soma->GetComponentL<NPulseSynapseCommon>(
+				    std::string("InhSynapse")+sntoa(j), true);
+				if(!inhibitory_synapse)
+					return false;
+
+				inhibitory_synapse->Input.DetachFrom();
+				inhibitory_synapse->DisconnectAllItems();
+			}
+
+			// Connect the class-example neurons only after the OR soma has its
+			// final, reset structure.
 			for(int j = 0; j < SizeTrainingSet; j++)
 			{
 				UEPtr<NNeuronTrainer> trainer = GetComponentL<NNeuronTrainer>(std::string("NeuronTrainer"+sntoa(i+1)+"_"+sntoa(j+1)),true);
 				if(!trainer)
-					return true;
+					return false;
 
 				UEPtr<NLTZone> ltzone = trainer->GetComponentL<NLTZone>("Neuron.LTZone", true);
 				if(!ltzone)
-					return true;
+					return false;
 
 				NPulseSynapseCommon *synapse=soma->GetComponentL<NPulseSynapseCommon>(
 				    std::string("ExcSynapse")+sntoa(j+1), true);
 				if(!synapse)
-					return true;
+					return false;
 
 				bool res(true);
-				res &= CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");  //"ExcSynapse"+sntoa(j+1)
+				res &= CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
 				if(!res)
-					return true;
+					return false;
 			}
-
-			// Добавляем тормозные синапсы для реализации функции "ИЛИ"
-			soma->NumInhibitorySynapses = NumClasses - 1;
-			soma->Build();
-
-			LogicalOrNeuron->Reset();
 		}
 
 		// Обратные связи между нейронами ИЛИ
-        for(int i = 0; i < NumClasses; i++)
+        for(int i = 0; UseLateralInhibition && i < NumClasses; i++)
 		{
             UEPtr<NPulseNeuron> logical_or_neuron = GetComponentL<NPulseNeuron>(std::string("OrNeuron"+sntoa(i+1)),true);
             if(!logical_or_neuron)
-				return true;
+				return false;
 
             UEPtr<NPulseMembrane> soma = logical_or_neuron->GetComponentL<NPulseMembrane>(std::string("Soma1"),true);
 			if(!soma)
-				return true;
+				return false;
 
 			int indexSynapse = 0;
 
@@ -676,27 +722,192 @@ bool NClassifier::BuildStructure(void)
 
 				LogicalOrNeuron = GetComponentL<NPulseNeuron>(std::string("OrNeuron" + sntoa(j + 1)), true);
 				if(!LogicalOrNeuron)
-					return true;
+					return false;
 
 				UEPtr<NLTZone> ltzone = LogicalOrNeuron->GetComponentL<NLTZone>("LTZone");
 				 if(!ltzone)
-					return true;
+					return false;
 
 				UEPtr<NPulseSynapse> synapse = soma->GetComponentL<NPulseSynapse>(std::string("InhSynapse" + sntoa(indexSynapse + 1)), true);
 				if(!synapse)
-					return true;
+					return false;
 
 				bool res(true);
 				res &= CreateLink(ltzone->GetLongName(this),"Output",synapse->GetLongName(this),"Input");
 				if(!res)
-					return true;
+					return false;
 
 				indexSynapse++;
 			}
 		}
 
+		if(!RebuildOutputLayer())
+			return false;
+
 		OldNumClasses = int(groups_trainers.size());
 		OldSizeTrainingSet = int(SizeTrainingSet);
+	}
+
+	return true;
+}
+
+// Rebuild the output layer after child components have been reset. Doing the
+// work here makes it safe to call both during initial construction and from
+// NClassifier::AReset(), which runs after child resets.
+bool NClassifier::RebuildOutputLayer(void)
+{
+	for(int class_idx = 0; class_idx < NumClasses; class_idx++)
+	{
+		UEPtr<NPulseNeuron> or_neuron = GetComponentL<NPulseNeuron>(
+		    std::string("OrNeuron")+sntoa(class_idx+1), true);
+		if(!or_neuron)
+			return false;
+
+		UEPtr<NPulseMembrane> soma = or_neuron->GetComponentL<NPulseMembrane>("Soma1", true);
+		if(!soma)
+			return false;
+
+		soma->NumExcitatorySynapses = SizeTrainingSet;
+		soma->NumInhibitorySynapses = NumClasses - 1;
+		if(!soma->Reset())
+			return false;
+		if(!InitializeOutputSoma(soma))
+			return false;
+
+		// Remove links restored from serialized classifiers before reconnecting
+		// the class-example inputs and the lateral inhibition fan-in.
+		for(int synapse_idx = 1; synapse_idx <= SizeTrainingSet; synapse_idx++)
+		{
+			UEPtr<NPulseSynapseCommon> synapse = soma->GetComponentL<NPulseSynapseCommon>(
+			    std::string("ExcSynapse")+sntoa(synapse_idx), true);
+			if(!synapse)
+				return false;
+			synapse->Input.DetachFrom();
+			synapse->DisconnectAllItems();
+		}
+
+		for(int synapse_idx = 1; synapse_idx < NumClasses; synapse_idx++)
+		{
+			UEPtr<NPulseSynapseCommon> synapse = soma->GetComponentL<NPulseSynapseCommon>(
+			    std::string("InhSynapse")+sntoa(synapse_idx), true);
+			if(!synapse)
+				return false;
+			synapse->Input.DetachFrom();
+			synapse->DisconnectAllItems();
+		}
+
+		for(int example_idx = 0; example_idx < SizeTrainingSet; example_idx++)
+		{
+			UEPtr<NNeuronTrainer> trainer = GetComponentL<NNeuronTrainer>(
+			    std::string("NeuronTrainer")+sntoa(class_idx+1)+"_"+sntoa(example_idx+1), true);
+			if(!trainer)
+				return false;
+
+			UEPtr<NLTZone> ltzone = trainer->GetComponentL<NLTZone>("Neuron.LTZone", true);
+			if(!ltzone)
+				return false;
+
+			UEPtr<NPulseSynapseCommon> synapse = soma->GetComponentL<NPulseSynapseCommon>(
+			    std::string("ExcSynapse")+sntoa(example_idx+1), true);
+			if(!synapse || !CreateLink(ltzone->GetLongName(this), "Output", synapse->GetLongName(this), "Input"))
+				return false;
+		}
+	}
+
+	for(int target_idx = 0; UseLateralInhibition && target_idx < NumClasses; target_idx++)
+	{
+		UEPtr<NPulseNeuron> target = GetComponentL<NPulseNeuron>(
+		    std::string("OrNeuron")+sntoa(target_idx+1), true);
+		if(!target)
+			return false;
+		UEPtr<NPulseMembrane> soma = target->GetComponentL<NPulseMembrane>("Soma1", true);
+		if(!soma)
+			return false;
+
+		int inhibitory_synapse_idx = 1;
+		for(int source_idx = 0; source_idx < NumClasses; source_idx++)
+		{
+			if(source_idx == target_idx)
+				continue;
+
+			UEPtr<NPulseNeuron> source = GetComponentL<NPulseNeuron>(
+			    std::string("OrNeuron")+sntoa(source_idx+1), true);
+			if(!source)
+				return false;
+			UEPtr<NLTZone> ltzone = source->GetComponentL<NLTZone>("LTZone", true);
+			if(!ltzone)
+				return false;
+
+			UEPtr<NPulseSynapseCommon> synapse = soma->GetComponentL<NPulseSynapseCommon>(
+			    std::string("InhSynapse")+sntoa(inhibitory_synapse_idx++), true);
+			if(!synapse || !CreateLink(ltzone->GetLongName(this), "Output", synapse->GetLongName(this), "Input"))
+				return false;
+		}
+	}
+
+	return true;
+}
+
+// Soma::Reset() can rebuild its channels and synapses after the application's
+// initial component Init() pass. Explicitly initialize the complete output
+// soma subtree before the classifier starts driving its inhibitory synapses.
+bool NClassifier::InitializeOutputSoma(UEPtr<NPulseMembrane> soma)
+{
+	if(!soma)
+		return false;
+
+	if(!soma->IsInit())
+		soma->Init();
+	if(!soma->IsInit())
+	{
+		LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "Failed to initialize classifier output soma.");
+		return false;
+	}
+
+	const char *channel_names[] = {"ExcChannel", "InhChannel"};
+	for(size_t i = 0; i < sizeof(channel_names) / sizeof(channel_names[0]); ++i)
+	{
+		UEPtr<NPulseChannelCommon> channel = soma->GetComponentL<NPulseChannelCommon>(channel_names[i], true);
+		if(channel && !channel->IsInit())
+			channel->Init();
+		if(channel && !channel->IsInit())
+		{
+			LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+			             std::string("Failed to initialize output channel ") + channel_names[i] + ".");
+			return false;
+		}
+	}
+
+	for(int synapse_index = 1; synapse_index <= SizeTrainingSet; ++synapse_index)
+	{
+		UEPtr<NPulseSynapseCommon> synapse = soma->GetComponentL<NPulseSynapseCommon>(
+		    std::string("ExcSynapse") + sntoa(synapse_index), true);
+		if(!synapse)
+			return false;
+		if(!synapse->IsInit())
+			synapse->Init();
+		if(!synapse->IsInit())
+		{
+			LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+			             std::string("Failed to initialize output synapse ") + synapse->GetLongName(this));
+			return false;
+		}
+	}
+
+	for(int synapse_index = 1; synapse_index < NumClasses; ++synapse_index)
+	{
+		UEPtr<NPulseSynapseCommon> synapse = soma->GetComponentL<NPulseSynapseCommon>(
+		    std::string("InhSynapse") + sntoa(synapse_index), true);
+		if(!synapse)
+			return false;
+		if(!synapse->IsInit())
+			synapse->Init();
+		if(!synapse->IsInit())
+		{
+			LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+			             std::string("Failed to initialize lateral synapse ") + synapse->GetLongName(this));
+			return false;
+		}
 	}
 
 	return true;
@@ -760,15 +971,15 @@ bool NClassifier::TreatDataFromFile(void)
         }
         for(int i = 0; i < NumInputDendrite; i++)
         {
-            double in;
-            fin >> in;
-            /*if(fin.eof())
+            double in = 0.0;
+            if(!(fin >> in))
             {
                 fin.close();
                 fout.close();
+                IsFirstFileStep = true;
                 DataFromFile = false;
                 return true;
-            } */
+            }
             inputs(i,0) = in;
         }
         InputPattern = inputs;

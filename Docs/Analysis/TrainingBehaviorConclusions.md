@@ -412,7 +412,9 @@ flowchart TD
 
 ### 2.3. Алгоритм изменения числа синапсов и его поведение
 
-`SomaSynapseNormalization()`:
+The following log excerpt was collected against an older Trainer revision. It must not be used as a description of the current source: the old implementation used an upper-bound comparison with `+0.000005`; the present implementation below uses a signed amplitude difference and the newer sign-crossing stop rule.
+
+`SomaSynapseNormalization()` in that archived revision:
 
 - хранит `InitialDendritePotential[i]` — максимум амплитуды на соме при длине дендрита 1 и начальном числе синапсов;
 - на каждой итерации вычисляет `max_iter_dend_amp[i]` — максимум амплитуды на соме за текущую итерацию;
@@ -1137,13 +1139,15 @@ In log `...191806.27644`:
 - `max_iter_dend_amp[i]` **numerically matches** `InitialDendritePotential[i]`, but due to tolerance `+ 0.000005` condition "less than initial + eps" remains true;
 - as a result `dend_status[i]` is constantly `2`, and one synapse is added each iteration: `SynapseNum` grows without stopping.
 
-### 2.4. NNeuronTrainer Conclusions
+The old trace is consistent with that old comparator repeatedly choosing addition at the boundary. This is historical evidence for the archived binary only. In the current source, the old `+0.000005` expression is absent; normalisation first accepts a difference within `1e-6`, then accepts a crossing of the target when the current integer structure is no worse than the previous one. The current Iris replay tests this changed criterion.
 
-1. **Lack of stable dendrite length growth is a result of the synchronization criterion.**
+### 2.4. NNeuronTrainer Conclusions (historical run)
+
+1. **In that historical run, lack of stable dendrite length growth was attributed to the synchronization criterion.**
    - For current input pattern length 2 leads to significantly larger `dt` than length 1, so the algorithm rationally returns to length 1 and declares training complete.
-2. **Unbounded synapse count growth is a consequence of a "boundary" in the amplitude criterion.**
+2. **In that historical run, synapse count growth was attributed to the old "boundary" amplitude criterion.**
    - Difference `max_iter_dend_amp - InitialDendritePotential` tends to zero; presence of tolerance `+ 0.000005` in the condition interprets even zero difference as "still below initial", and the "remove synapses" branch (`dend_status = -2`) never activates.
-3. **Behavior is consistent with algorithm mathematics and does not indicate an obvious bug in implemented logging.**
+3. **Those conclusions describe the historical source and run, not the current Trainer implementation.**
    - Logging shows meaningful maximum time and amplitude values; the problem is in the optimality criteria themselves and their sensitivity, not that code branches fail to execute.
 
 ### 2.5. NNeuronTrainer Training Mode Flowchart (Mode 6)
@@ -1229,18 +1233,22 @@ Both algorithms compare current amplitude with some **initial** value:
   - amplitude difference history `AmpDifference[num]` and its sign;
   - optimality criterion is more complex and allows zeroing `SynapseStatus` on small changes or direction reversal.
 
-- in Trainer `SomaSynapseNormalization` criterion is much simpler:
+- in Trainer `SomaSynapseNormalization` uses an amplitude difference and integer step:
 
   ```cpp
-  if (max_iter_dend_amp[i] < InitialDendritePotential[i] + 0.000005)
+  amplitude_difference = max_iter_dend_amp[i] - InitialDendritePotential[i];
+  if (abs(amplitude_difference) <= 1e-6 ||
+      (previous and current differences cross zero and current is no worse))
+      dend_status[i] = 0;
+  else if (amplitude_difference < 0)
       dend_status[i] = 2;
   else
       dend_status[i] = -2;
   ```
 
-  - only amplitude threshold with fixed tolerance is used;
-  - pattern changes and difference sign history are not considered;
-  - as a result in observed configuration a "boundary" situation arises where amplitude barely changes and algorithm always considers synapses should be added.
+  - the fixed `1e-6` tolerance remains;
+  - the previous iteration's amplitude difference detects when one integer synapse step crosses the target;
+  - this prevents oscillation when no integer synapse count lies inside the small tolerance.
 
 ### 3.4. Connection of Differences to Observed Behavior
 
@@ -1345,12 +1353,15 @@ Comparing file versions (e.g., `UNoise.h`) before and after these commits shows 
 1. **Synchronization criterion (by maximum times) genuinely selects minimum length as optimal.**
    - For specific `TestTrain` pattern length 1 gives minimum soma peak desynchronization; at length 2 temporal shift becomes substantially larger.
    - Training growth algorithm in `NNeuronTrainer` and `NNeuronLearner` interprets this correctly within their formulas, even if longer dendrites were desired from task perspective.
-2. **Synapse count normalization criterion sits at "boundary" of numerical precision.**
-   - Soma amplitude when increasing synapse count practically matches initial at length 1 and one synapse.
-   - Formula `max_iter_dend_amp < InitialDendritePotential + 0.000005` treats this state as "still below initial amplitude" and prevents algorithm from switching to synapse reduction mode.
+2. **The archived implementation could fail to stop at an integer amplitude boundary.**
+    - The old tolerance-only condition could alternate adjacent integer synapse counts indefinitely when the two resulting amplitudes straddled the target.
+    - Current source stops at the closer of the two neighboring structures when their amplitude differences change sign; a replay is required to verify the resulting convergence on each data set.
 3. **Calibration dendrite choice may not match intuitive "reference" branch.**
    - In both `NNeuronLearner` and `NNeuronTrainer` calibration dendrite is chosen by index or by maximum delay; if actual structure/pattern differs from design assumptions, `dt` minimization criterion may compare signals against an "unfortunate" reference branch.
-4. **RC parameters of channels and synapses are too "stiff" for current criterion scheme.**
+4. **The current and historical Iris runs use different defaults for newly created synapses.**
+    - The Iris experiment workbook's OOXML metadata says it was last saved on 2022-06-08; the workbook does not record the run date. This places the archived table in the period when `NPulseSynapse` defaults were temporarily changed (2022-04-15 to 2022-06-27), but does not prove the exact run date. New segments created now therefore need not share the old run's baseline resistance/time constants; see `SynapseParamsHistory.md`.
+    - This is a reproducibility confound and must be separated from the stop-criterion change.
+5. **RC parameters of channels and synapses can affect the number of discrete steps needed.**
    - High synapse resistances and fixed channel parameters may cause adding synapses to practically not change amplitude, while length change gives sharp time jumps.
    - This reinforces algorithm tendency toward minimum length choice and unbounded synapse count growth.
 

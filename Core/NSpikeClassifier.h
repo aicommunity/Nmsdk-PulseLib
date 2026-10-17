@@ -96,6 +96,9 @@ UProperty<bool,NSpikeClassifier, ptPubParameter> UseTransitSignal;
 ///        
 UProperty<bool, NSpikeClassifier, ptPubParameter> DataFromFile;
 
+/// Enable class-to-class lateral inhibition (enabled by default).
+UProperty<bool, NSpikeClassifier, ptPubParameter> UseLateralInhibition;
+
 
 protected:
 
@@ -103,6 +106,10 @@ protected:
  int OldNumNeurons;
  //     
  int OldNumInputDendrite;
+
+ // Whether the current trained neurons already have the classifier's
+ // lateral-inhibition topology attached.
+ bool LateralInhibitionBuilt;
 
  //  
  std::vector<UEPtr<NPulseGeneratorTransit> > generators;
@@ -195,6 +202,7 @@ bool SetUseTransitSignal(const bool &value);
 
 //        
 bool SetDataFromFile(const bool &value);
+bool SetUseLateralInhibition(const bool &value);
 // --------------------------
 
 // --------------------------
@@ -235,6 +243,10 @@ virtual bool ADelComponent(UEPtr<UContainer> comp);
 protected:
 ///         
 bool BuildStructure(void);
+
+/// Remove and rebuild the lateral-inhibition links between class neurons.
+bool BuildLateralInhibition(void);
+void ClearLateralInhibition(void);
 
 //     .
 //      ,

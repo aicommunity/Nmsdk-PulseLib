@@ -1642,6 +1642,11 @@ UploadClass("NPredictor",cont);
  cont->Default();
  UploadClass("NPatternResponseAnalyzer",cont);
 
+ cont=new NClassifierDynamicsRecorder;
+ cont->SetName("ClassifierDynamicsRecorder");
+ cont->Default();
+ UploadClass("NClassifierDynamicsRecorder",cont);
+
 // Создаем предиктор состояния
 cont=new NStatePredictor;
 cont->SetName("StatePredictor");

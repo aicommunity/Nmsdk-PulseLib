@@ -21,6 +21,7 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Core/NPulseLTZoneCommon.h"
 #include "../../Nmsdk-PulseLib/Core/NPulseNeuron.h"
 #include "../../Rdk/Deploy/Include/rdk_cpp_init.h"
+#include <cmath>
 #include <sstream>
 //#include <QString>
 //#include <QDateTime>
@@ -195,6 +196,8 @@ bool NNeuronTrainer::SetNeedToTrain(const bool &value)
   is_synchronizated=false;
   OldNumInputDendrite=0;
   generators.clear();
+  PreviousSynapseAmplitudeDifference.clear();
+  HasPreviousSynapseAmplitudeDifference.clear();
   is_first_iter=true;
   neuron = NULL;
   thresh_first_iter=true;
@@ -408,8 +411,10 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 	DendriteLength.assign(num_input_dendrite,0);
 	// Массив выходов дендритов при единичной их длине
 	InitialDendritePotential.assign(num_input_dendrite,0);
-	// Массив количества синапсов на дендрите
-	SynapseNum.assign(num_input_dendrite,1);
+ // Массив количества синапсов на дендрите
+ SynapseNum.assign(num_input_dendrite,1);
+ PreviousSynapseAmplitudeDifference.assign(num_input_dendrite, 0.0);
+ HasPreviousSynapseAmplitudeDifference.assign(num_input_dendrite, false);
 
 	// Вычисляем индекс дендрита, на который входной сигнал пришёл последним
 	// и устанавливаем длину данного дендрита равной 1
@@ -468,6 +473,18 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 		}
 		neuron->Reset();
 	}
+	else
+	{
+		// Rebind the runtime pointer when a saved, already-trained neuron is
+		// loaded. This member is not serialized, but CalculateProcess() uses it
+		// even when structural training is disabled.
+		neuron = GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
+		if(!neuron)
+		{
+			LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "Trained neuron component is missing.");
+			return false;
+		}
+	}
 
 	// Добаляем связи между генератором и синапсами
 	if(!neuron)
@@ -491,9 +508,16 @@ bool NNeuronTrainer::AReset(void)
  if(!n_in)
   return true;
 
- UEPtr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone");
+ // Component pointers are runtime-only and are not restored from saved model
+ // data. Rebind before the trainer's next calculation after a project reset.
+ neuron = n_in;
+
+ UEPtr<NLTZone> ltzone=n_in->GetComponentL<NLTZone>("LTZone", true);
  if(!ltzone)
-  return true;
+ {
+  LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "Neuron LTZone component is missing after reset.");
+  return false;
+ }
 
  ltzone->Threshold = LTZThreshold;
 
@@ -1462,6 +1486,18 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 
 				synapse->Resistance = SynapseResistanceStep;
 
+				// Rebuilding an existing membrane can add this synapse after the
+				// container's normal initialization pass. Initialize it explicitly
+				// so it participates in the next neuron calculation.
+				if(!synapse->IsInit())
+				 synapse->Init();
+				if(!synapse->IsInit())
+				{
+				 LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+				     "Failed to initialize synapse " + synapse->GetLongName(this));
+				 return false;
+				}
+
 				neuron->Reset();
 			}
 			// Удаляем синапс
@@ -1542,16 +1578,29 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 			if(!dend_status[i])
 			 continue;
 
-			// Если амплитуда меньше начальной - добавляем синапсы дальше
-			if(max_iter_dend_amp[i] < InitialDendritePotential[i] + 0.000005)
+			const double amplitude_difference = max_iter_dend_amp[i] - InitialDendritePotential[i];
+			// Synapse count is discrete; the target may lie between neighboring structures.
+			const bool amplitude_crossed_target =
+				HasPreviousSynapseAmplitudeDifference[i] &&
+				(amplitude_difference * PreviousSynapseAmplitudeDifference[i] < 0.0) &&
+				(std::fabs(amplitude_difference) <=
+				 std::fabs(PreviousSynapseAmplitudeDifference[i]));
+			if(std::fabs(amplitude_difference) <= kThresholdEpsilon || amplitude_crossed_target)
+			{
+				dend_status[i] = 0;
+			}
+			// Если амплитуда меньше начальной - добавляем синапсы дальше.
+			else if(amplitude_difference < 0.0)
 			{
 				dend_status[i] = 2;
 			}
-			// В противном случае - удаляем синапс
+			// Если амплитуда больше начальной - удаляем синапс.
 			else
 			{
 				dend_status[i] = -2;
 			}
+			PreviousSynapseAmplitudeDifference[i] = amplitude_difference;
+			HasPreviousSynapseAmplitudeDifference[i] = true;
 
 			if (EnableDebug && RDK::GetLogger())
 			{
@@ -1559,6 +1608,8 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 				oss << "SomaSynapseNormalization: iter done; i=" << i
 					<< " max_iter_dend_amp=" << max_iter_dend_amp[i]
 					<< " InitialDendritePotential=" << (i < (int)InitialDendritePotential.size() ? InitialDendritePotential[i] : 0.0)
+					<< " amplitude_difference=" << amplitude_difference
+					<< " amplitude_crossed_target=" << (amplitude_crossed_target ? 1 : 0)
 					<< " dend_status=" << dend_status[i];
 				RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, __FUNCTION__, oss.str());
 			}
@@ -1732,6 +1783,30 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
                  res&=CreateLink(MakeSourceName(i+1),"Output",synapse->GetLongName(this),"Input");
                  if(!res)
                   LogMessageEx(RDK_EX_WARNING,__FUNCTION__,std::string("Falied create link: ")+MakeSourceName(i+1)+":Output -> "+synapse->GetLongName(this)+":Input");
+                 else
+                 {
+                  // Dendrite growth creates a new membrane subtree after the
+                  // neuron's initial Init() pass. Initialize the whole subtree
+                  // so both its channel and synapse participate in calculation.
+                  UEPtr<NPulseMembrane> dendrite=neuron->GetComponentL<NPulseMembrane>(
+                      "Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
+                  if(dendrite && !dendrite->IsInit())
+                   dendrite->Init();
+                  UEPtr<NPulseChannelCommon> exc_channel;
+                  if(dendrite)
+                   exc_channel=dendrite->GetComponentL<NPulseChannelCommon>("ExcChannel",true);
+                  if(exc_channel && !exc_channel->IsInit())
+                   exc_channel->Init();
+                  if(!synapse->IsInit())
+                   synapse->Init();
+                  if(!dendrite || !dendrite->IsInit() || !exc_channel ||
+                     !exc_channel->IsInit() || !synapse->IsInit())
+                  {
+                   LogMessageEx(RDK_EX_ERROR,__FUNCTION__,
+                       std::string("Failed to initialize newly grown dendrite synapse: ")+synapse->GetLongName(this));
+                   return false;
+                  }
+                 }
                 }
 				// Удаляем связь между текущим генератором и старым синапсом
 				synapse=neuron->GetComponentL<NPulseSynapse>(MakeExcSynapsePath(i+1, DendriteLength[i]-1, 1),true);

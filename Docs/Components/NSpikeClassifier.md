@@ -12,6 +12,14 @@
 
 **Использование:** Классификация спайковых паттернов, распознавание паттернов импульсов
 
+### Как выбирается класс в реализации C++
+
+Явного выбора `argmax` и свойства с индексом класса-победителя в `NSpikeClassifier` нет. После завершения обучения `ACalculate()` соединяет `LTZone.Output` каждого нейрона с тормозными синапсами сом остальных нейронов. Предполагаемый единственный ответ должен возникнуть за счёт этой боковой ингибиции.
+
+В режиме `DataFromFile=true` `TreatDataFromFile()` ведёт отдельный флаг для каждого нейрона и устанавливает его, если `LTZone.Output > 1e-5` хотя бы на одном шаге окна образца. В конце окна записывается строка из всех флагов. Поэтому несколько единиц — это несколько нейронов, активировавшихся в окне; код не ранжирует их и не выбирает одного. Экспериментальный анализ должен считать такой ответ неоднозначным, а не применять к битам `argmax`.
+
+Бит отражает только факт активности нейрона за всё окно: один и несколько спайков одного нейрона кодируются одинаково. Поэтому корректный одиночный бит сам по себе не доказывает, что победитель выдал ровно один спайк. `NNeuronTrainer` также не проверяет число спайков при завершении структурного обучения; для оценки пачечной разрядки нужно анализировать фронты `LTZone.Output` отдельно (см. [аудит динамики классификаторов](../Analysis/StructuralClassifiersAudit.md)).
+
 ### UML-диаграмма классов
 
 ```mermaid
@@ -106,8 +114,8 @@ sequenceDiagram
             Classifier->>Generator: Обновление задержек (Delay + InputPattern[j])
             Classifier->>Neuron: ACalculate() для всех нейронов
             Generator-->>Neuron: Входные импульсы
-            Neuron-->>Classifier: Активность нейрона
-            Classifier->>Classifier: Определение класса (максимальная активность)
+            Neuron-->>Classifier: Выход LTZone нейрона
+            Classifier->>Classifier: Боковое торможение через InhSynapse
         end
     end
 ```
@@ -116,7 +124,7 @@ sequenceDiagram
 1. **Инициализация**: Установка параметров классификатора
 2. **Сборка структуры**: Создание нейронов, тренеров и генераторов для каждого класса
 3. **Обучение** (если `IsNeedToTrain = true`): Обучение нейронов на паттернах из `TrainingPatterns`
-4. **Классификация** (если `IsNeedToTrain = false`): Определение класса входного паттерна на основе активности нейронов
+4. **Классификация** (если `IsNeedToTrain = false`): конкуренция нейронов через боковые тормозные связи; при `DataFromFile=true` сохраняются флаги нейронов, активировавшихся в окне образца
 
 ### UML-диаграмма состояний
 
@@ -139,8 +147,9 @@ stateDiagram-v2
     Training --> Ready: Обучение завершено
     Classifying --> ProcessingInput: Обработка InputPattern
     ProcessingInput --> CalculatingNeurons: Расчет нейронов
-    CalculatingNeurons --> DeterminingClass: Определение класса
-    DeterminingClass --> Classifying: Следующий паттерн
+    CalculatingNeurons --> LateralInhibition: Тормозные связи между классами
+    LateralInhibition --> CollectResponses: Учёт LTZone.Output
+    CollectResponses --> Classifying: Следующий паттерн
     Ready --> Resetting: Reset()
     Resetting --> Ready: Состояния сброшены
 ```
@@ -161,7 +170,8 @@ stateDiagram-v2
 - **Classifying** — режим классификации паттернов
 - **ProcessingInput** — обработка входного паттерна
 - **CalculatingNeurons** — расчет активности нейронов
-- **DeterminingClass** — определение класса по активности
+- **LateralInhibition** — боковое торможение между классами после окончания обучения
+- **CollectResponses** — накопление откликов LTZone при обработке входа из файла
 - **Resetting** — выполняется сброс состояний
 
 ### UML-диаграмма активности
@@ -196,9 +206,9 @@ flowchart TD
     CalcNeuron --> GetActivity[Получение активности]
     GetActivity --> CheckMoreNeurons{Еще нейроны?}
     CheckMoreNeurons -->|Да| LoopNeurons
-    CheckMoreNeurons -->|Нет| FindMaxActivity[Поиск нейрона с максимальной активностью]
-    FindMaxActivity --> DetermineClass[Определение класса]
-    DetermineClass --> End
+    CheckMoreNeurons -->|Нет| LateralInhibition[Конкуренция через тормозные связи]
+    LateralInhibition --> CollectResponses[Учет выходов LTZone]
+    CollectResponses --> End
 ```
 
 **Алгоритм работы:**
@@ -208,8 +218,9 @@ flowchart TD
    
 2. **Режим классификации** (`IsNeedToTrain = false`):
    - Обновляются задержки генераторов на основе `InputPattern`
-   - Рассчитывается активность всех нейронов
-   - Определяется класс по нейрону с максимальной активностью
+   - После окончания обучения выход LTZone каждого нейрона связан с тормозными синапсами сом остальных нейронов; предполагаемый победитель должен подавить конкурентов
+   - В C++ нет явного `argmax` или отдельного свойства «победивший класс»
+   - При `DataFromFile=true` `TreatDataFromFile()` записывает по биту на нейрон, если его `LTZone.Output > 1e-5` хотя бы в один момент окна образца. Это набор всех ответивших нейронов, а не ранжирование активности; несколько единиц — неоднозначный ответ, его нельзя разрешать внешним `argmax`
 
 ### UML-диаграмма компонентов
 
@@ -417,7 +428,8 @@ classifier->InputPattern = inputPattern;
 // Выполнение классификации
 for (int step = 0; step < 1000; step++) {
     classifier->Calculate();
-    // Определение класса по активности нейронов
+    // Конкуренция реализована боковыми тормозными связями.
+    // NSpikeClassifier не предоставляет argmax / winner-class property.
 }
 ```
 
@@ -495,6 +507,14 @@ for (int step = 0; step < 1000; step++) {
 
 `NSpikeClassifier` implements classifier that determines input pattern class based on spike activity of trained neurons. Inherits from `UNet` and creates group of neurons, each trained to recognize one pattern class.
 
+### How the C++ implementation selects a class
+
+There is no explicit `argmax` or winner-class property in `NSpikeClassifier`. Once all trainers finish, `ACalculate()` links each neuron's `LTZone.Output` to inhibitory synapses on the somas of the other neurons. The intended single response is expected to emerge from this lateral inhibition.
+
+With `DataFromFile=true`, `TreatDataFromFile()` maintains one flag per neuron and sets it when `LTZone.Output > 1e-5` at any step in the sample window. It writes all flags at the end of that window. Multiple ones therefore mean multiple neurons were active during the window; C++ does not rank them or select one. Experiment analysis must report such a row as ambiguous instead of applying `argmax` to the flags.
+
+The bit records only whether a neuron was active at any point in the whole window: one spike and a burst from the same neuron are encoded identically. A single active bit therefore does not prove that the winner emitted exactly one spike. `NNeuronTrainer` also does not check spike count when structural training finishes; burst firing must be measured by counting `LTZone.Output` rising edges separately (see the [classifier dynamics audit](../Analysis/StructuralClassifiersAudit.md)).
+
 **Usage:** Spike pattern classification, pattern recognition
 
 ### UML Class Diagram
@@ -540,8 +560,8 @@ sequenceDiagram
         Storage->>Classifier: SetInputPattern()
         Storage->>Classifier: Calculate()
         Classifier->>Neuron: ACalculate()
-        Neuron-->>Classifier: Activity
-        Classifier->>Classifier: Determine class
+        Neuron-->>Classifier: LTZone outputs
+        Classifier->>Classifier: Lateral inhibition; collect response flags
     end
 ```
 
@@ -560,8 +580,9 @@ stateDiagram-v2
     Training --> UpdatingWeights: Update weights
     UpdatingWeights --> Training
     Classifying --> ProcessingInput: Process InputPattern
-    ProcessingInput --> DeterminingClass: Determine class
-    DeterminingClass --> Classifying
+    ProcessingInput --> LateralInhibition: Inhibitory links between class neurons
+    LateralInhibition --> CollectResponses: Accumulate LTZone outputs
+    CollectResponses --> Classifying
 ```
 
 ### UML Activity Diagram
@@ -583,9 +604,9 @@ flowchart TD
     CalcNeuron --> GetActivity[Get activity]
     GetActivity --> CheckMoreNeurons{More neurons?}
     CheckMoreNeurons -->|Yes| LoopNeurons
-    CheckMoreNeurons -->|No| FindMax[Find max activity]
-    FindMax --> DetermineClass[Determine class]
-    DetermineClass --> End
+    CheckMoreNeurons -->|No| LateralInhibition[Compete through inhibitory links]
+    LateralInhibition --> CollectResponses[Accumulate LTZone responses]
+    CollectResponses --> End
 ```
 
 ### UML Component Diagram

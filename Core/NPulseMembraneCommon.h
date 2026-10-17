@@ -33,7 +33,7 @@ public: //
 UProperty<double,NPulseMembraneCommon,ptPubState> Feedback;
 
 /// Суммарное значение потенциала на участке мембраны
-UProperty<MDMatrix<double>, NPulseMembraneCommon, ptPubState> SumPotential;
+UProperty<MDMatrix<double>, NPulseMembraneCommon, ptOutput | ptPubState> SumPotential;
 
 
 protected: //  
