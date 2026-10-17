@@ -45,6 +45,11 @@ NPulseSynapseCommon::NPulseSynapseCommon(void)
 NPulseSynapseCommon::~NPulseSynapseCommon(void)
 {
 }
+
+double NPulseSynapseCommon::GetPreOutputForAudit(void) const
+{
+ return PreOutput.GetData();
+}
 // --------------------------
 
 
@@ -149,7 +154,10 @@ bool NPulseSynapseCommon::AAfterBuild(void)
     {
      Trainer=AddMissingComponent<NSynapseTrainer>("Trainer", TrainerClassName);
      if(Trainer)
+     {
+      Trainer->SetCoord(MVector<double,3>(0.0, -3.0, 0.0));
       Trainer->RebuildInternalLinks();
+     }
     }
     else
     {

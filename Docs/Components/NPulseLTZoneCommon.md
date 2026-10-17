@@ -531,7 +531,7 @@ graph TB
 - **Base class**: Used as base for all spiking LT-zone types
 - **Spike generation**: Generates spikes when threshold is reached
 - **Frequency tracking**: Tracks spike frequency and pulse times
-- **Plasticity support**: Supports long-term plasticity mechanisms
+- **Output support**: Base functionality for low-threshold output zones
 
 **Features:**
 - Threshold detection: detects when potential reaches threshold

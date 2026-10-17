@@ -1,5 +1,7 @@
 # Nmsdk-PulseLib — Component Catalog
 
+[Temporal / AsymRm registration variants](Components/TemporalNeuronVariants.md)
+
 ## RU
 
 Полный список регистраций (`Core/NPulseLibrary.cpp`) очень велик. Ниже — группировка с кратким назначением и типами сигналов. Для полного набора см. исходник `NPulseLibrary.cpp`.
@@ -55,6 +57,15 @@
   - [`NPDelay`](Components/NPDelay.md)
   - [`NSource`](Components/NSource.md)
   - [`NReceptor`](Components/NReceptor.md) — *Используется в:* `Bin/Configs/!OldConfigs/NReceptor/`
+
+## Аксоны
+*Статус:* в сборке PulseLib, `UploadClass` в `NPulseLibrary`. См. [Architecture.md](Architecture.md) §8a. Smoke: `Bin/Configs/SpikeSamples/NeuralElements/Axone*`.
+- [`NAxoneCommon`](Components/NAxoneCommon.md) — база Input/Output 1×1
+- [`NAxoneDelay`](Components/NAxoneDelay.md) — задержка (default 1 мс)
+- [`NAperiodicLink`](Components/NAperiodicLink.md) — апериодическое звено
+- [`NAxoneSegment`](Components/NAxoneSegment.md) — сегмент LTZone ± инерция
+- [`NAxoneChain`](Components/NAxoneChain.md) — цепочка сегментов
+- [`NAxoneChainAndDelay`](Components/NAxoneChainAndDelay.md) — Segment↔Delay (миелин-подобная схема)
 
 ## Классификаторы / Рефлексы / Предсказатели / Эффекторы / Логика / Решатель
 - Классификаторы:
@@ -116,6 +127,8 @@
 - **NNeuronFreqGroup** — [`NNeuronFreqGroup`](Components/NNeuronFreqGroup.md)
 - **NNeuronFreqGroupLayer** — [`NNeuronFreqGroupLayer`](Components/NNeuronFreqGroupLayer.md)
 - **NNeuronLearner** — [`NNeuronLearner`](Components/NNeuronLearner.md)
+- **NNeuronTimeLearner** — [`NNeuronTimeLearner`](Components/NNeuronTimeLearner.md)
+- **NNeuronTimeLearnerBranch** — [`NNeuronTimeLearnerBranch`](Components/NNeuronTimeLearnerBranch.md)
 - **NNeuronLife** — [`NNeuronLife`](Components/NNeuronLife.md)
 - **NNeuronTrainer** — [`NNeuronTrainer`](Components/NNeuronTrainer.md)
 - **NNeuronsLayer** — [`NNeuronsLayer`](Components/NNeuronsLayer.md)
@@ -183,6 +196,7 @@
 - **NPac** — [`NPac`](Components/NPac.md)
 - **NPainReflexSimple** — [`NPainReflexSimple`](Components/NPainReflexSimple.md)
 - **NPattern** — [`NPattern`](Components/NPattern.md)
+- **NPatternResponseAnalyzer** — [`NPatternResponseAnalyzer`](Components/NPatternResponseAnalyzer.md)
 - **NPredictor** — [`NPredictor`](Components/NPredictor.md)
 - **NPulseChannelCable** — [`NPulseChannelCable`](Components/NPulseChannelCable.md)
 - **NPulseChannelCableMulti** — [`NPulseChannelCableMulti`](Components/NPulseChannelCableMulti.md)
@@ -328,6 +342,15 @@ The full list of registrations (`Core/NPulseLibrary.cpp`) is very large. Below i
   - [`NSource`](Components/NSource.md)
   - [`NReceptor`](Components/NReceptor.md) — *Used in:* `Bin/Configs/!OldConfigs/NReceptor/`
 
+## Axons
+*Status:* built into PulseLib, `UploadClass` in `NPulseLibrary`. See [Architecture.md](Architecture.md) §8a. Smoke: `Bin/Configs/SpikeSamples/NeuralElements/Axone*`.
+- [`NAxoneCommon`](Components/NAxoneCommon.md) — base Input/Output 1×1
+- [`NAxoneDelay`](Components/NAxoneDelay.md) — delay (default 1 ms)
+- [`NAperiodicLink`](Components/NAperiodicLink.md) — aperiodic link
+- [`NAxoneSegment`](Components/NAxoneSegment.md) — LTZone segment ± inertia
+- [`NAxoneChain`](Components/NAxoneChain.md) — segment chain
+- [`NAxoneChainAndDelay`](Components/NAxoneChainAndDelay.md) — Segment↔Delay (myelin-like)
+
 ## Classifiers / Reflexes / Predictors / Effectors / Logic / Solver
 
 - Classifiers:
@@ -390,6 +413,8 @@ Below is the full list of registration names from `Core/NPulseLibrary.cpp` with 
 - **NNeuronFreqGroup** — [`NNeuronFreqGroup`](Components/NNeuronFreqGroup.md)
 - **NNeuronFreqGroupLayer** — [`NNeuronFreqGroupLayer`](Components/NNeuronFreqGroupLayer.md)
 - **NNeuronLearner** — [`NNeuronLearner`](Components/NNeuronLearner.md)
+- **NNeuronTimeLearner** — [`NNeuronTimeLearner`](Components/NNeuronTimeLearner.md)
+- **NNeuronTimeLearnerBranch** — [`NNeuronTimeLearnerBranch`](Components/NNeuronTimeLearnerBranch.md)
 - **NNeuronLife** — [`NNeuronLife`](Components/NNeuronLife.md)
 - **NNeuronTrainer** — [`NNeuronTrainer`](Components/NNeuronTrainer.md)
 - **NNeuronsLayer** — [`NNeuronsLayer`](Components/NNeuronsLayer.md)
@@ -457,6 +482,7 @@ Below is the full list of registration names from `Core/NPulseLibrary.cpp` with 
 - **NPac** — [`NPac`](Components/NPac.md)
 - **NPainReflexSimple** — [`NPainReflexSimple`](Components/NPainReflexSimple.md)
 - **NPattern** — [`NPattern`](Components/NPattern.md)
+- **NPatternResponseAnalyzer** — [`NPatternResponseAnalyzer`](Components/NPatternResponseAnalyzer.md)
 - **NPredictor** — [`NPredictor`](Components/NPredictor.md)
 - **NPulseChannelCable** — [`NPulseChannelCable`](Components/NPulseChannelCable.md)
 - **NPulseChannelCableMulti** — [`NPulseChannelCableMulti`](Components/NPulseChannelCableMulti.md)

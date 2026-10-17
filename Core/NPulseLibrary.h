@@ -28,6 +28,12 @@ See file license.txt for more information
 #include "NPulseGeneratorDelay.h"
 #include "NPulseGeneratorMulti.h"
 #include "NPulseDelay.h"
+#include "NAxoneCommon.h"
+#include "NAxoneDelay.h"
+#include "NAperiodicLink.h"
+#include "NAxoneSegment.h"
+#include "NAxoneChain.h"
+#include "NAxoneChainAndDelay.h"
 
 
 #include "NMExtrapolator.h"
@@ -64,6 +70,9 @@ See file license.txt for more information
 #include "NNeuronFreqGroup.h"
 #include "NNeuronFreqGroupLayer.h"
 #include "NNeuronLearner.h"
+#include "NNeuronTimeLearner.h"
+#include "NNeuronTimeLearnerBranch.h"
+#include "NPatternResponseAnalyzer.h"
 #include "NNeuronsLayer.h"
 #include "NPulsePerseptron.h"
 #include "NNeuronTrainer.h"

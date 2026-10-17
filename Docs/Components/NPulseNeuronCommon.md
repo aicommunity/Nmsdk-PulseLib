@@ -470,7 +470,7 @@ graph TB
 - Multiple membranes: supports multiple soma and dendrite membranes
 - Activity tracking: tracks active inputs and outputs
 - Potential aggregation: aggregates dendritic and soma potentials
-- LT-zone support: integrates with LT-zones for long-term plasticity
+- LT-zone support: integrates with LT-zones for neuron output generation
 
 **Typical parameter values:**
 - **UseAverageDendritesPotential**: true (use averaging for dendrites)

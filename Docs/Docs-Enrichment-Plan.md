@@ -34,7 +34,7 @@
 | [`Components/NPulseMembraneCable.md`](Components/NPulseMembraneCable.md) | TODO |
 | [`Components/NPulseChannelCable.md`](Components/NPulseChannelCable.md) | TODO |
 | [`Components/NPulseLTZoneCable.md`](Components/NPulseLTZoneCable.md) | TODO |
-| [`Components/NPulseNeuronPosCGeneratorCable.md`](Components/NPulseNeuronPosCGeneratorCable.md) | TODO |
+| [`Components/NPulseNeuronPosCGeneratorCable.md`](Components/NPNeuronPosCGeneratorCable.md) | TODO |
 | [`Components/NSynapseCableMulti.md`](Components/NSynapseCableMulti.md) | TODO |
 | [`Components/NSynapseCable.md`](Components/NSynapseCable.md) | TODO (связь с CSNM) |
 
@@ -104,7 +104,7 @@ Add to descriptions of components related to cable models:
 | [`Components/NPulseMembraneCable.md`](Components/NPulseMembraneCable.md) | TODO |
 | [`Components/NPulseChannelCable.md`](Components/NPulseChannelCable.md) | TODO |
 | [`Components/NPulseLTZoneCable.md`](Components/NPulseLTZoneCable.md) | TODO |
-| [`Components/NPulseNeuronPosCGeneratorCable.md`](Components/NPulseNeuronPosCGeneratorCable.md) | TODO |
+| [`Components/NPulseNeuronPosCGeneratorCable.md`](Components/NPNeuronPosCGeneratorCable.md) | TODO |
 | [`Components/NSynapseCableMulti.md`](Components/NSynapseCableMulti.md) | TODO |
 | [`Components/NSynapseCable.md`](Components/NSynapseCable.md) | TODO (CSNM link) |
 

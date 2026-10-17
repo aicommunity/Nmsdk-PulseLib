@@ -41,6 +41,15 @@ UProperty<double, NDatasetBase, ptPubParameter> Delay;
 /// After burst+Delay: if true, Iteration = (Iteration+1) % NumSamples
 UProperty<bool, NDatasetBase, ptPubParameter> AdvanceSampleAfterBurst;
 
+/// If true, wrap Iteration to 0 after last sample; if false, stop after last sample
+UProperty<bool, NDatasetBase, ptPubParameter> LoopSamples;
+
+/// Class label of the active sample (from MatrixClasses at Iteration)
+UProperty<int, NDatasetBase, ptOutput | ptPubState> CurrentClass;
+
+/// Same as CurrentClass as 1×1 matrix for links to analyzers
+UProperty<MDMatrix<double>, NDatasetBase, ptOutput | ptPubState> CurrentClassMatrix;
+
 /// Generation mode: 0 = off, 1 = timed, 2 = continuous (burst -> Delay -> burst)
 UProperty<int, NDatasetBase, ptPubState> StateGeneration;
 
@@ -132,6 +141,20 @@ double SampleBurstEndRel;
 
 /// Last Iteration value used for playback schedule
 int LastPlayedIteration;
+
+public:
+/// Sample id currently (or last) playing; prefers LastPlayedIteration when set
+int GetCurrentSampleId() const;
+int GetNextSpikeIndex(int feature_index) const;
+double GetOneShotEndTime(int feature_index) const;
+double GetSampleStartTime() const { return SampleStartTime; }
+double GetSampleBurstEndRel() const { return SampleBurstEndRel; }
+/// Count MatrixData slots with ISI >= 0 for sample/feature (skips -1)
+int CountScheduledSpikes(int sample, int feature = 0) const;
+/// Cumulative abs time of last scheduled spike relative to sample start
+double GetExpectedLastSpikeAbsRel(int sample, int feature = 0) const;
+/// Class label from MatrixClasses (not live CurrentClass)
+int GetSampleClass(int sample) const;
 };
 
 }

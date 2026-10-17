@@ -61,7 +61,10 @@ bool NPulseSynapse::SetSecretionTC(const double &value)
  if(value <= 0)
   return false;
 
- Ready=false;
+ // Do not clear Ready: mid-structure ApplyElementDefaults (and live tweaks)
+ // must keep synapses calculable. Refresh discrete TC when TimeStep is set.
+ if(TimeStep != 0)
+  VSecretionTC = value * TimeStep;
 
  return true;
 }
@@ -72,7 +75,10 @@ bool NPulseSynapse::SetDissociationTC(const double &value)
  if(value <= 0)
   return false;
 
- Ready=false;
+ // Do not clear Ready: mid-structure ApplyElementDefaults (and live tweaks)
+ // must keep synapses calculable. Refresh discrete TC when TimeStep is set.
+ if(TimeStep != 0)
+  VDissociationTC = value * TimeStep;
 
  return true;
 }
@@ -94,8 +100,9 @@ bool NPulseSynapse::SetInhibitionCoeff(const double &value)
  const double resistance = Resistance.GetData();
  if(resistance > 0)
  {
-  if(value>0)
-   OutputConstData=4.0*(value+1)/resistance;
+  // Peak-normalize like SetResistance: C=4k/R so max of (1-k*p)*p equals 1/R.
+  if(value > 0 && UsePresynapticInhibition)
+   OutputConstData=4.0*value/resistance;
   else
    OutputConstData=1.0/resistance;
  }
@@ -197,6 +204,16 @@ bool NPulseSynapse::ABuild(void)
  VSecretionTC=SecretionTC*TimeStep;
  VDissociationTC=DissociationTC*TimeStep;
 
+ const double k = InhibitionCoeff.GetData();
+ const double r = Resistance.GetData();
+ if(r > 0.0)
+ {
+  if(k > 0.0 && UsePresynapticInhibition)
+   OutputConstData=4.0*k/r;
+  else
+   OutputConstData=1.0/r;
+ }
+
  return true;
 }
 
@@ -256,7 +273,13 @@ bool NPulseSynapse::ACalculate2(void)
  double preOutputNewVal = PreOutput.GetData();
  double inhibitionCoeffVal = InhibitionCoeff.GetData();
  if(UsePresynapticInhibition)
-  Output(0,0)=OutputConstData*(1.0-inhibitionCoeffVal*preOutputNewVal)*preOutputNewVal;
+ {
+  const double r = Resistance.GetData();
+  if(r > 0.0 && inhibitionCoeffVal > 0.0)
+   OutputConstData=4.0*inhibitionCoeffVal/r;
+  Output(0,0)=PresynapticInhibitionConductance(
+   OutputConstData, inhibitionCoeffVal, preOutputNewVal, input>0);
+ }
  else
   Output(0,0)=OutputConstData*preOutputNewVal;
 

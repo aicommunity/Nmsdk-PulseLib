@@ -191,6 +191,8 @@ bool NNeuronLife::CheckComponentType(UEPtr<UContainer> comp) const
 bool NNeuronLife::ABuild(void)
 {
  AddMissingComponent<NSum>("ExternalEnergyBonus","NSum",&ExternalEnergyBonus);
+ if(ExternalEnergyBonus)
+  ExternalEnergyBonus->SetCoord(MVector<double,3>(2.0, 4.0, 0.0));
  return true;
 }
  // Восстановление настроек по умолчанию и сброс процесса счета

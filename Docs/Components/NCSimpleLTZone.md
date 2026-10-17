@@ -11,7 +11,7 @@
 
 `NCSimpleLTZone` является расширением класса `NContinuesLTZone` для классических (непрерывных) нейронов. Наследуется от `NContinuesLTZone` и добавляет методы для управления временной константой и амплитудой импульсов.
 
-**Использование:** Простая LT-зона для классических нейронов, долговременная пластичность
+**Использование:** Простая LT-зона для классических нейронов, формирование выхода нейрона
 
 ### UML-диаграмма классов
 
@@ -99,7 +99,7 @@ ltZone->Build();
 
 `NCSimpleLTZone` is an extension of `NContinuesLTZone` class for classic (continuous) neurons. Inherits from `NContinuesLTZone` and adds methods for managing time constant and pulse amplitude.
 
-**Usage:** Simple LT-zone for classic neurons, long-term plasticity
+**Usage:** Simple LT-zone for classic neurons, neuron output generation
 
 ### UML Class Diagram
 
@@ -236,7 +236,7 @@ graph TB
 `NCSimpleLTZone` is used in experiments with classic neurons:
 
 - **Classic neurons**: Simple LT-zone for classic (continuous) neurons
-- **Long-term plasticity**: Implements long-term plasticity mechanisms
+- **Output activation**: Produces the continuous neuron output
 
 **Features:**
 - Simple model: Uses `tanh()` function for potential calculation

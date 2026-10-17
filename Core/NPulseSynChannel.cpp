@@ -20,6 +20,7 @@ See file license.txt for more information
 #include "NPulseMembrane.h"
 #include "NPulseNeuron.h"
 #include "NPulseLifeNeuron.h"
+#include "NPulseSynapse.h"
 #include "NReceptor.h"
 
 
@@ -106,8 +107,9 @@ bool NPulseSynChannel::SetInhibitionCoeff(const double &value)
  double synapseResistanceVal = SynapseResistance.GetData();
  if(synapseResistanceVal > 0)
  {
+  // Channel always uses quadratic output; C=4k/R peak-normalizes to 1/R.
   if(value>0)
-   OutputConstData=4.0*(value+1)/synapseResistanceVal;
+   OutputConstData=4.0*value/synapseResistanceVal;
   else
    OutputConstData=1.0/synapseResistanceVal;
  }
@@ -125,7 +127,7 @@ bool NPulseSynChannel::SetSynapseResistance(const double &value)
 
  double inhibitionCoeffVal = InhibitionCoeff.GetData();
  if(inhibitionCoeffVal>0)
-  OutputConstData=4.0*(inhibitionCoeffVal+1)/value;
+  OutputConstData=4.0*inhibitionCoeffVal/value;
  else
   OutputConstData=1.0/value;
 
@@ -323,7 +325,9 @@ bool NPulseSynChannel::ACalculate2(void)
    else
     preOutputVec[num_connected_synapsis-1]-=preOutputVec[num_connected_synapsis-1]/VDissociationTC;
 
-   syn_output=OutputConstData*(1.0-inhibitionCoeffVal*preOutputVec[num_connected_synapsis-1])*preOutputVec[num_connected_synapsis-1];
+   syn_output=PresynapticInhibitionConductance(
+    OutputConstData, inhibitionCoeffVal,
+    preOutputVec[num_connected_synapsis-1], input>0);
 
    if(syn_output>0)
     G+=syn_output;
@@ -459,7 +463,12 @@ bool NContinuesSynChannel::SetInhibitionCoeff(const double &value)
 {
  const double synapseResistance = SynapseResistance.GetData();
  if(synapseResistance > 0)
-  OutputConstData=4.0*(value+1)/synapseResistance;
+ {
+  if(value > 0)
+   OutputConstData=4.0*value/synapseResistance;
+  else
+   OutputConstData=1.0/synapseResistance;
+ }
  else
   OutputConstData=0;
 

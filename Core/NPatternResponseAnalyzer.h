@@ -1,0 +1,139 @@
+#ifndef NPATTERNRESPONSEANALYZER_H
+#define NPATTERNRESPONSEANALYZER_H
+
+#include "../../../Rdk/Deploy/Include/rdk.h"
+
+#include <fstream>
+#include <string>
+#include <vector>
+
+namespace NMSDK {
+
+class NPulseLTZoneCommon;
+class NNeuronTimeLearner;
+class NDatasetBase;
+
+using namespace RDK;
+
+class RDK_LIB_TYPE NPatternResponseAnalyzer : public UNet
+{
+public:
+UProperty<std::vector<MDMatrix<double> >, NPatternResponseAnalyzer, ptInput | ptPubState> StimulusInputs;
+UProperty<std::vector<MDMatrix<double> >, NPatternResponseAnalyzer, ptInput | ptPubState> NeuronOutputs;
+UProperty<std::vector<MDMatrix<double> >, NPatternResponseAnalyzer, ptInput | ptPubState> TargetClassInput;
+UProperty<std::vector<MDMatrix<double> >, NPatternResponseAnalyzer, ptInput | ptPubState> SomaAmplitudeInput;
+
+UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> LearnerComponentName;
+UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> DatasetComponentName;
+UProperty<int, NPatternResponseAnalyzer, ptPubParameter> StimulusFeatureIndex;
+
+UProperty<double, NPatternResponseAnalyzer, ptPubParameter> PostPatternWindow;
+ /// Extra watch after PostPatternWindow for late LTZone spikes (until this delay
+ /// after last stim, or until the next trial starts). Must be >= PostPatternWindow.
+ UProperty<double, NPatternResponseAnalyzer, ptPubParameter> LateResponseWindow;
+UProperty<double, NPatternResponseAnalyzer, ptPubParameter> PulseDetectThreshold;
+UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> SavePath;
+UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> FileName;
+UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> AppendMode;
+UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> Enable;
+/// Optional per-sample soma trace for headless test reports. Does not affect learning.
+UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> TraceLogEnabled;
+UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> TraceLogFileName;
+
+/// 0 = LTZ rising-edge match (default); 1 = ISI template vs trial-0 training pattern
+UProperty<int, NPatternResponseAnalyzer, ptPubParameter> MatchMode;
+
+UProperty<int, NPatternResponseAnalyzer, ptPubState> TrialIndex;
+UProperty<int, NPatternResponseAnalyzer, ptOutput | ptPubState> LastFired;
+UProperty<int, NPatternResponseAnalyzer, ptOutput | ptPubState> LastMatch;
+UProperty<int, NPatternResponseAnalyzer, ptOutput | ptPubState> LastLateFired;
+UProperty<std::string, NPatternResponseAnalyzer, ptOutput | ptPubState> LastErrorClass;
+UProperty<double, NPatternResponseAnalyzer, ptOutput | ptPubState> LastNeuronDelay;
+UProperty<double, NPatternResponseAnalyzer, ptOutput | ptPubState> LastLateNeuronDelay;
+UProperty<MDMatrix<double>, NPatternResponseAnalyzer, ptOutput | ptPubState> LastIsi;
+UProperty<int, NPatternResponseAnalyzer, ptOutput | ptPubState> LastSpikeCount;
+UProperty<std::string, NPatternResponseAnalyzer, ptOutput | ptPubState> LastResponseClass;
+
+NPatternResponseAnalyzer(void);
+virtual ~NPatternResponseAnalyzer(void);
+
+virtual NPatternResponseAnalyzer* New(void);
+static UComponent* NewStatic(void);
+
+protected:
+virtual bool ADefault(void);
+virtual bool ABuild(void);
+virtual bool AReset(void);
+virtual bool ACalculate(void);
+
+bool EnsureCsvReady(void);
+bool EnsureTraceReady(void);
+void WriteTraceSample(double now);
+bool IsIsiTemplateMatch(void) const;
+void CloseTrial(double now);
+void BeginTrial(double now);
+void ResetTrialState(void);
+void ResolveDatasetSourceIfNeeded(void);
+void AppendStim(double now);
+void AttributeNeuronToActiveTrial(double now);
+void MaybeClassifyFire(double now, double post_win);
+bool IsPatternComplete() const;
+static const char *ClassifyError(int target, int fired, int late_fired);
+static const char *ClassifyErrorEx(int target, int fired, int late_fired,
+                                   bool incomplete, bool censored);
+static std::string ClassifyResponseMorphology(
+    const std::vector<double> &spike_rel_times,
+    const std::vector<double> &stim_times);
+void RecordNeuronSpike(double now);
+bool DetectRisingEdge(const std::vector<MDMatrix<double> > &inputs,
+                      std::vector<double> &prev_values) const;
+double ReadScalar(const MDMatrix<double> &m) const;
+double ReadTargetClass(void) const;
+void UpdateTrialMetrics(double now);
+void ReadSomaAmplitudes(double soma_out[4], double &soma_sum) const;
+double ReadLtzPotential(void) const;
+double EffectiveLateWindow(void) const;
+
+bool trial_active_;
+bool trial_window_closed_;
+bool playback_stopped_;
+bool csv_header_written_;
+bool trace_header_written_;
+size_t trace_rows_since_flush_;
+int trial_target_class_;
+int trial_sample_id_;
+int trial_expected_stims_;
+int trial_neuron_fired_;
+int trial_late_fired_;
+double trial_t_first_stim_;
+double trial_t_last_stim_;
+double trial_t_neuron_;
+double trial_t_late_neuron_;
+double trial_ltz_potential_max_;
+double trial_soma_amp_max_[4];
+double trial_soma_amp_sum_max_;
+double trial_sample_start_abs_;
+double trial_expected_last_stim_abs_;
+double trial_observe_until_;
+bool trial_pattern_complete_;
+bool trial_neu_edge_consumed_;
+bool trial_censored_;
+bool trial_incomplete_;
+double pending_neu_time_;
+bool pending_neu_valid_;
+NPulseLTZoneCommon *ltz_source_;
+NDatasetBase *dataset_source_;
+std::vector<double> trial_stim_times_;
+std::vector<double> trial_neuron_spike_times_;
+std::vector<double> prev_stimulus_;
+std::vector<double> prev_neuron_;
+std::string csv_full_path_;
+std::string trace_full_path_;
+std::ofstream trace_stream_;
+static constexpr size_t kMaxSpikeTimesCsv = 16;
+static constexpr double kBurstIsiMax = 0.005;
+static constexpr double kPerStimWindowFloor = 0.003;
+};
+
+}
+#endif

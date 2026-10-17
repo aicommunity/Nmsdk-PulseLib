@@ -107,7 +107,7 @@
 
 ### Шаблон 3: Биоинспирированный нейрон с LT-зоной
 
-**Назначение:** Моделирование нейрона с биоинспирированной структурой (сома, дендриты, LT-зона) для долгосрочной пластичности.
+**Назначение:** Моделирование нейрона с биоинспирированной структурой (сома, дендриты, LT-зона) для формирования выходного сигнала.
 
 **Структура:**
 - Нейрон с настраиваемой структурой (`NSPNeuronGen`)
@@ -409,7 +409,7 @@ This document describes templates (patterns) for typical spiking neural network 
 
 ### Template 3: Bio-Inspired Neuron with LT-Zone
 
-**Purpose:** Modeling a neuron with bio-inspired structure (soma, dendrites, LT-zone) for long-term plasticity.
+**Purpose:** Modeling a neuron with bio-inspired structure (soma, dendrites, LT-zone) for neuron output generation.
 
 **Structure:**
 - Neuron with configurable structure (`NSPNeuronGen`)

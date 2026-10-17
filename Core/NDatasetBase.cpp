@@ -18,6 +18,9 @@ NDatasetBase::NDatasetBase(void)
   Iteration("Iteration", this),
   Delay("Delay", this, &NDatasetBase::SetDelay),
   AdvanceSampleAfterBurst("AdvanceSampleAfterBurst", this),
+  LoopSamples("LoopSamples", this),
+  CurrentClass("CurrentClass", this),
+  CurrentClassMatrix("CurrentClassMatrix", this),
   StateGeneration("StateGeneration", this),
   TimeGeneration("TimeGeneration", this),
   OperatingTime("OperatingTime", this),
@@ -123,6 +126,9 @@ bool NDatasetBase::ADefault(void)
     StateGeneration = 2;
     Delay = 0;
     AdvanceSampleAfterBurst = false;
+    LoopSamples = true;
+    CurrentClass = 0;
+    CurrentClassMatrix.Resize(1, 1, 0.0);
     OperatingTime = 0;
     ResetDelay = true;
     TimeGeneration = 5;
@@ -229,6 +235,15 @@ void NDatasetBase::BeginSpikeTrainSample(double now)
 
     SampleStartTime = now;
     LastPlayedIteration = Iteration;
+
+    int cls = 0;
+    if(MatrixClasses.GetRows() >= 1 && MatrixClasses.GetCols() > int(Iteration)
+       && int(Iteration) >= 0)
+        cls = MatrixClasses(0, int(Iteration));
+    CurrentClass.SetDataDirect(cls);
+    CurrentClassMatrix.Resize(1, 1, 0.0);
+    CurrentClassMatrix(0, 0) = double(cls);
+
     RebuildSpikeAbsTimesForIteration();
     SilenceGenerators();
 }
@@ -289,8 +304,19 @@ void NDatasetBase::UpdateSpikeTrainPlayback(double now)
     {
         if(AdvanceSampleAfterBurst && NumSamples > 0)
         {
-            const int next = (int(Iteration) + 1) % int(NumSamples);
-            Iteration.SetDataDirect(next);
+            const int next = int(Iteration) + 1;
+            if(next >= int(NumSamples))
+            {
+                if(!LoopSamples)
+                {
+                    StateGeneration = 0;
+                    SilenceGenerators();
+                    return;
+                }
+                Iteration.SetDataDirect(0);
+            }
+            else
+                Iteration.SetDataDirect(next);
         }
         BeginSpikeTrainSample(now);
     }
@@ -369,6 +395,17 @@ bool NDatasetBase::ABuild(void)
         LogMessageEx(RDK_EX_ERROR, __FUNCTION__, msg);
         RDK_THROW(EStringError(msg));
     }
+
+    // Empty matrices = idle (e.g. file source not present yet); valid built state.
+    if(MatrixData.GetRows() <= 0 || MatrixData.GetCols() <= 0)
+    {
+        NumSamples = 0;
+        NumFeatures = 0;
+        NumClasses = 0;
+        LastPlayedIteration = -1;
+        return SyncGenerators();
+    }
+
     if(!ApplyFromMatrices())
     {
         const std::string msg = std::string("NDatasetBase::ABuild failed: ApplyFromMatrices rejected data on ")
@@ -418,6 +455,84 @@ bool NDatasetBase::ACalculate(void)
         return true;
     }
     return false;
+}
+
+int NDatasetBase::GetCurrentSampleId() const
+{
+    if(LastPlayedIteration >= 0)
+        return LastPlayedIteration;
+    return int(Iteration);
+}
+
+int NDatasetBase::GetNextSpikeIndex(int feature_index) const
+{
+    if(feature_index < 0 || feature_index >= int(NextSpikeIndex.size()))
+        return -1;
+    return NextSpikeIndex[static_cast<size_t>(feature_index)];
+}
+
+double NDatasetBase::GetOneShotEndTime(int feature_index) const
+{
+    if(feature_index < 0 || feature_index >= int(OneShotEndTime.size()))
+        return 0.0;
+    return OneShotEndTime[static_cast<size_t>(feature_index)];
+}
+
+int NDatasetBase::CountScheduledSpikes(int sample, int feature) const
+{
+    const int max_spikes = int(MaxSpikesPerFeature);
+    const int features = int(NumFeatures);
+    if(sample < 0 || sample >= int(NumSamples) || feature < 0 || feature >= features)
+        return 0;
+    if(max_spikes < 1)
+        return 0;
+    if(MatrixData.GetCols() <= feature)
+        return 0;
+    const int base = SampleSlotRow(sample, 0);
+    if(MatrixData.GetRows() < base + max_spikes)
+        return 0;
+    int count = 0;
+    for(int s = 0; s < max_spikes; ++s)
+    {
+        if(MatrixData(base + s, feature) >= 0.0)
+            ++count;
+    }
+    return count;
+}
+
+double NDatasetBase::GetExpectedLastSpikeAbsRel(int sample, int feature) const
+{
+    const int max_spikes = int(MaxSpikesPerFeature);
+    const int features = int(NumFeatures);
+    if(sample < 0 || sample >= int(NumSamples) || feature < 0 || feature >= features)
+        return 0.0;
+    if(max_spikes < 1)
+        return 0.0;
+    if(MatrixData.GetCols() <= feature)
+        return 0.0;
+    const int base = SampleSlotRow(sample, 0);
+    if(MatrixData.GetRows() < base + max_spikes)
+        return 0.0;
+    double t = 0.0;
+    double last = 0.0;
+    bool any = false;
+    for(int s = 0; s < max_spikes; ++s)
+    {
+        const double d = MatrixData(base + s, feature);
+        if(d < 0.0)
+            continue;
+        t += d;
+        last = t;
+        any = true;
+    }
+    return any ? last : 0.0;
+}
+
+int NDatasetBase::GetSampleClass(int sample) const
+{
+    if(sample < 0 || MatrixClasses.GetRows() < 1 || MatrixClasses.GetCols() <= sample)
+        return 0;
+    return MatrixClasses(0, sample);
 }
 
 }

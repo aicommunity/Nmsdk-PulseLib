@@ -16,6 +16,7 @@
 - `NClassifier`, `NSpikeClassifier`, `NPCAClassifier` — классификация по активности.
 - `NConditionedReflex`, `NPainReflexSimple`, `NAssociationFormer` — условные/болевые рефлексы и ассоциации.
 - `NPredictor`, `NStatePredictor` — предсказание состояния.
+- `NPatternResponseAnalyzer` — сопоставление стимула и ответа нейрона, CSV-лог избирательности (см. [`NPatternResponseAnalyzer.md`](NPatternResponseAnalyzer.md)).
 
 ### Эффекторы и логика
 

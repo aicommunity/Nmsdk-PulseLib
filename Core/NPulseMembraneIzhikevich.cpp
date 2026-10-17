@@ -23,6 +23,28 @@ See file license.txt for more information
 
 namespace NMSDK {
 
+namespace {
+// Keep in sync with NPulseMembrane::ABuild diagram layout.
+constexpr double kMemSynX0     = 0.3;
+constexpr double kMemBlockW    = 7.0;
+constexpr double kMemChannelX  = kMemSynX0 + kMemBlockW + 1.5 * kMemBlockW; // 17.8
+constexpr double kMemExcRowY0  = 1.6;
+constexpr double kMemInhRowY0  = 5.25;
+constexpr double kMemSynPitchY = 3.5;
+
+inline MVector<double,3> izhChannelCoord(double rowY0, int numSynapses)
+{
+ const int n = numSynapses > 0 ? numSynapses : 1;
+ return MVector<double,3>(kMemChannelX, rowY0 + (n - 1) * kMemSynPitchY * 0.5, 0.0);
+}
+
+inline double izhInhRowY0(int numExcSynapses)
+{
+ const int nExc = numExcSynapses > 0 ? numExcSynapses : 0;
+ return std::max(kMemInhRowY0, kMemExcRowY0 + nExc * kMemSynPitchY);
+}
+} // namespace
+
 // Методы
 // --------------------------
 // Конструкторы и деструкторы
@@ -80,7 +102,20 @@ bool NPulseMembraneIzhikevich::ABuild(void)
  if(!NPulseMembrane::ABuild())
   return false;
 
- AddMissingComponent<NPulseChannelIzhikevich>("PosChannel", "NPulseChannelIzhikevich");
+ const int num_exc = int(NumExcitatorySynapses);
+ const int num_inh = int(NumInhibitorySynapses);
+ const MVector<double,3> exc_coord = izhChannelCoord(kMemExcRowY0, num_exc);
+ const MVector<double,3> inh_coord = izhChannelCoord(izhInhRowY0(num_exc), num_inh);
+
+ auto pos = AddMissingComponent<NPulseChannelIzhikevich>("PosChannel", "NPulseChannelIzhikevich");
+ if(pos)
+  pos->SetCoord(exc_coord);
+
+ // Align Exc/Inh channels with NPulseMembrane diagram layout (Pos shares Exc slot)
+ if(auto exc = GetComponent("ExcChannel", true))
+  exc->SetCoord(exc_coord);
+ if(auto inh = GetComponent("InhChannel", true))
+  inh->SetCoord(inh_coord);
 
  return true;
 }

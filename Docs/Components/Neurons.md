@@ -22,7 +22,8 @@ classDiagram
 
 - `NAfferentNeuron`, `NSAfferentNeuron`, `NSimpleAfferentNeuron` — получение внешних стимулов.
 - `NContinuesSAfferentNeuron`, `NContinuesSimpleAfferentNeuron` — непрерывные варианты.
-- `NNeuronLearner`, `NNeuronTrainer` — самообучающиеся/тренируемые нейроны.
+- `NNeuronLearner`, `NNeuronTrainer`, `NNeuronTimeLearner`, `NNeuronTimeLearnerBranch` — самообучающиеся/тренируемые нейроны.
+- Selectivity-тест обученного TimeLearner: конфиг `TimeNeuronTimeLearnerTest` + [`NPatternResponseAnalyzer`](NPatternResponseAnalyzer.md).
 
 ### Моторные и специальные
 

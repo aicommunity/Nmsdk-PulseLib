@@ -81,6 +81,31 @@ UProperty<MDMatrix<int>, NPulseNeuron, ptPubParameter> TrainingDendIndexes;
 /// НАЗНАЧАЕТСЯ ПРОГРАММНО! НЕ ДОЛЖЕН МЕНЯТЬСЯ ПОЛЬЗОВАТЕЛЕМ!!!
 UProperty<MDMatrix<int>, NPulseNeuron, ptPubParameter> TrainingSynapsisNum;
 
+/// Opt-in: after BuildStructure, override child channel Capacity / Rm / synapse TC / Rsyn.
+/// Default false — existing UploadClass / saved models keep class defaults.
+UProperty<bool, NPulseNeuron, ptPubParameter> UseElementDefaults;
+
+/// When UseElementDefaults and value > 0: Capacity on Soma/Dendrite Exc/Inh channels.
+UProperty<double, NPulseNeuron, ptPubParameter> MembraneCapacity;
+
+/// When UseElementDefaults and value > 0: DissociationTC on Soma/Dendrite Exc/Inh synapses.
+UProperty<double, NPulseNeuron, ptPubParameter> SynapseDissociationTC;
+
+/// When UseElementDefaults and value > 0: Resistance (+ RestingResistance) on ExcChannel.
+UProperty<double, NPulseNeuron, ptPubParameter> ExcMembraneResistance;
+
+/// When UseElementDefaults and value > 0: Resistance (+ RestingResistance) on InhChannel.
+UProperty<double, NPulseNeuron, ptPubParameter> InhMembraneResistance;
+
+/// When UseElementDefaults and value > 0: Resistance on ExcSynapse*.
+UProperty<double, NPulseNeuron, ptPubParameter> ExcSynapseResistance;
+
+/// When UseElementDefaults and value > 0: Resistance on InhSynapse*.
+UProperty<double, NPulseNeuron, ptPubParameter> InhSynapseResistance;
+
+/// When UseElementDefaults and value > 0: SecretionTC on Soma/Dendrite Exc/Inh synapses.
+UProperty<double, NPulseNeuron, ptPubParameter> SynapseSecretionTC;
+
 
 protected:
 NConstGenerator *PosGenerator,*NegGenerator;
@@ -126,6 +151,15 @@ bool SetExcGeneratorClassName(const std::string &value);
 
 /// Имя класса источника задающего сигнала для тормозного ионного механизма
 bool SetInhGeneratorClassName(const std::string &value);
+
+bool SetUseElementDefaults(const bool &value);
+bool SetMembraneCapacity(const double &value);
+bool SetSynapseDissociationTC(const double &value);
+bool SetExcMembraneResistance(const double &value);
+bool SetInhMembraneResistance(const double &value);
+bool SetExcSynapseResistance(const double &value);
+bool SetInhSynapseResistance(const double &value);
+bool SetSynapseSecretionTC(const double &value);
 
 /// Число участков мембраны тела нейрона
 bool SetNumSomaMembraneParts(const int &value);
@@ -229,6 +263,11 @@ virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // Скрытые методы управления счетом
 // --------------------------
 // --------------------------
+public:
+/// Apply MembraneCapacity / SynapseDissociationTC to Soma+Dendrite children (not LTMembrane).
+/// Safe to call after tip/dendrite Build() that recreates Bio-default synapses.
+void ApplyElementDefaults(void);
+
 protected:
 /// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
 /// dendrite_mode принимает 2 значения:

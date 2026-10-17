@@ -347,7 +347,7 @@ Bio-inspired membrane with excitatory and inhibitory channels.
 
 **See also:** [NPMembraneBio](Components/NPMembraneBio.md)
 
-### LT-Zones (Long-Term plasticity)
+### LT-Zones (Low Threshold)
 
 #### NPulseLTZoneThreshold
 

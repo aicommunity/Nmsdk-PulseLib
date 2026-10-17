@@ -30,6 +30,13 @@ See file license.txt for more information
 
 namespace NMSDK {
 
+namespace {
+constexpr double kDendritePitchX = 11.0;  // was 8.0 — wider for Modern Diagram cards
+constexpr double kSomaRowPitchY  = 2.0;
+constexpr double kNeuronBaseX   = 12.7;
+constexpr double kNeuronBaseY   = 4.67;
+} // namespace
+
 // ћетоды
 // --------------------------
 //  онструкторы и деструкторы
@@ -46,7 +53,15 @@ NPulseNeuron::NPulseNeuron(void)
   NumDendriteMembranePartsVec("NumDendriteMembranePartsVec",this,&NPulseNeuron::SetNumDendriteMembranePartsVec),
   TrainingPattern("TrainingPattern",this,&NPulseNeuron::SetTrainingPattern),
   TrainingDendIndexes("TrainingDendIndexes",this,&NPulseNeuron::SetTrainingDendIndexes),
-  TrainingSynapsisNum("TrainingSynapsisNum",this,&NPulseNeuron::SetTrainingSynapsisNum)
+  TrainingSynapsisNum("TrainingSynapsisNum",this,&NPulseNeuron::SetTrainingSynapsisNum),
+  UseElementDefaults("UseElementDefaults",this,&NPulseNeuron::SetUseElementDefaults),
+  MembraneCapacity("MembraneCapacity",this,&NPulseNeuron::SetMembraneCapacity),
+  SynapseDissociationTC("SynapseDissociationTC",this,&NPulseNeuron::SetSynapseDissociationTC),
+  ExcMembraneResistance("ExcMembraneResistance",this,&NPulseNeuron::SetExcMembraneResistance),
+  InhMembraneResistance("InhMembraneResistance",this,&NPulseNeuron::SetInhMembraneResistance),
+  ExcSynapseResistance("ExcSynapseResistance",this,&NPulseNeuron::SetExcSynapseResistance),
+  InhSynapseResistance("InhSynapseResistance",this,&NPulseNeuron::SetInhSynapseResistance),
+  SynapseSecretionTC("SynapseSecretionTC",this,&NPulseNeuron::SetSynapseSecretionTC)
 {
  PosGenerator=0;
  NegGenerator=0;
@@ -156,6 +171,63 @@ bool NPulseNeuron::SetInhGeneratorClassName(const std::string &value)
  Ready=false;
  return true;
 }
+
+bool NPulseNeuron::SetUseElementDefaults(const bool &value)
+{
+ (void)value;
+ // Do not clear Ready: Cap/TC are applied in ApplyElementDefaults after ABuild.
+ return true;
+}
+
+bool NPulseNeuron::SetMembraneCapacity(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetSynapseDissociationTC(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetExcMembraneResistance(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetInhMembraneResistance(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetExcSynapseResistance(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetInhSynapseResistance(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetSynapseSecretionTC(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
 
 /// „исло участков мембраны тела нейрона
 bool NPulseNeuron::SetNumSomaMembraneParts(const int &value)
@@ -466,7 +538,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
     std::string("Failed to create LTZone with class: ")+ltzone_class);
   return false;
  }
- ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*8,4.67,0));
+ ltzone->SetCoord(MVector<double,3>(27.3+dendrite_length*kDendritePitchX,kNeuronBaseY,0));
 
  UEPtr<UNet> gen_pos,gen_neg;
  if(!ExcGeneratorClassName->empty())
@@ -580,7 +652,22 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
      std::string("Failed to create LTMembrane with class: ")+ltzonemembraneclass);
    return false;
   }
-  ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*8,4.67,0));
+  ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*kDendritePitchX,kNeuronBaseY,0));
+  // Ensure channels exist: TakeObject prototypes may be Ready with empty Channels[].
+  if(!ltmembr->GetComponent("ExcChannel", true) || ltmembr->GetNumChannels() == 0)
+  {
+   if(UEPtr<NPulseMembrane> pm = dynamic_pointer_cast<NPulseMembrane>(ltmembr))
+   {
+    const int nsyn = pm->NumExcitatorySynapses;
+    pm->NumExcitatorySynapses = nsyn + 1;
+    pm->NumExcitatorySynapses = nsyn;
+   }
+   if(!ltmembr->Build())
+   {
+    LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "Failed to Build LTMembrane");
+    return false;
+   }
+  }
 
   ltchannel1=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("ExcChannel",true));
   ltchannel2=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("InhChannel",true));
@@ -607,7 +694,28 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
      std::string("Failed to create Soma")+sntoa(i+1)+std::string(" with class: ")+membraneclass);
    return false;
   }
-  membr->SetCoord(MVector<double,3>(12.7+dendrite_length*8,4.67+i*2,0));
+  membr->SetCoord(MVector<double,3>(kNeuronBaseX+dendrite_length*kDendritePitchX,kNeuronBaseY+i*kSomaRowPitchY,0));
+  // Ensure channels exist before CreateLink (TakeObject may be Ready w/o Channels).
+  if(!membr->GetComponent("ExcChannel", true) || membr->GetNumChannels() == 0)
+  {
+   if(UEPtr<NPulseMembrane> pm = dynamic_pointer_cast<NPulseMembrane>(membr))
+   {
+    const int nsyn = pm->NumExcitatorySynapses;
+    pm->NumExcitatorySynapses = nsyn + 1;
+    pm->NumExcitatorySynapses = nsyn;
+   }
+   if(!membr->Build())
+   {
+    LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+      std::string("Failed to Build Soma")+sntoa(i+1));
+    return false;
+   }
+  }
+  // TakeObject clones often keep Activity=false; Calculate() would skip them.
+  if(!membr->GetActivity())
+   membr->SetActivity(true);
+  if(!membr->IsInit())
+   membr->Init();
   Soma[i]=membr;
 
   channel1=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));
@@ -649,7 +757,29 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
       std::string("Failed to create Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1)+std::string(" with class: ")+membraneclass);
     return false;
    }
-   membr->SetCoord(MVector<double,3>(12.7+(dendrite_length-j-1)*8,4.67+i*2,0));
+   membr->SetCoord(MVector<double,3>(kNeuronBaseX+(dendrite_length-j-1)*kDendritePitchX,kNeuronBaseY+i*kSomaRowPitchY,0));
+   // New distal segments need real Channels[] before cable/PosNeg links.
+   // TakeObject prototypes can be Ready with ExcChannel child but empty Channels.
+   if(!membr->GetComponent("ExcChannel", true) || membr->GetNumChannels() == 0)
+   {
+    if(UEPtr<NPulseMembrane> pm = dynamic_pointer_cast<NPulseMembrane>(membr))
+    {
+     const int nsyn = pm->NumExcitatorySynapses;
+     pm->NumExcitatorySynapses = nsyn + 1;
+     pm->NumExcitatorySynapses = nsyn;
+    }
+    if(!membr->Build())
+    {
+     LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
+       std::string("Failed to Build Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1));
+     return false;
+    }
+   }
+   // Newly added segments from TakeObject may be inactive — Calculate would no-op.
+   if(!membr->GetActivity())
+    membr->SetActivity(true);
+   if(!membr->IsInit())
+    membr->Init();
 
    channel1temp=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));
    channel2temp=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("InhChannel",true));
@@ -685,6 +815,95 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
  return true;
 }
 
+void NPulseNeuron::ApplyElementDefaults(void)
+{
+ if(!UseElementDefaults.GetData())
+  return;
+
+ const double cap = MembraneCapacity.GetData();
+ const double dissoc = SynapseDissociationTC.GetData();
+ const double secr = SynapseSecretionTC.GetData();
+ const double exc_rm = ExcMembraneResistance.GetData();
+ const double inh_rm = InhMembraneResistance.GetData();
+ const double exc_rsyn = ExcSynapseResistance.GetData();
+ const double inh_rsyn = InhSynapseResistance.GetData();
+ if(cap <= 0.0 && dissoc <= 0.0 && secr <= 0.0
+    && exc_rm <= 0.0 && inh_rm <= 0.0
+    && exc_rsyn <= 0.0 && inh_rsyn <= 0.0)
+  return;
+
+ for(size_t mi = 0; mi < Membranes.size(); ++mi)
+ {
+  NPulseMembraneCommon *mcommon = Membranes[mi];
+  if(!mcommon)
+   continue;
+  if(mcommon->GetName() == "LTMembrane")
+   continue;
+
+  NPulseMembrane *membr = dynamic_cast<NPulseMembrane*>(mcommon);
+  if(!membr)
+   continue;
+
+  if(cap > 0.0 || exc_rm > 0.0 || inh_rm > 0.0)
+  {
+   UEPtr<UContainer> exc_c = membr->GetComponent("ExcChannel", true);
+   if(NPulseChannel *exc = dynamic_cast<NPulseChannel*>((UContainer*)exc_c))
+   {
+    if(cap > 0.0)
+     exc->Capacity = cap;
+    if(exc_rm > 0.0)
+    {
+     exc->Resistance = exc_rm;
+     exc->RestingResistance = exc_rm;
+    }
+   }
+   UEPtr<UContainer> inh_c = membr->GetComponent("InhChannel", true);
+   if(NPulseChannel *inh = dynamic_cast<NPulseChannel*>((UContainer*)inh_c))
+   {
+    if(cap > 0.0)
+     inh->Capacity = cap;
+    if(inh_rm > 0.0)
+    {
+     inh->Resistance = inh_rm;
+     inh->RestingResistance = inh_rm;
+    }
+   }
+  }
+
+  if(dissoc > 0.0 || secr > 0.0 || exc_rsyn > 0.0 || inh_rsyn > 0.0)
+  {
+   const int nexc = int(membr->NumExcitatorySynapses);
+   const int ninh = int(membr->NumInhibitorySynapses);
+   for(int i = 0; i < nexc; ++i)
+   {
+    UEPtr<UContainer> sc = membr->GetComponent(std::string("ExcSynapse")+sntoa(i+1), true);
+    if(NPulseSynapse *syn = dynamic_cast<NPulseSynapse*>((UContainer*)sc))
+    {
+     if(dissoc > 0.0)
+      syn->DissociationTC = dissoc;
+     if(secr > 0.0)
+      syn->SecretionTC = secr;
+     if(exc_rsyn > 0.0)
+      syn->Resistance = exc_rsyn;
+    }
+   }
+   for(int i = 0; i < ninh; ++i)
+   {
+    UEPtr<UContainer> sc = membr->GetComponent(std::string("InhSynapse")+sntoa(i+1), true);
+    if(NPulseSynapse *syn = dynamic_cast<NPulseSynapse*>((UContainer*)sc))
+    {
+     if(dissoc > 0.0)
+      syn->DissociationTC = dissoc;
+     if(secr > 0.0)
+      syn->SecretionTC = secr;
+     if(inh_rsyn > 0.0)
+      syn->Resistance = inh_rsyn;
+    }
+   }
+  }
+ }
+}
+
 // ¬осстановление настроек по умолчанию и сброс процесса счета
 bool NPulseNeuron::ADefault(void)
 {
@@ -702,6 +921,14 @@ bool NPulseNeuron::ADefault(void)
  TrainingPattern.Resize(0,0);
  TrainingDendIndexes.Resize(0,0);
  TrainingSynapsisNum.Resize(0,0);
+ UseElementDefaults = false;
+ MembraneCapacity = 0.0;
+ SynapseDissociationTC = 0.0;
+ ExcMembraneResistance = 0.0;
+ InhMembraneResistance = 0.0;
+ ExcSynapseResistance = 0.0;
+ InhSynapseResistance = 0.0;
+ SynapseSecretionTC = 0.0;
 
  return true;
 }
@@ -741,6 +968,7 @@ bool NPulseNeuron::ABuild(void)
  if(!NPulseNeuronCommon::ABuild())
   return false;
 
+ ApplyElementDefaults();
  return true;
 }
 

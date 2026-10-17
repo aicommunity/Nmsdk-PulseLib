@@ -190,7 +190,7 @@ bool NNeuronFreqGroupLayer::BuildStructure(int structure_build_mode, const strin
 	 {
 	  ind = i*num_aff_neurons_group_width + j;
 	  affneurongroup=AddMissingComponent<NNeuronFreqGroup>(std::string("AffNeuronGroup")+sntoa(ind+1), aff_neuron_group_class_name);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(membraneclass));
-	  affneurongroup->SetCoord(MVector<double,3>(8.7+j*7,1.67+i*2,0));
+	  affneurongroup->SetCoord(MVector<double,3>(8.7+j*10,1.67+i*2,0));
 	  affneurongroup->NumAffNeurons = num_aff_neurons_in_group;
       affneurongroup->Build();
 	 }

@@ -2,7 +2,7 @@
 
 ## Каналы, мембраны и LT-зоны (Nmsdk-PulseLib)
 
-Группа включает компоненты распространения импульсов, мембранные модели и LT-зоны (долговременная пластичность).
+Группа включает компоненты распространения импульсов, мембранные модели и LT-зоны (формирование выхода нейрона).
 
 ### Каналы
 
@@ -40,7 +40,7 @@ classDiagram
 
 ## Channels, Membranes & LT zones — overview (Nmsdk-PulseLib)
 
-Defines how spikes travel, how membrane potential is integrated and how long-term plasticity is implemented.
+Defines how spikes travel, how membrane potential is integrated and how the low-threshold zone produces the output.
 
 ### References
 

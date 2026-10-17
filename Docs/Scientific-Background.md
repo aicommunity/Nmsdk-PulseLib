@@ -109,24 +109,28 @@ STDP — механизм синаптической пластичности, �
 
 **Использование в конфигурациях:** `Bin/Configs/User/CognitiveNavigation/`
 
-#### 4. Долгосрочная пластичность (LT-зоны)
+#### 4. Низкопороговая зона (LTZone)
 
-**Компоненты PulseLib:** `NPulseLTZoneThreshold`, `NPLTZone`, `NPulseLTZoneIzhikevich`
+LT означает low threshold: зона формирования выхода/инициации спайка. `NPulseLTZoneThreshold` использует порог потенциала; `NPulseLTZoneIzhikevich` относится к соответствующей динамической модели. `NPLTZone` — регистрация семейства LT-зон. Это не реализация LTP/LTD и не самостоятельный механизм изменения синаптических весов.
+
+Параметры зависят от конкретного класса: нельзя приписывать общий TimeConstant всем LT-зонам. См. [NPulseLTZoneThreshold](Components/NPulseLTZoneThreshold.md), [NPLTZone](Components/NPLTZone.md) и [обзор API](API-Overview.md). Общая роль порога в спайковых моделях изложена в [Neuronal Dynamics, section 1.3](https://neuronaldynamics.epfl.ch/online/Ch1.S3.html); это концептуальный источник, а не доказательство эквивалентности реализации биологическому нейрону.
+
+#### 4a. Аксональная проводимость
+
+**Компоненты PulseLib:** `NAxoneCommon`, `NAxoneDelay`, `NAxoneSegment`, `NAxoneChain`, `NAxoneChainAndDelay`, `NAperiodicLink` (`UploadClass` в `NPulseLibrary`).
 
 **Научная основа:**
 
-LT-зоны моделируют механизмы долгосрочной потенциации (LTP) и долгосрочной депрессии (LTD), которые лежат в основе формирования памяти.
+После генерации спайка в низкопороговой зоне (LTZone) импульс распространяется по аксону. В парадигме структурной настройки (Бахшиев–Романов) длина и задержка задаются цепочкой сегментов, а не подгонкой внутренних параметров. Инерция на входе сегмента — апериодическое звено. Миелиноподобная схема: регенеративные узлы (`NAxoneSegment`) и междоузловые задержки (`NAxoneDelay`). Отдельный passive-cable аксон не вводится — кабельная модель уже есть для дендритов (`NPulseChannelCable` / CSNM).
 
-**Ключевые публикации:**
-- Bliss, T. V., & Lomo, T. (1973). "Long-lasting potentiation of synaptic transmission in the dentate area of the anaesthetized rabbit following stimulation of the perforant path." Journal of Physiology, 232(2), 331-356.
-- Malenka, R. C., & Bear, M. F. (2004). "LTP and LTD: An embarrassment of riches." Neuron, 44(5), 5-21.
+**Ключевые публикации / источники:** см. [Literature-References.md](Literature-References.md) **[A]**, **[C]**, **[25]**, **[26]**, **[29]**; SNM уч. пособие §2.6.
 
 **Связь с компонентами:**
-- `NPulseLTZoneThreshold` реализует LT-зону с пороговым механизмом активации
-- Порог (`Threshold`) определяет минимальную активность для активации пластичности
-- Временная константа (`TimeConstant`) определяет скорость накопления активности
-
-**Использование в конфигурациях:** `Bin/Configs/User/CognitiveNavigation/`, `Bin/Configs/!OldConfigs/NM-Neurons/`
+- `NAxoneDelay` — феноменологическая задержка тракта (default 1 мс)
+- `NAxoneChain` — структурная длина = `NumSegments`
+- `NAxoneChainAndDelay` — чередование узлов и междоузлий
+- `NAperiodicLink` — обязательная инерция на входе сегмента (`Output = y + Bias`, default Bias=-1 → ExcChannel)
+- Регенерация узла: сома `NPMembraneBio` + `PosGenerator`(+1) + feedback `LTZone`↔`Soma` (не «голый» LTZone)
 
 #### 5. Классификация на основе спайков
 
@@ -300,12 +304,15 @@ This document describes the scientific concepts and publications underlying the 
 - Neurotransmitter diffusion in synaptic cleft
 - Compartmental neuron model
 
-#### 4. Long-Term Plasticity (LT-Zones)
+#### 4. Low-threshold zones (LTZone)
 
-**PulseLib Components:** `NPulseLTZoneThreshold`, `NPLTZone`
+LT means low threshold. These components produce neuron output/spikes from their specific activation or membrane model; they do not implement LTP/LTD merely by being LT-zones. Threshold and time-dependent behavior must be checked in the selected concrete class. See [NPulseLTZoneThreshold](Components/NPulseLTZoneThreshold.md) and [NPLTZone](Components/NPLTZone.md).
 
-**Key Publications:**
-- Bliss, T. V., & Lomo, T. (1973). "Long-lasting potentiation of synaptic transmission in the dentate area of the anaesthetized rabbit following stimulation of the perforant path." Journal of Physiology, 232(2), 331-356.
+#### 4a. Axonal conduction
+
+**PulseLib Components:** `NAxoneCommon`, `NAxoneDelay`, `NAxoneSegment`, `NAxoneChain`, `NAxoneChainAndDelay`, `NAperiodicLink` (`UploadClass` in `NPulseLibrary`).
+
+Structural axon models after LTZone output: regenerative nodes (`NAxoneSegment` = Inertial Bias=-1 + Soma + PosGenerator + LTZone feedback), structural chains, myelin-like Segment↔Delay. No separate passive-cable axon (see dendritic `NPulseChannelCable` / CSNM). References: [Literature-References.md](Literature-References.md) **[A]**, **[C]**, **[25]**, **[26]**, **[29]**.
 
 #### 5. Spike-Based Classification
 
