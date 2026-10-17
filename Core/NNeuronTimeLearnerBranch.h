@@ -233,6 +233,10 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  
  /// One-shot reset to initial untrained structure/state
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubState> ResetToUntrainedState;
+
+ /// When true, an explicit loaded per-input TipSynapseResistance vector takes
+ /// precedence over the scalar base and saved snapshot during a cold reset.
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> UseLoadedTipResistanceOnUntrainedReset;
  
  /// Experiment id when ExperimentMode is on (1=PatternRecognition, 2=LearningSecondPattern)
  UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> ExperimentNum;

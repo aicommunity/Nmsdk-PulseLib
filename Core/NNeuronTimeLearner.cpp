@@ -2034,6 +2034,7 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  TrainingPhase("TrainingPhase", this),
  TrainingFailureReason("TrainingFailureReason", this),
  ResetToUntrainedState("ResetToUntrainedState", this, &NNeuronTimeLearner::SetResetToUntrainedState),
+ UseLoadedTipResistanceOnUntrainedReset("UseLoadedTipResistanceOnUntrainedReset", this),
  ExperimentNum("ExperimentNum", this, &NNeuronTimeLearner::SetExperimentNum),
  ExperimentMode("ExperimentMode", this, &NNeuronTimeLearner::SetExperimentMode),
  EnableDebug("EnableDebug", this, &NNeuronTimeLearner::SetEnableDebug),
@@ -2158,6 +2159,13 @@ bool NNeuronTimeLearner::ZeroingTrainingPattern(void)
 bool NNeuronTimeLearner::ResetToUntrained(void)
 {
  TipResistanceFrozenAfterSync.SetDataDirect(false);
+ const std::vector<double> loaded_tips = LoadedTipSynapseResistance;
+ const bool use_loaded_tips = IsParametricNormalization()
+  && UseLoadedTipResistanceOnUntrainedReset.GetData()
+  && HasLoadedTipSynapseResistance
+  && loaded_tips.size() == static_cast<size_t>(NumInputDendrite)
+  && std::all_of(loaded_tips.begin(), loaded_tips.end(), [](double r)
+     { return std::isfinite(r) && r > 0.0; });
  // Prefer a cold (L<=1) snapshot. StructTrain Parameters ship trained lengths
  // (49 41 25 1) + Initial — never restore that as "untrained".
  const bool snapshot_ok =
@@ -2179,6 +2187,13 @@ bool NNeuronTimeLearner::ResetToUntrained(void)
   NumSynapse.assign(NumInputDendrite, 1);
   InitialSomaPotential.assign(NumInputDendrite, 0.0);
   TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
+ }
+ if(use_loaded_tips)
+ {
+  std::vector<double> tips = loaded_tips;
+  for(int i = 0; i < NumInputDendrite; ++i)
+   tips[static_cast<size_t>(i)] = ClampResistance(i, tips[static_cast<size_t>(i)]);
+  TipSynapseResistance.SetDataDirect(tips);
  }
  // Prefer setter path for LTZ; SetDataDirect(true) alone left FixedLTZ on the
  // membrane and the neuron fired through the whole training run.
@@ -3226,6 +3241,7 @@ bool NNeuronTimeLearner::ADefault(void)
  TrainingPhase = kPhaseSync;
  TrainingFailureReason = kFailureNone;
  ResetToUntrainedState = false;
+ UseLoadedTipResistanceOnUntrainedReset = false;
  HasUntrainedSnapshot = false;
  
  LTZThreshold = 100;
