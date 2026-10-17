@@ -36,6 +36,9 @@ UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> SavePath;
 UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> FileName;
 UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> AppendMode;
 UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> Enable;
+/// Optional per-sample soma trace for headless test reports. Does not affect learning.
+UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> TraceLogEnabled;
+UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> TraceLogFileName;
 
 /// 0 = LTZ rising-edge match (default); 1 = ISI template vs trial-0 training pattern
 UProperty<int, NPatternResponseAnalyzer, ptPubParameter> MatchMode;
@@ -64,6 +67,8 @@ virtual bool AReset(void);
 virtual bool ACalculate(void);
 
 bool EnsureCsvReady(void);
+bool EnsureTraceReady(void);
+void WriteTraceSample(double now);
 bool IsIsiTemplateMatch(void) const;
 void CloseTrial(double now);
 void BeginTrial(double now);
@@ -93,6 +98,8 @@ bool trial_active_;
 bool trial_window_closed_;
 bool playback_stopped_;
 bool csv_header_written_;
+bool trace_header_written_;
+size_t trace_rows_since_flush_;
 int trial_target_class_;
 int trial_sample_id_;
 int trial_expected_stims_;
@@ -121,6 +128,8 @@ std::vector<double> trial_neuron_spike_times_;
 std::vector<double> prev_stimulus_;
 std::vector<double> prev_neuron_;
 std::string csv_full_path_;
+std::string trace_full_path_;
+std::ofstream trace_stream_;
 static constexpr size_t kMaxSpikeTimesCsv = 16;
 static constexpr double kBurstIsiMax = 0.005;
 static constexpr double kPerStimWindowFloor = 0.003;

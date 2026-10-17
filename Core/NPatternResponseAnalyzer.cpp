@@ -128,6 +128,8 @@ NPatternResponseAnalyzer::NPatternResponseAnalyzer(void)
   FileName("FileName", this),
   AppendMode("AppendMode", this),
   Enable("Enable", this),
+  TraceLogEnabled("TraceLogEnabled", this),
+  TraceLogFileName("TraceLogFileName", this),
   MatchMode("MatchMode", this),
   TrialIndex("TrialIndex", this),
   LastFired("LastFired", this),
@@ -143,6 +145,8 @@ NPatternResponseAnalyzer::NPatternResponseAnalyzer(void)
   trial_window_closed_(false),
   playback_stopped_(false),
   csv_header_written_(false),
+  trace_header_written_(false),
+  trace_rows_since_flush_(0),
   trial_target_class_(0),
   trial_sample_id_(-1),
   trial_expected_stims_(0),
@@ -194,6 +198,8 @@ bool NPatternResponseAnalyzer::ADefault(void)
  FileName = "results.csv";
  AppendMode = false;
  Enable = true;
+ TraceLogEnabled = false;
+ TraceLogFileName = "test_trace.csv";
  MatchMode = 0;
  LearnerComponentName = "NeuronTimeLearner";
  DatasetComponentName = "DatasetMatrix";
@@ -214,6 +220,11 @@ bool NPatternResponseAnalyzer::ADefault(void)
  prev_stimulus_.clear();
  prev_neuron_.clear();
  csv_full_path_.clear();
+ trace_full_path_.clear();
+ trace_header_written_ = false;
+ trace_rows_since_flush_ = 0;
+ if(trace_stream_.is_open())
+  trace_stream_.close();
  ltz_source_ = nullptr;
  dataset_source_ = nullptr;
  return true;
@@ -491,6 +502,57 @@ bool NPatternResponseAnalyzer::EnsureCsvReady(void)
  return true;
 }
 
+bool NPatternResponseAnalyzer::EnsureTraceReady(void)
+{
+ if(!TraceLogEnabled.GetData())
+  return false;
+
+ if(!trace_stream_.is_open())
+ {
+  std::string base;
+  if(Environment)
+   base = Environment->GetCurrentDataDir();
+  const std::string dir = JoinPath(base, std::string(SavePath));
+  std::error_code ec;
+  std::filesystem::create_directories(dir, ec);
+  const std::string file_name = std::string(TraceLogFileName).empty()
+      ? std::string("test_trace.csv") : std::string(TraceLogFileName);
+  trace_full_path_ = JoinPath(dir, file_name);
+  trace_stream_.open(trace_full_path_.c_str(), std::ios::out | std::ios::trunc);
+  if(!trace_stream_)
+   return false;
+  trace_stream_ << "trial,sample_id,target_class,time_abs_s,time_rel_s,"
+                   "soma_sum,soma_0,soma_1,soma_2,soma_3,ltz_potential\n";
+  trace_stream_ << std::setprecision(17);
+  trace_header_written_ = true;
+ }
+ return trace_header_written_ && trace_stream_.good();
+}
+
+void NPatternResponseAnalyzer::WriteTraceSample(double now)
+{
+ if(!TraceLogEnabled.GetData() || !trial_active_ || !EnsureTraceReady())
+  return;
+
+ double soma[4] = {0.0, 0.0, 0.0, 0.0};
+ double soma_sum = 0.0;
+ ReadSomaAmplitudes(soma, soma_sum);
+ trace_stream_ << int(TrialIndex) << ','
+               << trial_sample_id_ << ','
+               << trial_target_class_ << ','
+               << now << ','
+               << (now - trial_t_first_stim_) << ','
+               << soma_sum;
+ for(int i = 0; i < 4; ++i)
+  trace_stream_ << ',' << soma[i];
+ trace_stream_ << ',' << ReadLtzPotential() << '\n';
+ if(++trace_rows_since_flush_ >= 512)
+ {
+  trace_stream_.flush();
+  trace_rows_since_flush_ = 0;
+ }
+}
+
 bool NPatternResponseAnalyzer::IsIsiTemplateMatch(void) const
 {
  if(!GetOwner())
@@ -762,6 +824,12 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
   }
  }
 
+ if(trace_stream_.is_open())
+ {
+  trace_stream_.flush();
+  trace_rows_since_flush_ = 0;
+ }
+
  TrialIndex.SetDataDirect(int(TrialIndex) + 1);
  ResetTrialState();
 }
@@ -797,6 +865,16 @@ bool NPatternResponseAnalyzer::AReset(void)
    csv_header_written_ = true;
   }
  }
+ if(trace_stream_.is_open())
+ {
+  trace_stream_.flush();
+  trace_stream_.close();
+ }
+ trace_full_path_.clear();
+ trace_header_written_ = false;
+ trace_rows_since_flush_ = 0;
+ if(TraceLogEnabled.GetData())
+  EnsureTraceReady();
  return true;
 }
 
@@ -876,6 +954,8 @@ bool NPatternResponseAnalyzer::ACalculate(void)
 
   if(neu_edge && !trial_neu_edge_consumed_)
    AttributeNeuronToActiveTrial(now);
+
+  WriteTraceSample(now);
 
   if(trial_pattern_complete_ && trial_observe_until_ < 0.0)
    trial_observe_until_ = trial_t_last_stim_ + late_win;
