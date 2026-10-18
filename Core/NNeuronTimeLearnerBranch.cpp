@@ -4988,7 +4988,24 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
    const bool early_amp_collapse_floor = !IsParametricNormalization()
     && (num < int(NumSynapse.size()))
     && (NumSynapse[num] >= kEarlyAmpCollapseSynapseFloor);
-   const bool model_ok = fabs(dt) <= SyncTolerance.GetData();
+   // Mode=0 early BE must not arm DendBestEffortSynced while seg-order is
+   // still broken (L[k]<=L[k+1]): FinishTrainingIteration would see length_ok
+   // from BE but refuse PulseSynced on seg_ok → idle deadlock (D7 / M0 abort).
+   const bool early_amp_collapse_ok =
+    early_amp_collapse_floor && !segment_order_violation;
+   const double sync_tol_inv = SyncTolerance.GetData();
+   const double tip_rmin_inv = GetResistanceMinForInput(num);
+   const bool tip_at_rmin_inv = IsParametricNormalization()
+    && tip_rmin_inv > 0.0
+    && (num < int(TipSynapseResistance.size()))
+    && TipSynapseResistance[static_cast<size_t>(num)]
+       <= tip_rmin_inv * (1.0 + 1e-6);
+   // PeakSeen=1 / SomaPeakValid=0 is the cold br25_preinh thrash class: the
+   // invalid-peak length-recovery branch below must use the same Rmin-relaxed
+   // timing band as the valid-peak path (SyncTol*kRminLengthTolFactor).
+   const double length_accept_tol_inv = tip_at_rmin_inv
+    ? (sync_tol_inv * kRminLengthTolFactor) : sync_tol_inv;
+   const bool model_ok = fabs(dt) <= length_accept_tol_inv;
    const bool length_step_available = CanChangeDendLength
     && (num < int(DendriteLength.size()))
     && ((dt > 0.0 && DendriteLength[num] < MaxDendriteLength.GetData())
@@ -5010,6 +5027,20 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
     && !w3_may_recover && !length_step_available;
    if(int(InvalidPeakNoActionCount.size()) != NumInputDendrite.GetData())
     InvalidPeakNoActionCount.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0);
+   // TipR@Rmin + timing inside relaxed band: BE, do not ±L (D2 residual).
+   if(tip_at_rmin_inv && model_ok && !segment_order_violation)
+   {
+    if(num < int(InvalidPeakNoActionCount.size()))
+     InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
+    DendStatus[num] = 0;
+    Dissynchronization[num] = dt;
+    if(num < int(DendLastAbsDt.size()))
+     DendLastAbsDt[static_cast<size_t>(num)] =
+      std::min(fabs(dt), sync_tol_inv);
+    if(num < int(DendBestEffortSynced.size()))
+     DendBestEffortSynced[static_cast<size_t>(num)] = true;
+    return true;
+   }
    if(IsParametricNormalization() && amp_low && !w3_may_recover
       && length_step_available)
    {
@@ -5064,7 +5095,8 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
    else if(num < int(InvalidPeakNoActionCount.size()))
     InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
    
-   if((amp_low && (synapses_exhausted || early_amp_collapse_floor)) || model_ok)
+   if((amp_low && (synapses_exhausted || early_amp_collapse_ok))
+      || (model_ok && !segment_order_violation))
    {
     if(num < int(InvalidPeakNoActionCount.size()))
      InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
@@ -5081,10 +5113,17 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
      oss << "ChangeDendriteStatus: num=" << num
          << " invalid peak accept-only needed=" << needed
          << " delay_len=" << delay_len << " dt=" << dt
-         << " amp_collapse=" << ((amp_low && (synapses_exhausted || early_amp_collapse_floor)) ? 1 : 0)
+         << " amp_collapse=" << ((amp_low && (synapses_exhausted || early_amp_collapse_ok)) ? 1 : 0)
          << " syn=" << NumSynapse[num];
      RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
     }
+    return true;
+   }
+   // Early floor (or model_ok) with broken seg-order: keep growing L, not BE.
+   if(segment_order_violation
+      && (early_amp_collapse_floor || model_ok))
+   {
+    request_segment_order_repair();
     return true;
    }
   }
@@ -5152,13 +5191,18 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
   ? PrevDissynchronization[num] : 0.0;
  
  // Did we apply a length change to this dendrite after the previous decision?
- const bool had_length_apply = (LastLengthDeltaDendrite == num && LastLengthDelta > 0);
- const int applied_delta = LastLengthDelta;
+ // Count both grow and shrink: br25_preinh L thrash is ±1, and restricting
+ // NoImprove to LastLengthDelta>0 left the TipR@Rmin oscillation uncounted.
+ const int raw_length_delta =
+  (LastLengthDeltaDendrite == num) ? LastLengthDelta : 0;
+ const bool had_length_apply = (raw_length_delta != 0);
+ const bool had_length_grow = (raw_length_delta > 0);
+ const int applied_delta = raw_length_delta;
  
- // Refine EstDelayPerSeg from previous apply on this dendrite.
+ // Refine EstDelayPerSeg from previous grow on this dendrite.
  // Reject reopen sentinels (|prev_dt|≈IterationGap) and non-physical steps:
  // a 1.5→0 error over ΔL=3 would claim ~0.5 s/seg and miss all later peaks.
- if(had_length_apply && fabs(prev_dt) > 1e-12
+ if(had_length_grow && fabs(prev_dt) > 1e-12
     && fabs(prev_dt) < 0.5 * IterationGap.GetData()
     && fabs(dt) < fabs(prev_dt))
  {
@@ -5186,7 +5230,8 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
  LastLengthDeltaDendrite = -1;
  
  // Amp collapse: accept best-effort if time already ok (and cable model agrees),
- // synapses exhausted, or Mode=0 has already grown N to the early floor.
+ // synapses exhausted, or Mode=0 has already grown N to the early floor — but
+ // only when seg-order would allow PulseSynced (L[k]>L[k+1]); otherwise keep ±L.
  const bool amp_low = (num < int(InitialSomaPotential.size()))
   && (InitialSomaPotential[num] > 0.0)
   && (num < int(MaxIterSomaAmp.size()))
@@ -5198,10 +5243,13 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
  const bool early_amp_collapse_floor = !IsParametricNormalization()
   && (num < int(NumSynapse.size()))
   && (NumSynapse[num] >= kEarlyAmpCollapseSynapseFloor);
+ const bool early_amp_collapse_ok =
+  early_amp_collapse_floor && !segment_order_violation;
+ const bool timing_amp_collapse_ok =
+  time_ok && !model_still_short && !segment_order_violation;
  
  if(dt > 0.0 && amp_low
-    && (synapses_exhausted || early_amp_collapse_floor
-        || (time_ok && !model_still_short)))
+    && (synapses_exhausted || early_amp_collapse_ok || timing_amp_collapse_ok))
  {
   DendStatus[num] = 0;
   if(num < int(DendLastAbsDt.size()))
@@ -5224,19 +5272,74 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
   }
   return true;
  }
+ // Early floor with broken order: prefer structural grow over idle BE.
+ if(dt > 0.0 && amp_low && early_amp_collapse_floor && segment_order_violation)
+ {
+  request_segment_order_repair();
+  Dissynchronization[num] = dt;
+  if(num < int(DendLastAbsDt.size()))
+   DendLastAbsDt[static_cast<size_t>(num)] = fabs(dt);
+  return true;
+ }
  
+ const double tip_rmin = GetResistanceMinForInput(num);
+ const bool tip_at_rmin = IsParametricNormalization()
+  && tip_rmin > 0.0
+  && (num < int(TipSynapseResistance.size()))
+  && TipSynapseResistance[static_cast<size_t>(num)]
+     <= tip_rmin * (1.0 + 1e-6);
+ // Match AllSynapsesNormalized AmpNorm(b): TipR@Rmin may settle with
+ // |dt| slightly above tight SyncTol (br25_preinh oscillates 0.00026↔0.00129
+ // while SyncTol≈0.00104). Without the ×kRminLengthTolFactor band, ±L thrash
+ // Invalidate clears BE/LastAbsDt every burst and PulseSynced never commits.
+ const double sync_tol = SyncTolerance.GetData();
+ const double length_accept_tol = tip_at_rmin
+  ? (sync_tol * kRminLengthTolFactor) : sync_tol;
+
  if(dt == 0.0)
   DendStatus[num] = 0;
- else if(fabs(dt) <= SyncTolerance)
+ else if(fabs(dt) <= length_accept_tol)
+ {
   DendStatus[num] = 0;
+  // Outside tight SyncTol but inside Rmin-relaxed band → BE so Finish length_ok
+  // survives even if a later path rewrites LastAbsDt.
+  if(tip_at_rmin && !segment_order_violation && fabs(dt) > sync_tol)
+  {
+   if(num < int(DendBestEffortSynced.size()))
+    DendBestEffortSynced[static_cast<size_t>(num)] = true;
+   if(num < int(DendLastAbsDt.size()))
+    DendLastAbsDt[static_cast<size_t>(num)] = std::min(fabs(dt), sync_tol);
+  }
+ }
  else if((fabs(PrevInputPattern[num] - InputPattern[num]) < 0.0001)
          && (prev_dt * dt < 0.0)
          && (fabs(dt) <= fabs(prev_dt)))
+ {
   DendStatus[num] = 0; // sign flip with shrinking |dt| — stop oscillation
+  if(tip_at_rmin && !segment_order_violation && fabs(dt) > sync_tol)
+  {
+   if(num < int(DendBestEffortSynced.size()))
+    DendBestEffortSynced[static_cast<size_t>(num)] = true;
+   if(num < int(DendLastAbsDt.size()))
+    DendLastAbsDt[static_cast<size_t>(num)] = std::min(fabs(dt), sync_tol);
+  }
+ }
  else if(dt > 0)
   DendStatus[num] = 1;
  else
   DendStatus[num] = -1;
+
+ // TipR@Rmin + opposite length step vs last apply: BE immediately.
+ if(tip_at_rmin && !segment_order_violation && had_length_apply
+    && DendStatus[num] != 0 && (raw_length_delta * DendStatus[num] < 0)
+    && fabs(dt) > sync_tol)
+ {
+  DendStatus[num] = 0;
+  if(num < int(DendBestEffortSynced.size()))
+   DendBestEffortSynced[static_cast<size_t>(num)] = true;
+  if(num < int(DendLastAbsDt.size()))
+   DendLastAbsDt[static_cast<size_t>(num)] = std::min(fabs(dt), sync_tol);
+ }
  
  if(DendStatus[num] != 0 && num < int(DendBestEffortSynced.size()))
   DendBestEffortSynced[static_cast<size_t>(num)] = false;
@@ -5247,9 +5350,15 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
   if(had_length_apply && DendStatus[num] != 0
      && fabs(dt) >= fabs(prev_dt) - 1e-12)
    NoImproveCount[static_cast<size_t>(num)]++;
-  else if(fabs(dt) < fabs(prev_dt) - 1e-12 || fabs(dt) <= SyncTolerance.GetData())
+  else if(fabs(dt) <= SyncTolerance.GetData())
    NoImproveCount[static_cast<size_t>(num)] = 0;
-  if(NoImproveCount[static_cast<size_t>(num)] >= kNoImproveLimit)
+  else if(fabs(dt) < fabs(prev_dt) - 1e-12 && !tip_at_rmin)
+   NoImproveCount[static_cast<size_t>(num)] = 0;
+  // TipR@Rmin: tiny |dt| shrinks during L thrash must not clear the streak.
+  else if(tip_at_rmin && had_length_apply && DendStatus[num] != 0)
+   NoImproveCount[static_cast<size_t>(num)]++;
+  if(NoImproveCount[static_cast<size_t>(num)] >= kNoImproveLimit
+     && !segment_order_violation)
   {
    DendStatus[num] = 0;
    if(num < int(DendBestEffortSynced.size()))
