@@ -569,6 +569,10 @@ protected:
  static constexpr int kMaxLengthStep = 8;
  
  static constexpr int kMaxSynapsesPerDend = 128; // experimental headroom (was 16)
+
+ /// Mode=0: accept amp-collapse best-effort once N reaches this floor instead of
+ /// waiting for kMaxSynapsesPerDend (W04 N0 spent hours climbing 8→128 at amp≈0).
+ static constexpr int kEarlyAmpCollapseSynapseFloor = 8;
  
  /// Current experiment epoch counter
  int EpochCur;

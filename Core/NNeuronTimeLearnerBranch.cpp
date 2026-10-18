@@ -4985,7 +4985,14 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
     && (MaxIterSomaAmp[num] < kAmpCollapseRatio * InitialSomaPotential[num]);
    const bool synapses_exhausted = (num < int(NumSynapse.size()))
     && (NumSynapse[num] >= kMaxSynapsesPerDend);
+   const bool early_amp_collapse_floor = !IsParametricNormalization()
+    && (num < int(NumSynapse.size()))
+    && (NumSynapse[num] >= kEarlyAmpCollapseSynapseFloor);
    const bool model_ok = fabs(dt) <= SyncTolerance.GetData();
+   const bool length_step_available = CanChangeDendLength
+    && (num < int(DendriteLength.size()))
+    && ((dt > 0.0 && DendriteLength[num] < MaxDendriteLength.GetData())
+        || (dt < 0.0 && DendriteLength[num] > 1));
 
    const double rmax = GetResistanceMaxForInput(num);
    const bool at_r_max = num < int(TipSynapseResistance.size())
@@ -4995,14 +5002,34 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
    // valid peak. Do not call that state unrecoverable while the escape is armed.
    const bool w3_may_recover = IsParametricNormalization()
     && EnableRmaxLengthEscape.GetData() && at_r_max;
-   // Parametric normalization keeps the synapse count fixed, and resistance
-   // feedback cannot be computed from an invalid peak. Timing agreement alone
-   // therefore does not provide an amplitude-recovery step. Refuse after the
-   // bounded no-action window unless the explicit W3 escape is still armed.
+   // PeakSeen with collapsed amp still allows a cable-length step when |dt| is
+   // outside SyncTolerance (br25_preinh refused at TipR=Rmin while dt still large
+   // because this path returned before setting DendStatus). Refuse only when
+   // length cannot move.
    const bool no_legal_recovery = IsParametricNormalization() && amp_low
-    && !w3_may_recover;
+    && !w3_may_recover && !length_step_available;
    if(int(InvalidPeakNoActionCount.size()) != NumInputDendrite.GetData())
     InvalidPeakNoActionCount.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0);
+   if(IsParametricNormalization() && amp_low && !w3_may_recover
+      && length_step_available)
+   {
+    if(num < int(InvalidPeakNoActionCount.size()))
+     InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
+    DendStatus[num] = (dt > 0.0) ? 1 : -1;
+    Dissynchronization[num] = dt;
+    if(num < int(DendLastAbsDt.size()))
+     DendLastAbsDt[static_cast<size_t>(num)] = fabs(dt);
+    if(EnableDebug.GetData() && RDK::GetLogger())
+    {
+     std::ostringstream oss;
+     oss << "ChangeDendriteStatus: num=" << num
+         << " invalid-peak length recovery dt=" << dt
+         << " L=" << DendriteLength[num]
+         << " amp=" << MaxIterSomaAmp[static_cast<size_t>(num)];
+     RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+    }
+    return true;
+   }
    if(no_legal_recovery)
    {
     int &stall_count = InvalidPeakNoActionCount[static_cast<size_t>(num)];
@@ -5037,7 +5064,7 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
    else if(num < int(InvalidPeakNoActionCount.size()))
     InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
    
-   if((amp_low && synapses_exhausted) || model_ok)
+   if((amp_low && (synapses_exhausted || early_amp_collapse_floor)) || model_ok)
    {
     if(num < int(InvalidPeakNoActionCount.size()))
      InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
@@ -5054,7 +5081,7 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
      oss << "ChangeDendriteStatus: num=" << num
          << " invalid peak accept-only needed=" << needed
          << " delay_len=" << delay_len << " dt=" << dt
-         << " amp_collapse=" << ((amp_low && synapses_exhausted) ? 1 : 0)
+         << " amp_collapse=" << ((amp_low && (synapses_exhausted || early_amp_collapse_floor)) ? 1 : 0)
          << " syn=" << NumSynapse[num];
      RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
     }
@@ -5158,8 +5185,8 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
  LastLengthDelta = 0;
  LastLengthDeltaDendrite = -1;
  
- // Amp collapse: accept best-effort only if time already ok (and cable model agrees)
- // or synapses exhausted. Do not stop early while delay_len still short of needed.
+ // Amp collapse: accept best-effort if time already ok (and cable model agrees),
+ // synapses exhausted, or Mode=0 has already grown N to the early floor.
  const bool amp_low = (num < int(InitialSomaPotential.size()))
   && (InitialSomaPotential[num] > 0.0)
   && (num < int(MaxIterSomaAmp.size()))
@@ -5168,8 +5195,13 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
  const bool model_still_short = (delay_len + SyncTolerance.GetData()) < needed;
  const bool synapses_exhausted = (num < int(NumSynapse.size()))
   && (NumSynapse[num] >= kMaxSynapsesPerDend);
+ const bool early_amp_collapse_floor = !IsParametricNormalization()
+  && (num < int(NumSynapse.size()))
+  && (NumSynapse[num] >= kEarlyAmpCollapseSynapseFloor);
  
- if(dt > 0.0 && amp_low && (synapses_exhausted || (time_ok && !model_still_short)))
+ if(dt > 0.0 && amp_low
+    && (synapses_exhausted || early_amp_collapse_floor
+        || (time_ok && !model_still_short)))
  {
   DendStatus[num] = 0;
   if(num < int(DendLastAbsDt.size()))
@@ -5298,10 +5330,14 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseStatus(int num)
       && DendBestEffortSynced[static_cast<size_t>(num)]);
  const bool synapses_exhausted = num < int(NumSynapse.size())
   && NumSynapse[num] >= kMaxSynapsesPerDend;
+ const bool early_amp_collapse_floor = num < int(NumSynapse.size())
+  && NumSynapse[num] >= kEarlyAmpCollapseSynapseFloor;
+ // Do not grow N on noise-floor amp once length is settled and we already
+ // tried the early structural floor (M0 pulse1 amp≈1e-7 while N→128).
  if(!DendStatus[num] && length_settled
     && (num < int(MaxIterSomaAmp.size()))
     && (MaxIterSomaAmp[num] < kMinMeasurableSomaAmp)
-    && synapses_exhausted)
+    && (synapses_exhausted || early_amp_collapse_floor))
  {
   SynapseStatus[num] = 0;
   AmpDifference[num] = dt;
@@ -5534,13 +5570,19 @@ bool NNeuronTimeLearnerBranch::AllSynapsesNormalized(void) const
    continue;
   const bool at_cap = (i < int(NumSynapse.size()))
    && (NumSynapse[i] >= kMaxSynapsesPerDend);
+  const bool early_floor_dead_tip = (i < int(NumSynapse.size()))
+   && (NumSynapse[i] >= kEarlyAmpCollapseSynapseFloor)
+   && (i < int(MaxIterSomaAmp.size()))
+   && (MaxIterSomaAmp[i] < kMinMeasurableSomaAmp)
+   && (i < int(DendBestEffortSynced.size()))
+   && DendBestEffortSynced[static_cast<size_t>(i)];
   const bool amp_ok = (i < int(InitialSomaPotential.size()))
    && (i < int(MaxIterSomaAmp.size()))
    && (fabs(InitialSomaPotential[i] - MaxIterSomaAmp[i]) <= eps);
   if(amp_ok)
    continue;
-  if(at_cap)
-   continue; // best-effort amp is accepted only after structural capacity is exhausted
+  if(at_cap || early_floor_dead_tip)
+   continue; // best-effort amp: full cap or early floor after amp-collapse BE
   return false;
  }
  return true;
