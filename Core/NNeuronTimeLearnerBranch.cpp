@@ -2186,10 +2186,13 @@ void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange(int edit
  // Reopen DendLastAbsDt with a large sentinel so length_ok cannot pass on the
  // first clause alone. Dissynchronization is left intact for sign-flip damping;
  // finish requires PeakSeen before PulseSynced.
+ // Do NOT clear NoImproveCount or LastLengthDelta on a scoped edit: W10 @25 ms
+ // oscillated L=5↔6 forever because every ±1 apply reset the no-improve streak
+ // and dropped had_length_apply before the next ChangeDendriteStatus.
  const int n = NumInputDendrite.GetData();
  const double reopen_sentinel = IterationGap.GetData() + 0.001;
- const int clear_through = (edited_pulse >= 0 && edited_pulse < n - 1)
-  ? edited_pulse : (n - 1);
+ const bool full_reopen = !(edited_pulse >= 0 && edited_pulse < n - 1);
+ const int clear_through = full_reopen ? (n - 1) : edited_pulse;
  const auto clear_index = [&](int i)
  {
   if(i < 0 || i >= n)
@@ -2205,10 +2208,13 @@ void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange(int edit
    SynapseStatus[idx] = 0;
   if(idx < AmpDifference.size())
    AmpDifference[idx] = 0.0;
-  if(idx < NoImproveCount.size())
-   NoImproveCount[idx] = 0;
-  if(idx < InvalidPeakNoActionCount.size())
-   InvalidPeakNoActionCount[idx] = 0;
+  if(full_reopen)
+  {
+   if(idx < NoImproveCount.size())
+    NoImproveCount[idx] = 0;
+   if(idx < InvalidPeakNoActionCount.size())
+    InvalidPeakNoActionCount[idx] = 0;
+  }
   if(idx < DendLastAbsDt.size())
    DendLastAbsDt[idx] = reopen_sentinel;
  };
@@ -2224,8 +2230,11 @@ void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange(int edit
   if(i < int(AmpDifference.size()))
    AmpDifference[static_cast<size_t>(i)] = 0.0;
  }
- LastLengthDelta = 0;
- LastLengthDeltaDendrite = -1;
+ if(full_reopen)
+ {
+  LastLengthDelta = 0;
+  LastLengthDeltaDendrite = -1;
+ }
 }
 
 /// Save current PeakRel/Delay as Prev* snapshot
@@ -7120,11 +7129,18 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
     && PeakSeen[static_cast<size_t>(k)])
     || (k < int(SomaPeakValid.size())
         && SomaPeakValid[static_cast<size_t>(k)]);
+   // After structural reopen DendLastAbsDt is IterationGap+ε. Do not treat a
+   // pre-edit Dissynchronization≈0 as length_ok until a post-edit measurement
+   // refreshes LastAbsDt (otherwise pulse k syncs immediately and freezes a
+   // short cable — W10 pulse2 at L=4 while seed PASS needs L≈5).
+   const bool last_abs_fresh = (k < int(DendLastAbsDt.size())
+    && DendLastAbsDt[static_cast<size_t>(k)] < 0.5 * IterationGap.GetData());
    const bool length_ok = (k < int(DendLastAbsDt.size())
     && DendLastAbsDt[static_cast<size_t>(k)] <= tol)
     || ((k < int(DendBestEffortSynced.size()))
         && DendBestEffortSynced[static_cast<size_t>(k)])
-    || ((k < int(DendStatus.size())) && DendStatus[static_cast<size_t>(k)] == 0
+    || (last_abs_fresh
+        && (k < int(DendStatus.size())) && DendStatus[static_cast<size_t>(k)] == 0
         && k < int(Dissynchronization.size())
         && fabs(Dissynchronization[static_cast<size_t>(k)]) <= tol);
    if(peak_measured_this_burst && length_ok && AllSynapsesNormalized())
