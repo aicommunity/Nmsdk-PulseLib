@@ -2199,6 +2199,12 @@ void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange()
  std::fill(InvalidPeakNoActionCount.begin(), InvalidPeakNoActionCount.end(), 0);
  std::fill(DendLastAbsDt.begin(), DendLastAbsDt.end(), reopen_sentinel);
  std::fill(Dissynchronization.begin(), Dissynchronization.end(), reopen_sentinel);
+ // The length apply that triggered this reopen already consumed its before/after
+ // error pair. Clearing LastLengthDelta prevents the next valid peak from
+ // treating reopen_sentinel as prev_dt and poisoning EstDelayPerSeg (W10 N1
+ // windows jumped 0.005→0.15 s/seg and never saw the active pulse again).
+ LastLengthDelta = 0;
+ LastLengthDeltaDendrite = -1;
 }
 
 /// Save current PeakRel/Delay as Prev* snapshot
@@ -5093,10 +5099,15 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
  const int applied_delta = LastLengthDelta;
  
  // Refine EstDelayPerSeg from previous apply on this dendrite.
- if(had_length_apply && fabs(prev_dt) > 1e-12 && fabs(dt) < fabs(prev_dt))
+ // Reject reopen sentinels (|prev_dt|≈IterationGap) and non-physical steps:
+ // a 1.5→0 error over ΔL=3 would claim ~0.5 s/seg and miss all later peaks.
+ if(had_length_apply && fabs(prev_dt) > 1e-12
+    && fabs(prev_dt) < 0.5 * IterationGap.GetData()
+    && fabs(dt) < fabs(prev_dt))
  {
   const double observed = (fabs(prev_dt) - fabs(dt)) / double(applied_delta);
-  if(observed > 1e-4 && observed < 1.0)
+  const double max_obs = std::max(0.05, 3.0 * EstDelayPerSeg);
+  if(observed > 1e-4 && observed < max_obs)
    EstDelayPerSeg = 0.7 * EstDelayPerSeg + 0.3 * observed;
  }
  if(had_length_apply && IsParametricNormalization())

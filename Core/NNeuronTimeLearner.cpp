@@ -4208,11 +4208,17 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
  const int applied_delta = LastLengthDelta;
  
  // Refine EstDelayPerSeg from previous apply on this dendrite.
- if(had_length_apply && fabs(prev_dt) > 1e-12 && fabs(dt) < fabs(prev_dt))
+ // Reject IterationGap-scale prev errors and non-physical observed steps so a
+ // reopen/sentinel |dt| cannot drive EstDelayPerSeg into a peak-blind regime.
+ if(had_length_apply && fabs(prev_dt) > 1e-12
+    && fabs(prev_dt) < 0.5 * IterationGap.GetData()
+    && fabs(dt) < fabs(prev_dt))
  {
   const double observed = (fabs(prev_dt) - fabs(dt)) / double(applied_delta);
-  if(observed > 1e-4 && observed < 1.0)
-   EstDelayPerSeg = 0.7 * EstDelayPerSeg.GetData() + 0.3 * observed;
+  const double est = EstDelayPerSeg.GetData();
+  const double max_obs = std::max(0.05, 3.0 * est);
+  if(observed > 1e-4 && observed < max_obs)
+   EstDelayPerSeg = 0.7 * est + 0.3 * observed;
  }
  if(had_length_apply && IsParametricNormalization())
  {
