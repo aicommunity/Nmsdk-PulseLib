@@ -4389,6 +4389,22 @@ bool NNeuronTimeLearner::ChangeSynapseStatus(int num)
   DendStatus[num] = dendstatus;
   return true;
  }
+
+ // Unmeasured / PeakLocked bursts must not treat MaxAmp==0 as "short of Initial".
+ // Measured but subthreshold peaks may still add contacts (dead-tip recovery).
+ {
+  const bool peak_attempted =
+   (num < int(PeakSeen.size()) && PeakSeen[static_cast<size_t>(num)])
+   || (num < int(MaxIterSomaAmp.size())
+       && MaxIterSomaAmp[static_cast<size_t>(num)] > 1.0e-12);
+  if(!peak_attempted)
+  {
+   SynapseStatus[num] = 0;
+   AmpDifference[num] = 0.0;
+   DendStatus[num] = dendstatus;
+   return true;
+  }
+ }
  
  double dt = InitialSomaPotential[num] - MaxIterSomaAmp[num];
  

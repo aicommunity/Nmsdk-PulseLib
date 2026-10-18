@@ -2184,6 +2184,12 @@ void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange()
  // The pending one-step commands were derived from the pre-edit response. The
  // anchor-rebootstrap burst can defer recalculating them, so carrying them over
  // would repeatedly apply a stale length/count direction to the changed model.
+ // Dissynchronization must be reopened with the same large sentinel as
+ // DendLastAbsDt. Leaving a pre-edit |dt|≈0 would make the finish-iteration
+ // length_ok clause true without a new peak, so higher pulses would be marked
+ // PulseSynced again on the anchor-rebootstrap burst and Active would skip
+ // straight back to the edited pulse (1↔N-1 thrash on W04).
+ const double reopen_sentinel = IterationGap.GetData() + 0.001;
  std::fill(PulseSynced.begin(), PulseSynced.end(), false);
  std::fill(DendBestEffortSynced.begin(), DendBestEffortSynced.end(), false);
  std::fill(DendStatus.begin(), DendStatus.end(), 0);
@@ -2191,7 +2197,8 @@ void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange()
  std::fill(AmpDifference.begin(), AmpDifference.end(), 0.0);
  std::fill(NoImproveCount.begin(), NoImproveCount.end(), 0);
  std::fill(InvalidPeakNoActionCount.begin(), InvalidPeakNoActionCount.end(), 0);
- std::fill(DendLastAbsDt.begin(), DendLastAbsDt.end(), IterationGap.GetData() + 0.001);
+ std::fill(DendLastAbsDt.begin(), DendLastAbsDt.end(), reopen_sentinel);
+ std::fill(Dissynchronization.begin(), Dissynchronization.end(), reopen_sentinel);
 }
 
 /// Save current PeakRel/Delay as Prev* snapshot
@@ -5208,6 +5215,24 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseStatus(int num)
   DendStatus[num] = dendstatus;
   return true;
  }
+
+ // PeakLocked / unmeasured bursts leave MaxIterSomaAmp==0 and PeakSeen==false.
+ // Treating that as "amp short of Initial" would grow N without evidence.
+ // A measured but subthreshold peak (PeakSeen or MaxAmp>floor) may still add
+ // contacts — that is the structural dead-tip recovery path.
+ {
+  const bool peak_attempted =
+   (num < int(PeakSeen.size()) && PeakSeen[static_cast<size_t>(num)])
+   || (num < int(MaxIterSomaAmp.size())
+       && MaxIterSomaAmp[static_cast<size_t>(num)] > 1.0e-12);
+  if(!peak_attempted)
+  {
+   SynapseStatus[num] = 0;
+   AmpDifference[num] = 0.0;
+   DendStatus[num] = dendstatus;
+   return true;
+  }
+ }
  
  double dt = InitialSomaPotential[num] - MaxIterSomaAmp[num];
  
@@ -7042,6 +7067,13 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
      && k >= 0 && k < n - 1
      && k < int(PulseSynced.size()) && !PulseSynced[static_cast<size_t>(k)])
   {
+   // Anchor-rebootstrap bursts PeakLock i < ActivePulseIndex, so only the
+   // reference is measured. Do not promote an unmeasured pulse to PulseSynced
+   // from a stale Dissynchronization≈0 left over from the pre-edit model.
+   const bool peak_measured_this_burst = (k < int(PeakSeen.size())
+    && PeakSeen[static_cast<size_t>(k)])
+    || (k < int(SomaPeakValid.size())
+        && SomaPeakValid[static_cast<size_t>(k)]);
    const bool length_ok = (k < int(DendLastAbsDt.size())
     && DendLastAbsDt[static_cast<size_t>(k)] <= tol)
     || ((k < int(DendBestEffortSynced.size()))
@@ -7049,7 +7081,7 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
     || ((k < int(DendStatus.size())) && DendStatus[static_cast<size_t>(k)] == 0
         && k < int(Dissynchronization.size())
         && fabs(Dissynchronization[static_cast<size_t>(k)]) <= tol);
-   if(length_ok && AllSynapsesNormalized())
+   if(peak_measured_this_burst && length_ok && AllSynapsesNormalized())
    {
     const int ref = n - 1;
     bool seg_ok = true;
