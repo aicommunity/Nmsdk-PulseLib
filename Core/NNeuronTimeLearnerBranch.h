@@ -1144,9 +1144,11 @@ protected:
  
  /// Choose ActiveDendrite / ActivePulseIndex for this burst
  int SelectActiveDendrite() const;
- /// Structural edits change the shared soma response and invalidate every
- /// committed pulse peak, including the reference anchor.
- void InvalidatePulseSyncAfterStructuralChange();
+ /// Structural edits change the shared soma response. When edited_pulse is the
+ /// active non-anchor pulse, reopen sync only for indices <= edited_pulse so the
+ /// reverse-train cursor stays on that pulse; pass -1 for a full reopen including
+ /// the reference anchor (tests / unknown edit).
+ void InvalidatePulseSyncAfterStructuralChange(int edited_pulse = -1);
  
  /// Save current PeakRel/Delay as Prev* snapshot
  void CommitPrevPeakSnapshot(void);

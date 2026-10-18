@@ -2175,32 +2175,55 @@ int NNeuronTimeLearnerBranch::SelectActiveDendrite() const
  return 0;
 }
 
-void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange()
+void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange(int edited_pulse)
 {
- // A length or synapse-count edit changes the shared soma response. Previously
- // committed peak times, best-effort sync decisions, and no-improve counters are
- // no longer evidence for the edited model. Rebootstrap the reference from the
- // next measured burst.
- // The pending one-step commands were derived from the pre-edit response. The
- // anchor-rebootstrap burst can defer recalculating them, so carrying them over
- // would repeatedly apply a stale length/count direction to the changed model.
+ // A length or synapse-count edit changes the shared soma response for the
+ // edited pulse and every earlier reverse-train target. Full reopen (edited_pulse
+ // < 0 or edit on/after the anchor) still clears the reference. Scoped reopen
+ // keeps the anchor (and any already-committed later pulses) so SelectActive
+ // returns the edited pulse instead of thrashing Active to N-1 every ±1 length
+ // step (W10 @25 ms L=3↔4 stall).
  // Reopen DendLastAbsDt with a large sentinel so length_ok cannot pass on the
- // first clause alone. Do NOT overwrite Dissynchronization: finish already
- // requires PeakSeen/SomaPeakValid before PulseSynced, and poisoning Dissync
- // with IterationGap breaks length sign-flip damping (3↔4 oscillation on W10
- // @25 ms) and previously fed EstDelayPerSeg via LastLengthDelta.
+ // first clause alone. Dissynchronization is left intact for sign-flip damping;
+ // finish requires PeakSeen before PulseSynced.
+ const int n = NumInputDendrite.GetData();
  const double reopen_sentinel = IterationGap.GetData() + 0.001;
- std::fill(PulseSynced.begin(), PulseSynced.end(), false);
- std::fill(DendBestEffortSynced.begin(), DendBestEffortSynced.end(), false);
- std::fill(DendStatus.begin(), DendStatus.end(), 0);
- std::fill(SynapseStatus.begin(), SynapseStatus.end(), 0);
- std::fill(AmpDifference.begin(), AmpDifference.end(), 0.0);
- std::fill(NoImproveCount.begin(), NoImproveCount.end(), 0);
- std::fill(InvalidPeakNoActionCount.begin(), InvalidPeakNoActionCount.end(), 0);
- std::fill(DendLastAbsDt.begin(), DendLastAbsDt.end(), reopen_sentinel);
- // The length apply that triggered this reopen already consumed its before/after
- // error pair for EstDelayPerSeg; clear so the next peak does not treat a stale
- // apply delta as fresh evidence.
+ const int clear_through = (edited_pulse >= 0 && edited_pulse < n - 1)
+  ? edited_pulse : (n - 1);
+ const auto clear_index = [&](int i)
+ {
+  if(i < 0 || i >= n)
+   return;
+  const size_t idx = static_cast<size_t>(i);
+  if(idx < PulseSynced.size())
+   PulseSynced[idx] = false;
+  if(idx < DendBestEffortSynced.size())
+   DendBestEffortSynced[idx] = false;
+  if(idx < DendStatus.size())
+   DendStatus[idx] = 0;
+  if(idx < SynapseStatus.size())
+   SynapseStatus[idx] = 0;
+  if(idx < AmpDifference.size())
+   AmpDifference[idx] = 0.0;
+  if(idx < NoImproveCount.size())
+   NoImproveCount[idx] = 0;
+  if(idx < InvalidPeakNoActionCount.size())
+   InvalidPeakNoActionCount[idx] = 0;
+  if(idx < DendLastAbsDt.size())
+   DendLastAbsDt[idx] = reopen_sentinel;
+ };
+ for(int i = 0; i <= clear_through; ++i)
+  clear_index(i);
+ // Pending length/synapse commands were derived from the pre-edit response.
+ for(int i = 0; i < n; ++i)
+ {
+  if(i < int(DendStatus.size()))
+   DendStatus[static_cast<size_t>(i)] = 0;
+  if(i < int(SynapseStatus.size()))
+   SynapseStatus[static_cast<size_t>(i)] = 0;
+  if(i < int(AmpDifference.size()))
+   AmpDifference[static_cast<size_t>(i)] = 0.0;
+ }
  LastLengthDelta = 0;
  LastLengthDeltaDendrite = -1;
 }
@@ -7065,6 +7088,8 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
   // Apply length then synapses in one inter-burst gap (tip after Build/relink).
   const std::vector<int> audit_lengths_before = DendriteLength.GetData();
   const std::vector<int> audit_synapses_before = NumSynapse.GetData();
+  // Capture before apply/sync: sync success may move ActivePulseIndex to k-1.
+  const int structural_edit_pulse = ActivePulseIndex;
   if(TrainingPhase != kPhaseDone && TrainingPhase != kPhaseFailed
      && IsNeedToTrain && CanChangeDendLength)
    ApplyPendingDendriteLengthChanges();
@@ -7152,8 +7177,9 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
   if(structural_model_changed)
   {
    // The structural amplitude tracker has discarded measurements for this
-   // changed model. Reopen the corresponding sync sequence as well.
-   InvalidatePulseSyncAfterStructuralChange();
+   // changed model. Reopen sync for the edited pulse and earlier targets;
+   // keep a committed anchor so reverse-train does not bounce to N-1.
+   InvalidatePulseSyncAfterStructuralChange(structural_edit_pulse);
    ActivePulseIndex = SelectActiveDendrite();
    ActiveDendrite = ActivePulseIndex;
    ApplyPulseGeneratorMute();
