@@ -4923,6 +4923,18 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
      && num < int(ExpectedPulseRelTimes.size())
      && ref < int(PrevPeakRel.size()))
   {
+   // Empty measure windows (PeakSeen=false, MaxAmp==0) are not evidence of
+   // amplitude collapse. Counting them toward InvalidPeakNoRecovery made the
+   // post-invalidate rebootstrap thrash refuse N1 W10 seeds (br25_*) within a
+   // few bursts after the first length step. Only a real peak attempt may arm
+   // the no-recovery stall counter.
+   const bool peak_attempted = (num < int(PeakSeen.size())
+    && PeakSeen[static_cast<size_t>(num)])
+    || (num < int(MaxIterSomaAmp.size())
+        && MaxIterSomaAmp[static_cast<size_t>(num)] > 1.0e-12);
+   if(!peak_attempted)
+    return true;
+
    const double expected_k = ExpectedPulseRelTimes[static_cast<size_t>(num)];
    const double needed = MeanStoredPeakRel(num) - expected_k;
    const double delay_len = DelayLenOf(num);
