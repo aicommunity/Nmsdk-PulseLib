@@ -2184,11 +2184,11 @@ void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange()
  // The pending one-step commands were derived from the pre-edit response. The
  // anchor-rebootstrap burst can defer recalculating them, so carrying them over
  // would repeatedly apply a stale length/count direction to the changed model.
- // Dissynchronization must be reopened with the same large sentinel as
- // DendLastAbsDt. Leaving a pre-edit |dt|≈0 would make the finish-iteration
- // length_ok clause true without a new peak, so higher pulses would be marked
- // PulseSynced again on the anchor-rebootstrap burst and Active would skip
- // straight back to the edited pulse (1↔N-1 thrash on W04).
+ // Reopen DendLastAbsDt with a large sentinel so length_ok cannot pass on the
+ // first clause alone. Do NOT overwrite Dissynchronization: finish already
+ // requires PeakSeen/SomaPeakValid before PulseSynced, and poisoning Dissync
+ // with IterationGap breaks length sign-flip damping (3↔4 oscillation on W10
+ // @25 ms) and previously fed EstDelayPerSeg via LastLengthDelta.
  const double reopen_sentinel = IterationGap.GetData() + 0.001;
  std::fill(PulseSynced.begin(), PulseSynced.end(), false);
  std::fill(DendBestEffortSynced.begin(), DendBestEffortSynced.end(), false);
@@ -2198,11 +2198,9 @@ void NNeuronTimeLearnerBranch::InvalidatePulseSyncAfterStructuralChange()
  std::fill(NoImproveCount.begin(), NoImproveCount.end(), 0);
  std::fill(InvalidPeakNoActionCount.begin(), InvalidPeakNoActionCount.end(), 0);
  std::fill(DendLastAbsDt.begin(), DendLastAbsDt.end(), reopen_sentinel);
- std::fill(Dissynchronization.begin(), Dissynchronization.end(), reopen_sentinel);
  // The length apply that triggered this reopen already consumed its before/after
- // error pair. Clearing LastLengthDelta prevents the next valid peak from
- // treating reopen_sentinel as prev_dt and poisoning EstDelayPerSeg (W10 N1
- // windows jumped 0.005→0.15 s/seg and never saw the active pulse again).
+ // error pair for EstDelayPerSeg; clear so the next peak does not treat a stale
+ // apply delta as fresh evidence.
  LastLengthDelta = 0;
  LastLengthDeltaDendrite = -1;
 }
