@@ -5209,15 +5209,63 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
    }
    if(metrics_ok && gap < 1e-4)
     landscape_ok = false;
-   if(!metrics_ok || !landscape_ok)
+   // A→B→C: ideal mid → best-effort candidate (partial sep) → KeepDone TipR + silent
+   // for Test inference. Do not mask Canon NonSeparable as FixedLTZ=1.0 while TipR
+   // stays CanonRmin-flattened (N+1 D3 / A2.4).
+   bool partial_sep = false;
+   if(metrics_ok)
+   {
+    for(size_t fi = 0; fi < foils.size(); ++fi)
+    {
+     if(foils[fi] < tgt)
+     {
+      partial_sep = true;
+      break;
+     }
+    }
+   }
+   const int tip_mode = PostTrainTipResistanceMode.GetData();
+   const bool search_train_silent = !inference
+    && tip_mode == PostTrainTune::kPostTipSearchSynthetic;
+   if(search_train_silent)
+   {
     mid = PostTrainSilentThreshold.GetData();
-   // Always assign Result for THIS attempt (R04 — no stale Success).
-   if(!metrics_ok)
-    PostTuneResult = PostTrainTune::kResultInvalidMetrics;
-   else if(!landscape_ok)
-    PostTuneResult = PostTrainTune::kResultNonSeparable;
-   else
+    if(!metrics_ok)
+     PostTuneResult = PostTrainTune::kResultInvalidMetrics;
+    else if(!landscape_ok)
+     PostTuneResult = PostTrainTune::kResultNonSeparable;
+    else
+     PostTuneResult = PostTrainTune::kResultSuccess;
+   }
+   else if(metrics_ok && landscape_ok)
+   {
     PostTuneResult = PostTrainTune::kResultSuccess;
+   }
+   else if(metrics_ok && partial_sep && std::isfinite(candidate_mid)
+           && std::isfinite(tgt) && candidate_mid > 0.0 && candidate_mid < tgt)
+   {
+    mid = candidate_mid;
+    PostTuneResult = PostTrainTune::kResultBestEffort;
+   }
+   else if(!inference && metrics_ok && !PostTuneTipSnapshot.empty()
+           && tip_mode != PostTrainTune::kPostTipKeepDone
+           && tip_mode != PostTrainTune::kPostTipOff)
+   {
+    ApplyPostTrainTipMode(true);
+    mid = PostTrainSilentThreshold.GetData();
+    PostTuneResult = PostTrainTune::kResultRevertedKeepDone;
+    if(RDK::GetLogger())
+     RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearner",
+      "PostTune: Canon/Flat landscape fail → KeepDone TipR, silent mid for Test");
+   }
+   else
+   {
+    mid = PostTrainSilentThreshold.GetData();
+    if(!metrics_ok)
+     PostTuneResult = PostTrainTune::kResultInvalidMetrics;
+    else
+     PostTuneResult = PostTrainTune::kResultNonSeparable;
+   }
   }
   FixedLTZThreshold.SetDataDirect(mid);
   CalibratedFixedLTZThreshold.SetDataDirect(mid);

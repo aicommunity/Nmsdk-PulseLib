@@ -6384,22 +6384,62 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
     RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch", oss.str());
    }
   }
-  // Train in-process free-run often underestimates Test SB=2 peaks (~0.066 vs ~0.072)
-  // and can invert foils. Keep silent thr so Test inference mid can run.
-  // Search: always leave silent on Train — Test recomputes mid (phase8 skip-tipr-mid).
-  // Inference: never lock a failed landscape mid (would skip Test re-probe).
-  if(!metrics_ok || !landscape_ok
-     || (!inference
-         && PostTrainTipResistanceMode.GetData()
-            == PostTrainTune::kPostTipSearchSynthetic))
+  // A→B→C policy (same as Classic). SearchSynthetic on Train still leaves silent mid
+  // so Test inference mid can recompute (phase8 skip-tipr-mid).
+  bool partial_sep = false;
+  if(metrics_ok)
+  {
+   for(size_t fi = 0; fi < foils.size(); ++fi)
+   {
+    if(foils[fi] < tgt)
+    {
+     partial_sep = true;
+     break;
+    }
+   }
+  }
+  const int tip_mode = PostTrainTipResistanceMode.GetData();
+  const bool search_train_silent = !inference
+   && tip_mode == PostTrainTune::kPostTipSearchSynthetic;
+  if(search_train_silent)
+  {
    mid = PostTrainSilentThreshold.GetData();
-  // Always assign Result for THIS attempt (R04).
-  if(!metrics_ok)
-   PostTuneResult = PostTrainTune::kResultInvalidMetrics;
-  else if(!landscape_ok)
-   PostTuneResult = PostTrainTune::kResultNonSeparable;
-  else
+   if(!metrics_ok)
+    PostTuneResult = PostTrainTune::kResultInvalidMetrics;
+   else if(!landscape_ok)
+    PostTuneResult = PostTrainTune::kResultNonSeparable;
+   else
+    PostTuneResult = PostTrainTune::kResultSuccess;
+  }
+  else if(metrics_ok && landscape_ok)
+  {
    PostTuneResult = PostTrainTune::kResultSuccess;
+  }
+  else if(metrics_ok && partial_sep && std::isfinite(candidate_mid)
+          && std::isfinite(tgt) && candidate_mid > 0.0 && candidate_mid < tgt)
+  {
+   mid = candidate_mid;
+   PostTuneResult = PostTrainTune::kResultBestEffort;
+  }
+  else if(!inference && metrics_ok && !PostTuneTipSnapshot.empty()
+          && tip_mode != PostTrainTune::kPostTipKeepDone
+          && tip_mode != PostTrainTune::kPostTipOff)
+  {
+   ApplyPostTrainTipMode(true);
+   mid = PostTrainSilentThreshold.GetData();
+   PostTuneResult = PostTrainTune::kResultRevertedKeepDone;
+   if(RDK::GetLogger())
+    RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch",
+     "PostTune: Canon/Flat landscape fail → KeepDone TipR, silent mid for Test");
+  }
+  else
+  {
+   mid = PostTrainSilentThreshold.GetData();
+   if(!metrics_ok)
+    PostTuneResult = PostTrainTune::kResultInvalidMetrics;
+   else
+    PostTuneResult = PostTrainTune::kResultNonSeparable;
+  }
   }
   FixedLTZThreshold = mid;
   CalibratedFixedLTZThreshold = mid;

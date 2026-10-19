@@ -27,6 +27,10 @@ inline constexpr int kResultNonSeparable = 2;
 inline constexpr int kResultSetupFailure = 3;
 inline constexpr int kResultTimeout = 4;
 inline constexpr int kResultInvalidMetrics = 5;
+/// Ideal LandscapeOk failed, but applied candidate mid so target can still react.
+inline constexpr int kResultBestEffort = 6;
+/// TipR reverted to PostTuneTipSnapshot (KeepDone); mid left silent for Test inference.
+inline constexpr int kResultRevertedKeepDone = 7;
 
 /// Per-sample free-run observation (0 amp ≠ unobserved).
 struct SampleMetricState
