@@ -6413,19 +6413,11 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
    mid = candidate_mid;
    PostTuneResult = PostTrainTune::kResultBestEffort;
   }
-  else if(!inference && metrics_ok && !PostTuneTipSnapshot.empty()
-          && tip_mode != PostTrainTune::kPostTipKeepDone
-          && tip_mode != PostTrainTune::kPostTipOff)
-  {
-   ApplyPostTrainTipMode(true);
-   mid = PostTrainSilentThreshold.GetData();
-   PostTuneResult = PostTrainTune::kResultRevertedKeepDone;
-   if(RDK::GetLogger())
-    RDK::GetLogger()->LogMessage(RDK_EX_INFO, "NNeuronTimeLearnerBranch",
-     "PostTune: Canon/Flat landscape fail → KeepDone TipR, silent mid for Test");
-  }
   else
   {
+   // TipR unchanged; silent mid gates Test inference re-probe. Auto KeepDone TipR
+   // broke PASS×3 preinh@50/100 (Test NonSeparable on Done TipR). D3 gen: use
+   // PostTrainTipResistanceMode=KeepDone or PostTune OFF (A2.1).
    mid = PostTrainSilentThreshold.GetData();
    if(!metrics_ok)
     PostTuneResult = PostTrainTune::kResultInvalidMetrics;
