@@ -5207,23 +5207,14 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
     mid = PostTrainSilentThreshold.GetData();
     gap = 0.0;
    }
+   // Tiny-gap: foils all below tgt but gap < 1e-4 — still a usable mid (best-effort).
+   // If any foil >= tgt, candidate mid cannot be selective (would fire that foil).
+   const bool foils_all_below = metrics_ok
+    && PostTrainTune::LandscapeOk(tgt, foils);
+   const bool tiny_gap_fail = foils_all_below && gap < 1e-4;
    if(metrics_ok && gap < 1e-4)
     landscape_ok = false;
-   // A→B→C: ideal mid → best-effort candidate (partial sep) → KeepDone TipR + silent
-   // for Test inference. Do not mask Canon NonSeparable as FixedLTZ=1.0 while TipR
-   // stays CanonRmin-flattened (N+1 D3 / A2.4).
-   bool partial_sep = false;
-   if(metrics_ok)
-   {
-    for(size_t fi = 0; fi < foils.size(); ++fi)
-    {
-     if(foils[fi] < tgt)
-     {
-      partial_sep = true;
-      break;
-     }
-    }
-   }
+   // A→B→C: ideal → tiny-gap best-effort mid → KeepDone TipR + silent for Test.
    const int tip_mode = PostTrainTipResistanceMode.GetData();
    const bool search_train_silent = !inference
     && tip_mode == PostTrainTune::kPostTipSearchSynthetic;
@@ -5241,7 +5232,7 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
    {
     PostTuneResult = PostTrainTune::kResultSuccess;
    }
-   else if(metrics_ok && partial_sep && std::isfinite(candidate_mid)
+   else if(tiny_gap_fail && std::isfinite(candidate_mid)
            && std::isfinite(tgt) && candidate_mid > 0.0 && candidate_mid < tgt)
    {
     mid = candidate_mid;
