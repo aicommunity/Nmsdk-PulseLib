@@ -6415,7 +6415,10 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
   {
    PostTuneResult = PostTrainTune::kResultSuccess;
   }
-  else if(metrics_ok && partial_sep && std::isfinite(candidate_mid)
+  // Branch Train free-run peaks often underestimate Test SB=2; locking a
+  // best-effort mid (<0.9) skips MaybeStartInferenceMidProbes and breaks PASS.
+  // Prefer KeepDone TipR + silent mid so Test can recompute (same as Search).
+  else if(inference && metrics_ok && partial_sep && std::isfinite(candidate_mid)
           && std::isfinite(tgt) && candidate_mid > 0.0 && candidate_mid < tgt)
   {
    mid = candidate_mid;
