@@ -827,6 +827,7 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";prefer_measured_delay=" << (PreferMeasuredDelay.GetData() ? 1 : 0)
         << ";reset_before_train_burst=" << (ResetNeuronBeforeTrainBurst.GetData() ? 1 : 0)
         << ";mark_rmin_tol_as_be=" << (MarkRminLengthTolAsBestEffort.GetData() ? 1 : 0)
+        << ";disable_midband_walk_to_rmin=" << (DisableMidbandWalkToRmin.GetData() ? 1 : 0)
         << ";done_best_effort=" << (TrainingDoneBestEffort.GetData() ? 1 : 0)
         << ";est_delay_per_seg_init=" << EstDelayPerSegInit.GetData()
         << ";enable_posttrain_tuning=" << (EnablePostTrainTuning.GetData() ? 1 : 0)
@@ -2891,6 +2892,7 @@ NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
  PreferMeasuredDelay("PreferMeasuredDelay", this),
  ResetNeuronBeforeTrainBurst("ResetNeuronBeforeTrainBurst", this),
  MarkRminLengthTolAsBestEffort("MarkRminLengthTolAsBestEffort", this),
+ DisableMidbandWalkToRmin("DisableMidbandWalkToRmin", this),
  TrainingDoneBestEffort("TrainingDoneBestEffort", this),
  EstDelayPerSegInit("EstDelayPerSegInit", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearnerBranch::SetSynapseResistanceBase),
@@ -4154,6 +4156,7 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  PreferMeasuredDelay = false;
  ResetNeuronBeforeTrainBurst = false;
  MarkRminLengthTolAsBestEffort = false;
+ DisableMidbandWalkToRmin = false;
  TrainingDoneBestEffort = false;
  EstDelayPerSegInit = 0.0;
  SynapseResistanceBase = kSynapseResistanceBioDefault;

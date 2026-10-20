@@ -725,6 +725,7 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";prefer_measured_delay=" << (PreferMeasuredDelay.GetData() ? 1 : 0)
         << ";reset_before_train_burst=" << (ResetNeuronBeforeTrainBurst.GetData() ? 1 : 0)
         << ";mark_rmin_tol_as_be=" << (MarkRminLengthTolAsBestEffort.GetData() ? 1 : 0)
+        << ";disable_midband_walk_to_rmin=" << (DisableMidbandWalkToRmin.GetData() ? 1 : 0)
         << ";done_best_effort=" << (TrainingDoneBestEffort.GetData() ? 1 : 0)
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
@@ -1556,7 +1557,8 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   }
   else
   {
-  const bool midband_walk = (r_old > rmin * (1.0 + 1e-6))
+  const bool midband_walk = (!DisableMidbandWalkToRmin.GetData())
+   && (r_old > rmin * (1.0 + 1e-6))
    && (fabs(dt) <= kAmpOscillationBand);
   if(midband_walk)
   {
@@ -2026,6 +2028,7 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  PreferMeasuredDelay("PreferMeasuredDelay", this),
  ResetNeuronBeforeTrainBurst("ResetNeuronBeforeTrainBurst", this),
  MarkRminLengthTolAsBestEffort("MarkRminLengthTolAsBestEffort", this),
+ DisableMidbandWalkToRmin("DisableMidbandWalkToRmin", this),
  TrainingDoneBestEffort("TrainingDoneBestEffort", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this),
@@ -3298,6 +3301,7 @@ bool NNeuronTimeLearner::ADefault(void)
  PreferMeasuredDelay = false;
  ResetNeuronBeforeTrainBurst = false;
  MarkRminLengthTolAsBestEffort = false;
+ DisableMidbandWalkToRmin = false;
  TrainingDoneBestEffort = false;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
  ResistanceMin.SetDataDirect(1.0e6);

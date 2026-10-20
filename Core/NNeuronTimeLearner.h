@@ -161,6 +161,8 @@ public:
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> ResetNeuronBeforeTrainBurst;
  /// F7/A3: TipR@Rmin + LastAbsDt within RminLengthTolFactor*tol counts as Done_BE, not exact.
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> MarkRminLengthTolAsBestEffort;
+ /// F6/A6: do not floor TipR to Rmin via midband walk (keep damped / step path).
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> DisableMidbandWalkToRmin;
  /// Set true when EndOfLearning accepted via any best-effort escape (Done_BE).
  UProperty<bool, NNeuronTimeLearner, ptPubState> TrainingDoneBestEffort;
  
