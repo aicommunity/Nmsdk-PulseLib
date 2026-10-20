@@ -824,6 +824,10 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";use_signed_delay_estimate=" << (UseSignedDelayEstimate.GetData() ? 1 : 0)
         << ";rmin_length_tol_factor=" << RminLengthTolFactorValue()
         << ";freeze_synapse_resistance_base=" << (FreezeSynapseResistanceBase.GetData() ? 1 : 0)
+        << ";prefer_measured_delay=" << (PreferMeasuredDelay.GetData() ? 1 : 0)
+        << ";reset_before_train_burst=" << (ResetNeuronBeforeTrainBurst.GetData() ? 1 : 0)
+        << ";mark_rmin_tol_as_be=" << (MarkRminLengthTolAsBestEffort.GetData() ? 1 : 0)
+        << ";done_best_effort=" << (TrainingDoneBestEffort.GetData() ? 1 : 0)
         << ";est_delay_per_seg_init=" << EstDelayPerSegInit.GetData()
         << ";enable_posttrain_tuning=" << (EnablePostTrainTuning.GetData() ? 1 : 0)
         << ";enable_posttrain_mid_threshold=" << (EnablePostTrainMidThreshold.GetData() ? 1 : 0)
@@ -2315,10 +2319,12 @@ double NNeuronTimeLearnerBranch::DelayLenOf(int num) const
 double NNeuronTimeLearnerBranch::DelayUseOf(int num, double expected_k, double delay_meas) const
 {
  const double delay_len = DelayLenOf(num);
+ const bool peak_valid = (num < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(num)];
+ if(PreferMeasuredDelay.GetData() && peak_valid)
+  return delay_meas;
  // Tight margin: loose PeakMeasureMargin-scale agree allowed PeakRel-aligned
  // delay_meas to "agree" while delay_len still disagreed (L1 stopped early).
  const double agree_margin = std::max(SyncTolerance.GetData(), DelayAgreeMarginMin.GetData());
- const bool peak_valid = (num < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(num)];
  const double peak_meas = (num < int(PeakRel.size())) ? PeakRel[static_cast<size_t>(num)] : 0.0;
  const double peak_model = expected_k + delay_len;
  const bool meas_agrees = peak_valid
@@ -2882,6 +2888,10 @@ NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
  UseSignedDelayEstimate("UseSignedDelayEstimate", this),
  RminLengthTolFactor("RminLengthTolFactor", this),
  FreezeSynapseResistanceBase("FreezeSynapseResistanceBase", this),
+ PreferMeasuredDelay("PreferMeasuredDelay", this),
+ ResetNeuronBeforeTrainBurst("ResetNeuronBeforeTrainBurst", this),
+ MarkRminLengthTolAsBestEffort("MarkRminLengthTolAsBestEffort", this),
+ TrainingDoneBestEffort("TrainingDoneBestEffort", this),
  EstDelayPerSegInit("EstDelayPerSegInit", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearnerBranch::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this),
@@ -4141,6 +4151,10 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  UseSignedDelayEstimate = false;
  RminLengthTolFactor = kRminLengthTolFactor;
  FreezeSynapseResistanceBase = false;
+ PreferMeasuredDelay = false;
+ ResetNeuronBeforeTrainBurst = false;
+ MarkRminLengthTolAsBestEffort = false;
+ TrainingDoneBestEffort = false;
  EstDelayPerSegInit = 0.0;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
  ResistanceMin.SetDataDirect(1.0e6);
@@ -5200,7 +5214,11 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
  const double delay_len = DelayLenOf(num);
  const double delay_use = DelayUseOf(num, expected_k, delay_k);
  const bool meas_agrees = (fabs(delay_use - delay_k) < 1e-15);
- const double dt = needed - delay_use;
+ const bool num_valid_peak = (num < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(num)];
+ const double measured_dt = needed - delay_k;
+ const double dt = (PreferMeasuredDelay.GetData() && num_valid_peak)
+  ? measured_dt
+  : (needed - delay_use);
  const double prev_dt = (num < int(PrevDissynchronization.size()))
   ? PrevDissynchronization[num] : 0.0;
  
@@ -5774,6 +5792,30 @@ bool NNeuronTimeLearnerBranch::EndOfLearning(void)
  }
  if(!synced || !normalized)
   return false;
+
+ {
+  bool be = false;
+  const int n = NumInputDendrite.GetData();
+  const double tol = SyncTolerance.GetData();
+  for(int i = 0; i < n - 1; ++i)
+  {
+   if(i < int(DendBestEffortSynced.size()) && DendBestEffortSynced[static_cast<size_t>(i)])
+    be = true;
+   if(MarkRminLengthTolAsBestEffort.GetData() || PreferMeasuredDelay.GetData())
+   {
+    const double rmin = GetResistanceMinForInput(i);
+    const bool at_r_min = (i < int(TipSynapseResistance.size()))
+     && (TipSynapseResistance[static_cast<size_t>(i)] <= rmin * (1.0 + 1e-6));
+    const bool length_ok = (i < int(DendLastAbsDt.size()))
+     && (DendLastAbsDt[static_cast<size_t>(i)] <= tol);
+    const bool rmin_ok = at_r_min && (i < int(DendLastAbsDt.size()))
+     && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * RminLengthTolFactorValue());
+    if(rmin_ok && !length_ok)
+     be = true;
+   }
+  }
+  TrainingDoneBestEffort = be;
+ }
  
  Neuron->TrainingPattern = InputPattern;
  
@@ -6901,6 +6943,8 @@ int NNeuronTimeLearnerBranch::DetectNewImpulseCount(void)
 /// Start a training burst/iteration at time now
 void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
 {
+ if(ResetNeuronBeforeTrainBurst.GetData() && Neuron)
+  Neuron->Reset();
  StartIterTime = now;
  FirstImpulseTime = now;
  AuditBurstStartEstDelayPerSeg = EstDelayPerSeg;

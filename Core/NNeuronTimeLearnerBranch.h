@@ -155,6 +155,14 @@ public:
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> RminLengthTolFactor;
  /// F8/A14: do not overwrite SynapseResistanceBase from the measured tip synapse.
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> FreezeSynapseResistanceBase;
+ /// F2/A1: when peak is valid, use measured delay for Done/error; model only for step sizing.
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> PreferMeasuredDelay;
+ /// F3/A5: Neuron->Reset() at the start of every training burst (deterministic IC).
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> ResetNeuronBeforeTrainBurst;
+ /// F7/A3: TipR@Rmin + LastAbsDt within RminLengthTolFactor*tol counts as Done_BE, not exact.
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> MarkRminLengthTolAsBestEffort;
+ /// Set true when EndOfLearning accepted via any best-effort escape (Done_BE).
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubState> TrainingDoneBestEffort;
  /// Initial per-segment delay estimate (s); <=0 keeps kDelayPerSegDefault. Set to Rm*C.
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> EstDelayPerSegInit;
  

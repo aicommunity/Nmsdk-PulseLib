@@ -722,6 +722,10 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";use_signed_delay_estimate=" << (UseSignedDelayEstimate.GetData() ? 1 : 0)
         << ";rmin_length_tol_factor=" << RminLengthTolFactorValue()
         << ";freeze_synapse_resistance_base=" << (FreezeSynapseResistanceBase.GetData() ? 1 : 0)
+        << ";prefer_measured_delay=" << (PreferMeasuredDelay.GetData() ? 1 : 0)
+        << ";reset_before_train_burst=" << (ResetNeuronBeforeTrainBurst.GetData() ? 1 : 0)
+        << ";mark_rmin_tol_as_be=" << (MarkRminLengthTolAsBestEffort.GetData() ? 1 : 0)
+        << ";done_best_effort=" << (TrainingDoneBestEffort.GetData() ? 1 : 0)
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
         << ";freeze_tip_r_after_first_sync=" << (FreezeTipResistanceAfterFirstSync.GetData() ? 1 : 0)
@@ -1788,7 +1792,10 @@ void NNeuronTimeLearner::RefreshDendLastAbsDtFromPrevAnchor(void)
   const double delay_use = peak_valid
    ? DelayUseOf(i, expected_k, delay_meas)
    : DelayLenOf(i);
-  const double abs_dt = fabs(needed - delay_use);
+  // F2: LastAbsDt for Done must reflect measured residual when a peak exists.
+  const double abs_dt = (PreferMeasuredDelay.GetData() && peak_valid)
+   ? fabs(needed - delay_meas)
+   : fabs(needed - delay_use);
   DendLastAbsDt[static_cast<size_t>(i)] = abs_dt;
   // Invalid/dead tip: length judged by cable model — mark best-effort so Done
   // does not wait for ActiveDendrite to rotate onto this dendrite.
@@ -1809,10 +1816,14 @@ double NNeuronTimeLearner::DelayLenOf(int num) const
 double NNeuronTimeLearner::DelayUseOf(int num, double expected_k, double delay_meas) const
 {
  const double delay_len = DelayLenOf(num);
+ const bool peak_valid = (num < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(num)];
+ // F2: valid peak → always use measured delay for Done/error; cable model remains
+ // available via DelayLenOf for step sizing in ChangeDendriteStatus.
+ if(PreferMeasuredDelay.GetData() && peak_valid)
+  return delay_meas;
  // Tight margin: loose PeakMeasureMargin-scale agree allowed PeakRel-aligned
  // delay_meas to "agree" while delay_len still disagreed (L1 stopped early).
  const double agree_margin = std::max(SyncTolerance.GetData(), DelayAgreeMarginMin.GetData());
- const bool peak_valid = (num < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(num)];
  const double peak_meas = (num < int(PeakRel.size())) ? PeakRel[static_cast<size_t>(num)] : 0.0;
  const double peak_model = expected_k + delay_len;
  const bool meas_agrees = peak_valid
@@ -2012,6 +2023,10 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  UseSignedDelayEstimate("UseSignedDelayEstimate", this),
  RminLengthTolFactor("RminLengthTolFactor", this),
  FreezeSynapseResistanceBase("FreezeSynapseResistanceBase", this),
+ PreferMeasuredDelay("PreferMeasuredDelay", this),
+ ResetNeuronBeforeTrainBurst("ResetNeuronBeforeTrainBurst", this),
+ MarkRminLengthTolAsBestEffort("MarkRminLengthTolAsBestEffort", this),
+ TrainingDoneBestEffort("TrainingDoneBestEffort", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this),
  ResistanceMinRatio("ResistanceMinRatio", this),
@@ -3280,6 +3295,10 @@ bool NNeuronTimeLearner::ADefault(void)
  UseSignedDelayEstimate = false;
  RminLengthTolFactor = kRminLengthTolFactor;
  FreezeSynapseResistanceBase = false;
+ PreferMeasuredDelay = false;
+ ResetNeuronBeforeTrainBurst = false;
+ MarkRminLengthTolAsBestEffort = false;
+ TrainingDoneBestEffort = false;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
  ResistanceMin.SetDataDirect(1.0e6);
  ResistanceMinRatio.SetDataDirect(0.0);
@@ -4209,7 +4228,10 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
  const bool meas_agrees = (fabs(delay_use - delay_k) < 1e-15);
  const double measured_dt = needed - delay_k;
  const bool peak_synced = num_valid && (fabs(measured_dt) <= SyncTolerance.GetData());
- const double dt = needed - delay_use;
+ // F2: error for Done/grow gate uses measured residual when peak is valid.
+ const double dt = (PreferMeasuredDelay.GetData() && num_valid)
+  ? measured_dt
+  : (needed - delay_use);
  const double prev_dt = (num < int(PrevDissynchronization.size()))
   ? PrevDissynchronization[num] : 0.0;
  
@@ -4760,6 +4782,31 @@ bool NNeuronTimeLearner::EndOfLearning(void)
  }
  if(!synced || !normalized)
   return false;
+
+ // F2/F7: classify exact Done vs Done_BE (best-effort escapes / Rmin tol slack).
+ {
+  bool be = false;
+  const int n = NumInputDendrite.GetData();
+  const double tol = SyncTolerance.GetData();
+  for(int i = 0; i < n - 1; ++i)
+  {
+   if(i < int(DendBestEffortSynced.size()) && DendBestEffortSynced[static_cast<size_t>(i)])
+    be = true;
+   if(MarkRminLengthTolAsBestEffort.GetData() || PreferMeasuredDelay.GetData())
+   {
+    const double rmin = GetResistanceMinForInput(i);
+    const bool at_r_min = (i < int(TipSynapseResistance.size()))
+     && (TipSynapseResistance[static_cast<size_t>(i)] <= rmin * (1.0 + 1e-6));
+    const bool length_ok = (i < int(DendLastAbsDt.size()))
+     && (DendLastAbsDt[static_cast<size_t>(i)] <= tol);
+    const bool rmin_ok = at_r_min && (i < int(DendLastAbsDt.size()))
+     && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * RminLengthTolFactorValue());
+    if(rmin_ok && !length_ok)
+     be = true;
+   }
+  }
+  TrainingDoneBestEffort = be;
+ }
  
  Neuron->TrainingPattern = InputPattern;
  
@@ -5775,6 +5822,9 @@ int NNeuronTimeLearner::DetectNewImpulseCount(void)
 /// Start a training burst/iteration at time now
 void NNeuronTimeLearner::BeginTrainingIteration(double now)
 {
+ // F3: deterministic membrane IC before each training burst (opt-in).
+ if(ResetNeuronBeforeTrainBurst.GetData() && Neuron)
+  Neuron->Reset();
  StartIterTime = now;
  FirstImpulseTime = now;
  MaxIterSomaAmp.assign(NumInputDendrite, 0.0);
