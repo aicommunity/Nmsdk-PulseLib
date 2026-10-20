@@ -147,6 +147,16 @@ public:
  /// Mode 0 only: accept a stable lower integer synapse count when adjacent
  /// counts repeatedly straddle the requested amplitude.
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> AcceptQuantizedAmpUnderTarget;
+
+ /// Audit 2026-10-20 diagnostic switches (defaults reproduce d52dc1c behaviour).
+ /// F1/A2: refine EstDelayPerSeg from the signed change (prev_dt - dt)/dL, including overshoot.
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> UseSignedDelayEstimate;
+ /// F7/A3: LastAbsDt slack factor at TipR@Rmin/Rmax (was constexpr kRminLengthTolFactor=4).
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> RminLengthTolFactor;
+ /// F8/A14: do not overwrite SynapseResistanceBase from the measured tip synapse.
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> FreezeSynapseResistanceBase;
+ /// Initial per-segment delay estimate (s); <=0 keeps kDelayPerSegDefault. Set to Rm*C.
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> EstDelayPerSegInit;
  
  /// Reference tip synapse resistance at L==1 (typically 8.6e7)
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SynapseResistanceBase;
@@ -541,6 +551,12 @@ protected:
  
  /// Allow LastAbsDt up to this × SyncTolerance when TipR already @Rmin (AmpNorm b).
  static constexpr double kRminLengthTolFactor = 4.0;
+ /// Effective slack factor: RminLengthTolFactor when >= 1, otherwise the historical constant.
+ double RminLengthTolFactorValue(void) const
+ {
+  const double v = RminLengthTolFactor.GetData();
+  return (v >= 1.0) ? v : kRminLengthTolFactor;
+ }
  
  static constexpr double kGainOvershootFactor = 0.5;
  

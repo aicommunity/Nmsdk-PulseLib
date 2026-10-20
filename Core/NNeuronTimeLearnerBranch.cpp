@@ -186,7 +186,8 @@ void NNeuronTimeLearnerBranch::ResizeSyncVectors(int n)
  StoredPeakRel.assign(static_cast<size_t>(n), 0.0);
  PulseSynced.assign(static_cast<size_t>(n), false);
  HasPrevPeakSnapshot = false;
- EstDelayPerSeg = kDelayPerSegDefault;
+ EstDelayPerSeg = (EstDelayPerSegInit.GetData() > 0.0)
+  ? EstDelayPerSegInit.GetData() : kDelayPerSegDefault;
  LastLengthDelta = 0;
  LastLengthDeltaDendrite = -1;
  if(int(ResistanceStatus.size()) != n)
@@ -820,6 +821,10 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";max_dendrite_length=" << MaxDendriteLength.GetData()
         << ";normalization_mode=" << NormalizationMode.GetData()
         << ";accept_quantized_amp_under_target=" << (AcceptQuantizedAmpUnderTarget.GetData() ? 1 : 0)
+        << ";use_signed_delay_estimate=" << (UseSignedDelayEstimate.GetData() ? 1 : 0)
+        << ";rmin_length_tol_factor=" << RminLengthTolFactorValue()
+        << ";freeze_synapse_resistance_base=" << (FreezeSynapseResistanceBase.GetData() ? 1 : 0)
+        << ";est_delay_per_seg_init=" << EstDelayPerSegInit.GetData()
         << ";enable_posttrain_tuning=" << (EnablePostTrainTuning.GetData() ? 1 : 0)
         << ";enable_posttrain_mid_threshold=" << (EnablePostTrainMidThreshold.GetData() ? 1 : 0)
         << ";posttune_free_run_active=" << (PostTuneFreeRunActive ? 1 : 0)
@@ -1810,7 +1815,7 @@ bool NNeuronTimeLearnerBranch::ChangeSynapseResistanceStatus(int num)
   || ((num < int(DendBestEffortSynced.size()))
       && DendBestEffortSynced[static_cast<size_t>(num)])
   || ((at_r_min_ls || at_r_max_ls) && (num < int(DendLastAbsDt.size()))
-      && (DendLastAbsDt[static_cast<size_t>(num)] <= tol_len * kRminLengthTolFactor));
+      && (DendLastAbsDt[static_cast<size_t>(num)] <= tol_len * RminLengthTolFactorValue()));
  if(!DendStatus[num] && length_settled
     && (num < int(MaxIterSomaAmp.size()))
     && (MaxIterSomaAmp[num] < kMinMeasurableSomaAmp))
@@ -2874,6 +2879,10 @@ NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
  SynapseResistanceStep("SynapseResistanceStep", this, &NNeuronTimeLearnerBranch::SetSynapseResistanceStep),
  NormalizationMode("NormalizationMode", this, &NNeuronTimeLearnerBranch::SetNormalizationMode),
  AcceptQuantizedAmpUnderTarget("AcceptQuantizedAmpUnderTarget", this),
+ UseSignedDelayEstimate("UseSignedDelayEstimate", this),
+ RminLengthTolFactor("RminLengthTolFactor", this),
+ FreezeSynapseResistanceBase("FreezeSynapseResistanceBase", this),
+ EstDelayPerSegInit("EstDelayPerSegInit", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearnerBranch::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this),
  ResistanceMinRatio("ResistanceMinRatio", this),
@@ -4129,6 +4138,10 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  SynapseResistanceStep = 1.0e9;
  NormalizationMode = kNormParametric;
  AcceptQuantizedAmpUnderTarget = false;
+ UseSignedDelayEstimate = false;
+ RminLengthTolFactor = kRminLengthTolFactor;
+ FreezeSynapseResistanceBase = false;
+ EstDelayPerSegInit = 0.0;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
  ResistanceMin.SetDataDirect(1.0e6);
  ResistanceMinRatio.SetDataDirect(0.0);
@@ -4866,7 +4879,8 @@ bool NNeuronTimeLearnerBranch::MeasureMaxPotentialAndTime(void)
       tips.resize(static_cast<size_t>(NumInputDendrite), SynapseResistanceBase.GetData());
      tips[static_cast<size_t>(i)] = synapse->Resistance;
      TipSynapseResistance.SetDataDirect(tips);
-     if(i == 0 || SynapseResistanceBase.GetData() <= 0.0)
+     if(!FreezeSynapseResistanceBase.GetData()
+        && (i == 0 || SynapseResistanceBase.GetData() <= 0.0))
       SynapseResistanceBase = synapse->Resistance;
     }
    }
@@ -5004,7 +5018,7 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
    // invalid-peak length-recovery branch below must use the same Rmin-relaxed
    // timing band as the valid-peak path (SyncTol*kRminLengthTolFactor).
    const double length_accept_tol_inv = tip_at_rmin_inv
-    ? (sync_tol_inv * kRminLengthTolFactor) : sync_tol_inv;
+    ? (sync_tol_inv * RminLengthTolFactorValue()) : sync_tol_inv;
    const bool model_ok = fabs(dt) <= length_accept_tol_inv;
    const bool length_step_available = CanChangeDendLength
     && (num < int(DendriteLength.size()))
@@ -5202,7 +5216,19 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
  // Refine EstDelayPerSeg from previous grow on this dendrite.
  // Reject reopen sentinels (|prev_dt|≈IterationGap) and non-physical steps:
  // a 1.5→0 error over ΔL=3 would claim ~0.5 s/seg and miss all later peaks.
- if(had_length_grow && fabs(prev_dt) > 1e-12
+ if(UseSignedDelayEstimate.GetData())
+ {
+  // F1: signed refinement, valid also for overshoot and for shrink steps.
+  if(had_length_apply && applied_delta != 0 && fabs(prev_dt) > 1e-12
+     && fabs(prev_dt) < 0.5 * IterationGap.GetData())
+  {
+   const double observed = (prev_dt - dt) / double(applied_delta);
+   const double max_obs = std::max(0.05, 3.0 * EstDelayPerSeg);
+   if(observed > 1e-4 && observed < max_obs)
+    EstDelayPerSeg = 0.7 * EstDelayPerSeg + 0.3 * observed;
+  }
+ }
+ else if(had_length_grow && fabs(prev_dt) > 1e-12
     && fabs(prev_dt) < 0.5 * IterationGap.GetData()
     && fabs(dt) < fabs(prev_dt))
  {
@@ -5294,7 +5320,7 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
  // Invalidate clears BE/LastAbsDt every burst and PulseSynced never commits.
  const double sync_tol = SyncTolerance.GetData();
  const double length_accept_tol = tip_at_rmin
-  ? (sync_tol * kRminLengthTolFactor) : sync_tol;
+  ? (sync_tol * RminLengthTolFactorValue()) : sync_tol;
 
  if(dt == 0.0)
   DendStatus[num] = 0;
@@ -5605,7 +5631,7 @@ bool NNeuronTimeLearnerBranch::AllSynapsesNormalized(void) const
         && DendBestEffortSynced[static_cast<size_t>(i)])
     // AmpNorm(b): TipR@Rmin with LastAbsDt slightly above tight SyncTol
     || (at_r_min && (i < int(DendLastAbsDt.size()))
-        && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * kRminLengthTolFactor));
+        && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * RminLengthTolFactorValue()));
    
    // W1 E2: TipR@Rmin + length_ok — do not block Done on pending ResistanceStatus.
    if(i < int(ResistanceStatus.size()) && ResistanceStatus[i]

@@ -719,6 +719,9 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";max_dendrite_length=" << MaxDendriteLength.GetData()
         << ";normalization_mode=" << NormalizationMode.GetData()
         << ";accept_quantized_amp_under_target=" << (AcceptQuantizedAmpUnderTarget.GetData() ? 1 : 0)
+        << ";use_signed_delay_estimate=" << (UseSignedDelayEstimate.GetData() ? 1 : 0)
+        << ";rmin_length_tol_factor=" << RminLengthTolFactorValue()
+        << ";freeze_synapse_resistance_base=" << (FreezeSynapseResistanceBase.GetData() ? 1 : 0)
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
         << ";freeze_tip_r_after_first_sync=" << (FreezeTipResistanceAfterFirstSync.GetData() ? 1 : 0)
@@ -1253,7 +1256,7 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   || ((num < int(DendBestEffortSynced.size()))
       && DendBestEffortSynced[static_cast<size_t>(num)])
   || ((at_r_min_ls || at_r_max_ls) && (num < int(DendLastAbsDt.size()))
-      && (DendLastAbsDt[static_cast<size_t>(num)] <= tol_len * kRminLengthTolFactor));
+      && (DendLastAbsDt[static_cast<size_t>(num)] <= tol_len * RminLengthTolFactorValue()));
  if(!DendStatus[num] && length_settled
     && (num < int(MaxIterSomaAmp.size()))
     && (MaxIterSomaAmp[num] < kMinMeasurableSomaAmp))
@@ -2006,6 +2009,9 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  SynapseResistanceStep("SynapseResistanceStep", this, &NNeuronTimeLearner::SetSynapseResistanceStep),
  NormalizationMode("NormalizationMode", this, &NNeuronTimeLearner::SetNormalizationMode),
  AcceptQuantizedAmpUnderTarget("AcceptQuantizedAmpUnderTarget", this),
+ UseSignedDelayEstimate("UseSignedDelayEstimate", this),
+ RminLengthTolFactor("RminLengthTolFactor", this),
+ FreezeSynapseResistanceBase("FreezeSynapseResistanceBase", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this),
  ResistanceMinRatio("ResistanceMinRatio", this),
@@ -3271,6 +3277,9 @@ bool NNeuronTimeLearner::ADefault(void)
  SynapseResistanceStep = 1.0e9;
  NormalizationMode = kNormParametric;
  AcceptQuantizedAmpUnderTarget = false;
+ UseSignedDelayEstimate = false;
+ RminLengthTolFactor = kRminLengthTolFactor;
+ FreezeSynapseResistanceBase = false;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
  ResistanceMin.SetDataDirect(1.0e6);
  ResistanceMinRatio.SetDataDirect(0.0);
@@ -4052,7 +4061,8 @@ bool NNeuronTimeLearner::MeasureMaxPotentialAndTime(void)
       tips.resize(static_cast<size_t>(NumInputDendrite), SynapseResistanceBase.GetData());
      tips[static_cast<size_t>(i)] = synapse->Resistance;
      TipSynapseResistance.SetDataDirect(tips);
-     if(i == 0 || SynapseResistanceBase.GetData() <= 0.0)
+     if(!FreezeSynapseResistanceBase.GetData()
+        && (i == 0 || SynapseResistanceBase.GetData() <= 0.0))
       SynapseResistanceBase = synapse->Resistance;
     }
    }
@@ -4210,7 +4220,21 @@ bool NNeuronTimeLearner::ChangeDendriteStatus(int num)
  // Refine EstDelayPerSeg from previous apply on this dendrite.
  // Reject IterationGap-scale prev errors and non-physical observed steps so a
  // reopen/sentinel |dt| cannot drive EstDelayPerSeg into a peak-blind regime.
- if(had_length_apply && fabs(prev_dt) > 1e-12
+ if(UseSignedDelayEstimate.GetData())
+ {
+  // F1: lengthening by dL adds delay, so dt = needed - delay drops by delta*dL;
+  // the signed difference stays valid when the step overshoots (dt changes sign).
+  if(had_length_apply && applied_delta > 0 && fabs(prev_dt) > 1e-12
+     && fabs(prev_dt) < 0.5 * IterationGap.GetData())
+  {
+   const double observed = (prev_dt - dt) / double(applied_delta);
+   const double est = EstDelayPerSeg.GetData();
+   const double max_obs = std::max(0.05, 3.0 * est);
+   if(observed > 1e-4 && observed < max_obs)
+    EstDelayPerSeg = 0.7 * est + 0.3 * observed;
+  }
+ }
+ else if(had_length_apply && fabs(prev_dt) > 1e-12
     && fabs(prev_dt) < 0.5 * IterationGap.GetData()
     && fabs(dt) < fabs(prev_dt))
  {
@@ -4569,7 +4593,7 @@ bool NNeuronTimeLearner::AllDendritesSynced(void) const
    && (TipSynapseResistance[static_cast<size_t>(i)] <= rmin * (1.0 + 1e-6));
   const bool rmin_length_ok = at_r_min
    && (i < int(DendLastAbsDt.size()))
-   && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * kRminLengthTolFactor);
+   && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * RminLengthTolFactorValue());
   const bool dead_tip = (i < int(MaxIterSomaAmp.size()))
    && (MaxIterSomaAmp[i] < kMinMeasurableSomaAmp);
   // Dead tip: PeakRel invalid, but cable |needed-delay_len| already within tol.
@@ -4606,7 +4630,7 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
     // AmpNorm(b) asym50: TipR@Rmin with LastAbsDt slightly above tight SyncTol
     // (e.g. 0.0031 vs 0.00208) must not block EOL forever.
     || (at_r_min && (i < int(DendLastAbsDt.size()))
-        && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * kRminLengthTolFactor));
+        && (DendLastAbsDt[static_cast<size_t>(i)] <= tol * RminLengthTolFactorValue()));
    
    // W1 E2: TipR@Rmin + length_ok — do not block Done on pending ResistanceStatus.
    if(i < int(ResistanceStatus.size()) && ResistanceStatus[i]
