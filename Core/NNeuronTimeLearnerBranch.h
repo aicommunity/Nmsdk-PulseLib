@@ -163,6 +163,13 @@ public:
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> MarkRminLengthTolAsBestEffort;
  /// F6/A6: do not floor TipR to Rmin via midband walk (keep damped / step path). Classic-only path historically; flag kept for API parity.
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> DisableMidbandWalkToRmin;
+ /// F6/A8: Rmin = max(configured XML ResistanceMin, stability floor).
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> PreferConfiguredResistanceMinFloor;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> ConfiguredResistanceMin;
+ /// F4/A4: relative amp eps / osc band.
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> UseRelativeAmpEps;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> AmpNormEpsRel;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> AmpOscillationBandRel;
  /// Set true when EndOfLearning accepted via any best-effort escape (Done_BE).
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubState> TrainingDoneBestEffort;
  /// Initial per-segment delay estimate (s); <=0 keeps kDelayPerSegDefault. Set to Rm*C.

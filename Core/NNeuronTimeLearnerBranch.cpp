@@ -828,6 +828,9 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";reset_before_train_burst=" << (ResetNeuronBeforeTrainBurst.GetData() ? 1 : 0)
         << ";mark_rmin_tol_as_be=" << (MarkRminLengthTolAsBestEffort.GetData() ? 1 : 0)
         << ";disable_midband_walk_to_rmin=" << (DisableMidbandWalkToRmin.GetData() ? 1 : 0)
+        << ";prefer_configured_rmin_floor=" << (PreferConfiguredResistanceMinFloor.GetData() ? 1 : 0)
+        << ";configured_rmin=" << ConfiguredResistanceMin.GetData()
+        << ";use_relative_amp_eps=" << (UseRelativeAmpEps.GetData() ? 1 : 0)
         << ";done_best_effort=" << (TrainingDoneBestEffort.GetData() ? 1 : 0)
         << ";est_delay_per_seg_init=" << EstDelayPerSegInit.GetData()
         << ";enable_posttrain_tuning=" << (EnablePostTrainTuning.GetData() ? 1 : 0)
@@ -2893,6 +2896,11 @@ NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
  ResetNeuronBeforeTrainBurst("ResetNeuronBeforeTrainBurst", this),
  MarkRminLengthTolAsBestEffort("MarkRminLengthTolAsBestEffort", this),
  DisableMidbandWalkToRmin("DisableMidbandWalkToRmin", this),
+ PreferConfiguredResistanceMinFloor("PreferConfiguredResistanceMinFloor", this),
+ ConfiguredResistanceMin("ConfiguredResistanceMin", this),
+ UseRelativeAmpEps("UseRelativeAmpEps", this),
+ AmpNormEpsRel("AmpNormEpsRel", this),
+ AmpOscillationBandRel("AmpOscillationBandRel", this),
  TrainingDoneBestEffort("TrainingDoneBestEffort", this),
  EstDelayPerSegInit("EstDelayPerSegInit", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearnerBranch::SetSynapseResistanceBase),
@@ -4157,6 +4165,11 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  ResetNeuronBeforeTrainBurst = false;
  MarkRminLengthTolAsBestEffort = false;
  DisableMidbandWalkToRmin = false;
+ PreferConfiguredResistanceMinFloor = false;
+ ConfiguredResistanceMin = 1.0e6;
+ UseRelativeAmpEps = false;
+ AmpNormEpsRel = 0.01;
+ AmpOscillationBandRel = 0.05;
  TrainingDoneBestEffort = false;
  EstDelayPerSegInit = 0.0;
  SynapseResistanceBase = kSynapseResistanceBioDefault;

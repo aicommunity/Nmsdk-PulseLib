@@ -470,10 +470,42 @@ bool NNeuronTimeLearner::UpdateResistanceBoundsFromMembranes(void)
  const double derived_max = bounds.commonMaximumResistance;
  const double min_membrane_r = *std::min_element(membrane_resistances.begin(), membrane_resistances.end());
  const double max_membrane_r = *std::max_element(membrane_resistances.begin(), membrane_resistances.end());
- ResistanceMin.SetDataDirect(derived_min);
+ // F6/A8: optionally keep configured XML ResistanceMin above Rm/q collapse.
+ {
+  double floor_min = derived_min;
+  if(PreferConfiguredResistanceMinFloor.GetData())
+  {
+   const double cfg = ConfiguredResistanceMin.GetData();
+   double stab = 0.0;
+   for(size_t si = 0; si < stability_min_resistances.size(); ++si)
+    stab = std::max(stab, stability_min_resistances[si]);
+   if(cfg > 0.0 && std::isfinite(cfg))
+    floor_min = std::max(cfg, stab);
+   else
+    floor_min = std::max(derived_min, stab);
+  }
+  ResistanceMin.SetDataDirect(floor_min);
+ }
  ResistanceMinRatio.SetDataDirect(bounds.maximumMinimumRatio);
  ResistanceMax.SetDataDirect(derived_max);
- ResistanceMinByInput.SetDataDirect(bounds.minimumResistance);
+ if(PreferConfiguredResistanceMinFloor.GetData())
+ {
+  std::vector<double> mins = bounds.minimumResistance;
+  const double cfg = ConfiguredResistanceMin.GetData();
+  for(size_t i = 0; i < mins.size(); ++i)
+  {
+   double stab = (i < stability_min_resistances.size()) ? stability_min_resistances[i] : 0.0;
+   double v = mins[i];
+   if(cfg > 0.0 && std::isfinite(cfg))
+    v = std::max(cfg, stab);
+   else
+    v = std::max(v, stab);
+   mins[i] = v;
+  }
+  ResistanceMinByInput.SetDataDirect(mins);
+ }
+ else
+  ResistanceMinByInput.SetDataDirect(bounds.minimumResistance);
  ResistanceMaxByInput.SetDataDirect(bounds.maximumResistance);
  ResistanceMinRatioByInput.SetDataDirect(bounds.minimumRatio);
 
@@ -726,6 +758,9 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";reset_before_train_burst=" << (ResetNeuronBeforeTrainBurst.GetData() ? 1 : 0)
         << ";mark_rmin_tol_as_be=" << (MarkRminLengthTolAsBestEffort.GetData() ? 1 : 0)
         << ";disable_midband_walk_to_rmin=" << (DisableMidbandWalkToRmin.GetData() ? 1 : 0)
+        << ";prefer_configured_rmin_floor=" << (PreferConfiguredResistanceMinFloor.GetData() ? 1 : 0)
+        << ";configured_rmin=" << ConfiguredResistanceMin.GetData()
+        << ";use_relative_amp_eps=" << (UseRelativeAmpEps.GetData() ? 1 : 0)
         << ";done_best_effort=" << (TrainingDoneBestEffort.GetData() ? 1 : 0)
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
@@ -2029,6 +2064,11 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  ResetNeuronBeforeTrainBurst("ResetNeuronBeforeTrainBurst", this),
  MarkRminLengthTolAsBestEffort("MarkRminLengthTolAsBestEffort", this),
  DisableMidbandWalkToRmin("DisableMidbandWalkToRmin", this),
+ PreferConfiguredResistanceMinFloor("PreferConfiguredResistanceMinFloor", this),
+ ConfiguredResistanceMin("ConfiguredResistanceMin", this),
+ UseRelativeAmpEps("UseRelativeAmpEps", this),
+ AmpNormEpsRel("AmpNormEpsRel", this),
+ AmpOscillationBandRel("AmpOscillationBandRel", this),
  TrainingDoneBestEffort("TrainingDoneBestEffort", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this),
@@ -3302,6 +3342,11 @@ bool NNeuronTimeLearner::ADefault(void)
  ResetNeuronBeforeTrainBurst = false;
  MarkRminLengthTolAsBestEffort = false;
  DisableMidbandWalkToRmin = false;
+ PreferConfiguredResistanceMinFloor = false;
+ ConfiguredResistanceMin = 1.0e6;
+ UseRelativeAmpEps = false;
+ AmpNormEpsRel = 0.01;
+ AmpOscillationBandRel = 0.05;
  TrainingDoneBestEffort = false;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
  ResistanceMin.SetDataDirect(1.0e6);
@@ -4636,7 +4681,7 @@ bool NNeuronTimeLearner::AllDendritesSynced(void) const
 /// True when amp normalization finished for all tips
 bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
 {
- const double eps = kAmpNormEps;
+ // F4: peri-input AmpNormEpsForTarget when UseRelativeAmpEps.
  // Ref dendrite (N-1) is the length/timing anchor: ChangeSynapseResistanceStatus
  // skips R-tune there, and DendLastAbsDt[ref] stays a large sentinel. Match
  // AllDendritesSynced — only non-ref dendrites gate amp Done.
@@ -4669,6 +4714,10 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
      return false;
    }
    
+   const double target_amp = (i < int(InitialSomaPotential.size()))
+    ? InitialSomaPotential[i] : 0.0;
+   const double eps = AmpNormEpsForTarget(target_amp);
+   const double osc_band = AmpOscillationBandForTarget(target_amp);
    const bool amp_ok = length_ok
     && (i < int(InitialSomaPotential.size()))
     && (i < int(MaxIterSomaAmp.size()))
@@ -4692,7 +4741,7 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
    if(at_r_min && dt_positive && length_ok)
     continue;
    // W1 E4: at Rmin with amp near target (|dt|<=osc_band), including mild overshoot.
-   if(at_r_min && length_ok && abs_dt <= kAmpOscillationBand)
+   if(at_r_min && length_ok && abs_dt <= osc_band)
     continue;
    
    const bool oscillation_ok =
@@ -4701,7 +4750,7 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
     && (NoImproveResistanceCount[static_cast<size_t>(i)] >= kNoImproveResistanceLimit)
     && (i < int(InitialSomaPotential.size()))
     && (i < int(MaxIterSomaAmp.size()))
-    && (fabs(InitialSomaPotential[i] - MaxIterSomaAmp[i]) < kAmpOscillationBand);
+    && (fabs(InitialSomaPotential[i] - MaxIterSomaAmp[i]) < osc_band);
    if(oscillation_ok)
     continue;
    
@@ -4728,6 +4777,9 @@ bool NNeuronTimeLearner::AllSynapsesNormalized(void) const
    continue;
   const bool at_cap = (i < int(NumSynapse.size()))
    && (NumSynapse[i] >= kMaxSynapsesPerDend);
+  const double target_amp = (i < int(InitialSomaPotential.size()))
+   ? InitialSomaPotential[i] : 0.0;
+  const double eps = AmpNormEpsForTarget(target_amp);
   const bool amp_ok = (i < int(InitialSomaPotential.size()))
    && (i < int(MaxIterSomaAmp.size()))
    && (fabs(InitialSomaPotential[i] - MaxIterSomaAmp[i]) <= eps);

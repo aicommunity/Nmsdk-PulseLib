@@ -163,6 +163,16 @@ public:
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> MarkRminLengthTolAsBestEffort;
  /// F6/A6: do not floor TipR to Rmin via midband walk (keep damped / step path).
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> DisableMidbandWalkToRmin;
+ /// F6/A8: Rmin = max(configured XML ResistanceMin, stability floor); do not use Rm/q alone.
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> PreferConfiguredResistanceMinFloor;
+ /// Configured XML/default ResistanceMin retained across UpdateResistanceBounds (A8).
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> ConfiguredResistanceMin;
+ /// F4/A4: amp Done eps = max(kAmpNormEps, AmpNormEpsRel * |target|); osc band similarly.
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> UseRelativeAmpEps;
+ /// Relative amp eps fraction of |InitialSomaPotential| (default 0.01 = 1%).
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> AmpNormEpsRel;
+ /// Relative osc-band fraction of |target| (default 0.05); used when UseRelativeAmpEps.
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> AmpOscillationBandRel;
  /// Set true when EndOfLearning accepted via any best-effort escape (Done_BE).
  UProperty<bool, NNeuronTimeLearner, ptPubState> TrainingDoneBestEffort;
  
@@ -557,6 +567,22 @@ protected:
  {
   const double v = RminLengthTolFactor.GetData();
   return (v >= 1.0) ? v : kRminLengthTolFactor;
+ }
+ double AmpNormEpsForTarget(double target_amp) const
+ {
+  if(!UseRelativeAmpEps.GetData())
+   return kAmpNormEps;
+  const double rel = AmpNormEpsRel.GetData();
+  const double frac = (rel > 0.0) ? rel : 0.01;
+  return std::max(kAmpNormEps, frac * std::fabs(target_amp));
+ }
+ double AmpOscillationBandForTarget(double target_amp) const
+ {
+  if(!UseRelativeAmpEps.GetData())
+   return kAmpOscillationBand;
+  const double rel = AmpOscillationBandRel.GetData();
+  const double frac = (rel > 0.0) ? rel : 0.05;
+  return std::max(kAmpOscillationBand * 0.2, frac * std::fabs(target_amp));
  }
  
  static constexpr double kAmpCollapseRatio = 0.35;
