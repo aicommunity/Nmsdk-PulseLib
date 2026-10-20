@@ -7464,7 +7464,11 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
  CountIteration++;
  
  if(!CalculateMode)
+ {
   EndOfLearning();
+  if(TrainingPhase.GetData() == kPhaseDone || TrainingPhase.GetData() == kPhaseCalibrateLtz)
+   AppendTrainingIterationAudit(DendriteLength.GetData());
+ }
 }
 
 
