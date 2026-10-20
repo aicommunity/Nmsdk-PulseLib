@@ -6174,7 +6174,12 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
  CountIteration++;
  
  if(!CalculateMode)
+ {
   EndOfLearning();
+  // F2/F7: TrainingDoneBestEffort is set inside EndOfLearning — emit one Done row.
+  if(TrainingPhase.GetData() == kPhaseDone)
+   AppendTrainingIterationAudit(DendriteLength.GetData());
+ }
 }
 
 
