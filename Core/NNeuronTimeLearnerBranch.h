@@ -170,6 +170,8 @@ public:
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> UseRelativeAmpEps;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> AmpNormEpsRel;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> AmpOscillationBandRel;
+ /// F5/A7: TipR-corrected attenuation gamma estimate (see Classic). Default off.
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> CorrectAttenuationGammaForTipR;
  /// Set true when EndOfLearning accepted via any best-effort escape (Done_BE).
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubState> TrainingDoneBestEffort;
  /// Initial per-segment delay estimate (s); <=0 keeps kDelayPerSegDefault. Set to Rm*C.

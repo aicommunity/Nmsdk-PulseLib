@@ -173,6 +173,9 @@ public:
  UProperty<double, NNeuronTimeLearner, ptPubParameter> AmpNormEpsRel;
  /// Relative osc-band fraction of |target| (default 0.05); used when UseRelativeAmpEps.
  UProperty<double, NNeuronTimeLearner, ptPubParameter> AmpOscillationBandRel;
+ /// F5/A7: when auto-estimating gamma, undo TipR drop vs SynapseResistanceBase
+ /// (amp was measured at already-reduced TipR). Default off = legacy no-op.
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> CorrectAttenuationGammaForTipR;
  /// Set true when EndOfLearning accepted via any best-effort escape (Done_BE).
  UProperty<bool, NNeuronTimeLearner, ptPubState> TrainingDoneBestEffort;
  

@@ -761,6 +761,7 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";prefer_configured_rmin_floor=" << (PreferConfiguredResistanceMinFloor.GetData() ? 1 : 0)
         << ";configured_rmin=" << ConfiguredResistanceMin.GetData()
         << ";use_relative_amp_eps=" << (UseRelativeAmpEps.GetData() ? 1 : 0)
+        << ";correct_attenuation_gamma_for_tip_r=" << (CorrectAttenuationGammaForTipR.GetData() ? 1 : 0)
         << ";done_best_effort=" << (TrainingDoneBestEffort.GetData() ? 1 : 0)
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
@@ -1348,7 +1349,22 @@ bool NNeuronTimeLearner::ChangeSynapseResistanceStatus(int num)
   const double ratio = MaxIterSomaAmp[num] / InitialSomaPotential[num];
   if(ratio > 1e-6 && ratio < 1.0)
   {
-   const double gamma_obs = -std::log(ratio) / double(DendriteLength[num] - 1);
+   // F5/A7: amp measured at current TipR; scale ratio back to SynapseResistanceBase.
+   double ratio_for_gamma = ratio;
+   if(CorrectAttenuationGammaForTipR.GetData())
+   {
+    double tip_r = SynapseResistanceBase.GetData();
+    if(num < int(TipSynapseResistance.size()) && TipSynapseResistance[static_cast<size_t>(num)] > 0.0)
+     tip_r = TipSynapseResistance[static_cast<size_t>(num)];
+    const double r_base = SynapseResistanceBase.GetData();
+    if(r_base > 0.0 && tip_r > 0.0 && tip_r < r_base)
+    {
+     const double scaled = ratio * (r_base / tip_r);
+     if(scaled > 1e-6 && scaled < 1.0)
+      ratio_for_gamma = scaled;
+    }
+   }
+   const double gamma_obs = -std::log(ratio_for_gamma) / double(DendriteLength[num] - 1);
    if(gamma_obs > 1e-4 && gamma_obs < 1.0)
    {
     const double cur_gamma = AttenuationGamma.GetData();
@@ -2069,6 +2085,7 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  UseRelativeAmpEps("UseRelativeAmpEps", this),
  AmpNormEpsRel("AmpNormEpsRel", this),
  AmpOscillationBandRel("AmpOscillationBandRel", this),
+ CorrectAttenuationGammaForTipR("CorrectAttenuationGammaForTipR", this),
  TrainingDoneBestEffort("TrainingDoneBestEffort", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this),
@@ -3346,6 +3363,7 @@ bool NNeuronTimeLearner::ADefault(void)
  ConfiguredResistanceMin = 1.0e6;
  UseRelativeAmpEps = false;
  AmpNormEpsRel = 0.01;
+ CorrectAttenuationGammaForTipR = false;
  AmpOscillationBandRel = 0.05;
  TrainingDoneBestEffort = false;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
