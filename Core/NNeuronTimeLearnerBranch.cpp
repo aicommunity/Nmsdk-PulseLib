@@ -820,6 +820,7 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";max_dendrite_length=" << MaxDendriteLength.GetData()
         << ";normalization_mode=" << NormalizationMode.GetData()
         << ";accept_quantized_amp_under_target=" << (AcceptQuantizedAmpUnderTarget.GetData() ? 1 : 0)
+        << ";reset_before_train_burst=" << (ResetNeuronBeforeTrainBurst.GetData() ? 1 : 0)
         << ";enable_posttrain_tuning=" << (EnablePostTrainTuning.GetData() ? 1 : 0)
         << ";enable_posttrain_mid_threshold=" << (EnablePostTrainMidThreshold.GetData() ? 1 : 0)
         << ";posttune_free_run_active=" << (PostTuneFreeRunActive ? 1 : 0)
@@ -2943,6 +2944,7 @@ NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
  SynapseResistanceStep("SynapseResistanceStep", this, &NNeuronTimeLearnerBranch::SetSynapseResistanceStep),
  NormalizationMode("NormalizationMode", this, &NNeuronTimeLearnerBranch::SetNormalizationMode),
  AcceptQuantizedAmpUnderTarget("AcceptQuantizedAmpUnderTarget", this),
+ ResetNeuronBeforeTrainBurst("ResetNeuronBeforeTrainBurst", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearnerBranch::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this),
  ResistanceMinRatio("ResistanceMinRatio", this),
@@ -4204,6 +4206,7 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  SynapseResistanceStep = 1.0e9;
  NormalizationMode = kNormParametric;
  AcceptQuantizedAmpUnderTarget = false;
+ ResetNeuronBeforeTrainBurst = false;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
  ResistanceMin.SetDataDirect(1.0e6);
  ResistanceMinRatio.SetDataDirect(0.0);
@@ -6982,6 +6985,12 @@ int NNeuronTimeLearnerBranch::DetectNewImpulseCount(void)
 /// Start a training burst/iteration at time now
 void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
 {
+ // F3: deterministic membrane IC before each training burst (opt-in).
+ // Called only from Training() when starting a pack; Test inference and
+ // PostTune free-run do not enter BeginTrainingIteration. Audit burst-start
+ // potentials below therefore reflect post-Reset state when the flag is on.
+ if(ResetNeuronBeforeTrainBurst.GetData() && Neuron)
+  Neuron->Reset();
  StartIterTime = now;
  FirstImpulseTime = now;
  AuditBurstStartEstDelayPerSeg = EstDelayPerSeg;

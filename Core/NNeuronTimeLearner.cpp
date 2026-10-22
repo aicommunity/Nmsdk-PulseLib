@@ -719,6 +719,7 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";max_dendrite_length=" << MaxDendriteLength.GetData()
         << ";normalization_mode=" << NormalizationMode.GetData()
         << ";accept_quantized_amp_under_target=" << (AcceptQuantizedAmpUnderTarget.GetData() ? 1 : 0)
+        << ";reset_before_train_burst=" << (ResetNeuronBeforeTrainBurst.GetData() ? 1 : 0)
         << ";attenuation_gamma=" << AttenuationGamma.GetData()
         << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
         << ";freeze_tip_r_after_first_sync=" << (FreezeTipResistanceAfterFirstSync.GetData() ? 1 : 0)
@@ -2074,6 +2075,7 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  SynapseResistanceStep("SynapseResistanceStep", this, &NNeuronTimeLearner::SetSynapseResistanceStep),
  NormalizationMode("NormalizationMode", this, &NNeuronTimeLearner::SetNormalizationMode),
  AcceptQuantizedAmpUnderTarget("AcceptQuantizedAmpUnderTarget", this),
+ ResetNeuronBeforeTrainBurst("ResetNeuronBeforeTrainBurst", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
  ResistanceMin("ResistanceMin", this),
  ResistanceMinRatio("ResistanceMinRatio", this),
@@ -3345,6 +3347,7 @@ bool NNeuronTimeLearner::ADefault(void)
  SynapseResistanceStep = 1.0e9;
  NormalizationMode = kNormParametric;
  AcceptQuantizedAmpUnderTarget = false;
+ ResetNeuronBeforeTrainBurst = false;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
  ResistanceMin.SetDataDirect(1.0e6);
  ResistanceMinRatio.SetDataDirect(0.0);
@@ -5858,6 +5861,11 @@ int NNeuronTimeLearner::DetectNewImpulseCount(void)
 /// Start a training burst/iteration at time now
 void NNeuronTimeLearner::BeginTrainingIteration(double now)
 {
+ // F3: deterministic membrane IC before each training burst (opt-in).
+ // Called only from Training() when starting a pack; Test inference and
+ // PostTune free-run do not enter BeginTrainingIteration.
+ if(ResetNeuronBeforeTrainBurst.GetData() && Neuron)
+  Neuron->Reset();
  StartIterTime = now;
  FirstImpulseTime = now;
  MaxIterSomaAmp.assign(NumInputDendrite, 0.0);

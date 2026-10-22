@@ -148,6 +148,10 @@ public:
  /// Mode 0 only: accept a stable lower integer synapse count when adjacent
  /// counts repeatedly straddle the requested amplitude.
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> AcceptQuantizedAmpUnderTarget;
+
+ /// F3/A5: Neuron->Reset() at the start of every training burst (deterministic IC).
+ /// Default false preserves historical behaviour (Reset only after structure/Rs change).
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> ResetNeuronBeforeTrainBurst;
  
  /// Reference tip synapse resistance at L==1 (typically 8.6e7)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> SynapseResistanceBase;
