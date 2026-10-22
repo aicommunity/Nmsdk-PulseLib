@@ -152,6 +152,19 @@ public:
  /// F3/A5: Neuron->Reset() at the start of every training burst (deterministic IC).
  /// Default false preserves historical behaviour (Reset only after structure/Rs change).
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> ResetNeuronBeforeTrainBurst;
+
+ /// F7/A3: LastAbsDt slack factor at TipR@Rmin/Rmax (was constexpr kRminLengthTolFactor=4).
+ /// Value < 1 falls back to the historical constant.
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> RminLengthTolFactor;
+
+ /// F6/A6: when true, skip Classic midband walk that steps TipR toward Rmin.
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> DisableMidbandWalkToRmin;
+
+ /// F6/A8: keep configured XML ResistanceMin (or ConfiguredResistanceMin) above Rm/q collapse.
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> PreferConfiguredResistanceMinFloor;
+
+ /// Absolute Rmin floor used when PreferConfiguredResistanceMinFloor is set (ohms).
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> ConfiguredResistanceMin;
  
  /// Reference tip synapse resistance at L==1 (typically 8.6e7)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> SynapseResistanceBase;
@@ -542,6 +555,13 @@ protected:
  /// Allow LastAbsDt up to this × SyncTolerance when TipR already @Rmin (AmpNorm b).
  /// SoftCold E (asym100/fs50): LastAbsDt~0.004–0.006 with tol~0.002 blocked Done at factor 2.
  static constexpr double kRminLengthTolFactor = 4.0;
+
+ /// Effective slack factor: RminLengthTolFactor when >= 1, otherwise the historical constant.
+ double RminLengthTolFactorValue(void) const
+ {
+  const double v = RminLengthTolFactor.GetData();
+  return (v >= 1.0) ? v : kRminLengthTolFactor;
+ }
  
  static constexpr double kAmpCollapseRatio = 0.35;
  
