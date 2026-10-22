@@ -269,6 +269,9 @@ public:
  /// LTZ threshold during PostTune probes
  UProperty<double, NNeuronTimeLearner, ptPubParameter> PostTrainSilentThreshold;
 
+ /// Test inference: apply probe candidate_mid when NonSeparable/silent (default off)
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> UseCandidateMidOnNonSeparableTest;
+
  /// Max synthetic foils
  UProperty<int, NNeuronTimeLearner, ptPubParameter> PostTrainSyntheticFoilCount;
 

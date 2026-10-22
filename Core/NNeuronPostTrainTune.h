@@ -108,5 +108,31 @@ std::vector<double> MakeFlatLastVector(int n, double last_r);
 bool PatternsEqual(const std::vector<double> &a, const std::vector<double> &b, double eps = 1e-12);
 double PatternSum(const std::vector<double> &isi);
 
+/// Test inference only (UseCandidateMidOnNonSeparableTest=1): replace silent
+/// PostTrainSilentThreshold with finite probe candidate_mid in (0,1). Keeps
+/// PostTuneResult (NonSeparable remains quality_fail); does not affect Train.
+inline bool ApplyCandidateMidOnNonSeparableTest(
+ bool inference,
+ bool use_candidate_mid_on_nonseparable_test,
+ double silent_threshold,
+ int post_tune_result,
+ double candidate_mid,
+ double &mid_in_out)
+{
+ if(!inference || !use_candidate_mid_on_nonseparable_test)
+  return false;
+ if(!std::isfinite(candidate_mid) || candidate_mid <= 0.0 || candidate_mid >= 1.0)
+  return false;
+ if(post_tune_result == kResultSuccess || post_tune_result == kResultBestEffort)
+  return false;
+ const bool nonsep = post_tune_result == kResultNonSeparable;
+ const bool silent_mid = std::isfinite(silent_threshold)
+  && mid_in_out + 1e-12 >= silent_threshold;
+ if(!nonsep && !silent_mid)
+  return false;
+ mid_in_out = candidate_mid;
+ return true;
+}
+
 } // namespace PostTrainTune
 } // namespace NMSDK

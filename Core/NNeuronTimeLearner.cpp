@@ -2096,6 +2096,7 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  TipResistanceCanonFloor("TipResistanceCanonFloor", this),
  TipResistanceCanonLast("TipResistanceCanonLast", this),
  PostTrainSilentThreshold("PostTrainSilentThreshold", this),
+ UseCandidateMidOnNonSeparableTest("UseCandidateMidOnNonSeparableTest", this),
  PostTrainSyntheticFoilCount("PostTrainSyntheticFoilCount", this),
  PostTrainTipSearchIters("PostTrainTipSearchIters", this),
  PostTrainTuneComplete("PostTrainTuneComplete", this),
@@ -3347,6 +3348,7 @@ bool NNeuronTimeLearner::ADefault(void)
  TipResistanceCanonFloor = 2.0e7;
  TipResistanceCanonLast = 8.6e7;
  PostTrainSilentThreshold = 1.0;
+ UseCandidateMidOnNonSeparableTest = false;
  PostTrainSyntheticFoilCount = 8;
  PostTrainTipSearchIters = 12;
  PostTrainTuneComplete = false;
@@ -5216,6 +5218,7 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
  double gap = 0.0;
  double candidate_mid = std::numeric_limits<double>::quiet_NaN();
  bool landscape_ok = false;
+ bool test_applied_candidate_mid = false;
  const double prior_thr = FixedLTZThreshold.GetData();
  const bool have_sample_state = !PostTuneSampleState.empty();
  const bool run_bad = PostTuneRunInvalid
@@ -5301,6 +5304,13 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
      PostTuneResult = PostTrainTune::kResultNonSeparable;
    }
   }
+  test_applied_candidate_mid = PostTrainTune::ApplyCandidateMidOnNonSeparableTest(
+   inference,
+   UseCandidateMidOnNonSeparableTest.GetData(),
+   PostTrainSilentThreshold.GetData(),
+   PostTuneResult.GetData(),
+   candidate_mid,
+   mid);
   FixedLTZThreshold.SetDataDirect(mid);
   CalibratedFixedLTZThreshold.SetDataDirect(mid);
   AutoCalibrateFixedLTZThreshold.SetDataDirect(false);
@@ -5423,6 +5433,8 @@ void NNeuronTimeLearner::FinalizePostTuneMid(void)
          << " FixedLTZ=" << FixedLTZThreshold.GetData();
     if(std::isfinite(candidate_mid))
      flag << " candidate_mid=" << candidate_mid;
+    if(test_applied_candidate_mid)
+     flag << " test_mid_policy=candidate";
     if(PostTrainTipResistanceMode.GetData()
        == PostTrainTune::kPostTipSearchSynthetic)
      flag << " search_reverted=" << (PostTuneSearchReverted ? 1 : 0);

@@ -270,6 +270,9 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  /// LTZ threshold during PostTune probes
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> PostTrainSilentThreshold;
 
+ /// Test inference: apply probe candidate_mid when NonSeparable/silent (default off)
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> UseCandidateMidOnNonSeparableTest;
+
  /// Max synthetic foils
  UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> PostTrainSyntheticFoilCount;
 
