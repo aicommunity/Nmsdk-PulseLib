@@ -5107,7 +5107,11 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
    if(int(InvalidPeakNoActionCount.size()) != NumInputDendrite.GetData())
     InvalidPeakNoActionCount.assign(static_cast<size_t>(NumInputDendrite.GetData()), 0);
    // TipR@Rmin + timing inside relaxed band: BE, do not ±L (D2 residual).
-   if(tip_at_rmin_inv && model_ok && !segment_order_violation)
+   // Do not BE-accept when amp is collapsed and no recovery step remains:
+   // that state must still accumulate InvalidPeakNoActionCount and refuse
+   // (BranchInvalidPeakNoRecoveryTest Rmin cases / no_legal_recovery).
+   if(tip_at_rmin_inv && model_ok && !segment_order_violation
+      && !no_legal_recovery)
    {
     if(num < int(InvalidPeakNoActionCount.size()))
      InvalidPeakNoActionCount[static_cast<size_t>(num)] = 0;
