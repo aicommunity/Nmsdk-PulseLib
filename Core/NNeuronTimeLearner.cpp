@@ -824,6 +824,7 @@ void NNeuronTimeLearner::AppendStage0ScalarFields(std::ostringstream &record) co
  double delay_residue = 0.0;
  double amp_over_target = 0.0;
  int sync_exit = 0;
+ int amp_be = 0;
  int done_be = 0;
  for(int i = 0; i < n; ++i)
  {
@@ -836,24 +837,34 @@ void NNeuronTimeLearner::AppendStage0ScalarFields(std::ostringstream &record) co
    if(over > amp_over_target)
     amp_over_target = over;
   }
-  if(i < int(DendBestEffortSynced.size())
-   && DendBestEffortSynced[static_cast<size_t>(i)])
+  const bool sync_be = (i < int(DendBestEffortSynced.size())
+   && DendBestEffortSynced[static_cast<size_t>(i)]);
+  if(sync_be)
    sync_exit = 1;
   const double tip = (i < int(TipSynapseResistance.size()))
    ? TipSynapseResistance[static_cast<size_t>(i)] : 0.0;
   const bool at_r_min = (rmin > 0.0) && (tip <= rmin * (1.0 + 1e-6));
   const double last_dt = (i < int(DendLastAbsDt.size()))
    ? DendLastAbsDt[static_cast<size_t>(i)] : 0.0;
-  const bool rmin_slack_sync = at_r_min && (last_dt > tol)
+  const bool rmin_be = at_r_min && (last_dt > tol)
    && (last_dt <= tol * kRminLengthTolFactor);
-  if((i < int(DendBestEffortSynced.size())
-       && DendBestEffortSynced[static_cast<size_t>(i)])
-   || rmin_slack_sync)
+  // Same predicate as audit vector amp_quantized_under_target / EOL amp-BE.
+  const bool dend_amp_be =
+   (i < int(NumSynapse.size()))
+   && (i < int(DendriteLength.size()))
+   && (i < int(InitialSomaPotential.size()))
+   && StructuralAmpTracker.IsAccepted(
+    static_cast<size_t>(i), NumSynapse[i], DendriteLength[i],
+    InitialSomaPotential[i]);
+  if(dend_amp_be)
+   amp_be = 1;
+  if(sync_be || rmin_be || dend_amp_be)
    done_be = 1;
  }
  record << ";delay_residue=" << delay_residue
         << ";amp_over_target=" << amp_over_target
         << ";sync_exit=" << sync_exit
+        << ";amp_be=" << amp_be
         << ";done_best_effort=" << done_be
         << ";done_be=" << done_be;
  if(Stage0SepHave)
