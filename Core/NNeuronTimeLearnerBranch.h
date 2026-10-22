@@ -24,6 +24,7 @@ See file license.txt for more information
 #include "../../../Rdk/Deploy/Include/rdk.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cstring>
 
 namespace NMSDK {
@@ -1068,6 +1069,12 @@ protected:
  /// EnableDebug or EnableTrainingAudit is set.
  void AppendTrainingIterationAudit(const std::vector<int> &lengths_before,
                                    const char *kind = "iteration");
+
+ /// Stage0 rollup scalars for matrix / summarize_run (also on kind=done).
+ void AppendStage0ScalarFields(std::ostringstream &record) const;
+
+ /// Terminal audit after Need=0 (iteration rows may predate EOL gates).
+ void AppendTrainingDoneAudit(void);
  void AppendTrainingDynamicsSample(double now, int new_pulses);
  std::string BuildAuditComponentStateSnapshot(void) const;
  

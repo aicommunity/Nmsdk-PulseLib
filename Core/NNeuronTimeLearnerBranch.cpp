@@ -1010,10 +1010,60 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
  };
  append_pattern_column("input_pattern", InputPattern.GetData());
  append_pattern_column("prev_input_pattern", PrevInputPattern);
+ AppendStage0ScalarFields(record);
 
  std::ofstream audit((data_dir + "TimeLearnerTrainingAudit.log").c_str(), std::ios::out | std::ios::app);
  if(audit)
   audit << record.str() << '\n';
+}
+
+void NNeuronTimeLearnerBranch::AppendStage0ScalarFields(std::ostringstream &record) const
+{
+ const int n = std::max(0, NumInputDendrite.GetData() - 1);
+ const double tol = SyncTolerance.GetData();
+ const double rmin = ResistanceMin.GetData();
+ double delay_residue = 0.0;
+ double amp_over_target = 0.0;
+ int sync_exit = 0;
+ int done_be = 0;
+ for(int i = 0; i < n; ++i)
+ {
+  if(i < int(DendLastAbsDt.size()))
+   delay_residue = std::max(delay_residue, DendLastAbsDt[static_cast<size_t>(i)]);
+  if(i < int(InitialSomaPotential.size()) && i < int(MaxIterSomaAmp.size()))
+  {
+   const double over = InitialSomaPotential[static_cast<size_t>(i)]
+    - MaxIterSomaAmp[static_cast<size_t>(i)];
+   if(over > amp_over_target)
+    amp_over_target = over;
+  }
+  if(i < int(DendBestEffortSynced.size())
+   && DendBestEffortSynced[static_cast<size_t>(i)])
+   sync_exit = 1;
+  const double tip = (i < int(TipSynapseResistance.size()))
+   ? TipSynapseResistance[static_cast<size_t>(i)] : 0.0;
+  const bool at_r_min = (rmin > 0.0) && (tip <= rmin * (1.0 + 1e-6));
+  const double last_dt = (i < int(DendLastAbsDt.size()))
+   ? DendLastAbsDt[static_cast<size_t>(i)] : 0.0;
+  const bool rmin_slack_sync = at_r_min && (last_dt > tol)
+   && (last_dt <= tol * kRminLengthTolFactor);
+  if((i < int(DendBestEffortSynced.size())
+       && DendBestEffortSynced[static_cast<size_t>(i)])
+   || rmin_slack_sync)
+   done_be = 1;
+ }
+ record << ";delay_residue=" << delay_residue
+        << ";amp_over_target=" << amp_over_target
+        << ";sync_exit=" << sync_exit
+        << ";done_best_effort=" << done_be
+        << ";done_be=" << done_be;
+}
+
+void NNeuronTimeLearnerBranch::AppendTrainingDoneAudit(void)
+{
+ if((!EnableDebug.GetData() && !EnableTrainingAudit.GetData()) || !Environment)
+  return;
+ AppendTrainingIterationAudit(DendriteLength.GetData(), "done");
 }
 
 /// Read-only snapshot of cable, channel, and synapse state for diagnosing
@@ -1463,6 +1513,7 @@ void NNeuronTimeLearnerBranch::FinalizeAfterParallelCalibration(void)
  CanChangeDendLength = false;
  SetIsNeedToTrain(false);
  IsNeedToTrain = false;
+ AppendTrainingDoneAudit();
  ApplyPulseGeneratorMute();
  const bool inh = EnableNextSegmentInhibition.GetData();
  const int expect = NumInputDendrite.GetData() * (inh ? 2 : 1);
@@ -6511,6 +6562,7 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
  {
   SetIsNeedToTrain(false);
   IsNeedToTrain = false;
+  AppendTrainingDoneAudit();
  }
 
  if(EnableDebug.GetData() && RDK::GetLogger())
