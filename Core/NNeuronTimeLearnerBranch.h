@@ -617,6 +617,13 @@ protected:
  /// PostTune: probe metrics aligned with PostTunePatterns
  std::vector<double> PostTuneMetrics;
 
+ /// Stage0 Train sep_* snapshot from FinalizePostTuneMid (emit-only).
+ bool Stage0SepHave;
+ double Stage0SepTgt;
+ double Stage0SepMaxFoil;
+ double Stage0SepGap;
+ double Stage0SepMargin;
+
  /// Per-sample observed/finished/finite for free-run (R03)
  std::vector<PostTrainTune::SampleMetricState> PostTuneSampleState;
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <limits>
 #include <vector>
 
 namespace NMSDK
@@ -84,6 +85,34 @@ inline bool MetricsFinite(double tgt, const std::vector<double> &foil_metrics)
    return false;
  }
  return true;
+}
+
+/// Stage0 Train emit: sep_gap = tgt - max_foil (same gap as ComputeMidThreshold);
+/// sep_margin = sep_gap/tgt when metrics_usable && finite && tgt>0; else NaN.
+/// Does not change mid policy — emit-only for rollup / Controller v2.
+inline void FillSepMarginFields(
+ bool metrics_usable,
+ double tgt,
+ const std::vector<double> &foil_metrics,
+ double &sep_tgt_out,
+ double &sep_max_foil_out,
+ double &sep_gap_out,
+ double &sep_margin_out)
+{
+ const double nan = std::numeric_limits<double>::quiet_NaN();
+ sep_tgt_out = nan;
+ sep_max_foil_out = nan;
+ sep_gap_out = nan;
+ sep_margin_out = nan;
+ if(!metrics_usable || !MetricsFinite(tgt, foil_metrics) || !(tgt > 0.0))
+  return;
+ double mid = 0.0;
+ double gap = 0.0;
+ ComputeMidThreshold(tgt, foil_metrics, mid, gap);
+ sep_tgt_out = tgt;
+ sep_gap_out = gap;
+ sep_max_foil_out = tgt - gap;
+ sep_margin_out = gap / tgt;
 }
 
 /// True iff every foil is finite and strictly below tgt (usable landscape).

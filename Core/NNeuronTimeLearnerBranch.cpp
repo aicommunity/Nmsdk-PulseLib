@@ -1057,6 +1057,13 @@ void NNeuronTimeLearnerBranch::AppendStage0ScalarFields(std::ostringstream &reco
         << ";sync_exit=" << sync_exit
         << ";done_best_effort=" << done_be
         << ";done_be=" << done_be;
+ if(Stage0SepHave)
+ {
+  record << ";sep_tgt=" << Stage0SepTgt
+         << ";sep_max_foil=" << Stage0SepMaxFoil
+         << ";sep_gap=" << Stage0SepGap
+         << ";sep_margin=" << Stage0SepMargin;
+ }
 }
 
 void NNeuronTimeLearnerBranch::AppendTrainingDoneAudit(void)
@@ -3027,6 +3034,11 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  PostTuneRunInvalid = false;
  PostTuneRunTerminal = PostTrainTune::kResultNone;
  PostTuneResult = PostTrainTune::kResultNone;
+ Stage0SepHave = false;
+ Stage0SepTgt = std::numeric_limits<double>::quiet_NaN();
+ Stage0SepMaxFoil = std::numeric_limits<double>::quiet_NaN();
+ Stage0SepGap = std::numeric_limits<double>::quiet_NaN();
+ Stage0SepMargin = std::numeric_limits<double>::quiet_NaN();
 }
 
 
@@ -6280,6 +6292,11 @@ void NNeuronTimeLearnerBranch::EnterPostTunePhase(void)
 
  PostTunePatterns.clear();
  PostTuneMetrics.clear();
+ Stage0SepHave = false;
+ Stage0SepTgt = std::numeric_limits<double>::quiet_NaN();
+ Stage0SepMaxFoil = std::numeric_limits<double>::quiet_NaN();
+ Stage0SepGap = std::numeric_limits<double>::quiet_NaN();
+ Stage0SepMargin = std::numeric_limits<double>::quiet_NaN();
  PostTuneTargetIsi.assign(static_cast<size_t>(n), 0.0);
  for(int i = 0; i < n; ++i)
  {
@@ -6394,6 +6411,10 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
     PostTuneResult = PostTrainTune::kResultSetupFailure;
    else
     PostTuneResult = PostTrainTune::kResultInvalidMetrics;
+   Stage0SepHave = true;
+   PostTrainTune::FillSepMarginFields(
+    false, 0.0, std::vector<double>(),
+    Stage0SepTgt, Stage0SepMaxFoil, Stage0SepGap, Stage0SepMargin);
   }
   else
   {
@@ -6403,6 +6424,10 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
    foils.push_back(PostTuneMetrics[i]);
   const bool metrics_ok = PostTrainTune::MetricsFinite(tgt, foils);
   landscape_ok = metrics_ok && PostTrainTune::LandscapeOk(tgt, foils);
+  Stage0SepHave = true;
+  PostTrainTune::FillSepMarginFields(
+   metrics_ok, tgt, foils,
+   Stage0SepTgt, Stage0SepMaxFoil, Stage0SepGap, Stage0SepMargin);
   if(metrics_ok)
   {
    PostTrainTune::ComputeMidThreshold(tgt, foils, mid, gap);
@@ -6617,6 +6642,13 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
      flag << " candidate_mid=" << candidate_mid;
     if(test_applied_candidate_mid)
      flag << " test_mid_policy=candidate";
+    if(Stage0SepHave)
+    {
+     flag << " sep_tgt=" << Stage0SepTgt
+          << " sep_max_foil=" << Stage0SepMaxFoil
+          << " sep_gap=" << Stage0SepGap
+          << " sep_margin=" << Stage0SepMargin;
+    }
     if(PostTrainTipResistanceMode.GetData()
        == PostTrainTune::kPostTipSearchSynthetic)
      flag << " search_reverted=" << (PostTuneSearchReverted ? 1 : 0);
@@ -6647,7 +6679,7 @@ void NNeuronTimeLearnerBranch::FinalizePostTuneMid(void)
     }
    }
   }
-}
+ }
 }
 
 bool NNeuronTimeLearnerBranch::MaybeStartInferenceMidProbes(void)
