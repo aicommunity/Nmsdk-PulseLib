@@ -165,6 +165,10 @@ public:
 
  /// Absolute Rmin floor used when PreferConfiguredResistanceMinFloor is set (ohms).
  UProperty<double, NNeuronTimeLearner, ptPubParameter> ConfiguredResistanceMin;
+
+ /// F5/A7: when auto-estimating gamma, undo TipR drop vs SynapseResistanceBase
+ /// (amp was measured at already-reduced TipR). Default off = legacy no-op.
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> CorrectAttenuationGammaForTipR;
  
  /// Reference tip synapse resistance at L==1 (typically 8.6e7)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> SynapseResistanceBase;

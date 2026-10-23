@@ -152,6 +152,9 @@ public:
  /// F3/A5: Neuron->Reset() at the start of every training burst (deterministic IC).
  /// Default false preserves historical behaviour (Reset only after structure/Rs change).
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> ResetNeuronBeforeTrainBurst;
+
+ /// F5/A7: TipR-corrected attenuation gamma estimate (see Classic). Default off.
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> CorrectAttenuationGammaForTipR;
  
  /// Reference tip synapse resistance at L==1 (typically 8.6e7)
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SynapseResistanceBase;
