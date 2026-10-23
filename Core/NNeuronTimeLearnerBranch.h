@@ -296,6 +296,15 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  /// (same Generator). Cable grows to max(L)+1. Mute links Exc+Inh; Done → 2N.
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableNextSegmentInhibition;
 
+ /// Segmental Exc+Inh: Exc@PulseAttachPos, Inh@(attach+d); d=SegExcInhDelta (default 8).
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableSegExcInh;
+
+ /// Distal offset for SegEI (default 8). If ==1 with NextSeg, NextSeg link is skipped.
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> SegExcInhDelta;
+
+ /// SegEI α: InhResistance = ExcTipR / max(α,eps).
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SegExcInhAlpha;
+
 protected:
  /// Previous NumInputDendrite (resize / rebuild)
  int OldNumInputDendrite;
@@ -963,6 +972,12 @@ protected:
  
  /// Branch: link next-seg Inh to Dataset
  bool RelinkNextSegInhToDataset(int dendrite_index0, bool wire_now);
+
+ /// SegEI: Inh @ PulseAttachPos+d linked to Dataset.
+ bool EnsureSegExcInhOnPulse(int dendrite_index0, bool wire_now);
+
+ /// Wire SegEI then NextSeg (skip NextSeg if SegEI && d==1).
+ void WireAllInhForPulse(int dendrite_index0, bool wire_now);
  
  /// Branch: ensure next-seg Inh for all tips
  void EnsureNextSegInhSynapsesForAllTips(void);

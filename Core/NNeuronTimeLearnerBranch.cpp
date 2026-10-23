@@ -631,8 +631,16 @@ int NNeuronTimeLearnerBranch::ChainLengthMax(void) const
   if(DendriteLength[static_cast<size_t>(i)] > lmax)
    lmax = DendriteLength[static_cast<size_t>(i)];
  }
+ int extra = 0;
  if(EnableNextSegmentInhibition.GetData())
-  lmax += 1;
+  extra = std::max(extra, 1);
+ if(EnableSegExcInh.GetData())
+ {
+  const int d = SegExcInhDelta.GetData();
+  if(d > 0)
+   extra = std::max(extra, d);
+ }
+ lmax += extra;
  return lmax;
 }
 
@@ -2538,13 +2546,53 @@ bool NNeuronTimeLearnerBranch::RelinkNextSegInhToDataset(int dendrite_index0, bo
 /// Branch: ensure next-seg Inh for all tips
 void NNeuronTimeLearnerBranch::EnsureNextSegInhSynapsesForAllTips(void)
 {
- if(!EnableNextSegmentInhibition.GetData() || !Neuron)
+ if(!Neuron)
+  return;
+ if(!EnableNextSegmentInhibition.GetData() && !EnableSegExcInh.GetData())
   return;
  for(int d = 0; d < NumInputDendrite.GetData(); ++d)
- {
-  const int inh_seg = PulseAttachPos(d) + 1;
-  EnsureNextSegInhSynapseOnSegment(inh_seg);
- }
+  WireAllInhForPulse(d, false);
+}
+
+bool NNeuronTimeLearnerBranch::EnsureSegExcInhOnPulse(int dendrite_index0, bool wire_now)
+{
+ if(!EnableSegExcInh.GetData())
+  return true;
+ if(!Neuron || dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
+  return false;
+ int dlt = SegExcInhDelta.GetData();
+ if(dlt < 1)
+  dlt = 1;
+ const int inh_seg = PulseAttachPos(dendrite_index0) + dlt;
+ double exc_r = SynapseResistanceBase.GetData();
+ if(dendrite_index0 < int(TipSynapseResistance.size()) && TipSynapseResistance[static_cast<size_t>(dendrite_index0)] > 0.0)
+  exc_r = TipSynapseResistance[static_cast<size_t>(dendrite_index0)];
+ double alpha = SegExcInhAlpha.GetData();
+ if(alpha < 1.0e-12)
+  alpha = 1.0e-12;
+ if(!EnsureNextSegInhSynapseOnSegment(inh_seg))
+  return false;
+ NPulseSynapseCommon *inh = Neuron->GetComponentL<NPulseSynapseCommon>(
+  MakeBranchInhSynapsePath(inh_seg, 1), true);
+ if(!inh)
+  return false;
+ inh->Resistance = ClampResistance(exc_r / alpha);
+ if(!wire_now)
+  return true;
+ if(!LinkSynapseToDataset(inh))
+  return false;
+ return inh->Input.IsConnected();
+}
+
+void NNeuronTimeLearnerBranch::WireAllInhForPulse(int dendrite_index0, bool wire_now)
+{
+ if(!EnableNextSegmentInhibition.GetData() && !EnableSegExcInh.GetData())
+  return;
+ if(EnableSegExcInh.GetData())
+  EnsureSegExcInhOnPulse(dendrite_index0, wire_now);
+ const bool skip_nextseg = EnableSegExcInh.GetData() && (SegExcInhDelta.GetData() == 1);
+ if(EnableNextSegmentInhibition.GetData() && !skip_nextseg)
+  RelinkNextSegInhToDataset(dendrite_index0, wire_now);
 }
 
 /// Branch: drop Generator→ExcSynapse links
@@ -2657,7 +2705,9 @@ void NNeuronTimeLearnerBranch::RebuildGeneratorSynapseLinks(bool all_on, int act
   return;
  DisconnectGeneratorFromBranchExcSynapses();
  const int n = NumInputDendrite.GetData();
- const bool inh = EnableNextSegmentInhibition.GetData();
+ const bool nextseg = EnableNextSegmentInhibition.GetData();
+ const bool segei = EnableSegExcInh.GetData();
+ const bool skip_nextseg = segei && (SegExcInhDelta.GetData() == 1);
  std::vector<int> active_segments;
  if(all_on)
  {
@@ -2686,7 +2736,28 @@ void NNeuronTimeLearnerBranch::RebuildGeneratorSynapseLinks(bool all_on, int act
   }
  }
 
- if(inh)
+ auto link_segei = [&](int pulse)
+ {
+  int dlt = SegExcInhDelta.GetData();
+  if(dlt < 1)
+   dlt = 1;
+  const int inh_seg = PulseAttachPos(pulse) + dlt;
+  if(NPulseSynapseCommon *isyn = Neuron->GetComponentL<NPulseSynapseCommon>(
+       MakeBranchInhSynapsePath(inh_seg, 1), true))
+   LinkSynapseToDataset(isyn);
+ };
+
+ if(segei)
+ {
+  if(all_on)
+  {
+   for(int f = 0; f < n; ++f)
+    link_segei(f);
+  }
+  else if(active_pulse >= 0 && active_pulse < n)
+   link_segei(active_pulse);
+ }
+ if(nextseg && !skip_nextseg)
  {
   if(all_on)
   {
@@ -2845,10 +2916,9 @@ bool NNeuronTimeLearnerBranch::RelinkDendriteSynapsesToDataset(int dendrite_inde
     return false;
   }
  }
- if(EnableNextSegmentInhibition.GetData())
+ if(EnableNextSegmentInhibition.GetData() || EnableSegExcInh.GetData())
  {
-  if(!RelinkNextSegInhToDataset(dendrite_index0, wire_now))
-   return false;
+  WireAllInhForPulse(dendrite_index0, wire_now);
  }
  return true;
 }
@@ -3007,7 +3077,10 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  PostTrainTuneComplete("PostTrainTuneComplete", this),
  PostTuneResult("PostTuneResult", this),
  EnableNextSegmentInhibition("EnableNextSegmentInhibition", this,
-  &NNeuronTimeLearnerBranch::SetEnableNextSegmentInhibition)
+  &NNeuronTimeLearnerBranch::SetEnableNextSegmentInhibition),
+ EnableSegExcInh("EnableSegExcInh", this),
+ SegExcInhDelta("SegExcInhDelta", this),
+ SegExcInhAlpha("SegExcInhAlpha", this)
 {
  OldNumInputDendrite = 0;
  InitialSomaPotential.SetCheckEquals(false);
@@ -4303,6 +4376,9 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  EffectiveResistanceGain.assign(NumInputDendrite, kResistanceAdjustGainDefault);
  EnableDebug = false;
  EnableNextSegmentInhibition = false;
+ EnableSegExcInh = false;
+ SegExcInhDelta = 8;
+ SegExcInhAlpha = 1.0;
  ResizeSyncVectors(NumInputDendrite.GetData());
  
  IterationActive = false;
@@ -4651,6 +4727,14 @@ bool NNeuronTimeLearnerBranch::ApplyPendingDendriteLengthChanges(void)
    DetachBranchExcSynapseAtSegment(OldDendriteLength[i]);
    if(EnableNextSegmentInhibition.GetData())
     DetachBranchInhSynapseAtSegment(OldDendriteLength[i] + 1);
+   if(EnableSegExcInh.GetData())
+   {
+    int dlt = SegExcInhDelta.GetData();
+    if(dlt < 1)
+     dlt = 1;
+    if(!(EnableNextSegmentInhibition.GetData() && dlt == 1))
+     DetachBranchInhSynapseAtSegment(OldDendriteLength[i] + dlt);
+   }
   }
   EnforceSegmentMonotonicity(i);
   changed.push_back(i);

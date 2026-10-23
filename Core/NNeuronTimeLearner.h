@@ -172,6 +172,19 @@ public:
  
  /// Reference tip synapse resistance at L==1 (typically 8.6e7)
  UProperty<double, NNeuronTimeLearner, ptPubParameter> SynapseResistanceBase;
+
+ /// When true: each tip Exc@L[k] also drives InhSynapse1 on segment L[k]+1
+ /// (same Generator1). Cable grows to L+1 per dendrite. Port of Branch NextSegInh.
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> EnableNextSegmentInhibition;
+
+ /// Segmental Exc+Inh: same input → Exc@tip L and Inh@(L+d); d=SegExcInhDelta.
+ UProperty<bool, NNeuronTimeLearner, ptPubParameter> EnableSegExcInh;
+
+ /// Distal offset for SegEI Inh segment (default 8). Must be !=1 when NextSeg also on.
+ UProperty<int, NNeuronTimeLearner, ptPubParameter> SegExcInhDelta;
+
+ /// SegEI weight α: InhResistance = ExcTipR / max(α,eps). Default 1.0.
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> SegExcInhAlpha;
  
  /// Common-interval summary: greatest per-input minimum Rs; the optimizer clamps each tip independently.
  UProperty<double, NNeuronTimeLearner, ptPubState> ResistanceMin;
@@ -1033,6 +1046,30 @@ protected:
  
  /// Relink all tip synapses on dendrite/pulse to Dataset
  bool RelinkDendriteSynapsesToDataset(int dendrite_index0);
+
+ /// Dendrite segment counts including headroom for NextSeg (+1) and/or SegEI (+d).
+ std::vector<int> DendritePartsWithInhHeadroom(void) const;
+
+ /// Max distal Inh offset among enabled inh modes (0 if none).
+ int InhHeadroomSegments(void) const;
+
+ /// Ensure InhSynapse1 on Classic dendrite segment; set Type/Resistance.
+ bool EnsureInhSynapseOnSegment(int dendrite_index1, int segment_index1, double resistance);
+
+ /// NextSeg: Inh @ tip+1 linked to Generator1.
+ bool RelinkNextSegInhToDataset(int dendrite_index0, bool wire_now);
+
+ /// SegEI: Inh @ tip+d linked to Generator1; Resistance from α.
+ bool EnsureSegExcInhOnDendrite(int dendrite_index0, bool wire_now);
+
+ /// Clear Generator→Inh links on one dendrite (stale after length change).
+ void ClearGeneratorLinksToInhOnDendrite(int dendrite_index0);
+
+ /// Wire SegEI then NextSeg (skip NextSeg if SegEI && d==1).
+ void WireAllInhForDendrite(int dendrite_index0, bool wire_now);
+
+ /// Ensure NextSeg/SegEI inh synapses exist for all tips (no Generator link yet).
+ void EnsureInhSynapsesForAllTips(void);
  
  /// Align Dataset MaxSpikes / dims with NumInputDendrite
  void SyncDatasetDimsFromDendrites(void);

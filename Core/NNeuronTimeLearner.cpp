@@ -72,6 +72,11 @@ std::string MakeLearnerExcSynapsePath(const int dendrite_index1, const int segme
  return MakeLearnerDendriteName(dendrite_index1, segment_index1) + std::string(".ExcSynapse") + sntoa(synapse_index1);
 }
 
+std::string MakeLearnerInhSynapsePath(const int dendrite_index1, const int segment_index1, const int synapse_index1)
+{
+ return MakeLearnerDendriteName(dendrite_index1, segment_index1) + std::string(".InhSynapse") + sntoa(synapse_index1);
+}
+
 const int kPhaseSync = 0;
 const int kPhaseNormalize = 1;
 const int kPhaseDone = 2;
@@ -2023,7 +2028,161 @@ bool NNeuronTimeLearner::RelinkDendriteSynapsesToDataset(int dendrite_index0)
   if(!synapse->Input.IsConnected())
    return false;
  }
+ WireAllInhForDendrite(dendrite_index0, true);
  return true;
+}
+
+int NNeuronTimeLearner::InhHeadroomSegments(void) const
+{
+ int extra = 0;
+ if(EnableNextSegmentInhibition.GetData())
+  extra = std::max(extra, 1);
+ if(EnableSegExcInh.GetData())
+ {
+  const int d = SegExcInhDelta.GetData();
+  if(d > 0)
+   extra = std::max(extra, d);
+ }
+ return extra;
+}
+
+std::vector<int> NNeuronTimeLearner::DendritePartsWithInhHeadroom(void) const
+{
+ std::vector<int> parts;
+ parts.reserve(static_cast<size_t>(NumInputDendrite.GetData()));
+ const int extra = InhHeadroomSegments();
+ for(int i = 0; i < NumInputDendrite.GetData(); ++i)
+ {
+  int L = (i < int(DendriteLength.size())) ? DendriteLength[static_cast<size_t>(i)] : 1;
+  if(L < 1)
+   L = 1;
+  parts.push_back(L + extra);
+ }
+ return parts;
+}
+
+bool NNeuronTimeLearner::EnsureInhSynapseOnSegment(int dendrite_index1, int segment_index1, double resistance)
+{
+ if(!Neuron || dendrite_index1 < 1 || segment_index1 < 1)
+  return false;
+ UEPtr<NPulseMembrane> membr = Neuron->GetComponentL<NPulseMembrane>(
+  MakeLearnerDendriteName(dendrite_index1, segment_index1), true);
+ if(!membr)
+  return false;
+ if(int(membr->NumInhibitorySynapses) != 1)
+ {
+  membr->NumInhibitorySynapses = 1;
+  membr->Build();
+ }
+ if(!membr->GetActivity())
+  membr->SetActivity(true);
+ if(!membr->IsInit())
+  membr->Init();
+ NPulseSynapseCommon *inh = membr->GetComponentL<NPulseSynapseCommon>(
+  std::string("InhSynapse1"), true);
+ if(!inh)
+  return false;
+ inh->Type = 1.0;
+ double r = resistance;
+ if(r <= 0.0)
+  r = SynapseResistanceBase.GetData();
+ if(r <= 0.0)
+  r = kSynapseResistanceBioDefault;
+ inh->Resistance = ClampResistance(dendrite_index1 - 1, r);
+ return true;
+}
+
+bool NNeuronTimeLearner::RelinkNextSegInhToDataset(int dendrite_index0, bool wire_now)
+{
+ if(!EnableNextSegmentInhibition.GetData())
+  return true;
+ if(!Neuron || dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
+  return false;
+ const int tip = DendriteLength[static_cast<size_t>(dendrite_index0)];
+ const int inh_seg = tip + 1;
+ double r = SynapseResistanceBase.GetData();
+ if(dendrite_index0 < int(TipSynapseResistance.size()) && TipSynapseResistance[static_cast<size_t>(dendrite_index0)] > 0.0)
+  r = TipSynapseResistance[static_cast<size_t>(dendrite_index0)];
+ if(!EnsureInhSynapseOnSegment(dendrite_index0 + 1, inh_seg, r))
+  return false;
+ if(!wire_now)
+  return true;
+ NPulseSynapseCommon *inh = Neuron->GetComponentL<NPulseSynapseCommon>(
+  MakeLearnerInhSynapsePath(dendrite_index0 + 1, inh_seg, 1), true);
+ if(!inh)
+  return false;
+ if(!LinkSynapseToDataset(inh))
+  return false;
+ return inh->Input.IsConnected();
+}
+
+bool NNeuronTimeLearner::EnsureSegExcInhOnDendrite(int dendrite_index0, bool wire_now)
+{
+ if(!EnableSegExcInh.GetData())
+  return true;
+ if(!Neuron || dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
+  return false;
+ const int tip = DendriteLength[static_cast<size_t>(dendrite_index0)];
+ int d = SegExcInhDelta.GetData();
+ if(d < 1)
+  d = 1;
+ const int inh_seg = tip + d;
+ double exc_r = SynapseResistanceBase.GetData();
+ if(dendrite_index0 < int(TipSynapseResistance.size()) && TipSynapseResistance[static_cast<size_t>(dendrite_index0)] > 0.0)
+  exc_r = TipSynapseResistance[static_cast<size_t>(dendrite_index0)];
+ double alpha = SegExcInhAlpha.GetData();
+ if(alpha < 1.0e-12)
+  alpha = 1.0e-12;
+ const double inh_r = exc_r / alpha;
+ if(!EnsureInhSynapseOnSegment(dendrite_index0 + 1, inh_seg, inh_r))
+  return false;
+ if(!wire_now)
+  return true;
+ NPulseSynapseCommon *inh = Neuron->GetComponentL<NPulseSynapseCommon>(
+  MakeLearnerInhSynapsePath(dendrite_index0 + 1, inh_seg, 1), true);
+ if(!inh)
+  return false;
+ if(!LinkSynapseToDataset(inh))
+  return false;
+ return inh->Input.IsConnected();
+}
+
+void NNeuronTimeLearner::ClearGeneratorLinksToInhOnDendrite(int dendrite_index0)
+{
+ if(!Neuron || dendrite_index0 < 0 || dendrite_index0 >= NumInputDendrite)
+  return;
+ const int tip = (dendrite_index0 < int(DendriteLength.size()))
+  ? DendriteLength[static_cast<size_t>(dendrite_index0)] : 1;
+ const int scan_max = tip + InhHeadroomSegments() + 2;
+ for(int seg = 1; seg <= scan_max; ++seg)
+ {
+  NPulseSynapseCommon *inh = Neuron->GetComponentL<NPulseSynapseCommon>(
+   MakeLearnerInhSynapsePath(dendrite_index0 + 1, seg, 1), true);
+  if(!inh)
+   continue;
+  inh->Input.DetachFrom();
+  inh->DisconnectAllItems();
+ }
+}
+
+void NNeuronTimeLearner::WireAllInhForDendrite(int dendrite_index0, bool wire_now)
+{
+ if(!EnableNextSegmentInhibition.GetData() && !EnableSegExcInh.GetData())
+  return;
+ ClearGeneratorLinksToInhOnDendrite(dendrite_index0);
+ if(EnableSegExcInh.GetData())
+  EnsureSegExcInhOnDendrite(dendrite_index0, wire_now);
+ const bool skip_nextseg = EnableSegExcInh.GetData() && (SegExcInhDelta.GetData() == 1);
+ if(EnableNextSegmentInhibition.GetData() && !skip_nextseg)
+  RelinkNextSegInhToDataset(dendrite_index0, wire_now);
+}
+
+void NNeuronTimeLearner::EnsureInhSynapsesForAllTips(void)
+{
+ if(!Neuron)
+  return;
+ for(int d = 0; d < NumInputDendrite.GetData(); ++d)
+  WireAllInhForDendrite(d, false);
 }
 
 /// Align Dataset MaxSpikes / dims with NumInputDendrite
@@ -2135,6 +2294,10 @@ NNeuronTimeLearner::NNeuronTimeLearner(void):
  ConfiguredResistanceMin("ConfiguredResistanceMin", this),
  CorrectAttenuationGammaForTipR("CorrectAttenuationGammaForTipR", this),
  SynapseResistanceBase("SynapseResistanceBase", this, &NNeuronTimeLearner::SetSynapseResistanceBase),
+ EnableNextSegmentInhibition("EnableNextSegmentInhibition", this),
+ EnableSegExcInh("EnableSegExcInh", this),
+ SegExcInhDelta("SegExcInhDelta", this),
+ SegExcInhAlpha("SegExcInhAlpha", this),
  ResistanceMin("ResistanceMin", this),
  ResistanceMinRatio("ResistanceMinRatio", this),
  ResistanceMinByInput("ResistanceMinByInput", this),
@@ -3018,7 +3181,7 @@ bool NNeuronTimeLearner::BuildStructure()
  {
   Neuron->StructureBuildMode = 2;
  }
- Neuron->NumDendriteMembranePartsVec = DendriteLength;
+ Neuron->NumDendriteMembranePartsVec = DendritePartsWithInhHeadroom();
  // Force neuron ABuild so soma/dendrite cables and Pos/Neg generator links match tips.
  Neuron->StructureBuildMode = 2;
  if(!Neuron->Build())
@@ -3027,6 +3190,7 @@ bool NNeuronTimeLearner::BuildStructure()
    "BuildStructure: Neuron->Build failed after length sync");
   return false;
  }
+ EnsureInhSynapsesForAllTips();
  Neuron->Reset();
  if(!UpdateResistanceBoundsFromMembranes())
   return false;
@@ -3153,7 +3317,7 @@ bool NNeuronTimeLearner::BuildStructure()
  // (links report connected). A second cable Build+Relink matches the first
  // ApplyPending cycle that historically woke the tips.
  // Preserve external listeners on Generator1.Output across the wake-pass.
- Neuron->NumDendriteMembranePartsVec = DendriteLength;
+ Neuron->NumDendriteMembranePartsVec = DendritePartsWithInhHeadroom();
  Neuron->StructureBuildMode = 2;
  if(!Neuron->Build())
  {
@@ -3163,6 +3327,7 @@ bool NNeuronTimeLearner::BuildStructure()
  }
  Neuron->Reset();
  Neuron->InvalidateActiveComponentsCache();
+ EnsureInhSynapsesForAllTips();
  for(int numdend = 0; numdend < NumInputDendrite; numdend++)
  {
   if(!RelinkDendriteSynapsesToDataset(numdend))
@@ -3412,6 +3577,10 @@ bool NNeuronTimeLearner::ADefault(void)
  ConfiguredResistanceMin = 1.0e6;
  CorrectAttenuationGammaForTipR = false;
  SynapseResistanceBase = kSynapseResistanceBioDefault;
+ EnableNextSegmentInhibition = false;
+ EnableSegExcInh = false;
+ SegExcInhDelta = 8;
+ SegExcInhAlpha = 1.0;
  ResistanceMin.SetDataDirect(1.0e6);
  ResistanceMinRatio.SetDataDirect(0.0);
  ResistanceMinByInput.SetDataDirect(std::vector<double>());
@@ -3867,7 +4036,7 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
  NPulseGeneratorTransit *gen = GetDatasetGenerator();
  // Preserve external listeners on Generator1.Output while retargeting synapses.
  
- Neuron->NumDendriteMembranePartsVec = DendriteLength;
+ Neuron->NumDendriteMembranePartsVec = DendritePartsWithInhHeadroom();
  Neuron->StructureBuildMode = 2;
  if(!Neuron->Build())
  {
@@ -3875,6 +4044,7 @@ bool NNeuronTimeLearner::ApplyPendingDendriteLengthChanges(void)
    "ApplyPendingDendriteLengthChanges: Neuron->Build failed");
   return false;
  }
+ EnsureInhSynapsesForAllTips();
  
  // Neuron->Build already creates tip membranes with default NumExcitatorySynapses=1
  // and cable/PosNeg links. Only rebuild a tip when synapse count must change;

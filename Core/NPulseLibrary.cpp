@@ -1131,6 +1131,21 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->LTZone->Threshold=0.0117;
  UploadClass("NSPNeuronGen",n);
 
+ // SymInh alias: Rm_inh = Rm_exc (both Bio 1e7). For SegEI campaign; not AsymRm.
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBio";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->MembraneCapacity=1e-9;
+  n->SynapseDissociationTC=0.005;
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenSymInhC1e9",n);
+ }
 
  // Fast-response grid: DissociationTC x MembraneCapacity (opt-in UseElementDefaults).
  // Names without '_'. Does not alter NSPNeuronGen (flag stays false).
