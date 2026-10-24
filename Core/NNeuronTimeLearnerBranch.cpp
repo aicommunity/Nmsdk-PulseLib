@@ -186,7 +186,7 @@ void NNeuronTimeLearnerBranch::ResizeSyncVectors(int n)
  StoredPeakRel.assign(static_cast<size_t>(n), 0.0);
  PulseSynced.assign(static_cast<size_t>(n), false);
  HasPrevPeakSnapshot = false;
- EstDelayPerSeg = kDelayPerSegDefault;
+ EstDelayPerSeg = (InitEstDelayPerSeg.GetData() > 0.0) ? InitEstDelayPerSeg.GetData() : kDelayPerSegDefault;
  LastLengthDelta = 0;
  LastLengthDeltaDendrite = -1;
  if(int(ResistanceStatus.size()) != n)
@@ -3083,6 +3083,7 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  ExperimentMode("ExperimentMode", this, &NNeuronTimeLearnerBranch::SetExperimentMode),
  EnableDebug("EnableDebug", this, &NNeuronTimeLearnerBranch::SetEnableDebug),
  EnableTrainingAudit("EnableTrainingAudit", this),
+ InitEstDelayPerSeg("InitEstDelayPerSeg", this),
  OverrideMembraneCapacity("OverrideMembraneCapacity", this),
  OverrideExcMembraneResistance("OverrideExcMembraneResistance", this),
  OverrideInhMembraneResistance("OverrideInhMembraneResistance", this),
@@ -3140,7 +3141,7 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  HasPrevPeakSnapshot = false;
  ActiveDendrite = 0;
  ActivePulseIndex = 0;
- EstDelayPerSeg = kDelayPerSegDefault;
+ EstDelayPerSeg = (InitEstDelayPerSeg.GetData() > 0.0) ? InitEstDelayPerSeg.GetData() : kDelayPerSegDefault;
  LastLengthDelta = 0;
  LastLengthDeltaDendrite = -1;
  IterMinLTZPotential = std::numeric_limits<double>::max();
@@ -4283,6 +4284,7 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  CalculateMode = 0;
  PulseGeneratorClassName = "NPulseGeneratorTransit";
  NeuronClassName = "NSPNeuronGen";
+ InitEstDelayPerSeg = 0.0;
  OverrideMembraneCapacity = 0.0;
  OverrideExcMembraneResistance = 0.0;
  OverrideInhMembraneResistance = 0.0;

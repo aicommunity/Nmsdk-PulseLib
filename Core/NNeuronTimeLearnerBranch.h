@@ -259,6 +259,10 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  /// Per-experiment overrides of neuron class element defaults applied after the
  /// Neuron is recreated from NeuronClassName (BuildStructure / PostTune rebuild).
  /// Value <= 0 keeps the class value.
+ /// Initial EstDelayPerSeg (sec/segment) at reset; <=0 keeps kDelayPerSegDefault (0.005).
+ /// Needed when the class tau is overridden (tau 0.75 ms -> 0.25 ms/seg): a 20x wrong
+ /// initial estimate mis-places the peak window and the d2 peak is never seen.
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> InitEstDelayPerSeg;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideMembraneCapacity;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideExcMembraneResistance;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideInhMembraneResistance;
