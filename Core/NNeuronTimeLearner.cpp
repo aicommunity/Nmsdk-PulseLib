@@ -456,6 +456,14 @@ bool NNeuronTimeLearner::UpdateResistanceBoundsFromMembranes(void)
 
  if(membrane_resistances.empty())
  {
+  // PLAN 2026-10-25 F4: ADefault / early BuildStructure can leave
+  // NumInputDendrite=1 → target_count=0 (no tip membranes yet). That is not
+  // a derivation failure — skip ERROR and succeed without changing bounds.
+  if(target_count == 0)
+  {
+   clear_integration_failure();
+   return true;
+  }
   if(RDK::GetLogger())
    RDK::GetLogger()->LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearner",
     "Resistance bounds could not be derived: no positive NPulseChannel membrane resistance was found");
