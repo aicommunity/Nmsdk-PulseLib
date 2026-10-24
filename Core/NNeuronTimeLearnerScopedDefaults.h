@@ -18,13 +18,14 @@ inline void ApplyElementDefaultsToMembrane(NPulseNeuron *neuron, NPulseMembrane 
  const double cap = neuron->MembraneCapacity.GetData();
  const double dissoc = neuron->SynapseDissociationTC.GetData();
  const double secr = neuron->SynapseSecretionTC.GetData();
+ const double tpd = neuron->SynapseTypicalPulseDuration.GetData();
  const double exc_rm = neuron->ExcMembraneResistance.GetData();
  const double inh_rm = neuron->InhMembraneResistance.GetData();
  const double exc_rsyn = neuron->ExcSynapseResistance.GetData();
  const double inh_rsyn = neuron->InhSynapseResistance.GetData();
  if(cap <= 0.0 && dissoc <= 0.0 && secr <= 0.0
     && exc_rm <= 0.0 && inh_rm <= 0.0
-    && exc_rsyn <= 0.0 && inh_rsyn <= 0.0)
+    && exc_rsyn <= 0.0 && inh_rsyn <= 0.0 && tpd <= 0.0)
   return;
 
  if(cap > 0.0 || exc_rm > 0.0 || inh_rm > 0.0)
@@ -54,7 +55,7 @@ inline void ApplyElementDefaultsToMembrane(NPulseNeuron *neuron, NPulseMembrane 
   }
  }
 
- if(dissoc > 0.0 || secr > 0.0 || exc_rsyn > 0.0 || inh_rsyn > 0.0)
+ if(dissoc > 0.0 || secr > 0.0 || exc_rsyn > 0.0 || inh_rsyn > 0.0 || tpd > 0.0)
  {
   const int nexc = int(membrane->NumExcitatorySynapses);
   const int ninh = int(membrane->NumInhibitorySynapses);
@@ -67,6 +68,8 @@ inline void ApplyElementDefaultsToMembrane(NPulseNeuron *neuron, NPulseMembrane 
      syn->DissociationTC = dissoc;
     if(secr > 0.0)
      syn->SecretionTC = secr;
+    if(tpd > 0.0)
+     syn->TypicalPulseDuration = tpd;
     if(exc_rsyn > 0.0)
      syn->Resistance = exc_rsyn;
    }
@@ -80,6 +83,8 @@ inline void ApplyElementDefaultsToMembrane(NPulseNeuron *neuron, NPulseMembrane 
      syn->DissociationTC = dissoc;
     if(secr > 0.0)
      syn->SecretionTC = secr;
+    if(tpd > 0.0)
+     syn->TypicalPulseDuration = tpd;
     if(inh_rsyn > 0.0)
      syn->Resistance = inh_rsyn;
    }

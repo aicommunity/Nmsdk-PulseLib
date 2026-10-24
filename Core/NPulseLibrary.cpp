@@ -1446,6 +1446,36 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  upload_h0_asymrm("NSPNeuronGenAsymRmD001C1e9TauH0_S480", 1e-9, false);
  upload_h0_asymrm("NSPNeuronGenPreinh2_5AsymRmD001C1e9TauH0_S480", 1e-9, true);
 
+ // H-sim (PLAN 2026-10-25 Q1): exact time-similarity twins of AsymRmD001C1e9.
+ // Every time constant x k: Cm, synaptic Secretion/Dissociation TC, TypicalPulseDuration.
+ // S50 -> k=2, S100 -> k=4, S480 -> k=19.2 (pattern times and generator PulseLength x k in config).
+ auto upload_sim_asymrm = [&](const char *class_name, double k, bool preinh) {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName=preinh ? "NPMembraneBioPreinh2_5" : "NPMembraneBio";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001*k;
+  n->SynapseSecretionTC=0.001*k;
+  n->SynapseTypicalPulseDuration=0.001*k;
+  n->MembraneCapacity=1e-9*k;
+  n->ExcMembraneResistance=1e7;
+  n->InhMembraneResistance=1e8;
+  n->ExcSynapseResistance=8.6e7;
+  n->InhSynapseResistance=8.6e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass(class_name, n);
+ };
+ upload_sim_asymrm("NSPNeuronGenAsymRmD001C1e9Sim1", 1.0, false);
+ upload_sim_asymrm("NSPNeuronGenAsymRmD001C1e9Sim2", 2.0, false);
+ upload_sim_asymrm("NSPNeuronGenAsymRmD001C1e9Sim4", 4.0, false);
+ upload_sim_asymrm("NSPNeuronGenAsymRmD001C1e9Sim19_2", 19.2, false);
+ upload_sim_asymrm("NSPNeuronGenPreinh2_5AsymRmD001C1e9Sim2", 2.0, true);
+ upload_sim_asymrm("NSPNeuronGenPreinh2_5AsymRmD001C1e9Sim4", 4.0, true);
+
  // Создаем мелкий нейрон с биологически правдоподобными параметрами
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
  n->LTMembraneClassName="";
