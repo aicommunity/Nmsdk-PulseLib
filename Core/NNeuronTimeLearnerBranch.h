@@ -305,6 +305,9 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  /// SegEI α: InhResistance = ExcTipR / max(α,eps).
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SegExcInhAlpha;
 
+ /// NextSeg Inh resistance override; <=0 keeps SynapseResistanceBase (legacy).
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> NextSegInhResistance;
+
 protected:
  /// Previous NumInputDendrite (resize / rebuild)
  int OldNumInputDendrite;

@@ -2540,6 +2540,8 @@ bool NNeuronTimeLearnerBranch::RelinkNextSegInhToDataset(int dendrite_index0, bo
  NPulseSynapseCommon *inh = GetNextSegInhSynapse(dendrite_index0);
  if(!inh)
   return false;
+ if(NextSegInhResistance.GetData() > 0.0)
+  inh->Resistance = ClampResistance(NextSegInhResistance.GetData());
  if(wire_now)
  {
   if(!LinkSynapseToDataset(inh))
@@ -3087,9 +3089,11 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
   &NNeuronTimeLearnerBranch::SetEnableNextSegmentInhibition),
  EnableSegExcInh("EnableSegExcInh", this),
  SegExcInhDelta("SegExcInhDelta", this),
- SegExcInhAlpha("SegExcInhAlpha", this)
+ SegExcInhAlpha("SegExcInhAlpha", this),
+ NextSegInhResistance("NextSegInhResistance", this)
 {
  OldNumInputDendrite = 0;
+ NextSegInhResistance = 0.0;
  InitialSomaPotential.SetCheckEquals(false);
  TipSynapseResistance.SetCheckEquals(false);
  AttenuationGammaByInput.SetCheckEquals(false);
@@ -4386,6 +4390,7 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  EnableSegExcInh = false;
  SegExcInhDelta = 8;
  SegExcInhAlpha = 1.0;
+ NextSegInhResistance = 0.0;
  ResizeSyncVectors(NumInputDendrite.GetData());
  
  IterationActive = false;
