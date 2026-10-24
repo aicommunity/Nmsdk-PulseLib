@@ -282,6 +282,15 @@ public:
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> EnableDebug;
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> EnableTrainingAudit;
 
+ /// Per-experiment overrides of neuron class element defaults applied after the
+ /// Neuron is recreated from NeuronClassName (BuildStructure / PostTune rebuild).
+ /// Value <= 0 keeps the class value.
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> OverrideMembraneCapacity;
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> OverrideExcMembraneResistance;
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> OverrideInhMembraneResistance;
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> OverrideExcSynapseResistance;
+ UProperty<double, NNeuronTimeLearner, ptPubParameter> OverrideInhSynapseResistance;
+
  /// When true, after sync+amp Done run PostTune (tip-resistance + silent mid)
  UProperty<bool, NNeuronTimeLearner, ptPubParameter> EnablePostTrainTuning;
 

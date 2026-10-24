@@ -256,6 +256,23 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableDebug;
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableTrainingAudit;
 
+ /// Per-experiment overrides of neuron class element defaults applied after the
+ /// Neuron is recreated from NeuronClassName (BuildStructure / PostTune rebuild).
+ /// Value <= 0 keeps the class value.
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideMembraneCapacity;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideExcMembraneResistance;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideInhMembraneResistance;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideExcSynapseResistance;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideInhSynapseResistance;
+
+ /// TimeLearnerTrainingDynamics.log thinning: first DynamicsLogHead records are
+ /// written in full; afterwards every DynamicsLogEvery-th record, component_state
+ /// only if DynamicsLogComponentState. DynamicsLogHead < 0 keeps legacy behaviour.
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> DynamicsLogHead;
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> DynamicsLogEvery;
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> DynamicsLogComponentState;
+ long long DynamicsLogCounter = 0;
+
  /// When true, after sync+amp Done run PostTune (tip-resistance + silent mid)
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnablePostTrainTuning;
 

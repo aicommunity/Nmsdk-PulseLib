@@ -1,11 +1,38 @@
 #ifndef NNEURONTIMELEARNER_SCOPED_DEFAULTS_H
 #define NNEURONTIMELEARNER_SCOPED_DEFAULTS_H
 
+#include <sstream>
 #include "NPulseNeuron.h"
 #include "NPulseChannel.h"
 #include "NPulseSynapse.h"
 
 namespace NMSDK {
+
+/// Per-experiment override of class element defaults on a freshly created neuron.
+/// Values <= 0 keep the class value. Must be called before Neuron->Build() so
+/// NPulseNeuron::ABuild/ApplyElementDefaults propagate them to every membrane.
+inline std::string ApplyNeuronClassOverrides(NPulseNeuron *neuron, double cap, double exc_rm,
+ double inh_rm, double exc_rsyn, double inh_rsyn)
+{
+ if(!neuron)
+  return std::string();
+ if(cap <= 0.0 && exc_rm <= 0.0 && inh_rm <= 0.0 && exc_rsyn <= 0.0 && inh_rsyn <= 0.0)
+  return std::string();
+ if(cap > 0.0) neuron->MembraneCapacity = cap;
+ if(exc_rm > 0.0) neuron->ExcMembraneResistance = exc_rm;
+ if(inh_rm > 0.0) neuron->InhMembraneResistance = inh_rm;
+ if(exc_rsyn > 0.0) neuron->ExcSynapseResistance = exc_rsyn;
+ if(inh_rsyn > 0.0) neuron->InhSynapseResistance = inh_rsyn;
+ std::ostringstream oss;
+ oss.precision(10);
+ oss << "NeuronClassOverrides: Capacity=" << neuron->MembraneCapacity.GetData()
+     << " ExcRm=" << neuron->ExcMembraneResistance.GetData()
+     << " InhRm=" << neuron->InhMembraneResistance.GetData()
+     << " ExcRsyn=" << neuron->ExcSynapseResistance.GetData()
+     << " InhRsyn=" << neuron->InhSynapseResistance.GetData()
+     << " UseElementDefaults=" << neuron->UseElementDefaults.GetData();
+ return oss.str();
+}
 
 /// Apply NPulseNeuron element defaults to one rebuilt membrane only.
 /// NPulseNeuron::ApplyElementDefaults() walks every membrane and resets all

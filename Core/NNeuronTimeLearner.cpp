@@ -2338,6 +2338,11 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  ExperimentMode("ExperimentMode", this, &NNeuronTimeLearner::SetExperimentMode),
  EnableDebug("EnableDebug", this, &NNeuronTimeLearner::SetEnableDebug),
  EnableTrainingAudit("EnableTrainingAudit", this),
+ OverrideMembraneCapacity("OverrideMembraneCapacity", this),
+ OverrideExcMembraneResistance("OverrideExcMembraneResistance", this),
+ OverrideInhMembraneResistance("OverrideInhMembraneResistance", this),
+ OverrideExcSynapseResistance("OverrideExcSynapseResistance", this),
+ OverrideInhSynapseResistance("OverrideInhSynapseResistance", this),
  EnablePostTrainTuning("EnablePostTrainTuning", this),
  PostTrainTipResistanceMode("PostTrainTipResistanceMode", this),
  EnablePostTrainMidThreshold("EnablePostTrainMidThreshold", this),
@@ -3159,6 +3164,13 @@ bool NNeuronTimeLearner::BuildStructure()
   Neuron = NULL;
  }
  Neuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron"), NeuronClassName);
+ {
+  const std::string ov_msg = ApplyNeuronClassOverrides(Neuron, OverrideMembraneCapacity.GetData(),
+   OverrideExcMembraneResistance.GetData(), OverrideInhMembraneResistance.GetData(),
+   OverrideExcSynapseResistance.GetData(), OverrideInhSynapseResistance.GetData());
+  if(!ov_msg.empty())
+   LogMessageEx(RDK_EX_INFO, "NNeuronTimeLearner", ov_msg);
+ }
  Neuron->SetCoord(MVector<double,3>(8.7 + 1 * 7, 1.67, 0));
  // Independent dendrite lengths are required for temporal sync.
  Neuron->StructureBuildMode = 2;
@@ -3530,6 +3542,11 @@ bool NNeuronTimeLearner::ADefault(void)
  CalculateMode = 0;
  PulseGeneratorClassName = "NPulseGeneratorTransit";
  NeuronClassName = "NSPNeuronGen";
+ OverrideMembraneCapacity = 0.0;
+ OverrideExcMembraneResistance = 0.0;
+ OverrideInhMembraneResistance = 0.0;
+ OverrideExcSynapseResistance = 0.0;
+ OverrideInhSynapseResistance = 0.0;
  SynapseClassName = "NPSynapseBio";
  IsNeedToTrain = true;
  ExperimentMode = false;

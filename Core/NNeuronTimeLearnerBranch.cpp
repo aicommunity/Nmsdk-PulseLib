@@ -1212,6 +1212,15 @@ void NNeuronTimeLearnerBranch::AppendTrainingDynamicsSample(double now, int new_
 {
  if(!EnableDebug.GetData() || !Environment || !IterationActive)
   return;
+ ++DynamicsLogCounter;
+ bool dyn_full = true;
+ if(DynamicsLogHead.GetData() >= 0 && DynamicsLogCounter > DynamicsLogHead.GetData())
+ {
+  const long long every = std::max(1, DynamicsLogEvery.GetData());
+  if(((DynamicsLogCounter - DynamicsLogHead.GetData()) % every) != 0)
+   return;
+  dyn_full = DynamicsLogComponentState.GetData();
+ }
  std::string data_dir = Environment->GetCurrentDataDir();
  if(data_dir.empty())
   return;
@@ -1285,7 +1294,8 @@ void NNeuronTimeLearnerBranch::AppendTrainingDynamicsSample(double now, int new_
  append_vector("peak_window_hi_rel", AuditPeakWindowHiRel);
  append_vector("dissynchronization", Dissynchronization);
  append_vector("prev_dissynchronization", PrevDissynchronization);
- record << ";component_state=" << BuildAuditComponentStateSnapshot();
+ if(dyn_full)
+  record << ";component_state=" << BuildAuditComponentStateSnapshot();
 
  // The detailed component snapshot can dwarf the compact training audit in
  // long runs. Keep it behind the existing diagnostic flag; the compact C++
@@ -3073,6 +3083,14 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  ExperimentMode("ExperimentMode", this, &NNeuronTimeLearnerBranch::SetExperimentMode),
  EnableDebug("EnableDebug", this, &NNeuronTimeLearnerBranch::SetEnableDebug),
  EnableTrainingAudit("EnableTrainingAudit", this),
+ OverrideMembraneCapacity("OverrideMembraneCapacity", this),
+ OverrideExcMembraneResistance("OverrideExcMembraneResistance", this),
+ OverrideInhMembraneResistance("OverrideInhMembraneResistance", this),
+ OverrideExcSynapseResistance("OverrideExcSynapseResistance", this),
+ OverrideInhSynapseResistance("OverrideInhSynapseResistance", this),
+ DynamicsLogHead("DynamicsLogHead", this),
+ DynamicsLogEvery("DynamicsLogEvery", this),
+ DynamicsLogComponentState("DynamicsLogComponentState", this),
  EnablePostTrainTuning("EnablePostTrainTuning", this),
  PostTrainTipResistanceMode("PostTrainTipResistanceMode", this),
  EnablePostTrainMidThreshold("EnablePostTrainMidThreshold", this),
@@ -3906,6 +3924,13 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
   Neuron = NULL;
  }
  Neuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron"), NeuronClassName);
+ {
+  const std::string ov_msg = ApplyNeuronClassOverrides(Neuron, OverrideMembraneCapacity.GetData(),
+   OverrideExcMembraneResistance.GetData(), OverrideInhMembraneResistance.GetData(),
+   OverrideExcSynapseResistance.GetData(), OverrideInhSynapseResistance.GetData());
+  if(!ov_msg.empty())
+   LogMessageEx(RDK_EX_INFO, "NNeuronTimeLearnerBranch", ov_msg);
+ }
  Neuron->SetCoord(MVector<double,3>(8.7 + 1 * 7, 1.67, 0));
  Neuron->StructureBuildMode = 2;
  Neuron->NumSomaMembraneParts = 1;
@@ -4258,6 +4283,15 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  CalculateMode = 0;
  PulseGeneratorClassName = "NPulseGeneratorTransit";
  NeuronClassName = "NSPNeuronGen";
+ OverrideMembraneCapacity = 0.0;
+ OverrideExcMembraneResistance = 0.0;
+ OverrideInhMembraneResistance = 0.0;
+ OverrideExcSynapseResistance = 0.0;
+ OverrideInhSynapseResistance = 0.0;
+ DynamicsLogHead = -1;
+ DynamicsLogEvery = 1;
+ DynamicsLogComponentState = true;
+ DynamicsLogCounter = 0;
  SynapseClassName = "NPSynapseBio";
  IsNeedToTrain = true;
  ExperimentMode = false;
@@ -6331,6 +6365,13 @@ bool NNeuronTimeLearnerBranch::RebuildCableForPostTuneProbes(void)
  Neuron->SetCoord(MVector<double,3>(8.7 + 1 * 7, 1.67, 0));
  Neuron->NumSomaMembraneParts = 1;
  Neuron->MembraneCapacity = cap;
+ {
+  const std::string ov_msg = ApplyNeuronClassOverrides(Neuron, OverrideMembraneCapacity.GetData(),
+   OverrideExcMembraneResistance.GetData(), OverrideInhMembraneResistance.GetData(),
+   OverrideExcSynapseResistance.GetData(), OverrideInhSynapseResistance.GetData());
+  if(!ov_msg.empty())
+   LogMessageEx(RDK_EX_INFO, "NNeuronTimeLearnerBranch", ov_msg);
+ }
  {
   std::vector<int> chain(1, ChainLengthMax());
   Neuron->NumDendriteMembranePartsVec = chain;
