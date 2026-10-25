@@ -2079,7 +2079,7 @@ void NNeuronTimeLearner::TrimSyncCapacitances(const std::vector<int> &lengths_be
    c_new = c_old;
   else
    c_new = std::min(c_hi, std::max(c_lo, c_new));
-  if(EnableDebug.GetData() && RDK::GetLogger())
+  if(RDK::GetLogger())
   {
    std::ostringstream oss;
    oss << "SyncCapacitanceTrim: num=" << i << " iter=" << CountIteration
