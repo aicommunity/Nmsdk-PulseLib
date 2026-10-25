@@ -1,45 +1,83 @@
 # NPatternResponseAnalyzer — измерение ответов на паттерны
 
-Сверено с PulseLib d4149190, 2026-09-24. [Повторный аудит и ограничения](../../../../Docs/Audit/TimeLearner-2026-09-24-review/README.md).
-
 ## RU
 
-Analyzer регистрирует rising-edge стимулов и выхода нейрона. Wiring: StimulusInputs←DatasetMatrix.Generator1.Output, NeuronOutputs←Neuron.LTZone.Output, TargetClassInput←DatasetMatrix.CurrentClass.
+Analyzer регистрирует rising-edge стимулов и выхода нейрона. StimulusInputs
+подключаются к DatasetMatrix.Generator1.Output, NeuronOutputs — к LTZone.Output,
+TargetClassInput — к классу сэмпла. Метка фиксируется в BeginTrial. При доступном
+dataset ожидаемое число стимулов и sample id берутся из него. Legacy fallback без
+dataset требует минимум четыре observed стимула и не подтверждает произвольный N.
 
-### Полнота паттерна и границы trial
+Ответ классифицируется относительно последнего стимула. Наблюдение продолжается
+после timely fire до last_stim + EffectiveLateWindow. Досрочное закрытие при
+sample advance помечает censored. Неполный паттерн помечает incomplete. Такие
+наблюдения не подтверждают тишину фойлов.
 
-При найденном DatasetMatrix через learner (включая Branch) expected stim count, sample id и класс берутся из dataset. Паттерн полон при observed>=expected. Без доступного expected count legacy fallback — **observed>=4**; одиночный стимул больше не объявляется полным. Это ограничение fallback, а не общая поддержка произвольного N.
+### CSV
 
-neuron_fired выставляется после complete в PostPatternWindow относительно последнего стимула. Метка класса фиксируется в BeginTrial. После timely fire наблюдение продолжается до trial_observe_until_=last_stim+EffectiveLateWindow, **если раньше не закрыт trial при переходе к следующему sample**.
+ObservationSchemaVersion=3 сохраняет прежний набор колонок. Версия 4 выбирается
+явно и добавляет run_id, trial_id, sample_id, pattern_hash, model_revision,
+onset_abs, required_observe_end, measurement_valid и soma_amplitudes. RunId и
+ModelRevision задаются launcher из immutable manifest. Hash описывает наблюдённые
+stimulus offsets (fnv1a64); он не заменяет hash конфигурации/исходных данных.
 
-Текущие ограничения (R01/R02 аудита): sample advance может сократить окно без явного censored-статуса; между advance и первым новым стимулом output edge может остаться незаписанным. При совпадении sample advance и нового stimulus edge неполный старый trial может поглотить стимул нового sample. Этот последний переход воспроизведён изолированно; его достижимость в полном scheduler требует проверки.
+Soma peaks хранятся для всех входных строк. В schema 4 полный массив записывается
+через ";", а optional trace добавляет soma_potentials. Старые soma_amp_0..3
+сохраняются для чтения legacy tools. CSV пишется с precision 17 и classic locale.
 
-### CSV и Python-метрики
+NaN/Inf или изменение размерности во время пробы инвалидируют измерение даже
+при сохранённом прежнем конечном максимуме. Ограничение spike timestamps — 16;
+превышение выдаёт error_class=overflow. Невалидное измерение выдаёт
+invalid_measurement. Match такого наблюдения равен 0. Rest-state и физическая
+динамика модели не изменяются analyzer.
 
-Поля: trial,target_class,stim_count,isi0..isi3,neuron_fired,neuron_t_rel,match,late_fired,late_t_rel,error_class,ltz_potential_max,soma_amp_0..3,soma_amp_sum,neuron_spike_count,neuron_spike_times,response_class.
+При AppendMode заголовок существующего CSV должен совпадать с выбранной схемой.
+Смена схемы не дописывает строки к несовместимому заголовку. Неизвестные версии
+не записываются. Ошибки записи обнаруживаются pipeline как отсутствие полных
+наблюдений; bool lifecycle остаются true.
 
-- При MatchMode=0 (default) match учитывает in-window neuron_fired; late в нём не учтён. MatchMode=1 использует IsIsiTemplateMatch независимо от fired.
-- neuron_spike_count и neuron_spike_times сохраняют не более 16 rising-edge открытого trial (count — размер ограниченного списка); overflow отдельно не отмечается. Времена заданы относительно первого стимула. Закрытое/обрезанное окно не восстанавливается последующим пересчётом CSV.
-- per_stim использует injective matching: один spike не может покрывать несколько stimulus windows.
-- Python metrics_version=2 учитывает любой записанный foil-spike как FP; last_pulse_ok использует сумму ISI. Но schema_ok не проверяет все противоречия/count/NaN; classify отдельно не гарантирует last_pulse_ok.
-- Четыре ISI-поля не описывают произвольный N>5; N=1 требует согласования single/per_stim и last_pulse. Поле ok_audit_legacy не воспроизводит исторический scorer на всех входах.
+### Scorer
 
-Критерий «один target-spike после последнего стимула, тишина всех foils за полное одинаковое окно» требует полной записи наблюдений и проверки валидности. Текущие исправления сами по себе ещё не обеспечивают его во всех переходах.
+Metrics version 4 использует метки target/foil и не зависит от позиции target.
+Проверяются уникальные trial IDs, ожидаемое множество проб, schema version,
+complete/censored, числа, stimulus/spike timestamps и их согласованность.
+ok_audit и ok_audit_v2 — один verdict, включающий last-pulse. Для нового run
+schema 4 дополнительно требует provenance и полное окно наблюдения.
+
+Старые CSV без доказательств полноты сохраняют историческую точность и target hit,
+но не получают новый strict PASS. Августовские визуально подтверждённые 4/8–6/8
+не отменяются более строгим gate. Same-Matrix calibration и независимый frozen
+Test должны иметь разные protocol IDs.
 
 ### Свойства
 
 | Имя | Смысл |
 |---|---|
 | PostPatternWindow / LateResponseWindow | Окна в секундах |
-| PulseDetectThreshold | Порог rising-edge, default 0 |
-| SavePath / FileName | Путь CSV относительно data dir |
-| AppendMode | false: пересоздание CSV при Reset |
-| Enable | Включение анализа |
-| TrialIndex, LastFired, LastMatch, LastLateFired, LastErrorClass | Последний закрытый trial |
-| LastNeuronDelay, LastLateNeuronDelay, LastIsi, LastSpikeCount, LastResponseClass | Времена, ISI и морфология |
+| PulseDetectThreshold | Порог rising-edge; default 0 |
+| SavePath / FileName | CSV относительно data dir |
+| AppendMode | false пересоздаёт CSV при Reset; true требует совместимый header |
+| ObservationSchemaVersion | 3 — совместимость; 4 — новый observation contract |
+| RunId / ModelRevision | Идентификаторы immutable запуска и измеряемой модели |
+| Enable | Включает сбор наблюдений |
+| TraceLogEnabled / TraceLogFileName | Optional trace, без изменения обучения |
+| TrialIndex, LastFired, LastMatch, LastLateFired, LastErrorClass | Последний trial |
+| LastNeuronDelay, LastLateNeuronDelay, LastIsi, LastSpikeCount, LastResponseClass | Времена, ISI, morphology |
+
+Ограничения остаются явными: fallback без dataset, привязка к фактическому
+вычислительному порядку, разрешение источников после перестройки модели и
+полноценная end-to-end проверка границ trial входят в lifecycle/integration audit.
 
 ## EN
 
-The dataset supplies expected stimulus count, sample identity and the immutable trial label. Completion uses observed>=expected; without an expected count, the legacy fallback is observed>=4. A timely fire no longer immediately ends observation. However, dataset advance can still close the trial before its observation deadline, and an output edge before the next first stimulus can be lost. The incomplete-trial/coincident-sample transition also needs an explicit boundary rule.
+Schema 3 remains the default for old configurations. Explicit schema 4 adds run,
+trial and sample identity, observed-pattern hash, model revision, absolute onset,
+required observation deadline, validity and a variable-size soma array. Numeric
+corruption, a dimension change or spike-list overflow invalidates evidence.
+Early sample advance censors the observation. Append requires a matching header.
 
-CSV spike count and timestamps are both capped at 16; overflow is not flagged. Default MatchMode=0 uses in-window fire, while MatchMode=1 matches the ISI template independently of fire. Per-stim matching is injective. Python metrics v2 counts all recorded foil spikes and last_pulse_ok sums ISIs. Full schema validity, N=1, the fixed four-ISI CSV format for larger N, and exact legacy-scoring compatibility remain limited. A passing CSV score does not certify unobserved portions of a truncated window. See the linked review for executable counterexamples and the planned contract.
+Metrics v4 identifies targets by labels, validates the expected trial set and
+completeness, and uses one audit verdict including last-pulse timing. Historical
+partial recognition is retained separately; missing historical metadata cannot
+be reconstructed into proof of a complete modern trial. Model state, lifecycle
+ordering, and independent frozen evaluation require their own integration checks.

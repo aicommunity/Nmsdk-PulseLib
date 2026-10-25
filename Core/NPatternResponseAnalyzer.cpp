@@ -528,6 +528,11 @@ std::string NPatternResponseAnalyzer::CsvHeader(void) const
 
 bool NPatternResponseAnalyzer::EnsureCsvReady(void)
 {
+ if(int(ObservationSchemaVersion) != 3 && int(ObservationSchemaVersion) != 4)
+ {
+  LastErrorClass = "unsupported_schema";
+  return false;
+ }
  if(csv_full_path_.empty())
  {
   std::string base;
@@ -593,7 +598,9 @@ bool NPatternResponseAnalyzer::EnsureTraceReady(void)
   if(!trace_stream_)
    return false;
   trace_stream_ << "trial,sample_id,target_class,time_abs_s,time_rel_s,"
-                   "soma_sum,soma_0,soma_1,soma_2,soma_3,ltz_potential\n";
+                   "soma_sum,soma_0,soma_1,soma_2,soma_3,ltz_potential";
+  if(int(ObservationSchemaVersion) == 4) trace_stream_ << ",soma_potentials";
+  trace_stream_ << '\n';
   trace_stream_ << std::setprecision(17);
   trace_header_written_ = true;
  }
@@ -616,7 +623,17 @@ void NPatternResponseAnalyzer::WriteTraceSample(double now)
                << soma_sum;
  for(int i = 0; i < 4; ++i)
   trace_stream_ << ',' << (i < int(soma.size()) ? soma[size_t(i)] : 0.0);
- trace_stream_ << ',' << ReadLtzPotential() << '\n';
+ trace_stream_ << ',' << ReadLtzPotential();
+ if(int(ObservationSchemaVersion) == 4)
+ {
+  trace_stream_ << ',';
+  for(size_t i = 0; i < soma.size(); ++i)
+  {
+   if(i) trace_stream_ << ';';
+   trace_stream_ << soma[i];
+  }
+ }
+ trace_stream_ << '\n';
  if(++trace_rows_since_flush_ >= 512)
  {
   trace_stream_.flush();
@@ -797,7 +814,7 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
  if(!trial_measurement_valid_ || trial_spike_overflow_)
  {
   match = 0;
-  err = trial_spike_overflow_ ? "overflow" : "nonfinite";
+  err = trial_spike_overflow_ ? "overflow" : "invalid_measurement";
  }
 
  std::vector<double> spike_rel;
