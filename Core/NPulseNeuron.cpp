@@ -61,7 +61,8 @@ NPulseNeuron::NPulseNeuron(void)
   InhMembraneResistance("InhMembraneResistance",this,&NPulseNeuron::SetInhMembraneResistance),
   ExcSynapseResistance("ExcSynapseResistance",this,&NPulseNeuron::SetExcSynapseResistance),
   InhSynapseResistance("InhSynapseResistance",this,&NPulseNeuron::SetInhSynapseResistance),
-  SynapseSecretionTC("SynapseSecretionTC",this,&NPulseNeuron::SetSynapseSecretionTC)
+  SynapseSecretionTC("SynapseSecretionTC",this,&NPulseNeuron::SetSynapseSecretionTC),
+  SynapseTypicalPulseDuration("SynapseTypicalPulseDuration",this,&NPulseNeuron::SetSynapseTypicalPulseDuration)
 {
  PosGenerator=0;
  NegGenerator=0;
@@ -222,6 +223,13 @@ bool NPulseNeuron::SetInhSynapseResistance(const double &value)
 }
 
 bool NPulseNeuron::SetSynapseSecretionTC(const double &value)
+{
+ if(value < 0.0)
+  return false;
+ return true;
+}
+
+bool NPulseNeuron::SetSynapseTypicalPulseDuration(const double &value)
 {
  if(value < 0.0)
   return false;
@@ -823,13 +831,14 @@ void NPulseNeuron::ApplyElementDefaults(void)
  const double cap = MembraneCapacity.GetData();
  const double dissoc = SynapseDissociationTC.GetData();
  const double secr = SynapseSecretionTC.GetData();
+ const double tpd = SynapseTypicalPulseDuration.GetData();
  const double exc_rm = ExcMembraneResistance.GetData();
  const double inh_rm = InhMembraneResistance.GetData();
  const double exc_rsyn = ExcSynapseResistance.GetData();
  const double inh_rsyn = InhSynapseResistance.GetData();
  if(cap <= 0.0 && dissoc <= 0.0 && secr <= 0.0
     && exc_rm <= 0.0 && inh_rm <= 0.0
-    && exc_rsyn <= 0.0 && inh_rsyn <= 0.0)
+    && exc_rsyn <= 0.0 && inh_rsyn <= 0.0 && tpd <= 0.0)
   return;
 
  for(size_t mi = 0; mi < Membranes.size(); ++mi)
@@ -870,7 +879,7 @@ void NPulseNeuron::ApplyElementDefaults(void)
    }
   }
 
-  if(dissoc > 0.0 || secr > 0.0 || exc_rsyn > 0.0 || inh_rsyn > 0.0)
+  if(dissoc > 0.0 || secr > 0.0 || exc_rsyn > 0.0 || inh_rsyn > 0.0 || tpd > 0.0)
   {
    const int nexc = int(membr->NumExcitatorySynapses);
    const int ninh = int(membr->NumInhibitorySynapses);
@@ -883,6 +892,8 @@ void NPulseNeuron::ApplyElementDefaults(void)
       syn->DissociationTC = dissoc;
      if(secr > 0.0)
       syn->SecretionTC = secr;
+     if(tpd > 0.0)
+      syn->TypicalPulseDuration = tpd;
      if(exc_rsyn > 0.0)
       syn->Resistance = exc_rsyn;
     }
@@ -896,6 +907,8 @@ void NPulseNeuron::ApplyElementDefaults(void)
       syn->DissociationTC = dissoc;
      if(secr > 0.0)
       syn->SecretionTC = secr;
+     if(tpd > 0.0)
+      syn->TypicalPulseDuration = tpd;
      if(inh_rsyn > 0.0)
       syn->Resistance = inh_rsyn;
     }
@@ -929,6 +942,7 @@ bool NPulseNeuron::ADefault(void)
  ExcSynapseResistance = 0.0;
  InhSynapseResistance = 0.0;
  SynapseSecretionTC = 0.0;
+ SynapseTypicalPulseDuration = 0.0;
 
  return true;
 }

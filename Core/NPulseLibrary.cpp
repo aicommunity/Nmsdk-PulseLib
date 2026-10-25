@@ -1131,6 +1131,21 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
  n->LTZone->Threshold=0.0117;
  UploadClass("NSPNeuronGen",n);
 
+ // SymInh alias: Rm_inh = Rm_exc (both Bio 1e7). For SegEI campaign; not AsymRm.
+ {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName="NPMembraneBio";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->MembraneCapacity=1e-9;
+  n->SynapseDissociationTC=0.005;
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  UploadClass("NSPNeuronGenSymInhC1e9",n);
+ }
 
  // Fast-response grid: DissociationTC x MembraneCapacity (opt-in UseElementDefaults).
  // Names without '_'. Does not alter NSPNeuronGen (flag stays false).
@@ -1396,6 +1411,70 @@ void NPulseLibrary::CreateClassSamples(UStorage *storage)
   n->LTZone->Threshold=0.0117;
   UploadClass("NSPNeuronGenPreinh2_5AsymRmD001C25e12Rm5e6", n);
  }
+
+ // H0 TauCm per Span (AGENT_PLAN 2026-10-23): AsymRm Pack A Rm, Cm = τ/Rm.
+ // Legacy C25e12 / C25e11 / C1e9 above stay read-only demos; these are new names only.
+ // S25 τ=0.5 мс → Cm=5e-11; S50 τ=1 мс → 1e-10; S100 τ=2.5 мс → 2.5e-10;
+ // S200 τ=5 мс → 5e-10; S480 τ=10 мс → 1e-9.
+ auto upload_h0_asymrm = [&](const char *class_name, double cm, bool preinh) {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName=preinh ? "NPMembraneBioPreinh2_5" : "NPMembraneBio";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001;
+  n->SynapseSecretionTC=0.001;
+  n->MembraneCapacity=cm;
+  n->ExcMembraneResistance=1e7;
+  n->InhMembraneResistance=1e8;
+  n->ExcSynapseResistance=8.6e7;
+  n->InhSynapseResistance=8.6e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass(class_name, n);
+ };
+ upload_h0_asymrm("NSPNeuronGenAsymRmD001C5e11TauH0_S25", 5e-11, false);
+ upload_h0_asymrm("NSPNeuronGenPreinh2_5AsymRmD001C5e11TauH0_S25", 5e-11, true);
+ upload_h0_asymrm("NSPNeuronGenAsymRmD001C1e10TauH0_S50", 1e-10, false);
+ upload_h0_asymrm("NSPNeuronGenPreinh2_5AsymRmD001C1e10TauH0_S50", 1e-10, true);
+ upload_h0_asymrm("NSPNeuronGenAsymRmD001C25e11TauH0_S100", 2.5e-10, false);
+ upload_h0_asymrm("NSPNeuronGenPreinh2_5AsymRmD001C25e11TauH0_S100", 2.5e-10, true);
+ upload_h0_asymrm("NSPNeuronGenAsymRmD001C5e10TauH0_S200", 5e-10, false);
+ upload_h0_asymrm("NSPNeuronGenPreinh2_5AsymRmD001C5e10TauH0_S200", 5e-10, true);
+ upload_h0_asymrm("NSPNeuronGenAsymRmD001C1e9TauH0_S480", 1e-9, false);
+ upload_h0_asymrm("NSPNeuronGenPreinh2_5AsymRmD001C1e9TauH0_S480", 1e-9, true);
+
+ // H-sim (PLAN 2026-10-25 Q1): exact time-similarity twins of AsymRmD001C1e9.
+ // Every time constant x k: Cm, synaptic Secretion/Dissociation TC, TypicalPulseDuration.
+ // S50 -> k=2, S100 -> k=4, S480 -> k=19.2 (pattern times and generator PulseLength x k in config).
+ auto upload_sim_asymrm = [&](const char *class_name, double k, bool preinh) {
+  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));
+  n->LTMembraneClassName="";
+  n->MembraneClassName=preinh ? "NPMembraneBioPreinh2_5" : "NPMembraneBio";
+  n->LTZoneClassName="NPulseLTZoneThreshold";
+  n->Build();
+  n->LTZone->Threshold=0.0117;
+  n->UseElementDefaults=true;
+  n->SynapseDissociationTC=0.001*k;
+  n->SynapseSecretionTC=0.001*k;
+  n->SynapseTypicalPulseDuration=0.001*k;
+  n->MembraneCapacity=1e-9*k;
+  n->ExcMembraneResistance=1e7;
+  n->InhMembraneResistance=1e8;
+  n->ExcSynapseResistance=8.6e7;
+  n->InhSynapseResistance=8.6e8;
+  n->ApplyElementDefaults();
+  n->LTZone->Threshold=0.0117;
+  UploadClass(class_name, n);
+ };
+ upload_sim_asymrm("NSPNeuronGenAsymRmD001C1e9Sim1", 1.0, false);
+ upload_sim_asymrm("NSPNeuronGenAsymRmD001C1e9Sim2", 2.0, false);
+ upload_sim_asymrm("NSPNeuronGenAsymRmD001C1e9Sim4", 4.0, false);
+ upload_sim_asymrm("NSPNeuronGenAsymRmD001C1e9Sim19_2", 19.2, false);
+ upload_sim_asymrm("NSPNeuronGenPreinh2_5AsymRmD001C1e9Sim2", 2.0, true);
+ upload_sim_asymrm("NSPNeuronGenPreinh2_5AsymRmD001C1e9Sim4", 4.0, true);
 
  // Создаем мелкий нейрон с биологически правдоподобными параметрами
  n=dynamic_pointer_cast<NPulseNeuron>(storage->TakeObject("NPNeuron"));

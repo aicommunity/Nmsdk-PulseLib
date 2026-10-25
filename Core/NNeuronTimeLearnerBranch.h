@@ -24,6 +24,7 @@ See file license.txt for more information
 #include "../../../Rdk/Deploy/Include/rdk.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cstring>
 
 namespace NMSDK {
@@ -147,6 +148,13 @@ public:
  /// Mode 0 only: accept a stable lower integer synapse count when adjacent
  /// counts repeatedly straddle the requested amplitude.
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> AcceptQuantizedAmpUnderTarget;
+
+ /// F3/A5: Neuron->Reset() at the start of every training burst (deterministic IC).
+ /// Default false preserves historical behaviour (Reset only after structure/Rs change).
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> ResetNeuronBeforeTrainBurst;
+
+ /// F5/A7: TipR-corrected attenuation gamma estimate (see Classic). Default off.
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> CorrectAttenuationGammaForTipR;
  
  /// Reference tip synapse resistance at L==1 (typically 8.6e7)
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SynapseResistanceBase;
@@ -248,6 +256,55 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableDebug;
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableTrainingAudit;
 
+ /// Per-experiment overrides of neuron class element defaults applied after the
+ /// Neuron is recreated from NeuronClassName (BuildStructure / PostTune rebuild).
+ /// Value <= 0 keeps the class value.
+ /// Initial EstDelayPerSeg (sec/segment) at reset; <=0 keeps kDelayPerSegDefault (0.005).
+ /// Needed when the class tau is overridden (tau 0.75 ms -> 0.25 ms/seg): a 20x wrong
+ /// initial estimate mis-places the peak window and the d2 peak is never seen.
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> InitEstDelayPerSeg;
+ /// TipR@Rmin no-improve guard (default 0 = old behaviour: every length apply at
+ /// Rmin counts toward kNoImproveLimit even when |dt| shrinks). When > 0, a length
+ /// apply at Rmin whose |dt| shrank (same sign) by at least
+ /// RminNoImproveMinProgress * EstDelayPerSeg * |applied_delta| clears the streak,
+ /// so a monotonically converging dendrite is not marked best-effort at short L.
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> RminNoImproveMinProgress;
+ /// Re-measure sync after a normalization edit (TipR / NumSynapse).
+ /// 0 = old behaviour; 1 = reopen the edited pulse (and earlier targets) after a
+ /// TipR edit, as for structural edits; 2 = full reopen of all pulses after any
+ /// normalization edit.
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> ResyncAfterNormalization;
+ /// Diagnostic state: number of resync-after-normalization events
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubState> ResyncAfterNormalizationCount;
+
+ /// SyncCapacitanceTrim (default 0 = old). 1 = when pulse k is about to be
+ /// promoted to synced, trim the capacitance C_k of its own branch interval
+ /// (segments L_{k+1}+1..L_k, which only delay pulses <=k) to remove the
+ /// residual arrival error, and re-measure before promotion.
+ /// Limits: |C_k/C0-1|<=SyncCapTrimMaxRel, R*C_k>=max(SyncCapTrimMinTau, dt).
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapacitanceTrim;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapTrimTolerance;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapTrimMaxRel;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapTrimMinTau;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapTrimGain;
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapTrimMaxSteps;
+ /// Per-pulse interval capacitance C_k (F); empty / <=0 = class capacitance.
+ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubParameter | ptPubState> DendriteCapacitance;
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubState> SyncCapTrimCount;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideMembraneCapacity;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideExcMembraneResistance;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideInhMembraneResistance;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideExcSynapseResistance;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideInhSynapseResistance;
+
+ /// TimeLearnerTrainingDynamics.log thinning: first DynamicsLogHead records are
+ /// written in full; afterwards every DynamicsLogEvery-th record, component_state
+ /// only if DynamicsLogComponentState. DynamicsLogHead < 0 keeps legacy behaviour.
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> DynamicsLogHead;
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> DynamicsLogEvery;
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> DynamicsLogComponentState;
+ long long DynamicsLogCounter = 0;
+
  /// When true, after sync+amp Done run PostTune (tip-resistance + silent mid)
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnablePostTrainTuning;
 
@@ -269,6 +326,9 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  /// LTZ threshold during PostTune probes
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> PostTrainSilentThreshold;
 
+ /// Test inference: apply probe candidate_mid when NonSeparable/silent (default off)
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> UseCandidateMidOnNonSeparableTest;
+
  /// Max synthetic foils
  UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> PostTrainSyntheticFoilCount;
 
@@ -284,6 +344,18 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  /// When true: each tip Exc@L[k] also drives InhSynapse1 on segment L[k]+1
  /// (same Generator). Cable grows to max(L)+1. Mute links Exc+Inh; Done → 2N.
  UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableNextSegmentInhibition;
+
+ /// Segmental Exc+Inh: Exc@PulseAttachPos, Inh@(attach+d); d=SegExcInhDelta (default 8).
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter> EnableSegExcInh;
+
+ /// Distal offset for SegEI (default 8). If ==1 with NextSeg, NextSeg link is skipped.
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> SegExcInhDelta;
+
+ /// SegEI α: InhResistance = ExcTipR / max(α,eps).
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SegExcInhAlpha;
+
+ /// NextSeg Inh resistance override; <=0 keeps SynapseResistanceBase (legacy).
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> NextSegInhResistance;
 
 protected:
  /// Previous NumInputDendrite (resize / rebuild)
@@ -569,6 +641,10 @@ protected:
  static constexpr int kMaxLengthStep = 8;
  
  static constexpr int kMaxSynapsesPerDend = 128; // experimental headroom (was 16)
+
+ /// Mode=0: accept amp-collapse best-effort once N reaches this floor instead of
+ /// waiting for kMaxSynapsesPerDend (W04 N0 spent hours climbing 8→128 at amp≈0).
+ static constexpr int kEarlyAmpCollapseSynapseFloor = 8;
  
  /// Current experiment epoch counter
  int EpochCur;
@@ -608,6 +684,13 @@ protected:
 
  /// PostTune: probe metrics aligned with PostTunePatterns
  std::vector<double> PostTuneMetrics;
+
+ /// Stage0 Train sep_* snapshot from FinalizePostTuneMid (emit-only).
+ bool Stage0SepHave;
+ double Stage0SepTgt;
+ double Stage0SepMaxFoil;
+ double Stage0SepGap;
+ double Stage0SepMargin;
 
  /// Per-sample observed/finished/finite for free-run (R03)
  std::vector<PostTrainTune::SampleMetricState> PostTuneSampleState;
@@ -941,6 +1024,12 @@ protected:
  
  /// Branch: link next-seg Inh to Dataset
  bool RelinkNextSegInhToDataset(int dendrite_index0, bool wire_now);
+
+ /// SegEI: Inh @ PulseAttachPos+d linked to Dataset.
+ bool EnsureSegExcInhOnPulse(int dendrite_index0, bool wire_now);
+
+ /// Wire SegEI then NextSeg (skip NextSeg if SegEI && d==1).
+ void WireAllInhForPulse(int dendrite_index0, bool wire_now);
  
  /// Branch: ensure next-seg Inh for all tips
  void EnsureNextSegInhSynapsesForAllTips(void);
@@ -1064,6 +1153,12 @@ protected:
  /// EnableDebug or EnableTrainingAudit is set.
  void AppendTrainingIterationAudit(const std::vector<int> &lengths_before,
                                    const char *kind = "iteration");
+
+ /// Stage0 rollup scalars for matrix / summarize_run (also on kind=done).
+ void AppendStage0ScalarFields(std::ostringstream &record) const;
+
+ /// Terminal audit after Need=0 (iteration rows may predate EOL gates).
+ void AppendTrainingDoneAudit(void);
  void AppendTrainingDynamicsSample(double now, int new_pulses);
  std::string BuildAuditComponentStateSnapshot(void) const;
  
@@ -1144,15 +1239,25 @@ protected:
  
  /// Choose ActiveDendrite / ActivePulseIndex for this burst
  int SelectActiveDendrite() const;
- /// Structural edits change the shared soma response and invalidate every
- /// committed pulse peak, including the reference anchor.
- void InvalidatePulseSyncAfterStructuralChange();
+ /// Structural edits change the shared soma response. When edited_pulse is the
+ /// active non-anchor pulse, reopen sync only for indices <= edited_pulse so the
+ /// reverse-train cursor stays on that pulse; pass -1 for a full reopen including
+ /// the reference anchor (tests / unknown edit).
+ void InvalidatePulseSyncAfterStructuralChange(int edited_pulse = -1);
  
  /// Save current PeakRel/Delay as Prev* snapshot
  void CommitPrevPeakSnapshot(void);
  
  /// Refresh DendLastAbsDt from prev-burst anchor
  void RefreshDendLastAbsDtFromPrevAnchor(void);
+ /// SyncCapacitanceTrim helpers
+ bool ApplyDendriteCapacitances(void);
+ double ClassCapacitance(void) const;
+ bool TrimSyncCapacitanceForPulse(int k, const std::vector<int> &lengths_before, bool norm_changed);
+ std::string DendriteCapacitanceAuditString(void) const;
+ std::vector<int> CapTrimSteps;
+ std::vector<double> CapTrimDelayShift;
+ bool CapApplyPending;
  
  /// Cable-model delay for dendrite/pulse num (sec)
  double DelayLenOf(int num) const;

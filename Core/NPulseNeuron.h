@@ -106,6 +106,10 @@ UProperty<double, NPulseNeuron, ptPubParameter> InhSynapseResistance;
 /// When UseElementDefaults and value > 0: SecretionTC on Soma/Dendrite Exc/Inh synapses.
 UProperty<double, NPulseNeuron, ptPubParameter> SynapseSecretionTC;
 
+/// When UseElementDefaults and value > 0: TypicalPulseDuration (s) on Soma/Dendrite
+/// Exc/Inh synapses. Used by time-similarity classes (Sim k): all time constants x k.
+UProperty<double, NPulseNeuron, ptPubParameter> SynapseTypicalPulseDuration;
+
 
 protected:
 NConstGenerator *PosGenerator,*NegGenerator;
@@ -160,6 +164,7 @@ bool SetInhMembraneResistance(const double &value);
 bool SetExcSynapseResistance(const double &value);
 bool SetInhSynapseResistance(const double &value);
 bool SetSynapseSecretionTC(const double &value);
+bool SetSynapseTypicalPulseDuration(const double &value);
 
 /// Число участков мембраны тела нейрона
 bool SetNumSomaMembraneParts(const int &value);

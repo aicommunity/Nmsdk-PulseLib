@@ -1,11 +1,38 @@
 #ifndef NNEURONTIMELEARNER_SCOPED_DEFAULTS_H
 #define NNEURONTIMELEARNER_SCOPED_DEFAULTS_H
 
+#include <sstream>
 #include "NPulseNeuron.h"
 #include "NPulseChannel.h"
 #include "NPulseSynapse.h"
 
 namespace NMSDK {
+
+/// Per-experiment override of class element defaults on a freshly created neuron.
+/// Values <= 0 keep the class value. Must be called before Neuron->Build() so
+/// NPulseNeuron::ABuild/ApplyElementDefaults propagate them to every membrane.
+inline std::string ApplyNeuronClassOverrides(NPulseNeuron *neuron, double cap, double exc_rm,
+ double inh_rm, double exc_rsyn, double inh_rsyn)
+{
+ if(!neuron)
+  return std::string();
+ if(cap <= 0.0 && exc_rm <= 0.0 && inh_rm <= 0.0 && exc_rsyn <= 0.0 && inh_rsyn <= 0.0)
+  return std::string();
+ if(cap > 0.0) neuron->MembraneCapacity = cap;
+ if(exc_rm > 0.0) neuron->ExcMembraneResistance = exc_rm;
+ if(inh_rm > 0.0) neuron->InhMembraneResistance = inh_rm;
+ if(exc_rsyn > 0.0) neuron->ExcSynapseResistance = exc_rsyn;
+ if(inh_rsyn > 0.0) neuron->InhSynapseResistance = inh_rsyn;
+ std::ostringstream oss;
+ oss.precision(10);
+ oss << "NeuronClassOverrides: Capacity=" << neuron->MembraneCapacity.GetData()
+     << " ExcRm=" << neuron->ExcMembraneResistance.GetData()
+     << " InhRm=" << neuron->InhMembraneResistance.GetData()
+     << " ExcRsyn=" << neuron->ExcSynapseResistance.GetData()
+     << " InhRsyn=" << neuron->InhSynapseResistance.GetData()
+     << " UseElementDefaults=" << neuron->UseElementDefaults.GetData();
+ return oss.str();
+}
 
 /// Apply NPulseNeuron element defaults to one rebuilt membrane only.
 /// NPulseNeuron::ApplyElementDefaults() walks every membrane and resets all
@@ -18,13 +45,14 @@ inline void ApplyElementDefaultsToMembrane(NPulseNeuron *neuron, NPulseMembrane 
  const double cap = neuron->MembraneCapacity.GetData();
  const double dissoc = neuron->SynapseDissociationTC.GetData();
  const double secr = neuron->SynapseSecretionTC.GetData();
+ const double tpd = neuron->SynapseTypicalPulseDuration.GetData();
  const double exc_rm = neuron->ExcMembraneResistance.GetData();
  const double inh_rm = neuron->InhMembraneResistance.GetData();
  const double exc_rsyn = neuron->ExcSynapseResistance.GetData();
  const double inh_rsyn = neuron->InhSynapseResistance.GetData();
  if(cap <= 0.0 && dissoc <= 0.0 && secr <= 0.0
     && exc_rm <= 0.0 && inh_rm <= 0.0
-    && exc_rsyn <= 0.0 && inh_rsyn <= 0.0)
+    && exc_rsyn <= 0.0 && inh_rsyn <= 0.0 && tpd <= 0.0)
   return;
 
  if(cap > 0.0 || exc_rm > 0.0 || inh_rm > 0.0)
@@ -54,7 +82,7 @@ inline void ApplyElementDefaultsToMembrane(NPulseNeuron *neuron, NPulseMembrane 
   }
  }
 
- if(dissoc > 0.0 || secr > 0.0 || exc_rsyn > 0.0 || inh_rsyn > 0.0)
+ if(dissoc > 0.0 || secr > 0.0 || exc_rsyn > 0.0 || inh_rsyn > 0.0 || tpd > 0.0)
  {
   const int nexc = int(membrane->NumExcitatorySynapses);
   const int ninh = int(membrane->NumInhibitorySynapses);
@@ -67,6 +95,8 @@ inline void ApplyElementDefaultsToMembrane(NPulseNeuron *neuron, NPulseMembrane 
      syn->DissociationTC = dissoc;
     if(secr > 0.0)
      syn->SecretionTC = secr;
+    if(tpd > 0.0)
+     syn->TypicalPulseDuration = tpd;
     if(exc_rsyn > 0.0)
      syn->Resistance = exc_rsyn;
    }
@@ -80,6 +110,8 @@ inline void ApplyElementDefaultsToMembrane(NPulseNeuron *neuron, NPulseMembrane 
      syn->DissociationTC = dissoc;
     if(secr > 0.0)
      syn->SecretionTC = secr;
+    if(tpd > 0.0)
+     syn->TypicalPulseDuration = tpd;
     if(inh_rsyn > 0.0)
      syn->Resistance = inh_rsyn;
    }
