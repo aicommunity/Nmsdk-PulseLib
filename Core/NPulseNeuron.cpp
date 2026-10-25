@@ -1000,7 +1000,10 @@ void NPulseNeuron::UpdateComputationOrder(void)
  // Mode 0 owns an explicit graph, including its saved sibling order.
  // Moving only soma/LT while omitting dendrites changes cable dynamics on load.
  if(StructureBuildMode == 0)
+ {
+  RefreshMembraneIndex();
   return;
+ }
 
  int position = 0;
  int num_soma=NumSomaMembraneParts;
@@ -1036,6 +1039,7 @@ void NPulseNeuron::UpdateComputationOrder(void)
 
  if(GetLTZone())
   SetComponentPosition(GetLTZone()->GetName(), position++);
+ RefreshMembraneIndex();
 }
 // --------------------------
 

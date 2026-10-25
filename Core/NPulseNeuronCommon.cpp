@@ -202,6 +202,23 @@ NPulseNeuronCommon* NPulseNeuronCommon::New(void)
 {
  return new NPulseNeuronCommon;
 }
+
+void NPulseNeuronCommon::RefreshMembraneIndex(void)
+{
+ std::vector<NPulseMembraneCommon*> ordered;
+ for(int i = 0; i < GetNumComponents(); ++i)
+ {
+  auto membrane = dynamic_pointer_cast<NPulseMembraneCommon>(GetComponentByIndex(i));
+  if(membrane) ordered.push_back(membrane.Get());
+ }
+ Membranes.swap(ordered);
+}
+
+void NPulseNeuronCommon::UpdateComputationOrder(void)
+{
+ NNeuron::UpdateComputationOrder();
+ RefreshMembraneIndex();
+}
 // --------------------------
 
 // --------------------------
