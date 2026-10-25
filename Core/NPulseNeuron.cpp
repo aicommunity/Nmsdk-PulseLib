@@ -661,21 +661,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
    return false;
   }
   ltmembr->SetCoord(MVector<double,3>(20+dendrite_length*kDendritePitchX,kNeuronBaseY,0));
-  // Ensure channels exist: TakeObject prototypes may be Ready with empty Channels[].
-  if(!ltmembr->GetComponent("ExcChannel", true) || ltmembr->GetNumChannels() == 0)
-  {
-   if(UEPtr<NPulseMembrane> pm = dynamic_pointer_cast<NPulseMembrane>(ltmembr))
-   {
-    const int nsyn = pm->NumExcitatorySynapses;
-    pm->NumExcitatorySynapses = nsyn + 1;
-    pm->NumExcitatorySynapses = nsyn;
-   }
-   if(!ltmembr->Build())
-   {
-    LogMessageEx(RDK_EX_ERROR, __FUNCTION__, "Failed to Build LTMembrane");
-    return false;
-   }
-  }
+  ltmembr->Build();
 
   ltchannel1=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("ExcChannel",true));
   ltchannel2=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("InhChannel",true));
@@ -703,22 +689,9 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
    return false;
   }
   membr->SetCoord(MVector<double,3>(kNeuronBaseX+dendrite_length*kDendritePitchX,kNeuronBaseY+i*kSomaRowPitchY,0));
-  // Ensure channels exist before CreateLink (TakeObject may be Ready w/o Channels).
-  if(!membr->GetComponent("ExcChannel", true) || membr->GetNumChannels() == 0)
-  {
-   if(UEPtr<NPulseMembrane> pm = dynamic_pointer_cast<NPulseMembrane>(membr))
-   {
-    const int nsyn = pm->NumExcitatorySynapses;
-    pm->NumExcitatorySynapses = nsyn + 1;
-    pm->NumExcitatorySynapses = nsyn;
-   }
-   if(!membr->Build())
-   {
-    LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
-      std::string("Failed to Build Soma")+sntoa(i+1));
-    return false;
-   }
-  }
+  // Native Copy invalidates the rebuilt graph; no parameter toggles are needed
+  // to repair caches. Build is a no-op when the membrane is already ready.
+  membr->Build();
   // TakeObject clones often keep Activity=false; Calculate() would skip them.
   if(!membr->GetActivity())
    membr->SetActivity(true);
@@ -766,23 +739,7 @@ bool NPulseNeuron::BuildStructure(const string &membraneclass, const string &ltz
     return false;
    }
    membr->SetCoord(MVector<double,3>(kNeuronBaseX+(dendrite_length-j-1)*kDendritePitchX,kNeuronBaseY+i*kSomaRowPitchY,0));
-   // New distal segments need real Channels[] before cable/PosNeg links.
-   // TakeObject prototypes can be Ready with ExcChannel child but empty Channels.
-   if(!membr->GetComponent("ExcChannel", true) || membr->GetNumChannels() == 0)
-   {
-    if(UEPtr<NPulseMembrane> pm = dynamic_pointer_cast<NPulseMembrane>(membr))
-    {
-     const int nsyn = pm->NumExcitatorySynapses;
-     pm->NumExcitatorySynapses = nsyn + 1;
-     pm->NumExcitatorySynapses = nsyn;
-    }
-    if(!membr->Build())
-    {
-     LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
-       std::string("Failed to Build Dendrite")+sntoa(i+1)+std::string("_")+sntoa(j+1));
-     return false;
-    }
-   }
+   membr->Build();
    // Newly added segments from TakeObject may be inactive — Calculate would no-op.
    if(!membr->GetActivity())
     membr->SetActivity(true);
