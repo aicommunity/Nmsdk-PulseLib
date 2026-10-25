@@ -19,6 +19,7 @@ target_include_directories(${TARGET_CORE_NAME}
 
 file(GLOB PULSE_SOURCES CONFIGURE_DEPENDS
   ${CMAKE_SOURCE_DIR}/Libraries/Nmsdk-PulseLib/Core/*.cpp
+  ${CMAKE_SOURCE_DIR}/Libraries/Nmsdk-PulseLib/Core/TimeLearner/*.cpp
 )
 
 # Exclude files with known compilation errors

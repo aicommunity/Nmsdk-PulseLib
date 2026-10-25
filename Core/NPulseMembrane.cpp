@@ -58,6 +58,8 @@ NPulseMembrane::NPulseMembrane(void)
  : FeedbackGain("FeedbackGain",this,&NPulseMembrane::SetFeedbackGain),
   ResetAvailable("ResetAvailable",this,&NPulseMembrane::SetResetAvailable),
   SynapseClassName("SynapseClassName",this,&NPulseMembrane::SetSynapseClassName),
+  ExcSynapseClassName("ExcSynapseClassName",this,&NPulseMembrane::SetSynapseClassName),
+  InhSynapseClassName("InhSynapseClassName",this,&NPulseMembrane::SetSynapseClassName),
   ExcChannelClassName("ExcChannelClassName",this,&NPulseMembrane::SetExcChannelClassName),
   InhChannelClassName("InhChannelClassName",this,&NPulseMembrane::SetInhChannelClassName),
   NumExcitatorySynapses("NumExcitatorySynapses",this,&NPulseMembrane::SetNumExcitatorySynapses),
@@ -196,6 +198,16 @@ bool NPulseMembrane::SetSynapseClassName(const std::string &value)
 {
  Ready=false;
  return true;
+}
+
+const std::string& NPulseMembrane::GetEffectiveExcSynapseClassName(void) const
+{
+ return ExcSynapseClassName->empty() ? SynapseClassName.GetData() : ExcSynapseClassName.GetData();
+}
+
+const std::string& NPulseMembrane::GetEffectiveInhSynapseClassName(void) const
+{
+ return InhSynapseClassName->empty() ? SynapseClassName.GetData() : InhSynapseClassName.GetData();
 }
 
 bool NPulseMembrane::SetExcChannelClassName(const std::string &value)
@@ -341,6 +353,8 @@ bool NPulseMembrane::ADefault(void)
  FeedbackGain=2;
  ResetAvailable=true;
  SynapseClassName="NPSynapse";
+ ExcSynapseClassName="";
+ InhSynapseClassName="";
  ExcChannelClassName="NPExcChannel";
  InhChannelClassName="NPInhChannel";
  NumExcitatorySynapses=1;
@@ -372,6 +386,8 @@ bool NPulseMembrane::ABuild(void)
 
  if(!ExcChannelClassName->empty())
  {
+  auto previous_channel = GetComponent("ExcChannel", true);
+  const bool channel_existed = previous_channel && previous_channel->GetCompClassName() == ExcChannelClassName.GetData();
   exc_channel=AddMissingComponent<NPulseChannelCommon>("ExcChannel", ExcChannelClassName);
   if(!exc_channel)
   {
@@ -382,6 +398,11 @@ bool NPulseMembrane::ABuild(void)
 //  ExcitatoryChannels.resize(1);
 //  ExcitatoryChannels[0]=exc_channel;
   exc_channel->SetCoord(membraneChannelCoord(kMemExcRowY0, num_exc));
+  if(!channel_existed && activate_new_synapses)
+  {
+   exc_channel->SetActivity(true);
+   if(initialize_new_synapses) exc_channel->Init();
+  }
 
   int old_ex_synapses=int(ExcitatorySynapses.size());
 
@@ -397,13 +418,14 @@ bool NPulseMembrane::ABuild(void)
   for(int i=0;i<NumExcitatorySynapses;i++)
   {
    const std::string synapse_name = std::string("ExcSynapse")+sntoa(i+1);
-   const bool synapse_existed = static_cast<bool>(
-    GetComponentL<NPulseSynapseCommon>(synapse_name, true));
-   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(synapse_name, SynapseClassName);
+   auto previous_synapse = GetComponentL<NPulseSynapseCommon>(synapse_name, true);
+   const auto& synapse_class = GetEffectiveExcSynapseClassName();
+   const bool synapse_existed = previous_synapse && previous_synapse->GetCompClassName() == synapse_class;
+   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(synapse_name, synapse_class);
    if(!synapse)
    {
     LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
-      std::string("Failed to create ExcSynapse")+sntoa(i+1)+std::string(" with class: ")+SynapseClassName.GetData());
+      std::string("Failed to create ExcSynapse")+sntoa(i+1)+std::string(" with class: ")+synapse_class);
     return false;
    }
    synapse->Type = -1;
@@ -422,6 +444,8 @@ bool NPulseMembrane::ABuild(void)
 
  if(!InhChannelClassName->empty())
  {
+  auto previous_channel = GetComponent("InhChannel", true);
+  const bool channel_existed = previous_channel && previous_channel->GetCompClassName() == InhChannelClassName.GetData();
   inh_channel=AddMissingComponent<NPulseChannelCommon>("InhChannel", InhChannelClassName);
   if(!inh_channel)
   {
@@ -434,6 +458,11 @@ bool NPulseMembrane::ABuild(void)
 //  InhibitoryChannels[0]=inh_channel;
   const double inh_y0 = membraneInhRowY0(num_exc);
   inh_channel->SetCoord(membraneChannelCoord(inh_y0, num_inh));
+  if(!channel_existed && activate_new_synapses)
+  {
+   inh_channel->SetActivity(true);
+   if(initialize_new_synapses) inh_channel->Init();
+  }
 
   int old_in_synapses=int(InhibitorySynapses.size());
   for(int i=NumInhibitorySynapses;i<old_in_synapses;i++)
@@ -449,13 +478,14 @@ bool NPulseMembrane::ABuild(void)
   for(int i=0;i<NumInhibitorySynapses;i++)
   {
    const std::string synapse_name = std::string("InhSynapse")+sntoa(i+1);
-   const bool synapse_existed = static_cast<bool>(
-    GetComponentL<NPulseSynapseCommon>(synapse_name, true));
-   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(synapse_name, SynapseClassName);
+   auto previous_synapse = GetComponentL<NPulseSynapseCommon>(synapse_name, true);
+   const auto& synapse_class = GetEffectiveInhSynapseClassName();
+   const bool synapse_existed = previous_synapse && previous_synapse->GetCompClassName() == synapse_class;
+   UEPtr<NPulseSynapseCommon> synapse=AddMissingComponent<NPulseSynapseCommon>(synapse_name, synapse_class);
    if(!synapse)
    {
     LogMessageEx(RDK_EX_ERROR, __FUNCTION__,
-      std::string("Failed to create InhSynapse")+sntoa(i+1)+std::string(" with class: ")+SynapseClassName.GetData());
+      std::string("Failed to create InhSynapse")+sntoa(i+1)+std::string(" with class: ")+synapse_class);
     return false;
    }
    synapse->Type = 1;
