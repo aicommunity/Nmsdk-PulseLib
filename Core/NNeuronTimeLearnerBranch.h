@@ -263,6 +263,12 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  /// Needed when the class tau is overridden (tau 0.75 ms -> 0.25 ms/seg): a 20x wrong
  /// initial estimate mis-places the peak window and the d2 peak is never seen.
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> InitEstDelayPerSeg;
+ /// TipR@Rmin no-improve guard (default 0 = old behaviour: every length apply at
+ /// Rmin counts toward kNoImproveLimit even when |dt| shrinks). When > 0, a length
+ /// apply at Rmin whose |dt| shrank (same sign) by at least
+ /// RminNoImproveMinProgress * EstDelayPerSeg * |applied_delta| clears the streak,
+ /// so a monotonically converging dendrite is not marked best-effort at short L.
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> RminNoImproveMinProgress;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideMembraneCapacity;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideExcMembraneResistance;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideInhMembraneResistance;

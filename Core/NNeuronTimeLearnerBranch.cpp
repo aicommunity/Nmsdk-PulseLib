@@ -837,6 +837,7 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";accept_quantized_amp_under_target=" << (AcceptQuantizedAmpUnderTarget.GetData() ? 1 : 0)
         << ";reset_before_train_burst=" << (ResetNeuronBeforeTrainBurst.GetData() ? 1 : 0)
         << ";correct_attenuation_gamma_for_tip_r=" << (CorrectAttenuationGammaForTipR.GetData() ? 1 : 0)
+        << ";rmin_noimprove_min_progress=" << RminNoImproveMinProgress.GetData()
         << ";enable_posttrain_tuning=" << (EnablePostTrainTuning.GetData() ? 1 : 0)
         << ";enable_posttrain_mid_threshold=" << (EnablePostTrainMidThreshold.GetData() ? 1 : 0)
         << ";posttune_free_run_active=" << (PostTuneFreeRunActive ? 1 : 0)
@@ -3084,6 +3085,7 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  EnableDebug("EnableDebug", this, &NNeuronTimeLearnerBranch::SetEnableDebug),
  EnableTrainingAudit("EnableTrainingAudit", this),
  InitEstDelayPerSeg("InitEstDelayPerSeg", this),
+ RminNoImproveMinProgress("RminNoImproveMinProgress", this),
  OverrideMembraneCapacity("OverrideMembraneCapacity", this),
  OverrideExcMembraneResistance("OverrideExcMembraneResistance", this),
  OverrideInhMembraneResistance("OverrideInhMembraneResistance", this),
@@ -4285,6 +4287,7 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  PulseGeneratorClassName = "NPulseGeneratorTransit";
  NeuronClassName = "NSPNeuronGen";
  InitEstDelayPerSeg = 0.0;
+ RminNoImproveMinProgress = 0.0;
  OverrideMembraneCapacity = 0.0;
  OverrideExcMembraneResistance = 0.0;
  OverrideInhMembraneResistance = 0.0;
@@ -5586,6 +5589,13 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteStatus(int num)
   else if(fabs(dt) <= SyncTolerance.GetData())
    NoImproveCount[static_cast<size_t>(num)] = 0;
   else if(fabs(dt) < fabs(prev_dt) - 1e-12 && !tip_at_rmin)
+   NoImproveCount[static_cast<size_t>(num)] = 0;
+  // Optional (RminNoImproveMinProgress > 0): real monotone progress at Rmin
+  // (same sign, |dt| shrank by >= k * EstDelayPerSeg * |applied_delta|) clears the streak.
+  else if(RminNoImproveMinProgress.GetData() > 0.0 && tip_at_rmin && had_length_apply
+          && DendStatus[num] != 0 && (prev_dt * dt > 0.0)
+          && (fabs(prev_dt) - fabs(dt)) >= RminNoImproveMinProgress.GetData()
+             * EstDelayPerSeg * double(std::abs(applied_delta)))
    NoImproveCount[static_cast<size_t>(num)] = 0;
   // TipR@Rmin: tiny |dt| shrinks during L thrash must not clear the streak.
   else if(tip_at_rmin && had_length_apply && DendStatus[num] != 0)
