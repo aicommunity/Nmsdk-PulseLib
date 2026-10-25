@@ -840,6 +840,9 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";rmin_noimprove_min_progress=" << RminNoImproveMinProgress.GetData()
         << ";resync_after_norm=" << ResyncAfterNormalization.GetData()
         << ";resync_count=" << ResyncAfterNormalizationCount.GetData()
+        << ";sync_cap_trim=" << SyncCapacitanceTrim.GetData()
+        << ";sync_cap_trim_count=" << SyncCapTrimCount.GetData()
+        << ";dend_cap=" << DendriteCapacitanceAuditString()
         << ";enable_posttrain_tuning=" << (EnablePostTrainTuning.GetData() ? 1 : 0)
         << ";enable_posttrain_mid_threshold=" << (EnablePostTrainMidThreshold.GetData() ? 1 : 0)
         << ";posttune_free_run_active=" << (PostTuneFreeRunActive ? 1 : 0)
@@ -2412,12 +2415,181 @@ void NNeuronTimeLearnerBranch::RefreshDendLastAbsDtFromPrevAnchor(void)
  }
 }
 
+
+// --------------------------
+// SyncCapacitanceTrim
+// --------------------------
+double NNeuronTimeLearnerBranch::ClassCapacitance(void) const
+{
+ if(Neuron && Neuron->MembraneCapacity.GetData() > 0.0)
+  return Neuron->MembraneCapacity.GetData();
+ return 0.0;
+}
+
+std::string NNeuronTimeLearnerBranch::DendriteCapacitanceAuditString(void) const
+{
+ std::ostringstream oss;
+ const std::vector<double> &caps = DendriteCapacitance.GetData();
+ for(size_t i = 0; i < caps.size(); ++i)
+ {
+  if(i) oss << ',';
+  oss << caps[i];
+ }
+ return oss.str();
+}
+
+bool NNeuronTimeLearnerBranch::ApplyDendriteCapacitances(void)
+{
+ CapApplyPending = false;
+ if(SyncCapacitanceTrim.GetData() <= 0 || !Neuron)
+  return false;
+ const std::vector<double> &caps = DendriteCapacitance.GetData();
+ if(caps.empty())
+  return false;
+ const int n = NumInputDendrite.GetData();
+ int applied = 0;
+ for(int j = 0; j < n - 1 && j < int(caps.size()) && j + 1 < int(DendriteLength.size()); ++j)
+ {
+  const double ck = caps[static_cast<size_t>(j)];
+  if(ck <= 0.0)
+   continue;
+  for(int seg = std::max(1, DendriteLength[j + 1]) + 1; seg <= DendriteLength[j]; ++seg)
+  {
+   UEPtr<NPulseMembrane> mem = Neuron->GetComponentL<NPulseMembrane>(
+    MakeBranchDendriteName(seg), true);
+   if(!mem)
+    continue;
+   const char *names[2] = {"ExcChannel", "InhChannel"};
+   for(int q = 0; q < 2; ++q)
+   {
+    UEPtr<UContainer> cc = mem->GetComponent(names[q], true);
+    NPulseChannel *ch = dynamic_cast<NPulseChannel*>((UContainer*)cc);
+    if(ch && ch->Capacity.GetData() != ck)
+    {
+     ch->Capacity = ck;
+     ++applied;
+    }
+   }
+  }
+ }
+ if(applied > 0 && EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "SyncCapacitanceTrim: apply channels=" << applied
+      << " caps=[" << DendriteCapacitanceAuditString() << "]";
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+ }
+ return true;
+}
+
+bool NNeuronTimeLearnerBranch::TrimSyncCapacitanceForPulse(int k, const std::vector<int> &lengths_before, bool norm_changed)
+{
+ if(SyncCapacitanceTrim.GetData() <= 0 || !Neuron || !IsNeedToTrain.GetData())
+  return false;
+ if(TrainingPhase.GetData() != kPhaseSync || norm_changed)
+  return false;
+ if(lengths_before != DendriteLength.GetData())
+  return false;
+ const int n = NumInputDendrite.GetData();
+ if(n < 2 || k < 0 || k >= n - 1 || k + 1 >= int(DendriteLength.size()))
+  return false;
+ const int lk = DendriteLength[k];
+ const int lnext = std::max(1, DendriteLength[k + 1]);
+ const int cnt = lk - lnext;
+ if(cnt <= 0)
+  return false;
+ if(k >= int(SomaPeakValid.size()) || !SomaPeakValid[static_cast<size_t>(k)])
+  return false;
+ const double c0 = ClassCapacitance();
+ if(c0 <= 0.0)
+  return false;
+ std::vector<double> caps = DendriteCapacitance.GetData();
+ if(int(caps.size()) != n)
+  caps.resize(static_cast<size_t>(n), c0);
+ for(size_t i = 0; i < caps.size(); ++i)
+  if(caps[i] <= 0.0)
+   caps[i] = c0;
+ if(int(CapTrimSteps.size()) != n)
+  CapTrimSteps.assign(static_cast<size_t>(n), 0);
+ if(int(CapTrimDelayShift.size()) != n)
+  CapTrimDelayShift.assign(static_cast<size_t>(n), 0.0);
+ if(CapTrimSteps[static_cast<size_t>(k)] >= SyncCapTrimMaxSteps.GetData())
+  return false;
+ const double expected_k = (k < int(ExpectedPulseRelTimes.size()))
+  ? ExpectedPulseRelTimes[static_cast<size_t>(k)] : 0.0;
+ const double needed = MeanStoredPeakRel(k) - expected_k;
+ const double delay_meas = (k < int(DelayFromPulse.size()))
+  ? DelayFromPulse[static_cast<size_t>(k)] : 0.0;
+ const double err = needed - delay_meas; // >0: arrives early, needs more delay
+ if(fabs(err) <= SyncCapTrimTolerance.GetData())
+  return false;
+ UEPtr<NPulseMembrane> mem = Neuron->GetComponentL<NPulseMembrane>(
+  MakeBranchDendriteName(lk), true);
+ if(!mem)
+  return false;
+ UEPtr<UContainer> cc = mem->GetComponent("ExcChannel", true);
+ NPulseChannel *ch = dynamic_cast<NPulseChannel*>((UContainer*)cc);
+ if(!ch)
+  return false;
+ double r = ch->Resistance.GetData();
+ if(ch->RestingResistance.GetData() > 0.0)
+  r = std::min(r, ch->RestingResistance.GetData());
+ if(r <= 0.0)
+  return false;
+ const double max_rel = std::max(0.0, SyncCapTrimMaxRel.GetData());
+ const double gain = (SyncCapTrimGain.GetData() > 0.0) ? SyncCapTrimGain.GetData() : 1.0;
+ const double step = (ch->TimeStep > 0) ? 1.0 / double(ch->TimeStep) : 0.0;
+ const double tau_floor = std::max(SyncCapTrimMinTau.GetData(), step * 1.000001);
+ const double c_lo = std::max(c0 * (1.0 - max_rel), tau_floor / r);
+ const double c_hi = c0 * (1.0 + max_rel);
+ CapTrimSteps[static_cast<size_t>(k)]++;
+ const double c_old = caps[static_cast<size_t>(k)];
+ double c_new = c_old + gain * err / double(cnt) / r;
+ if(c_lo > c_hi)
+  c_new = c_old;
+ else
+  c_new = std::min(c_hi, std::max(c_lo, c_new));
+ if(EnableDebug.GetData() && RDK::GetLogger())
+ {
+  std::ostringstream oss;
+  oss << "SyncCapacitanceTrim: pulse=" << k << " iter=" << CountIteration
+      << " L=" << lk << " Lnext=" << lnext << " err=" << err
+      << " C_old=" << c_old << " C_new=" << c_new << " C0=" << c0 << " R=" << r
+      << " tau=" << r * c_new << " lo=" << c_lo << " hi=" << c_hi
+      << " step=" << CapTrimSteps[static_cast<size_t>(k)];
+  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+ }
+ if(fabs(c_new - c_old) <= 1e-6 * c0)
+  return false;
+ caps[static_cast<size_t>(k)] = c_new;
+ CapTrimDelayShift[static_cast<size_t>(k)] = r * (c_new - c0);
+ if(int(DendLastAbsDt.size()) == n)
+  DendLastAbsDt[static_cast<size_t>(k)] = IterationGap.GetData() + 0.001;
+ SyncCapTrimCount = SyncCapTrimCount.GetData() + 1;
+ DendriteCapacitance = caps;
+ ApplyDendriteCapacitances();
+ return true;
+}
+
 /// Cable-model delay for dendrite/pulse num (sec)
 double NNeuronTimeLearnerBranch::DelayLenOf(int num) const
 {
  if(num < 0 || num >= int(DendriteLength.size()) || DendriteLength[num] <= 1)
   return 0.0;
- return (DendriteLength[num] - 1) * EstDelayPerSeg;
+ double delay = (DendriteLength[num] - 1) * EstDelayPerSeg;
+ // SyncCapacitanceTrim: pulse num crosses the trimmed intervals of pulses >= num.
+ if(SyncCapacitanceTrim.GetData() > 0)
+ {
+  const int n = NumInputDendrite.GetData();
+  for(int j = num; j < n - 1 && j + 1 < int(DendriteLength.size())
+      && j < int(CapTrimDelayShift.size()); ++j)
+  {
+   const int cnt = DendriteLength[j] - std::max(1, DendriteLength[j + 1]);
+   if(cnt > 0)
+    delay += cnt * CapTrimDelayShift[static_cast<size_t>(j)];
+  }
+ }
+ return delay;
 }
 
 /// Prefer DelayFromPulse when it agrees with cable model; else delay_len
@@ -3090,6 +3262,14 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  RminNoImproveMinProgress("RminNoImproveMinProgress", this),
  ResyncAfterNormalization("ResyncAfterNormalization", this),
  ResyncAfterNormalizationCount("ResyncAfterNormalizationCount", this),
+ SyncCapacitanceTrim("SyncCapacitanceTrim", this),
+ SyncCapTrimTolerance("SyncCapTrimTolerance", this),
+ SyncCapTrimMaxRel("SyncCapTrimMaxRel", this),
+ SyncCapTrimMinTau("SyncCapTrimMinTau", this),
+ SyncCapTrimGain("SyncCapTrimGain", this),
+ SyncCapTrimMaxSteps("SyncCapTrimMaxSteps", this),
+ DendriteCapacitance("DendriteCapacitance", this),
+ SyncCapTrimCount("SyncCapTrimCount", this),
  OverrideMembraneCapacity("OverrideMembraneCapacity", this),
  OverrideExcMembraneResistance("OverrideExcMembraneResistance", this),
  OverrideInhMembraneResistance("OverrideInhMembraneResistance", this),
@@ -3241,6 +3421,12 @@ bool NNeuronTimeLearnerBranch::ZeroingTrainingPattern(void)
 bool NNeuronTimeLearnerBranch::ResetToUntrained(void)
 {
  ResyncAfterNormalizationCount.SetDataDirect(0);
+ SyncCapTrimCount.SetDataDirect(0);
+ CapTrimSteps.clear();
+ CapTrimDelayShift.clear();
+ if(SyncCapacitanceTrim.GetData() > 0)
+  DendriteCapacitance.SetDataDirect(std::vector<double>());
+ CapApplyPending = true;
  const std::vector<double> loaded_tips = LoadedTipSynapseResistance;
  const bool use_loaded_tips = IsParametricNormalization()
   && UseLoadedTipResistanceOnUntrainedReset.GetData()
@@ -4295,6 +4481,17 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  RminNoImproveMinProgress = 0.0;
  ResyncAfterNormalization = 0;
  ResyncAfterNormalizationCount = 0;
+ SyncCapacitanceTrim = 0;
+ SyncCapTrimTolerance = 0.0005;
+ SyncCapTrimMaxRel = 0.3;
+ SyncCapTrimMinTau = 0.00075;
+ SyncCapTrimGain = 0.8;
+ SyncCapTrimMaxSteps = 8;
+ DendriteCapacitance = std::vector<double>();
+ SyncCapTrimCount = 0;
+ CapTrimSteps.clear();
+ CapTrimDelayShift.clear();
+ CapApplyPending = true;
  OverrideMembraneCapacity = 0.0;
  OverrideExcMembraneResistance = 0.0;
  OverrideInhMembraneResistance = 0.0;
@@ -4457,6 +4654,7 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
 bool NNeuronTimeLearnerBranch::ABuild(void)
 {
  bool res(true);
+ CapApplyPending = true;
  if(StructureBuildMode == 1)
  {
   res = BuildStructure();
@@ -4515,6 +4713,7 @@ void NNeuronTimeLearnerBranch::UpdateComputationOrder(void)
 bool NNeuronTimeLearnerBranch::AReset(void)
 {
  ResyncAfterNormalizationCount.SetDataDirect(0);
+ CapApplyPending = true;
  ApplyLoadedAnchorProperties();
  
  // Snapshot only a cold topology (all L<=1). Trained samples (L=49 41 25 1 in
@@ -4673,6 +4872,7 @@ bool NNeuronTimeLearnerBranch::ChangeDendriteLength(int num)
 bool NNeuronTimeLearnerBranch::ApplyPendingDendriteLengthChanges(void)
 {
  bool res(true);
+ CapApplyPending = true;
  std::vector<int> changed;
  changed.reserve(static_cast<size_t>(std::max(0, NumInputDendrite.GetData() - 1)));
  
@@ -7614,7 +7814,14 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
         && (k < int(DendStatus.size())) && DendStatus[static_cast<size_t>(k)] == 0
         && k < int(Dissynchronization.size())
         && fabs(Dissynchronization[static_cast<size_t>(k)]) <= tol);
-   if(peak_measured_this_burst && length_ok && AllSynapsesNormalized())
+   // SyncCapacitanceTrim (default 0 = old): trim C_k and re-measure instead
+   // of promoting when the residual arrival error is above SyncCapTrimTolerance.
+   const bool cap_trimmed = peak_measured_this_burst && length_ok
+    && SyncCapacitanceTrim.GetData() > 0 && AllSynapsesNormalized()
+    && TrimSyncCapacitanceForPulse(k, audit_lengths_before,
+        resync_tips_before != TipSynapseResistance.GetData()
+        || audit_synapses_before != NumSynapse.GetData());
+   if(peak_measured_this_burst && length_ok && AllSynapsesNormalized() && !cap_trimmed)
    {
     const int ref = n - 1;
     bool seg_ok = true;
@@ -7838,6 +8045,9 @@ bool NNeuronTimeLearnerBranch::ACalculate(void)
  {
   if(!Neuron)
    return true;
+  // SyncCapacitanceTrim: re-apply per-pulse C_k after Build / relink / load.
+  if(CapApplyPending && SyncCapacitanceTrim.GetData() > 0)
+   ApplyDendriteCapacitances();
   if(TrainingPhase.GetData() == kPhaseFailed)
   {
    Output = Neuron->Output;

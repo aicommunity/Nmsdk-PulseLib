@@ -276,6 +276,21 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> ResyncAfterNormalization;
  /// Diagnostic state: number of resync-after-normalization events
  UProperty<int, NNeuronTimeLearnerBranch, ptPubState> ResyncAfterNormalizationCount;
+
+ /// SyncCapacitanceTrim (default 0 = old). 1 = when pulse k is about to be
+ /// promoted to synced, trim the capacitance C_k of its own branch interval
+ /// (segments L_{k+1}+1..L_k, which only delay pulses <=k) to remove the
+ /// residual arrival error, and re-measure before promotion.
+ /// Limits: |C_k/C0-1|<=SyncCapTrimMaxRel, R*C_k>=max(SyncCapTrimMinTau, dt).
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapacitanceTrim;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapTrimTolerance;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapTrimMaxRel;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapTrimMinTau;
+ UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapTrimGain;
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> SyncCapTrimMaxSteps;
+ /// Per-pulse interval capacitance C_k (F); empty / <=0 = class capacitance.
+ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubParameter | ptPubState> DendriteCapacitance;
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubState> SyncCapTrimCount;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideMembraneCapacity;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideExcMembraneResistance;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideInhMembraneResistance;
@@ -1235,6 +1250,14 @@ protected:
  
  /// Refresh DendLastAbsDt from prev-burst anchor
  void RefreshDendLastAbsDtFromPrevAnchor(void);
+ /// SyncCapacitanceTrim helpers
+ bool ApplyDendriteCapacitances(void);
+ double ClassCapacitance(void) const;
+ bool TrimSyncCapacitanceForPulse(int k, const std::vector<int> &lengths_before, bool norm_changed);
+ std::string DendriteCapacitanceAuditString(void) const;
+ std::vector<int> CapTrimSteps;
+ std::vector<double> CapTrimDelayShift;
+ bool CapApplyPending;
  
  /// Cable-model delay for dendrite/pulse num (sec)
  double DelayLenOf(int num) const;
