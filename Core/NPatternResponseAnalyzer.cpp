@@ -13,6 +13,9 @@
 #include <filesystem>
 #include <iomanip>
 #include <sstream>
+#include <limits>
+#include <cstdint>
+#include <locale>
 
 namespace NMSDK {
 
@@ -37,6 +40,34 @@ const char *kCsvHeader =
  "ltz_potential_max,soma_amp_0,soma_amp_1,soma_amp_2,soma_amp_3,soma_amp_sum,"
  "neuron_spike_count,neuron_spike_times,response_class,"
  "complete,censored,actual_observe_end,stim_times,isis,schema_version\n";
+
+void WriteCsvString(std::ostream &out, const std::string &value)
+{
+ out << '"';
+ for(char c : value)
+ {
+  if(c == '"') out << '"';
+  out << c;
+ }
+ out << '"';
+}
+
+std::string ObservedPatternHash(const std::vector<double> &times, double onset)
+{
+ std::ostringstream canonical;
+ canonical.imbue(std::locale::classic());
+ canonical << std::setprecision(17);
+ for(double time : times) canonical << time - onset << ';';
+ uint64_t digest = UINT64_C(14695981039346656037);
+ for(unsigned char value : canonical.str())
+ {
+  digest ^= value;
+  digest *= UINT64_C(1099511628211);
+ }
+ std::ostringstream result;
+ result << "fnv1a64:" << std::hex << std::setw(16) << std::setfill('0') << digest;
+ return result.str();
+}
 
 }
 
@@ -128,6 +159,9 @@ NPatternResponseAnalyzer::NPatternResponseAnalyzer(void)
   FileName("FileName", this),
   AppendMode("AppendMode", this),
   Enable("Enable", this),
+  ObservationSchemaVersion("ObservationSchemaVersion", this),
+  RunId("RunId", this),
+  ModelRevision("ModelRevision", this),
   TraceLogEnabled("TraceLogEnabled", this),
   TraceLogFileName("TraceLogFileName", this),
   MatchMode("MatchMode", this),
@@ -169,8 +203,8 @@ NPatternResponseAnalyzer::NPatternResponseAnalyzer(void)
   ltz_source_(nullptr),
   dataset_source_(nullptr)
 {
- trial_soma_amp_max_[0] = trial_soma_amp_max_[1] = 0.0;
- trial_soma_amp_max_[2] = trial_soma_amp_max_[3] = 0.0;
+ trial_measurement_valid_ = true;
+ trial_spike_overflow_ = false;
  trial_soma_amp_sum_max_ = 0.0;
 }
 
@@ -198,6 +232,9 @@ bool NPatternResponseAnalyzer::ADefault(void)
  FileName = "results.csv";
  AppendMode = false;
  Enable = true;
+ ObservationSchemaVersion = 3;
+ RunId = "";
+ ModelRevision = "";
  TraceLogEnabled = false;
  TraceLogFileName = "test_trace.csv";
  MatchMode = 0;
@@ -235,7 +272,10 @@ void NPatternResponseAnalyzer::RecordNeuronSpike(double now)
  if(!trial_active_)
   return;
  if(trial_neuron_spike_times_.size() >= kMaxSpikeTimesCsv)
+ {
+  trial_spike_overflow_ = true;
   return;
+ }
  trial_neuron_spike_times_.push_back(now);
 }
 
@@ -254,8 +294,9 @@ void NPatternResponseAnalyzer::ResetTrialState(void)
  trial_t_neuron_ = -1.0;
  trial_t_late_neuron_ = -1.0;
  trial_ltz_potential_max_ = 0.0;
- trial_soma_amp_max_[0] = trial_soma_amp_max_[1] = 0.0;
- trial_soma_amp_max_[2] = trial_soma_amp_max_[3] = 0.0;
+ trial_soma_amp_max_.clear();
+ trial_measurement_valid_ = true;
+ trial_spike_overflow_ = false;
  trial_soma_amp_sum_max_ = 0.0;
  trial_sample_start_abs_ = 0.0;
  trial_expected_last_stim_abs_ = -1.0;
@@ -422,11 +463,10 @@ double NPatternResponseAnalyzer::ReadLtzPotential(void) const
  return 0.0;
 }
 
-void NPatternResponseAnalyzer::ReadSomaAmplitudes(double soma_out[4], double &soma_sum) const
+void NPatternResponseAnalyzer::ReadSomaAmplitudes(std::vector<double> &soma_out, double &soma_sum) const
 {
  soma_sum = 0.0;
- for(int i = 0; i < 4; ++i)
-  soma_out[i] = 0.0;
+ soma_out.clear();
 
  const std::vector<MDMatrix<double> > &amps = SomaAmplitudeInput.GetData();
  if(amps.empty())
@@ -438,34 +478,61 @@ void NPatternResponseAnalyzer::ReadSomaAmplitudes(double soma_out[4], double &so
 
  if(m.GetRows() > 0)
   soma_sum = m(0, 0);
- for(int i = 0; i < 4; ++i)
+ for(int row = 1; row < m.GetRows(); ++row)
  {
-  const int row = i + 1;
-  if(row < m.GetRows())
-   soma_out[i] = m(row, 0);
+  soma_out.push_back(m(row, 0));
  }
 }
 
 void NPatternResponseAnalyzer::UpdateTrialMetrics(double /*now*/)
 {
  const double ltz = ReadLtzPotential();
+ if(!std::isfinite(ltz)) trial_measurement_valid_ = false;
  if(ltz > trial_ltz_potential_max_)
   trial_ltz_potential_max_ = ltz;
 
- double soma[4] = {0.0, 0.0, 0.0, 0.0};
+ std::vector<double> soma;
  double soma_sum = 0.0;
  ReadSomaAmplitudes(soma, soma_sum);
+ if(!std::isfinite(soma_sum)) trial_measurement_valid_ = false;
+ if(int(ObservationSchemaVersion) == 4 && (!ltz_source_ || soma.empty()))
+  trial_measurement_valid_ = false;
  if(soma_sum > trial_soma_amp_sum_max_)
   trial_soma_amp_sum_max_ = soma_sum;
- for(int i = 0; i < 4; ++i)
+ if(trial_soma_amp_max_.empty())
+  trial_soma_amp_max_.assign(soma.size(), -std::numeric_limits<double>::infinity());
+ if(trial_soma_amp_max_.size() != soma.size())
  {
+  trial_measurement_valid_ = false;
+  return;
+ }
+ for(size_t i = 0; i < soma.size(); ++i)
+ {
+  if(!std::isfinite(soma[i])) trial_measurement_valid_ = false;
   if(soma[i] > trial_soma_amp_max_[i])
    trial_soma_amp_max_[i] = soma[i];
  }
 }
 
+std::string NPatternResponseAnalyzer::CsvHeader(void) const
+{
+ std::string header(kCsvHeader);
+ if(int(ObservationSchemaVersion) == 4)
+ {
+  header.pop_back();
+  header += ",run_id,trial_id,sample_id,pattern_hash,model_revision,onset_abs,"
+            "required_observe_end,measurement_valid,soma_amplitudes\n";
+ }
+ return header;
+}
+
 bool NPatternResponseAnalyzer::EnsureCsvReady(void)
 {
+ if(int(ObservationSchemaVersion) != 3 && int(ObservationSchemaVersion) != 4)
+ {
+  LastErrorClass = "unsupported_schema";
+  return false;
+ }
  if(csv_full_path_.empty())
  {
   std::string base;
@@ -482,7 +549,7 @@ bool NPatternResponseAnalyzer::EnsureCsvReady(void)
   std::ofstream out(csv_full_path_.c_str(), std::ios::trunc);
   if(!out)
    return false;
-  out << kCsvHeader;
+  out << CsvHeader();
   csv_header_written_ = true;
   return true;
  }
@@ -495,7 +562,16 @@ bool NPatternResponseAnalyzer::EnsureCsvReady(void)
    std::ofstream out(csv_full_path_.c_str(), std::ios::trunc);
    if(!out)
     return false;
-   out << kCsvHeader;
+   out << CsvHeader();
+  }
+  else
+  {
+   std::string existing;
+   std::getline(probe, existing);
+   if(!existing.empty() && existing.back() == '\r') existing.pop_back();
+   std::string expected = CsvHeader();
+   expected.pop_back();
+   if(existing != expected) return false;
   }
   csv_header_written_ = true;
  }
@@ -522,7 +598,9 @@ bool NPatternResponseAnalyzer::EnsureTraceReady(void)
   if(!trace_stream_)
    return false;
   trace_stream_ << "trial,sample_id,target_class,time_abs_s,time_rel_s,"
-                   "soma_sum,soma_0,soma_1,soma_2,soma_3,ltz_potential\n";
+                   "soma_sum,soma_0,soma_1,soma_2,soma_3,ltz_potential";
+  if(int(ObservationSchemaVersion) == 4) trace_stream_ << ",soma_potentials";
+  trace_stream_ << '\n';
   trace_stream_ << std::setprecision(17);
   trace_header_written_ = true;
  }
@@ -534,7 +612,7 @@ void NPatternResponseAnalyzer::WriteTraceSample(double now)
  if(!TraceLogEnabled.GetData() || !trial_active_ || !EnsureTraceReady())
   return;
 
- double soma[4] = {0.0, 0.0, 0.0, 0.0};
+ std::vector<double> soma;
  double soma_sum = 0.0;
  ReadSomaAmplitudes(soma, soma_sum);
  trace_stream_ << int(TrialIndex) << ','
@@ -544,8 +622,18 @@ void NPatternResponseAnalyzer::WriteTraceSample(double now)
                << (now - trial_t_first_stim_) << ','
                << soma_sum;
  for(int i = 0; i < 4; ++i)
-  trace_stream_ << ',' << soma[i];
- trace_stream_ << ',' << ReadLtzPotential() << '\n';
+  trace_stream_ << ',' << (i < int(soma.size()) ? soma[size_t(i)] : 0.0);
+ trace_stream_ << ',' << ReadLtzPotential();
+ if(int(ObservationSchemaVersion) == 4)
+ {
+  trace_stream_ << ',';
+  for(size_t i = 0; i < soma.size(); ++i)
+  {
+   if(i) trace_stream_ << ';';
+   trace_stream_ << soma[i];
+  }
+ }
+ trace_stream_ << '\n';
  if(++trace_rows_since_flush_ >= 512)
  {
   trace_stream_.flush();
@@ -626,10 +714,11 @@ void NPatternResponseAnalyzer::BeginTrial(double now)
  trial_t_last_stim_ = now;
  trial_t_neuron_ = -1.0;
  trial_t_late_neuron_ = -1.0;
- trial_ltz_potential_max_ = 0.0;
- trial_soma_amp_max_[0] = trial_soma_amp_max_[1] = 0.0;
- trial_soma_amp_max_[2] = trial_soma_amp_max_[3] = 0.0;
- trial_soma_amp_sum_max_ = 0.0;
+ trial_ltz_potential_max_ = -std::numeric_limits<double>::infinity();
+ trial_soma_amp_max_.clear();
+ trial_soma_amp_sum_max_ = -std::numeric_limits<double>::infinity();
+ trial_measurement_valid_ = true;
+ trial_spike_overflow_ = false;
  trial_stim_times_.clear();
  trial_neuron_spike_times_.clear();
  trial_stim_times_.push_back(now);
@@ -722,6 +811,11 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
   match = (target != 0) ? fired : (fired ? 0 : 1);
  const char *err = ClassifyErrorEx(
   target, fired, late, trial_incomplete_, trial_censored_);
+ if(!trial_measurement_valid_ || trial_spike_overflow_)
+ {
+  match = 0;
+  err = trial_spike_overflow_ ? "overflow" : "invalid_measurement";
+ }
 
  std::vector<double> spike_rel;
  spike_rel.reserve(trial_neuron_spike_times_.size());
@@ -766,6 +860,8 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
    std::ofstream out(csv_full_path_.c_str(), std::ios::app);
    if(out)
    {
+    out.imbue(std::locale::classic());
+    out << std::setprecision(17);
     out << int(TrialIndex) << ','
         << target << ','
         << int(trial_stim_times_.size()) << ',';
@@ -792,7 +888,7 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
         << trial_ltz_potential_max_ << ',';
     for(int i = 0; i < 4; ++i)
     {
-     out << trial_soma_amp_max_[i];
+     out << (i < int(trial_soma_amp_max_.size()) ? trial_soma_amp_max_[size_t(i)] : 0.0);
      if(i < 3)
       out << ',';
     }
@@ -819,7 +915,24 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
      if(i) out << ';';
      out << isi_mat(i, 0);
     }
-    out << ",3\n";
+    out << ',' << (int(ObservationSchemaVersion) == 4 ? 4 : 3);
+    if(int(ObservationSchemaVersion) == 4)
+    {
+     out << ',';
+     WriteCsvString(out, std::string(RunId));
+     out << ',' << int(TrialIndex) << ',' << trial_sample_id_ << ',';
+     WriteCsvString(out, ObservedPatternHash(trial_stim_times_, trial_t_first_stim_));
+     out << ',';
+     WriteCsvString(out, std::string(ModelRevision));
+     out << ',' << trial_t_first_stim_ << ',' << trial_observe_until_ << ','
+         << (trial_measurement_valid_ && !trial_spike_overflow_ ? 1 : 0) << ',';
+     for(size_t i = 0; i < trial_soma_amp_max_.size(); ++i)
+     {
+      if(i) out << ';';
+      out << trial_soma_amp_max_[i];
+     }
+    }
+    out << '\n';
    }
   }
  }
@@ -861,7 +974,7 @@ bool NPatternResponseAnalyzer::AReset(void)
   {
    std::ofstream out(csv_full_path_.c_str(), std::ios::trunc);
    if(out)
-    out << kCsvHeader;
+    out << CsvHeader();
    csv_header_written_ = true;
   }
  }

@@ -36,6 +36,10 @@ UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> SavePath;
 UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> FileName;
 UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> AppendMode;
 UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> Enable;
+/// 3 preserves historical CSV columns; 4 adds explicit observation provenance.
+UProperty<int, NPatternResponseAnalyzer, ptPubParameter> ObservationSchemaVersion;
+UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> RunId;
+UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> ModelRevision;
 /// Optional per-sample soma trace for headless test reports. Does not affect learning.
 UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> TraceLogEnabled;
 UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> TraceLogFileName;
@@ -67,6 +71,7 @@ virtual bool AReset(void);
 virtual bool ACalculate(void);
 
 bool EnsureCsvReady(void);
+std::string CsvHeader(void) const;
 bool EnsureTraceReady(void);
 void WriteTraceSample(double now);
 bool IsIsiTemplateMatch(void) const;
@@ -90,7 +95,7 @@ bool DetectRisingEdge(const std::vector<MDMatrix<double> > &inputs,
 double ReadScalar(const MDMatrix<double> &m) const;
 double ReadTargetClass(void) const;
 void UpdateTrialMetrics(double now);
-void ReadSomaAmplitudes(double soma_out[4], double &soma_sum) const;
+void ReadSomaAmplitudes(std::vector<double> &soma_out, double &soma_sum) const;
 double ReadLtzPotential(void) const;
 double EffectiveLateWindow(void) const;
 
@@ -110,7 +115,9 @@ double trial_t_last_stim_;
 double trial_t_neuron_;
 double trial_t_late_neuron_;
 double trial_ltz_potential_max_;
-double trial_soma_amp_max_[4];
+std::vector<double> trial_soma_amp_max_;
+bool trial_measurement_valid_;
+bool trial_spike_overflow_;
 double trial_soma_amp_sum_max_;
 double trial_sample_start_abs_;
 double trial_expected_last_stim_abs_;
