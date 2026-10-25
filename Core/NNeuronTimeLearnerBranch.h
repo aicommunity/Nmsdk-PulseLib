@@ -269,6 +269,13 @@ UProperty<std::vector<double>, NNeuronTimeLearnerBranch, ptPubState> Attenuation
  /// RminNoImproveMinProgress * EstDelayPerSeg * |applied_delta| clears the streak,
  /// so a monotonically converging dendrite is not marked best-effort at short L.
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> RminNoImproveMinProgress;
+ /// Re-measure sync after a normalization edit (TipR / NumSynapse).
+ /// 0 = old behaviour; 1 = reopen the edited pulse (and earlier targets) after a
+ /// TipR edit, as for structural edits; 2 = full reopen of all pulses after any
+ /// normalization edit.
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> ResyncAfterNormalization;
+ /// Diagnostic state: number of resync-after-normalization events
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubState> ResyncAfterNormalizationCount;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideMembraneCapacity;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideExcMembraneResistance;
  UProperty<double, NNeuronTimeLearnerBranch, ptPubParameter> OverrideInhMembraneResistance;

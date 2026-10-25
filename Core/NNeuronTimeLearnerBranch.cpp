@@ -838,6 +838,8 @@ void NNeuronTimeLearnerBranch::AppendTrainingIterationAudit(const std::vector<in
         << ";reset_before_train_burst=" << (ResetNeuronBeforeTrainBurst.GetData() ? 1 : 0)
         << ";correct_attenuation_gamma_for_tip_r=" << (CorrectAttenuationGammaForTipR.GetData() ? 1 : 0)
         << ";rmin_noimprove_min_progress=" << RminNoImproveMinProgress.GetData()
+        << ";resync_after_norm=" << ResyncAfterNormalization.GetData()
+        << ";resync_count=" << ResyncAfterNormalizationCount.GetData()
         << ";enable_posttrain_tuning=" << (EnablePostTrainTuning.GetData() ? 1 : 0)
         << ";enable_posttrain_mid_threshold=" << (EnablePostTrainMidThreshold.GetData() ? 1 : 0)
         << ";posttune_free_run_active=" << (PostTuneFreeRunActive ? 1 : 0)
@@ -3086,6 +3088,8 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  EnableTrainingAudit("EnableTrainingAudit", this),
  InitEstDelayPerSeg("InitEstDelayPerSeg", this),
  RminNoImproveMinProgress("RminNoImproveMinProgress", this),
+ ResyncAfterNormalization("ResyncAfterNormalization", this),
+ ResyncAfterNormalizationCount("ResyncAfterNormalizationCount", this),
  OverrideMembraneCapacity("OverrideMembraneCapacity", this),
  OverrideExcMembraneResistance("OverrideExcMembraneResistance", this),
  OverrideInhMembraneResistance("OverrideInhMembraneResistance", this),
@@ -3236,6 +3240,7 @@ bool NNeuronTimeLearnerBranch::ZeroingTrainingPattern(void)
 /// Restore Untrained* snapshots onto live structure
 bool NNeuronTimeLearnerBranch::ResetToUntrained(void)
 {
+ ResyncAfterNormalizationCount.SetDataDirect(0);
  const std::vector<double> loaded_tips = LoadedTipSynapseResistance;
  const bool use_loaded_tips = IsParametricNormalization()
   && UseLoadedTipResistanceOnUntrainedReset.GetData()
@@ -4288,6 +4293,8 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
  NeuronClassName = "NSPNeuronGen";
  InitEstDelayPerSeg = 0.0;
  RminNoImproveMinProgress = 0.0;
+ ResyncAfterNormalization = 0;
+ ResyncAfterNormalizationCount = 0;
  OverrideMembraneCapacity = 0.0;
  OverrideExcMembraneResistance = 0.0;
  OverrideInhMembraneResistance = 0.0;
@@ -4507,6 +4514,7 @@ void NNeuronTimeLearnerBranch::UpdateComputationOrder(void)
 /// Reset runtime counters / iteration state
 bool NNeuronTimeLearnerBranch::AReset(void)
 {
+ ResyncAfterNormalizationCount.SetDataDirect(0);
  ApplyLoadedAnchorProperties();
  
  // Snapshot only a cold topology (all L<=1). Trained samples (L=49 41 25 1 in
@@ -7559,6 +7567,7 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
   // Apply length then synapses in one inter-burst gap (tip after Build/relink).
   const std::vector<int> audit_lengths_before = DendriteLength.GetData();
   const std::vector<int> audit_synapses_before = NumSynapse.GetData();
+  const std::vector<double> resync_tips_before = TipSynapseResistance.GetData();
   // Capture before apply/sync: sync success may move ActivePulseIndex to k-1.
   const int structural_edit_pulse = ActivePulseIndex;
   if(TrainingPhase != kPhaseDone && TrainingPhase != kPhaseFailed
@@ -7661,6 +7670,28 @@ void NNeuronTimeLearnerBranch::FinishTrainingIteration(void)
    ActivePulseIndex = SelectActiveDendrite();
    ActiveDendrite = ActivePulseIndex;
    ApplyPulseGeneratorMute();
+  }
+  // ResyncAfterNormalization (default 0 = old): a TipR edit is not structural,
+  // so the pulse promoted in this burst may carry a stale sync. Reopen it.
+  const bool norm_model_changed = resync_tips_before != TipSynapseResistance.GetData()
+   || audit_synapses_before != NumSynapse.GetData();
+  if(ResyncAfterNormalization.GetData() > 0 && norm_model_changed
+     && (!structural_model_changed || ResyncAfterNormalization.GetData() >= 2))
+  {
+   InvalidatePulseSyncAfterStructuralChange(
+    ResyncAfterNormalization.GetData() >= 2 ? -1 : structural_edit_pulse);
+   ActivePulseIndex = SelectActiveDendrite();
+   ActiveDendrite = ActivePulseIndex;
+   ApplyPulseGeneratorMute();
+   ResyncAfterNormalizationCount = ResyncAfterNormalizationCount.GetData() + 1;
+   if(RDK::GetLogger())
+   {
+    std::ostringstream oss;
+    oss << "ResyncAfterNormalization: event " << ResyncAfterNormalizationCount.GetData()
+        << " iter=" << CountIteration << " pulse=" << structural_edit_pulse
+        << " mode=" << ResyncAfterNormalization.GetData();
+    RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
+   }
   }
  
  // Snapshot this burst for next iteration's Prev* comparison (before CountIteration++).

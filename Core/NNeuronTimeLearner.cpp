@@ -774,6 +774,8 @@ void NNeuronTimeLearner::AppendTrainingIterationAudit(const std::vector<int> &le
         << ";auto_estimate_attenuation_gamma=" << (AutoEstimateAttenuationGamma.GetData() ? 1 : 0)
         << ";freeze_tip_r_after_first_sync=" << (FreezeTipResistanceAfterFirstSync.GetData() ? 1 : 0)
         << ";tip_r_frozen_after_sync=" << (TipResistanceFrozenAfterSync.GetData() ? 1 : 0)
+        << ";resync_after_norm=" << ResyncAfterNormalization.GetData()
+        << ";resync_count=" << ResyncAfterNormalizationCount.GetData()
         << ";rmin=" << ResistanceMin.GetData()
         << ";rmax=" << ResistanceMax.GetData()
         << ";rs_rm_min=" << ResistanceMinRatio.GetData()
@@ -2319,6 +2321,8 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  AutoEstimateAttenuationGamma("AutoEstimateAttenuationGamma", this),
  FreezeTipResistanceAfterFirstSync("FreezeTipResistanceAfterFirstSync", this),
  TipResistanceFrozenAfterSync("TipResistanceFrozenAfterSync", this),
+ ResyncAfterNormalization("ResyncAfterNormalization", this),
+ ResyncAfterNormalizationCount("ResyncAfterNormalizationCount", this),
  ResistanceAdjustGain("ResistanceAdjustGain", this, &NNeuronTimeLearner::SetResistanceAdjustGain),
  TipSynapseResistance("TipSynapseResistance", this, &NNeuronTimeLearner::SetTipSynapseResistance),
  DendriteLength("DendriteLength", this, &NNeuronTimeLearner::SetDendriteLength),
@@ -2469,6 +2473,7 @@ bool NNeuronTimeLearner::ZeroingTrainingPattern(void)
 bool NNeuronTimeLearner::ResetToUntrained(void)
 {
  TipResistanceFrozenAfterSync.SetDataDirect(false);
+ ResyncAfterNormalizationCount.SetDataDirect(0);
  const std::vector<double> loaded_tips = LoadedTipSynapseResistance;
  const bool use_loaded_tips = IsParametricNormalization()
   && UseLoadedTipResistanceOnUntrainedReset.GetData()
@@ -3618,6 +3623,8 @@ bool NNeuronTimeLearner::ADefault(void)
  AutoEstimateAttenuationGamma = true;
  FreezeTipResistanceAfterFirstSync = false;
  TipResistanceFrozenAfterSync = false;
+ ResyncAfterNormalization = 0;
+ ResyncAfterNormalizationCount = 0;
  ResistanceAdjustGain = kResistanceAdjustGainDefault;
  TipSynapseResistance.assign(NumInputDendrite, SynapseResistanceBase.GetData());
  DendriteLength.assign(NumInputDendrite, 1);
@@ -3755,6 +3762,7 @@ void NNeuronTimeLearner::UpdateComputationOrder(void)
 bool NNeuronTimeLearner::AReset(void)
 {
  TipResistanceFrozenAfterSync.SetDataDirect(false);
+ ResyncAfterNormalizationCount.SetDataDirect(0);
  ApplyLoadedAnchorProperties();
  
  // Snapshot only a cold topology (all L<=1). Trained samples (L=49 41 25 1 in
@@ -6440,6 +6448,8 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
 
   // Apply length then synapses in one inter-burst gap (tip after Build/relink).
   const std::vector<int> audit_lengths_before = DendriteLength.GetData();
+  const std::vector<double> resync_tips_before = TipSynapseResistance.GetData();
+  const std::vector<int> resync_synapses_before = NumSynapse.GetData();
   if(TrainingPhase != kPhaseDone && TrainingPhase != kPhaseFailed
      && IsNeedToTrain && CanChangeDendLength)
    ApplyPendingDendriteLengthChanges();
@@ -6451,6 +6461,31 @@ void NNeuronTimeLearner::FinishTrainingIteration(void)
     ApplySynapseResistanceChange(i);
    else
     ChangeSynapseNumber(i);
+  }
+ }
+ // ResyncAfterNormalization (default 0 = old): a TipR / N edit changes arrival
+ // times, so the sync measured in this burst is stale. Force re-measurement in
+ // the next burst before EndOfLearning may declare Done.
+ if(ResyncAfterNormalization.GetData() > 0
+    && (resync_tips_before != TipSynapseResistance.GetData()
+        || resync_synapses_before != NumSynapse.GetData()))
+ {
+  const int n_rs = NumInputDendrite.GetData();
+  const double sentinel = IterationGap.GetData() + 0.001;
+  for(int i = 0; i < n_rs - 1; ++i)
+  {
+   if(i < int(DendLastAbsDt.size()))
+    DendLastAbsDt[static_cast<size_t>(i)] = sentinel;
+   if(ResyncAfterNormalization.GetData() >= 2 && i < int(DendBestEffortSynced.size()))
+    DendBestEffortSynced[static_cast<size_t>(i)] = false;
+  }
+  ResyncAfterNormalizationCount = ResyncAfterNormalizationCount.GetData() + 1;
+  if(RDK::GetLogger())
+  {
+   std::ostringstream oss;
+   oss << "ResyncAfterNormalization: event " << ResyncAfterNormalizationCount.GetData()
+       << " iter=" << CountIteration << " mode=" << ResyncAfterNormalization.GetData();
+   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
   }
  }
  

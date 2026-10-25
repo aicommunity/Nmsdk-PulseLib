@@ -222,6 +222,15 @@ public:
 
  /// Diagnostic state: tip resistance is frozen by the first-sync control
  UProperty<bool, NNeuronTimeLearner, ptPubState> TipResistanceFrozenAfterSync;
+
+ /// Re-measure sync after a normalization edit (TipR / NumSynapse) before Done.
+ /// 0 = old behaviour; 1 = after an edit mark every non-ref input as unmeasured
+ /// (DendLastAbsDt sentinel) so EndOfLearning waits for the next burst;
+ /// 2 = as 1 and also clear best-effort latches.
+ UProperty<int, NNeuronTimeLearner, ptPubParameter> ResyncAfterNormalization;
+
+ /// Diagnostic state: number of resync-after-normalization events
+ UProperty<int, NNeuronTimeLearner, ptPubState> ResyncAfterNormalizationCount;
  
  /// P-regulator gain for parametric R step (0..1], default 0.4
  UProperty<double, NNeuronTimeLearner, ptPubParameter> ResistanceAdjustGain;
