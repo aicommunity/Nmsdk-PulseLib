@@ -1040,6 +1040,11 @@ bool NPulseNeuron::ACalculate(void)
 // ”станавливает компоненты в требуемый пор€док расчета
 void NPulseNeuron::UpdateComputationOrder(void)
 {
+ // Mode 0 owns an explicit graph, including its saved sibling order.
+ // Moving only soma/LT while omitting dendrites changes cable dynamics on load.
+ if(StructureBuildMode == 0)
+  return;
+
  int position = 0;
  int num_soma=NumSomaMembraneParts;
  for(int i=0;i<num_soma;i++)
