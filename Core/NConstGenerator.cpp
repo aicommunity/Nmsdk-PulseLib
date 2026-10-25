@@ -83,6 +83,9 @@ bool NConstGenerator::ABuild(void)
 // Сброс процесса счета.
 bool NConstGenerator::AReset(void)
 {
+ // Consumers may run before this source in the first native tick. Publish
+ // the model's constant rest value now, rather than retaining old dynamics.
+ Output.Assign(1,1,Amplitude.GetData());
  UpdateOutputFlag=true;
  return NSource::AReset();
 }

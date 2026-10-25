@@ -176,6 +176,9 @@ bool NPulseSynapseCommon::AReset(void)
 {
  // Сброс временных переменных
  PreOutput=0;
+ // Reset the exposed conductance together with secretion. A consumer must
+ // not see the preceding trial's conductance before this synapse calculates.
+ Output.ToZero();
  InputPulseSignal=false;
  PulseSignalTemp=false;
 
