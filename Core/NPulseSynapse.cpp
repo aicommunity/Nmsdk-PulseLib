@@ -223,6 +223,12 @@ bool NPulseSynapse::AReset(void)
  if(!NPulseSynapseCommon::AReset())
   return false;
 
+ // SetGlobalTimeStep updates the scheduler frequency without rebuilding an
+ // already-ready component. Derive step coefficients at the native reset
+ // boundary, after frequency propagation, rather than retaining factory-time
+ // values or requiring parameter self-assignment from a learner.
+ VSecretionTC=SecretionTC*TimeStep;
+ VDissociationTC=DissociationTC*TimeStep;
  PulseCounter=0;
 
  return true;
