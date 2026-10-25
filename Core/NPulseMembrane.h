@@ -36,6 +36,10 @@ UProperty<bool,NPulseMembrane, ptPubParameter> ResetAvailable;
 /// Имя класса синапса
 UProperty<std::string, NPulseMembrane, ptPubParameter> SynapseClassName;
 
+/// Optional role-specific images; empty uses SynapseClassName for compatibility.
+UProperty<std::string, NPulseMembrane, ptPubParameter> ExcSynapseClassName;
+UProperty<std::string, NPulseMembrane, ptPubParameter> InhSynapseClassName;
+
 /// Имя класса ионного канала
 UProperty<std::string, NPulseMembrane, ptPubParameter> ExcChannelClassName;
 
@@ -115,6 +119,8 @@ bool SetResetAvailable(const bool &value);
 bool SetFeedbackGain(const double &value);
 
 bool SetSynapseClassName(const std::string &value);
+const std::string& GetEffectiveExcSynapseClassName(void) const;
+const std::string& GetEffectiveInhSynapseClassName(void) const;
 bool SetExcChannelClassName(const std::string &value);
 bool SetInhChannelClassName(const std::string &value);
 bool SetNumExcitatorySynapses(const int &value);
