@@ -246,7 +246,7 @@ graph TB
 
 - **`AAfterBuild()`** → `bool` — выполняется после сборки. Создает тренер синапса, если указан `TrainerClassName`.
 
-- **`AReset()`** → `bool` — сбрасывает состояния синапса. Обнуляет `PreOutput`, сбрасывает флаги импульсов.
+- **`AReset()`** → `bool` — обнуляет `PreOutput` и публичную проводимость `Output`, сбрасывает флаги импульсов. Потребитель до первого Calculate не видит проводимость прежней пробы.
 
 - **`ACalculate()`** → `bool` — выполняет расчет синапса на одном шаге. Обрабатывает входной сигнал, обновляет вес, вызывает `ACalculate2()`, применяет вес к выходному сигналу.
 
@@ -475,7 +475,7 @@ graph TB
 - `ADefault()` → `bool` — initialize default parameters
 - `ABuild()` → `bool` — build synapse structure
 - `AAfterBuild()` → `bool` — create trainer if specified
-- `AReset()` → `bool` — reset synapse state
+- `AReset()` → `bool` — clear secretion, exposed Output conductance and pulse-edge flags before the next calculation tick
 - `ACalculate()` → `bool` — perform one calculation step
 - `ACalculate2()` → `bool` — calculate output (virtual, must be overridden)
 
