@@ -81,7 +81,7 @@ sequenceDiagram
     end
     Synapse->>Synapse: Расчет Output
     alt UsePresynapticInhibition
-        Synapse->>Synapse: Output = OutputConstData * (1 - InhibitionCoeff * PreOutput) * PreOutput
+        Synapse->>Synapse: Output = PresynapticInhibitionConductance(C, k, p, input_active)
     else !UsePresynapticInhibition
         Synapse->>Synapse: Output = OutputConstData * PreOutput
     end
@@ -140,7 +140,7 @@ flowchart TD
     UpdatePreOutput -->|Нет| UpdateDissociation[PreOutput -= PreOutput / VDissociationTC]
     UpdateSecretion --> CalcOutput
     UpdateDissociation --> CalcOutput{UsePresynapticInhibition?}
-    CalcOutput -->|Да| CalcWithInhibition[Output = OutputConstData * (1 - InhibitionCoeff * PreOutput) * PreOutput]
+    CalcOutput -->|Да| CalcWithInhibition[PresynapticInhibitionConductance: active/dissociation gates]
     CalcOutput -->|Нет| CalcWithoutInhibition[Output = OutputConstData * PreOutput]
     CalcWithInhibition --> ClampOutput[Output = max(Output, 0)]
     CalcWithoutInhibition --> ClampOutput
@@ -155,6 +155,14 @@ flowchart TD
    - При отсутствии сигнала: `PreOutput -= PreOutput / VDissociationTC`
 4. Расчет выходного тока с учетом пресинаптического торможения
 5. Ограничение выходного сигнала снизу нулем
+
+Действующая PSI-функция — `PresynapticInhibitionConductance` в NPulseSynapse.h.
+Для k>0 используется C=4k/R и p=PreOutput. При gate=1−kp≥0 выход равен C·gate·p.
+При gate<0 и отсутствии активного входа выход нулевой. При gate<0 и активном
+входе используется residual gate 0.05 (для k>2 — 0.05·2/k). При k≤0 функция
+возвращает C·p. Поэтому одной формулы с clamp квадратичной части недостаточно
+для описания всех фаз. Этот текст описывает текущую реализацию, не доказательство
+качества разделимости конкретной обученной модели.
 
 ### UML-диаграмма компонентов
 
@@ -244,7 +252,7 @@ graph TB
 
 - **`ABuild()`** → `bool` — строит структуру синапса. Рассчитывает `VSecretionTC = SecretionTC * TimeStep` и `VDissociationTC = DissociationTC * TimeStep`.
 
-- **`AReset()`** → `bool` — сбрасывает состояния синапса. Устанавливает `PulseCounter=0`, вызывает `NPulseSynapseCommon::AReset()`.
+- **`AReset()`** → `bool` — сбрасывает `PulseCounter`, наследуемые secretion/output/edge states и пересчитывает `VSecretionTC=SecretionTC*TimeStep`, `VDissociationTC=DissociationTC*TimeStep`. После смены частоты применяется native Reset; self-assignment параметров не требуется.
 
 - **`ACalculate2()`** → `bool` — выполняет расчет синапса на одном шаге. Обрабатывает входной сигнал, обновляет концентрацию медиатора, рассчитывает выходной ток.
 
