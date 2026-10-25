@@ -111,6 +111,9 @@ NLTZone* GetLTZone(void);
 // --------------------------
 // --------------------------
 virtual NPulseNeuronCommon* New(void);
+// Native Build finalizes child computation order before exposing this index.
+// Index order follows the named child table, not object creation history.
+virtual void UpdateComputationOrder(void);
 // --------------------------
 
 // --------------------------
@@ -119,6 +122,7 @@ virtual NPulseNeuronCommon* New(void);
 // --------------------------
 // --------------------------
 protected:
+void RefreshMembraneIndex(void);
 // Выполняет завершающие пользовательские действия
 // при добавлении дочернего компонента в этот объект
 // Метод будет вызван только если comp был
