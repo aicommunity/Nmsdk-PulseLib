@@ -318,6 +318,7 @@ void Transform(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,const P
 }
 void CheckRemovedListeners(UEPtr<NPulseNeuron> original,UEPtr<NPulseNeuron> candidate)
 {
+    std::set<const UIProperty*> removedOutputs;
     std::vector<UEPtr<UContainer>> nodes;Collect(original,nodes);
     for(const auto& node:nodes)
     {
@@ -325,12 +326,34 @@ void CheckRemovedListeners(UEPtr<NPulseNeuron> original,UEPtr<NPulseNeuron> cand
         if(node==original || candidate->GetComponentL(path,true))continue;
         for(const auto& [name,entry]:node->GetPropertiesList())
             if(auto output=dynamic_cast<UIPropertyOutput*>(entry.Property.Get()))
+            {
+                removedOutputs.insert(output);
+                // Native UItem::Connect and typed property bindings do not
+                // necessarily populate the same reverse-connection cache.
+                if(auto item=dynamic_cast<UItem*>(node.Get()))
+                    for(int i=0;i<item->GetNumAConnectors(name);++i)
+                    {
+                        const auto consumer=item->GetAConnectorByIndex(name,i);
+                        Require(!consumer || Inside(consumer.Get(),original.Get()),"edit_would_remove_external_observation_source");
+                    }
                 for(std::size_t i=0;i<output->GetNumConnectors();++i)
                 {
                     const auto input=output->GetConnectorProperty(int(i));
                     Require(!input || Inside(dynamic_cast<UContainer*>(input->GetOwner()),original.Get()),"edit_would_remove_external_observation_source");
                 }
+            }
     }
+    if(removedOutputs.empty())return;
+    UEPtr<UContainer> scope(original.Get());while(scope->GetOwner())scope=scope->GetOwner();
+    nodes.clear();Collect(scope,nodes);
+    for(const auto& node:nodes)if(!Inside(node.Get(),original.Get()))
+        for(const auto& [name,entry]:node->GetPropertiesList())if(auto input=dynamic_cast<UIPropertyInput*>(entry.Property.Get()))
+        {
+            if(!input->IsConnected() && !input->UsesExternalDataSource())continue;
+            Require(input->CanInspectDataSources(),"uninspectable_external_observation_binding");
+            for(const auto source:input->GetDataSources())
+                Require(!removedOutputs.count(source),"edit_would_remove_external_observation_source");
+        }
 }
 struct Lease {
     UEPtr<UContainer> object;
