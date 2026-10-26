@@ -196,6 +196,7 @@ For overview information see root project documentation:
 - [Architecture.md](Architecture.md) - library architecture
 - [Usage-Examples.md](Usage-Examples.md) - usage examples
 - [API-Overview.md](API-Overview.md) - API overview
+- [Native model graph API](Analysis/TimeLearnerModelGraph.ru.md) - shared identity, readback and archive; relocation acceptance tracked separately
 - [Component-Catalog.md](Component-Catalog.md) - component catalog
 - [Config-Overview.md](Config-Overview.md) - configuration projects overview
 - [Config-Templates.md](Config-Templates.md) - typical experiment templates
