@@ -97,6 +97,7 @@ bool NPulseGeneratorMulti::SetPulseCount(const int &value)
         return false;
 
     Delays.Resize(1,value);
+    Ready=false;
     return true;
 }
 
@@ -111,7 +112,8 @@ bool NPulseGeneratorMulti::SetDelays(const MDMatrix<double> &value)
  //int c = value.GetCols();
  //int r = value.GetRows();
  int num_pulses = value.GetCols();
- PulseCounters.resize(num_pulses);
+ PulseCount.SetDataDirect(num_pulses);
+ Ready=false;
  return true;
 }
 
@@ -165,6 +167,7 @@ bool NPulseGeneratorMulti::ADefault(void)
  PulseLength=0.001;
  Amplitude=1.0;
  //Проверить, надо ли это
+ PulseCount=1;
  Delays.Assign(1,1,0.0);
  FrequencyDeviation=0;
  AvgInterval=5;
@@ -370,7 +373,6 @@ bool NPulseGeneratorMulti::ACalculate(void)
   */
  }
 
- /*
  list<double>::iterator I,J,K;
  I=AvgFrequencyCounter->begin();
  J=AvgFrequencyCounter->end();
@@ -396,7 +398,6 @@ bool NPulseGeneratorMulti::ACalculate(void)
  OutputPulseTimes.Resize(1,int(AvgFrequencyCounter->size()));
  for(int i=0;i<OutputPulseTimes.GetCols();i++,++I)
   OutputPulseTimes(0,i)=*I;
- */
 
  return true;
 }
