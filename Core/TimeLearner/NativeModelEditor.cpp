@@ -17,6 +17,11 @@ namespace {
 using namespace RDK;
 void Require(bool value,const char* reason) { if(!value)throw std::runtime_error(reason); }
 bool Positive(double value) { return std::isfinite(value) && value>0.; }
+void StaticParameters(std::initializer_list<const UIProperty*> parameters)
+{
+    for(const auto parameter:parameters)if(auto input=dynamic_cast<const UIPropertyInput*>(parameter))
+        Require(!input->IsConnected() && !input->UsesExternalDataSource(),"unsupported_connected_integration_parameter");
+}
 std::string MembranePath(bool branch,std::size_t input,int position)
 { return "Dendrite"+std::to_string(branch?1u:input+1)+"_"+std::to_string(position); }
 void Collect(UEPtr<UContainer> node,std::vector<UEPtr<UContainer>>& nodes)
@@ -30,6 +35,8 @@ bool Inside(UContainer* node,UContainer* root)
 double SecretionBound(NPulseSynapse& synapse,double sourceAmplitude)
 {
     Require(typeid(synapse)==typeid(NPulseSynapse),"unsupported_synapse_integrator");
+    StaticParameters({&synapse.Resistance,&synapse.SecretionTC,&synapse.DissociationTC,&synapse.Weight,
+        &synapse.PulseAmplitude,&synapse.UsePulseSignal,&synapse.UsePresynapticInhibition,&synapse.InhibitionCoeff});
     Require(!synapse.WeightInput.IsConnected() && std::isfinite(synapse.Weight.GetData()) && synapse.Weight.GetData()>=0.,
         "unsupported_dynamic_or_negative_synapse_weight");
     Require(Positive(synapse.Resistance.GetData()) && Positive(synapse.PulseAmplitude.GetData()) &&
@@ -52,7 +59,7 @@ double SecretionBound(NPulseSynapse& synapse,double sourceAmplitude)
         else if(auto constant=dynamic_cast<NConstGenerator*>(owner))
         {
             Require(typeid(*constant)==typeid(NConstGenerator),"unsupported_constant_stimulus_equation");
-            sourceAmplitude=std::fabs(constant->Amplitude.GetData());
+            sourceAmplitude=std::max(0.,constant->Amplitude.GetData());
         }
         else throw std::runtime_error("unsupported_analog_stimulus_source");
     }
@@ -63,13 +70,13 @@ double SecretionBound(NPulseSynapse& synapse,double sourceAmplitude)
         const double contraction=std::max(std::fabs(1.-alpha),std::fabs(1.-beta));
         maximum=alpha*drive/(1.-contraction);
     }
-    Require(Positive(maximum),"nonfinite_secretion_bound");
+    Require(std::isfinite(maximum) && maximum>=0.,"nonfinite_secretion_bound");
     double normalized=maximum;
     if(synapse.UsePresynapticInhibition.GetData())
     {
         const double k=synapse.InhibitionCoeff.GetData();
         Require(std::isfinite(k) && k>=0.,"invalid_presynaptic_inhibition");
-        if(k>0.)normalized=std::max(1.,(k>2.?.4:.2*k)*maximum);
+        if(k>0. && maximum>0.)normalized=std::max(1.,(k>2.?.4:.2*k)*maximum);
     }
     const double conductance=normalized/synapse.Resistance.GetData()*synapse.Weight.GetData();
     Require(std::isfinite(conductance) && conductance>=0.,"nonfinite_conductance_bound");return conductance;
@@ -287,6 +294,8 @@ NativeIntegrationAssessment AssessNativeIntegration(RDK::UEPtr<NPulseNeuron> neu
         {
             Require(typeid(*channel)==typeid(NPulseChannel),"unsupported_channel_integrator");
             auto explicitChannel=static_cast<NPulseChannel*>(channel);
+            StaticParameters({&explicitChannel->Capacity,&explicitChannel->Resistance,&explicitChannel->RestingResistance,
+                &explicitChannel->FBResistance,&channel->UseAverageSynapsis});
             double conductance=0.;
             for(std::size_t k=0;k<channel->SynapticInputs->size();++k)
             {
