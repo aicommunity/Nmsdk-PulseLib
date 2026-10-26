@@ -64,7 +64,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
     try
     {
         Require(b.owner && b.neuron && b.dataset && b.inputCount>0,"missing_native_probe_graph");
-        physical=b;
+        physical.emplace(b); // UEPtr is a native weak handle, not const-assignable.
         Require(!b.unsafeIntegration,"native_integration_preflight_failed");
         Require(!b.legacyPhysicsPending,"pending_legacy_physics_edit");
         Require(!b.postTuneActive,"concurrent_native_posttune");
@@ -84,7 +84,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         for(auto ancestor=b.owner->GetOwner();ancestor;ancestor=ancestor->GetOwner())
             Require(double(ancestor->GetTimeStep())==frequency,"unsupported_native_multirate");
         std::vector<UEPtr<UContainer>> nodes;std::set<UContainer*> seen;
-        Collect(b.neuron,nodes,seen);Collect(b.dataset,nodes,seen);
+        Collect(b.neuron.Get(),nodes,seen);Collect(b.dataset.Get(),nodes,seen);
         for(const auto& node:nodes)
             Require(node->IsReady() && node->IsInit() && double(node->GetTimeStep())==frequency,
                 "unready_or_multirate_native_graph");
