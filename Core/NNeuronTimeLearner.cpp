@@ -4104,6 +4104,7 @@ bool NNeuronTimeLearner::AReset(void)
  {
   CapApplyPending=false;CountIteration=0;IterationActive=false;
   HasPrevIteration=false;HasPrevPeakSnapshot=false;IsFirstBeat=true;
+  TrainingPhase.SetDataDirect(kPhaseSync);
   return true;
  }
  TipResistanceFrozenAfterSync.SetDataDirect(false);

@@ -150,7 +150,7 @@ void NativeTrainingService::AfterTick(const NativeTrainingAdapter& a,double mode
             referenceEvidence.push_back({*result->prepared,*result->observation});
             if(referenceEvidence.size()==plan.protocol.inputs.size())
             {
-                references=CapturedReferences::Capture(plan.protocol,referenceEvidence);
+                references.emplace(CapturedReferences::Capture(plan.protocol,referenceEvidence));
                 referenceBinding=plan.search.initialModelRevision;BeginSearch(a);
             }
         }
