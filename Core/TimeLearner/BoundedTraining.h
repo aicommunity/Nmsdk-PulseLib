@@ -41,6 +41,7 @@ struct CandidateEvidence {
     InputParameters parameters;
     std::string modelRevision,trialId,anchorTrialId;
     double timingResidualLow=0.,timingResidualHigh=0.,amplitudeResidual=0.;
+    double parameterChangeCost=0.;
     bool withinTiming=false,withinAmplitude=false;
 };
 struct TrainingRejection { std::string trialId,reason; };
@@ -98,6 +99,7 @@ private:
     void BeginVerification();
     void FinishVerification();
     bool Legal(const std::vector<InputParameters>& parameters) const;
+    bool PrepareCandidate(std::vector<InputParameters>& parameters) const;
     bool NextCandidate(std::vector<InputParameters>& parameters);
     void Reject(const std::string& reason);
     void Stop(TrainingStatus terminal);
