@@ -193,6 +193,12 @@ void FinalVerificationSession::Arm(const PreparedVerificationProbe& prepared)
 void FinalVerificationSession::Consume(const ProbeObservation& observation,const std::string& currentBaseRevision)
 {
     if(status!=VerificationStatus::Collecting)return;
+    if(currentBaseRevision.empty())
+    {
+        const auto trial=pending?pending->trialId:std::string{};
+        Invalidate(config.currentModelRevision);rejected.push_back({trial,"missing_current_model_revision"});
+        status=VerificationStatus::InvalidObservation;return;
+    }
     if(currentBaseRevision!=config.currentModelRevision)
     {Invalidate(currentBaseRevision);return;}
     if(std::find(observation.reasons.begin(),observation.reasons.end(),"model_revision_changed")!=observation.reasons.end())
