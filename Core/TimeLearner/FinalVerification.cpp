@@ -174,6 +174,14 @@ CapturedReferences CapturedReferences::Capture(VerificationProtocol p,const std:
     return result;
 }
 
+ValidatedProbeMeasurement ValidateProbeMeasurement(const VerificationProtocol& protocol,
+    std::size_t inputIndex,const PreparedVerificationProbe& prepared,const ProbeObservation& observation)
+{
+    ProtocolValid(protocol);
+    const auto measured=CheckedMeasurement(protocol,inputIndex,prepared,observation);
+    return {measured.raw,measured.arrival,measured.plateauEnd};
+}
+
 bool TrainingCertificate::Matches(const std::string& currentModel,const CapturedReferences& currentReferences,
                                   const VerificationTolerances& currentTolerances,ModelStateKind kind,std::size_t currentEpoch) const
 {

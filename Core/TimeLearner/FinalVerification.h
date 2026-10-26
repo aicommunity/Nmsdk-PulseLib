@@ -37,6 +37,11 @@ struct ReferenceEvidence {
     PreparedVerificationProbe prepared;
     ProbeObservation observation;
 };
+// Shared production validation for search and final verification. Arrival is
+// relative to the actual protocol origin, not a predicted cable delay.
+struct ValidatedProbeMeasurement { double rawPotential,arrival,plateauEnd; };
+ValidatedProbeMeasurement ValidateProbeMeasurement(const VerificationProtocol& protocol,
+    std::size_t inputIndex,const PreparedVerificationProbe& prepared,const ProbeObservation& observation);
 struct CapturedInputReference {
     std::string id, runId, trialId, effectiveModelRevision;
     double rawPotential=0.;
