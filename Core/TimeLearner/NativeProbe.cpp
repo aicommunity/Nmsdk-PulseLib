@@ -1,6 +1,8 @@
 #include "NativeProbe.h"
 #include "NumericChecks.h"
 #include "NativeModelEditor.h"
+#include "ModelIdentity.h"
+#include <QJsonArray>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -103,9 +105,15 @@ void NativeProbeExecutor::CheckPattern(const NativeProbeBindings& b) const
         b.dataset->Iteration.GetData()==0 && b.dataset->MaxSpikesPerFeature.GetData()==b.inputCount &&
         b.dataset->MatrixData.GetRows()==b.inputCount && b.dataset->MatrixData.GetCols()==1 &&
         request.expectedInputIsi.size()==std::size_t(b.inputCount),"unsupported_native_dataset_shape");
+    QJsonArray actual;
     for(int i=0;i<b.inputCount;++i)
+    {
         Require(Detail::Finite(request.expectedInputIsi[i]) && request.expectedInputIsi[i]>=0. &&
             b.dataset->MatrixData(i,0)==request.expectedInputIsi[i],"native_pattern_changed");
+        actual.append(b.dataset->MatrixData(i,0));
+    }
+    Require(NmsdkTools::CanonicalModelDataSha256(actual).toStdString()==request.specification.patternHash,
+        "native_pattern_hash_mismatch");
 }
 
 void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double time)
@@ -325,6 +333,8 @@ void NativeProbeExecutor::Restore()
 void NativeProbeExecutor::Finish(double time,const std::string& reason,NativeProbeStatus status)
 {
     NativeProbeResult completed;completed.status=status;completed.prepared=prepared;
+    completed.requestedSpecification=request.specification;
+    if(status!=NativeProbeStatus::Completed)completed.reasons.push_back(reason);
     try
     {
         if(recorder)completed.observation=recorder->Close(time,CanReadModel()?request.readModelRevision():"",reason);
@@ -335,11 +345,12 @@ void NativeProbeExecutor::Finish(double time,const std::string& reason,NativePro
         Restore();
         if(CanReadModel() && request.readModelRevision)
             completed.currentBaseRevision=request.readModelRevision();
-        if(completed.currentBaseRevision!=request.baseModelRevision)
+        if(completed.currentBaseRevision.empty())
+        {completed.reasons.push_back("native_base_revision_unavailable");completed.status=NativeProbeStatus::Rejected;}
+        else if(completed.currentBaseRevision!=request.baseModelRevision)
         {completed.reasons.push_back("native_base_revision_changed");completed.status=NativeProbeStatus::Rejected;}
     }
     catch(const std::exception& error){completed.reasons.push_back(error.what());completed.status=NativeProbeStatus::Rejected;}
-    if(status!=NativeProbeStatus::Completed)completed.reasons.push_back(reason);
     completed.requiresFreshVerification=completed.status!=NativeProbeStatus::Completed ||
         (completed.observation && std::find(completed.observation->reasons.begin(),completed.observation->reasons.end(),
             "model_revision_changed")!=completed.observation->reasons.end());

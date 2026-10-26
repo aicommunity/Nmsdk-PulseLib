@@ -25,6 +25,43 @@ auto Rank(const CandidateEvidence& e,const BoundedTrainingConfig& cfg,const Capt
         normalized(amplitude,AmplitudeTolerance(cfg,reference));
     return std::tuple{!e.withinTiming,!e.withinAmplitude,residual,e.parameterChangeCost};
 }
+bool ParametersLegal(const VerificationProtocol& protocol,const BoundedTrainingConfig& config,
+                     const std::vector<InputParameters>& parameters)
+{
+    if(parameters.size()!=config.bounds.size())return false;
+    for(std::size_t i=0;i<parameters.size();++i)
+    {
+        const auto& p=parameters[i];const auto& b=config.bounds[i];
+        if(p.length<b.minimumLength || p.length>b.maximumLength || p.synapses<b.minimumSynapses ||
+            p.synapses>b.maximumSynapses || !Finite(p.resistance) || p.resistance<b.minimumResistance ||
+            p.resistance>b.maximumResistance || (config.normalization==Normalization::TipResistance && p.synapses!=1))return false;
+        if(protocol.routing==ProbeRouting::BranchSoloBurst && i && parameters[i-1].length<p.length)return false;
+        if(protocol.routing==ProbeRouting::BranchSoloBurst && i && parameters[i-1].length==p.length &&
+            (parameters[i-1].synapses!=p.synapses || parameters[i-1].resistance!=p.resistance))return false;
+    }
+    return true;
+}
+}
+
+void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const BoundedTrainingConfig& config,
+                                   const std::vector<InputParameters>& initial)
+{
+    ValidateVerificationProtocol(protocol);
+    if(config.runId.empty() || config.initialModelRevision.empty() || !config.maximumProbes || !config.maximumEdits ||
+        !config.maximumCandidatesPerInput || !config.maximumSweeps || config.resistanceSubdivisionDepth>20 ||
+        (config.normalization!=Normalization::SynapseCount && config.normalization!=Normalization::TipResistance) ||
+        protocol.schemaVersion!=3 || config.bounds.size()!=protocol.inputs.size() || initial.size()!=protocol.inputs.size() || initial.empty())
+        throw std::invalid_argument("invalid_bounded_training_configuration");
+    if(!Finite(config.tolerances.amplitudeAbsolute) || config.tolerances.amplitudeAbsolute<0. ||
+        !Finite(config.tolerances.amplitudeRelative) || config.tolerances.amplitudeRelative<0. ||
+        !Finite(config.tolerances.sync) || config.tolerances.sync<0.)
+        throw std::invalid_argument("invalid_verification_configuration");
+    for(const auto& b:config.bounds)
+        if(b.minimumLength<1 || b.maximumLength<b.minimumLength || b.minimumSynapses<1 ||
+            b.maximumSynapses>128 || b.maximumSynapses<b.minimumSynapses ||
+            !Finite(b.minimumResistance) || !Finite(b.maximumResistance) || b.minimumResistance<=0. || b.maximumResistance<b.minimumResistance)
+            throw std::invalid_argument("invalid_per_input_search_bounds");
+    if(!ParametersLegal(protocol,config,initial))throw std::invalid_argument("initial_parameters_outside_search_domain");
 }
 
 BoundedTrainingSession::BoundedTrainingSession(CapturedReferences refs,BoundedTrainingConfig cfg,
@@ -32,22 +69,15 @@ BoundedTrainingSession::BoundedTrainingSession(CapturedReferences refs,BoundedTr
     :references(std::move(refs)),config(std::move(cfg)),current(std::move(initial)),
      epoch(config.initialModelEpoch),revision(config.initialModelRevision)
 {
-    if(config.runId.empty() || revision.empty() || !config.maximumProbes || !config.maximumEdits ||
-        !config.maximumCandidatesPerInput || !config.maximumSweeps || config.resistanceSubdivisionDepth>20 ||
-        (config.normalization!=Normalization::SynapseCount && config.normalization!=Normalization::TipResistance) ||
-        references.Protocol().schemaVersion!=3 || config.bounds.size()!=references.Inputs().size() ||
-        current.size()!=references.Inputs().size() || current.empty())
+    ValidateBoundedTrainingInputs(references.Protocol(),config,current);
+    if(current.size()!=references.Inputs().size())
         throw std::invalid_argument("invalid_bounded_training_configuration");
     // Use the exact same protocol/tolerance checks as the final gate.
     FinalVerificationSession validate(references,{config.runId,revision,config.maximumProbes,
         config.maximumInvalidObservations,epoch,config.tolerances});
     for(std::size_t i=0;i<config.bounds.size();++i)
     {
-        const auto& b=config.bounds[i];
-        if(b.minimumLength<1 || b.maximumLength<b.minimumLength || b.minimumSynapses<1 ||
-            b.maximumSynapses>128 || b.maximumSynapses<b.minimumSynapses ||
-            !Finite(b.minimumResistance) || !Finite(b.maximumResistance) || b.minimumResistance<=0. ||
-            b.maximumResistance<b.minimumResistance || !Finite(AmplitudeTolerance(config,references.Inputs()[i])))
+        if(!Finite(AmplitudeTolerance(config,references.Inputs()[i])))
             throw std::invalid_argument("invalid_per_input_search_bounds");
     }
     if(!Legal(current))throw std::invalid_argument("initial_parameters_outside_search_domain");
@@ -59,23 +89,7 @@ BoundedTrainingSession::BoundedTrainingSession(CapturedReferences refs,BoundedTr
 
 bool BoundedTrainingSession::Legal(const std::vector<InputParameters>& parameters) const
 {
-    if(parameters.size()!=config.bounds.size())return false;
-    for(std::size_t i=0;i<parameters.size();++i)
-    {
-        const auto& p=parameters[i];const auto& b=config.bounds[i];
-        if(p.length<b.minimumLength || p.length>b.maximumLength || p.synapses<b.minimumSynapses ||
-            p.synapses>b.maximumSynapses || !Finite(p.resistance) || p.resistance<b.minimumResistance ||
-            p.resistance>b.maximumResistance || (config.normalization==Normalization::TipResistance && p.synapses!=1))
-            return false;
-        if(references.Protocol().routing==ProbeRouting::BranchSoloBurst && i && parameters[i-1].length<p.length)
-            return false;
-        // Native Branch has one excitation bank per attachment, not per label.
-        // A nominally local edit must not silently change the fixed anchor.
-        if(references.Protocol().routing==ProbeRouting::BranchSoloBurst && i && parameters[i-1].length==p.length &&
-            (parameters[i-1].synapses!=p.synapses || parameters[i-1].resistance!=p.resistance))
-            return false;
-    }
-    return true;
+    return ParametersLegal(references.Protocol(),config,parameters);
 }
 
 bool BoundedTrainingSession::PrepareCandidate(std::vector<InputParameters>& parameters) const

@@ -45,6 +45,10 @@ struct CandidateEvidence {
     bool withinTiming=false,withinAmplitude=false;
 };
 struct TrainingRejection { std::string trialId,reason; };
+// Shared preflight before paying for reference measurements. Uses the same
+// bounds/physical-bank legality and tolerances as the actual decision session.
+void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const BoundedTrainingConfig& configuration,
+                                   const std::vector<InputParameters>& initial);
 
 // Common decision controller. Adapters alone apply edits/read back the graph,
 // prepare native probes and schedule children. No Rdk calls or physical reset

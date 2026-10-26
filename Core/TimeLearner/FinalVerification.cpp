@@ -181,6 +181,8 @@ ValidatedProbeMeasurement ValidateProbeMeasurement(const VerificationProtocol& p
     const auto measured=CheckedMeasurement(protocol,inputIndex,prepared,observation);
     return {measured.raw,measured.arrival,measured.plateauEnd};
 }
+void ValidateVerificationProtocol(const VerificationProtocol& protocol)
+{ProtocolValid(protocol);}
 
 bool TrainingCertificate::Matches(const std::string& currentModel,const CapturedReferences& currentReferences,
                                   const VerificationTolerances& currentTolerances,ModelStateKind kind,std::size_t currentEpoch) const
