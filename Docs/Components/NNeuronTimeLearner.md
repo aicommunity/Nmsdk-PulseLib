@@ -5,6 +5,13 @@
 
 ## NNeuronTimeLearner — обучение временному паттерну
 
+**Уточнение lifecycle 2026-10-26:** при live Build новый Neuron теперь проходит
+native Init в конце BuildStructure. Ранее правильные связи и Ready=true могли
+сочетаться с Init=false и нулевой динамикой после cold Reset. Это исправление
+не меняет математическую цель. Частота корневой модели 20000 сама по себе не
+доказывает частоту новых legacy-элементов; uniform-rate/growth остаётся отдельной
+проверкой. [Причина, контракт и область проверки](../Analysis/TimeLearnerLiveRebuildInit.ru.md).
+
 **Класс**: `NNeuronTimeLearner` — контейнер (`UNet`) с внутренним `NPulseNeuron` и дочерним `NDatasetMatrix`.
 **Регистрация**: `NPulseLibrary.cpp` → `UploadClass("NNeuronTimeLearner", ...)`.
 **База кода**: копия/адаптация [`NNeuronLearner`](NNeuronLearner.md).
