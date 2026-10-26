@@ -133,7 +133,8 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         Require(!b.postTuneActive,"concurrent_native_posttune");
         Require(Detail::Finite(time),"invalid_native_time");
         Require(bool(request.readModelRevision) && !request.baseModelRevision.empty(),"missing_native_revision_provider");
-        Require(request.specification.schemaVersion==2 && request.specification.begin==0. && request.specification.baseline.empty() &&
+        Require((request.specification.schemaVersion==2 || request.specification.schemaVersion==3) &&
+            request.specification.begin==0. && request.specification.baseline.empty() &&
             request.specification.modelRevision.empty() && !request.specification.recordSpikes,
             "unsupported_native_probe_specification");
         Require(b.branch==(request.routing==ProbeRouting::BranchSoloBurst),"native_routing_mismatch");

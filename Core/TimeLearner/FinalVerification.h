@@ -17,6 +17,7 @@ struct VerificationProtocol {
     std::vector<std::string> stimulusIds;
     double maximumSampleGap=0., minimumAmplitude=1e-6;
     std::optional<StimulusProfile> stimulusProfile;
+    WaveAssignmentPolicy waveAssignment=WaveAssignmentPolicy::WindowOnly;
     bool operator==(const VerificationProtocol&) const=default;
 };
 // Adapter-produced declaration after native routing/reset at a legal boundary.

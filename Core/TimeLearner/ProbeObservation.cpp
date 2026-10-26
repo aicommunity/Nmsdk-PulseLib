@@ -18,9 +18,11 @@ bool ValidStimulusProfile(const StimulusProfile& p)
 
 ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specification))
 {
-    if((spec.schemaVersion!=1 && spec.schemaVersion!=2) ||
+    if((spec.schemaVersion!=1 && spec.schemaVersion!=2 && spec.schemaVersion!=3) ||
        (spec.schemaVersion==1 && spec.stimulusProfile) ||
-       (spec.schemaVersion==2 && (!spec.stimulusProfile || !ValidStimulusProfile(*spec.stimulusProfile))) ||
+       (spec.schemaVersion>=2 && (!spec.stimulusProfile || !ValidStimulusProfile(*spec.stimulusProfile))) ||
+       (spec.schemaVersion<3 && spec.waveAssignment!=WaveAssignmentPolicy::WindowOnly) ||
+       (spec.schemaVersion==3 && spec.waveAssignment!=WaveAssignmentPolicy::OrderedWholeBurst) ||
        spec.runId.empty() || spec.trialId.empty() ||
        spec.sampleId.empty() || spec.patternHash.empty() || spec.modelRevision.empty() ||
        !Finite(spec.begin) || !Finite(spec.end) || !Finite(spec.end-spec.begin) || !After(spec.end,spec.begin) ||
@@ -137,6 +139,39 @@ PeakObservation ProbeRecorder::Measure(const PeakWindow& window,bool complete) c
     return result;
 }
 
+BurstAssignmentObservation ProbeRecorder::AssignBurst(std::size_t channel,bool complete) const
+{
+    BurstAssignmentObservation result;result.channel=channel;
+    if(!complete)return result;
+    std::vector<const Frame*> samples;
+    for(const auto& frame:frames)
+        if(!After(spec.begin,frame.time) && !After(frame.time,spec.end))samples.push_back(&frame);
+    if(samples.size()<3)return result;
+    const auto value=[&](std::size_t i){return samples[i]->potentials[channel]-spec.baseline[channel];};
+    for(std::size_t i=1;i+1<samples.size();)
+    {
+        std::size_t last=i;
+        while(last+1<samples.size() && value(last+1)==value(i))++last;
+        if(last+1<samples.size() && value(i)>=spec.minimumAmplitude &&
+            value(i)>value(i-1) && value(last)>value(last+1))
+            result.waves.push_back({"",value(i),samples[i]->potentials[channel],samples[i]->time,samples[last]->time});
+        i=last+1;
+    }
+    if((value(0)>=spec.minimumAmplitude && value(0)>=value(1)) ||
+       (value(samples.size()-1)>=spec.minimumAmplitude && value(samples.size()-1)>=value(samples.size()-2)))
+    {result.validity=PeakValidity::Clipped;return result;}
+    if(result.waves.size()!=spec.expectedStimulusIds.size())
+    {result.validity=result.waves.size()<spec.expectedStimulusIds.size()?PeakValidity::Missing:PeakValidity::Ambiguous;return result;}
+    if(stimuli.size()!=spec.expectedStimulusIds.size())return result;
+    for(std::size_t i=0;i<stimuli.size();++i)
+        if(stimuli[i].id!=spec.expectedStimulusIds[i] || (i && stimuli[i].time<=stimuli[i-1].time) ||
+            After(stimuli[i].time,result.waves[i].time))
+        {result.validity=PeakValidity::Ambiguous;return result;}
+    result.validity=PeakValidity::Valid;
+    for(std::size_t i=0;i<result.waves.size();++i)result.waves[i].stimulusId=stimuli[i].id;
+    return result;
+}
+
 ProbeObservation ProbeRecorder::Close(double time,const std::string& currentModelRevision,
                                       const std::string& endReason)
 {
@@ -151,9 +186,38 @@ ProbeObservation ProbeRecorder::Close(double time,const std::string& currentMode
     if(stimuli.size()!=spec.expectedStimulusIds.size()) Reason("missing_stimulus");
     ProbeObservation result;result.schemaVersion=spec.schemaVersion;result.specification=spec;result.complete=complete;
     result.endReason=endReason;result.sampleCount=frames.size();result.stimuli=stimuli;result.spikes=spikes;
+    if(spec.waveAssignment==WaveAssignmentPolicy::OrderedWholeBurst)
+    {
+        std::set<std::size_t> channels;
+        for(const auto& window:spec.windows)channels.insert(window.channel);
+        for(const auto channel:channels)
+        {
+            auto assignment=AssignBurst(channel,complete);
+            if(assignment.validity!=PeakValidity::Valid)
+                Reason(std::string("burst_")+PeakValidityName(assignment.validity)+":"+std::to_string(channel));
+            result.burstAssignments.push_back(std::move(assignment));
+        }
+    }
     for(const auto& window:spec.windows)
     {
         auto peak=Measure(window,complete);
+        if(spec.waveAssignment==WaveAssignmentPolicy::OrderedWholeBurst)
+        {
+            const auto& assignment=*std::find_if(result.burstAssignments.begin(),result.burstAssignments.end(),
+                [&](const auto& a){return a.channel==window.channel;});
+            if(assignment.validity!=PeakValidity::Valid)peak=PeakObservation{window.inputId,window.stimulusId,assignment.validity};
+            else if(peak.validity==PeakValidity::Valid)
+            {
+                const auto wave=std::find_if(assignment.waves.begin(),assignment.waves.end(),
+                    [&](const auto& w){return w.stimulusId==window.stimulusId;});
+                if(wave==assignment.waves.end() || peak.time!=wave->time || peak.plateauEnd!=wave->plateauEnd ||
+                   peak.rawPotential!=wave->rawPotential || peak.amplitude!=wave->amplitude)
+                {
+                    peak=PeakObservation{window.inputId,window.stimulusId,PeakValidity::Ambiguous};
+                    Reason("burst_window_assignment_mismatch:"+window.inputId);
+                }
+            }
+        }
         if(peak.validity==PeakValidity::Valid)
         {
             const auto event=std::find_if(stimuli.begin(),stimuli.end(),[&](const auto& stimulus){return stimulus.id==window.stimulusId;});

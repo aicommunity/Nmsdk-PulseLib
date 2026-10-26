@@ -15,9 +15,11 @@ struct Measurement { double raw,arrival,plateauEnd; };
 
 void ProtocolValid(const VerificationProtocol& p)
 {
-    if((p.schemaVersion!=1 && p.schemaVersion!=2) ||
+    if((p.schemaVersion!=1 && p.schemaVersion!=2 && p.schemaVersion!=3) ||
        (p.schemaVersion==1 && p.stimulusProfile) ||
-       (p.schemaVersion==2 && (!p.stimulusProfile || !ValidStimulusProfile(*p.stimulusProfile))) ||
+       (p.schemaVersion>=2 && (!p.stimulusProfile || !ValidStimulusProfile(*p.stimulusProfile))) ||
+       (p.schemaVersion<3 && p.waveAssignment!=WaveAssignmentPolicy::WindowOnly) ||
+       (p.schemaVersion==3 && p.waveAssignment!=WaveAssignmentPolicy::OrderedWholeBurst) ||
        p.revision.empty() || p.sampleId.empty() || p.patternHash.empty() ||
        p.originStimulusId.empty() || p.inputs.empty() || p.stimulusIds.size()!=p.inputs.size() ||
        !Finite(p.maximumSampleGap) || p.maximumSampleGap<=0. ||
@@ -46,7 +48,7 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
     // Reuse the production spec validator; do not infer valid data from a flag.
     ProbeRecorder specificationValidator(o.specification);
     const auto& s=o.specification;
-    if(s.schemaVersion!=p.schemaVersion || s.stimulusProfile!=p.stimulusProfile ||
+    if(s.schemaVersion!=p.schemaVersion || s.stimulusProfile!=p.stimulusProfile || s.waveAssignment!=p.waveAssignment ||
        s.modelRevision!=prepared.effectiveModelRevision || s.sampleId!=p.sampleId ||
        s.patternHash!=p.patternHash || s.minimumAmplitude!=p.minimumAmplitude ||
        After(s.maximumSampleGap,p.maximumSampleGap))fail("observation_protocol_mismatch");
@@ -64,6 +66,32 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
            After(event.time,s.end) || (previous && event.time<*previous) ||
            !events.emplace(event.id,event.time).second)fail("invalid_actual_stimuli");
         previous=event.time;
+    }
+    std::map<std::size_t,const BurstAssignmentObservation*> assignments;
+    if(p.schemaVersion<3 && !o.burstAssignments.empty())fail("unexpected_burst_assignment_evidence");
+    if(p.schemaVersion==3)
+    {
+        if(s.expectedStimulusIds!=p.stimulusIds)fail("burst_protocol_order_mismatch");
+        std::set<std::size_t> channels;
+        for(const auto& window:s.windows)channels.insert(window.channel);
+        if(channels.size()!=o.burstAssignments.size())fail("burst_assignment_channel_set_mismatch");
+        for(const auto& assignment:o.burstAssignments)
+        {
+            if(!channels.count(assignment.channel) || !assignments.emplace(assignment.channel,&assignment).second ||
+                assignment.validity!=PeakValidity::Valid || assignment.waves.size()!=p.stimulusIds.size())
+                fail("invalid_burst_assignment");
+            for(std::size_t i=0;i<assignment.waves.size();++i)
+            {
+                const auto& wave=assignment.waves[i];
+                if(wave.stimulusId!=p.stimulusIds[i] || o.stimuli[i].id!=p.stimulusIds[i] ||
+                    (i && o.stimuli[i].time<=o.stimuli[i-1].time) ||
+                    !Finite(wave.amplitude) || !Finite(wave.rawPotential) || !Finite(wave.time) || !Finite(wave.plateauEnd) ||
+                    wave.rawPotential-s.baseline.at(assignment.channel)!=wave.amplitude || wave.amplitude<p.minimumAmplitude ||
+                    wave.plateauEnd<wave.time || After(s.begin,wave.time) || After(wave.plateauEnd,s.end) ||
+                    After(o.stimuli[i].time,wave.time) || (i && wave.time<=assignment.waves[i-1].plateauEnd))
+                    fail("inconsistent_burst_assignment");
+            }
+        }
     }
     if(p.routing==ProbeRouting::BranchSoloBurst && s.windows.size()!=1)
         fail("branch_probe_is_not_one_selected_input");
@@ -86,6 +114,14 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
            !peak.rawPotential || !peak.amplitude || !peak.time || !peak.plateauEnd || !peak.delayFromStimulus ||
            !Finite(*peak.rawPotential) || !Finite(*peak.amplitude) || !Finite(*peak.time) ||
            !Finite(*peak.plateauEnd) || !Finite(*peak.delayFromStimulus))fail("invalid_measured_peak");
+        if(p.schemaVersion==3)
+        {
+            const auto index=std::find(p.stimulusIds.begin(),p.stimulusIds.end(),window.stimulusId)-p.stimulusIds.begin();
+            const auto& wave=assignments.at(window.channel)->waves.at(index);
+            if(peak.time!=wave.time || peak.plateauEnd!=wave.plateauEnd ||
+                peak.rawPotential!=wave.rawPotential || peak.amplitude!=wave.amplitude)
+                fail("peak_burst_assignment_mismatch");
+        }
         const double deviation=*peak.rawPotential-s.baseline.at(window.channel);
         const double delay=*peak.time-events.at(window.stimulusId);
         if(!Finite(deviation) || deviation!=*peak.amplitude || deviation<p.minimumAmplitude ||
