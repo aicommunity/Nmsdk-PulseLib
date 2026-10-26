@@ -87,6 +87,7 @@ Sample: `Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearner`.
 
 - [Общие legacy-политики контроллера и сохранённые ограничения](../Analysis/TimeLearnerSharedPolicies.ru.md)
 - [Новый контур final verification и границы его подключения](../Analysis/TimeLearnerFinalVerification.ru.md)
+- [Внутренний C++ исполнитель native-проб и ограничения нового пути](../Analysis/TimeLearnerNativeExecution.ru.md)
 - [`NNeuronTimeLearnerBranch`](NNeuronTimeLearnerBranch.md)
 - [`NNeuronLearner`](NNeuronLearner.md)
 - [`NDatasetMatrix`](NDatasetMatrix.md)

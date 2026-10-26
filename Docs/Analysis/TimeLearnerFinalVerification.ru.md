@@ -7,6 +7,11 @@
 production-ready. Поиск L/Ns/Rs, conversion, PostTune и калибровка здесь не
 реализованы и не имитируются успешными stub.
 
+Новый [native executor](TimeLearnerNativeExecution.ru.md) подключает отдельные
+пробы к обоим learner. Это ещё не переключение их main train loop. Для нового
+native пути schema 2 связывает references/observations с typed stimulus profile;
+schema 1 сохраняется для прежних контролируемых сигналов и не смешивается с ней.
+
 ## References и протокол
 
 CapturedReferences создаётся только из завершённых валидных ProbeObservation
