@@ -58,6 +58,9 @@ struct NativeProbeBindings {
 };
 struct NativeProbeResult {
     NativeProbeStatus status=NativeProbeStatus::Rejected;
+    // Retains trial identity/declared relative window even when cancellation
+    // occurs before preparation. An unarmed request is not a complete trial.
+    std::optional<ProbeSpec> requestedSpecification;
     std::optional<PreparedVerificationProbe> prepared;
     std::optional<ProbeObservation> observation;
     std::string currentBaseRevision;

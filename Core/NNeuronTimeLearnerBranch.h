@@ -23,6 +23,7 @@ See file license.txt for more information
 #include "NNeuronTimeLearnerStructuralAmp.h"
 #include "TimeLearner/NativeProbe.h"
 #include "TimeLearner/NativeModelEditor.h"
+#include "TimeLearner/NativeTrainingService.h"
 #include "../../../Rdk/Deploy/Include/rdk.h"
 #include <iostream>
 #include <fstream>
@@ -775,16 +776,26 @@ public: // Methods
  /// Explicit native probe ownership; released by native learner Reset/Default.
  /// Completion is an observation status, never proof that training converged.
  void QueueNativeProbe(TimeLearner::NativeProbeRequest request) {
+  if(NativeTrainingOwned && (NativeTrainingControl.State()==TimeLearner::NativeTrainingState::CapturingReferences ||
+      NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Searching))
+   throw std::logic_error("native_training_owns_probe_runner");
   if(!IsReady() || !IsInit())throw std::logic_error("native_probe_requires_initialized_ready_learner");
   if(!NativeEditFailure.empty())throw std::logic_error("native_model_requires_repair_after_failed_edit");
   NativeProbeControl.Queue(std::move(request));
  }
  bool NativeProbeOwnsControl() const { return NativeProbeControl.OwnsControl(); }
  TimeLearner::NativeProbeStatus NativeProbeState() const { return NativeProbeControl.Status(); }
- std::optional<TimeLearner::NativeProbeResult> TakeNativeProbeResult() { return NativeProbeControl.TakeResult(); }
+ std::optional<TimeLearner::NativeProbeResult> TakeNativeProbeResult() {
+  if(NativeTrainingOwned && (NativeTrainingControl.State()==TimeLearner::NativeTrainingState::CapturingReferences ||
+      NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Searching))
+   throw std::logic_error("native_training_owns_probe_result");
+  return NativeProbeControl.TakeResult();
+ }
  std::vector<TimeLearner::InputParameters> ReadNativeParameters();
  TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested);
  const std::string& NativeModelEditFailure() const { return NativeEditFailure; }
+ void BeginNativeTraining(TimeLearner::NativeTrainingPlan plan,bool recaptureReferences=false);
+ const TimeLearner::NativeTrainingService& NativeTrainingController() const { return NativeTrainingControl; }
  
  // --------------------------
  // Parameter setters
@@ -927,6 +938,9 @@ public: // Methods
 
 protected:
  TimeLearner::NativeProbeExecutor NativeProbeControl;
+ TimeLearner::NativeTrainingService NativeTrainingControl;
+ bool NativeTrainingOwned=false;
+ unsigned NativeTrainingEditDepth=0;
  std::string NativeEditFailure;
  unsigned NativeLifecycleDepth=0;
  TimeLearner::NativeProbeBindings NativeProbeModelBindings();
