@@ -49,6 +49,8 @@ public:
     const std::vector<ReferenceEvidence>& ReferenceObservations() const { return referenceEvidence; }
     const BoundedTrainingSession* Search() const { return search.get(); }
     std::size_t IssuedReferenceProbes() const { return referenceProbes; }
+    std::size_t ModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
+    const BoundedTrainingConfig& Configuration() const { return plan.search; }
 private:
     NativeTrainingState state=NativeTrainingState::Idle;
     TrainingStatus outcome=TrainingStatus::Searching;

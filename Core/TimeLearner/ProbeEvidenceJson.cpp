@@ -1,4 +1,5 @@
 #include "ProbeEvidenceJson.h"
+#include "NativeTrainingService.h"
 #include <QJsonArray>
 #include <cmath>
 #include <stdexcept>
@@ -78,5 +79,76 @@ QJsonObject EncodeNativeProbeEvidence(const NativeProbeResult& result)
             QJsonValue(Spec(*result.requestedSpecification,"relative_to_trial_start")):QJsonValue(QJsonValue::Null)},
         {"prepared",result.prepared?QJsonValue(Prepared(*result.prepared)):QJsonValue(QJsonValue::Null)},
         {"observation",result.observation?QJsonValue(Observation(*result.observation)):QJsonValue(QJsonValue::Null)}};
+}
+QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
+                                      const std::vector<InputParameters>& actualParameters)
+{
+    const auto parameters=[](const std::vector<InputParameters>& values) {
+        QJsonArray result;for(const auto& p:values)result.append(QJsonObject{
+            {"length",p.length},{"synapses",p.synapses},{"resistance",Number(p.resistance)}});return result;
+    };
+    const auto& cfg=service.Configuration();
+    QJsonObject tolerances{{"amplitude_absolute",Number(cfg.tolerances.amplitudeAbsolute)},
+        {"amplitude_relative",Number(cfg.tolerances.amplitudeRelative)},{"sync",Number(cfg.tolerances.sync)}};
+    QJsonObject result{{"kind","native_training_state_summary"},{"schema_version",1},
+        {"state",NativeTrainingStateName(service.State())},{"outcome",TrainingStatusName(service.Outcome())},
+        {"reason",Text(service.Reason())},{"model_state_kind","learned_solo"},
+        {"actual_model_revision",Text(actualModelRevision)},{"model_epoch",Count(service.ModelEpoch())},
+        {"actual_parameters",parameters(actualParameters)},{"tolerances",tolerances},
+        {"reference_probes",Count(service.IssuedReferenceProbes())},{"contains_evaluation_verdict",false}};
+    QJsonArray bounds;
+    for(const auto& b:cfg.bounds)bounds.append(QJsonObject{{"minimum_length",b.minimumLength},{"maximum_length",b.maximumLength},
+        {"minimum_synapses",b.minimumSynapses},{"maximum_synapses",b.maximumSynapses},
+        {"minimum_resistance",Number(b.minimumResistance)},{"maximum_resistance",Number(b.maximumResistance)}});
+    result["configuration"]=QJsonObject{{"run_id",Text(cfg.runId)},
+        {"normalization",cfg.normalization==Normalization::SynapseCount?"synapse_count":"tip_resistance"},
+        {"maximum_probes",Count(cfg.maximumProbes)},{"maximum_edits",Count(cfg.maximumEdits)},
+        {"maximum_candidates_per_input",Count(cfg.maximumCandidatesPerInput)},{"maximum_sweeps",Count(cfg.maximumSweeps)},
+        {"maximum_invalid_observations",Count(cfg.maximumInvalidObservations)},
+        {"resistance_subdivision_depth",int(cfg.resistanceSubdivisionDepth)},{"bounds",bounds}};
+    QJsonArray references;
+    if(service.References())
+    {
+        result["reference_model_revision"]=Text(service.References()->InitialModelRevision());
+        result["reference_model_epoch"]=Count(service.References()->InitialModelEpoch());
+        for(const auto& r:service.References()->Inputs())references.append(QJsonObject{
+            {"input_id",Text(r.id)},{"run_id",Text(r.runId)},{"trial_id",Text(r.trialId)},
+            {"effective_model_revision",Text(r.effectiveModelRevision)},{"raw_potential",Number(r.rawPotential)}});
+    }
+    result["references"]=references;
+    QJsonArray candidates,rejections;
+    if(const auto search=service.Search())
+    {
+        result["search_probes"]=Count(search->IssuedProbes());result["applied_edits"]=Count(search->AppliedEdits());
+        result["accepted_parameters"]=parameters(search->Parameters());
+        for(const auto& e:search->Evidence())candidates.append(QJsonObject{{"input_index",Count(e.inputIndex)},
+            {"model_epoch",Count(e.modelEpoch)},{"parameters",parameters({e.parameters}).at(0)},
+            {"model_revision",Text(e.modelRevision)},{"trial_id",Text(e.trialId)},{"anchor_trial_id",Text(e.anchorTrialId)},
+            {"timing_low",Number(e.timingResidualLow)},{"timing_high",Number(e.timingResidualHigh)},
+            {"amplitude_residual",Number(e.amplitudeResidual)},{"within_timing",e.withinTiming},
+            {"within_amplitude",e.withinAmplitude},{"parameter_change_cost",Number(e.parameterChangeCost)}});
+        for(const auto& r:search->Rejected())rejections.append(QJsonObject{{"trial_id",Text(r.trialId)},{"reason",Text(r.reason)}});
+    }
+    result["candidates"]=candidates;result["rejections"]=rejections;
+    result["certificate"]=QJsonValue(QJsonValue::Null);
+    result["certificate_matches_actual_model"]=false;
+    if(const auto& certificate=service.Certificate())
+    {
+        QJsonArray residuals;
+        for(const auto& r:certificate->Residuals())residuals.append(QJsonObject{{"input_id",Text(r.inputId)},
+            {"trial_id",Text(r.trialId)},{"effective_model_revision",Text(r.effectiveModelRevision)},
+            {"target_raw_potential",Number(r.targetRawPotential)},{"measured_raw_potential",Number(r.measuredRawPotential)},
+            {"amplitude_residual",Number(r.amplitudeResidual)},{"amplitude_tolerance",Number(r.amplitudeTolerance)},
+            {"timing_low",Number(r.timingResidualLow)},{"timing_high",Number(r.timingResidualHigh)},
+            {"within_timing",r.withinTiming},{"within_amplitude",r.withinAmplitude}});
+        result["certificate"]=QJsonObject{{"schema_version",int(certificate->SchemaVersion())},
+            {"exact",certificate->Exact()},{"model_revision",Text(certificate->ModelRevision())},
+            {"model_epoch",Count(certificate->ModelEpoch())},{"protocol_revision",Text(certificate->ProtocolRevision())},
+            {"reference_model_revision",Text(certificate->ReferenceModelRevision())},
+            {"reference_model_epoch",Count(certificate->ReferenceModelEpoch())},{"residuals",residuals}};
+        result["certificate_matches_actual_model"]=service.References() && certificate->Matches(actualModelRevision,
+            *service.References(),cfg.tolerances,ModelStateKind::LearnedSolo,service.ModelEpoch());
+    }
+    return result;
 }
 }
