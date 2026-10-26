@@ -508,6 +508,8 @@ See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 
+- [Actual pulse-event history](../Analysis/TimeLearnerPulseEvents.ru.md) — empty history versus an actual emission at time zero (TL-019).
+
 - [`NSource`](NSource.md) — base signal source
 - [`NPulseGeneratorTransit`](NPulseGeneratorTransit.md) — generator with transit signal
 - [`NPulseGeneratorMulti`](NPulseGeneratorMulti.md) — multi-channel generator

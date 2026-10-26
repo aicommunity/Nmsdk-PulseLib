@@ -492,6 +492,8 @@ See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 
+- [Actual pulse-event history](../Analysis/TimeLearnerPulseEvents.ru.md) — own-generator events; transit signals require separate observation.
+
 - [`NPulseGenerator`](NPulseGenerator.md) — base pulse generator
 - [`NPGenerator`](NPGenerator.md) — pulse generator
 - [`NFileGenerator`](NFileGenerator.md) — file generator

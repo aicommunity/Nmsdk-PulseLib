@@ -571,6 +571,8 @@ See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
 
+- [Actual pulse-event history](../Analysis/TimeLearnerPulseEvents.ru.md) — empty history and simultaneous emissions (TL-019).
+
 - [`NPulseGenerator`](NPulseGenerator.md) — base pulse generator
 - [`NPulseGeneratorDelay`](NPulseGeneratorDelay.md) — pulse generator with delay
 - [`NSource`](NSource.md) — base signal source
