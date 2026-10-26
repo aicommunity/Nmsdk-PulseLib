@@ -1,4 +1,5 @@
 #include "ProbeObservation.h"
+#include "NumericChecks.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -7,13 +8,8 @@
 #include <utility>
 
 namespace NMSDK::TimeLearner {
-namespace {
-bool Finite(double value) { return std::isfinite(value); }
-// Floating-point comparison slack only; not a physical/synchronization tolerance.
-double Slack(double a,double b)
-{ return 32.*std::numeric_limits<double>::epsilon()*std::max({1.,std::fabs(a),std::fabs(b)}); }
-bool After(double a,double b) { return a>b+Slack(a,b); }
-}
+using Detail::Finite;
+using Detail::After;
 
 ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specification))
 {

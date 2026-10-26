@@ -29,6 +29,10 @@ Sample: `Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearnerBranch`.
 Это механическое устранение дублирования; новый контроллер версии 2 и
 независимая свежая финальная проверка всех входов этим не реализуются.
 
+Отдельный [FinalVerificationSession](../Analysis/TimeLearnerFinalVerification.ru.md)
+реализует такую проверку как общий API, но ещё не подключён вместо legacy
+AllSynapsesNormalized/EndOfLearning. Его наличие не закрывает TL-001 в данном пути.
+
 
 ### Уточнение 2026-09-23 (9a6cee0b)
 
