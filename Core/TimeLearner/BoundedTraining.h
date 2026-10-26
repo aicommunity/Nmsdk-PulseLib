@@ -7,6 +7,8 @@ enum class Normalization { SynapseCount, TipResistance };
 enum class TrainingStatus { Searching, Verifying, Exact, SearchUnresolved, BudgetExhausted,
     InvalidModel, InvalidObservation, ExternalStop };
 struct InputParameters {
+    // Effective physical bank values. Coincident Branch attachments share a
+    // bank: their Ns/Rs must agree. Legacy requested counts are not readback.
     int length=1,synapses=1;
     double resistance=0.;
     bool operator==(const InputParameters&) const=default;

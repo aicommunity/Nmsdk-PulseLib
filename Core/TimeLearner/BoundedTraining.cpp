@@ -73,6 +73,11 @@ bool BoundedTrainingSession::Legal(const std::vector<InputParameters>& parameter
             return false;
         if(references.Protocol().routing==ProbeRouting::BranchSoloBurst && i && parameters[i-1].length<p.length)
             return false;
+        // Native Branch has one excitation bank per attachment, not per label.
+        // A nominally local edit must not silently change the fixed anchor.
+        if(references.Protocol().routing==ProbeRouting::BranchSoloBurst && i && parameters[i-1].length==p.length &&
+            (parameters[i-1].synapses!=p.synapses || parameters[i-1].resistance!=p.resistance))
+            return false;
     }
     return true;
 }
