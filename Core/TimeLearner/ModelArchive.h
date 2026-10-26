@@ -3,6 +3,11 @@
 #include <stdexcept>
 
 namespace NmsdkTools {
+// Same-storage native Save/Load construction for a speculative boundary edit.
+// Preserves the physical graph/ports and initializes fresh dynamics. This is
+// neither Alloc/Copy nor a dynamic checkpoint or a training-result certificate.
+RDK_LIB_TYPE RDK::UEPtr<RDK::UContainer> ClonePhysicalGraphForEdit(
+    RDK::UEPtr<RDK::UContainer> model,const ModelBoundarySources& boundarySources = {});
 class RDK_LIB_TYPE ModelArchiveError : public std::runtime_error
 {
 public:

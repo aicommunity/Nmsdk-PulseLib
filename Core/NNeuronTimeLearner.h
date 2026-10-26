@@ -22,6 +22,7 @@ See file license.txt for more information
 #include "NNeuronPostTrainTune.h"
 #include "NNeuronTimeLearnerStructuralAmp.h"
 #include "TimeLearner/NativeProbe.h"
+#include "TimeLearner/NativeModelEditor.h"
 #include "../../../Rdk/Deploy/Include/rdk.h"
 #include <iostream>
 #include <fstream>
@@ -748,11 +749,15 @@ public: // Methods
  /// control between probes. A native learner Reset/Default releases ownership.
  void QueueNativeProbe(TimeLearner::NativeProbeRequest request) {
   if(!IsReady() || !IsInit())throw std::logic_error("native_probe_requires_initialized_ready_learner");
+  if(!NativeEditFailure.empty())throw std::logic_error("native_model_requires_repair_after_failed_edit");
   NativeProbeControl.Queue(std::move(request));
  }
  bool NativeProbeOwnsControl() const { return NativeProbeControl.OwnsControl(); }
  TimeLearner::NativeProbeStatus NativeProbeState() const { return NativeProbeControl.Status(); }
  std::optional<TimeLearner::NativeProbeResult> TakeNativeProbeResult() { return NativeProbeControl.TakeResult(); }
+ std::vector<TimeLearner::InputParameters> ReadNativeParameters();
+ TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested);
+ const std::string& NativeModelEditFailure() const { return NativeEditFailure; }
  
  // --------------------------
  // Parameter setters
@@ -895,6 +900,7 @@ public: // Methods
 
 protected:
  TimeLearner::NativeProbeExecutor NativeProbeControl;
+ std::string NativeEditFailure;
  unsigned NativeLifecycleDepth=0;
  TimeLearner::NativeProbeBindings NativeProbeModelBindings();
  virtual bool ABeforeDefault(void) override;

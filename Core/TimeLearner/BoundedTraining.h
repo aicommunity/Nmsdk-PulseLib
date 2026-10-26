@@ -56,6 +56,7 @@ public:
     std::optional<TrainingAction> NextAction();
     void Applied(std::size_t actionSerial,const std::vector<InputParameters>& effective,
                  const std::string& actualModelRevision);
+    void DeclineEdit(std::size_t actionSerial,const std::string& reason,const std::string& unchangedModelRevision);
     void Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared);
     void Consume(const ProbeObservation& observation,const std::string& actualModelRevision);
     void ExternalStop();

@@ -231,6 +231,17 @@ void BoundedTrainingSession::Reject(const std::string& reason)
     if(invalid++>=config.maximumInvalidObservations)Stop(TrainingStatus::InvalidObservation);
 }
 
+void BoundedTrainingSession::DeclineEdit(std::size_t actionSerial,const std::string& reason,const std::string& unchangedModelRevision)
+{
+    if(status!=TrainingStatus::Searching)return;
+    if(!pending || pending->kind!=TrainingActionKind::Edit || pending->serial!=actionSerial || reason.empty())
+        throw std::logic_error("unrequested_training_edit_rejection");
+    rejected.push_back({{},"edit_rejected:"+reason});
+    if(unchangedModelRevision!=revision || unchangedModelRevision.empty() || restoringBest)
+    {Stop(TrainingStatus::InvalidModel);return;}
+    pending.reset();armed.reset();anchor.reset();anchorTrial.clear();phase=Phase::Candidate;
+}
+
 void BoundedTrainingSession::Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared)
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
