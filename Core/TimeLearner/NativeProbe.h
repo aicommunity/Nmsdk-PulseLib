@@ -75,6 +75,10 @@ public:
     bool OwnsControl() const { return state!=NativeProbeStatus::Idle; }
     NativeProbeStatus Status() const { return state; }
     int ActiveInput() const { return request.activeInput; }
+    bool AtEditBoundary() const {
+        return OwnsControl() && state!=NativeProbeStatus::Queued && state!=NativeProbeStatus::Running &&
+            !result && !physical && savedInputs.empty();
+    }
     void BeforeChildren(const NativeProbeBindings& bindings,double time);
     void AfterChildren(const NativeProbeBindings& bindings,double time);
     void Cancel(const std::string& reason);

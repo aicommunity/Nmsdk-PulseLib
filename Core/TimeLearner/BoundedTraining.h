@@ -41,6 +41,7 @@ struct CandidateEvidence {
     InputParameters parameters;
     std::string modelRevision,trialId,anchorTrialId;
     double timingResidualLow=0.,timingResidualHigh=0.,amplitudeResidual=0.;
+    double parameterChangeCost=0.;
     bool withinTiming=false,withinAmplitude=false;
 };
 struct TrainingRejection { std::string trialId,reason; };
@@ -56,6 +57,7 @@ public:
     std::optional<TrainingAction> NextAction();
     void Applied(std::size_t actionSerial,const std::vector<InputParameters>& effective,
                  const std::string& actualModelRevision);
+    void DeclineEdit(std::size_t actionSerial,const std::string& reason,const std::string& unchangedModelRevision);
     void Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared);
     void Consume(const ProbeObservation& observation,const std::string& actualModelRevision);
     void ExternalStop();
@@ -97,6 +99,7 @@ private:
     void BeginVerification();
     void FinishVerification();
     bool Legal(const std::vector<InputParameters>& parameters) const;
+    bool PrepareCandidate(std::vector<InputParameters>& parameters) const;
     bool NextCandidate(std::vector<InputParameters>& parameters);
     void Reject(const std::string& reason);
     void Stop(TrainingStatus terminal);

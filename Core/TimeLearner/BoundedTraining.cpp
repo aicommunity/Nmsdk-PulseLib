@@ -13,8 +13,7 @@ template<class T> void UniquePush(std::vector<T>& values,T value)
 { if(std::find(values.begin(),values.end(),value)==values.end())values.push_back(value); }
 double AmplitudeTolerance(const BoundedTrainingConfig& config,const CapturedInputReference& reference)
 { return config.tolerances.amplitudeAbsolute+config.tolerances.amplitudeRelative*std::fabs(reference.rawPotential); }
-auto Rank(const CandidateEvidence& e,const BoundedTrainingConfig& cfg,const CapturedInputReference& reference,
-          const InputParameters& initial)
+auto Rank(const CandidateEvidence& e,const BoundedTrainingConfig& cfg,const CapturedInputReference& reference)
 {
     const double time=std::max(std::fabs(e.timingResidualLow),std::fabs(e.timingResidualHigh));
     const double amplitude=std::fabs(e.amplitudeResidual);
@@ -24,10 +23,7 @@ auto Rank(const CandidateEvidence& e,const BoundedTrainingConfig& cfg,const Capt
     };
     const double residual=normalized(time,cfg.tolerances.sync)+
         normalized(amplitude,AmplitudeTolerance(cfg,reference));
-    const double cost=std::fabs(double(e.parameters.length)-initial.length)+
-        std::fabs(double(e.parameters.synapses)-initial.synapses)+
-        std::fabs(std::log(e.parameters.resistance)-std::log(initial.resistance));
-    return std::tuple{!e.withinTiming,!e.withinAmplitude,residual,cost};
+    return std::tuple{!e.withinTiming,!e.withinAmplitude,residual,e.parameterChangeCost};
 }
 }
 
@@ -80,6 +76,29 @@ bool BoundedTrainingSession::Legal(const std::vector<InputParameters>& parameter
             return false;
     }
     return true;
+}
+
+bool BoundedTrainingSession::PrepareCandidate(std::vector<InputParameters>& parameters) const
+{
+    if(references.Protocol().routing==ProbeRouting::BranchSoloBurst)
+    {
+        // In reverse order these earlier inputs are not yet visited in this
+        // sweep. Cold all-L=1 graphs otherwise cannot grow input N-2 at all.
+        // Propagate explicit positions, never silently alter their Ns/Rs or
+        // the already visited inputs (including the fixed last anchor).
+        for(std::size_t k=order.at(position);k>0;--k)
+        {
+            const auto& next=parameters[k];auto& previous=parameters[k-1];
+            int minimum=next.length;
+            if(previous.synapses!=next.synapses || previous.resistance!=next.resistance)
+            {
+                if(minimum==std::numeric_limits<int>::max())return false;
+                ++minimum;
+            }
+            previous.length=std::max(previous.length,minimum);
+        }
+    }
+    return Legal(parameters);
 }
 
 void BoundedTrainingSession::BeginInput()
@@ -135,7 +154,7 @@ bool BoundedTrainingSession::NextCandidate(std::vector<InputParameters>& paramet
         parameters=background;parameters[index].length=lengths[lengthIndex++];
         if(config.normalization==Normalization::SynapseCount)parameters[index].synapses=counts[normalizerIndex];
         else parameters[index].resistance=resistances[normalizerIndex];
-        if(Legal(parameters))return true;
+        if(PrepareCandidate(parameters))return true;
     }
     return false;
 }
@@ -182,6 +201,8 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
         {
             if(!best){Stop(TrainingStatus::SearchUnresolved);return {};}
             candidate=background;candidate[order.at(position)]=best->parameters;restoringBest=true;
+            if(!PrepareCandidate(candidate))
+            {rejected.push_back({{},"best_candidate_no_longer_legal"});Stop(TrainingStatus::InvalidModel);return {};}
         }
         else ++candidates;
         phase=Phase::Anchor;anchor.reset();anchorTrial.clear();
@@ -231,6 +252,17 @@ void BoundedTrainingSession::Reject(const std::string& reason)
     if(invalid++>=config.maximumInvalidObservations)Stop(TrainingStatus::InvalidObservation);
 }
 
+void BoundedTrainingSession::DeclineEdit(std::size_t actionSerial,const std::string& reason,const std::string& unchangedModelRevision)
+{
+    if(status!=TrainingStatus::Searching)return;
+    if(!pending || pending->kind!=TrainingActionKind::Edit || pending->serial!=actionSerial || reason.empty())
+        throw std::logic_error("unrequested_training_edit_rejection");
+    rejected.push_back({{},"edit_rejected:"+reason});
+    if(unchangedModelRevision!=revision || unchangedModelRevision.empty() || restoringBest)
+    {Stop(TrainingStatus::InvalidModel);return;}
+    pending.reset();armed.reset();anchor.reset();anchorTrial.clear();phase=Phase::Candidate;
+}
+
 void BoundedTrainingSession::Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared)
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
@@ -277,12 +309,16 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
     e.timingResidualLow=measurement.arrival-anchor->plateauEnd;
     e.timingResidualHigh=measurement.plateauEnd-anchor->arrival;
     e.amplitudeResidual=measurement.rawPotential-reference.rawPotential;
+    for(std::size_t i=0;i<current.size();++i)
+        e.parameterChangeCost+=std::fabs(double(current[i].length)-background[i].length)+
+            std::fabs(double(current[i].synapses)-background[i].synapses)+
+            std::fabs(std::log(current[i].resistance)-std::log(background[i].resistance));
     if(!Finite(e.timingResidualLow) || !Finite(e.timingResidualHigh) || !Finite(e.amplitudeResidual))
     {Reject("nonfinite_training_residual");return;}
     e.withinTiming=std::max(std::fabs(e.timingResidualLow),std::fabs(e.timingResidualHigh))<=config.tolerances.sync;
     e.withinAmplitude=std::fabs(e.amplitudeResidual)<=AmplitudeTolerance(config,reference);
     evidence.push_back(e);
-    if(!best || Rank(e,config,reference,background[index])<Rank(*best,config,reference,background[index]))best=e;
+    if(!best || Rank(e,config,reference)<Rank(*best,config,reference))best=e;
     if(restoringBest || (e.withinTiming && e.withinAmplitude))AdvanceInput();
     else {phase=Phase::Candidate;anchor.reset();anchorTrial.clear();}
 }
