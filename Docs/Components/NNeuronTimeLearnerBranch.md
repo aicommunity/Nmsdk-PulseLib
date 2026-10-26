@@ -33,6 +33,10 @@ Sample: `Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearnerBranch`.
 реализует такую проверку как общий API, но ещё не подключён вместо legacy
 AllSynapsesNormalized/EndOfLearning. Его наличие не закрывает TL-001 в данном пути.
 
+Для обоих классов добавлен внутренний [API native-проб](../Analysis/TimeLearnerNativeExecution.ru.md),
+включая временный Branch solo routing и lifecycle validation. Он ещё не
+переключает legacy Train на новый bounded search или ControllerVersion=2.
+
 
 ### Уточнение 2026-09-23 (9a6cee0b)
 

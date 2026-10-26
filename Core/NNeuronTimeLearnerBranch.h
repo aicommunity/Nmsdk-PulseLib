@@ -21,6 +21,7 @@ See file license.txt for more information
 #include "NPulseNeuron.h"
 #include "NNeuronPostTrainTune.h"
 #include "NNeuronTimeLearnerStructuralAmp.h"
+#include "TimeLearner/NativeProbe.h"
 #include "../../../Rdk/Deploy/Include/rdk.h"
 #include <iostream>
 #include <fstream>
@@ -766,6 +767,19 @@ public: // Methods
  NNeuronTimeLearnerBranch(void);
  
  virtual ~NNeuronTimeLearnerBranch(void);
+ virtual bool Build(void) override;
+ virtual void Init(void) override;
+ virtual void UnInit(void) override;
+
+ /// Explicit native probe ownership; released by native learner Reset/Default.
+ /// Completion is an observation status, never proof that training converged.
+ void QueueNativeProbe(TimeLearner::NativeProbeRequest request) {
+  if(!IsReady() || !IsInit())throw std::logic_error("native_probe_requires_initialized_ready_learner");
+  NativeProbeControl.Queue(std::move(request));
+ }
+ bool NativeProbeOwnsControl() const { return NativeProbeControl.OwnsControl(); }
+ TimeLearner::NativeProbeStatus NativeProbeState() const { return NativeProbeControl.Status(); }
+ std::optional<TimeLearner::NativeProbeResult> TakeNativeProbeResult() { return NativeProbeControl.TakeResult(); }
  
  // --------------------------
  // Parameter setters
@@ -907,6 +921,11 @@ public: // Methods
  static UComponent* NewStatic(void);
 
 protected:
+ TimeLearner::NativeProbeExecutor NativeProbeControl;
+ unsigned NativeLifecycleDepth=0;
+ TimeLearner::NativeProbeBindings NativeProbeModelBindings();
+ virtual bool ABeforeDefault(void) override;
+ virtual bool ABeforeReset(void) override;
  // --------------------------
  // Component management
  // --------------------------

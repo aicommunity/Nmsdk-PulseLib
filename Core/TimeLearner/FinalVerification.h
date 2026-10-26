@@ -16,6 +16,7 @@ struct VerificationProtocol {
     std::vector<VerificationInput> inputs; // Last input is the fixed reference.
     std::vector<std::string> stimulusIds;
     double maximumSampleGap=0., minimumAmplitude=1e-6;
+    std::optional<StimulusProfile> stimulusProfile;
     bool operator==(const VerificationProtocol&) const=default;
 };
 // Adapter-produced declaration after native routing/reset at a legal boundary.
@@ -85,6 +86,7 @@ public:
     bool Exact() const { return exact; }
     const std::string& ModelRevision() const { return modelRevision; }
     const std::string& ProtocolRevision() const { return protocol.revision; }
+    const VerificationProtocol& Protocol() const { return protocol; }
     const std::string& ReferenceModelRevision() const { return referenceModelRevision; }
     std::size_t ReferenceModelEpoch() const { return referenceModelEpoch; }
     const std::vector<InputVerificationResidual>& Residuals() const { return residuals; }
