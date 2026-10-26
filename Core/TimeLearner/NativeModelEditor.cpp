@@ -4,6 +4,7 @@
 #include "../NPulseChannel.h"
 #include "../NPulseSynapse.h"
 #include "../NConstGenerator.h"
+#include <QJsonArray>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -159,20 +160,37 @@ std::pair<std::vector<double>,std::vector<double>> ResistanceIntervals(UEPtr<NPu
     }
     return result;
 }
-using ChannelPhysics=std::map<std::string,std::array<double,6>>;
-ChannelPhysics Physics(UEPtr<NPulseNeuron> neuron)
+using ParameterMap=std::map<QString,QJsonObject>;
+ParameterMap Parameters(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source)
 {
-    ChannelPhysics result;std::vector<UEPtr<UContainer>> nodes;Collect(neuron,nodes);
-    for(const auto& node:nodes)if(auto channel=dynamic_cast<NPulseChannel*>(node.Get()))
-        result.emplace(node->GetLongName(neuron.Get()),std::array<double,6>{channel->Capacity.GetData(),channel->Resistance.GetData(),
-            channel->RestingResistance.GetData(),channel->FBResistance.GetData(),double(channel->GetTimeStep()),channel->Type.GetData()});
+    const auto identity=NmsdkTools::IdentifyModel(neuron,{{&source.Output,"burst"}});
+    Require(identity["valid"].toBool(),"invalid_parameter_preservation_identity");
+    ParameterMap result;
+    for(const auto& entry:identity["model"].toObject()["nodes"].toArray())
+    {const auto node=entry.toObject();result.emplace(node["path"].toString(),node);}
     return result;
 }
-void CheckPreserved(const ChannelPhysics& before,UEPtr<NPulseNeuron> after)
+void CheckPreserved(const ParameterMap& before,UEPtr<NPulseNeuron> after,NPulseGeneratorTransit& source,const Plan& plan)
 {
-    const auto current=Physics(after);
-    for(const auto& [path,values]:before)
-        if(auto found=current.find(path);found!=current.end())Require(found->second==values,"existing_channel_physics_changed");
+    const auto current=Parameters(after,source);std::set<QString> adjustableR;
+    for(const auto& [path,target]:plan.excitation)adjustableR.insert("$."+QString::fromStdString(path)+".ExcSynapse1");
+    for(const auto& [path,target]:plan.inhibition)adjustableR.insert("$."+QString::fromStdString(path)+".InhSynapse1");
+    for(const auto& [path,node]:before)if(auto found=current.find(path);found!=current.end())
+    {
+        Require(node["class"]==found->second["class"] && node["frequency_hz"]==found->second["frequency_hz"],"existing_component_class_or_frequency_changed");
+        auto expected=node["parameters"].toObject(),actual=found->second["parameters"].toObject();
+        const auto remove=[&](const char* name){expected.remove(name);actual.remove(name);};
+        if(path=="$"){remove("NumDendriteMembraneParts");remove("NumDendriteMembranePartsVec");}
+        if(path.startsWith("$.Dendrite") && path.count('.')==1)
+        {remove("NumExcitatorySynapses");remove("NumInhibitorySynapses");}
+        if(adjustableR.count(path))remove("Resistance");
+        if(expected!=actual)
+        {
+            for(auto it=expected.begin();it!=expected.end();++it)if(actual[it.key()]!=it.value())
+                throw std::runtime_error("existing_parameter_changed:"+path.toStdString()+":"+it.key().toStdString());
+            throw std::runtime_error("existing_parameter_set_changed:"+path.toStdString());
+        }
+    }
 }
 void UniformTree(UEPtr<UContainer> node,unsigned frequency)
 {
@@ -205,7 +223,7 @@ void ConnectStimulus(NPulseSynapseCommon& synapse,NPulseGeneratorTransit& source
 }
 void Transform(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,const Plan& p,UNet* owner)
 {
-    const unsigned frequency=neuron->GetTimeStep();const auto physics=Physics(neuron);
+    const unsigned frequency=neuron->GetTimeStep();const auto parameters=Parameters(neuron,source);
     // Uniform physical overrides belong to images. Rebuilding with a live
     // parent override would overwrite learned/heterogeneous child physics.
     Require(!neuron->UseElementDefaults.GetData(),"native_edit_requires_storage_owned_physics");
@@ -259,7 +277,7 @@ void Transform(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,const P
     for(const auto& [name,target]:p.excitation)Require(bool(neuron->GetComponentL<NPulseMembrane>(name,true)),"attachment_outside_explicit_graph");
     for(const auto& [name,target]:p.inhibition)Require(bool(neuron->GetComponentL<NPulseMembrane>(name,true)),"inhibition_outside_explicit_graph");
     neuron->Init();neuron->Reset();neuron->InvalidateActiveComponentsCache();
-    UniformTree(neuron,frequency);CheckPreserved(physics,neuron);
+    UniformTree(neuron,frequency);CheckPreserved(parameters,neuron,source,p);
 }
 void CheckRemovedListeners(UEPtr<NPulseNeuron> original,UEPtr<NPulseNeuron> candidate)
 {
