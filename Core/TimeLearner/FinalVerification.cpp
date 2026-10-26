@@ -15,7 +15,10 @@ struct Measurement { double raw,arrival,plateauEnd; };
 
 void ProtocolValid(const VerificationProtocol& p)
 {
-    if(p.schemaVersion!=1 || p.revision.empty() || p.sampleId.empty() || p.patternHash.empty() ||
+    if((p.schemaVersion!=1 && p.schemaVersion!=2) ||
+       (p.schemaVersion==1 && p.stimulusProfile) ||
+       (p.schemaVersion==2 && (!p.stimulusProfile || !ValidStimulusProfile(*p.stimulusProfile))) ||
+       p.revision.empty() || p.sampleId.empty() || p.patternHash.empty() ||
        p.originStimulusId.empty() || p.inputs.empty() || p.stimulusIds.size()!=p.inputs.size() ||
        !Finite(p.maximumSampleGap) || p.maximumSampleGap<=0. ||
        !Finite(p.minimumAmplitude) || p.minimumAmplitude<=0. ||
@@ -38,12 +41,13 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
     if(prepared.inputId!=input.id || prepared.routing!=p.routing ||
        prepared.protocolRevision!=p.revision || prepared.baseModelRevision.empty() ||
        prepared.effectiveModelRevision.empty())fail("prepared_probe_context_mismatch");
-    if(o.schemaVersion!=1 || !o.complete || !o.valid || !o.reasons.empty() || o.endReason.empty())
+    if(o.schemaVersion!=p.schemaVersion || !o.complete || !o.valid || !o.reasons.empty() || o.endReason.empty())
         fail("observation_not_valid_complete");
     // Reuse the production spec validator; do not infer valid data from a flag.
     ProbeRecorder specificationValidator(o.specification);
     const auto& s=o.specification;
-    if(s.modelRevision!=prepared.effectiveModelRevision || s.sampleId!=p.sampleId ||
+    if(s.schemaVersion!=p.schemaVersion || s.stimulusProfile!=p.stimulusProfile ||
+       s.modelRevision!=prepared.effectiveModelRevision || s.sampleId!=p.sampleId ||
        s.patternHash!=p.patternHash || s.minimumAmplitude!=p.minimumAmplitude ||
        After(s.maximumSampleGap,p.maximumSampleGap))fail("observation_protocol_mismatch");
     if(o.sampleCount<3 || o.sampleCount>s.maximumSamples)fail("invalid_observation_sample_count");

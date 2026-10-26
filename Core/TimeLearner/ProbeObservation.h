@@ -5,6 +5,13 @@
 #include <vector>
 
 namespace NMSDK::TimeLearner {
+struct StimulusProfile {
+    std::string generatorClass;
+    double amplitude=0.,pulseLength=0.,frequencyHz=0.,frequencyDeviation=0.;
+    bool useTransitSignal=false,usePatternOutput=false;
+    bool operator==(const StimulusProfile&) const=default;
+};
+bool ValidStimulusProfile(const StimulusProfile& profile);
 // Internal training/characterization schema; distinct from the recognition CSV.
 struct PeakWindow {
     std::string inputId;
@@ -23,6 +30,9 @@ struct ProbeSpec {
     std::vector<double> baseline;
     std::vector<PeakWindow> windows;
     std::vector<std::string> expectedStimulusIds;
+    // Schema 1: unspecified source (legacy/internal controlled signals).
+    // Schema 2: actual declared generator physics, bound across probes.
+    std::optional<StimulusProfile> stimulusProfile;
 };
 enum class PeakValidity { Valid, Missing, Ambiguous, Clipped, Incomplete };
 struct PeakObservation {

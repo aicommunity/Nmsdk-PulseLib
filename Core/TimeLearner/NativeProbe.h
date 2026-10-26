@@ -29,6 +29,7 @@ struct NativeProbeSample {
     std::string effectiveModelRevision;
 };
 struct NativeProbeRequest {
+    NativeProbeRequest() { specification.schemaVersion=2; }
     // Relative window: begin must be zero, end is duration. The adapter supplies
     // absolute time, effective revision and the native post-reset baseline.
     ProbeSpec specification;
@@ -101,6 +102,7 @@ private:
     RDK::UModuleLifecycleObservation ownerLife,neuronLife,datasetLife,generatorLife;
     NPulseGeneratorTransit* capturedGenerator=nullptr;
     std::map<std::string,std::string> generatorParameters;
+    std::optional<StimulusProfile> stimulusProfile;
     std::unique_ptr<ProbeRecorder> recorder;
     std::optional<NativeProbeResult> result;
     std::optional<PreparedVerificationProbe> prepared;

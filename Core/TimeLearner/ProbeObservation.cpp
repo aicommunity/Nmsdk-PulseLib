@@ -10,10 +10,18 @@
 namespace NMSDK::TimeLearner {
 using Detail::Finite;
 using Detail::After;
+bool ValidStimulusProfile(const StimulusProfile& p)
+{
+    return !p.generatorClass.empty() && Finite(p.amplitude) && Finite(p.pulseLength) && p.pulseLength>0. &&
+        Finite(p.frequencyHz) && p.frequencyHz>0. && Finite(p.frequencyDeviation) && p.frequencyDeviation>=0.;
+}
 
 ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specification))
 {
-    if(spec.schemaVersion!=1 || spec.runId.empty() || spec.trialId.empty() ||
+    if((spec.schemaVersion!=1 && spec.schemaVersion!=2) ||
+       (spec.schemaVersion==1 && spec.stimulusProfile) ||
+       (spec.schemaVersion==2 && (!spec.stimulusProfile || !ValidStimulusProfile(*spec.stimulusProfile))) ||
+       spec.runId.empty() || spec.trialId.empty() ||
        spec.sampleId.empty() || spec.patternHash.empty() || spec.modelRevision.empty() ||
        !Finite(spec.begin) || !Finite(spec.end) || !Finite(spec.end-spec.begin) || !After(spec.end,spec.begin) ||
        !Finite(spec.maximumSampleGap) || spec.maximumSampleGap<=0. ||
@@ -141,7 +149,7 @@ ProbeObservation ProbeRecorder::Close(double time,const std::string& currentMode
         !After(spec.end,frames.back().time) && !After(frames.back().time,time);
     if(!complete) Reason("incomplete_observation");
     if(stimuli.size()!=spec.expectedStimulusIds.size()) Reason("missing_stimulus");
-    ProbeObservation result;result.specification=spec;result.complete=complete;
+    ProbeObservation result;result.schemaVersion=spec.schemaVersion;result.specification=spec;result.complete=complete;
     result.endReason=endReason;result.sampleCount=frames.size();result.stimuli=stimuli;result.spikes=spikes;
     for(const auto& window:spec.windows)
     {

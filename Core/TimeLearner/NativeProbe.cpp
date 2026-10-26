@@ -32,6 +32,12 @@ std::map<std::string,std::string> SourceParameters(NPulseGeneratorTransit* sourc
     }
     return values;
 }
+StimulusProfile SourceProfile(NPulseGeneratorTransit* source)
+{
+    return {source->GetCompClassName(),source->Amplitude.GetData(),source->PulseLength.GetData(),
+        double(source->GetTimeStep()),source->FrequencyDeviation.GetData(),
+        source->UseTransitSignal.GetData(),source->UsePatternOutput.GetData()};
+}
 }
 
 void NativeProbeExecutor::Queue(NativeProbeRequest value)
@@ -42,7 +48,7 @@ void NativeProbeExecutor::Queue(NativeProbeRequest value)
     if(!seenTrials.insert(key).second)throw std::logic_error("reused_native_trial_id");
     request=std::move(value);state=NativeProbeStatus::Queued;prepared.reset();
     lastEmission.reset();emitted=0;watched.clear();generatorParameters.clear();capturedGenerator=nullptr;
-    ownerLife={};neuronLife={};datasetLife={};generatorLife={};
+    ownerLife={};neuronLife={};datasetLife={};generatorLife={};stimulusProfile.reset();
 }
 
 bool NativeProbeExecutor::SameLiveRoots() const
@@ -79,7 +85,8 @@ void NativeProbeExecutor::CheckSource(const NativeProbeBindings& b) const
         Require(double(ancestor->GetTimeStep())==frequency,"unsupported_native_multirate");
     Require(double(b.dataset->GetTimeStep())==frequency,"unsupported_native_multirate");
     auto source=Generator(b);
-    Require(SourceParameters(source)==generatorParameters && source->Delay.GetData()==0.,
+    Require(stimulusProfile && SourceProfile(source)==*stimulusProfile &&
+        SourceParameters(source)==generatorParameters && source->Delay.GetData()==0.,
         "native_generator_configuration_changed");
     const double expected=!b.dataset->ResetDelay.GetData() && b.dataset->GetOneShotEndTime(0)>0.
         ?1./source->PulseLength.GetData():0.;
@@ -126,7 +133,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         Require(!b.postTuneActive,"concurrent_native_posttune");
         Require(Detail::Finite(time),"invalid_native_time");
         Require(bool(request.readModelRevision) && !request.baseModelRevision.empty(),"missing_native_revision_provider");
-        Require(request.specification.begin==0. && request.specification.baseline.empty() &&
+        Require(request.specification.schemaVersion==2 && request.specification.begin==0. && request.specification.baseline.empty() &&
             request.specification.modelRevision.empty() && !request.specification.recordSpikes,
             "unsupported_native_probe_specification");
         Require(b.branch==(request.routing==ProbeRouting::BranchSoloBurst),"native_routing_mismatch");
@@ -152,6 +159,9 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
             "unsupported_native_generator_mode");
         generatorLife=generator->ObserveLifecycle();
         generatorParameters=SourceParameters(generator);
+        stimulusProfile=SourceProfile(generator);
+        Require(!request.specification.stimulusProfile || request.specification.stimulusProfile==stimulusProfile,
+            "native_source_profile_mismatch");
         Require(b.somas.size()==(b.branch?1u:std::size_t(b.inputCount)),"missing_native_physical_somas");
         Require(request.specification.maximumSampleGap>0. &&
             !Detail::After(request.specification.maximumSampleGap,1./frequency),"unsupported_native_sample_gap");
@@ -196,6 +206,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
                 }
         }
         ProbeSpec spec=request.specification;
+        spec.stimulusProfile=stimulusProfile;
         const double duration=spec.end;
         Require(Detail::Finite(duration) && duration>0. && Detail::Finite(time+duration),"invalid_native_duration");
         spec.begin=time;spec.end=time+duration;end=spec.end;
