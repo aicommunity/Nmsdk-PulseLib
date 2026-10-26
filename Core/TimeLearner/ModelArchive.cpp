@@ -419,6 +419,16 @@ try
 }
 catch(const UException& error) { Fail("native_archive_export_failed",QString::fromStdString(std::string(typeid(error).name())+": "+error.what())); }
 
+UEPtr<UContainer> ClonePhysicalGraphForEdit(UEPtr<UContainer> model,const ModelBoundarySources& sources)
+try
+{
+    if(!model || !model->GetStorage() || !model->GetEnvironment() || !dynamic_pointer_cast<NMSDK::NPulseNeuron>(model))
+        Fail("invalid_edit_clone_context","native neuron/storage/environment required");
+    auto snapshot=Snapshot(model,sources);CheckSnapshot(snapshot);
+    return LoadSnapshot(snapshot,model->GetStorage(),model->GetEnvironment(),sources);
+}
+catch(const UException& error) { Fail("native_edit_clone_failed",QString::fromStdString(error.what())); }
+
 UEPtr<UContainer> ImportModelArchive(const QJsonObject& archive, UEPtr<UStorage> storage,
     UEPtr<UEnvironment> environment, const QString& implementationId, const ModelBoundarySources& boundarySources)
 try

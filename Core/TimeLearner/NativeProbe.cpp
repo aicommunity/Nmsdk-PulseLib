@@ -1,5 +1,6 @@
 #include "NativeProbe.h"
 #include "NumericChecks.h"
+#include "NativeModelEditor.h"
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -159,6 +160,8 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
             Detail::Finite(generator->Amplitude.GetData()) && generator->Amplitude.GetData()>0.,
             "unsupported_native_generator_mode");
         generatorLife=generator->ObserveLifecycle();
+        const auto integration=AssessNativeIntegration(b.neuron,generator->Amplitude.GetData());
+        if(!integration.valid)throw std::runtime_error(integration.reason);
         generatorParameters=SourceParameters(generator);
         stimulusProfile=SourceProfile(generator);
         Require(!request.specification.stimulusProfile || request.specification.stimulusProfile==stimulusProfile,
