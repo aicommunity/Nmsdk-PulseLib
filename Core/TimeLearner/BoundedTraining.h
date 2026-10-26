@@ -57,6 +57,8 @@ public:
     void Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared);
     void Consume(const ProbeObservation& observation,const std::string& actualModelRevision);
     void ExternalStop();
+    // Adapter-owned wall/model-time deadline; cannot manufacture convergence.
+    void ExhaustBudget();
     TrainingStatus Status() const { return status; }
     const std::optional<TrainingCertificate>& Certificate() const;
     const std::vector<CandidateEvidence>& Evidence() const { return evidence; }

@@ -291,6 +291,12 @@ void BoundedTrainingSession::ExternalStop()
     if(verification)verification->ExternalStop();Stop(TrainingStatus::ExternalStop);
 }
 
+void BoundedTrainingSession::ExhaustBudget()
+{
+    if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
+    if(verification)verification->ExhaustBudget();Stop(TrainingStatus::BudgetExhausted);
+}
+
 const std::optional<TrainingCertificate>& BoundedTrainingSession::Certificate() const
 {
     static const std::optional<TrainingCertificate> absent;
