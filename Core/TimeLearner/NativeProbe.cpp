@@ -53,6 +53,13 @@ bool NativeProbeExecutor::SameLiveRoots() const
     return neuron.Get()==physical->neuron.Get() && dataset.Get()==physical->dataset.Get() &&
         (!capturedGenerator || dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true).Get()==capturedGenerator);
 }
+bool NativeProbeExecutor::CanReadModel() const
+{
+    return SameLiveRoots() && generatorLife.IsAlive() &&
+        std::all_of(watched.begin(),watched.end(),[this](const auto& node){
+            return node.lifecycle.IsAlive() && physical->owner->GetComponentL(node.path,true).Get()==node.node.Get();
+        });
+}
 void NativeProbeExecutor::CheckLiveGraph(const NativeProbeBindings& b) const
 {
     Require(SameLiveRoots() && b.neuron.Get()==physical->neuron.Get() &&
@@ -224,6 +231,10 @@ void NativeProbeExecutor::AfterChildren(const NativeProbeBindings& b,double time
         CheckLiveGraph(b);CheckPattern(b);CheckSource(b);
         const auto revision=request.readModelRevision();
         auto generator=Generator(b);
+        NativeProbeSample sample;sample.time=time;sample.effectiveModelRevision=revision;
+        Require(generator->Output.GetRows()==1 && generator->Output.GetCols()==1 &&
+            Detail::Finite(generator->Output(0,0)),"invalid_native_stimulus_sample");
+        sample.stimulus=generator->Output(0,0);
         for(int i=0;i<generator->OutputPulseTimes.GetCols();++i)
         {
             const double emission=generator->OutputPulseTimes(0,i);
@@ -231,7 +242,8 @@ void NativeProbeExecutor::AfterChildren(const NativeProbeBindings& b,double time
             if(emission>=end-request.specification.end && (!lastEmission || emission>*lastEmission))
             {
                 const auto& ids=request.specification.expectedStimulusIds;
-                recorder->RecordStimulus(emitted<ids.size()?ids[emitted]:"unexpected_native_emission",emission);
+                const auto id=emitted<ids.size()?ids[emitted]:"unexpected_native_emission";
+                recorder->RecordStimulus(id,emission);sample.newStimuli.push_back({id,emission});
                 ++emitted;lastEmission=emission;
             }
         }
@@ -243,6 +255,8 @@ void NativeProbeExecutor::AfterChildren(const NativeProbeBindings& b,double time
             values.push_back(soma->SumPotential(0,0));
         }
         recorder->Observe(time,values,revision);
+        if(request.onSample)
+        {sample.potentials=std::move(values);request.onSample(sample);}
         if(!Detail::After(end,time))Finish(time,"window_closed",NativeProbeStatus::Completed);
     }
     catch(const std::exception& error){Failure(time,error.what());}
@@ -279,16 +293,13 @@ void NativeProbeExecutor::Finish(double time,const std::string& reason,NativePro
     NativeProbeResult completed;completed.status=status;completed.prepared=prepared;
     try
     {
-        const bool readable=SameLiveRoots() && generatorLife.IsAlive() &&
-            std::all_of(watched.begin(),watched.end(),[](const auto& node){return node.lifecycle.IsAlive();});
-        if(recorder)completed.observation=recorder->Close(time,readable?request.readModelRevision():"",reason);
+        if(recorder)completed.observation=recorder->Close(time,CanReadModel()?request.readModelRevision():"",reason);
     }
     catch(const std::exception& error){completed.reasons.push_back(error.what());completed.status=NativeProbeStatus::Rejected;}
     try
     {
         Restore();
-        if(SameLiveRoots() && generatorLife.IsAlive() && request.readModelRevision &&
-            std::all_of(watched.begin(),watched.end(),[](const auto& node){return node.lifecycle.IsAlive();}))
+        if(CanReadModel() && request.readModelRevision)
             completed.currentBaseRevision=request.readModelRevision();
         if(completed.currentBaseRevision!=request.baseModelRevision)
         {completed.reasons.push_back("native_base_revision_changed");completed.status=NativeProbeStatus::Rejected;}

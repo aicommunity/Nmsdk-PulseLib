@@ -22,6 +22,12 @@ private:
     unsigned& depth;
 };
 enum class NativeProbeStatus { Idle, Queued, Running, Completed, Rejected, Cancelled };
+struct NativeProbeSample {
+    double time=0.,stimulus=0.;
+    std::vector<double> potentials;
+    std::vector<StimulusObservation> newStimuli;
+    std::string effectiveModelRevision;
+};
 struct NativeProbeRequest {
     // Relative window: begin must be zero, end is duration. The adapter supplies
     // absolute time, effective revision and the native post-reset baseline.
@@ -36,6 +42,9 @@ struct NativeProbeRequest {
     // assumption is made by this adapter. Dataset pattern is checked separately.
     std::function<std::string()> readModelRevision;
     std::function<void(const PreparedVerificationProbe&,const ProbeSpec&)> onPrepared;
+    // Read-only artifact sink. Runs after native sampling, before closing the
+    // window; failure rejects the observation rather than silently losing data.
+    std::function<void(const NativeProbeSample&)> onSample;
 };
 struct NativeProbeBindings {
     RDK::UNet* owner=nullptr;
@@ -105,6 +114,7 @@ private:
     void CheckLiveGraph(const NativeProbeBindings& bindings) const;
     void CheckSource(const NativeProbeBindings& bindings) const;
     bool SameLiveRoots() const;
+    bool CanReadModel() const;
     void StopSource();
     void Restore();
     void Finish(double time,const std::string& reason,NativeProbeStatus status);
