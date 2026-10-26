@@ -1749,14 +1749,14 @@ double NNeuronTimeLearnerBranch::EffectiveAttenuationGamma(int dendrite_index0) 
 
 /// Damped P-step tip R from amp error
 double NNeuronTimeLearnerBranch::ComputeDampedTipResistance(int dendrite_index0, double r_old,
- double amp, double initial, double dt, double &effective_gain_out) const
+ double amp, double initial, double amplitude_error, double &effective_gain_out) const
 {
  std::optional<double> previous_error;
  if(dendrite_index0 >= 0 && dendrite_index0 < int(PrevAmpError.size()))
   previous_error = PrevAmpError[static_cast<size_t>(dendrite_index0)];
  const TimeLearner::Legacy::ResistancePolicy policy{kResistanceAdjustGainDefault,
   kMinMeasurableSomaAmp, kGainOvershootFactor, kGainUndershootFactor, kUndershootBoostRatio};
- const auto decision = TimeLearner::Legacy::ProposeResistance(r_old, amp, initial, dt,
+ const auto decision = TimeLearner::Legacy::ProposeResistance(r_old, amp, initial, amplitude_error,
   ResistanceAdjustGain.GetData(), previous_error, policy);
  effective_gain_out = decision.effectiveGain;
  if(!decision.adjusted)
