@@ -34,6 +34,8 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
         value.probe.specification.waveAssignment==value.protocol.waveAssignment,
         "native_training_protocol_mismatch");
     const auto revision=a.readModelRevision();Require(!revision.empty(),"missing_native_training_model_revision");
+    value.search.initialModelRevision=revision;
+    ValidateBoundedTrainingInputs(value.protocol,value.search,a.readParameters());
     if(references)
         Require(references->Protocol()==value.protocol && revision==referenceBinding,
             "native_training_reference_binding_changed");

@@ -37,6 +37,7 @@ struct ReferenceEvidence {
     PreparedVerificationProbe prepared;
     ProbeObservation observation;
 };
+void ValidateVerificationProtocol(const VerificationProtocol& protocol);
 // Shared production validation for search and final verification. Arrival is
 // relative to the actual protocol origin, not a predicted cable delay.
 struct ValidatedProbeMeasurement { double rawPotential,arrival,plateauEnd; };

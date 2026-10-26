@@ -334,6 +334,7 @@ void NativeProbeExecutor::Finish(double time,const std::string& reason,NativePro
 {
     NativeProbeResult completed;completed.status=status;completed.prepared=prepared;
     completed.requestedSpecification=request.specification;
+    if(status!=NativeProbeStatus::Completed)completed.reasons.push_back(reason);
     try
     {
         if(recorder)completed.observation=recorder->Close(time,CanReadModel()?request.readModelRevision():"",reason);
@@ -344,11 +345,12 @@ void NativeProbeExecutor::Finish(double time,const std::string& reason,NativePro
         Restore();
         if(CanReadModel() && request.readModelRevision)
             completed.currentBaseRevision=request.readModelRevision();
-        if(completed.currentBaseRevision!=request.baseModelRevision)
+        if(completed.currentBaseRevision.empty())
+        {completed.reasons.push_back("native_base_revision_unavailable");completed.status=NativeProbeStatus::Rejected;}
+        else if(completed.currentBaseRevision!=request.baseModelRevision)
         {completed.reasons.push_back("native_base_revision_changed");completed.status=NativeProbeStatus::Rejected;}
     }
     catch(const std::exception& error){completed.reasons.push_back(error.what());completed.status=NativeProbeStatus::Rejected;}
-    if(status!=NativeProbeStatus::Completed)completed.reasons.push_back(reason);
     completed.requiresFreshVerification=completed.status!=NativeProbeStatus::Completed ||
         (completed.observation && std::find(completed.observation->reasons.begin(),completed.observation->reasons.end(),
             "model_revision_changed")!=completed.observation->reasons.end());
