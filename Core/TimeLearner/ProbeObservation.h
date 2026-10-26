@@ -19,6 +19,7 @@ struct PeakWindow {
     double begin, end;
     std::string stimulusId;
 };
+enum class WaveAssignmentPolicy { WindowOnly, OrderedWholeBurst };
 struct ProbeSpec {
     unsigned schemaVersion=1;
     std::string runId, trialId, sampleId, patternHash, modelRevision;
@@ -31,8 +32,11 @@ struct ProbeSpec {
     std::vector<PeakWindow> windows;
     std::vector<std::string> expectedStimulusIds;
     // Schema 1: unspecified source (legacy/internal controlled signals).
-    // Schema 2: actual declared generator physics, bound across probes.
+    // Schemas 2/3: actual declared generator physics, bound across probes.
     std::optional<StimulusProfile> stimulusProfile;
+    // Schema 3 additionally requires a complete order-preserving response wave
+    // sequence on every measured channel. No model delay fills a missing wave.
+    WaveAssignmentPolicy waveAssignment=WaveAssignmentPolicy::WindowOnly;
 };
 enum class PeakValidity { Valid, Missing, Ambiguous, Clipped, Incomplete };
 struct PeakObservation {
@@ -47,6 +51,15 @@ struct PeakObservation {
 };
 struct StimulusObservation { std::string id; double time; };
 struct SpikeObservation { std::size_t channel; double time; };
+struct BurstWave {
+    std::string stimulusId; // Empty when a unique full assignment was not obtained.
+    double amplitude=0.,rawPotential=0.,time=0.,plateauEnd=0.;
+};
+struct BurstAssignmentObservation {
+    std::size_t channel=0;
+    PeakValidity validity=PeakValidity::Incomplete;
+    std::vector<BurstWave> waves;
+};
 struct ProbeObservation {
     unsigned schemaVersion=1;
     ProbeSpec specification;
@@ -57,6 +70,7 @@ struct ProbeObservation {
     std::vector<SpikeObservation> spikes; // Count is derived from this list.
     std::vector<PeakObservation> peaks;
     std::size_t sampleCount=0;
+    std::vector<BurstAssignmentObservation> burstAssignments;
 };
 
 // Consumes observations only. The adapter owns native scheduling, physical
@@ -80,6 +94,7 @@ private:
     bool closed=false, coverageBroken=false;
     void Reason(const std::string& reason);
     PeakObservation Measure(const PeakWindow& window, bool complete) const;
+    BurstAssignmentObservation AssignBurst(std::size_t channel,bool complete) const;
 };
 const char* PeakValidityName(PeakValidity validity);
 }

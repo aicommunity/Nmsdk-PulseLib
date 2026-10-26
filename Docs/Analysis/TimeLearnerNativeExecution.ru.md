@@ -42,6 +42,9 @@ Actual stimuli читаются из OutputPulseTimes; PulseCounter и фрон�
 класс, amplitude, pulse length, frequency/deviation, transit/pattern modes.
 Schema 1 остаётся отдельным историческим/контролируемым протоколом.
 
+Явная [schema 3](TimeLearnerBurstAssignment.ru.md) дополнительно проверяет полную
+последовательность и physical input ownership; default request остаётся schema 2.
+
 Первый контур требует единой частоты всего дерева, штатного Dataset playback и
 поддерживаемых source/routing dimensions. При незавершённом legacy physics edit,
 PostTune или недопустимом графе preflight отклоняет пробу. Multirate legacy
