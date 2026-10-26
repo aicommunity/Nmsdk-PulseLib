@@ -24,6 +24,11 @@
 
 Sample: `Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearnerBranch`.
 
+Общие вычисления задержки, пиков, импульсов и Rs вынесены в
+[legacy-политики контроллера](../Analysis/TimeLearnerSharedPolicies.ru.md).
+Это механическое устранение дублирования; новый контроллер версии 2 и
+независимая свежая финальная проверка всех входов этим не реализуются.
+
 
 ### Уточнение 2026-09-23 (9a6cee0b)
 

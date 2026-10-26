@@ -980,7 +980,7 @@ protected:
  
  /// Damped P-step tip R from amp error
  double ComputeDampedTipResistance(int dendrite_index0, double r_old,
-  double amp, double initial, double dt, double &effective_gain_out) const;
+  double amp, double initial, double amplitude_error, double &effective_gain_out) const;
   
  /// Commit computed tip R and update gain traces
  void ApplyComputedResistance(int num, double r_old, double r_new, double effective_gain);
