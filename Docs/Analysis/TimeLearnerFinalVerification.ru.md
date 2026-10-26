@@ -12,6 +12,11 @@ production-ready. Поиск L/Ns/Rs, conversion, PostTune и калибровк
 native пути schema 2 связывает references/observations с typed stimulus profile;
 schema 1 сохраняется для прежних контролируемых сигналов и не смешивается с ней.
 
+[Schema 3](TimeLearnerBurstAssignment.ru.md) добавляет full burst assignment и
+physical input ownership. Classic input i измеряется на channel i; Branch arm
+требует actual selectedInputIndex. Неполная размерность или reference другого
+физического входа не принимаются даже при формально верных числах и valid=true.
+
 ## References и протокол
 
 CapturedReferences создаётся только из завершённых валидных ProbeObservation
