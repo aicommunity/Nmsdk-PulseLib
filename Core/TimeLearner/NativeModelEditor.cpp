@@ -348,10 +348,10 @@ NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const 
         auto source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_edit_stimulus_source");
         ReadNativeInputParameters(b,attachments);
         const auto plan=MakePlan(b,requested,spec);const auto frequency=b.neuron->GetTimeStep();
-        UniformTree(b.neuron,frequency);
+        UEPtr<UContainer> live(b.neuron.Get());UniformTree(live,frequency);
         const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
-        auto before=NmsdkTools::IdentifyModel(b.neuron,ports);Require(before["valid"].toBool(),"invalid_live_edit_identity");
-        auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(b.neuron,ports));Lease lease{preview};
+        auto before=NmsdkTools::IdentifyModel(live,ports);Require(before["valid"].toBool(),"invalid_live_edit_identity");
+        auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(live,ports));Lease lease{preview};
         Require(bool(preview),"failed_edit_preview");
         Transform(preview,*source,plan,nullptr);CheckRemovedListeners(b.neuron,preview);
         const auto stability=AssessNativeIntegration(preview,source->Amplitude.GetData());
@@ -361,19 +361,18 @@ NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const 
         // Disposal must disconnect the speculative source consumers before the
         // live edit. No physical tick occurs on the preview or between edits.
         preview->BreakLinks();preview->GetStorage()->ReturnObject(preview);lease.object=0;
-        Require(NmsdkTools::IdentifyModel(b.neuron,ports)==before,"live_graph_changed_during_preview");
+        Require(NmsdkTools::IdentifyModel(live,ports)==before,"live_graph_changed_during_preview");
         result.modelMayHaveChanged=true;
         Transform(b.neuron,*source,plan,b.owner);
-        const auto after=NmsdkTools::VerifyModelIdentity(predicted,b.neuron,ports);
-        Require(after["valid"].toBool() && after["match"].toBool(),"live_edit_differs_from_native_preview");
+        const auto after=NmsdkTools::VerifyModelIdentity(predicted,live,ports);
+        if(!after["valid"].toBool() || !after["match"].toBool())
+            throw std::runtime_error("live_edit_differs_from_native_preview:"+after["first_difference"].toString().toStdString());
         std::vector<int> positions;for(const auto& input:requested)positions.push_back(input.length);
         result.effective=ReadNativeInputParameters(b,positions);Require(result.effective==requested,"native_edit_readback_mismatch");
         result.minimumResistance=intervals.first;result.maximumResistance=intervals.second;
         result.status=NativeEditStatus::Applied;
     }
     catch(const std::exception& error)
-    {result.reason=error.what();result.status=result.modelMayHaveChanged?NativeEditStatus::Failed:NativeEditStatus::Rejected;}
-    catch(const RDK::UException& error)
     {result.reason=error.what();result.status=result.modelMayHaveChanged?NativeEditStatus::Failed:NativeEditStatus::Rejected;}
     return result;
 }
