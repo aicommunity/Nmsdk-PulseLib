@@ -409,6 +409,14 @@ std::vector<InputParameters> ReadNativeInputParameters(const NativeProbeBindings
         Require(bool(membrane),"missing_native_input_membrane");
         auto synapse=membrane->GetComponentL<NPulseSynapseCommon>("ExcSynapse1",true);
         Require(bool(synapse) && membrane->NumExcitatorySynapses.GetData()>=1 && Positive(synapse->Resistance.GetData()),"missing_native_input_bank");
+        // InputParameters has one Rs per bank. Do not silently flatten a
+        // physically heterogeneous bank into its first synapse's value.
+        for(int k=2;k<=membrane->NumExcitatorySynapses.GetData();++k)
+        {
+            auto member=membrane->GetComponentL<NPulseSynapseCommon>("ExcSynapse"+std::to_string(k),true);
+            Require(bool(member),"missing_native_input_bank_member");
+            Require(member->Resistance.GetData()==synapse->Resistance.GetData(),"heterogeneous_native_input_bank_resistance");
+        }
         result.push_back({attachments[i],membrane->NumExcitatorySynapses.GetData(),synapse->Resistance.GetData()});
     }
     return result;

@@ -4012,7 +4012,15 @@ TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeParameters(const st
   }
   else if(result.modelMayHaveChanged)NativeEditFailure=result.reason;
  }
- catch(const std::exception& error){result.reason=error.what();}
+ catch(const std::exception& error)
+ {
+  result.reason=error.what();
+  if(result.modelMayHaveChanged)
+  {
+   result.status=TimeLearner::NativeEditStatus::Failed;
+   NativeEditFailure=result.reason;
+  }
+ }
  return result;
 }
 
