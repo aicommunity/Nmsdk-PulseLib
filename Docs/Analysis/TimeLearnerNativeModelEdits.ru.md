@@ -18,6 +18,15 @@ Calculate, whole-learner Build/Reset, изменения прототипов и
 native connectors, property reverse cache и реальные inbound bindings owner tree.
 Нельзя предполагать, что один reverse cache описывает все способы создания связей.
 
+Search API представляет одно Rs на входной банк. Неоднородные исходные Rs банка
+отклоняются как неподдерживаемое представление, сохраняя фактическую модель.
+У представимого банка learned Rs применяется ко всем синапсам, в том числе
+новым из storage; другие параметры существующих членов сохраняются. Effective
+readback проверяется на preview до live apply. Root
+1e980f9103920c6012afe810d1e4be23929c80dc прошёл 43 адресных cases на каждом
+сервере, включая N0 bank Rs + Ns growth при 2000/20000 и отказ неоднородному
+исходному банку. M40 ASan: 4/4, detect_leaks=0. Это отдельный tested snapshot.
+
 Rejected preview сохраняет live hash; Failed после начала изменения означает
 modelMayHaveChanged и блокирует дальнейшие пробы/расчёт до ремонта. Bool lifecycle
 не превращается в канал диагностики. Полная транзакция PostTune ещё нужна.
@@ -36,7 +45,9 @@ b0cd47e4acc335416bff8c3a516d446cfafbed83 — 35 адресных cases на об
 bbc81c3d857ceedc188275087354a31f74c71bdb — 36 cases на каждом сервере и M40 ASan
 с detect_leaks=0. Root 4a27a579b5fff61e025ed200f627aa0482f06e1a добавляет native
 четырёхвходовой coupled edit: [1,1,1,1] → [2,2,2,1], actual bank readback и свежая
-проба; он прошёл на обоих серверах. Полные наборы этого снимка ещё проверяются.
+проба; он прошёл на обоих серверах. Четыре поддерживаемых CTest suites этого
+снимка прошли: PulseLib 293 pass + 9 skip из 302, другие suites — 18 pass.
+Opt-in compatibility и process helper skips не считаются доказательством.
 
 Детальный журнал неудачных и успешных попыток, границы приёмки и ссылки на
 Git evidence поддерживаются в корневом Docs/StructTrain/TimeLearner/
