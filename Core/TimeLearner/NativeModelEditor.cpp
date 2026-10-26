@@ -200,7 +200,9 @@ ParameterMap Parameters(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& sourc
 void CheckPreserved(const ParameterMap& before,UEPtr<NPulseNeuron> after,NPulseGeneratorTransit& source,const Plan& plan)
 {
     const auto current=Parameters(after,source);std::set<QString> adjustableR;
-    for(const auto& [path,target]:plan.excitation)adjustableR.insert("$."+QString::fromStdString(path)+".ExcSynapse1");
+    for(const auto& [path,target]:plan.excitation)
+        for(int k=1;k<=target.count;++k)
+            adjustableR.insert("$."+QString::fromStdString(path)+".ExcSynapse"+QString::number(k));
     for(const auto& [path,target]:plan.inhibition)adjustableR.insert("$."+QString::fromStdString(path)+".InhSynapse1");
     for(const auto& [path,node]:before)if(auto found=current.find(path);found!=current.end())
     {
@@ -297,12 +299,13 @@ void Transform(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,const P
         }
         if(exc!=p.excitation.end())
         {
-            auto first=membrane->GetComponentL<NPulseSynapseCommon>("ExcSynapse1",true);Require(bool(first),"missing_edited_excitation_bank");
-            first->Resistance=exc->second.resistance;
             for(int k=1;k<=count;++k)
             {
                 auto synapse=membrane->GetComponentL<NPulseSynapseCommon>("ExcSynapse"+std::to_string(k),true);
-                Require(bool(synapse),"missing_edited_excitation_synapse");ConnectStimulus(*synapse,source,owner);
+                Require(bool(synapse),"missing_edited_excitation_synapse");
+                // Learned Rs belongs to this input bank, including instances
+                // just created from its storage image. Other physics is kept.
+                synapse->Resistance=exc->second.resistance;ConnectStimulus(*synapse,source,owner);
             }
         }
         if(inh!=p.inhibition.end())
@@ -440,6 +443,9 @@ NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const 
         auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(live,ports));Lease lease{preview};
         Require(bool(preview),"failed_edit_preview");
         Transform(preview,*source,plan,nullptr);CheckRemovedListeners(b.neuron,preview);
+        std::vector<int> positions;for(const auto& input:requested)positions.push_back(input.length);
+        auto previewBindings=b;previewBindings.neuron=preview;
+        Require(ReadNativeInputParameters(previewBindings,positions)==requested,"preview_edit_readback_mismatch");
         const auto stability=AssessNativeIntegration(preview,source->Amplitude.GetData());
         Require(stability.valid,stability.reason.c_str());
         const auto intervals=ResistanceIntervals(preview,b.branch,requested,spec,source->Amplitude.GetData());
@@ -453,7 +459,6 @@ NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const 
         const auto after=NmsdkTools::VerifyModelIdentity(predicted,live,ports);
         if(!after["valid"].toBool() || !after["match"].toBool())
             throw std::runtime_error("live_edit_differs_from_native_preview:"+after["first_difference"].toString().toStdString());
-        std::vector<int> positions;for(const auto& input:requested)positions.push_back(input.length);
         result.effective=ReadNativeInputParameters(b,positions);Require(result.effective==requested,"native_edit_readback_mismatch");
         result.minimumResistance=intervals.first;result.maximumResistance=intervals.second;
         result.status=NativeEditStatus::Applied;
