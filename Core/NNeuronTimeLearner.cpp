@@ -3677,6 +3677,15 @@ bool NNeuronTimeLearner::BuildStructure()
   oss << "]";
   RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearner", oss.str());
  }
+ // BuildStructure can replace the Neuron of an already initialized learner
+ // (for example during the scheduler's first Build after a cold Reset).
+ // Build alone does not initialize that new subtree. Complete its native
+ // lifecycle before the scheduler reaches it; do not calculate it here.
+ InvalidateActiveComponentsCache();
+ if(Dataset && !Dataset->IsInit())
+  Dataset->Init();
+ if(Neuron && !Neuron->IsInit())
+  Neuron->Init();
  return res;
  }
  catch(const UException &ex)
