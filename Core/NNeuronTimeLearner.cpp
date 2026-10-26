@@ -3925,7 +3925,9 @@ bool NNeuronTimeLearner::ABeforeCalculate(void)
  if(NativeProbeControl.OwnsControl())
  {
   NativeProbeControl.BeforeChildren(NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
-  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))ForceSkipComponentCalculation();
+  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()) ||
+      NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Rejected ||
+      NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Cancelled)ForceSkipComponentCalculation();
   return true;
  }
  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))

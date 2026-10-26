@@ -62,6 +62,7 @@ void NativeProbeExecutor::CheckLiveGraph(const NativeProbeBindings& b) const
     {
         Require(node.lifecycle.IsAlive(),"native_graph_destroyed");
         Require(b.owner->GetComponentL(node.path,true).Get()==node.node.Get(),"native_graph_replaced");
+        Require(node.node->IsReady() && node.node->IsInit(),"native_graph_not_ready");
         Require(!node.stable || node.lifecycle.IsCurrent(),"native_lifecycle_changed");
     }
 }
