@@ -31,6 +31,7 @@ See file license.txt for more information
 #include "NNeuronTimeLearnerScopedDefaults.h"
 #include "NNeuronPostTrainTune.h"
 #include "NNeuronTimeLearnerResistanceBounds.h"
+#include "TimeLearner/LegacyController.h"
 #include "NPatternResponseAnalyzer.h"
 #include "NPulseChannel.h"
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
@@ -1750,31 +1751,17 @@ double NNeuronTimeLearnerBranch::EffectiveAttenuationGamma(int dendrite_index0) 
 double NNeuronTimeLearnerBranch::ComputeDampedTipResistance(int dendrite_index0, double r_old,
  double amp, double initial, double dt, double &effective_gain_out) const
 {
- effective_gain_out = ResistanceAdjustGain.GetData();
- if(effective_gain_out <= 0.0)
-  effective_gain_out = kResistanceAdjustGainDefault;
- 
- if(r_old <= 0.0 || initial <= 0.0 || amp <= kMinMeasurableSomaAmp)
-  return ClampResistance(dendrite_index0, r_old);
- 
- const double target_ratio = amp / initial;
- 
- if(dendrite_index0 >= 0 && dendrite_index0 < int(PrevAmpError.size())
-    && fabs(PrevAmpError[static_cast<size_t>(dendrite_index0)]) > 1e-12)
- {
-  const double prev_e = PrevAmpError[static_cast<size_t>(dendrite_index0)];
-  if(prev_e * dt < 0.0)
-   effective_gain_out *= kGainOvershootFactor;
-  else if(fabs(prev_e) > kUndershootBoostRatio * fabs(dt) && prev_e * dt > 0.0)
-   effective_gain_out *= kGainUndershootFactor;
- }
- effective_gain_out = std::max(0.05, std::min(1.0, effective_gain_out));
- 
- double step_ratio = 1.0 + effective_gain_out * (target_ratio - 1.0);
- if(step_ratio <= 0.0)
-  step_ratio = 0.05;
- 
- double r_new = r_old * step_ratio;
+ std::optional<double> previous_error;
+ if(dendrite_index0 >= 0 && dendrite_index0 < int(PrevAmpError.size()))
+  previous_error = PrevAmpError[static_cast<size_t>(dendrite_index0)];
+ const TimeLearner::Legacy::ResistancePolicy policy{kResistanceAdjustGainDefault,
+  kMinMeasurableSomaAmp, kGainOvershootFactor, kGainUndershootFactor, kUndershootBoostRatio};
+ const auto decision = TimeLearner::Legacy::ProposeResistance(r_old, amp, initial, dt,
+  ResistanceAdjustGain.GetData(), previous_error, policy);
+ effective_gain_out = decision.effectiveGain;
+ if(!decision.adjusted)
+  return ClampResistance(dendrite_index0, decision.proposedResistance);
+ const double r_new = decision.proposedResistance;
  
  // r_model is a feedforward orientation, not a hard floor for feedback: when amp
  // is still below Initial, allow R below the cable model down to ResistanceMin
@@ -2252,27 +2239,8 @@ bool NNeuronTimeLearnerBranch::ApplySynapseResistanceChange(int num)
 /// Compute PeakRel and DelayFromPulse from measurements
 void NNeuronTimeLearnerBranch::ComputePeakRelAndDelay(void)
 {
- const int n = NumInputDendrite.GetData();
- if(int(PeakRel.size()) != n)
-  PeakRel.assign(static_cast<size_t>(n), 0.0);
- if(int(DelayFromPulse.size()) != n)
-  DelayFromPulse.assign(static_cast<size_t>(n), 0.0);
- 
- for(int i = 0; i < n; ++i)
- {
-  if(i >= int(SomaPeakValid.size()) || !SomaPeakValid[i]
-     || i >= int(TimeOfMaxIterSomaAmp.size()))
-  {
-   PeakRel[static_cast<size_t>(i)] = 0.0;
-   DelayFromPulse[static_cast<size_t>(i)] = 0.0;
-   continue;
-  }
-  const double t_pulse_rel = (i < int(ExpectedPulseRelTimes.size()))
-   ? ExpectedPulseRelTimes[static_cast<size_t>(i)] : 0.0;
-  PeakRel[static_cast<size_t>(i)] = TimeOfMaxIterSomaAmp[static_cast<size_t>(i)] - FirstImpulseTime;
-  DelayFromPulse[static_cast<size_t>(i)] =
-   TimeOfMaxIterSomaAmp[static_cast<size_t>(i)] - (FirstImpulseTime + t_pulse_rel);
- }
+ TimeLearner::Legacy::ComputePeakTimes(NumInputDendrite.GetData(), FirstImpulseTime,
+  SomaPeakValid, TimeOfMaxIterSomaAmp, ExpectedPulseRelTimes, PeakRel, DelayFromPulse);
 }
 
 /// Choose ActiveDendrite / ActivePulseIndex for this burst
@@ -2595,17 +2563,10 @@ double NNeuronTimeLearnerBranch::DelayLenOf(int num) const
 /// Prefer DelayFromPulse when it agrees with cable model; else delay_len
 double NNeuronTimeLearnerBranch::DelayUseOf(int num, double expected_k, double delay_meas) const
 {
- const double delay_len = DelayLenOf(num);
- // Tight margin: loose PeakMeasureMargin-scale agree allowed PeakRel-aligned
- // delay_meas to "agree" while delay_len still disagreed (L1 stopped early).
- const double agree_margin = std::max(SyncTolerance.GetData(), DelayAgreeMarginMin.GetData());
  const bool peak_valid = (num < int(SomaPeakValid.size())) && SomaPeakValid[static_cast<size_t>(num)];
  const double peak_meas = (num < int(PeakRel.size())) ? PeakRel[static_cast<size_t>(num)] : 0.0;
- const double peak_model = expected_k + delay_len;
- const bool meas_agrees = peak_valid
-  && (fabs(delay_meas - delay_len) <= agree_margin)
-  && (fabs(peak_meas - peak_model) <= agree_margin);
- return meas_agrees ? delay_meas : delay_len;
+ return TimeLearner::Legacy::ChooseDelay(DelayLenOf(num), delay_meas, peak_valid,
+  peak_meas, expected_k, SyncTolerance.GetData(), DelayAgreeMarginMin.GetData());
 }
 
 /// Resolve DatasetMatrix child generator
@@ -7347,18 +7308,7 @@ int NNeuronTimeLearnerBranch::DetectNewImpulseCount(void)
  if(gen->Output.GetRows() > 0 && gen->Output.GetCols() > 0)
   out = gen->Output(0, 0);
  
- int count = 0;
- if(counter > PrevPulseCounter)
- {
-  count = counter - PrevPulseCounter;
-  PrevPulseCounter = counter;
- }
- else if(out > 0.0 && PrevGenOutput <= 0.0)
- {
-  count = 1;
- }
- PrevGenOutput = out;
- return count > 0 ? count : 0;
+ return TimeLearner::Legacy::DetectPulses(counter, out, PrevPulseCounter, PrevGenOutput);
 }
 
 /// Start a training burst/iteration at time now
