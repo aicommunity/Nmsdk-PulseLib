@@ -33,6 +33,8 @@ void ProtocolValid(const VerificationProtocol& p)
     for(const auto& input:p.inputs)
         if(input.id.empty() || !ids.insert(input.id).second || !stimuli.count(input.stimulusId) ||
            !mapped.insert(input.stimulusId).second)throw std::invalid_argument("invalid_protocol_input_mapping");
+    if(p.schemaVersion==3)for(std::size_t i=0;i<p.inputs.size();++i)
+        if(p.inputs[i].stimulusId!=p.stimulusIds[i])throw std::invalid_argument("invalid_physical_input_order");
 }
 
 Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIndex,
@@ -48,6 +50,13 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
     // Reuse the production spec validator; do not infer valid data from a flag.
     ProbeRecorder specificationValidator(o.specification);
     const auto& s=o.specification;
+    if(p.schemaVersion==3)
+    {
+        if(s.baseline.size()!=(p.routing==ProbeRouting::ClassicBurst?p.inputs.size():1u))
+            fail("observation_physical_dimension_mismatch");
+        if(p.routing==ProbeRouting::BranchSoloBurst ? prepared.selectedInputIndex!=inputIndex : bool(prepared.selectedInputIndex))
+            fail("prepared_physical_input_mismatch");
+    }
     if(s.schemaVersion!=p.schemaVersion || s.stimulusProfile!=p.stimulusProfile || s.waveAssignment!=p.waveAssignment ||
        s.modelRevision!=prepared.effectiveModelRevision || s.sampleId!=p.sampleId ||
        s.patternHash!=p.patternHash || s.minimumAmplitude!=p.minimumAmplitude ||
@@ -105,6 +114,8 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
         auto definition=std::find_if(p.inputs.begin(),p.inputs.end(),[&](const auto& x){return x.id==window.inputId;});
         if(definition==p.inputs.end() || definition->stimulusId!=window.stimulusId)
             fail("unexpected_peak_window");
+        if(p.schemaVersion==3 && window.channel!=(p.routing==ProbeRouting::ClassicBurst?
+            std::size_t(definition-p.inputs.begin()):0u))fail("observation_input_channel_mismatch");
         if(p.routing==ProbeRouting::BranchSoloBurst && window.inputId!=input.id)
             fail("branch_selected_input_mismatch");
         auto found=peaks.find(window.inputId);
@@ -203,7 +214,7 @@ std::optional<VerificationRequest> FinalVerificationSession::NextRequest()
     const auto& p=references.Protocol();
     const auto trial=config.runId+"/verify/"+std::to_string(epoch)+"/"+std::to_string(++serial);
     pending=VerificationRequest{config.runId,trial,p.inputs[order.at(position)].id,p.sampleId,p.patternHash,
-        p.revision,config.currentModelRevision,p.routing,epoch};
+        p.revision,config.currentModelRevision,p.routing,epoch,order.at(position)};
     return pending;
 }
 
@@ -227,6 +238,9 @@ void FinalVerificationSession::Arm(const PreparedVerificationProbe& prepared)
        prepared.protocolRevision!=pending->protocolRevision || prepared.baseModelRevision!=config.currentModelRevision ||
        prepared.modelEpoch!=epoch || prepared.effectiveModelRevision.empty())
     {Reject("prepared_probe_context_mismatch");return;}
+    if(references.Protocol().schemaVersion==3 &&
+       (prepared.routing==ProbeRouting::BranchSoloBurst ? prepared.selectedInputIndex!=pending->inputIndex : bool(prepared.selectedInputIndex)))
+    {Reject("prepared_physical_input_mismatch");return;}
     armed=prepared;
 }
 

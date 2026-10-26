@@ -167,6 +167,21 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         Require(request.specification.maximumSampleGap>0. &&
             !Detail::After(request.specification.maximumSampleGap,1./frequency),"unsupported_native_sample_gap");
         Require(request.readModelRevision()==request.baseModelRevision,"native_base_revision_changed");
+        if(request.specification.schemaVersion==3)
+        {
+            const auto& ids=request.specification.expectedStimulusIds;
+            Require(ids.size()==std::size_t(b.inputCount),"native_physical_input_count_mismatch");
+            Require(!b.branch || request.specification.windows.size()==1,"native_solo_window_count_mismatch");
+            for(const auto& window:request.specification.windows)
+            {
+                const auto event=std::find(ids.begin(),ids.end(),window.stimulusId);
+                Require(event!=ids.end(),"native_window_stimulus_mismatch");
+                const auto index=std::size_t(event-ids.begin());
+                Require(window.channel==(b.branch?0u:index),"native_input_channel_mismatch");
+                Require(!b.branch || (index==std::size_t(request.activeInput) && window.inputId==request.inputId),
+                    "native_solo_selector_mismatch");
+            }
+        }
         // Snapshot all stimulus inputs before any transient Branch routing edit.
         // The standard typed input API is used; persistent UNet link records
         // remain untouched and are correct again when this overlay is restored.
@@ -228,6 +243,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         for(const auto& node:nodes)watched.push_back({node,node->GetLongName(b.owner),node->ObserveLifecycle(),node.Get()==b.dataset.Get()});
         prepared=PreparedVerificationProbe{request.routing,request.inputId,request.protocolRevision,
             request.baseModelRevision,spec.modelRevision,request.modelEpoch};
+        if(spec.schemaVersion==3 && b.branch)prepared->selectedInputIndex=std::size_t(request.activeInput);
         if(request.onPrepared)request.onPrepared(*prepared,spec);
         CheckLiveGraph(b);CheckPattern(b);CheckSource(b);
         Require(request.readModelRevision()==spec.modelRevision,"native_prepared_callback_changed_model");

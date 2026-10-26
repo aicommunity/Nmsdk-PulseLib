@@ -13,7 +13,9 @@ struct VerificationProtocol {
     unsigned schemaVersion=1;
     ProbeRouting routing=ProbeRouting::ClassicBurst;
     std::string revision, sampleId, patternHash, originStimulusId;
-    std::vector<VerificationInput> inputs; // Last input is the fixed reference.
+    // Last input is the fixed reference. Schema 3 follows physical/chronological
+    // input order: Classic input i owns soma channel i; Branch uses channel 0.
+    std::vector<VerificationInput> inputs;
     std::vector<std::string> stimulusIds;
     double maximumSampleGap=0., minimumAmplitude=1e-6;
     std::optional<StimulusProfile> stimulusProfile;
@@ -27,6 +29,9 @@ struct PreparedVerificationProbe {
     ProbeRouting routing=ProbeRouting::ClassicBurst;
     std::string inputId, protocolRevision, baseModelRevision, effectiveModelRevision;
     std::size_t modelEpoch=0;
+    // Actual Branch solo selector, produced by the native adapter. Schema 3
+    // binds it to protocol input order; Classic measures an unmuted full burst.
+    std::optional<std::size_t> selectedInputIndex;
 };
 struct ReferenceEvidence {
     PreparedVerificationProbe prepared;
@@ -70,6 +75,7 @@ struct VerificationRequest {
     std::string runId, trialId, inputId, sampleId, patternHash, protocolRevision, baseModelRevision;
     ProbeRouting routing=ProbeRouting::ClassicBurst;
     std::size_t epoch=0;
+    std::size_t inputIndex=0;
 };
 struct InputVerificationResidual {
     std::string inputId, trialId, effectiveModelRevision;
