@@ -257,11 +257,11 @@ graph TB
 
 - **`Amplitude`** (double) — амплитуда импульсов. Значение по умолчанию: 1.0
 
-- **`PulseCount`** (int) — количество независимых импульсов. При установке автоматически изменяет размер `Delays`. Значение по умолчанию: 0
+- **`PulseCount`** (int) — количество независимых импульсов. При установке изменяет размер `Delays` и инициирует штатный Build внутренних массивов. Значение по умолчанию: 1.
 
 - **`Delays`** (MDMatrix<double>) — матрица задержек для каждого импульса (размер: 1 × PulseCount). Каждый элемент определяет задержку запуска соответствующего импульса относительно времени сброса. Значение по умолчанию: матрица 1×1 с нулем
 
-- **`FrequencyDeviation`** (double) — отклонение частоты (диапазон, не стандартное отклонение). Используется для случайной вариации частоты. Значение по умолчанию: 0
+- **`FrequencyDeviation`** (double) — историческое свойство, default 0. Случайная ветвь Multi закомментирована и не реализована; ненулевое значение не является действующим фактором эксперимента.
 
 - **`AvgInterval`** (double) — интервал для усреднения частоты. Значение по умолчанию: 5
 
@@ -273,7 +273,7 @@ graph TB
 
 - **`OutputFrequency`** (MDMatrix<double>) — выходная частота (текущая частота генерации).
 
-- **`OutputPulseTimes`** (MDMatrix<double>) — времена импульсов (для анализа).
+- **`OutputPulseTimes`** (MDMatrix<double>) — реальные времена импульсов в секундах за AvgInterval, 1×N; без событий — 1×0. Одновременные emissions могут иметь равные timestamps; 0 означает реальное событие t=0.
 
 #### Состояния (ptPubState)
 
@@ -329,7 +329,7 @@ graph TB
 
 - **`SetPulseCount(const int &value)`** → `bool` — устанавливает количество импульсов. Если `value < 0`, возвращает `false`. Автоматически изменяет размер `Delays`.
 
-- **`SetDelays(const MDMatrix<double> &value)`** → `bool` — устанавливает задержки для импульсов. Если `value.GetCols() <= 0` или `value.GetRows() != 1`, возвращает `false`. Автоматически изменяет размер `PulseCounters`.
+- **`SetDelays(const MDMatrix<double> &value)`** → `bool` — устанавливает задержки. Если `value.GetCols() <= 0` или `value.GetRows() != 1`, возвращает `false`. Согласует `PulseCount` и инициирует native Build, который создаёт `PulseCounters` и `pulses` нужного размера.
 
 - **`SetFrequencyDeviation(const double &value)`** → `bool` — устанавливает отклонение частоты. Если `value < 0`, возвращает `false`.
 
@@ -535,7 +535,7 @@ graph TB
 - **`Frequency`** (`double`) — pulse generation frequency (Hz). Default: 0.0
 - **`PulseLength`** (`double`) — pulse duration (sec). Default: 0.001
 - **`Amplitude`** (`double`) — pulse amplitude. Default: 1.0
-- **`PulseCount`** (`int`) — number of independent pulses. Default: 0
+- **`PulseCount`** (`int`) — number of independent pulses. Default: 1. Count/delay edits request the native Build of internal arrays.
 - **`Delays`** (`MDMatrix<double>`) — delay matrix for each pulse (size: 1 × PulseCount). Default: 1×1 matrix with zero
 - **`Output`** (`MDMatrix<double>`) — output signal (sum of all active pulses)
 - **`OutputPotential`** (`MDMatrix<double>`) — output potential
@@ -570,6 +570,8 @@ graph TB
 See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
+
+- [Actual pulse-event history](../Analysis/TimeLearnerPulseEvents.ru.md) — empty history and simultaneous emissions (TL-019).
 
 - [`NPulseGenerator`](NPulseGenerator.md) — base pulse generator
 - [`NPulseGeneratorDelay`](NPulseGeneratorDelay.md) — pulse generator with delay

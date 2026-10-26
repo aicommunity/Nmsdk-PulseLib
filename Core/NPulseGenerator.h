@@ -50,6 +50,8 @@ UProperty<MDMatrix<double>,NPulseGenerator, ptOutput | ptPubState> OutputPotenti
 UProperty<MDMatrix<double>,NPulseGenerator, ptOutput | ptPubState> OutputFrequency;
 
 ///      (3)
+/// Actual emission timestamps (seconds), 1 x N; empty after Default/Build/Reset
+/// or disabled generation. A zero timestamp denotes a real emission at time 0.
 UProperty<MDMatrix<double>,NPulseGenerator, ptOutput | ptPubState> OutputPulseTimes;
 
 public: //  

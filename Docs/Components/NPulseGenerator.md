@@ -126,7 +126,7 @@ stateDiagram-v2
 ```mermaid
 flowchart TD
     Start([Start Calculate]) --> CheckFrequency["Frequency < 1e-8 или<br/>TimeStep/Frequency < 1?"]
-    CheckFrequency -->|Да| ZeroOutput["Output = 0<br/>OutputPotential = 0<br/>OutputFrequency = 0<br/>OutputPulseTimes = 0<br/>Очистка AvgFrequencyCounter"]
+    CheckFrequency -->|Да| ZeroOutput["Output = 0<br/>OutputPotential = 0<br/>OutputFrequency = 0<br/>OutputPulseTimes пуст (1×0)<br/>Очистка AvgFrequencyCounter"]
     CheckFrequency -->|Нет| CheckDelay{Время - ResetTime < Delay?}
     CheckDelay -->|Да| End([End])
     CheckDelay -->|Нет| CheckFrequencyChanged{OldFrequency != Frequency?}
@@ -222,7 +222,7 @@ graph TB
 
 - **`OutputFrequency`** (MDMatrix<double>) — выходная частота. Равна `Frequency` (или `RandomFrequency`, если используется отклонение). Значение по умолчанию: 0.0
 
-- **`OutputPulseTimes`** (MDMatrix<double>) — времена генерации спайков. Содержит список времен последних спайков в интервале `AvgInterval`. Значение по умолчанию: 0.0
+- **`OutputPulseTimes`** (MDMatrix<double>) — фактические времена генерации спайков в секундах за `AvgInterval`, размер 1×N. Без событий, после Default/Build/Reset или при выключенной генерации — пустая матрица 1×0. Настоящий спайк в t=0 сохраняется как запись 0.
 
 #### Состояния (ptPubState)
 
@@ -507,6 +507,8 @@ graph TB
 See [Literature-References.md](../Literature-References.md): **14**, **25**.
 
 ### See Also
+
+- [Actual pulse-event history](../Analysis/TimeLearnerPulseEvents.ru.md) — empty history versus an actual emission at time zero (TL-019).
 
 - [`NSource`](NSource.md) — base signal source
 - [`NPulseGeneratorTransit`](NPulseGeneratorTransit.md) — generator with transit signal
