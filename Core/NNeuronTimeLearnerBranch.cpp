@@ -4688,6 +4688,8 @@ bool NNeuronTimeLearnerBranch::Build(void)
  if(!IsReady())NativeProbeControl.Cancel("learner_rebuild");
  UNet::Build();return true;
 }
+void NNeuronTimeLearnerBranch::ABeforeUnInit(void)
+{ NativeProbeControl.Cancel("learner_uninit");UNet::ABeforeUnInit(); }
 void NNeuronTimeLearnerBranch::Init(void)
 {
  TimeLearner::NativeLifecycleScope scope(NativeLifecycleDepth);

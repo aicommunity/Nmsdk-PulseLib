@@ -81,7 +81,8 @@ void NativeProbeExecutor::CheckSource(const NativeProbeBindings& b) const
     auto source=Generator(b);
     Require(SourceParameters(source)==generatorParameters && source->Delay.GetData()==0.,
         "native_generator_configuration_changed");
-    const double expected=b.dataset->GetOneShotEndTime(0)>0.?1./source->PulseLength.GetData():0.;
+    const double expected=!b.dataset->ResetDelay.GetData() && b.dataset->GetOneShotEndTime(0)>0.
+        ?1./source->PulseLength.GetData():0.;
     Require(source->Frequency.GetData()==expected,"native_generator_control_changed");
     Require(b.dataset->StateGeneration.GetData()==2 && !b.dataset->AdvanceSampleAfterBurst.GetData() &&
         b.dataset->Delay.GetData()==std::max(oldDelay,request.specification.end+2./frequency),
@@ -216,6 +217,8 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         prepared=PreparedVerificationProbe{request.routing,request.inputId,request.protocolRevision,
             request.baseModelRevision,spec.modelRevision,request.modelEpoch};
         if(request.onPrepared)request.onPrepared(*prepared,spec);
+        CheckLiveGraph(b);CheckPattern(b);CheckSource(b);
+        Require(request.readModelRevision()==spec.modelRevision,"native_prepared_callback_changed_model");
         state=NativeProbeStatus::Running;
     }
     catch(const std::exception& error){Failure(time,error.what());}
