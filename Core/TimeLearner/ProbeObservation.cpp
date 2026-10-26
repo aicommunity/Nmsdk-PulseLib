@@ -19,7 +19,7 @@ ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specificati
 {
     if(spec.schemaVersion!=1 || spec.runId.empty() || spec.trialId.empty() ||
        spec.sampleId.empty() || spec.patternHash.empty() || spec.modelRevision.empty() ||
-       !Finite(spec.begin) || !Finite(spec.end) || !After(spec.end,spec.begin) ||
+       !Finite(spec.begin) || !Finite(spec.end) || !Finite(spec.end-spec.begin) || !After(spec.end,spec.begin) ||
        !Finite(spec.maximumSampleGap) || spec.maximumSampleGap<=0. ||
        !Finite(spec.minimumAmplitude) || spec.minimumAmplitude<=0. ||
        !spec.maximumSamples || spec.baseline.empty() || spec.windows.empty() ||
@@ -58,7 +58,10 @@ void ProbeRecorder::Observe(double time,const std::vector<double>& potentials,
     {
         if(time<=frames.back().time)
         { Reason("nonmonotonic_sample_time"); coverageBroken=true; return; }
-        if(After(time-frames.back().time,spec.maximumSampleGap))
+        const double interval=time-frames.back().time;
+        if(!Finite(interval))
+        { Reason("nonfinite_sample_interval"); coverageBroken=true; return; }
+        if(After(interval,spec.maximumSampleGap))
         { Reason("sample_gap"); coverageBroken=true; }
     }
     if(frames.size()>=spec.maximumSamples)
