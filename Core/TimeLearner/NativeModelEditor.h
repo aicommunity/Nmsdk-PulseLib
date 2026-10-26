@@ -7,6 +7,7 @@ struct NativeInhibitoryTarget { std::size_t inputIndex=0;int offset=1;double res
 struct NativeEditSpec {
     Normalization normalization=Normalization::SynapseCount;
     int maximumCableLength=1;
+    bool preserveAllocatedCable=false;
     double maximumResistanceRatio=1000.,configuredMinimumResistance=0.;
     std::vector<NativeInhibitoryTarget> inhibition;
 };
@@ -40,5 +41,6 @@ NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const 
     const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& specification);
 const char* NativeEditStatusName(NativeEditStatus status);
 NativeEditSpec MakeNativeEditSpec(Normalization normalization,int maximumLength,const std::vector<InputParameters>& requested,
-    bool nextSegment,bool segmentEI,int delta,double alpha,double maximumResistanceRatio,double configuredMinimumResistance);
+    bool nextSegment,bool segmentEI,int delta,double alpha,double maximumResistanceRatio,double configuredMinimumResistance,
+    bool preserveAllocatedCable=false);
 }

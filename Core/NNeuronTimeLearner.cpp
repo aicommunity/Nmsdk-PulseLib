@@ -3987,7 +3987,7 @@ TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeParameters(const st
    NormalizationMode.GetData()==0?TimeLearner::Normalization::SynapseCount:TimeLearner::Normalization::TipResistance,
    MaxDendriteLength.GetData(),requested,EnableNextSegmentInhibition.GetData(),EnableSegExcInh.GetData(),
    SegExcInhDelta.GetData(),SegExcInhAlpha.GetData(),MaxSynapseToMembraneResistanceRatio.GetData(),
-   PreferConfiguredResistanceMinFloor.GetData()?std::max(0.,ConfiguredResistanceMin.GetData()):0.);
+   PreferConfiguredResistanceMinFloor.GetData()?std::max(0.,ConfiguredResistanceMin.GetData()):0.,StructureBuildMode.GetData()==0);
   result=TimeLearner::ApplyNativeInputParameters(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),requested,spec);
   if(result.status==TimeLearner::NativeEditStatus::Applied)
   {

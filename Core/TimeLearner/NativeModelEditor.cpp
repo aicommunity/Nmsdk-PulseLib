@@ -6,10 +6,10 @@
 #include "../NConstGenerator.h"
 #include <QJsonArray>
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <limits>
 #include <map>
+#include <set>
 #include <stdexcept>
 #include <typeinfo>
 
@@ -85,9 +85,11 @@ double SecretionBound(NPulseSynapse& synapse,double sourceAmplitude)
 struct Target { int count=1;double resistance=0.; };
 struct Plan {
     std::map<std::string,Target> excitation,inhibition;
+    std::set<std::string> ownedExcitation,ownedInhibition,releasedExcitation;
     std::vector<int> cableLengths;
 };
-Plan MakePlan(const NativeProbeBindings& b,const std::vector<InputParameters>& values,const NativeEditSpec& s)
+Plan MakePlan(const NativeProbeBindings& b,const std::vector<InputParameters>& previous,
+    const std::vector<InputParameters>& values,const NativeEditSpec& s)
 {
     Require(values.size()==std::size_t(b.inputCount) && b.inputCount>0 && s.maximumCableLength>0,"invalid_edit_dimensions");
     Require(s.normalization==Normalization::SynapseCount || s.normalization==Normalization::TipResistance,"invalid_edit_normalization");
@@ -99,6 +101,7 @@ Plan MakePlan(const NativeProbeBindings& b,const std::vector<InputParameters>& v
             Positive(value.resistance) && (s.normalization!=Normalization::TipResistance || value.synapses==1),"invalid_edit_parameters");
         Require(!b.branch || !i || values[i-1].length>=value.length,"invalid_branch_attachment_order");
         const auto path=MembranePath(b.branch,i,value.length);
+        p.ownedExcitation.insert(path);
         auto [existing,added]=p.excitation.emplace(path,Target{value.synapses,value.resistance});
         Require(added || (existing->second.count==value.synapses && existing->second.resistance==value.resistance),"incompatible_shared_excitation_bank");
         auto& length=p.cableLengths[b.branch?0:i];length=std::max(length,value.length);
@@ -109,9 +112,33 @@ Plan MakePlan(const NativeProbeBindings& b,const std::vector<InputParameters>& v
         const long long segment=static_cast<long long>(values[rule.inputIndex].length)+rule.offset;
         Require(segment<=s.maximumCableLength,"missing_inhibition_headroom");
         const auto path=MembranePath(b.branch,rule.inputIndex,int(segment));
+        p.ownedInhibition.insert(path);
         auto [existing,added]=p.inhibition.emplace(path,Target{1,rule.resistance});
         Require(added || existing->second.resistance==rule.resistance,"incompatible_shared_inhibition_bank");
         auto& length=p.cableLengths[b.branch?0:rule.inputIndex];length=std::max(length,int(segment));
+    }
+    for(std::size_t i=0;i<previous.size();++i)
+    {
+        const auto path=MembranePath(b.branch,i,previous[i].length);p.ownedExcitation.insert(path);
+        if(!p.excitation.count(path))p.releasedExcitation.insert(path);
+    }
+    for(const auto& rule:s.inhibition)
+    {
+        const long long segment=static_cast<long long>(previous.at(rule.inputIndex).length)+rule.offset;
+        Require(segment<=std::numeric_limits<int>::max(),"invalid_previous_inhibition_position");
+        p.ownedInhibition.insert(MembranePath(b.branch,rule.inputIndex,int(segment)));
+    }
+    if(b.neuron->StructureBuildMode.GetData()==2)
+    {
+        const auto allocation=b.neuron->NumDendriteMembranePartsVec.GetData();
+        Require(allocation.size()==std::size_t(b.neuron->NumSomaMembraneParts.GetData()) && allocation.size()>=p.cableLengths.size(),
+            "inconsistent_native_cable_allocation");
+        if(s.preserveAllocatedCable)
+        {
+            const auto required=p.cableLengths;p.cableLengths=allocation;
+            for(std::size_t i=0;i<required.size();++i)p.cableLengths[i]=std::max(required[i],allocation[i]);
+        }
+        else Require(allocation.size()==p.cableLengths.size(),"unowned_soma_allocation_would_change");
     }
     return p;
 }
@@ -182,7 +209,11 @@ void CheckPreserved(const ParameterMap& before,UEPtr<NPulseNeuron> after,NPulseG
         const auto remove=[&](const char* name){expected.remove(name);actual.remove(name);};
         if(path=="$"){remove("NumDendriteMembraneParts");remove("NumDendriteMembranePartsVec");}
         if(path.startsWith("$.Dendrite") && path.count('.')==1)
-        {remove("NumExcitatorySynapses");remove("NumInhibitorySynapses");}
+        {
+            const auto membrane=path.mid(2).toStdString();
+            if(plan.excitation.count(membrane) || plan.releasedExcitation.count(membrane))remove("NumExcitatorySynapses");
+            if(plan.inhibition.count(membrane))remove("NumInhibitorySynapses");
+        }
         if(adjustableR.count(path))remove("Resistance");
         if(expected!=actual)
         {
@@ -199,11 +230,16 @@ void UniformTree(UEPtr<UContainer> node,unsigned frequency)
 }
 // Only owned stimulus inputs are replaced. Other model-internal connections
 // remain native Build's responsibility; source fan-out to analyzers is retained.
-void DetachStimulus(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,UNet* owner)
+void DetachStimulus(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,UNet* owner,const Plan& plan)
 {
     std::vector<UEPtr<UContainer>> nodes;Collect(neuron,nodes);
     for(const auto& part:nodes)if(auto synapse=dynamic_cast<NPulseSynapseCommon*>(part.Get()))
     {
+        const auto membrane=synapse->GetOwner();Require(bool(membrane),"unowned_model_synapse");
+        const auto path=membrane->GetLongName(neuron.Get());
+        const bool owned=(synapse->GetName().rfind("ExcSynapse",0)==0 && plan.ownedExcitation.count(path)) ||
+            (synapse->GetName().rfind("InhSynapse",0)==0 && plan.ownedInhibition.count(path));
+        if(!owned)continue;
         const auto inputs=synapse->Input.GetDataSources();
         if(std::find(inputs.begin(),inputs.end(),&source.Output)==inputs.end())continue;
         if(owner)owner->BreakLink(source.GetLongName(owner),"Output",synapse->GetLongName(owner),"Input");
@@ -227,7 +263,7 @@ void Transform(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,const P
     // Uniform physical overrides belong to images. Rebuilding with a live
     // parent override would overwrite learned/heterogeneous child physics.
     Require(!neuron->UseElementDefaults.GetData(),"native_edit_requires_storage_owned_physics");
-    DetachStimulus(neuron,source,owner);
+    DetachStimulus(neuron,source,owner,p);
     const int mode=neuron->StructureBuildMode.GetData();
     if(mode==2)
     {
@@ -249,9 +285,10 @@ void Transform(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,const P
         if(name.rfind("Dendrite",0)!=0)continue;
         auto membrane=neuron->GetComponentL<NPulseMembrane>(name,true);Require(bool(membrane),"unsupported_dendrite_component");
         const auto exc=p.excitation.find(name),inh=p.inhibition.find(name);
-        // Unused branches have no driven excitation bank. Native role images
-        // recreate a future bank; no old learned R is used as its prototype.
-        const int count=exc==p.excitation.end()?0:exc->second.count;
+        // Release former learner input banks. Unowned banks and their internal
+        // inputs belong to the supplied model, especially in explicit mode 0.
+        const int count=exc!=p.excitation.end()?exc->second.count:
+            (p.releasedExcitation.count(name)?0:membrane->NumExcitatorySynapses.GetData());
         if(membrane->NumExcitatorySynapses.GetData()!=count || (inh!=p.inhibition.end() && membrane->NumInhibitorySynapses.GetData()<1))
         {
             membrane->NumExcitatorySynapses=count;
@@ -364,8 +401,8 @@ NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const 
         Require(b.owner && b.neuron && b.dataset && b.owner->GetComponentL("Neuron",true).Get()==b.neuron.Get(),"invalid_native_edit_binding");
         Require(!b.legacyPhysicsPending && !b.postTuneActive,"conflicting_native_edit_controller");
         auto source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_edit_stimulus_source");
-        ReadNativeInputParameters(b,attachments);
-        const auto plan=MakePlan(b,requested,spec);const auto frequency=b.neuron->GetTimeStep();
+        const auto previous=ReadNativeInputParameters(b,attachments);
+        const auto plan=MakePlan(b,previous,requested,spec);const auto frequency=b.neuron->GetTimeStep();
         UEPtr<UContainer> live(b.neuron.Get());UniformTree(live,frequency);
         const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
         auto before=NmsdkTools::IdentifyModel(live,ports);Require(before["valid"].toBool(),"invalid_live_edit_identity");
@@ -398,10 +435,12 @@ const char* NativeEditStatusName(NativeEditStatus status)
 {switch(status){case NativeEditStatus::Applied:return "applied";case NativeEditStatus::Rejected:return "rejected";case NativeEditStatus::Failed:return "failed";}return "unknown";}
 
 NativeEditSpec MakeNativeEditSpec(Normalization normalization,int maximumLength,const std::vector<InputParameters>& requested,
-    bool nextSegment,bool segmentEI,int delta,double alpha,double maximumResistanceRatio,double configuredMinimumResistance)
+    bool nextSegment,bool segmentEI,int delta,double alpha,double maximumResistanceRatio,double configuredMinimumResistance,
+    bool preserveAllocatedCable)
 {
     NativeEditSpec result;result.normalization=normalization;result.maximumCableLength=maximumLength;
     result.maximumResistanceRatio=maximumResistanceRatio;result.configuredMinimumResistance=configuredMinimumResistance;
+    result.preserveAllocatedCable=preserveAllocatedCable;
     Require(!segmentEI || (delta>=1 && Positive(alpha)),"invalid_segment_inhibition_policy");
     for(std::size_t i=0;i<requested.size();++i)
     {

@@ -4746,7 +4746,7 @@ TimeLearner::NativeEditResult NNeuronTimeLearnerBranch::ApplyNativeParameters(co
    NormalizationMode.GetData()==0?TimeLearner::Normalization::SynapseCount:TimeLearner::Normalization::TipResistance,
    MaxDendriteLength.GetData(),requested,EnableNextSegmentInhibition.GetData(),EnableSegExcInh.GetData(),
    SegExcInhDelta.GetData(),SegExcInhAlpha.GetData(),MaxSynapseToMembraneResistanceRatio.GetData(),
-   0.); // The optional configured floor is a Classic-only parameter.
+   0.,StructureBuildMode.GetData()==0); // The optional configured floor is Classic-only.
   result=TimeLearner::ApplyNativeInputParameters(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),requested,spec);
   if(result.status==TimeLearner::NativeEditStatus::Applied)
   {
