@@ -3516,6 +3516,11 @@ bool NNeuronTimeLearnerBranch::SetLTZThreshold(const double &value)
 /// Raise/clear training flag; applies Training/Fixed LTZ threshold
 bool NNeuronTimeLearnerBranch::SetIsNeedToTrain(const bool &value)
 {
+ if(NativeProbeControl.OwnsControl())
+ {
+  if(!value)NativeProbeControl.Cancel("external_stop");
+  return true;
+ }
  if(CalculateMode == 1 && !value)
  {
   if(!(EnablePostTrainTuning.GetData() && TrainingPhase.GetData() == kPhasePostTune
@@ -4656,9 +4661,50 @@ bool NNeuronTimeLearnerBranch::ABuild(void)
 /// Sources (generators) before Neuron — Dataset calc contract
 bool NNeuronTimeLearnerBranch::ABeforeCalculate(void)
 {
+ if(NativeProbeControl.OwnsControl())
+ {
+  NativeProbeControl.BeforeChildren(NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
+  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))ForceSkipComponentCalculation();
+  return true;
+ }
  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))
   ForceSkipComponentCalculation();
  return true;
+}
+
+bool NNeuronTimeLearnerBranch::ABeforeDefault(void)
+{ NativeProbeControl.ResetControl();UNet::ABeforeDefault();return true; }
+bool NNeuronTimeLearnerBranch::ABeforeReset(void)
+{ NativeProbeControl.ResetControl();UNet::ABeforeReset();return true; }
+TimeLearner::NativeProbeBindings NNeuronTimeLearnerBranch::NativeProbeModelBindings()
+{
+ TimeLearner::NativeProbeBindings bindings;bindings.owner=this;bindings.neuron=Neuron;bindings.dataset=Dataset;
+ bindings.inputCount=NumInputDendrite.GetData();bindings.branch=true;
+ bindings.legacyPhysicsPending=CapApplyPending && SyncCapacitanceTrim.GetData()>0;
+ bindings.unsafeIntegration=IsIntegrationPreflightFailure(TrainingFailureReason.GetData());
+ bindings.postTuneActive=TrainingPhase.GetData()==kPhasePostTune || PostTuneFreeRunActive;
+ if(!Neuron)return bindings;
+ bindings.somas.push_back(Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(),true));
+ const int active=NativeProbeControl.ActiveInput();
+ if(active<0 || active>=bindings.inputCount)return bindings;
+ if(auto membrane=GetInputMembraneForPulse(active))
+  for(int i=1;i<=int(membrane->NumExcitatorySynapses);++i)
+   if(auto synapse=Neuron->GetComponentL<NPulseSynapseCommon>(MakeBranchExcSynapsePath(PulseAttachPos(active),i),true))
+    bindings.soloSynapses.push_back(synapse.Get());
+ const bool segei=EnableSegExcInh.GetData();
+ if(segei)
+ {
+  const int segment=PulseAttachPos(active)+std::max(1,SegExcInhDelta.GetData());
+  if(auto synapse=Neuron->GetComponentL<NPulseSynapseCommon>(MakeBranchInhSynapsePath(segment,1),true))
+   bindings.soloSynapses.push_back(synapse.Get());
+  else bindings.routingComplete=false;
+ }
+ if(EnableNextSegmentInhibition.GetData() && !(segei && SegExcInhDelta.GetData()==1))
+ {
+  if(auto synapse=GetNextSegInhSynapse(active))bindings.soloSynapses.push_back(synapse);
+  else bindings.routingComplete=false;
+ }
+ return bindings;
 }
 
 void NNeuronTimeLearnerBranch::UpdateComputationOrder(void)
@@ -7993,6 +8039,12 @@ bool NNeuronTimeLearnerBranch::ACalculate(void)
 {
  try
  {
+  if(NativeProbeControl.OwnsControl())
+  {
+   NativeProbeControl.AfterChildren(NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
+   if(Neuron)Output=Neuron->Output;
+   return true;
+  }
   if(!Neuron)
    return true;
   // SyncCapacitanceTrim: re-apply per-pulse C_k after Build / relink / load.

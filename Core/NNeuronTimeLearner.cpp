@@ -2750,6 +2750,11 @@ bool NNeuronTimeLearner::SetLTZThreshold(const double &value)
 /// Raise/clear training flag; applies Training/Fixed LTZ threshold
 bool NNeuronTimeLearner::SetIsNeedToTrain(const bool &value)
 {
+ if(NativeProbeControl.OwnsControl())
+ {
+  if(!value)NativeProbeControl.Cancel("external_stop");
+  return true;
+ }
  if(CalculateMode == 1 && !value)
  {
   if(!(EnablePostTrainTuning.GetData() && TrainingPhase.GetData() == kPhasePostTune
@@ -3917,9 +3922,31 @@ bool NNeuronTimeLearner::ABuild(void)
 /// Sources (generators) before Neuron — Dataset calc contract
 bool NNeuronTimeLearner::ABeforeCalculate(void)
 {
+ if(NativeProbeControl.OwnsControl())
+ {
+  NativeProbeControl.BeforeChildren(NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
+  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))ForceSkipComponentCalculation();
+  return true;
+ }
  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))
   ForceSkipComponentCalculation();
  return true;
+}
+
+bool NNeuronTimeLearner::ABeforeDefault(void)
+{ NativeProbeControl.ResetControl();UNet::ABeforeDefault();return true; }
+bool NNeuronTimeLearner::ABeforeReset(void)
+{ NativeProbeControl.ResetControl();UNet::ABeforeReset();return true; }
+TimeLearner::NativeProbeBindings NNeuronTimeLearner::NativeProbeModelBindings()
+{
+ TimeLearner::NativeProbeBindings bindings;bindings.owner=this;bindings.neuron=Neuron;bindings.dataset=Dataset;
+ bindings.inputCount=NumInputDendrite.GetData();
+ bindings.legacyPhysicsPending=CapApplyPending && SyncCapacitanceTrim.GetData()>0;
+ bindings.unsafeIntegration=IsIntegrationPreflightFailure(TrainingFailureReason.GetData());
+ bindings.postTuneActive=TrainingPhase.GetData()==kPhasePostTune || PostTuneFreeRunActive;
+ if(Neuron)for(int i=0;i<bindings.inputCount;++i)
+  bindings.somas.push_back(Neuron->GetComponentL<NPulseMembrane>(MakeLearnerSomaName(i+1),true));
+ return bindings;
 }
 
 void NNeuronTimeLearner::UpdateComputationOrder(void)
@@ -6783,6 +6810,12 @@ bool NNeuronTimeLearner::ACalculate(void)
 {
  try
  {
+  if(NativeProbeControl.OwnsControl())
+  {
+   NativeProbeControl.AfterChildren(NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
+   if(Neuron)Output=Neuron->Output;
+   return true;
+  }
   {
    static bool s_acal_logged = false;
    if(!s_acal_logged)
