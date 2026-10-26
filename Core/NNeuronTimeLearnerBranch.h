@@ -767,6 +767,8 @@ public: // Methods
  NNeuronTimeLearnerBranch(void);
  
  virtual ~NNeuronTimeLearnerBranch(void);
+ virtual bool Build(void) override;
+ virtual void Init(void) override;
 
  /// Explicit native probe ownership; released by native learner Reset/Default.
  /// Completion is an observation status, never proof that training converged.
@@ -919,6 +921,7 @@ public: // Methods
 
 protected:
  TimeLearner::NativeProbeExecutor NativeProbeControl;
+ unsigned NativeLifecycleDepth=0;
  TimeLearner::NativeProbeBindings NativeProbeModelBindings();
  virtual bool ABeforeDefault(void) override;
  virtual bool ABeforeReset(void) override;

@@ -3936,16 +3936,34 @@ bool NNeuronTimeLearner::ABeforeCalculate(void)
 bool NNeuronTimeLearner::ABeforeDefault(void)
 { NativeProbeControl.ResetControl();UNet::ABeforeDefault();return true; }
 bool NNeuronTimeLearner::ABeforeReset(void)
-{ NativeProbeControl.ResetControl();UNet::ABeforeReset();return true; }
+{
+ if(!NativeLifecycleDepth)NativeProbeControl.ResetControl();
+ else NativeProbeControl.Cancel("learner_implicit_reset");
+ UNet::ABeforeReset();return true;
+}
+bool NNeuronTimeLearner::Build(void)
+{
+ TimeLearner::NativeLifecycleScope scope(NativeLifecycleDepth);
+ if(!IsReady())NativeProbeControl.Cancel("learner_rebuild");
+ UNet::Build();return true;
+}
+void NNeuronTimeLearner::Init(void)
+{
+ TimeLearner::NativeLifecycleScope scope(NativeLifecycleDepth);
+ if(!IsInit())NativeProbeControl.Cancel("learner_init");
+ UNet::Init();
+}
 TimeLearner::NativeProbeBindings NNeuronTimeLearner::NativeProbeModelBindings()
 {
- TimeLearner::NativeProbeBindings bindings;bindings.owner=this;bindings.neuron=Neuron;bindings.dataset=Dataset;
+ TimeLearner::NativeProbeBindings bindings;bindings.owner=this;
+ bindings.neuron=GetComponentL<NPulseNeuron>("Neuron",true);
+ bindings.dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
  bindings.inputCount=NumInputDendrite.GetData();
  bindings.legacyPhysicsPending=CapApplyPending && SyncCapacitanceTrim.GetData()>0;
  bindings.unsafeIntegration=IsIntegrationPreflightFailure(TrainingFailureReason.GetData());
  bindings.postTuneActive=TrainingPhase.GetData()==kPhasePostTune || PostTuneFreeRunActive;
- if(Neuron)for(int i=0;i<bindings.inputCount;++i)
-  bindings.somas.push_back(Neuron->GetComponentL<NPulseMembrane>(MakeLearnerSomaName(i+1),true));
+ if(bindings.neuron)for(int i=0;i<bindings.inputCount;++i)
+  bindings.somas.push_back(bindings.neuron->GetComponentL<NPulseMembrane>(MakeLearnerSomaName(i+1),true));
  return bindings;
 }
 
@@ -6813,7 +6831,7 @@ bool NNeuronTimeLearner::ACalculate(void)
   if(NativeProbeControl.OwnsControl())
   {
    NativeProbeControl.AfterChildren(NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
-   if(Neuron)Output=Neuron->Output;
+   if(auto current=GetComponentL<NPulseNeuron>("Neuron",true))Output=current->Output;
    return true;
   }
   {

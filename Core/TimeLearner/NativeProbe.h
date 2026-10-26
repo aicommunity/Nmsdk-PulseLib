@@ -6,11 +6,21 @@
 #include "../NPulseSynapseCommon.h"
 #include <functional>
 #include <memory>
+#include <map>
 #include <set>
 #include <stdexcept>
 #include <utility>
 
 namespace NMSDK::TimeLearner {
+class NativeLifecycleScope {
+public:
+    explicit NativeLifecycleScope(unsigned& depth):depth(depth) { ++depth; }
+    ~NativeLifecycleScope() { --depth; }
+    NativeLifecycleScope(const NativeLifecycleScope&)=delete;
+    NativeLifecycleScope& operator=(const NativeLifecycleScope&)=delete;
+private:
+    unsigned& depth;
+};
 enum class NativeProbeStatus { Idle, Queued, Running, Completed, Rejected, Cancelled };
 struct NativeProbeRequest {
     // Relative window: begin must be zero, end is duration. The adapter supplies
@@ -42,6 +52,7 @@ struct NativeProbeResult {
     std::optional<ProbeObservation> observation;
     std::string currentBaseRevision;
     std::vector<std::string> reasons;
+    bool requiresFreshVerification=false;
 };
 
 // Called by the learner's native hooks, never calls Calculate. Taking control
@@ -61,11 +72,26 @@ public:
     const std::optional<NativeProbeResult>& Result() const { return result; }
     std::optional<NativeProbeResult> TakeResult();
 private:
-    struct SavedInput { RDK::UEPtr<NPulseSynapseCommon> synapse; RDK::UIPropertyOutput* source; };
+    struct SavedInput {
+        RDK::UEPtr<NPulseSynapseCommon> synapse;
+        RDK::UIPropertyOutput* source;
+        std::string path;
+        RDK::UModuleLifecycleObservation lifetime;
+    };
+    struct WatchedNode {
+        RDK::UEPtr<RDK::UContainer> node;
+        std::string path;
+        RDK::UModuleLifecycleObservation lifecycle;
+        bool stable;
+    };
     NativeProbeStatus state=NativeProbeStatus::Idle;
     NativeProbeRequest request;
     std::optional<NativeProbeBindings> physical;
     std::vector<SavedInput> savedInputs;
+    std::vector<WatchedNode> watched;
+    RDK::UModuleLifecycleObservation ownerLife,neuronLife,datasetLife,generatorLife;
+    NPulseGeneratorTransit* capturedGenerator=nullptr;
+    std::map<std::string,std::string> generatorParameters;
     std::unique_ptr<ProbeRecorder> recorder;
     std::optional<NativeProbeResult> result;
     std::optional<PreparedVerificationProbe> prepared;
@@ -74,7 +100,11 @@ private:
     bool oldAdvance=false,sourceSaved=false;
     std::optional<double> lastEmission;
     std::size_t emitted=0;
+    double frequency=0.;
     void CheckPattern(const NativeProbeBindings& bindings) const;
+    void CheckLiveGraph(const NativeProbeBindings& bindings) const;
+    void CheckSource(const NativeProbeBindings& bindings) const;
+    bool SameLiveRoots() const;
     void StopSource();
     void Restore();
     void Finish(double time,const std::string& reason,NativeProbeStatus status);

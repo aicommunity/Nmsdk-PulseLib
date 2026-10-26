@@ -21,6 +21,17 @@ NPulseGeneratorTransit* Generator(const NativeProbeBindings& b)
     auto generator=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     Require(bool(generator),"missing_native_generator");return generator.Get();
 }
+std::map<std::string,std::string> SourceParameters(NPulseGeneratorTransit* source)
+{
+    std::map<std::string,std::string> values{{"$class",source->GetCompClassName()}};
+    for(const auto& name:source->GetPropertiesOrder())
+    {
+        const auto property=source->FindProperty(name);
+        if(property && (property->GetType() & ptParameter) && name!="Frequency" && name!="Delay")
+            source->GetPropertyValue(name,values[name]);
+    }
+    return values;
+}
 }
 
 void NativeProbeExecutor::Queue(NativeProbeRequest value)
@@ -30,7 +41,43 @@ void NativeProbeExecutor::Queue(NativeProbeRequest value)
     const auto key=std::make_pair(value.specification.runId,value.specification.trialId);
     if(!seenTrials.insert(key).second)throw std::logic_error("reused_native_trial_id");
     request=std::move(value);state=NativeProbeStatus::Queued;prepared.reset();
-    lastEmission.reset();emitted=0;
+    lastEmission.reset();emitted=0;watched.clear();generatorParameters.clear();capturedGenerator=nullptr;
+    ownerLife={};neuronLife={};datasetLife={};generatorLife={};
+}
+
+bool NativeProbeExecutor::SameLiveRoots() const
+{
+    if(!physical || !ownerLife.IsAlive() || !neuronLife.IsAlive() || !datasetLife.IsAlive())return false;
+    auto neuron=physical->owner->GetComponentL<NPulseNeuron>("Neuron",true);
+    auto dataset=physical->owner->GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
+    return neuron.Get()==physical->neuron.Get() && dataset.Get()==physical->dataset.Get() &&
+        (!capturedGenerator || dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true).Get()==capturedGenerator);
+}
+void NativeProbeExecutor::CheckLiveGraph(const NativeProbeBindings& b) const
+{
+    Require(SameLiveRoots() && b.neuron.Get()==physical->neuron.Get() &&
+        b.dataset.Get()==physical->dataset.Get() && b.somas==physical->somas,"native_graph_replaced");
+    Require(ownerLife.IsCurrent(),"native_lifecycle_changed");
+    for(const auto& node:watched)
+    {
+        Require(node.lifecycle.IsAlive(),"native_graph_destroyed");
+        Require(b.owner->GetComponentL(node.path,true).Get()==node.node.Get(),"native_graph_replaced");
+        Require(!node.stable || node.lifecycle.IsCurrent(),"native_lifecycle_changed");
+    }
+}
+void NativeProbeExecutor::CheckSource(const NativeProbeBindings& b) const
+{
+    for(auto ancestor=b.owner;ancestor;ancestor=dynamic_cast<UNet*>(ancestor->GetOwner().Get()))
+        Require(double(ancestor->GetTimeStep())==frequency,"unsupported_native_multirate");
+    Require(double(b.dataset->GetTimeStep())==frequency,"unsupported_native_multirate");
+    auto source=Generator(b);
+    Require(SourceParameters(source)==generatorParameters && source->Delay.GetData()==0.,
+        "native_generator_configuration_changed");
+    const double expected=b.dataset->GetOneShotEndTime(0)>0.?1./source->PulseLength.GetData():0.;
+    Require(source->Frequency.GetData()==expected,"native_generator_control_changed");
+    Require(b.dataset->StateGeneration.GetData()==2 && !b.dataset->AdvanceSampleAfterBurst.GetData() &&
+        b.dataset->Delay.GetData()==std::max(oldDelay,request.specification.end+2./frequency),
+        "native_dataset_control_changed");
 }
 
 void NativeProbeExecutor::CheckPattern(const NativeProbeBindings& b) const
@@ -50,9 +97,8 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
     {
         try
         {
-            Require(physical && b.neuron==physical->neuron && b.dataset==physical->dataset &&
-                b.somas==physical->somas,"native_graph_replaced");
-            CheckPattern(b);
+            Require(Detail::Finite(time),"invalid_native_time");
+            CheckLiveGraph(b);CheckPattern(b);CheckSource(b);
             Require(prepared && request.readModelRevision()==prepared->effectiveModelRevision,"model_revision_changed");
         }
         catch(const std::exception& error){Failure(time,error.what());}
@@ -65,6 +111,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
     {
         Require(b.owner && b.neuron && b.dataset && b.inputCount>0,"missing_native_probe_graph");
         physical.emplace(b); // UEPtr is a native weak handle, not const-assignable.
+        ownerLife=b.owner->ObserveLifecycle();neuronLife=b.neuron->ObserveLifecycle();datasetLife=b.dataset->ObserveLifecycle();
         Require(!b.unsafeIntegration,"native_integration_preflight_failed");
         Require(!b.legacyPhysicsPending,"pending_legacy_physics_edit");
         Require(!b.postTuneActive,"concurrent_native_posttune");
@@ -79,7 +126,8 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
             !b.soloSynapses.empty()),"invalid_native_solo_input");
         CheckPattern(b);
         auto generator=Generator(b);
-        const double frequency=b.owner->GetTimeStep();
+        capturedGenerator=generator;
+        frequency=b.owner->GetTimeStep();
         Require(Detail::Finite(frequency) && frequency>0.,"invalid_native_frequency");
         for(auto ancestor=b.owner->GetOwner();ancestor;ancestor=ancestor->GetOwner())
             Require(double(ancestor->GetTimeStep())==frequency,"unsupported_native_multirate");
@@ -90,7 +138,11 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
                 "unready_or_multirate_native_graph");
         Require(!generator->UseTransitSignal.GetData() && !generator->UsePatternOutput.GetData() &&
             generator->FrequencyDeviation.GetData()==0. && Detail::Finite(generator->PulseLength.GetData()) &&
-            generator->PulseLength.GetData()>=1./frequency,"unsupported_native_generator_mode");
+            generator->PulseLength.GetData()>=1./frequency && generator->Delay.GetData()==0. &&
+            Detail::Finite(generator->Amplitude.GetData()) && generator->Amplitude.GetData()>0.,
+            "unsupported_native_generator_mode");
+        generatorLife=generator->ObserveLifecycle();
+        generatorParameters=SourceParameters(generator);
         Require(b.somas.size()==(b.branch?1u:std::size_t(b.inputCount)),"missing_native_physical_somas");
         Require(request.specification.maximumSampleGap>0. &&
             !Detail::After(request.specification.maximumSampleGap,1./frequency),"unsupported_native_sample_gap");
@@ -111,7 +163,8 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
                     Require(synapse->Input.GetData().GetSize()==0 ||
                         (synapse->Input.GetRows()==1 && synapse->Input.GetCols()==1 && synapse->Input(0,0)==0.),
                         "unsupported_native_unconnected_stimulus");
-                savedInputs.push_back({synapse,sources.empty()?nullptr:&generator->Output});
+                savedInputs.push_back({synapse,sources.empty()?nullptr:&generator->Output,
+                    synapse->GetLongName(b.owner),synapse->ObserveLifecycle()});
                 selected.erase(synapse.Get());
             }
             Require(selected.empty(),"native_solo_synapse_outside_graph");
@@ -119,6 +172,9 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         oldDelay=b.dataset->Delay.GetData();oldAdvance=b.dataset->AdvanceSampleAfterBurst.GetData();sourceSaved=true;
         StopSource();b.neuron->Reset();b.dataset->Reset();
         Require(request.readModelRevision()==request.baseModelRevision,"native_reset_changed_model");
+        for(const auto& saved:savedInputs)
+            Require(saved.lifetime.IsAlive() && b.owner->GetComponentL(saved.path,true).Get()==saved.synapse.Get(),
+                "native_reset_replaced_graph");
         if(b.branch)
         {
             const std::set<NPulseSynapseCommon*> selected(b.soloSynapses.begin(),b.soloSynapses.end());
@@ -145,6 +201,10 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         recorder=std::make_unique<ProbeRecorder>(spec);
         b.dataset->Delay=std::max(oldDelay,duration+2./frequency);
         b.dataset->AdvanceSampleAfterBurst=false;b.dataset->StateGeneration=2;
+        nodes.clear();seen.clear();Collect(b.neuron.Get(),nodes,seen);
+        for(const auto& node:nodes)watched.push_back({node,node->GetLongName(b.owner),node->ObserveLifecycle(),true});
+        nodes.clear();seen.clear();Collect(b.dataset.Get(),nodes,seen);
+        for(const auto& node:nodes)watched.push_back({node,node->GetLongName(b.owner),node->ObserveLifecycle(),node.Get()==b.dataset.Get()});
         prepared=PreparedVerificationProbe{request.routing,request.inputId,request.protocolRevision,
             request.baseModelRevision,spec.modelRevision,request.modelEpoch};
         if(request.onPrepared)request.onPrepared(*prepared,spec);
@@ -160,9 +220,7 @@ void NativeProbeExecutor::AfterChildren(const NativeProbeBindings& b,double time
     lastTime=time;
     try
     {
-        Require(physical && b.neuron==physical->neuron && b.dataset==physical->dataset &&
-            b.somas==physical->somas,"native_graph_replaced");
-        CheckPattern(b);
+        CheckLiveGraph(b);CheckPattern(b);CheckSource(b);
         const auto revision=request.readModelRevision();
         auto generator=Generator(b);
         for(int i=0;i<generator->OutputPulseTimes.GetCols();++i)
@@ -192,18 +250,23 @@ void NativeProbeExecutor::AfterChildren(const NativeProbeBindings& b,double time
 
 void NativeProbeExecutor::StopSource()
 {
-    if(!physical)return;
+    if(!SameLiveRoots())return;
     physical->dataset->StateGeneration=0;
-    for(auto generator:physical->dataset->Generators)if(generator){generator->Frequency=0.;generator->Reset();}
+    auto generator=physical->dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+    if(generator && generatorLife.IsAlive()){generator->Frequency=0.;generator->Reset();}
 }
 void NativeProbeExecutor::Restore()
 {
     StopSource();
     for(auto& saved:savedInputs)
-        if(saved.source)saved.synapse->Input.SetPointer(0,saved.source);
-        else saved.synapse->Input.DetachFrom();
+        if(SameLiveRoots() && generatorLife.IsAlive() && saved.lifetime.IsAlive() &&
+            physical->owner->GetComponentL(saved.path,true).Get()==saved.synapse.Get())
+        {
+            if(saved.source)saved.synapse->Input.SetPointer(0,saved.source);
+            else saved.synapse->Input.DetachFrom();
+        }
     savedInputs.clear();
-    if(physical && sourceSaved)
+    if(SameLiveRoots() && sourceSaved)
     {
         physical->dataset->Delay=oldDelay;
         physical->dataset->AdvanceSampleAfterBurst=oldAdvance;
@@ -215,24 +278,31 @@ void NativeProbeExecutor::Finish(double time,const std::string& reason,NativePro
     NativeProbeResult completed;completed.status=status;completed.prepared=prepared;
     try
     {
-        if(recorder)completed.observation=recorder->Close(time,request.readModelRevision(),reason);
+        const bool readable=SameLiveRoots() && generatorLife.IsAlive() &&
+            std::all_of(watched.begin(),watched.end(),[](const auto& node){return node.lifecycle.IsAlive();});
+        if(recorder)completed.observation=recorder->Close(time,readable?request.readModelRevision():"",reason);
     }
     catch(const std::exception& error){completed.reasons.push_back(error.what());completed.status=NativeProbeStatus::Rejected;}
     try
     {
         Restore();
-        if(request.readModelRevision)completed.currentBaseRevision=request.readModelRevision();
+        if(SameLiveRoots() && generatorLife.IsAlive() && request.readModelRevision &&
+            std::all_of(watched.begin(),watched.end(),[](const auto& node){return node.lifecycle.IsAlive();}))
+            completed.currentBaseRevision=request.readModelRevision();
         if(completed.currentBaseRevision!=request.baseModelRevision)
         {completed.reasons.push_back("native_base_revision_changed");completed.status=NativeProbeStatus::Rejected;}
     }
     catch(const std::exception& error){completed.reasons.push_back(error.what());completed.status=NativeProbeStatus::Rejected;}
     if(status!=NativeProbeStatus::Completed)completed.reasons.push_back(reason);
+    completed.requiresFreshVerification=completed.status!=NativeProbeStatus::Completed ||
+        (completed.observation && std::find(completed.observation->reasons.begin(),completed.observation->reasons.end(),
+            "model_revision_changed")!=completed.observation->reasons.end());
     if(completed.observation && (completed.status!=NativeProbeStatus::Completed || !completed.reasons.empty()))
     {
         completed.observation->valid=false;
         completed.observation->reasons.insert(completed.observation->reasons.end(),completed.reasons.begin(),completed.reasons.end());
     }
-    state=completed.status;result=std::move(completed);recorder.reset();physical.reset();
+    state=completed.status;result=std::move(completed);recorder.reset();physical.reset();watched.clear();
 }
 void NativeProbeExecutor::Failure(double time,const std::string& reason)
 { Finish(time,reason,NativeProbeStatus::Rejected); }

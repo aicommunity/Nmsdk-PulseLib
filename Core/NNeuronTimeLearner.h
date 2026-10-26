@@ -740,6 +740,8 @@ public: // Methods
  NNeuronTimeLearner(void);
  
  virtual ~NNeuronTimeLearner(void);
+ virtual bool Build(void) override;
+ virtual void Init(void) override;
 
  /// Explicit native probe control; does not mark training Done or resume legacy
  /// control between probes. A native learner Reset/Default releases ownership.
@@ -892,6 +894,7 @@ public: // Methods
 
 protected:
  TimeLearner::NativeProbeExecutor NativeProbeControl;
+ unsigned NativeLifecycleDepth=0;
  TimeLearner::NativeProbeBindings NativeProbeModelBindings();
  virtual bool ABeforeDefault(void) override;
  virtual bool ABeforeReset(void) override;
