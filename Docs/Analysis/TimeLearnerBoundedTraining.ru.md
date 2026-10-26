@@ -23,3 +23,17 @@ CapturedPerInput references, индивидуальные границы, исх
 Это ещё не конфигурационное включение ControllerVersion=2: полные структурные
 адаптеры, C-trim, экспорт обученного состояния и научная матрица остаются частью
 плана. Корневая документация: Docs/StructTrain/TimeLearner/BoundedTraining.ru.md.
+
+Проверки в корневом репозитории: root 5f3737013ec3c18d3514f1d3292e1367181cb9e0
+прошёл 29 addressed cases на обоих серверах, включая реальные коррекции Rs
+Classic/Branch × 2000/20000 Гц (фиксированные длины, явный sync tolerance 0.2 с).
+Root 067a4dba91b0e1a2bca83d8c73850baa9c0aa9b7 / PulseLib
+c33085f37ad7ce64ec446e05765dab0b742fd81d прошёл 27 cases на обоих серверах и
+27 M40 ASan cases с detect_leaks=0: controlled search, final gate, deadline,
+native N0/N1 readback совпадающих Branch позиций. Эффективные параметры общего
+банка должны совпадать у его входных меток; legacy requested Ns/Rs не заменяют
+readback. При невозможности разделения позиций самостоятельная нормализация
+связанного входа не разрешается скрытым изменением anchor.
+
+Evidence: Reports/StructTrain/TimeLearner/s07-bounded-elder1 и s07-bounded-m40,
+206 проверенных artifact hashes. Это не full CTest или полная матрица алгоритмов.
