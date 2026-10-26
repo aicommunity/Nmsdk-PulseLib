@@ -49,7 +49,8 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
     if(references)plan.search.initialModelEpoch=retainedEpoch;
     else retainedEpoch=plan.search.initialModelEpoch;
     startModel=lastModel=modelTime;startWall=lastWall=wallTime;
-    referenceProbes=invalidReferences=0;referenceEvidence.clear();certificate.reset();search.reset();activeAction.reset();
+    referenceProbes=invalidReferences=0;if(!references)referenceEvidence.clear();
+    certificate.reset();search.reset();activeAction.reset();
     waiting=false;reason.clear();outcome=TrainingStatus::Searching;++attempt;
     plan.search.runId+="/session/"+std::to_string(attempt);
     state=NativeTrainingState::CapturingReferences;
@@ -207,11 +208,11 @@ void NativeTrainingService::FailConfiguration(const std::string& diagnostic)
 void NativeTrainingService::ResetControl()
 {
     state=NativeTrainingState::Idle;outcome=TrainingStatus::Searching;reason.clear();waiting=false;
-    search.reset();activeAction.reset();referenceEvidence.clear();
+    search.reset();activeAction.reset();if(!references)referenceEvidence.clear();
     referenceProbes=invalidReferences=0;
 }
 void NativeTrainingService::InvalidateTarget()
-{ResetControl();certificate.reset();references.reset();referenceBinding.clear();retainedEpoch=0;}
+{ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referenceBinding.clear();retainedEpoch=0;}
 const char* NativeTrainingStateName(NativeTrainingState state)
 {switch(state){case NativeTrainingState::Idle:return "idle";case NativeTrainingState::CapturingReferences:return "capturing_references";
  case NativeTrainingState::Searching:return "searching";case NativeTrainingState::Finished:return "finished";}return "unknown";}
