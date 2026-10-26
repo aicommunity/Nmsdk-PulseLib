@@ -152,8 +152,8 @@ ProbeObservation ProbeRecorder::Close(double time,const std::string& currentMode
             const auto event=std::find_if(stimuli.begin(),stimuli.end(),[&](const auto& stimulus){return stimulus.id==window.stimulusId;});
             if(event!=stimuli.end())
             {
-                peak.delayFromStimulus=peak.time-event->time;
-                if(After(event->time,peak.time)) Reason("peak_precedes_stimulus:"+peak.inputId);
+                peak.delayFromStimulus=peak.time.value()-event->time;
+                if(After(event->time,peak.time.value())) Reason("peak_precedes_stimulus:"+peak.inputId);
             }
         }
         if(peak.validity!=PeakValidity::Valid)

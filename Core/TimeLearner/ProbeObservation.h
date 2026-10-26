@@ -1,5 +1,6 @@
 #pragma once
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -29,8 +30,9 @@ struct PeakObservation {
     PeakValidity validity=PeakValidity::Incomplete;
     // Only valid when validity==Valid. Times are measured sample timestamps;
     // a plateau reports its first and last sample, never an interpolated peak.
-    double amplitude=0., rawPotential=0., time=0., plateauEnd=0.;
-    double delayFromStimulus=0.;
+    std::optional<double> amplitude, rawPotential, time, plateauEnd;
+    // Unknown until the matching actual stimulus exists, even if a peak exists.
+    std::optional<double> delayFromStimulus;
     std::size_t candidateCount=0;
 };
 struct StimulusObservation { std::string id; double time; };
