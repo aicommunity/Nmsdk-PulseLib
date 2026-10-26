@@ -152,7 +152,9 @@ bool NPulseGenerator::ADefault(void)
  Output.Assign(1,1,0.0);
  OutputPotential.Assign(1,1,0.0);
  OutputFrequency.Assign(1,1,0.0);
- OutputPulseTimes.Assign(1,1,0.0);
+ // No emission is an empty list; time zero is a valid actual event.
+ OutputPulseTimes.Resize(1,0);
+ AvgFrequencyCounter->clear();
 
  return NSource::ADefault();
 }
@@ -164,6 +166,7 @@ bool NPulseGenerator::ADefault(void)
 bool NPulseGenerator::ABuild(void)
 {
  AvgFrequencyCounter->clear();
+ OutputPulseTimes.Resize(1,0);
  return true;
 }
 
@@ -186,7 +189,7 @@ bool NPulseGenerator::AReset(void)
  Output.ToZero();
  OutputPotential.ToZero();
  OutputFrequency.ToZero();
- OutputPulseTimes.ToZero();
+ OutputPulseTimes.Resize(1,0);
 
  if(Environment)
   ResetTime = Environment->GetTime().GetDoubleTime();
@@ -204,7 +207,7 @@ bool NPulseGenerator::ACalculate(void)
   Output.ToZero();
   OutputPotential.ToZero();
   OutputFrequency.ToZero();
-  OutputPulseTimes.ToZero();
+  OutputPulseTimes.Resize(1,0);
   AvgFrequencyCounter->clear();
   OldFrequency=Frequency;
   PulseCounter = 0;

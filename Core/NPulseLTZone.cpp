@@ -523,7 +523,8 @@ bool NPulseSimpleLTZone::ACalculate2(void)
  OutputPotential(0,0)=generator.OutputPotential(0,0);
  OutputFrequency(0,0)=potential;
 
- OutputPulseTimes(0,0)=generator.OutputPulseTimes(0,0);
+ // Preserve the complete event list, including an empty history after reset.
+ OutputPulseTimes=generator.OutputPulseTimes;
 
  if(MainOwner)
   dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));

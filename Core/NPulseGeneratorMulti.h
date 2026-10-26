@@ -53,6 +53,8 @@ UProperty<MDMatrix<double>,NPulseGeneratorMulti, ptOutput | ptPubState> OutputPo
 UProperty<MDMatrix<double>,NPulseGeneratorMulti, ptOutput | ptPubState> OutputFrequency;
 
 ///      (3)
+/// Actual emission timestamps (seconds), 1 x N; empty without emissions.
+/// Simultaneous emissions may have equal timestamps; zero is not a sentinel.
 UProperty<MDMatrix<double>,NPulseGeneratorMulti, ptOutput | ptPubState> OutputPulseTimes;
 
 public: //  
