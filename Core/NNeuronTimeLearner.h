@@ -24,6 +24,7 @@ See file license.txt for more information
 #include "TimeLearner/NativeProbe.h"
 #include "TimeLearner/NativeModelEditor.h"
 #include "TimeLearner/NativeTrainingService.h"
+#include "TimeLearner/NativeModelBuilder.h"
 #include "../../../Rdk/Deploy/Include/rdk.h"
 #include <iostream>
 #include <fstream>
@@ -769,6 +770,10 @@ public: // Methods
  const std::string& NativeModelEditFailure() const { return NativeEditFailure; }
  void BeginNativeTraining(TimeLearner::NativeTrainingPlan plan,bool recaptureReferences=false);
  const TimeLearner::NativeTrainingService& NativeTrainingController() const { return NativeTrainingControl; }
+ // Explicit cold construction may replace factory-owned children after preview;
+ // adoption is read-only and never infers whether a supplied graph was trained.
+ TimeLearner::NativeModelBuildResult ConstructNativeModel(TimeLearner::NativeModelSpec specification);
+ TimeLearner::NativeModelBuildResult AdoptNativeModel(TimeLearner::NativeModelSpec specification);
  
  // --------------------------
  // Parameter setters
@@ -912,6 +917,8 @@ public: // Methods
 protected:
  TimeLearner::NativeProbeExecutor NativeProbeControl;
  TimeLearner::NativeTrainingService NativeTrainingControl;
+ std::optional<TimeLearner::NativeModelSpec> NativeModelDeclaration;
+ void ValidateNativeModelDeclaration();
  bool NativeTrainingOwned=false;
  unsigned NativeTrainingEditDepth=0;
  std::string NativeEditFailure;
