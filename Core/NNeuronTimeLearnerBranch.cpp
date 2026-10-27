@@ -3346,7 +3346,7 @@ bool NNeuronTimeLearnerBranch::SetControllerVersion(const int &value)
 }
 bool NNeuronTimeLearnerBranch::SetControllerConfiguration(const std::string &value)
 {
- if(ConfiguredModelInitialized.GetData() && value!=ControllerConfiguration.GetData())return false;
+ if(ConfiguredModelInitialized.GetData() && NativeModelDeclaration && value!=ControllerConfiguration.GetData())return false;
  if(TimeLearner::NativeTrainingIsActive(NativeTrainingControl))return false;
  Ready=false;return true;
 }
