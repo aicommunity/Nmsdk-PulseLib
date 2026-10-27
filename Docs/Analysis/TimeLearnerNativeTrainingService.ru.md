@@ -1,5 +1,9 @@
 # NativeTrainingService
 
+Явные ConstructNativeModel/AdoptNativeModel и сохраняющий граф forced Build
+описаны в [NativeModelBuilder](TimeLearnerNativeModelBuilder.ru.md).
+Configured ControllerVersion=2 и полный trained-state codec ещё не реализованы.
+
 Подэтап assigned-wave-selection добавляет явную PeakSelectionPolicy в ProbeSpec
 и VerificationProtocol: прежний IsolatedWindow и opt-in AssignedBurstWave
 только для schema 3. Назначенный выбор требует полной measured burst assignment
@@ -48,4 +52,5 @@ observations/CSV и четыре отрицательных сертификат
 Актуальный журнал, области
 приёмки и оставшиеся задачи — корневой Docs/StructTrain/TimeLearner/
 NativeTrainingService.ru.md. C-trim, PostTune/calibration, полный trained-state
-transfer, новые builders и конфигурационный dispatch ещё обязательны.
+transfer и конфигурационный dispatch ещё обязательны. Native builder реализован
+отдельным API-подэтапом; это не завершает всю production mode matrix.
