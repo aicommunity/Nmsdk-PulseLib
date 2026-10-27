@@ -1,5 +1,13 @@
 # NativeTrainingService
 
+Подэтап assigned-wave-selection добавляет явную PeakSelectionPolicy в ProbeSpec
+и VerificationProtocol: прежний IsolatedWindow и opt-in AssignedBurstWave
+только для schema 3. Назначенный выбор требует полной measured burst assignment
+и реальных соседних samples вокруг плато внутри окна; missing/extra/clipped
+не принимаются. References, Start и final verification связывают одну политику.
+Evidence envelope 2 записывает её явно. Серверная приёмка этой редакции ожидается;
+актуальный статус — корневой Docs/StructTrain/TimeLearner/AssignedWaveSelection.ru.md.
+
 BeginNativeTraining у обоих TimeLearner запускает общую последовательность
 захвата per-input references, ограниченного поиска и независимой свежей
 финальной проверки. Before/After hooks штатного scheduler вызывают service и

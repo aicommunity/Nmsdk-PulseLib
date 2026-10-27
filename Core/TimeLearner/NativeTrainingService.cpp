@@ -31,7 +31,8 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
         value.probe.specification.expectedStimulusIds==value.protocol.stimulusIds &&
         value.probe.specification.stimulusProfile==value.protocol.stimulusProfile &&
         value.probe.specification.minimumAmplitude==value.protocol.minimumAmplitude &&
-        value.probe.specification.waveAssignment==value.protocol.waveAssignment,
+        value.probe.specification.waveAssignment==value.protocol.waveAssignment &&
+        value.probe.specification.peakSelection==value.protocol.peakSelection,
         "native_training_protocol_mismatch");
     const auto revision=a.readModelRevision();Require(!revision.empty(),"missing_native_training_model_revision");
     value.search.initialModelRevision=revision;

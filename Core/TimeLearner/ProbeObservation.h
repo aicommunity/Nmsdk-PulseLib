@@ -20,6 +20,7 @@ struct PeakWindow {
     std::string stimulusId;
 };
 enum class WaveAssignmentPolicy { WindowOnly, OrderedWholeBurst };
+enum class PeakSelectionPolicy { IsolatedWindow, AssignedBurstWave };
 struct ProbeSpec {
     unsigned schemaVersion=1;
     std::string runId, trialId, sampleId, patternHash, modelRevision;
@@ -37,6 +38,9 @@ struct ProbeSpec {
     // Schema 3 additionally requires a complete order-preserving response wave
     // sequence on every measured channel. No model delay fills a missing wave.
     WaveAssignmentPolicy waveAssignment=WaveAssignmentPolicy::WindowOnly;
+    // Explicit opt-in: select the measured ordered burst wave rather than
+    // requiring the window to contain exactly one local maximum.
+    PeakSelectionPolicy peakSelection=PeakSelectionPolicy::IsolatedWindow;
 };
 enum class PeakValidity { Valid, Missing, Ambiguous, Clipped, Incomplete };
 struct PeakObservation {
@@ -94,6 +98,8 @@ private:
     bool closed=false, coverageBroken=false;
     void Reason(const std::string& reason);
     PeakObservation Measure(const PeakWindow& window, bool complete) const;
+    PeakObservation SelectAssigned(const PeakWindow& window,
+                                  const BurstAssignmentObservation& assignment) const;
     BurstAssignmentObservation AssignBurst(std::size_t channel,bool complete) const;
 };
 const char* PeakValidityName(PeakValidity validity);

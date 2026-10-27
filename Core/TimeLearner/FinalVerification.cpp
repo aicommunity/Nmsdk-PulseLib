@@ -20,6 +20,8 @@ void ProtocolValid(const VerificationProtocol& p)
        (p.schemaVersion>=2 && (!p.stimulusProfile || !ValidStimulusProfile(*p.stimulusProfile))) ||
        (p.schemaVersion<3 && p.waveAssignment!=WaveAssignmentPolicy::WindowOnly) ||
        (p.schemaVersion==3 && p.waveAssignment!=WaveAssignmentPolicy::OrderedWholeBurst) ||
+       (p.peakSelection!=PeakSelectionPolicy::IsolatedWindow && p.peakSelection!=PeakSelectionPolicy::AssignedBurstWave) ||
+       (p.peakSelection==PeakSelectionPolicy::AssignedBurstWave && p.schemaVersion!=3) ||
        p.revision.empty() || p.sampleId.empty() || p.patternHash.empty() ||
        p.originStimulusId.empty() || p.inputs.empty() || p.stimulusIds.size()!=p.inputs.size() ||
        !Finite(p.maximumSampleGap) || p.maximumSampleGap<=0. ||
@@ -58,6 +60,7 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
             fail("prepared_physical_input_mismatch");
     }
     if(s.schemaVersion!=p.schemaVersion || s.stimulusProfile!=p.stimulusProfile || s.waveAssignment!=p.waveAssignment ||
+       s.peakSelection!=p.peakSelection ||
        s.modelRevision!=prepared.effectiveModelRevision || s.sampleId!=p.sampleId ||
        s.patternHash!=p.patternHash || s.minimumAmplitude!=p.minimumAmplitude ||
        After(s.maximumSampleGap,p.maximumSampleGap))fail("observation_protocol_mismatch");
