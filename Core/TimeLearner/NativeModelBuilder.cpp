@@ -107,6 +107,7 @@ void CheckReplacement(UNet& owner)
             {auto consumer=item->GetAConnectorByIndex(name,i);Require(!consumer || inside(consumer.Get()),"native_cold_replace_has_external_listener");}
         }
     UEPtr<UContainer> root(&owner);while(root->GetOwner())root=root->GetOwner();
+    if(outputs.empty())return;
     std::vector<UEPtr<UContainer>> all;Collect(root,all);
     for(const auto& node:all)if(!inside(node.Get()))for(const auto& [name,entry]:node->GetPropertiesList())
         if(auto input=dynamic_cast<UIPropertyInput*>(entry.Property.Get()))
@@ -141,6 +142,8 @@ void ValidateNativeModelSpec(const NativeModelSpec& s)
     Require(s.neuronStructureMode>=0 && s.neuronStructureMode<=2 &&
         (s.normalization==Normalization::SynapseCount || s.normalization==Normalization::TipResistance) &&
         s.editPolicy.normalization==s.normalization && s.editPolicy.maximumCableLength>=1,"invalid_native_model_policy");
+    Require(!s.allowMutedInputBaseline || s.branch,"muted_native_baseline_requires_branch");
+    Require(s.neuronStructureMode!=0 || s.allocatedCableLengths.empty(),"explicit_native_allocation_belongs_to_image");
     Require(std::isfinite(s.editPolicy.maximumResistanceRatio) && s.editPolicy.maximumResistanceRatio>=1. &&
         std::isfinite(s.editPolicy.configuredMinimumResistance) && s.editPolicy.configuredMinimumResistance>=0.,"invalid_native_model_resistance_policy");
     double total=0.;std::map<int,const NativeInitialInput*> shared;
@@ -189,7 +192,12 @@ static NativeModelBuildResult InspectBuiltModel(UNet& owner,const NativeModelSpe
         }
         auto source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
         Require(source && source->GetCompClassName()==s.generatorClass,"native_model_generator_class_mismatch");
+        Require(b.dataset->Generators.size()==1 && b.dataset->Generators[0]==source.Get(),"native_model_generator_cache_mismatch");
+        Require(Positive(source->Amplitude.GetData()) && Positive(source->PulseLength.GetData()) &&
+            source->PulseLength.GetData()>=1./s.frequencyHz && !source->UseTransitSignal.GetData() &&
+            !source->UsePatternOutput.GetData() && source->FrequencyDeviation.GetData()==0.,"native_model_unsupported_generator_profile");
         Require(b.dataset->NumSamples.GetData()==1 && b.dataset->NumFeatures.GetData()==1 &&
+            b.dataset->Iteration.GetData()==0 &&
             b.dataset->MaxSpikesPerFeature.GetData()==int(s.inputs.size()) &&
             ValidNativeTarget(b.dataset->MatrixData.GetData(),s.inputs.size()),"native_model_dataset_mismatch");
         r.effective=ReadNativeInputParameters(b,attachments);
@@ -198,11 +206,14 @@ static NativeModelBuildResult InspectBuiltModel(UNet& owner,const NativeModelSpe
             Require(attachments[i]>=1 && attachments[i]<=s.editPolicy.maximumCableLength &&
                 (!s.branch || !i || attachments[i-1]>=attachments[i]),"native_model_attachment_mismatch");
             auto membrane=b.neuron->GetComponentL<NPulseMembrane>(Path(s.branch,i,attachments[i]),true);
+            std::optional<bool> bankConnected;
             for(int k=1;k<=r.effective[i].synapses;++k)
             {
                 auto synapse=membrane->GetComponentL<NPulseSynapseCommon>("ExcSynapse"+std::to_string(k),true);
                 const auto inputs=synapse->Input.GetDataSources();
-                Require(inputs.size()==1 && inputs.front()==&source->Output,"native_model_input_binding_mismatch");
+                const bool connected=inputs.size()==1 && inputs.front()==&source->Output;
+                Require(connected || (s.allowMutedInputBaseline && inputs.empty()),"native_model_input_binding_mismatch");
+                Require(!bankConnected || *bankConnected==connected,"native_model_partially_connected_input_bank");bankConnected=connected;
             }
         }
         for(const auto& rule:s.editPolicy.inhibition)
@@ -211,7 +222,8 @@ static NativeModelBuildResult InspectBuiltModel(UNet& owner,const NativeModelSpe
             Require(position<=s.editPolicy.maximumCableLength,"native_inhibition_attachment_outside_bounds");
             auto synapse=b.neuron->GetComponentL<NPulseSynapseCommon>(Path(s.branch,rule.inputIndex,int(position))+".InhSynapse1",true);
             Require(bool(synapse),"missing_native_inhibitory_attachment");const auto inputs=synapse->Input.GetDataSources();
-            Require(inputs.size()==1 && inputs.front()==&source->Output,"native_model_inhibition_binding_mismatch");
+            Require((inputs.size()==1 && inputs.front()==&source->Output) ||
+                (s.allowMutedInputBaseline && inputs.empty()),"native_model_inhibition_binding_mismatch");
         }
         const auto identity=NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}});
         Require(identity["valid"].toBool(),"invalid_native_built_model_identity");
@@ -308,6 +320,11 @@ NativeModelSpec DescribeNativeLearnerModel(UNet& owner,bool branch,Normalization
     else if(s.neuronStructureMode==1)s.allocatedCableLengths.assign(branch?1:attachments.size(),neuron->NumDendriteMembraneParts.GetData());
     NativeProbeBindings b;b.owner=&owner;b.neuron=neuron;b.dataset=dataset;b.branch=branch;b.inputCount=int(attachments.size());
     for(const auto& p:ReadNativeInputParameters(b,attachments))s.inputs.push_back({p.length,p.synapses,p.resistance});
+    if(branch)for(std::size_t i=0;i<attachments.size();++i)
+    {
+        auto synapse=neuron->GetComponentL<NPulseSynapseCommon>(Path(true,i,attachments[i])+".ExcSynapse1",true);
+        if(synapse && synapse->Input.GetDataSources().empty())s.allowMutedInputBaseline=true;
+    }
     for(int i=0;i<dataset->MatrixData.GetRows();++i)s.initialIsi.push_back(dataset->MatrixData(i,0));
     ValidateNativeModelSpec(s);return s;
 }

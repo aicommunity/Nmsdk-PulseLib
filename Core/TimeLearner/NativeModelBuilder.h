@@ -20,6 +20,9 @@ struct NativeModelSpec {
     std::vector<int> allocatedCableLengths;
     NativeEditSpec editPolicy;
     bool scaleInhibitionWithInput=true;
+    // Compatibility adoption may retain a Branch's native muted baseline.
+    // Actual binding state remains part of the model hash; no implicit relink.
+    bool allowMutedInputBaseline=false;
 };
 enum class NativeModelBuildStatus { Constructed,Adopted,Rejected,Failed };
 struct NativeModelBuildResult {
