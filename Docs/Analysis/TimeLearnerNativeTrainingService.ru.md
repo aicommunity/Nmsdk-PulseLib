@@ -5,8 +5,11 @@
 только для schema 3. Назначенный выбор требует полной measured burst assignment
 и реальных соседних samples вокруг плато внутри окна; missing/extra/clipped
 не принимаются. References, Start и final verification связывают одну политику.
-Evidence envelope 2 записывает её явно. Серверная приёмка этой редакции ожидается;
-актуальный статус — корневой Docs/StructTrain/TimeLearner/AssignedWaveSelection.ru.md.
+Evidence envelope 2 записывает её явно. Root
+f2fe81f96d68859690ae56e4ef29f5c32c549bc7 прошёл 56/56 addressed C++ и 18/18
+Python на каждом сервере без пропусков. Те же 56/56 C++ cases прошли
+M40 ASan с detect_leaks=0; отсутствие утечек не заявляется.
+Актуальный статус — корневой Docs/StructTrain/TimeLearner/AssignedWaveSelection.ru.md.
 
 BeginNativeTraining у обоих TimeLearner запускает общую последовательность
 захвата per-input references, ограниченного поиска и независимой свежей
