@@ -53,6 +53,8 @@ class CapturedReferences {
 public:
     CapturedReferences(const CapturedReferences&)=default;
     CapturedReferences(CapturedReferences&&)=default;
+    CapturedReferences& operator=(const CapturedReferences&)=default;
+    CapturedReferences& operator=(CapturedReferences&&)=default;
     static CapturedReferences Capture(VerificationProtocol protocol,
                                       const std::vector<ReferenceEvidence>& evidence);
     const VerificationProtocol& Protocol() const { return protocol; }
