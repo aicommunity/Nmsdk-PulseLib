@@ -148,7 +148,7 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
     if(version==2)Require(protocol==MakeConfiguredNativeTrainingPlan(c).protocol,"configured_learned_state_requires_canonical_protocol");
     result->service.RestoreBoundary(plan,Packets(package["reference_packets"]),Packets(package["final_packets"]),result->modelRevision,
         Count(package["model_epoch"]),Count(package["session_attempt"]));
-    Require(EncodeTrainingCertificate(*result->service.Certificate())==package["certificate"] &&
+    Require(EncodeTrainingCertificate(*result->service.Certificate())==Object(package["certificate"]) &&
         package["training_outcome"]==QJsonValue(result->service.Certificate()->Exact()?"exact":"search_unresolved"),"learned_state_certificate_claim_mismatch");
     const auto archive=Object(package["neuron"]);Require(Object(Object(archive["graph"])["identity"])["sha256"]==package["model_revision"],"learned_state_archive_revision_mismatch");
     const auto metadata=Object(archive["metadata"]),training=Object(metadata["training"]);

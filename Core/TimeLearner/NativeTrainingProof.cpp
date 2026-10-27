@@ -29,3 +29,4 @@ NativeTrainingProof ReplayNativeTrainingProof(const VerificationProtocol& protoc
         throw std::invalid_argument("native_boundary_verification_incomplete");
     return {std::move(captured),*replay.Certificate()};
 }
+}

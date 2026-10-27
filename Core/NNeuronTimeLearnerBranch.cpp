@@ -4944,6 +4944,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeLearne
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
  {
+  NativeConfiguredSinks={};
   OldDendriteLength=DendriteLength.GetData();LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
   CapApplyPending=false;TrainingPhase.SetDataDirect(NativeTrainingControl.Certificate()->Exact()?kPhaseDone:kPhaseFailed);Ready=false;
  }
