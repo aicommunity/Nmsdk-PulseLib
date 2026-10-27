@@ -21,6 +21,7 @@ template<class Owner> ConfiguredNativeTraining PrepareConfiguredNativeOwner(Owne
     const StimulusProfile actual{generator->GetCompClassName(),generator->Amplitude.GetData(),generator->PulseLength.GetData(),
         double(generator->GetTimeStep()),generator->FrequencyDeviation.GetData(),generator->UseTransitSignal.GetData(),generator->UsePatternOutput.GetData()};
     if(actual!=c.stimulusProfile)throw std::invalid_argument("configured_native_effective_stimulus_mismatch");
+    owner.ConfiguredModelInitialized.SetDataDirect(true);
     return c;
 }
 }
