@@ -19,6 +19,8 @@ QString Routing(ProbeRouting routing)
 {if(routing==ProbeRouting::ClassicBurst)return "classic_burst";if(routing==ProbeRouting::BranchSoloBurst)return "branch_solo_burst";throw std::invalid_argument("unknown_probe_routing");}
 QString Assignment(WaveAssignmentPolicy policy)
 {if(policy==WaveAssignmentPolicy::WindowOnly)return "window_only";if(policy==WaveAssignmentPolicy::OrderedWholeBurst)return "ordered_whole_burst";throw std::invalid_argument("unknown_wave_assignment");}
+QString Selection(PeakSelectionPolicy policy)
+{if(policy==PeakSelectionPolicy::IsolatedWindow)return "isolated_window";if(policy==PeakSelectionPolicy::AssignedBurstWave)return "assigned_burst_wave";throw std::invalid_argument("unknown_peak_selection");}
 QJsonObject Profile(const StimulusProfile& p)
 {return {{"generator_class",Text(p.generatorClass)},{"amplitude",Number(p.amplitude)},{"pulse_length",Number(p.pulseLength)},
  {"frequency_hz",Number(p.frequencyHz)},{"frequency_deviation",Number(p.frequencyDeviation)},
@@ -36,7 +38,7 @@ QJsonObject Spec(const ProbeSpec& s,const char* timeFrame)
         {"record_spikes",s.recordSpikes},{"baseline",baseline},{"windows",windows},
         {"expected_stimulus_ids",Strings(s.expectedStimulusIds)},
         {"stimulus_profile",s.stimulusProfile?QJsonValue(Profile(*s.stimulusProfile)):QJsonValue(QJsonValue::Null)},
-        {"wave_assignment",Assignment(s.waveAssignment)}};
+        {"wave_assignment",Assignment(s.waveAssignment)},{"peak_selection",Selection(s.peakSelection)}};
 }
 QJsonObject Observation(const ProbeObservation& o)
 {
@@ -72,7 +74,7 @@ QJsonObject Prepared(const PreparedVerificationProbe& p)
 }
 QJsonObject EncodeNativeProbeEvidence(const NativeProbeResult& result)
 {
-    return {{"kind","timelearner_native_probe_evidence"},{"evidence_schema_version",1},
+    return {{"kind","timelearner_native_probe_evidence"},{"evidence_schema_version",2},
         {"native_status",NativeProbeStatusName(result.status)},{"current_base_revision",Text(result.currentBaseRevision)},
         {"reasons",Strings(result.reasons)},{"requires_fresh_verification",result.requiresFreshVerification},
         {"requested_specification",result.requestedSpecification?
@@ -142,6 +144,7 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
             {"timing_low",Number(r.timingResidualLow)},{"timing_high",Number(r.timingResidualHigh)},
             {"within_timing",r.withinTiming},{"within_amplitude",r.withinAmplitude}});
         result["certificate"]=QJsonObject{{"schema_version",int(certificate->SchemaVersion())},
+            {"peak_selection",Selection(certificate->Protocol().peakSelection)},
             {"exact",certificate->Exact()},{"model_revision",Text(certificate->ModelRevision())},
             {"model_epoch",Count(certificate->ModelEpoch())},{"protocol_revision",Text(certificate->ProtocolRevision())},
             {"reference_model_revision",Text(certificate->ReferenceModelRevision())},

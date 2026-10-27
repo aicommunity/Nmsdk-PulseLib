@@ -23,6 +23,9 @@ ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specificati
        (spec.schemaVersion>=2 && (!spec.stimulusProfile || !ValidStimulusProfile(*spec.stimulusProfile))) ||
        (spec.schemaVersion<3 && spec.waveAssignment!=WaveAssignmentPolicy::WindowOnly) ||
        (spec.schemaVersion==3 && spec.waveAssignment!=WaveAssignmentPolicy::OrderedWholeBurst) ||
+       (spec.peakSelection!=PeakSelectionPolicy::IsolatedWindow &&
+        spec.peakSelection!=PeakSelectionPolicy::AssignedBurstWave) ||
+       (spec.peakSelection==PeakSelectionPolicy::AssignedBurstWave && spec.schemaVersion!=3) ||
        spec.runId.empty() || spec.trialId.empty() ||
        spec.sampleId.empty() || spec.patternHash.empty() || spec.modelRevision.empty() ||
        !Finite(spec.begin) || !Finite(spec.end) || !Finite(spec.end-spec.begin) || !After(spec.end,spec.begin) ||
@@ -139,6 +142,26 @@ PeakObservation ProbeRecorder::Measure(const PeakWindow& window,bool complete) c
     return result;
 }
 
+PeakObservation ProbeRecorder::SelectAssigned(const PeakWindow& window,
+    const BurstAssignmentObservation& assignment) const
+{
+    PeakObservation result{window.inputId,window.stimulusId,assignment.validity};
+    if(assignment.validity!=PeakValidity::Valid)return result;
+    const auto wave=std::find_if(assignment.waves.begin(),assignment.waves.end(),
+        [&](const auto& w){return w.stimulusId==window.stimulusId;});
+    if(wave==assignment.waves.end()) {result.validity=PeakValidity::Missing;return result;}
+    // The peak and both neighbouring samples must be inside the declared
+    // window. Numeric bounds around a peak alone do not prove coverage.
+    const auto first=std::find_if(frames.begin(),frames.end(),[&](const auto& f){return f.time==wave->time;});
+    const auto last=std::find_if(frames.begin(),frames.end(),[&](const auto& f){return f.time==wave->plateauEnd;});
+    if(first==frames.end() || last==frames.end() || first==frames.begin() || last+1==frames.end() ||
+       After(window.begin,(first-1)->time) || After((last+1)->time,window.end))
+    {result.validity=PeakValidity::Clipped;return result;}
+    result.candidateCount=1;result.amplitude=wave->amplitude;result.rawPotential=wave->rawPotential;
+    result.time=wave->time;result.plateauEnd=wave->plateauEnd;
+    return result;
+}
+
 BurstAssignmentObservation ProbeRecorder::AssignBurst(std::size_t channel,bool complete) const
 {
     BurstAssignmentObservation result;result.channel=channel;
@@ -205,7 +228,8 @@ ProbeObservation ProbeRecorder::Close(double time,const std::string& currentMode
         {
             const auto& assignment=*std::find_if(result.burstAssignments.begin(),result.burstAssignments.end(),
                 [&](const auto& a){return a.channel==window.channel;});
-            if(assignment.validity!=PeakValidity::Valid)peak=PeakObservation{window.inputId,window.stimulusId,assignment.validity};
+            if(spec.peakSelection==PeakSelectionPolicy::AssignedBurstWave)peak=SelectAssigned(window,assignment);
+            else if(assignment.validity!=PeakValidity::Valid)peak=PeakObservation{window.inputId,window.stimulusId,assignment.validity};
             else if(peak.validity==PeakValidity::Valid)
             {
                 const auto wave=std::find_if(assignment.waves.begin(),assignment.waves.end(),
