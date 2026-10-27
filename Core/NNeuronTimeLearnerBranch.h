@@ -45,7 +45,7 @@ public:
  /// Missing property in existing configs means legacy version 1.
  UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> ControllerVersion;
  UProperty<std::string, NNeuronTimeLearnerBranch, ptPubParameter> ControllerConfiguration;
- UProperty<bool, NNeuronTimeLearnerBranch, ptPubState> ConfiguredModelInitialized;
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter | ptPubState> ConfiguredModelInitialized;
  /// 0 - do not rebuild; 1 - BuildStructure in ABuild
  UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> StructureBuildMode;
  
