@@ -47,6 +47,7 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
             window.channel==(value.protocol.routing==ProbeRouting::ClassicBurst?i:0u),"native_training_window_mapping_mismatch");
     }
     plan=std::move(value);plan.search.initialModelRevision=revision;plan.probe.readModelRevision=a.readModelRevision;
+    plan.probe.readFullModelRevision=a.readFullModelRevision;
     if(references)plan.search.initialModelEpoch=retainedEpoch;
     else retainedEpoch=plan.search.initialModelEpoch;
     startModel=lastModel=modelTime;startWall=lastWall=wallTime;

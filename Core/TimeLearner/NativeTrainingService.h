@@ -28,6 +28,7 @@ struct NativeTrainingAdapter {
     std::function<NativeProbeStatus()> probeState;
     std::function<std::optional<NativeProbeResult>()> takeResult;
     std::function<void(const std::string&)> cancel;
+    std::function<std::string()> readFullModelRevision;
 };
 
 class NativeTrainingService {

@@ -39,13 +39,18 @@ struct NativeProbeRequest {
     std::size_t modelEpoch=0;
     std::vector<double> expectedInputIsi;
     // Must read the actual physical graph including bindings/frequency. Called
-    // before/after preparation and on every observed tick; no cached revision
-    // assumption is made by this adapter. Dataset pattern is checked separately.
+    // before/after preparation and on every observed tick. A typed observer may
+    // reuse a full hash only after checking all its actual semantic inputs.
+    // Dataset pattern is checked separately.
     std::function<std::string()> readModelRevision;
     std::function<void(const PreparedVerificationProbe&,const ProbeSpec&)> onPrepared;
     // Read-only artifact sink. Runs after native sampling, before closing the
     // window; failure rejects the observation rather than silently losing data.
     std::function<void(const NativeProbeSample&)> onSample;
+    // Optional independent full capture at preparation/closure boundaries.
+    // Typed observers still inspect the actual graph on EVERY intervening tick.
+    // Legacy providers omit it and use readModelRevision everywhere as before.
+    std::function<std::string()> readFullModelRevision;
 };
 struct NativeProbeBindings {
     RDK::UNet* owner=nullptr;
@@ -124,6 +129,7 @@ private:
     void CheckSource(const NativeProbeBindings& bindings) const;
     bool SameLiveRoots() const;
     bool CanReadModel() const;
+    std::string ReadRevision(bool full=false) const;
     void StopSource();
     void Restore();
     void Finish(double time,const std::string& reason,NativeProbeStatus status);

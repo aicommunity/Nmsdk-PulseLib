@@ -177,7 +177,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         Require(b.somas.size()==(b.branch?1u:std::size_t(b.inputCount)),"missing_native_physical_somas");
         Require(request.specification.maximumSampleGap>0. &&
             !Detail::After(request.specification.maximumSampleGap,1./frequency),"unsupported_native_sample_gap");
-        Require(request.readModelRevision()==request.baseModelRevision,"native_base_revision_changed");
+        Require(ReadRevision(true)==request.baseModelRevision,"native_base_revision_changed");
         if(request.specification.schemaVersion==3)
         {
             const auto& ids=request.specification.expectedStimulusIds;
@@ -217,7 +217,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         }
         oldDelay=b.dataset->Delay.GetData();oldAdvance=b.dataset->AdvanceSampleAfterBurst.GetData();sourceSaved=true;
         StopSource();b.neuron->Reset();b.dataset->Reset();
-        Require(request.readModelRevision()==request.baseModelRevision,"native_reset_changed_model");
+        Require(ReadRevision(true)==request.baseModelRevision,"native_reset_changed_model");
         for(const auto& saved:savedInputs)
             Require(saved.lifetime.IsAlive() && b.owner->GetComponentL(saved.path,true).Get()==saved.synapse.Get(),
                 "native_reset_replaced_graph");
@@ -244,7 +244,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
                 "unsupported_native_soma_dimensions");
             spec.baseline.push_back(soma->SumPotential(0,0));
         }
-        spec.modelRevision=request.readModelRevision();
+        spec.modelRevision=ReadRevision(true);
         recorder=std::make_unique<ProbeRecorder>(spec);
         b.dataset->Delay=std::max(oldDelay,duration+2./frequency);
         b.dataset->AdvanceSampleAfterBurst=false;b.dataset->StateGeneration=2;
@@ -257,7 +257,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         if(spec.schemaVersion==3 && b.branch)prepared->selectedInputIndex=std::size_t(request.activeInput);
         if(request.onPrepared)request.onPrepared(*prepared,spec);
         CheckLiveGraph(b);CheckPattern(b);CheckSource(b);
-        Require(request.readModelRevision()==spec.modelRevision,"native_prepared_callback_changed_model");
+        Require(ReadRevision(true)==spec.modelRevision,"native_prepared_callback_changed_model");
         state=NativeProbeStatus::Running;
     }
     catch(const std::exception& error){Failure(time,error.what());}
@@ -337,14 +337,14 @@ void NativeProbeExecutor::Finish(double time,const std::string& reason,NativePro
     if(status!=NativeProbeStatus::Completed)completed.reasons.push_back(reason);
     try
     {
-        if(recorder)completed.observation=recorder->Close(time,CanReadModel()?request.readModelRevision():"",reason);
+        if(recorder)completed.observation=recorder->Close(time,CanReadModel()?ReadRevision(true):"",reason);
     }
     catch(const std::exception& error){completed.reasons.push_back(error.what());completed.status=NativeProbeStatus::Rejected;}
     try
     {
         Restore();
         if(CanReadModel() && request.readModelRevision)
-            completed.currentBaseRevision=request.readModelRevision();
+            completed.currentBaseRevision=ReadRevision(true);
         if(completed.currentBaseRevision.empty())
         {completed.reasons.push_back("native_base_revision_unavailable");completed.status=NativeProbeStatus::Rejected;}
         else if(completed.currentBaseRevision!=request.baseModelRevision)
@@ -363,6 +363,8 @@ void NativeProbeExecutor::Finish(double time,const std::string& reason,NativePro
 }
 void NativeProbeExecutor::Failure(double time,const std::string& reason)
 { Finish(time,reason,NativeProbeStatus::Rejected); }
+std::string NativeProbeExecutor::ReadRevision(bool full) const
+{return full && request.readFullModelRevision?request.readFullModelRevision():request.readModelRevision();}
 void NativeProbeExecutor::Cancel(const std::string& reason)
 {
     if(state==NativeProbeStatus::Queued || state==NativeProbeStatus::Running)
