@@ -237,7 +237,7 @@ NativeModelBuildResult InspectNativeLearnerModel(UNet& owner,const NativeModelSp
 NativeModelBuildResult CommitNativeLearnerChildren(UNet& owner,const NativeModelSpec& s,
     const std::vector<InputParameters>& expected,UEPtr<NPulseNeuron> neuron,UEPtr<NDatasetMatrix> dataset)
 {
-    NativeModelBuildResult result;UEPtr<UContainer> oldNeuron,oldDataset;bool detached=false;
+    NativeModelBuildResult result;UEPtr<UContainer> oldNeuron,oldDataset;bool detached=false,committed=false;
     std::vector<NameT> order;owner.GetComponentsList(order);
     const auto restoreOrder=[&] {
         for(std::size_t i=0;i<order.size();++i)
@@ -265,12 +265,14 @@ NativeModelBuildResult CommitNativeLearnerChildren(UNet& owner,const NativeModel
         result=InspectNativeLearnerModel(owner,s,positions);
         Require(result.status==NativeModelBuildStatus::Adopted && result.modelRevision==preview.modelRevision && result.effective==expected,
             "import_graph_changed_during_attachment");
+        committed=true;result.modelMayHaveChanged=true;
         if(oldNeuron)dynamic_pointer_cast<UNet>(oldNeuron)->BreakLinks();if(oldDataset)dynamic_pointer_cast<UNet>(oldDataset)->BreakLinks();
         if(oldNeuron)owner.GetStorage()->ReturnObject(oldNeuron);if(oldDataset)owner.GetStorage()->ReturnObject(oldDataset);
         result.modelMayHaveChanged=true;return result;
     }
     catch(const std::exception& error)
     {
+        if(committed){result.status=NativeModelBuildStatus::Failed;result.reason=error.what();result.modelMayHaveChanged=true;return result;}
         result.status=NativeModelBuildStatus::Rejected;result.reason=error.what();result.modelMayHaveChanged=false;
         if(detached)try
         {
