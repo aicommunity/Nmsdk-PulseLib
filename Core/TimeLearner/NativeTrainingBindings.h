@@ -9,14 +9,15 @@ template<class Learner> NativeTrainingAdapter BindNativeTraining(Learner& owner,
 {
     NativeTrainingAdapter result;
     result.readParameters=[&owner]{return owner.ReadNativeParameters();};
-    result.readModelRevision=[&owner] {
+    auto observer=std::make_shared<NmsdkTools::ModelRevisionObserver>();
+    const auto revision=[&owner,observer](bool full) {
         auto neuron=owner.template GetComponentL<NPulseNeuron>("Neuron",true);
         auto source=owner.template GetComponentL<NPulseGeneratorTransit>("DatasetMatrix.Generator1",true);
         if(!neuron || !source)throw std::runtime_error("missing_native_training_graph");
-        const auto identity=NmsdkTools::IdentifyModel(neuron,{{&source->Output,"burst"}});
-        if(!identity["valid"].toBool())throw std::runtime_error("invalid_native_training_model_identity");
-        return identity["sha256"].toString().toStdString();
+        return observer->Read(neuron,{{&source->Output,"burst"}},full).toStdString();
     };
+    result.readModelRevision=[revision]{return revision(false);};
+    result.readFullModelRevision=[revision]{return revision(true);};
     result.apply=[&owner,&editDepth](const auto& parameters) {
         NativeLifecycleScope scope(editDepth);return owner.ApplyNativeParameters(parameters);
     };

@@ -2,6 +2,9 @@
 #include "ModelInspection.h"
 #include "../NPulseNeuronCommon.h"
 #include "../NPulseMembraneCommon.h"
+#include "../NPulseNeuron.h"
+#include "../NPulseChannel.h"
+#include "../NPulseSynapse.h"
 #include <QCryptographicHash>
 #include <QJsonArray>
 #include <cmath>
@@ -11,6 +14,8 @@
 #include <map>
 #include <set>
 #include <stdexcept>
+#include <functional>
+#include <typeindex>
 
 namespace NmsdkTools {
 namespace {
@@ -353,6 +358,200 @@ QJsonObject IdentifyModel(UEPtr<UContainer> model, const ModelBoundarySources& b
         result["sha256"] = CanonicalModelDataSha256(semantic);
     }
     return result;
+}
+
+namespace {
+using Match=std::function<bool()>;
+template<class T> Match ScalarMatch(UIProperty* property)
+{
+    if(auto typed=dynamic_cast<UVBaseDataProperty<T>*>(property))
+        return [typed,saved=T(typed->GetData())]{return typed->GetData()==saved;};
+    return {};
+}
+template<class T> Match MatrixMatch(UIProperty* property)
+{
+    auto typed=dynamic_cast<UVBaseDataProperty<MDMatrix<T>>*>(property);if(!typed)return {};
+    const auto& matrix=typed->GetData();const auto rows=matrix.GetRows(),cols=matrix.GetCols();
+    std::vector<T> saved;for(int r=0;r<rows;++r)for(int c=0;c<cols;++c)saved.push_back(matrix(r,c));
+    return [typed,rows,cols,saved=std::move(saved)] {
+        const auto& now=typed->GetData();if(now.GetRows()!=rows || now.GetCols()!=cols)return false;
+        std::size_t i=0;for(int r=0;r<rows;++r)for(int c=0;c<cols;++c)if(now(r,c)!=saved[i++])return false;
+        return true;
+    };
+}
+Match ParameterMatch(UIProperty* property)
+{
+    // Same supported typed domain as Value above. Unknown types fail closed;
+    // neither this path nor the full identity uses formatted Rdk numbers.
+    Match result;
+    if((result=ScalarMatch<bool>(property)) || (result=ScalarMatch<double>(property)) ||
+       (result=ScalarMatch<int>(property)) || (result=ScalarMatch<long>(property)) ||
+       (result=ScalarMatch<long long>(property)) || (result=ScalarMatch<unsigned int>(property)) ||
+       (result=ScalarMatch<unsigned long>(property)) || (result=ScalarMatch<unsigned long long>(property)) ||
+       (result=ScalarMatch<std::string>(property)) ||
+       (result=ScalarMatch<std::pair<std::string,std::string>>(property)) ||
+       (result=ScalarMatch<std::vector<double>>(property)) || (result=ScalarMatch<std::vector<int>>(property)) ||
+       (result=ScalarMatch<std::vector<std::string>>(property)) ||
+       (result=MatrixMatch<double>(property)) || (result=MatrixMatch<int>(property)))return result;
+    throw std::runtime_error("unsupported_observer_parameter_type");
+}
+bool SameAliases(const UNet::PropertyAliasMapT& a,const UNet::PropertyAliasMapT& b)
+{
+    if(a.size()!=b.size())return false;auto x=a.begin(),y=b.begin();
+    for(;x!=a.end();++x,++y)
+        if(x->first!=y->first || x->second.ComponentPath!=y->second.ComponentPath ||
+           x->second.PropertyName!=y->second.PropertyName || x->second.PropertyType!=y->second.PropertyType)return false;
+    return true;
+}
+struct ObservedProperty {
+    std::string name;UIProperty* property=nullptr;unsigned mask=0;
+    std::type_index implementationType{typeid(void)};
+    UIPropertyInput* input=nullptr;
+    bool connected=false,external=false,inspectable=false;
+    std::vector<const UIProperty*> sources;
+    Match parameter;
+};
+struct ObservedNode {
+    UContainer* component=nullptr;UModuleLifecycleObservation lifetime;
+    std::string className;UTime frequency;
+    std::vector<std::string> order,childNames;
+    std::vector<UContainer*> children;
+    std::vector<std::pair<std::string,UIProperty*>> registered;
+    std::vector<ObservedProperty> properties;
+    UNet* net=nullptr;UNet::PropertyAliasMapT aliases;
+    NMSDK::NPulseNeuronCommon* neuron=nullptr;
+    NMSDK::NPulseMembraneCommon* membrane=nullptr;
+    NMSDK::NPulseNeuron* pulseNeuron=nullptr;
+    std::vector<NMSDK::NPulseMembraneCommon*> membranes;
+    std::vector<NMSDK::NPulseChannelCommon*> channels;
+    UContainer *lt=nullptr,*positive=nullptr,*negative=nullptr;
+    Match finitePhysics;
+};
+struct ObservedPort {
+    const UIProperty* property=nullptr;UContainer* owner=nullptr;
+    UModuleLifecycleObservation lifetime;std::string name;unsigned mask=0;
+};
+}
+
+struct ModelRevisionObserver::Impl {
+    UContainer* root=nullptr;ModelBoundarySources ports;
+    std::vector<ObservedNode> nodes;std::vector<ObservedPort> boundaries;
+    QString digest;std::size_t fullReads=0,cacheHits=0;
+    void Clear(){root=nullptr;nodes.clear();boundaries.clear();ports.clear();digest.clear();}
+    bool Unchanged(UEPtr<UContainer> model,const ModelBoundarySources& actualPorts) const
+    {
+        if(root!=model.Get() || ports!=actualPorts || nodes.empty())return false;
+        // Do not dereference ANY stored node/property until all named owners'
+        // lifetimes and memberships have been checked. UEPtr is a raw pointer.
+        for(const auto& n:nodes)if(!n.lifetime.IsAlive() || !n.lifetime.IsCurrent())return false;
+        for(const auto& b:boundaries)if(!b.lifetime.IsAlive() || !b.lifetime.IsCurrent())return false;
+        for(const auto& n:nodes)
+        {
+            auto c=n.component;
+            std::vector<std::string> names;c->GetComponentsList(names);
+            if(names!=n.childNames)return false;
+            for(std::size_t i=0;i<names.size();++i)if(c->GetComponent(names[i],true).Get()!=n.children[i])return false;
+            if(!c->IsReady() || !c->IsInit() || c->GetTimeStep()!=n.frequency ||
+                c->GetCompClassName()!=n.className || c->GetPropertiesOrder()!=n.order)return false;
+            const auto& actual=c->GetPropertiesList();if(actual.size()!=n.registered.size())return false;
+            auto i=actual.begin();for(const auto& p:n.registered)
+            {if(i->first!=p.first || i->second.Property.Get()!=p.second)return false;++i;}
+            // FindProperty also covers registered aliases, not only the map.
+            for(const auto& p:n.properties)if(c->FindProperty(p.name).Get()!=p.property)return false;
+        }
+        for(const auto& b:boundaries)
+        {
+            const auto found=b.owner->GetPropertiesList().find(b.name);
+            if(found==b.owner->GetPropertiesList().end() || found->second.Property.Get()!=b.property)return false;
+        }
+        for(const auto& n:nodes)
+        {
+            for(const auto& p:n.properties)
+            {
+                if(p.property->GetType()!=p.mask || std::type_index(typeid(*p.property))!=p.implementationType)return false;
+                if(p.input && (p.input->UsesExternalDataSource()!=p.external ||
+                    (p.input->IsConnected() || p.input->UsesExternalDataSource())!=p.connected ||
+                    p.input->CanInspectDataSources()!=p.inspectable || p.input->GetDataSources()!=p.sources))return false;
+                if(p.parameter && !p.parameter())return false;
+            }
+            if(n.net && !SameAliases(n.net->GetPropertyAliases(),n.aliases))return false;
+            if(n.neuron && (n.neuron->Membranes!=n.membranes || n.neuron->GetLTZone()!=n.lt))return false;
+            if(n.membrane)
+            {
+                if(n.membrane->GetNumChannels()!=n.channels.size())return false;
+                for(std::size_t i=0;i<n.channels.size();++i)if(n.membrane->GetChannel(i)!=n.channels[i])return false;
+            }
+            if(n.pulseNeuron && (n.pulseNeuron->GetPosGenerator()!=n.positive ||
+                n.pulseNeuron->GetNegGenerator()!=n.negative))return false;
+            if(n.finitePhysics && !n.finitePhysics())return false;
+        }
+        for(const auto& b:boundaries)if(b.property->GetType()!=b.mask)return false;
+        return true;
+    }
+    void Capture(UEPtr<UContainer> model,const ModelBoundarySources& actualPorts,const QString& hash)
+    {
+        Clear();std::vector<Node> collected;std::set<const UContainer*> seen;Collect(model,"$",collected,seen);
+        for(const auto& entry:collected)
+        {
+            auto c=entry.component.Get();ObservedNode n;n.component=c;n.lifetime=c->ObserveLifecycle();
+            n.className=c->GetCompClassName();n.frequency=c->GetTimeStep();n.order=c->GetPropertiesOrder();
+            c->GetComponentsList(n.childNames);
+            for(const auto& name:n.childNames)n.children.push_back(c->GetComponent(name,true).Get());
+            for(const auto& p:c->GetPropertiesList())n.registered.push_back({p.first,p.second.Property.Get()});
+            for(const auto& name:n.order)
+            {
+                ObservedProperty p;p.name=name;p.property=c->FindProperty(name).Get();p.mask=p.property->GetType();
+                p.implementationType=std::type_index(typeid(*p.property));
+                p.input=dynamic_cast<UIPropertyInput*>(p.property);
+                if(p.input)
+                {
+                    p.external=p.input->UsesExternalDataSource();p.connected=p.input->IsConnected() || p.external;
+                    p.inspectable=p.input->CanInspectDataSources();p.sources=p.input->GetDataSources();
+                }
+                if((p.mask & ptParameter) && !Excluded(name) && !p.connected)p.parameter=ParameterMatch(p.property);
+                n.properties.push_back(std::move(p));
+            }
+            n.net=dynamic_cast<UNet*>(c);if(n.net)n.aliases=n.net->GetPropertyAliases();
+            n.neuron=dynamic_cast<NMSDK::NPulseNeuronCommon*>(c);
+            if(n.neuron){n.membranes=n.neuron->Membranes;n.lt=n.neuron->GetLTZone();}
+            n.membrane=dynamic_cast<NMSDK::NPulseMembraneCommon*>(c);
+            if(n.membrane)for(std::size_t i=0;i<n.membrane->GetNumChannels();++i)n.channels.push_back(n.membrane->GetChannel(i));
+            n.pulseNeuron=dynamic_cast<NMSDK::NPulseNeuron*>(c);
+            if(n.pulseNeuron){n.positive=n.pulseNeuron->GetPosGenerator();n.negative=n.pulseNeuron->GetNegGenerator();}
+            if(auto channel=dynamic_cast<NMSDK::NPulseChannel*>(c))n.finitePhysics=[channel] {
+                return std::isfinite(channel->Capacity.GetData()) && std::isfinite(channel->Resistance.GetData()) &&
+                    std::isfinite(channel->RestingResistance.GetData()) && std::isfinite(channel->TimeConstant.GetData());};
+            if(auto synapse=dynamic_cast<NMSDK::NPulseSynapse*>(c))n.finitePhysics=[synapse] {
+                return std::isfinite(synapse->Resistance.GetData()) && std::isfinite(synapse->SecretionTC.GetData()) &&
+                    std::isfinite(synapse->DissociationTC.GetData()) && std::isfinite(synapse->TypicalPulseDuration.GetData()) &&
+                    std::isfinite(synapse->InhibitionCoeff.GetData());};
+            nodes.push_back(std::move(n));
+        }
+        for(const auto& p:actualPorts)
+        {
+            auto owner=p.first->GetOwner();if(!owner)throw std::runtime_error("observer_port_has_no_owner");
+            boundaries.push_back({p.first,owner,owner->ObserveLifecycle(),p.first->GetName(),p.first->GetType()});
+        }
+        root=model.Get();ports=actualPorts;digest=hash;
+    }
+};
+ModelRevisionObserver::ModelRevisionObserver():implementation(new Impl){}
+ModelRevisionObserver::~ModelRevisionObserver()=default;
+void ModelRevisionObserver::Clear(){implementation->Clear();}
+std::size_t ModelRevisionObserver::FullReads() const{return implementation->fullReads;}
+std::size_t ModelRevisionObserver::CacheHits() const{return implementation->cacheHits;}
+QString ModelRevisionObserver::Read(UEPtr<UContainer> model,const ModelBoundarySources& ports,bool forceFull)
+{
+    auto& state=*implementation;
+    if(!forceFull && state.Unchanged(model,ports)){++state.cacheHits;return state.digest;}
+    ++state.fullReads;
+    // Guard a previously declared source that has been destroyed. Never read
+    // its type/name through a dangling pointer while refreshing the snapshot.
+    if(state.ports==ports)for(const auto& b:state.boundaries)
+        if(!b.lifetime.IsAlive()){state.Clear();throw std::runtime_error("stale_model_boundary_source");}
+    state.Clear();const auto identity=IdentifyModel(model,ports);
+    if(!identity["valid"].toBool())throw std::runtime_error("invalid_model_revision");
+    state.Capture(model,ports,identity["sha256"].toString());return state.digest;
 }
 
 QJsonObject VerifyModelIdentity(const QJsonObject& expected, UEPtr<UContainer> model,
