@@ -2,8 +2,9 @@
 
 Оба learner предоставляют `ConstructNativeModel(NativeModelSpec)` для явного
 холодного построения и `AdoptNativeModel(NativeModelSpec)` для read-only приёма
-существующего графа. Это C++ API; configured `ControllerVersion=2` и перенос
-полного обученного состояния остаются отдельной незавершённой работой.
+существующего графа. Это C++ API; отдельный configured cold frontend
+`ControllerVersion=2` подключён позднее через JSON и штатный XML Load.
+Перенос полного обученного состояния остаётся незавершённой работой.
 
 Общие физические параметры берутся из immutable storage images. Builder создаёт
 частный Neuron/Dataset, устанавливает частоту до финального построения, задаёт
