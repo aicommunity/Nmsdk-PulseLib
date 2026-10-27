@@ -48,6 +48,15 @@ public:
     const std::optional<CapturedReferences>& References() const { return references; }
     const std::optional<TrainingCertificate>& Certificate() const { return certificate; }
     const std::vector<ReferenceEvidence>& ReferenceObservations() const { return referenceEvidence; }
+    const std::vector<NativeProbeResult>& ReferencePackets() const { return referencePackets; }
+    const std::vector<NativeProbeResult>& FinalPackets() const { return finalPackets; }
+    const NativeTrainingPlan& Plan() const { return plan; }
+    std::size_t SessionAttempt() const { return attempt; }
+    // Completed-stage restore, never a mid-probe checkpoint. Replays the actual
+    // reference/final evidence through the production validators before commit.
+    void RestoreBoundary(NativeTrainingPlan plan,std::vector<NativeProbeResult> references,
+        std::vector<NativeProbeResult> finals,const std::string& actualModelRevision,
+        std::size_t modelEpoch,std::size_t sessionAttempt);
     const BoundedTrainingSession* Search() const { return search.get(); }
     std::size_t IssuedReferenceProbes() const { return referenceProbes; }
     std::size_t ModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
@@ -60,6 +69,7 @@ private:
     std::optional<CapturedReferences> references;
     std::optional<TrainingCertificate> certificate;
     std::vector<ReferenceEvidence> referenceEvidence;
+    std::vector<NativeProbeResult> referencePackets,finalPackets;
     std::unique_ptr<BoundedTrainingSession> search;
     std::optional<TrainingAction> activeAction;
     bool waiting=false;

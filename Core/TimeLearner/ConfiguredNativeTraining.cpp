@@ -210,11 +210,13 @@ ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
     c.maximumModelSeconds=Number(o["maximum_model_seconds"]);c.maximumWallSeconds=Number(o["maximum_wall_seconds"]);
     MakeConfiguredNativeTrainingPlan(c);return c;
 }
-ConfiguredNativeTraining ParseConfiguredNativeTraining(const std::string& text)
+QJsonObject ParseStrictNativeJsonObject(const std::string& text,std::size_t maximumBytes)
 {
-    Require(!text.empty() && text.size()<=16*1024*1024,"invalid_native_configuration_size");
+    Require(!text.empty() && text.size()<=maximumBytes && text.size()<=std::size_t(std::numeric_limits<int>::max()),"invalid_native_configuration_size");
     const auto bytes=QByteArray::fromStdString(text);QJsonParseError error;const auto document=QJsonDocument::fromJson(bytes,&error);
     Require(error.error==QJsonParseError::NoError && document.isObject(),"invalid_native_configuration_json");
-    DuplicateKeys{bytes}.Value();return DecodeConfiguredNativeTraining(document.object());
+    DuplicateKeys{bytes}.Value();return document.object();
 }
+ConfiguredNativeTraining ParseConfiguredNativeTraining(const std::string& text)
+{return DecodeConfiguredNativeTraining(ParseStrictNativeJsonObject(text));}
 }

@@ -82,6 +82,32 @@ QJsonObject EncodeNativeProbeEvidence(const NativeProbeResult& result)
         {"prepared",result.prepared?QJsonValue(Prepared(*result.prepared)):QJsonValue(QJsonValue::Null)},
         {"observation",result.observation?QJsonValue(Observation(*result.observation)):QJsonValue(QJsonValue::Null)}};
 }
+QJsonObject EncodeTrainingCertificate(const TrainingCertificate& certificate)
+{
+        QJsonArray residuals;
+        for(const auto& r:certificate.Residuals())residuals.append(QJsonObject{{"input_id",Text(r.inputId)},
+            {"trial_id",Text(r.trialId)},{"effective_model_revision",Text(r.effectiveModelRevision)},
+            {"target_raw_potential",Number(r.targetRawPotential)},{"measured_raw_potential",Number(r.measuredRawPotential)},
+            {"amplitude_residual",Number(r.amplitudeResidual)},{"amplitude_tolerance",Number(r.amplitudeTolerance)},
+            {"timing_low",Number(r.timingResidualLow)},{"timing_high",Number(r.timingResidualHigh)},
+            {"within_timing",r.withinTiming},{"within_amplitude",r.withinAmplitude}});
+        return QJsonObject{{"schema_version",int(certificate.SchemaVersion())},
+            {"peak_selection",Selection(certificate.Protocol().peakSelection)},
+            {"exact",certificate.Exact()},{"model_revision",Text(certificate.ModelRevision())},
+            {"model_epoch",Count(certificate.ModelEpoch())},{"protocol_revision",Text(certificate.ProtocolRevision())},
+            {"reference_model_revision",Text(certificate.ReferenceModelRevision())},
+            {"reference_model_epoch",Count(certificate.ReferenceModelEpoch())},{"residuals",residuals}};
+}
+QJsonObject EncodeVerificationProtocol(const VerificationProtocol& p)
+{
+    ValidateVerificationProtocol(p);QJsonArray inputs;
+    for(const auto& input:p.inputs)inputs.append(QJsonObject{{"id",Text(input.id)},{"stimulus_id",Text(input.stimulusId)}});
+    return {{"schema_version",int(p.schemaVersion)},{"routing",Routing(p.routing)},{"revision",Text(p.revision)},
+        {"sample_id",Text(p.sampleId)},{"pattern_hash",Text(p.patternHash)},{"origin_stimulus_id",Text(p.originStimulusId)},
+        {"inputs",inputs},{"stimulus_ids",Strings(p.stimulusIds)},{"maximum_sample_gap",Number(p.maximumSampleGap)},
+        {"minimum_amplitude",Number(p.minimumAmplitude)},{"stimulus_profile",p.stimulusProfile?QJsonValue(Profile(*p.stimulusProfile)):QJsonValue(QJsonValue::Null)},
+        {"wave_assignment",Assignment(p.waveAssignment)},{"peak_selection",Selection(p.peakSelection)}};
+}
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)
 {
@@ -136,19 +162,7 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
     result["certificate_matches_actual_model"]=false;
     if(const auto& certificate=service.Certificate())
     {
-        QJsonArray residuals;
-        for(const auto& r:certificate->Residuals())residuals.append(QJsonObject{{"input_id",Text(r.inputId)},
-            {"trial_id",Text(r.trialId)},{"effective_model_revision",Text(r.effectiveModelRevision)},
-            {"target_raw_potential",Number(r.targetRawPotential)},{"measured_raw_potential",Number(r.measuredRawPotential)},
-            {"amplitude_residual",Number(r.amplitudeResidual)},{"amplitude_tolerance",Number(r.amplitudeTolerance)},
-            {"timing_low",Number(r.timingResidualLow)},{"timing_high",Number(r.timingResidualHigh)},
-            {"within_timing",r.withinTiming},{"within_amplitude",r.withinAmplitude}});
-        result["certificate"]=QJsonObject{{"schema_version",int(certificate->SchemaVersion())},
-            {"peak_selection",Selection(certificate->Protocol().peakSelection)},
-            {"exact",certificate->Exact()},{"model_revision",Text(certificate->ModelRevision())},
-            {"model_epoch",Count(certificate->ModelEpoch())},{"protocol_revision",Text(certificate->ProtocolRevision())},
-            {"reference_model_revision",Text(certificate->ReferenceModelRevision())},
-            {"reference_model_epoch",Count(certificate->ReferenceModelEpoch())},{"residuals",residuals}};
+        result["certificate"]=EncodeTrainingCertificate(*certificate);
         result["certificate_matches_actual_model"]=service.References() && certificate->Matches(actualModelRevision,
             *service.References(),cfg.tolerances,ModelStateKind::LearnedSolo,service.ModelEpoch());
     }

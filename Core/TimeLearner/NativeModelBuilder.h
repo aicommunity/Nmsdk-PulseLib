@@ -41,6 +41,10 @@ NativeModelBuildResult ConstructNativeLearnerModel(RDK::UNet& owner,const Native
 // overlay. Attachments are current learned values; Rs/C may differ from initial.
 NativeModelBuildResult InspectNativeLearnerModel(RDK::UNet& owner,const NativeModelSpec& specification,
                                                const std::vector<int>& attachments);
+// Verified unowned import children. Preserves owner order, checks external
+// listeners before replacement and restores the old children on commit failure.
+NativeModelBuildResult CommitNativeLearnerChildren(RDK::UNet& owner,const NativeModelSpec& specification,
+    const std::vector<InputParameters>& expected,RDK::UEPtr<NPulseNeuron> neuron,RDK::UEPtr<NDatasetMatrix> dataset);
 NativeModelSpec DescribeNativeLearnerModel(RDK::UNet& owner,bool branch,Normalization normalization,
     const std::vector<int>& attachments,const NativeEditSpec& policy);
 NativeEditSpec NativeModelEditPolicy(const NativeModelSpec& declaration,const std::vector<InputParameters>& requested);
