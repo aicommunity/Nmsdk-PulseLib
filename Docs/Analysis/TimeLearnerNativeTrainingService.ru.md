@@ -2,7 +2,9 @@
 
 Явные ConstructNativeModel/AdoptNativeModel и сохраняющий граф forced Build
 описаны в [NativeModelBuilder](TimeLearnerNativeModelBuilder.ru.md).
-Configured ControllerVersion=2 и полный trained-state codec ещё не реализованы.
+Configured ControllerVersion=2 подключён отдельным cold-подэтапом;
+полный trained-state codec ещё не реализован. См. корневой
+Docs/StructTrain/TimeLearner/ConfiguredNativeController.ru.md.
 
 Подэтап assigned-wave-selection добавляет явную PeakSelectionPolicy в ProbeSpec
 и VerificationProtocol: прежний IsolatedWindow и opt-in AssignedBurstWave
@@ -21,8 +23,9 @@ BeginNativeTraining у обоих TimeLearner запускает общую по
 native probe runner; вложенного расчёта физики нет. Edit выполняется через
 NativeModelEditor между пробами, с preview и effective readback.
 
-Это рабочий API-подэтап, ещё не configured ControllerVersion=2. Default и
-старые конфигурации сохраняют legacy-ветвь до явного BeginNativeTraining.
+Это рабочий API-подэтап. Default и старые конфигурации сохраняют legacy-ветвь;
+ControllerVersion=2 с ControllerConfiguration запускает этот же service из
+штатного scheduler без внешнего вызова BeginNativeTraining.
 После явного начала старое обучение не возобновляется между пробами или после
 ошибки. Reset очищает временное управление, сохраняя модель и goal; Default
 освобождает native-владение. Retarget очищает goal и certificates. Warm restart

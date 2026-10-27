@@ -1,3 +1,4 @@
+#include "TimeLearner/ConfiguredNativeOwner.h"
 // ===========================================================
 // Version:        3.0.2
 // ===========================================================
@@ -3151,6 +3152,9 @@ bool NNeuronTimeLearnerBranch::SyncInputPatternToDataset(const MDMatrix<double> 
 // --------------------------
 
 NNeuronTimeLearnerBranch::NNeuronTimeLearnerBranch(void):
+ ControllerVersion("ControllerVersion",this,&NNeuronTimeLearnerBranch::SetControllerVersion),
+ ControllerConfiguration("ControllerConfiguration",this,&NNeuronTimeLearnerBranch::SetControllerConfiguration),
+ ConfiguredModelInitialized("ConfiguredModelInitialized",this),
  StructureBuildMode("StructureBuildMode",this,&NNeuronTimeLearnerBranch::SetStructureBuildMode),
  PulseGeneratorClassName("PulseGeneratorClassName",this,&NNeuronTimeLearnerBranch::SetPulseGeneratorClassName),
  NeuronClassName("NeuronClassName",this,&NNeuronTimeLearnerBranch::SetNeuronClassName),
@@ -3334,6 +3338,24 @@ NNeuronTimeLearnerBranch::~NNeuronTimeLearnerBranch(void)
 // --------------------------
 
 /// Set StructureBuildMode (0=no rebuild, 1=BuildStructure in ABuild)
+bool NNeuronTimeLearnerBranch::SetControllerVersion(const int &value)
+{
+ if(value!=1 && value!=2)return false;
+ if(NativeTrainingOwned && value!=ControllerVersion.GetData())return false;
+ Ready=false;return true;
+}
+bool NNeuronTimeLearnerBranch::SetControllerConfiguration(const std::string &value)
+{
+ if(ConfiguredModelInitialized.GetData() && NativeModelDeclaration && value!=ControllerConfiguration.GetData())return false;
+ if(TimeLearner::NativeTrainingIsActive(NativeTrainingControl))return false;
+ Ready=false;return true;
+}
+void NNeuronTimeLearnerBranch::SetConfiguredNativeEvidenceSinks(TimeLearner::ConfiguredNativeEvidenceSinks sinks)
+{
+ if(TimeLearner::NativeTrainingIsActive(NativeTrainingControl))throw std::logic_error("configured_evidence_sink_change_during_training");
+ NativeConfiguredSinks=std::move(sinks);
+}
+
 bool NNeuronTimeLearnerBranch::SetStructureBuildMode(const int &value)
 {
  if(value > 0)
@@ -3519,6 +3541,15 @@ bool NNeuronTimeLearnerBranch::SetLTZThreshold(const double &value)
 /// Raise/clear training flag; applies Training/Fixed LTZ threshold
 bool NNeuronTimeLearnerBranch::SetIsNeedToTrain(const bool &value)
 {
+ if(ControllerVersion.GetData()==2)
+ {
+  if(NativeTrainingOwned)
+  {
+   if(value && !IsNeedToTrain.GetData()){NativeTrainingControl.ResetControl();NativeProbeControl.ResetControl();}
+   if(!value)NativeTrainingControl.ExternalStop(TimeLearner::BindNativeTraining(*this,NativeProbeControl,NativeTrainingEditDepth));
+  }
+  return true;
+ }
  if(NativeTrainingOwned)
  {
   if(!value)NativeTrainingControl.ExternalStop(TimeLearner::BindNativeTraining(*this,NativeProbeControl,NativeTrainingEditDepth));
@@ -4075,6 +4106,7 @@ bool NNeuronTimeLearnerBranch::ADelComponent(UEPtr<UContainer> comp)
 /// Hook before Build
 bool NNeuronTimeLearnerBranch::ABeforeBuild(void)
 {
+ if(ControllerVersion.GetData()==2)return true;
  if(NativeTrainingOwned)return true;
  if(!Dataset)
   Dataset = GetComponentL<NDatasetMatrix>(std::string("DatasetMatrix"), true);
@@ -4468,6 +4500,7 @@ bool NNeuronTimeLearnerBranch::BuildStructure()
 /// Restore defaults and clear training state
 bool NNeuronTimeLearnerBranch::ADefault(void)
 {
+ ControllerVersion.SetDataDirect(1);ControllerConfiguration.SetDataDirect("");ConfiguredModelInitialized.SetDataDirect(false);
  Dataset = NULL;
  StructureBuildMode = 1;
  CalculateMode = 0;
@@ -4649,6 +4682,20 @@ bool NNeuronTimeLearnerBranch::ADefault(void)
 /// Build after parameters; may call BuildStructure
 bool NNeuronTimeLearnerBranch::ABuild(void)
 {
+ if(ControllerVersion.GetData()==2)
+ {
+  try
+  {
+   if(NativeConfiguredPlan && NativeConfiguredText!=ControllerConfiguration.GetData())
+    throw std::invalid_argument("configured_native_declaration_changed");
+   NativeConfiguredPlan=TimeLearner::PrepareConfiguredNativeOwner(*this,true,bool(NativeModelDeclaration));
+   NativeConfiguredText=ControllerConfiguration.GetData();ValidateNativeModelDeclaration();CapApplyPending=false;NativeEditFailure.clear();
+  }
+  catch(const std::exception& error)
+  {NativeTrainingOwned=true;NativeEditFailure=error.what();NativeTrainingControl.FailConfiguration(error.what());}
+  return true;
+ }
+
  if(NativeTrainingOwned)
  {
   try{ValidateNativeModelDeclaration();CapApplyPending=false;}
@@ -4697,6 +4744,21 @@ bool NNeuronTimeLearnerBranch::ABuild(void)
 /// Sources (generators) before Neuron — Dataset calc contract
 bool NNeuronTimeLearnerBranch::ABeforeCalculate(void)
 {
+ if(ControllerVersion.GetData()==2 && NativeEditFailure.empty() && IsNeedToTrain.GetData() &&
+    NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Idle)
+ {
+  try
+  {
+   if(!NativeConfiguredPlan || NativeConfiguredText!=ControllerConfiguration.GetData())
+    throw std::invalid_argument("configured_native_model_requires_build");
+   auto plan=TimeLearner::MakeConfiguredNativeTrainingPlan(*NativeConfiguredPlan);
+   plan.probe.onPrepared=NativeConfiguredSinks.onPrepared;plan.probe.onSample=NativeConfiguredSinks.onSample;
+   plan.observationSink=NativeConfiguredSinks.onObservation;BeginNativeTraining(std::move(plan));
+  }
+  catch(const std::exception& error)
+  {NativeTrainingOwned=true;NativeEditFailure=error.what();NativeTrainingControl.FailConfiguration(error.what());}
+ }
+
  if(!NativeEditFailure.empty()){ForceSkipComponentCalculation();return true;}
  if(NativeTrainingOwned)
  {
@@ -4726,6 +4788,7 @@ bool NNeuronTimeLearnerBranch::ABeforeCalculate(void)
 
 bool NNeuronTimeLearnerBranch::ABeforeDefault(void)
 {
+ NativeConfiguredPlan.reset();NativeConfiguredSinks={};NativeConfiguredText.clear();
  NativeModelDeclaration.reset();
  NativeTrainingOwned=false;NativeTrainingControl.InvalidateTarget();
  NativeEditFailure.clear();NativeProbeControl.ResetControl();UNet::ABeforeDefault();return true;

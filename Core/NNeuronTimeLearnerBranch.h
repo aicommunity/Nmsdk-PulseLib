@@ -25,6 +25,7 @@ See file license.txt for more information
 #include "TimeLearner/NativeModelEditor.h"
 #include "TimeLearner/NativeTrainingService.h"
 #include "TimeLearner/NativeModelBuilder.h"
+#include "TimeLearner/ConfiguredNativeTraining.h"
 #include "../../../Rdk/Deploy/Include/rdk.h"
 #include <iostream>
 #include <fstream>
@@ -41,6 +42,10 @@ using namespace RDK;
 class RDK_LIB_TYPE NNeuronTimeLearnerBranch: public UNet
 {
 public:
+ /// Missing property in existing configs means legacy version 1.
+ UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> ControllerVersion;
+ UProperty<std::string, NNeuronTimeLearnerBranch, ptPubParameter> ControllerConfiguration;
+ UProperty<bool, NNeuronTimeLearnerBranch, ptPubParameter | ptPubState> ConfiguredModelInitialized;
  /// 0 - do not rebuild; 1 - BuildStructure in ABuild
  UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> StructureBuildMode;
  
@@ -807,6 +812,9 @@ public: // Methods
  // --------------------------
  
  /// Set StructureBuildMode (0=no rebuild, 1=BuildStructure in ABuild)
+ bool SetControllerVersion(const int &value);
+ bool SetControllerConfiguration(const std::string &value);
+ void SetConfiguredNativeEvidenceSinks(TimeLearner::ConfiguredNativeEvidenceSinks sinks);
  bool SetStructureBuildMode(const int &value);
  
  /// Set DatasetMatrix / generator class name
@@ -945,6 +953,9 @@ protected:
  TimeLearner::NativeProbeExecutor NativeProbeControl;
  TimeLearner::NativeTrainingService NativeTrainingControl;
  std::optional<TimeLearner::NativeModelSpec> NativeModelDeclaration;
+ std::optional<TimeLearner::ConfiguredNativeTraining> NativeConfiguredPlan;
+ TimeLearner::ConfiguredNativeEvidenceSinks NativeConfiguredSinks;
+ std::string NativeConfiguredText;
  void ValidateNativeModelDeclaration();
  bool NativeTrainingOwned=false;
  unsigned NativeTrainingEditDepth=0;
