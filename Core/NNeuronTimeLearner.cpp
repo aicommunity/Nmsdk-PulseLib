@@ -3931,6 +3931,7 @@ bool NNeuronTimeLearner::ADefault(void)
  RmaxOvershootLengthCooldown.assign(NumInputDendrite, 0);
  EffectiveResistanceGain.assign(NumInputDendrite, kResistanceAdjustGainDefault);
  EnableDebug = false;
+ EnableTrainingAudit = false;
  ResizeSyncVectors(NumInputDendrite.GetData());
  
  IterationActive = false;
