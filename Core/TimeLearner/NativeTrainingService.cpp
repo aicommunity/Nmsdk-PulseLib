@@ -19,6 +19,8 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
     Require(state==NativeTrainingState::Idle,"native_training_requires_reset_before_restart");
     Require(bool(a.readParameters) && bool(a.readModelRevision) && bool(a.apply) && bool(a.queue) &&
         bool(a.probeState) && bool(a.takeResult) && bool(a.cancel),"incomplete_native_training_adapter");
+    Require(value.search.normalization!=Normalization::TipResistance || bool(a.assessResistanceDomain),
+        "native_n1_requires_effective_domain_provider");
     Require(value.protocol.schemaVersion==3 && value.probe.specification.schemaVersion==3 &&
         value.protocol.inputs.size()==value.inputWindows.size() && !value.protocol.inputs.empty() &&
         value.maximumReferenceProbes>=value.protocol.inputs.size() &&
@@ -89,7 +91,8 @@ void NativeTrainingService::BeginSearch(const NativeTrainingAdapter& a)
     Require(bool(references),"missing_native_training_references");
     const auto actual=a.readModelRevision();Require(actual==referenceBinding,"reference_capture_model_changed");
     plan.search.initialModelRevision=actual;
-    search=std::make_unique<BoundedTrainingSession>(*references,plan.search,a.readParameters());
+    search=std::make_unique<BoundedTrainingSession>(*references,plan.search,a.readParameters(),
+        plan.search.normalization==Normalization::TipResistance);
     state=NativeTrainingState::Searching;SyncOutcome();
 }
 
@@ -110,6 +113,13 @@ void NativeTrainingService::BeforeTick(const NativeTrainingAdapter& a,double mod
                 plan.search.initialModelRevision,plan.search.initialModelEpoch));waiting=true;return;
         }
         activeAction=search->NextAction();SyncOutcome();if(!activeAction || !Active(state))return;
+        if(activeAction->kind==TrainingActionKind::ResistanceDomain)
+        {
+            Require(a.readModelRevision()==activeAction->baseModelRevision,"native_training_model_changed_before_domain");
+            const auto domain=a.assessResistanceDomain(activeAction->parameters,activeAction->inputIndex);
+            search->AssessedDomain(activeAction->serial,domain,a.readModelRevision());
+            activeAction.reset();SyncOutcome();return;
+        }
         if(activeAction->kind==TrainingActionKind::Edit)
         {
             Require(a.readModelRevision()==activeAction->baseModelRevision,"native_training_model_changed_before_edit");
@@ -206,7 +216,10 @@ void NativeTrainingService::SyncOutcome()
 {
     if(!search)return;retainedEpoch=search->ModelEpoch();const auto status=search->Status();
     if(status==TrainingStatus::Searching || status==TrainingStatus::Verifying)return;
-    certificate=search->Certificate();Finish(status,TrainingStatusName(status));
+    certificate=search->Certificate();
+    const auto& rejected=search->Rejected();
+    Finish(status,(status==TrainingStatus::InvalidModel || status==TrainingStatus::InvalidObservation) && !rejected.empty()?
+        rejected.back().reason:TrainingStatusName(status));
 }
 void NativeTrainingService::ExternalStop(const NativeTrainingAdapter& a)
 {

@@ -145,20 +145,35 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
             {"effective_model_revision",Text(r.effectiveModelRevision)},{"raw_potential",Number(r.rawPotential)}});
     }
     result["references"]=references;
-    QJsonArray candidates,rejections;
+    QJsonArray candidates,rejections,domains;
     if(const auto search=service.Search())
     {
         result["search_probes"]=Count(search->IssuedProbes());result["applied_edits"]=Count(search->AppliedEdits());
         result["accepted_parameters"]=parameters(search->Parameters());
         for(const auto& e:search->Evidence())candidates.append(QJsonObject{{"input_index",Count(e.inputIndex)},
             {"model_epoch",Count(e.modelEpoch)},{"parameters",parameters({e.parameters}).at(0)},
+            {"full_parameters",parameters(e.fullParameters)},
             {"model_revision",Text(e.modelRevision)},{"trial_id",Text(e.trialId)},{"anchor_trial_id",Text(e.anchorTrialId)},
             {"timing_low",Number(e.timingResidualLow)},{"timing_high",Number(e.timingResidualHigh)},
             {"amplitude_residual",Number(e.amplitudeResidual)},{"within_timing",e.withinTiming},
             {"within_amplitude",e.withinAmplitude},{"parameter_change_cost",Number(e.parameterChangeCost)}});
         for(const auto& r:search->Rejected())rejections.append(QJsonObject{{"trial_id",Text(r.trialId)},{"reason",Text(r.reason)}});
+        for(const auto& d:search->Domains())
+        {
+            QJsonArray channels;for(const auto& c:d.channels)channels.append(QJsonObject{{"path",Text(c.path)},
+                {"variable_coefficient",Number(c.variableCoefficient)},{"fixed_conductance",Number(c.fixedConductance)},
+                {"minimum_resistance",Number(c.minimumResistance)}});
+            domains.append(QJsonObject{{"kind","native_resistance_domain_evidence"},{"schema_version",1},
+                {"status",ResistanceDomainStatusName(d.status)},{"reason",Text(d.reason)},{"input_index",Count(d.inputIndex)},
+                {"base_model_revision",Text(d.baseModelRevision)},{"preview_model_revision",Text(d.previewModelRevision)},
+                {"geometry",parameters(d.geometry)},{"locked_by_shared_bank",d.lockedBySharedBank},{"model_may_have_changed",d.modelMayHaveChanged},
+                {"minimum_resistance",d.minimumResistance==0.?QJsonValue(QJsonValue::Null):QJsonValue(Number(d.minimumResistance))},
+                {"maximum_resistance",d.maximumResistance==0.?QJsonValue(QJsonValue::Null):QJsonValue(Number(d.maximumResistance))},
+                {"channels",channels}});
+        }
     }
     result["candidates"]=candidates;result["rejections"]=rejections;
+    result["resistance_domains"]=domains;
     result["certificate"]=QJsonValue(QJsonValue::Null);
     result["certificate_matches_actual_model"]=false;
     if(const auto& certificate=service.Certificate())

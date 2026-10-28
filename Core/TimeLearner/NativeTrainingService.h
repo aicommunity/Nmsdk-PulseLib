@@ -30,6 +30,7 @@ struct NativeTrainingAdapter {
     std::function<std::optional<NativeProbeResult>()> takeResult;
     std::function<void(const std::string&)> cancel;
     std::function<std::string()> readFullModelRevision;
+    std::function<ResistanceDomainAssessment(const std::vector<InputParameters>&,std::size_t)> assessResistanceDomain;
 };
 
 class NativeTrainingService {
