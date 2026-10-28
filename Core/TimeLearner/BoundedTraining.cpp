@@ -65,10 +65,11 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
 }
 
 BoundedTrainingSession::BoundedTrainingSession(CapturedReferences refs,BoundedTrainingConfig cfg,
-                                             std::vector<InputParameters> initial)
+                                             std::vector<InputParameters> initial,bool physicalDomains)
     :references(std::move(refs)),config(std::move(cfg)),current(std::move(initial)),
      epoch(config.initialModelEpoch),revision(config.initialModelRevision)
 {
+    requireResistanceDomains=physicalDomains && config.normalization==Normalization::TipResistance;
     ValidateBoundedTrainingInputs(references.Protocol(),config,current);
     if(current.size()!=references.Inputs().size())
         throw std::invalid_argument("invalid_bounded_training_configuration");
@@ -120,6 +121,8 @@ void BoundedTrainingSession::BeginInput()
     const auto index=order.at(position);const auto& b=config.bounds[index];const auto& p=current[index];
     background=current;lengths.clear();counts.clear();resistances.clear();best.reset();anchor.reset();anchorTrial.clear();
     lengthIndex=normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
+    initialCandidatePending=requireResistanceDomains;domainReady=false;domainLength=domainNormalizer=domainVariant=0;
+    domainGeometry.clear();domainScope.clear();visitedDomainCandidates.clear();
     // Nearest integers first. Enumeration is bounded by the declared candidate
     // budget, even for a very large physical length range.
     UniquePush(lengths,p.length);
@@ -139,7 +142,7 @@ void BoundedTrainingSession::BeginInput()
             if(p.synapses-distance>=b.minimumSynapses)UniquePush(counts,p.synapses-distance);
         }
     }
-    else
+    else if(!requireResistanceDomains)
     {
         UniquePush(resistances,p.resistance);
         UniquePush(resistances,b.minimumResistance);UniquePush(resistances,b.maximumResistance);
@@ -171,6 +174,104 @@ bool BoundedTrainingSession::NextCandidate(std::vector<InputParameters>& paramet
         if(PrepareCandidate(parameters))return true;
     }
     return false;
+}
+
+void BoundedTrainingSession::AdvanceDomainGeometry()
+{domainReady=false;if(++domainVariant==2){domainVariant=0;++domainLength;}}
+
+BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandidate(std::vector<InputParameters>& parameters)
+{
+    const auto input=order.at(position);
+    if(initialCandidatePending)
+    {
+        initialCandidatePending=false;parameters=background;
+        visitedDomainCandidates.push_back({revision,parameters});return DynamicCandidate::Candidate;
+    }
+    while(domainLength<lengths.size())
+    {
+        if(!domainReady)
+        {
+            auto geometry=background;geometry[input].length=lengths[domainLength];
+            const bool branch=references.Protocol().routing==ProbeRouting::BranchSoloBurst;
+            const bool locked=branch && geometry[input].length==geometry[input+1].length;
+            if(locked)geometry[input].resistance=geometry[input+1].resistance;
+            auto ordinary=geometry;
+            if(!PrepareCandidate(ordinary))
+            {
+                // An upstream shared bank may be impossible to separate within
+                // its length bounds. Its existing Rs still defines a legal
+                // singleton candidate; do not drop that geometry altogether.
+                if(branch && !locked && input>0 && geometry[input-1].length==geometry[input].length)
+                {ordinary=geometry;ordinary[input].resistance=ordinary[input-1].resistance;}
+                if(!PrepareCandidate(ordinary)){AdvanceDomainGeometry();continue;}
+            }
+            geometry=ordinary;
+            // Earlier Branch inputs are not yet visited in reverse order.
+            // Separate their bank before varying this Rs; downstream/anchor
+            // banks remain fixed. The whole geometry is explicit in the action.
+            if(domainVariant==1)
+            {
+                if(!branch || locked || input==0 || geometry[input].length==std::numeric_limits<int>::max())
+                {AdvanceDomainGeometry();continue;}
+                geometry[input-1].length=std::max(geometry[input-1].length,geometry[input].length+1);
+                if(!PrepareCandidate(geometry) || geometry==ordinary){AdvanceDomainGeometry();continue;}
+            }
+            pending=TrainingAction{TrainingActionKind::ResistanceDomain,++serial,input,epoch,
+                config.runId,{},revision,std::move(geometry),false};
+            return DynamicCandidate::NeedDomain;
+        }
+        while(domainNormalizer<resistances.size())
+        {
+            parameters=domainGeometry;parameters[input].resistance=resistances[domainNormalizer++];
+            if(!PrepareCandidate(parameters))continue;
+            const auto seen=std::find_if(visitedDomainCandidates.begin(),visitedDomainCandidates.end(),[&](const auto& item) {
+                return item.first==domainScope && item.second==parameters;
+            });
+            if(seen!=visitedDomainCandidates.end())continue;
+            visitedDomainCandidates.push_back({domainScope,parameters});return DynamicCandidate::Candidate;
+        }
+        AdvanceDomainGeometry();
+    }
+    return DynamicCandidate::Exhausted;
+}
+
+void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const ResistanceDomainAssessment& assessment,
+    const std::string& unchangedModelRevision)
+{
+    if(status!=TrainingStatus::Searching)return;
+    if(!pending || pending->kind!=TrainingActionKind::ResistanceDomain || pending->serial!=actionSerial)
+        throw std::logic_error("unrequested_resistance_domain");
+    domains.push_back(assessment);
+    if(assessment.modelMayHaveChanged || unchangedModelRevision!=revision || assessment.baseModelRevision!=revision ||
+        assessment.inputIndex!=pending->inputIndex || assessment.geometry!=pending->parameters)
+    {rejected.push_back({{},"resistance_domain_context_mismatch:"+assessment.reason});Stop(TrainingStatus::InvalidModel);return;}
+    if(assessment.status==ResistanceDomainStatus::Unavailable)
+    {rejected.push_back({{},"resistance_domain_unavailable:"+assessment.reason});pending.reset();AdvanceDomainGeometry();return;}
+    if(assessment.status!=ResistanceDomainStatus::Available || assessment.previewModelRevision.empty())
+    {rejected.push_back({{},"resistance_domain_unsupported:"+assessment.reason});Stop(TrainingStatus::InvalidModel);return;}
+    const auto& bound=config.bounds.at(pending->inputIndex);
+    const double low=std::max(bound.minimumResistance,assessment.minimumResistance);
+    const double high=std::min(bound.maximumResistance,assessment.maximumResistance);
+    if(!Finite(assessment.minimumResistance) || assessment.minimumResistance<=0. || !Finite(assessment.maximumResistance) ||
+        assessment.maximumResistance<assessment.minimumResistance)
+    {rejected.push_back({{},"invalid_resistance_domain_interval"});Stop(TrainingStatus::InvalidModel);return;}
+    if(low>high)
+    {rejected.push_back({{},"resistance_domain_outside_declared_box"});pending.reset();AdvanceDomainGeometry();return;}
+    domainGeometry=pending->parameters;domainScope=assessment.previewModelRevision;resistances.clear();
+    const double original=background[pending->inputIndex].resistance;
+    if(original>=low && original<=high)UniquePush(resistances,original);
+    UniquePush(resistances,low);UniquePush(resistances,high);
+    for(unsigned level=1;level<=config.resistanceSubdivisionDepth && resistances.size()<config.maximumCandidatesPerInput;++level)
+    {
+        const std::size_t denominator=std::size_t(1)<<level;
+        for(std::size_t numerator=1;numerator<denominator && resistances.size()<config.maximumCandidatesPerInput;numerator+=2)
+        {
+            const double fraction=double(numerator)/double(denominator);
+            const double value=std::exp(std::log(low)+fraction*(std::log(high)-std::log(low)));
+            if(Finite(value) && value>=low && value<=high)UniquePush(resistances,value);
+        }
+    }
+    domainNormalizer=0;domainReady=true;pending.reset();
 }
 
 void BoundedTrainingSession::AdvanceInput()
@@ -211,16 +312,29 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
     if(phase==Phase::Candidate)
     {
         std::vector<InputParameters> candidate;
-        if(candidates>=config.maximumCandidatesPerInput || !NextCandidate(candidate))
+        bool exhausted=candidates>=config.maximumCandidatesPerInput;
+        if(!exhausted && requireResistanceDomains)
+        {
+            const auto next=NextDomainCandidate(candidate);
+            if(next==DynamicCandidate::NeedDomain)return pending;
+            exhausted=next==DynamicCandidate::Exhausted;
+        }
+        else if(!exhausted)exhausted=!NextCandidate(candidate);
+        if(exhausted)
         {
             if(!best){Stop(TrainingStatus::SearchUnresolved);return {};}
-            candidate=background;candidate[order.at(position)]=best->parameters;restoringBest=true;
+            candidate=best->fullParameters;restoringBest=true;
             if(!PrepareCandidate(candidate))
             {rejected.push_back({{},"best_candidate_no_longer_legal"});Stop(TrainingStatus::InvalidModel);return {};}
         }
         else ++candidates;
         phase=Phase::Anchor;anchor.reset();anchorTrial.clear();
-        if(candidate!=current)
+        // A compatibility graph can have the same L/Ns/Rs but different
+        // effective stimulus bindings. Realize the assessed geometry explicitly
+        // before treating its normalized preview scope as a measured point.
+        const bool realizePreview=requireResistanceDomains && !restoringBest && domainReady &&
+            candidate==domainGeometry && domainScope!=revision;
+        if(candidate!=current || realizePreview)
         {
             if(edits>=config.maximumEdits || epoch==std::numeric_limits<std::size_t>::max())
             {Stop(TrainingStatus::BudgetExhausted);return {};}
@@ -255,6 +369,7 @@ void BoundedTrainingSession::Applied(std::size_t actionSerial,const std::vector<
     if(effective!=pending->parameters || !Legal(effective) || actualModelRevision.empty() || actualModelRevision==revision)
     {rejected.push_back({{},"effective_edit_readback_mismatch"});Stop(TrainingStatus::InvalidModel);return;}
     current=effective;revision=actualModelRevision;++epoch;++edits;pending.reset();
+    if(requireResistanceDomains)domainReady=false;
     // Every edit invalidates all current measurements, including Branch shared
     // cable dependencies. Earlier evidence remains historical, never reused.
     anchor.reset();anchorTrial.clear();
@@ -275,6 +390,7 @@ void BoundedTrainingSession::DeclineEdit(std::size_t actionSerial,const std::str
     if(unchangedModelRevision!=revision || unchangedModelRevision.empty() || restoringBest)
     {Stop(TrainingStatus::InvalidModel);return;}
     pending.reset();armed.reset();anchor.reset();anchorTrial.clear();phase=Phase::Candidate;
+    if(requireResistanceDomains)domainReady=false;
 }
 
 void BoundedTrainingSession::Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared)
@@ -319,6 +435,7 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
     if(!anchor)throw std::logic_error("missing_same_revision_anchor");
     const auto index=order.at(position);const auto& reference=references.Inputs()[index];
     CandidateEvidence e;e.inputIndex=index;e.modelEpoch=epoch;e.parameters=current[index];
+    e.fullParameters=current;
     e.modelRevision=revision;e.trialId=trial;e.anchorTrialId=anchorTrial;
     e.timingResidualLow=measurement.arrival-anchor->plateauEnd;
     e.timingResidualHigh=measurement.plateauEnd-anchor->arrival;

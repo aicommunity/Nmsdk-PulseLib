@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 #include <set>
+#include <map>
 
 namespace NMSDK::TimeLearner {
 namespace {
@@ -21,6 +22,45 @@ QJsonArray Packets(const std::vector<NativeProbeResult>& packets)
 {QJsonArray r;for(const auto& p:packets)r.append(EncodeNativeProbeEvidence(p));return r;}
 std::vector<NativeProbeResult> Packets(const QJsonValue& value)
 {std::vector<NativeProbeResult> r;for(const auto& p:Array(value))r.push_back(DecodeNativeProbeEvidence(Object(p)));return r;}
+void CheckStoppedPackets(const std::vector<NativeProbeResult>& references,const std::vector<NativeProbeResult>& finals,
+    const std::vector<NativeProbeResult>& observed)
+{
+    const auto id=[](const NativeProbeResult& p) {
+        Require(p.requestedSpecification && !p.requestedSpecification->runId.empty() && !p.requestedSpecification->trialId.empty(),
+            "stopped_packet_requires_trial_identity");
+        return p.requestedSpecification->trialId;
+    };
+    std::map<std::string,QJsonObject> attempts;
+    for(const auto& p:observed)Require(attempts.emplace(id(p),EncodeNativeProbeEvidence(p)).second,"duplicate_stopped_trial");
+    std::set<std::string> accepted;
+    for(const auto& p:references)
+    {
+        const auto trial=id(p);Require(accepted.insert(trial).second,"duplicate_stopped_reference");
+        // A warm attempt legitimately retains references from an older attempt.
+        const auto i=attempts.find(trial);
+        if(i!=attempts.end())Require(i->second==EncodeNativeProbeEvidence(p),"stopped_reference_observation_mismatch");
+    }
+    for(const auto& p:finals)
+    {
+        const auto trial=id(p);const auto i=attempts.find(trial);
+        Require(accepted.insert(trial).second && i!=attempts.end() && i->second==EncodeNativeProbeEvidence(p),
+            "stopped_final_observation_mismatch");
+    }
+}
+TrainingStatus StoppedStatus(const QJsonValue& value)
+{
+    Require(value.isString(),"invalid_stopped_training_status");
+    for(const auto s:{TrainingStatus::BudgetExhausted,TrainingStatus::ExternalStop,TrainingStatus::InvalidObservation,
+        TrainingStatus::InvalidModel,TrainingStatus::SearchUnresolved})
+        if(value.toString()==QLatin1String(TrainingStatusName(s)))return s;
+    throw std::invalid_argument("invalid_stopped_training_status");
+}
+QJsonArray RawReferences(const VerificationProtocol& protocol,const std::vector<NativeProbeResult>& packets)
+{
+    QJsonArray result;for(std::size_t i=0;i<packets.size();++i)
+        result.append(ValidateProbeMeasurement(protocol,i,*packets[i].prepared,*packets[i].observation).rawPotential);
+    return result;
+}
 NativeTrainingPlan Plan(const ConfiguredNativeTraining& c,const VerificationProtocol& protocol)
 {
     auto plan=MakeConfiguredNativeTrainingPlan(c);const auto& canonical=plan.protocol;
@@ -80,8 +120,10 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
 QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
     int version,int calculateMode,int structureMode,const std::string& implementationId)
 {
+    const bool stopped=!service.Certificate();
     Require(service.State()!=NativeTrainingState::CapturingReferences && service.State()!=NativeTrainingState::Searching &&
-        service.References() && service.Certificate(),"learned_state_requires_completed_certified_boundary");
+        (stopped?(service.State()==NativeTrainingState::Finished && service.SessionAttempt()>0):bool(service.References())),
+        "learned_state_requires_completed_or_stopped_boundary");
     Require(!implementationId.empty() && (version==1 || version==2) && (calculateMode==0 || calculateMode==1) &&
         (structureMode==0 || structureMode==1),"invalid_learned_state_component_options");
     auto neuron=owner.GetComponentL<NPulseNeuron>("Neuron",true);auto dataset=owner.GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
@@ -90,34 +132,61 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
     const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
     const auto identity=NmsdkTools::IdentifyModel(neuron,ports);Require(identity["valid"].toBool(),"learned_state_invalid_model");
     const auto revision=identity["sha256"].toString().toStdString();const auto epoch=service.ModelEpoch();
-    const auto proof=ReplayNativeTrainingProof(service.References()->Protocol(),service.Certificate()->Tolerances(),
-        service.ReferencePackets(),service.FinalPackets(),revision,epoch,service.Configuration().maximumInvalidObservations);
-    Require(EncodeTrainingCertificate(proof.certificate)==EncodeTrainingCertificate(*service.Certificate()) &&
-        service.Certificate()->Matches(revision,*service.References(),service.Certificate()->Tolerances(),ModelStateKind::LearnedSolo,epoch),
-        "learned_state_certificate_does_not_match_model");
+    const auto& protocol=service.References()?service.References()->Protocol():service.Plan().protocol;
+    std::optional<NativeTrainingProof> proof;
+    if(stopped)
+    {
+        StoppedStatus(QJsonValue(QLatin1String(TrainingStatusName(service.Outcome()))));
+        Require(!service.Reason().empty(),"stopped_state_requires_reason");
+        CheckStoppedPackets(service.ReferencePackets(),service.FinalPackets(),service.ObservedPackets());
+        const auto captured=ReplayNativeReferencePrefix(protocol,service.ReferencePackets(),service.CaptureRevision(),service.CaptureEpoch(),bool(service.References()));
+        if(captured)Require(captured->Inputs()==service.References()->Inputs(),"stopped_state_reference_mismatch");
+    }
+    else
+    {
+        proof.emplace(ReplayNativeTrainingProof(protocol,service.Certificate()->Tolerances(),
+            service.ReferencePackets(),service.FinalPackets(),revision,epoch,service.Configuration().maximumInvalidObservations));
+        Require(EncodeTrainingCertificate(proof->certificate)==EncodeTrainingCertificate(*service.Certificate()) &&
+            service.Certificate()->Matches(revision,*service.References(),service.Certificate()->Tolerances(),ModelStateKind::LearnedSolo,epoch),
+            "learned_state_certificate_does_not_match_model");
+    }
     std::vector<int> positions;QJsonArray inputs;
     for(const auto& p:actual){positions.push_back(p.length);inputs.append(QJsonObject{{"length",p.length},{"synapses",p.synapses},{"resistance",p.resistance}});}
     const auto checked=InspectNativeLearnerModel(owner,declaration,positions);
     Require(checked.status==NativeModelBuildStatus::Adopted && checked.modelRevision==revision && checked.effective==actual,"learned_state_readback_mismatch");
     const auto datasetSnapshot=NmsdkTools::ExportDatasetSnapshot(dataset);std::vector<std::string> additional;
     for(const auto& cls:Array(datasetSnapshot["required_class_names"]))additional.push_back(cls.toString().toStdString());
-    const auto [ltPath,threshold]=Threshold(identity);QJsonArray target,references;
-    for(double isi:declaration.initialIsi)target.append(isi);for(const auto& r:proof.references.Inputs())references.append(r.rawPotential);
-    const auto status=proof.certificate.Exact()?"exact":"search_unresolved";
-    QJsonObject metadata{{"implementation_id",Text(implementationId)},{"state_kind","learned_solo"},
+    const auto [ltPath,threshold]=Threshold(identity);QJsonArray target;
+    for(double isi:declaration.initialIsi)target.append(isi);
+    const auto references=RawReferences(protocol,service.ReferencePackets());
+    const auto status=stopped?TrainingStatusName(service.Outcome()):(proof->certificate.Exact()?"exact":"search_unresolved");
+    const auto stateKind=stopped?"diagnostic":"learned_solo";
+    QJsonObject metadata{{"implementation_id",Text(implementationId)},{"state_kind",stateKind},
         {"training",QJsonObject{{"status",status},{"target_id",Text(c.sampleId)},{"trainer",declaration.branch?"Branch":"Classic"},
             {"normalization",declaration.normalization==Normalization::SynapseCount?"N0":"N1"},{"target_pattern",target},{"captured_per_input",references},
             {"certificate",QJsonObject{{"state_identity",Text(revision)},{"status",status}}}}},
         {"calibration",QJsonObject{{"status","fixed"},{"protocol","fixed-trained-graph"},{"ltzone_path",ltPath},{"threshold",threshold}}},
         {"conversion",QJsonObject{{"mode","none"}}}};
+    if(stopped)
+    {
+        auto training=metadata["training"].toObject();training["certificate"]=QJsonValue(QJsonValue::Null);
+        training["reference_complete"]=bool(service.References());training["capture_revision"]=Text(service.CaptureRevision());
+        training["capture_epoch"]=Integer(service.CaptureEpoch());training["reason"]=Text(service.Reason());metadata["training"]=training;
+    }
     const auto archive=NmsdkTools::ExportModelArchive(neuron,metadata,ports,additional);
-    QJsonObject package{{"kind","timelearner_completed_state"},{"schema_version",1},{"dynamic_checkpoint",false},{"state_kind","learned_solo"},
+    QJsonObject package{{"kind",stopped?"timelearner_stopped_state":"timelearner_completed_state"},{"schema_version",1},{"dynamic_checkpoint",false},{"state_kind",stateKind},
         {"implementation_id",Text(implementationId)},{"controller_version",version},{"calculate_mode",calculateMode},{"structure_build_mode",structureMode},
-        {"configuration",EncodeConfiguredNativeTraining(c)},{"protocol",EncodeVerificationProtocol(proof.references.Protocol())},
+        {"configuration",EncodeConfiguredNativeTraining(c)},{"protocol",EncodeVerificationProtocol(protocol)},
         {"trained_inputs",inputs},{"model_revision",Text(revision)},{"model_epoch",Integer(epoch)},{"session_attempt",Integer(service.SessionAttempt())},
-        {"training_outcome",status},{"certificate",EncodeTrainingCertificate(proof.certificate)},
+        {"training_outcome",status},{"certificate",proof?QJsonValue(EncodeTrainingCertificate(proof->certificate)):QJsonValue(QJsonValue::Null)},
         {"reference_packets",Packets(service.ReferencePackets())},{"final_packets",Packets(service.FinalPackets())},
         {"dataset",datasetSnapshot},{"neuron",archive}};
+    if(stopped)
+    {
+        package["reason"]=Text(service.Reason());package["capture_revision"]=Text(service.CaptureRevision());
+        package["capture_epoch"]=Integer(service.CaptureEpoch());package["reference_complete"]=bool(service.References());
+        package["observed_packets"]=Packets(service.ObservedPackets());
+    }
     package["sha256"]=NmsdkTools::CanonicalModelDataSha256(package);return package;
 }
 QJsonObject ParseNativeLearnedState(const std::string& text)
@@ -126,8 +195,10 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
     RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId)
 {
     auto body=package;body.remove("sha256");
-    Require(package.size()==21 && package["kind"]==QJsonValue("timelearner_completed_state") && package["schema_version"]==QJsonValue(1) &&
-        package["dynamic_checkpoint"]==QJsonValue(false) && package["state_kind"]==QJsonValue("learned_solo"),"unsupported_learned_state_schema");
+    const bool stopped=package["kind"]==QJsonValue("timelearner_stopped_state");
+    Require((stopped?(package.size()==26 && package["state_kind"]==QJsonValue("diagnostic")):
+        (package.size()==21 && package["kind"]==QJsonValue("timelearner_completed_state") && package["state_kind"]==QJsonValue("learned_solo"))) &&
+        package["schema_version"]==QJsonValue(1) && package["dynamic_checkpoint"]==QJsonValue(false),"unsupported_learned_state_schema");
     Require(package["sha256"].isString() && package["sha256"].toString()==NmsdkTools::CanonicalModelDataSha256(body),"learned_state_digest_mismatch");
     Require(!implementationId.empty() && package["implementation_id"]==QJsonValue(Text(implementationId)),"learned_state_implementation_mismatch");
     auto result=std::make_unique<PreparedNativeLearnedState>();result->storage=storage;
@@ -146,20 +217,38 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
     Require(result->parameters.size()==c.model.inputs.size(),"learned_state_input_dimension_mismatch");
     const auto protocol=DecodeVerificationProtocol(Object(package["protocol"]));auto plan=Plan(c,protocol);
     if(version==2)Require(protocol==MakeConfiguredNativeTrainingPlan(c).protocol,"configured_learned_state_requires_canonical_protocol");
-    result->service.RestoreBoundary(plan,Packets(package["reference_packets"]),Packets(package["final_packets"]),result->modelRevision,
-        Count(package["model_epoch"]),Count(package["session_attempt"]));
-    Require(EncodeTrainingCertificate(*result->service.Certificate())==Object(package["certificate"]) &&
-        package["training_outcome"]==QJsonValue(result->service.Certificate()->Exact()?"exact":"search_unresolved"),"learned_state_certificate_claim_mismatch");
+    if(stopped)
+    {
+        Require(package["certificate"].isNull() && package["reference_complete"].isBool() &&
+            package["reason"].isString() && !package["reason"].toString().isEmpty() && package["capture_revision"].isString(),
+            "invalid_stopped_state_claim");
+        auto refs=Packets(package["reference_packets"]),finals=Packets(package["final_packets"]),observed=Packets(package["observed_packets"]);
+        CheckStoppedPackets(refs,finals,observed);
+        result->service.RestoreStoppedBoundary(plan,std::move(refs),std::move(finals),std::move(observed),
+            result->modelRevision,Count(package["model_epoch"]),Count(package["session_attempt"]),
+            package["capture_revision"].toString().toStdString(),Count(package["capture_epoch"]),package["reference_complete"].toBool(),
+            StoppedStatus(package["training_outcome"]),package["reason"].toString().toStdString());
+    }
+    else
+    {
+        result->service.RestoreBoundary(plan,Packets(package["reference_packets"]),Packets(package["final_packets"]),result->modelRevision,
+            Count(package["model_epoch"]),Count(package["session_attempt"]));
+        Require(EncodeTrainingCertificate(*result->service.Certificate())==Object(package["certificate"]) &&
+            package["training_outcome"]==QJsonValue(result->service.Certificate()->Exact()?"exact":"search_unresolved"),"learned_state_certificate_claim_mismatch");
+    }
     const auto archive=Object(package["neuron"]);Require(Object(Object(archive["graph"])["identity"])["sha256"]==package["model_revision"],"learned_state_archive_revision_mismatch");
     const auto metadata=Object(archive["metadata"]),training=Object(metadata["training"]);
-    QJsonArray target,raw;for(double value:c.model.initialIsi)target.append(value);
-    for(const auto& reference:result->service.References()->Inputs())raw.append(reference.rawPotential);
-    Require(metadata["state_kind"]==QJsonValue("learned_solo") && training["status"]==package["training_outcome"] &&
+    QJsonArray target;for(double value:c.model.initialIsi)target.append(value);
+    const auto raw=RawReferences(protocol,result->service.ReferencePackets());
+    Require(metadata["state_kind"]==package["state_kind"] && training["status"]==package["training_outcome"] &&
         training["target_pattern"]==QJsonValue(target) && training["captured_per_input"]==QJsonValue(raw) &&
         training["target_id"]==QJsonValue(Text(c.sampleId)) && training["trainer"]==QJsonValue(c.model.branch?"Branch":"Classic") &&
         training["normalization"]==QJsonValue(c.model.normalization==Normalization::SynapseCount?"N0":"N1") &&
         Object(metadata["calibration"])["status"]==QJsonValue("fixed") && Object(metadata["conversion"])["mode"]==QJsonValue("none"),
         "learned_state_archive_metadata_mismatch");
+    if(stopped)Require(training["certificate"].isNull() && training["reference_complete"]==package["reference_complete"] &&
+        training["capture_revision"]==package["capture_revision"] && training["capture_epoch"]==package["capture_epoch"] &&
+        training["reason"]==package["reason"],"stopped_state_archive_metadata_mismatch");
     std::set<QString> declared;for(const auto& value:Array(archive["class_definitions"]))declared.insert(Object(value)["name"].toString());
     for(const auto& value:Array(Object(package["dataset"])["required_class_names"]))
         Require(value.isString() && declared.count(value.toString()),"learned_state_missing_dataset_dependency");

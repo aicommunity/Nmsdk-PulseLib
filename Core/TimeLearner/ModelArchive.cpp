@@ -128,7 +128,7 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
     }
     RequiredString(metadata, "implementation_id");
     const auto state = RequiredString(metadata, "state_kind");
-    if(state != "model_spec" && state != "learned_solo" && state != "recognition") Fail("invalid_state_kind", state);
+    if(state != "model_spec" && state != "learned_solo" && state != "recognition" && state != "diagnostic") Fail("invalid_state_kind", state);
     if(!metadata["training"].isObject() || !metadata["calibration"].isObject() || !metadata["conversion"].isObject())
         Fail("incomplete_model_metadata", "training/calibration/conversion required");
     const auto training = metadata["training"].toObject();
@@ -139,21 +139,38 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
     }
     else
     {
-        const std::set<QString> statuses{"exact","quantized","best_effort","search_unresolved","budget_exhausted","external_stop"};
+        const std::set<QString> statuses=state=="diagnostic"?
+            std::set<QString>{"search_unresolved","budget_exhausted","external_stop","invalid_model","invalid_observation"}:
+            std::set<QString>{"exact","quantized","best_effort","search_unresolved","budget_exhausted","external_stop"};
         if(!statuses.count(status)) Fail("invalid_training_metadata", status);
         RequiredString(training, "target_id");
         const auto trainer = RequiredString(training, "trainer"), normalization = RequiredString(training, "normalization");
         if((trainer != "Classic" && trainer != "Branch") || (normalization != "N0" && normalization != "N1"))
             Fail("invalid_training_metadata", "trainer/normalization");
         const auto target = training["target_pattern"].toArray(), references = training["captured_per_input"].toArray();
-        if(target.isEmpty() || target.size() != references.size()) Fail("invalid_training_metadata", "target/reference dimension");
+        if(target.isEmpty() || (state=="diagnostic"?references.size()>target.size():target.size()!=references.size()))
+            Fail("invalid_training_metadata", "target/reference dimension");
         for(const auto& value : target)
             if(!value.isDouble() || !std::isfinite(value.toDouble()) || value.toDouble() < 0.) Fail("invalid_training_metadata", "target value");
         for(const auto& value : references)
             if(!value.isDouble() || !std::isfinite(value.toDouble())) Fail("invalid_training_metadata", "reference value");
-        const auto certificate = training["certificate"].toObject();
-        if(certificate["state_identity"] != identity["sha256"] || certificate["status"] != training["status"])
-            Fail("certificate_model_mismatch", "certificate does not identify the exported state");
+        if(state=="diagnostic")
+        {
+            if(!training["certificate"].isNull() || !training["reference_complete"].isBool() ||
+                training["reference_complete"].toBool()!=(target.size()==references.size()))
+                Fail("invalid_training_metadata", "diagnostic reference/certificate claim");
+            RequiredString(training,"reason");RequiredString(training,"capture_revision");
+            const auto epoch=training["capture_epoch"];
+            if(!epoch.isDouble() || !std::isfinite(epoch.toDouble()) || epoch.toDouble()<0. ||
+                epoch.toDouble()>9007199254740991. || std::floor(epoch.toDouble())!=epoch.toDouble())
+                Fail("invalid_training_metadata", "diagnostic capture epoch");
+        }
+        else
+        {
+            const auto certificate = training["certificate"].toObject();
+            if(certificate["state_identity"] != identity["sha256"] || certificate["status"] != training["status"])
+                Fail("certificate_model_mismatch", "certificate does not identify the exported state");
+        }
     }
     const auto calibration = metadata["calibration"].toObject();
     const auto calibrationStatus = RequiredString(calibration, "status");

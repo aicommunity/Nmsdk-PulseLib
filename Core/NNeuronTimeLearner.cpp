@@ -4177,7 +4177,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeLearnedState
  {
   NativeConfiguredSinks={};
   OldDendriteLength=DendriteLength.GetData();LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
-  CapApplyPending=false;TrainingPhase.SetDataDirect(NativeTrainingControl.Certificate()->Exact()?kPhaseDone:kPhaseFailed);Ready=false;
+  CapApplyPending=false;TrainingPhase.SetDataDirect(NativeTrainingControl.Certificate() && NativeTrainingControl.Certificate()->Exact()?kPhaseDone:kPhaseFailed);Ready=false;
  }
  return result;
 }
@@ -4206,6 +4206,24 @@ void NNeuronTimeLearner::BeginNativeTraining(TimeLearner::NativeTrainingPlan pla
  catch(const std::exception& error){NativeTrainingControl.FailConfiguration(error.what());}
  catch(...){NativeTrainingControl.FailConfiguration("native_training_start_exception");}
 }
+TimeLearner::ResistanceDomainAssessment NNeuronTimeLearner::AssessNativeResistanceDomain(
+ const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex)
+{
+ TimeLearner::ResistanceDomainAssessment result;result.geometry=geometry;result.inputIndex=inputIndex;
+ try
+ {
+  if(NativeTrainingOwned && TimeLearner::NativeTrainingIsActive(NativeTrainingControl) && !NativeTrainingEditDepth)
+   throw std::logic_error("native_training_owns_domain_preview");
+  if(NormalizationMode.GetData()!=1)throw std::invalid_argument("native_resistance_domain_requires_n1");
+  const auto policy=TimeLearner::NativeOwnerEditSpec(*this,NativeModelDeclaration,geometry,
+   PreferConfiguredResistanceMinFloor.GetData()?std::max(0.,ConfiguredResistanceMin.GetData()):0.);
+  result=TimeLearner::AssessNativeInputResistanceDomain(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),
+   geometry,policy,inputIndex,NativeModelDeclaration?NativeModelDeclaration->scaleInhibitionWithInput:true);
+  if(result.modelMayHaveChanged)NativeEditFailure=result.reason;
+ }
+ catch(const std::exception& error){result.reason=error.what();}
+ return result;
+}
 TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested)
 {
  TimeLearner::NativeEditResult result;
@@ -4215,12 +4233,8 @@ TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeParameters(const st
    throw std::logic_error("native_training_owns_model_editor");
   if(NormalizationMode.GetData()!=0 && NormalizationMode.GetData()!=1)
    throw std::runtime_error("invalid_native_normalization_mode");
-  auto spec=TimeLearner::MakeNativeEditSpec(
-   NormalizationMode.GetData()==0?TimeLearner::Normalization::SynapseCount:TimeLearner::Normalization::TipResistance,
-   MaxDendriteLength.GetData(),requested,EnableNextSegmentInhibition.GetData(),EnableSegExcInh.GetData(),
-   SegExcInhDelta.GetData(),SegExcInhAlpha.GetData(),MaxSynapseToMembraneResistanceRatio.GetData(),
-   PreferConfiguredResistanceMinFloor.GetData()?std::max(0.,ConfiguredResistanceMin.GetData()):0.,StructureBuildMode.GetData()==0);
-  if(NativeModelDeclaration)spec=TimeLearner::NativeModelEditPolicy(*NativeModelDeclaration,requested);
+  const auto spec=TimeLearner::NativeOwnerEditSpec(*this,NativeModelDeclaration,requested,
+   PreferConfiguredResistanceMinFloor.GetData()?std::max(0.,ConfiguredResistanceMin.GetData()):0.);
   result=TimeLearner::ApplyNativeInputParameters(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),requested,spec);
   if(result.status==TimeLearner::NativeEditStatus::Applied)
   {
