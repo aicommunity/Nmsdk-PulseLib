@@ -1,5 +1,27 @@
 #include "NativeTrainingProof.h"
+#include <set>
 namespace NMSDK::TimeLearner {
+std::optional<CapturedReferences> ReplayNativeReferencePrefix(const VerificationProtocol& protocol,
+    const std::vector<NativeProbeResult>& packets,const std::string& captureRevision,std::size_t captureEpoch,bool complete)
+{
+    ValidateVerificationProtocol(protocol);
+    if(captureRevision.empty() || packets.size()>protocol.inputs.size() || complete!=(packets.size()==protocol.inputs.size()))
+        throw std::invalid_argument("invalid_native_reference_prefix");
+    std::vector<ReferenceEvidence> evidence;std::set<std::string> trials;
+    for(std::size_t i=0;i<packets.size();++i)
+    {
+        const auto& p=packets[i];
+        if(p.status!=NativeProbeStatus::Completed || !p.prepared || !p.observation || !p.reasons.empty() ||
+            p.requiresFreshVerification || p.currentBaseRevision!=captureRevision ||
+            p.prepared->baseModelRevision!=captureRevision || p.prepared->modelEpoch!=captureEpoch ||
+            !trials.insert(p.observation->specification.trialId).second)
+            throw std::invalid_argument("unusable_native_reference_prefix_packet");
+        ValidateProbeMeasurement(protocol,i,*p.prepared,*p.observation);
+        evidence.push_back({*p.prepared,*p.observation});
+    }
+    if(complete)return CapturedReferences::Capture(protocol,evidence);
+    return {};
+}
 NativeTrainingProof ReplayNativeTrainingProof(const VerificationProtocol& protocol,const VerificationTolerances& tolerances,
     const std::vector<NativeProbeResult>& references,const std::vector<NativeProbeResult>& finals,
     const std::string& revision,std::size_t epoch,std::size_t maximumInvalidObservations)

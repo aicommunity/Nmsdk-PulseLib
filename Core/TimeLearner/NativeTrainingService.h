@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeModelEditor.h"
 #include <functional>
+#include <utility>
 
 namespace NMSDK::TimeLearner {
 enum class NativeTrainingState { Idle, CapturingReferences, Searching, Finished };
@@ -50,13 +51,26 @@ public:
     const std::vector<ReferenceEvidence>& ReferenceObservations() const { return referenceEvidence; }
     const std::vector<NativeProbeResult>& ReferencePackets() const { return referencePackets; }
     const std::vector<NativeProbeResult>& FinalPackets() const { return finalPackets; }
+    const std::vector<NativeProbeResult>& ObservedPackets() const { return observedPackets; }
     const NativeTrainingPlan& Plan() const { return plan; }
     std::size_t SessionAttempt() const { return attempt; }
+    const std::string& CaptureRevision() const {
+        return references?references->InitialModelRevision():(incompleteCaptureConstraint?incompleteCaptureConstraint->first:plan.search.initialModelRevision);
+    }
+    std::size_t CaptureEpoch() const {
+        return references?references->InitialModelEpoch():(incompleteCaptureConstraint?incompleteCaptureConstraint->second:plan.search.initialModelEpoch);
+    }
     // Completed-stage restore, never a mid-probe checkpoint. Replays the actual
     // reference/final evidence through the production validators before commit.
     void RestoreBoundary(NativeTrainingPlan plan,std::vector<NativeProbeResult> references,
         std::vector<NativeProbeResult> finals,const std::string& actualModelRevision,
         std::size_t modelEpoch,std::size_t sessionAttempt);
+    // Halted model/evidence, without a certificate or mid-probe continuation.
+    void RestoreStoppedBoundary(NativeTrainingPlan plan,std::vector<NativeProbeResult> references,
+        std::vector<NativeProbeResult> finals,std::vector<NativeProbeResult> observations,
+        const std::string& actualModelRevision,std::size_t modelEpoch,std::size_t sessionAttempt,
+        const std::string& captureRevision,std::size_t captureEpoch,bool referenceComplete,
+        TrainingStatus outcome,const std::string& reason);
     const BoundedTrainingSession* Search() const { return search.get(); }
     std::size_t IssuedReferenceProbes() const { return referenceProbes; }
     std::size_t ModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
@@ -69,7 +83,8 @@ private:
     std::optional<CapturedReferences> references;
     std::optional<TrainingCertificate> certificate;
     std::vector<ReferenceEvidence> referenceEvidence;
-    std::vector<NativeProbeResult> referencePackets,finalPackets;
+    std::vector<NativeProbeResult> referencePackets,finalPackets,observedPackets;
+    std::optional<std::pair<std::string,std::size_t>> incompleteCaptureConstraint;
     std::unique_ptr<BoundedTrainingSession> search;
     std::optional<TrainingAction> activeAction;
     bool waiting=false;

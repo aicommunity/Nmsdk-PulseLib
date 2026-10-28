@@ -36,6 +36,9 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
         value.probe.specification.peakSelection==value.protocol.peakSelection,
         "native_training_protocol_mismatch");
     const auto revision=a.readModelRevision();Require(!revision.empty(),"missing_native_training_model_revision");
+    if(incompleteCaptureConstraint)
+        Require(revision==incompleteCaptureConstraint->first && retainedEpoch==incompleteCaptureConstraint->second,
+            "incomplete_reference_capture_requires_original_model_or_explicit_cold_restart");
     value.search.initialModelRevision=revision;
     ValidateBoundedTrainingInputs(value.protocol,value.search,a.readParameters());
     if(references)
@@ -49,11 +52,11 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
     }
     plan=std::move(value);plan.search.initialModelRevision=revision;plan.probe.readModelRevision=a.readModelRevision;
     plan.probe.readFullModelRevision=a.readFullModelRevision;
-    if(references)plan.search.initialModelEpoch=retainedEpoch;
+    if(references || incompleteCaptureConstraint)plan.search.initialModelEpoch=retainedEpoch;
     else retainedEpoch=plan.search.initialModelEpoch;
     startModel=lastModel=modelTime;startWall=lastWall=wallTime;
     referenceProbes=invalidReferences=0;if(!references){referenceEvidence.clear();referencePackets.clear();}
-    finalPackets.clear();
+    finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();
     certificate.reset();search.reset();activeAction.reset();
     waiting=false;reason.clear();outcome=TrainingStatus::Searching;++attempt;
     plan.search.runId+="/session/"+std::to_string(attempt);
@@ -128,8 +131,8 @@ void NativeTrainingService::BeforeTick(const NativeTrainingAdapter& a,double mod
         a.queue(Request(activeAction->inputIndex,activeAction->runId,activeAction->trialId,
             activeAction->baseModelRevision,activeAction->modelEpoch));waiting=true;
     }
-    catch(const std::exception& error){a.cancel("native_training_controller_error");Finish(TrainingStatus::InvalidModel,error.what());}
-    catch(...){a.cancel("native_training_controller_error");Finish(TrainingStatus::InvalidModel,"native_training_controller_exception");}
+    catch(const std::exception& error){a.cancel("native_training_controller_error");Finish(TrainingStatus::InvalidModel,error.what());RecordCancelled(a);}
+    catch(...){a.cancel("native_training_controller_error");Finish(TrainingStatus::InvalidModel,"native_training_controller_exception");RecordCancelled(a);}
 }
 
 void NativeTrainingService::AfterTick(const NativeTrainingAdapter& a,double modelTime,double wallTime)
@@ -141,6 +144,7 @@ void NativeTrainingService::AfterTick(const NativeTrainingAdapter& a,double mode
         const auto status=a.probeState();
         if(status==NativeProbeStatus::Queued || status==NativeProbeStatus::Running)return;
         auto result=a.takeResult();Require(bool(result),"missing_native_training_probe_result");waiting=false;
+        observedPackets.push_back(*result);
         if(plan.observationSink)plan.observationSink(*result);
         if(result->status!=NativeProbeStatus::Completed || !result->prepared || !result->observation)
         {Finish(TrainingStatus::InvalidObservation,result->reasons.empty()?"native_training_probe_failed":result->reasons.front());return;}
@@ -175,8 +179,8 @@ void NativeTrainingService::AfterTick(const NativeTrainingAdapter& a,double mode
             search->Consume(*result->observation,result->currentBaseRevision);activeAction.reset();SyncOutcome();
         }
     }
-    catch(const std::exception& error){a.cancel("native_training_observation_error");Finish(TrainingStatus::InvalidObservation,error.what());}
-    catch(...){a.cancel("native_training_observation_error");Finish(TrainingStatus::InvalidObservation,"native_training_observation_exception");}
+    catch(const std::exception& error){a.cancel("native_training_observation_error");Finish(TrainingStatus::InvalidObservation,error.what());RecordCancelled(a);}
+    catch(...){a.cancel("native_training_observation_error");Finish(TrainingStatus::InvalidObservation,"native_training_observation_exception");RecordCancelled(a);}
 }
 
 void NativeTrainingService::CheckBudget(const NativeTrainingAdapter& a,double modelTime,double wallTime)
@@ -193,6 +197,7 @@ void NativeTrainingService::CheckBudget(const NativeTrainingAdapter& a,double mo
 }
 void NativeTrainingService::Finish(TrainingStatus result,const std::string& diagnostic)
 {
+    if(search)retainedEpoch=search->ModelEpoch();
     outcome=result;reason=diagnostic;state=NativeTrainingState::Finished;waiting=false;activeAction.reset();
     if(result!=TrainingStatus::Exact && !(result==TrainingStatus::SearchUnresolved && search && search->Certificate()))
         certificate.reset();
@@ -211,7 +216,7 @@ void NativeTrainingService::ExternalStop(const NativeTrainingAdapter& a)
 }
 void NativeTrainingService::RecordCancelled(const NativeTrainingAdapter& a)
 {
-    try{if(auto result=a.takeResult();result && plan.observationSink)plan.observationSink(*result);}
+    try{if(auto result=a.takeResult()){observedPackets.push_back(*result);if(plan.observationSink)plan.observationSink(*result);}}
     catch(const std::exception& error){reason+=";cancelled_observation_sink_failed:"+std::string(error.what());}
     catch(...){reason+=";cancelled_observation_sink_failed";}
 }
@@ -219,12 +224,14 @@ void NativeTrainingService::FailConfiguration(const std::string& diagnostic)
 {Finish(TrainingStatus::InvalidModel,diagnostic);}
 void NativeTrainingService::ResetControl()
 {
+    if(!references && attempt>0 && !plan.search.initialModelRevision.empty() && !incompleteCaptureConstraint)
+        incompleteCaptureConstraint.emplace(plan.search.initialModelRevision,plan.search.initialModelEpoch);
     state=NativeTrainingState::Idle;outcome=TrainingStatus::Searching;reason.clear();waiting=false;
     search.reset();activeAction.reset();if(!references){referenceEvidence.clear();referencePackets.clear();}
     referenceProbes=invalidReferences=0;
 }
 void NativeTrainingService::InvalidateTarget()
-{ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();referenceBinding.clear();retainedEpoch=0;}
+{ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;}
 void NativeTrainingService::RestoreBoundary(NativeTrainingPlan value,std::vector<NativeProbeResult> refs,
     std::vector<NativeProbeResult> finals,const std::string& revision,std::size_t epoch,std::size_t sessions)
 {
@@ -236,10 +243,33 @@ void NativeTrainingService::RestoreBoundary(NativeTrainingPlan value,std::vector
     value.observationSink={};value.probe.onPrepared={};value.probe.onSample={};
     value.probe.readModelRevision={};value.probe.readFullModelRevision={};
     plan=std::move(value);referencePackets=std::move(refs);finalPackets=std::move(finals);referenceEvidence=std::move(observations);
+    observedPackets.clear();incompleteCaptureConstraint.reset();
     references=proof.references;certificate=proof.certificate;referenceBinding=revision;retainedEpoch=epoch;attempt=sessions;
     search.reset();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
     outcome=certificate->Exact()?TrainingStatus::Exact:TrainingStatus::SearchUnresolved;
     reason="restored_completed_training_boundary";state=NativeTrainingState::Finished;
+}
+void NativeTrainingService::RestoreStoppedBoundary(NativeTrainingPlan value,std::vector<NativeProbeResult> refs,
+    std::vector<NativeProbeResult> finals,std::vector<NativeProbeResult> observations,
+    const std::string& revision,std::size_t epoch,std::size_t sessions,
+    const std::string& captureRevision,std::size_t captureEpoch,bool complete,
+    TrainingStatus terminal,const std::string& diagnostic)
+{
+    Require(!Active(state),"native_boundary_import_requires_idle_controller");
+    Require(sessions>0 && !revision.empty() && !diagnostic.empty() &&
+        (terminal==TrainingStatus::BudgetExhausted || terminal==TrainingStatus::ExternalStop ||
+         terminal==TrainingStatus::InvalidModel || terminal==TrainingStatus::InvalidObservation || terminal==TrainingStatus::SearchUnresolved),
+        "invalid_native_stopped_boundary");
+    auto captured=ReplayNativeReferencePrefix(value.protocol,refs,captureRevision,captureEpoch,complete);
+    std::vector<ReferenceEvidence> accepted;for(const auto& p:refs)accepted.push_back({*p.prepared,*p.observation});
+    value.observationSink={};value.probe.onPrepared={};value.probe.onSample={};
+    value.probe.readModelRevision={};value.probe.readFullModelRevision={};
+    plan=std::move(value);referencePackets=std::move(refs);finalPackets=std::move(finals);
+    observedPackets=std::move(observations);referenceEvidence=std::move(accepted);references=std::move(captured);
+    certificate.reset();referenceBinding=complete?revision:captureRevision;retainedEpoch=epoch;attempt=sessions;
+    incompleteCaptureConstraint.reset();if(!complete)incompleteCaptureConstraint.emplace(captureRevision,captureEpoch);
+    search.reset();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
+    outcome=terminal;reason=diagnostic;state=NativeTrainingState::Finished;
 }
 const char* NativeTrainingStateName(NativeTrainingState state)
 {switch(state){case NativeTrainingState::Idle:return "idle";case NativeTrainingState::CapturingReferences:return "capturing_references";

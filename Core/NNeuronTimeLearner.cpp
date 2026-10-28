@@ -4177,7 +4177,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeLearnedState
  {
   NativeConfiguredSinks={};
   OldDendriteLength=DendriteLength.GetData();LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
-  CapApplyPending=false;TrainingPhase.SetDataDirect(NativeTrainingControl.Certificate()->Exact()?kPhaseDone:kPhaseFailed);Ready=false;
+  CapApplyPending=false;TrainingPhase.SetDataDirect(NativeTrainingControl.Certificate() && NativeTrainingControl.Certificate()->Exact()?kPhaseDone:kPhaseFailed);Ready=false;
  }
  return result;
 }
