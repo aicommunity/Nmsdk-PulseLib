@@ -1,18 +1,11 @@
 #pragma once
 #include "FinalVerification.h"
+#include "TrainingParameters.h"
 #include <memory>
 
 namespace NMSDK::TimeLearner {
-enum class Normalization { SynapseCount, TipResistance };
 enum class TrainingStatus { Searching, Verifying, Exact, SearchUnresolved, BudgetExhausted,
     InvalidModel, InvalidObservation, ExternalStop };
-struct InputParameters {
-    // Effective physical bank values. Coincident Branch attachments share a
-    // bank: their Ns/Rs must agree. Legacy requested counts are not readback.
-    int length=1,synapses=1;
-    double resistance=0.;
-    bool operator==(const InputParameters&) const=default;
-};
 struct InputSearchBounds {
     int minimumLength=1,maximumLength=1,minimumSynapses=1,maximumSynapses=128;
     double minimumResistance=0.,maximumResistance=0.;
