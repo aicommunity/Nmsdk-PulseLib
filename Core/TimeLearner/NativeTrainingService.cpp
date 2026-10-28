@@ -231,7 +231,7 @@ void NativeTrainingService::ResetControl()
     referenceProbes=invalidReferences=0;
 }
 void NativeTrainingService::InvalidateTarget()
-{ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;}
+{ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};}
 void NativeTrainingService::RestoreBoundary(NativeTrainingPlan value,std::vector<NativeProbeResult> refs,
     std::vector<NativeProbeResult> finals,const std::string& revision,std::size_t epoch,std::size_t sessions)
 {
