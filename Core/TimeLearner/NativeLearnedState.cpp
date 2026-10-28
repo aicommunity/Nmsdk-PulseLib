@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 #include <set>
+#include <map>
 
 namespace NMSDK::TimeLearner {
 namespace {
@@ -21,6 +22,31 @@ QJsonArray Packets(const std::vector<NativeProbeResult>& packets)
 {QJsonArray r;for(const auto& p:packets)r.append(EncodeNativeProbeEvidence(p));return r;}
 std::vector<NativeProbeResult> Packets(const QJsonValue& value)
 {std::vector<NativeProbeResult> r;for(const auto& p:Array(value))r.push_back(DecodeNativeProbeEvidence(Object(p)));return r;}
+void CheckStoppedPackets(const std::vector<NativeProbeResult>& references,const std::vector<NativeProbeResult>& finals,
+    const std::vector<NativeProbeResult>& observed)
+{
+    const auto id=[](const NativeProbeResult& p) {
+        Require(p.requestedSpecification && !p.requestedSpecification->runId.empty() && !p.requestedSpecification->trialId.empty(),
+            "stopped_packet_requires_trial_identity");
+        return p.requestedSpecification->trialId;
+    };
+    std::map<std::string,QJsonObject> attempts;
+    for(const auto& p:observed)Require(attempts.emplace(id(p),EncodeNativeProbeEvidence(p)).second,"duplicate_stopped_trial");
+    std::set<std::string> accepted;
+    for(const auto& p:references)
+    {
+        const auto trial=id(p);Require(accepted.insert(trial).second,"duplicate_stopped_reference");
+        // A warm attempt legitimately retains references from an older attempt.
+        const auto i=attempts.find(trial);
+        if(i!=attempts.end())Require(i->second==EncodeNativeProbeEvidence(p),"stopped_reference_observation_mismatch");
+    }
+    for(const auto& p:finals)
+    {
+        const auto trial=id(p);const auto i=attempts.find(trial);
+        Require(accepted.insert(trial).second && i!=attempts.end() && i->second==EncodeNativeProbeEvidence(p),
+            "stopped_final_observation_mismatch");
+    }
+}
 TrainingStatus StoppedStatus(const QJsonValue& value)
 {
     Require(value.isString(),"invalid_stopped_training_status");
@@ -112,6 +138,7 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
     {
         StoppedStatus(QJsonValue(QLatin1String(TrainingStatusName(service.Outcome()))));
         Require(!service.Reason().empty(),"stopped_state_requires_reason");
+        CheckStoppedPackets(service.ReferencePackets(),service.FinalPackets(),service.ObservedPackets());
         const auto captured=ReplayNativeReferencePrefix(protocol,service.ReferencePackets(),service.CaptureRevision(),service.CaptureEpoch(),bool(service.References()));
         if(captured)Require(captured->Inputs()==service.References()->Inputs(),"stopped_state_reference_mismatch");
     }
@@ -195,8 +222,10 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
         Require(package["certificate"].isNull() && package["reference_complete"].isBool() &&
             package["reason"].isString() && !package["reason"].toString().isEmpty() && package["capture_revision"].isString(),
             "invalid_stopped_state_claim");
-        result->service.RestoreStoppedBoundary(plan,Packets(package["reference_packets"]),Packets(package["final_packets"]),
-            Packets(package["observed_packets"]),result->modelRevision,Count(package["model_epoch"]),Count(package["session_attempt"]),
+        auto refs=Packets(package["reference_packets"]),finals=Packets(package["final_packets"]),observed=Packets(package["observed_packets"]);
+        CheckStoppedPackets(refs,finals,observed);
+        result->service.RestoreStoppedBoundary(plan,std::move(refs),std::move(finals),std::move(observed),
+            result->modelRevision,Count(package["model_epoch"]),Count(package["session_attempt"]),
             package["capture_revision"].toString().toStdString(),Count(package["capture_epoch"]),package["reference_complete"].toBool(),
             StoppedStatus(package["training_outcome"]),package["reason"].toString().toStdString());
     }
