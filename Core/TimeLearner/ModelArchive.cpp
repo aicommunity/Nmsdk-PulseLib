@@ -461,6 +461,22 @@ try
 }
 catch(const UException& error) { Fail("native_edit_clone_failed",QString::fromStdString(error.what())); }
 
+QJsonObject ExportPhysicalGraphForEdit(UEPtr<UContainer> model,const ModelBoundarySources& sources)
+{
+    if(!model || !dynamic_pointer_cast<NMSDK::NPulseNeuron>(model))
+        Fail("invalid_edit_snapshot_context","native neuron required");
+    auto snapshot=Snapshot(model,sources);CheckSnapshot(snapshot);return snapshot;
+}
+UEPtr<UContainer> ImportPhysicalGraphForEdit(const QJsonObject& snapshot,UEPtr<UStorage> storage,
+    UEPtr<UEnvironment> environment,const ModelBoundarySources& sources)
+{
+    if(!storage || !environment)Fail("invalid_edit_snapshot_context","storage/environment required");
+    Lease candidate{storage,LoadSnapshot(snapshot,storage,environment,sources),!sources.empty()};
+    if(!dynamic_pointer_cast<NMSDK::NPulseNeuron>(candidate.object))
+        Fail("invalid_edit_snapshot_context","native neuron required");
+    return candidate.Release();
+}
+
 QJsonObject ExportDatasetSnapshot(UEPtr<UContainer> dataset)
 {
     if(!dataset || !dynamic_pointer_cast<NMSDK::NDatasetMatrix>(dataset))Fail("unsupported_auxiliary_graph","NDatasetMatrix required");

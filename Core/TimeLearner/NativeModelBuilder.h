@@ -48,6 +48,25 @@ NativeModelBuildResult InspectNativeLearnerModel(RDK::UNet& owner,const NativeMo
 // refresh any cached Neuron pointer after return, including a failed commit.
 NativeModelBuildResult ReconstructNativeLearnerNeuron(RDK::UNet& owner,
     const NmsdkTools::ModelBoundarySources& boundarySources);
+// Physical stage-boundary rollback foundation for PostTune. Captures both
+// children before any candidate edit and reconnects the archived neuron to the
+// restored Dataset generator. Same owner/storage/environment only. No clock,
+// controller/learner properties, certificate or mid-probe dynamics are restored.
+// Callers must refresh cached child aliases after every Restore result.
+class NativeLearnerGraphCheckpoint {
+public:
+    static std::unique_ptr<NativeLearnerGraphCheckpoint> Capture(RDK::UNet& owner);
+    NativeModelBuildResult Restore(RDK::UNet& owner) const;
+    QJsonObject NeuronIdentity() const {return neuronSnapshot["identity"].toObject();}
+private:
+    NativeLearnerGraphCheckpoint()=default;
+    RDK::UNet* capturedOwner=nullptr;
+    RDK::UStorage* capturedStorage=nullptr;
+    RDK::UEnvironment* capturedEnvironment=nullptr;
+    unsigned frequency=0;
+    std::vector<RDK::NameT> order;
+    QJsonObject neuronSnapshot,datasetSnapshot;
+};
 // Verified unowned import children. Preserves owner order, checks external
 // listeners before replacement and restores the old children on commit failure.
 NativeModelBuildResult CommitNativeLearnerChildren(RDK::UNet& owner,const NativeModelSpec& specification,

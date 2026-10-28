@@ -8,6 +8,14 @@ namespace NmsdkTools {
 // neither Alloc/Copy nor a dynamic checkpoint or a training-result certificate.
 RDK_LIB_TYPE RDK::UEPtr<RDK::UContainer> ClonePhysicalGraphForEdit(
     RDK::UEPtr<RDK::UContainer> model,const ModelBoundarySources& boundarySources = {});
+// Same-storage immutable edit snapshot. Unlike ModelArchive this does not
+// publish an image closure or claim a training result. Callers own context and
+// boundary ports; loading initializes fresh native dynamics, not a checkpoint.
+RDK_LIB_TYPE QJsonObject ExportPhysicalGraphForEdit(
+    RDK::UEPtr<RDK::UContainer> model,const ModelBoundarySources& boundarySources = {});
+RDK_LIB_TYPE RDK::UEPtr<RDK::UContainer> ImportPhysicalGraphForEdit(
+    const QJsonObject& snapshot,RDK::UEPtr<RDK::UStorage> storage,
+    RDK::UEPtr<RDK::UEnvironment> environment,const ModelBoundarySources& boundarySources = {});
 class RDK_LIB_TYPE ModelArchiveError : public std::runtime_error
 {
 public:
