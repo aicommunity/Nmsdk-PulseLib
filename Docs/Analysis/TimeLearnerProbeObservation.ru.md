@@ -122,3 +122,14 @@ configured pattern hash и отдельный hash фактических stimul
 baseline/windows, observation reasons и native semantic identity до/после.
 Сериализация этого fixture не является готовым production экспортом всех
 ProbeObservation или адаптером нового CLI/scorer.
+
+## Absolute-clock precision
+
+Sampling gap проверяется сравнением absolute end с begin+maximumSampleGap;
+сравнение уже вычтенного интервала теряло масштаб binary64 roundoff при большом
+model time. Final measurement coverage использует тот же принцип. Specification
+отклоняется, если sampling period неразличим на фоне timestamp uncertainty.
+Это representational guard, не новый физический допуск или правило tau/dt.
+SyncTolerance, amplitude tolerances, Rdk scheduler и Reset semantics не меняются.
+Причина full-suite regression и текущая приёмка поддерживаются в корневом
+`Docs/StructTrain/TimeLearner/AbsoluteClockSampling.ru.md`.
