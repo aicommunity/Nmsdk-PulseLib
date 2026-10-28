@@ -168,8 +168,21 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
         else
         {
             const auto certificate = training["certificate"].toObject();
-            if(certificate["state_identity"] != identity["sha256"] || certificate["status"] != training["status"])
+            // Versioned recognition metadata retains the original solo proof;
+            // it must not relabel that proof as verification of a scaled graph.
+            const bool recognition=state=="recognition" && metadata.contains("recognition_schema_version");
+            const auto expectedIdentity=recognition?metadata["conversion"].toObject()["source_solo_identity"]:identity["sha256"];
+            if(certificate["state_identity"] != expectedIdentity || certificate["status"] != training["status"])
                 Fail("certificate_model_mismatch", "certificate does not identify the exported state");
+            if(recognition)
+            {
+                const auto verification=metadata["recognition_verification"].toObject();
+                if(metadata["recognition_schema_version"]!=QJsonValue(1) || training["scope"]!=QJsonValue("source_solo") ||
+                   verification["status"]!=QJsonValue("unverified") || verification["model_identity"]!=identity["sha256"] ||
+                   !verification.contains("certificate") || !verification["certificate"].isNull() ||
+                   metadata["conversion"].toObject()["mode"]!=QJsonValue("parallel"))
+                    Fail("invalid_recognition_verification", "converted state requires separate verification");
+            }
         }
     }
     const auto calibration = metadata["calibration"].toObject();
