@@ -6888,7 +6888,7 @@ bool NNeuronTimeLearnerBranch::PushPostTunePattern(int index)
   const double v = (i < int(isi.size())) ? isi[static_cast<size_t>(i)] : 0.0;
   matrix(i, 0) = (v < 0.0) ? 0.0 : v;
  }
- InputPattern.SetDataDirect(matrix);
+ // Evaluation stimulus is transient. InputPattern remains the training goal.
  if(!SyncInputPatternToDataset(&matrix))
   return false;
  if(Dataset)
@@ -6910,108 +6910,26 @@ bool NNeuronTimeLearnerBranch::PushPostTunePattern(int index)
 
 bool NNeuronTimeLearnerBranch::RebuildCableForPostTuneProbes(void)
 {
- // Match learner BuildStructure cold-start: recreate Neuron from class, tip links,
- // then a second wake-pass Build (Test load path). Single Build left mid ~0.066.
- if(!Neuron && !Dataset)
+ if(!Neuron || !Dataset)
   return false;
-
- const std::string cls = NeuronClassName.GetData();
- const double cap = (Neuron && Neuron->MembraneCapacity.GetData() > 0.0)
-  ? Neuron->MembraneCapacity.GetData() : 1e-9;
-
- DelComponent(std::string("Neuron"));
- Neuron = NULL;
- Neuron = AddMissingComponent<NPulseNeuron>(std::string("Neuron"), cls);
- if(!Neuron)
+ auto generator=GetDatasetGenerator();
+ if(!generator)
+  return false;
+ const auto reconstructed=TimeLearner::ReconstructNativeLearnerNeuron(*this,{{&generator->Output,"burst"}});
+ // DelComponent clears the learner's alias, including during rollback.
+ Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
+ if(reconstructed.status!=TimeLearner::NativeModelBuildStatus::Adopted)
  {
-  LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearnerBranch",
-   "RebuildCableForPostTuneProbes: failed to create Neuron");
+  LogMessageEx(RDK_EX_ERROR,"NNeuronTimeLearnerBranch",
+   std::string("PostTune native reconstruction failed: ")+reconstructed.reason);
   return false;
  }
- Neuron->SetCoord(MVector<double,3>(8.7 + 1 * 7, 1.67, 0));
- Neuron->NumSomaMembraneParts = 1;
- Neuron->MembraneCapacity = cap;
- {
-  const std::string ov_msg = ApplyNeuronClassOverrides(Neuron, OverrideMembraneCapacity.GetData(),
-   OverrideExcMembraneResistance.GetData(), OverrideInhMembraneResistance.GetData(),
-   OverrideExcSynapseResistance.GetData(), OverrideInhSynapseResistance.GetData());
-  if(!ov_msg.empty())
-   LogMessageEx(RDK_EX_INFO, "NNeuronTimeLearnerBranch", ov_msg);
- }
- {
-  std::vector<int> chain(1, ChainLengthMax());
-  Neuron->NumDendriteMembranePartsVec = chain;
- }
- Neuron->StructureBuildMode = 2;
- if(!Neuron->Build())
- {
-  LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearnerBranch",
-   "RebuildCableForPostTuneProbes: Neuron->Build failed");
-  return false;
- }
- Neuron->ApplyElementDefaults();
-
- EnsureSingleInputSynapseOnBranchSegments(Neuron, ChainLengthMax());
- EnsureNextSegInhSynapsesForAllTips();
- Neuron->Reset();
- Neuron->InvalidateActiveComponentsCache();
-
- bool ok = true;
- for(int d = 0; d < NumInputDendrite; ++d)
- {
-  if(!RelinkDendriteSynapsesToDataset(d))
-   ok = false;
- }
- ApplyPostTrainTipMode(false);
-
- // Wake-pass (same as BuildStructure after first tip link).
- {
-  std::vector<int> chain(1, ChainLengthMax());
-  Neuron->NumDendriteMembranePartsVec = chain;
- }
- Neuron->StructureBuildMode = 2;
- if(!Neuron->Build())
- {
-  LogMessageEx(RDK_EX_ERROR, "NNeuronTimeLearnerBranch",
-   "RebuildCableForPostTuneProbes: wake-pass Build failed");
-  return false;
- }
- Neuron->ApplyElementDefaults();
- Neuron->Reset();
- Neuron->InvalidateActiveComponentsCache();
- EnsureSingleInputSynapseOnBranchSegments(Neuron, ChainLengthMax());
- EnsureNextSegInhSynapsesForAllTips();
- for(int d = 0; d < NumInputDendrite; ++d)
- {
-  if(!RelinkDendriteSynapsesToDataset(d))
-   ok = false;
-  if(IsParametricNormalization() && d < int(TipSynapseResistance.size()))
-   SetTipSynapseResistanceOnComponent(d, TipSynapseResistance[d]);
- }
- ApplyPostTrainTipMode(false);
+ // The imported tree already has native Build/Init and fresh dynamics. No
+ // class-default replacement, uniform parent C overlay or wake-pass Build.
  ApplyPulseGeneratorMute();
- if(NPulseGeneratorTransit *g = GetDatasetGenerator())
-  g->Reset();
- if(Dataset)
-  Dataset->Reset();
+ Dataset->Reset();
  Neuron->Reset();
-
- if(EnableDebug.GetData() && RDK::GetLogger())
- {
-  const int n = NumInputDendrite.GetData();
-  std::ostringstream oss;
-  oss << "RebuildCableForPostTuneProbes: recreate class=" << cls
-      << " Lmax=" << ChainLengthMax() << " Cap=" << cap << " tips=[";
-  const std::vector<double> tips_dbg = TipSynapseResistance.GetData();
-  for(int i = 0; i < n && i < int(tips_dbg.size()); ++i)
-  {
-   if(i) oss << ',';
-   oss << tips_dbg[static_cast<size_t>(i)];
-  }
-  oss << "] gen_links=" << CountGeneratorTipLinks() << " ok=" << (ok ? 1 : 0);
-  RDK::GetLogger()->LogMessageEx(RDK_EX_DEBUG, "NNeuronTimeLearnerBranch", oss.str());
- }
- return ok;
+ return true;
 }
 
 void NNeuronTimeLearnerBranch::EnterPostTunePhase(void)
@@ -7074,8 +6992,17 @@ void NNeuronTimeLearnerBranch::EnterPostTunePhase(void)
  ParallelResistanceScaled = false;
  IsNeedToTrain.SetDataDirect(true);
 
- // Match Test gate: rebuild cable before silent mid probes.
- RebuildCableForPostTuneProbes();
+ // Reconstruct the actual graph; a failed transfer is not a valid probe run.
+ if(!RebuildCableForPostTuneProbes())
+ {
+  PostTuneRunInvalid=true;
+  PostTuneRunTerminal=PostTrainTune::kResultSetupFailure;
+  PostTuneResult=PostTrainTune::kResultSetupFailure;
+  PostTrainTuneComplete=false;
+  TrainingPhase=kPhaseFailed;
+  IsNeedToTrain.SetDataDirect(false);
+  return;
+ }
 
  const double silent = PostTrainSilentThreshold.GetData();
  SetLTZThreshold(silent);
@@ -7756,12 +7683,16 @@ void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
   // Rel times are gaps after pulse 0, so Expected[0]=0 (not cumsum including the
   // pre-first ISI — that shifted measure windows +0.01 and missed L=1 peaks).
   ExpectedPulseRelTimes[0] = 0.0;
+  // PostTune's single-presentation loop measures the actual transient matrix;
+  // its timing windows must not be derived from the immutable training goal.
+  const auto& presented = (TrainingPhase.GetData()==kPhasePostTune && Dataset)
+   ? Dataset->MatrixData.GetData() : InputPattern.GetData();
   double acc = 0.0;
   for(int i = 1; i < NumInputDendrite; ++i)
   {
    double isi = 0.0;
-   if(InputPattern.GetRows() > i && InputPattern.GetCols() > 0)
-    isi = InputPattern(i, 0);
+   if(presented.GetRows() > i && presented.GetCols() > 0)
+    isi = presented(i, 0);
    if(isi < 0.0)
     isi = 0.0;
    acc += isi;
