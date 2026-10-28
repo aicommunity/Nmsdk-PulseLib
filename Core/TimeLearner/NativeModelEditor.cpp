@@ -5,6 +5,7 @@
 #include "../NPulseSynapse.h"
 #include "../NConstGenerator.h"
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -438,6 +439,10 @@ ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor
         Require(ReadNativeInputParameters(previewBindings,positions)==requested,"domain_preview_readback_mismatch");
         const auto identity=NmsdkTools::IdentifyModel(preview,ports);Require(identity["valid"].toBool(),"invalid_domain_preview_identity");
         result.previewModelRevision=identity["sha256"].toString().toStdString();
+        result.previewModelJson=QJsonDocument(identity["model"].toObject()).toJson(QJsonDocument::Compact).toStdString();
+        result.sourceAmplitude=source->Amplitude.GetData();result.branch=b.branch;
+        result.maximumResistanceRatio=spec.maximumResistanceRatio;
+        result.configuredMinimumResistance=spec.configuredMinimumResistance;
         // Record declared control dependencies, never infer scaling by equal
         // numeric Rs. Multiple logical owners lock a shared physical bank.
         std::map<NPulseSynapse*,std::set<std::size_t>> controls;
@@ -453,7 +458,11 @@ ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor
             Require(bool(synapse),"unsupported_domain_inhibition_bank");controls[synapse.Get()].insert(rule.inputIndex);
         }
         for(const auto& [synapse,owners]:controls)
+        {
+            result.controls.push_back({synapse->GetLongName(preview.Get()),std::vector<std::size_t>(owners.begin(),owners.end())});
             if(owners.count(inputIndex) && owners.size()>1)result.lockedBySharedBank=true;
+        }
+        std::sort(result.controls.begin(),result.controls.end(),[](const auto& a,const auto& b){return a.synapsePath<b.synapsePath;});
         const auto calculate=[&] {
             auto membrane=preview->GetComponentL<NPulseMembrane>(MembranePath(b.branch,inputIndex,requested[inputIndex].length),true);
             Require(membrane && membrane->GetNumPosChannels()>0,"missing_domain_target_channel");

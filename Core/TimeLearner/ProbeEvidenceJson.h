@@ -13,6 +13,8 @@ QJsonObject EncodeVerificationProtocol(const VerificationProtocol& protocol);
 VerificationProtocol DecodeVerificationProtocol(const QJsonObject& object);
 class NativeTrainingService;
 struct InputParameters;
+struct ResistanceDomainAssessment;
+QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& assessment);
 // Diagnostic state summary, not a checkpoint/import format or a scientific
 // verdict. The actual graph/readback is supplied independently by the adapter.
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
