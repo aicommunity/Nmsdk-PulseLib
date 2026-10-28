@@ -6888,7 +6888,7 @@ bool NNeuronTimeLearnerBranch::PushPostTunePattern(int index)
   const double v = (i < int(isi.size())) ? isi[static_cast<size_t>(i)] : 0.0;
   matrix(i, 0) = (v < 0.0) ? 0.0 : v;
  }
- InputPattern.SetDataDirect(matrix);
+ // Evaluation stimulus is transient. InputPattern remains the training goal.
  if(!SyncInputPatternToDataset(&matrix))
   return false;
  if(Dataset)
@@ -7683,12 +7683,16 @@ void NNeuronTimeLearnerBranch::BeginTrainingIteration(double now)
   // Rel times are gaps after pulse 0, so Expected[0]=0 (not cumsum including the
   // pre-first ISI — that shifted measure windows +0.01 and missed L=1 peaks).
   ExpectedPulseRelTimes[0] = 0.0;
+  // PostTune's single-presentation loop measures the actual transient matrix;
+  // its timing windows must not be derived from the immutable training goal.
+  const auto& presented = (TrainingPhase.GetData()==kPhasePostTune && Dataset)
+   ? Dataset->MatrixData.GetData() : InputPattern.GetData();
   double acc = 0.0;
   for(int i = 1; i < NumInputDendrite; ++i)
   {
    double isi = 0.0;
-   if(InputPattern.GetRows() > i && InputPattern.GetCols() > 0)
-    isi = InputPattern(i, 0);
+   if(presented.GetRows() > i && presented.GetCols() > 0)
+    isi = presented(i, 0);
    if(isi < 0.0)
     isi = 0.0;
    acc += isi;
