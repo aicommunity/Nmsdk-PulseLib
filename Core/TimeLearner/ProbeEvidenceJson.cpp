@@ -120,7 +120,8 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         {"amplitude_relative",Number(cfg.tolerances.amplitudeRelative)},{"sync",Number(cfg.tolerances.sync)}};
     QJsonObject result{{"kind","native_training_state_summary"},{"schema_version",1},
         {"state",NativeTrainingStateName(service.State())},{"outcome",TrainingStatusName(service.Outcome())},
-        {"reason",Text(service.Reason())},{"model_state_kind","learned_solo"},
+        {"reason",Text(service.Reason())},{"model_state_kind",
+            service.State()==NativeTrainingState::Finished && !service.Certificate()?"diagnostic":"learned_solo"},
         {"actual_model_revision",Text(actualModelRevision)},{"model_epoch",Count(service.ModelEpoch())},
         {"actual_parameters",parameters(actualParameters)},{"tolerances",tolerances},
         {"reference_probes",Count(service.IssuedReferenceProbes())},{"contains_evaluation_verdict",false}};
