@@ -7,6 +7,10 @@ namespace NMSDK::TimeLearner {
 // Nonfinite numbers and integers not exactly representable in JSON are errors;
 // they must never become an apparently valid null/rounded measurement.
 QJsonObject EncodeNativeProbeEvidence(const NativeProbeResult& result);
+NativeProbeResult DecodeNativeProbeEvidence(const QJsonObject& object);
+QJsonObject EncodeTrainingCertificate(const TrainingCertificate& certificate);
+QJsonObject EncodeVerificationProtocol(const VerificationProtocol& protocol);
+VerificationProtocol DecodeVerificationProtocol(const QJsonObject& object);
 class NativeTrainingService;
 struct InputParameters;
 // Diagnostic state summary, not a checkpoint/import format or a scientific

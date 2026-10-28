@@ -806,6 +806,8 @@ public: // Methods
  // adoption is read-only and never infers whether a supplied graph was trained.
  TimeLearner::NativeModelBuildResult ConstructNativeModel(TimeLearner::NativeModelSpec specification);
  TimeLearner::NativeModelBuildResult AdoptNativeModel(TimeLearner::NativeModelSpec specification);
+ QJsonObject ExportNativeLearnedState(const std::string& implementationId);
+ TimeLearner::NativeModelBuildResult ImportNativeLearnedState(const QJsonObject& package,const std::string& implementationId);
  
  // --------------------------
  // Parameter setters
