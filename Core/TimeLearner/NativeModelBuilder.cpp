@@ -234,6 +234,57 @@ static NativeModelBuildResult InspectBuiltModel(UNet& owner,const NativeModelSpe
 }
 NativeModelBuildResult InspectNativeLearnerModel(UNet& owner,const NativeModelSpec& s,const std::vector<int>& attachments)
 {return InspectBuiltModel(owner,s,attachments,Bindings(owner,s));}
+NativeModelBuildResult CommitNativeLearnerChildren(UNet& owner,const NativeModelSpec& s,
+    const std::vector<InputParameters>& expected,UEPtr<NPulseNeuron> neuron,UEPtr<NDatasetMatrix> dataset)
+{
+    NativeModelBuildResult result;UEPtr<UContainer> oldNeuron,oldDataset;bool detached=false,committed=false;
+    std::vector<NameT> order;owner.GetComponentsList(order);
+    const auto restoreOrder=[&] {
+        for(std::size_t i=0;i<order.size();++i)
+        {
+            std::vector<NameT> now;owner.GetComponentsList(now);const auto at=std::find(now.begin(),now.end(),order[i]);
+            Require(at!=now.end(),"import_owner_member_lost");const int offset=int(i)-int(at-now.begin());
+            if(offset)Require(owner.ChangeComponentPosition(order[i],offset),"import_owner_order_restore_failed");
+        }
+    };
+    try
+    {
+        Require(neuron && dataset && !neuron->GetOwner() && !dataset->GetOwner(),"import_children_must_be_unowned");
+        Require(neuron->GetName()=="Neuron" && dataset->GetName()=="DatasetMatrix","import_children_name_mismatch");
+        std::vector<int> positions;for(const auto& p:expected)positions.push_back(p.length);
+        NativeProbeBindings b;b.owner=&owner;b.neuron=neuron;b.dataset=dataset;b.branch=s.branch;b.inputCount=int(s.inputs.size());
+        const auto preview=InspectBuiltModel(owner,s,positions,b);
+        Require(preview.status==NativeModelBuildStatus::Adopted,preview.reason.c_str());
+        Require(preview.effective==expected,"import_effective_parameters_mismatch");
+        auto source=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+        const auto stability=AssessNativeIntegration(neuron,source->Amplitude.GetData());Require(stability.valid,stability.reason.c_str());
+        CheckReplacement(owner);oldNeuron=owner.GetComponent("Neuron",true);oldDataset=owner.GetComponent("DatasetMatrix",true);
+        if(oldNeuron)owner.DelComponent("Neuron",false);if(oldDataset)owner.DelComponent("DatasetMatrix",false);detached=true;
+        UEPtr<UContainer> child=dataset;Require(owner.AddComponent(child)!=ForbiddenId,"import_dataset_attach_failed");
+        child=neuron;Require(owner.AddComponent(child)!=ForbiddenId,"import_neuron_attach_failed");restoreOrder();
+        result=InspectNativeLearnerModel(owner,s,positions);
+        Require(result.status==NativeModelBuildStatus::Adopted && result.modelRevision==preview.modelRevision && result.effective==expected,
+            "import_graph_changed_during_attachment");
+        committed=true;result.modelMayHaveChanged=true;
+        if(oldNeuron)dynamic_pointer_cast<UNet>(oldNeuron)->BreakLinks();if(oldDataset)dynamic_pointer_cast<UNet>(oldDataset)->BreakLinks();
+        if(oldNeuron)owner.GetStorage()->ReturnObject(oldNeuron);if(oldDataset)owner.GetStorage()->ReturnObject(oldDataset);
+        result.modelMayHaveChanged=true;return result;
+    }
+    catch(const std::exception& error)
+    {
+        if(committed){result.status=NativeModelBuildStatus::Failed;result.reason=error.what();result.modelMayHaveChanged=true;return result;}
+        result.status=NativeModelBuildStatus::Rejected;result.reason=error.what();result.modelMayHaveChanged=false;
+        if(detached)try
+        {
+            if(neuron->GetOwner().Get()==&owner)owner.DelComponent("Neuron",false);
+            if(dataset->GetOwner().Get()==&owner)owner.DelComponent("DatasetMatrix",false);
+            if(oldDataset)Require(owner.AddComponent(oldDataset)!=ForbiddenId,"import_rollback_dataset_failed");
+            if(oldNeuron)Require(owner.AddComponent(oldNeuron)!=ForbiddenId,"import_rollback_neuron_failed");restoreOrder();
+        }
+        catch(...){result.status=NativeModelBuildStatus::Failed;result.modelMayHaveChanged=true;result.reason+=";import_rollback_failed";}
+        return result;
+    }
+}
 NativeModelBuildResult ConstructNativeLearnerModel(UNet& owner,const NativeModelSpec& s,bool explicitColdReplacement)
 {
     NativeModelBuildResult r;NewObjects lease{owner};

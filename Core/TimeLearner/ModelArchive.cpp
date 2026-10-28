@@ -2,6 +2,7 @@
 #include "../../../../Rdk/Core/Engine/UClassImageRegistry.h"
 #include "../../../../Rdk/Core/Engine/UComponentFactory.h"
 #include "../NPulseNeuron.h"
+#include "../NDatasetMatrix.h"
 #include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -127,7 +128,7 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
     }
     RequiredString(metadata, "implementation_id");
     const auto state = RequiredString(metadata, "state_kind");
-    if(state != "model_spec" && state != "learned_solo" && state != "recognition") Fail("invalid_state_kind", state);
+    if(state != "model_spec" && state != "learned_solo" && state != "recognition" && state != "diagnostic") Fail("invalid_state_kind", state);
     if(!metadata["training"].isObject() || !metadata["calibration"].isObject() || !metadata["conversion"].isObject())
         Fail("incomplete_model_metadata", "training/calibration/conversion required");
     const auto training = metadata["training"].toObject();
@@ -138,21 +139,38 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
     }
     else
     {
-        const std::set<QString> statuses{"exact","quantized","best_effort","search_unresolved","budget_exhausted","external_stop"};
+        const std::set<QString> statuses=state=="diagnostic"?
+            std::set<QString>{"search_unresolved","budget_exhausted","external_stop","invalid_model","invalid_observation"}:
+            std::set<QString>{"exact","quantized","best_effort","search_unresolved","budget_exhausted","external_stop"};
         if(!statuses.count(status)) Fail("invalid_training_metadata", status);
         RequiredString(training, "target_id");
         const auto trainer = RequiredString(training, "trainer"), normalization = RequiredString(training, "normalization");
         if((trainer != "Classic" && trainer != "Branch") || (normalization != "N0" && normalization != "N1"))
             Fail("invalid_training_metadata", "trainer/normalization");
         const auto target = training["target_pattern"].toArray(), references = training["captured_per_input"].toArray();
-        if(target.isEmpty() || target.size() != references.size()) Fail("invalid_training_metadata", "target/reference dimension");
+        if(target.isEmpty() || (state=="diagnostic"?references.size()>target.size():target.size()!=references.size()))
+            Fail("invalid_training_metadata", "target/reference dimension");
         for(const auto& value : target)
             if(!value.isDouble() || !std::isfinite(value.toDouble()) || value.toDouble() < 0.) Fail("invalid_training_metadata", "target value");
         for(const auto& value : references)
-            if(!value.isDouble() || !std::isfinite(value.toDouble()) || value.toDouble() <= 0.) Fail("invalid_training_metadata", "reference value");
-        const auto certificate = training["certificate"].toObject();
-        if(certificate["state_identity"] != identity["sha256"] || certificate["status"] != training["status"])
-            Fail("certificate_model_mismatch", "certificate does not identify the exported state");
+            if(!value.isDouble() || !std::isfinite(value.toDouble())) Fail("invalid_training_metadata", "reference value");
+        if(state=="diagnostic")
+        {
+            if(!training["certificate"].isNull() || !training["reference_complete"].isBool() ||
+                training["reference_complete"].toBool()!=(target.size()==references.size()))
+                Fail("invalid_training_metadata", "diagnostic reference/certificate claim");
+            RequiredString(training,"reason");RequiredString(training,"capture_revision");
+            const auto epoch=training["capture_epoch"];
+            if(!epoch.isDouble() || !std::isfinite(epoch.toDouble()) || epoch.toDouble()<0. ||
+                epoch.toDouble()>9007199254740991. || std::floor(epoch.toDouble())!=epoch.toDouble())
+                Fail("invalid_training_metadata", "diagnostic capture epoch");
+        }
+        else
+        {
+            const auto certificate = training["certificate"].toObject();
+            if(certificate["state_identity"] != identity["sha256"] || certificate["status"] != training["status"])
+                Fail("certificate_model_mismatch", "certificate does not identify the exported state");
+        }
     }
     const auto calibration = metadata["calibration"].toObject();
     const auto calibrationStatus = RequiredString(calibration, "status");
@@ -380,7 +398,7 @@ QJsonObject ImageSnapshot(UEPtr<UStorage> storage, UEPtr<UEnvironment> environme
 }
 
 QJsonObject ExportModelArchive(UEPtr<UContainer> model, const QJsonObject& metadata,
-                               const ModelBoundarySources& boundarySources)
+                               const ModelBoundarySources& boundarySources,const std::vector<std::string>& additionalImageRoots)
 try
 {
     if(!model || !model->GetStorage() || !model->GetEnvironment()) Fail("invalid_archive_context", "model/storage/environment");
@@ -409,6 +427,7 @@ try
         definitions.append(definition); visiting.erase(name); done.insert(name);
     };
     for(const auto& name : Classes(graph["identity"].toObject())) capture(name);
+    for(const auto& name:additionalImageRoots)capture(QString::fromStdString(name));
     QJsonObject archive;
     archive["schema_version"] = boundarySources.empty() ? 1 : 2; archive["kind"] = "timelearner_model_archive";
     archive["encoding"] = boundarySources.empty() ? "native-xml-and-model-identity-v1" : "native-xml-and-model-identity-v2";
@@ -429,12 +448,29 @@ try
 }
 catch(const UException& error) { Fail("native_edit_clone_failed",QString::fromStdString(error.what())); }
 
-UEPtr<UContainer> ImportModelArchive(const QJsonObject& archive, UEPtr<UStorage> storage,
-    UEPtr<UEnvironment> environment, const QString& implementationId, const ModelBoundarySources& boundarySources)
+QJsonObject ExportDatasetSnapshot(UEPtr<UContainer> dataset)
+{
+    if(!dataset || !dynamic_pointer_cast<NMSDK::NDatasetMatrix>(dataset))Fail("unsupported_auxiliary_graph","NDatasetMatrix required");
+    auto snapshot=Snapshot(dataset);CheckSnapshot(snapshot);QJsonArray required;
+    for(const auto& name:Classes(snapshot["identity"].toObject()))required.append(name);
+    snapshot["required_class_names"]=required;return snapshot;
+}
+UEPtr<UContainer> ImportDatasetSnapshot(const QJsonObject& snapshot,UEPtr<UStorage> storage,UEPtr<UEnvironment> environment)
+{
+    CheckSnapshot(snapshot);QJsonArray required;
+    for(const auto& name:Classes(snapshot["identity"].toObject()))required.append(name);
+    if(snapshot["required_class_names"]!=QJsonValue(required))Fail("auxiliary_dependencies_mismatch","classes");
+    Lease candidate{storage,LoadSnapshot(snapshot,storage,environment)};
+    if(!dynamic_pointer_cast<NMSDK::NDatasetMatrix>(candidate.object))Fail("unsupported_auxiliary_graph","NDatasetMatrix required");
+    return candidate.Release();
+}
+
+void PrepareModelArchive(const QJsonObject& archive,UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const QString& implementationId)
 try
 {
     if(!storage || !environment) Fail("invalid_archive_context", "storage/environment");
-    const int version = boundarySources.empty() ? 1 : 2;
+    const int version = archive["schema_version"].toInt();
+    if(version!=1 && version!=2)Fail("unsupported_archive_schema","version");
     if(archive["schema_version"] != QJsonValue(version) || archive["kind"].toString() != "timelearner_model_archive" ||
        archive["encoding"].toString() != QString("native-xml-and-model-identity-v%1").arg(version) || archive["dynamic_checkpoint"] != QJsonValue(false))
         Fail("unsupported_archive_schema", "header");
@@ -444,7 +480,6 @@ try
     if(implementationId.isEmpty() || metadata["implementation_id"].toString() != implementationId)
         Fail("implementation_identity_mismatch", "runtime");
     const auto graph = archive["graph"].toObject(); CheckSnapshot(graph);
-    BoundaryOutputs(graph["identity"].toObject(),boundarySources);
     ValidateMetadata(metadata, graph["identity"].toObject());
     if(!archive["class_definitions"].isArray()) Fail("missing_class_definitions", "array required");
     std::set<QString> declared;
@@ -494,6 +529,16 @@ try
             RegisterClassImage(storage, name.toStdString(), candidate.object);
         }
     }
+}
+catch(const UException& error){Fail("native_archive_prepare_failed",QString::fromStdString(error.what()));}
+
+UEPtr<UContainer> ImportModelArchive(const QJsonObject& archive, UEPtr<UStorage> storage,
+    UEPtr<UEnvironment> environment, const QString& implementationId, const ModelBoundarySources& boundarySources)
+try
+{
+    PrepareModelArchive(archive,storage,environment,implementationId);
+    if(archive["schema_version"]!=QJsonValue(boundarySources.empty()?1:2))Fail("unsupported_archive_schema","boundary ports");
+    const auto graph=archive["graph"].toObject();BoundaryOutputs(graph["identity"].toObject(),boundarySources);
     Lease imported{storage,LoadSnapshot(graph, storage, environment,boundarySources),!boundarySources.empty()};
     if(!dynamic_pointer_cast<NMSDK::NPulseNeuron>(imported.object)) Fail("unsupported_archive_model", "NPulseNeuron graph required");
     return imported.Release();

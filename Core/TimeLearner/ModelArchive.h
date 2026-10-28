@@ -22,7 +22,16 @@ public:
 // metadata declares implementation_id, state_kind, training, calibration and
 // conversion. This is not a physical/controller mid-probe checkpoint.
 RDK_LIB_TYPE QJsonObject ExportModelArchive(RDK::UEPtr<RDK::UContainer> model, const QJsonObject& metadata,
-                               const ModelBoundarySources& boundarySources = {});
+                               const ModelBoundarySources& boundarySources = {},const std::vector<std::string>& additionalImageRoots = {});
+// Validate/register the complete immutable dependency closure before creating
+// caller-owned stimulus sources. Does not instantiate the archived neuron.
+RDK_LIB_TYPE void PrepareModelArchive(const QJsonObject& archive,RDK::UEPtr<RDK::UStorage> storage,
+    RDK::UEPtr<RDK::UEnvironment> environment,const QString& implementationId);
+// Auxiliary closed DatasetMatrix graph, used only inside a complete learned
+// state package whose neuron archive supplies its immutable image closure.
+RDK_LIB_TYPE QJsonObject ExportDatasetSnapshot(RDK::UEPtr<RDK::UContainer> dataset);
+RDK_LIB_TYPE RDK::UEPtr<RDK::UContainer> ImportDatasetSnapshot(const QJsonObject& snapshot,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment);
 
 // Returns a newly acquired model only after native Load/Init and full identity
 // verification. Caller owns the instance and must Free/ReturnObject it.
