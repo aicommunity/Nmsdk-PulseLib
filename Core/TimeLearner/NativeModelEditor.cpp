@@ -527,7 +527,7 @@ ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor
         result.status=ResistanceDomainStatus::Unsupported;result.reason=error.what();
         if(!before.isEmpty())try
         {
-            if(NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}})!=before)
+            if(NmsdkTools::IdentifyModel(UEPtr<UContainer>(b.neuron.Get()),{{&source->Output,"burst"}})!=before)
             {result.modelMayHaveChanged=true;result.status=ResistanceDomainStatus::Failed;}
         }
         catch(...){result.modelMayHaveChanged=true;result.status=ResistanceDomainStatus::Failed;}
