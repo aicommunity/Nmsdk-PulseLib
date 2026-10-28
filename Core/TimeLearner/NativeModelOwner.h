@@ -3,6 +3,17 @@
 #include "NativeTrainingBindings.h"
 
 namespace NMSDK::TimeLearner {
+
+template<class Owner> NativeEditSpec NativeOwnerEditSpec(Owner& owner,const std::optional<NativeModelSpec>& declaration,
+    const std::vector<InputParameters>& requested,double configuredFloor)
+{
+    auto policy=MakeNativeEditSpec(owner.NormalizationMode.GetData()==0?Normalization::SynapseCount:Normalization::TipResistance,
+        owner.MaxDendriteLength.GetData(),requested,owner.EnableNextSegmentInhibition.GetData(),owner.EnableSegExcInh.GetData(),
+        owner.SegExcInhDelta.GetData(),owner.SegExcInhAlpha.GetData(),owner.MaxSynapseToMembraneResistanceRatio.GetData(),
+        configuredFloor,owner.StructureBuildMode.GetData()==0);
+    if(declaration)policy=NativeModelEditPolicy(*declaration,requested);
+    return policy;
+}
 template<class Owner> void CheckNativeOwnerOverrides(const Owner& owner)
 {
     if(owner.OverrideMembraneCapacity.GetData()!=0. || owner.OverrideExcMembraneResistance.GetData()!=0. ||

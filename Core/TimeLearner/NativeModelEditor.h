@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeProbe.h"
 #include "BoundedTraining.h"
+#include "ResistanceDomain.h"
 
 namespace NMSDK::TimeLearner {
 struct NativeInhibitoryTarget { std::size_t inputIndex=0;int offset=1;double resistance=0.; };
@@ -33,6 +34,12 @@ struct NativeIntegrationAssessment {
 // equations, including secretion discretization, PSI, Weight and averaging.
 // Unsupported equations/bindings are explicit diagnostics, never assumed safe.
 NativeIntegrationAssessment AssessNativeIntegration(RDK::UEPtr<NPulseNeuron> neuron,double sourceAmplitude);
+// Read-only native preview, including declared excitation/inhibition Rs
+// dependencies. An unsafe proposed Rs can still have a finite legal domain.
+// No physical tick, live edit or common intersection of different inputs.
+ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
+    const std::vector<int>& attachments,const std::vector<InputParameters>& geometry,const NativeEditSpec& specification,
+    std::size_t inputIndex,bool scaleInhibitionWithInput);
 std::vector<InputParameters> ReadNativeInputParameters(const NativeProbeBindings& bindings,
                                                       const std::vector<int>& attachments);
 // Native Save/Load preview validates a candidate before changing the live graph.
