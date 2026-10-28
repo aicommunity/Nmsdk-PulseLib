@@ -63,6 +63,7 @@ private:
     RDK::UNet* capturedOwner=nullptr;
     RDK::UStorage* capturedStorage=nullptr;
     RDK::UEnvironment* capturedEnvironment=nullptr;
+    RDK::UModuleLifecycleObservation ownerLifecycle;
     unsigned frequency=0;
     std::vector<RDK::NameT> order;
     QJsonObject neuronSnapshot,datasetSnapshot;

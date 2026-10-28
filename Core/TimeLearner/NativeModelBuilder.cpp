@@ -298,6 +298,7 @@ std::unique_ptr<NativeLearnerGraphCheckpoint> NativeLearnerGraphCheckpoint::Capt
     auto result=std::unique_ptr<NativeLearnerGraphCheckpoint>(new NativeLearnerGraphCheckpoint);
     result->capturedOwner=&owner;result->capturedStorage=owner.GetStorage().Get();
     result->capturedEnvironment=owner.GetEnvironment().Get();result->frequency=owner.GetTimeStep();
+    result->ownerLifecycle=owner.ObserveLifecycle();
     owner.GetComponentsList(result->order);
     result->neuronSnapshot=NmsdkTools::ExportPhysicalGraphForEdit(neuron,{{&source->Output,"burst"}});
     result->datasetSnapshot=NmsdkTools::ExportDatasetSnapshot(dataset);
@@ -324,6 +325,7 @@ NativeModelBuildResult NativeLearnerGraphCheckpoint::Restore(UNet& owner) const
         Require(&owner==capturedOwner && owner.GetStorage().Get()==capturedStorage &&
             owner.GetEnvironment().Get()==capturedEnvironment && owner.GetTimeStep()==frequency,
             "boundary_checkpoint_context_changed");
+        Require(ownerLifecycle.IsCurrent(),"boundary_checkpoint_owner_lifecycle_changed");
         auto previousSet=previousOrder,originalSet=order;
         std::sort(previousSet.begin(),previousSet.end());std::sort(originalSet.begin(),originalSet.end());
         Require(previousSet==originalSet,"boundary_checkpoint_owner_members_changed");
