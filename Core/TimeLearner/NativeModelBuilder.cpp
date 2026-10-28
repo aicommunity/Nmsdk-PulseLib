@@ -1,5 +1,6 @@
 #include "NativeModelBuilder.h"
 #include "ModelIdentity.h"
+#include "ModelArchive.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <cmath>
@@ -234,6 +235,57 @@ static NativeModelBuildResult InspectBuiltModel(UNet& owner,const NativeModelSpe
 }
 NativeModelBuildResult InspectNativeLearnerModel(UNet& owner,const NativeModelSpec& s,const std::vector<int>& attachments)
 {return InspectBuiltModel(owner,s,attachments,Bindings(owner,s));}
+NativeModelBuildResult ReconstructNativeLearnerNeuron(UNet& owner,const NmsdkTools::ModelBoundarySources& sources)
+{
+    NativeModelBuildResult result;UEPtr<NPulseNeuron> original,candidate;
+    std::vector<NameT> order;owner.GetComponentsList(order);bool detached=false,committed=false;
+    QJsonObject identity;
+    const auto restoreOrder=[&] {
+        for(std::size_t i=0;i<order.size();++i)
+        {
+            std::vector<NameT> now;owner.GetComponentsList(now);const auto at=std::find(now.begin(),now.end(),order[i]);
+            Require(at!=now.end(),"reconstruction_owner_member_lost");
+            const int offset=int(i)-int(at-now.begin());
+            if(offset)Require(owner.ChangeComponentPosition(order[i],offset),"reconstruction_order_restore_failed");
+        }
+    };
+    try
+    {
+        Require(owner.GetStorage() && owner.GetEnvironment(),"missing_reconstruction_context");
+        original=owner.GetComponentL<NPulseNeuron>("Neuron",true);Require(bool(original),"missing_reconstruction_neuron");
+        CheckReplacement(owner);
+        identity=NmsdkTools::IdentifyModel(original,sources);
+        candidate=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(original,sources));
+        Require(bool(candidate) && !candidate->GetOwner(),"invalid_reconstruction_candidate");
+        Require(NmsdkTools::IdentifyModel(candidate,sources)==identity,"reconstruction_preview_changed_model");
+        // Keep the original object alive until attachment and full readback pass.
+        owner.DelComponent("Neuron",false);detached=true;
+        UEPtr<UContainer> child=candidate;Require(owner.AddComponent(child)!=ForbiddenId,"reconstruction_attach_failed");
+        restoreOrder();
+        Require(candidate->IsReady() && candidate->IsInit() &&
+            NmsdkTools::IdentifyModel(candidate,sources)==identity,"reconstruction_attachment_changed_model");
+        committed=true;result.status=NativeModelBuildStatus::Adopted;
+        result.modelRevision=identity.value("sha256").toString().toStdString();result.modelMayHaveChanged=true;
+        original->BreakLinks();owner.GetStorage()->ReturnObject(original);original=0;return result;
+    }
+    catch(const std::exception& error)
+    {
+        result.reason=error.what();result.status=committed?NativeModelBuildStatus::Failed:NativeModelBuildStatus::Rejected;
+        result.modelMayHaveChanged=committed;
+        if(detached && !committed)try
+        {
+            if(candidate && candidate->GetOwner().Get()==&owner)owner.DelComponent("Neuron",false);
+            if(original && !original->GetOwner())
+            {UEPtr<UContainer> child=original;Require(owner.AddComponent(child)!=ForbiddenId,"reconstruction_rollback_attach_failed");}
+            restoreOrder();
+            Require(original && NmsdkTools::IdentifyModel(original,sources)==identity,"reconstruction_rollback_changed_model");
+        }
+        catch(...){result.status=NativeModelBuildStatus::Failed;result.modelMayHaveChanged=true;result.reason+=";reconstruction_rollback_failed";}
+        if(candidate && !candidate->GetOwner())
+        {candidate->BreakLinks();owner.GetStorage()->ReturnObject(candidate);}
+        return result;
+    }
+}
 NativeModelBuildResult CommitNativeLearnerChildren(UNet& owner,const NativeModelSpec& s,
     const std::vector<InputParameters>& expected,UEPtr<NPulseNeuron> neuron,UEPtr<NDatasetMatrix> dataset)
 {

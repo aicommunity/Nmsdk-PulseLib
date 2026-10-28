@@ -1,5 +1,6 @@
 #pragma once
 #include "NativeModelEditor.h"
+#include "ModelIdentity.h"
 
 namespace NMSDK::TimeLearner {
 struct NativeInitialInput {
@@ -41,6 +42,12 @@ NativeModelBuildResult ConstructNativeLearnerModel(RDK::UNet& owner,const Native
 // overlay. Attachments are current learned values; Rs/C may differ from initial.
 NativeModelBuildResult InspectNativeLearnerModel(RDK::UNet& owner,const NativeModelSpec& specification,
                                                const std::vector<int>& attachments);
+// Reconstruct the actual physical neuron through the common native snapshot
+// path. Dataset, images, effective child physics and owner order are retained.
+// No defaults, inferred parent physics or nested Calculate. The caller must
+// refresh any cached Neuron pointer after return, including a failed commit.
+NativeModelBuildResult ReconstructNativeLearnerNeuron(RDK::UNet& owner,
+    const NmsdkTools::ModelBoundarySources& boundarySources);
 // Verified unowned import children. Preserves owner order, checks external
 // listeners before replacement and restores the old children on commit failure.
 NativeModelBuildResult CommitNativeLearnerChildren(RDK::UNet& owner,const NativeModelSpec& specification,
