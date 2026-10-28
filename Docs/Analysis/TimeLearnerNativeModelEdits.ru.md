@@ -53,7 +53,8 @@ Opt-in compatibility и process helper skips не считаются доказ�
 Git evidence поддерживаются в корневом Docs/StructTrain/TimeLearner/
 NativeModelEdits.ru.md. Это не selectivity experiment, historical replay,
 полный trained-state export или принятие всей физической матрицы.
-# Domain evidence schema 2
+
+## Domain evidence schema 2
 
 Read-only N1 preview сохраняет semantic model identity, source amplitude,
 policy floor/ratio и per-synapse ownership в `ResistanceDomainAssessment`.
