@@ -1,6 +1,7 @@
 #include "ProbeEvidenceJson.h"
 #include "NativeTrainingService.h"
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <cmath>
 #include <stdexcept>
 
@@ -108,6 +109,38 @@ QJsonObject EncodeVerificationProtocol(const VerificationProtocol& p)
         {"minimum_amplitude",Number(p.minimumAmplitude)},{"stimulus_profile",p.stimulusProfile?QJsonValue(Profile(*p.stimulusProfile)):QJsonValue(QJsonValue::Null)},
         {"wave_assignment",Assignment(p.waveAssignment)},{"peak_selection",Selection(p.peakSelection)}};
 }
+QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& d)
+{
+    QJsonArray channels,geometry,controls;
+    for(const auto& c:d.channels)channels.append(QJsonObject{{"path",Text(c.path)},
+        {"variable_coefficient",Number(c.variableCoefficient)},{"fixed_conductance",Number(c.fixedConductance)},
+        {"minimum_resistance",Number(c.minimumResistance)}});
+    for(const auto& p:d.geometry)geometry.append(QJsonObject{
+        {"length",p.length},{"synapses",p.synapses},{"resistance",Number(p.resistance)}});
+    for(const auto& c:d.controls)
+    {
+        QJsonArray owners;for(auto owner:c.inputIndices)owners.append(Count(owner));
+        controls.append(QJsonObject{{"synapse_path",Text(c.synapsePath)},{"input_indices",owners}});
+    }
+    QJsonValue model(QJsonValue::Null);
+    if(!d.previewModelJson.empty())
+    {
+        const auto document=QJsonDocument::fromJson(QByteArray::fromStdString(d.previewModelJson));
+        if(!document.isObject())throw std::invalid_argument("invalid_native_domain_preview_json");
+        model=document.object();
+    }
+    return {{"kind","native_resistance_domain_evidence"},{"schema_version",2},
+        {"status",ResistanceDomainStatusName(d.status)},{"reason",Text(d.reason)},{"input_index",Count(d.inputIndex)},
+        {"base_model_revision",Text(d.baseModelRevision)},{"preview_model_revision",Text(d.previewModelRevision)},
+        {"geometry",geometry},{"locked_by_shared_bank",d.lockedBySharedBank},{"model_may_have_changed",d.modelMayHaveChanged},
+        {"minimum_resistance",d.minimumResistance==0.?QJsonValue(QJsonValue::Null):QJsonValue(Number(d.minimumResistance))},
+        {"maximum_resistance",d.maximumResistance==0.?QJsonValue(QJsonValue::Null):QJsonValue(Number(d.maximumResistance))},
+        {"channels",channels},{"preview_model",model},{"controls",controls},{"branch",d.branch},
+        {"source_amplitude",Number(d.sourceAmplitude)},
+        {"policy",QJsonObject{{"equations","explicit_npulsechannel_npulsesynapse_v1"},
+            {"maximum_resistance_ratio",Number(d.maximumResistanceRatio)},
+            {"configured_minimum_resistance",Number(d.configuredMinimumResistance)}}}};
+}
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)
 {
@@ -120,7 +153,8 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         {"amplitude_relative",Number(cfg.tolerances.amplitudeRelative)},{"sync",Number(cfg.tolerances.sync)}};
     QJsonObject result{{"kind","native_training_state_summary"},{"schema_version",1},
         {"state",NativeTrainingStateName(service.State())},{"outcome",TrainingStatusName(service.Outcome())},
-        {"reason",Text(service.Reason())},{"model_state_kind","learned_solo"},
+        {"reason",Text(service.Reason())},{"model_state_kind",
+            service.State()==NativeTrainingState::Finished && !service.Certificate()?"diagnostic":"learned_solo"},
         {"actual_model_revision",Text(actualModelRevision)},{"model_epoch",Count(service.ModelEpoch())},
         {"actual_parameters",parameters(actualParameters)},{"tolerances",tolerances},
         {"reference_probes",Count(service.IssuedReferenceProbes())},{"contains_evaluation_verdict",false}};
@@ -144,20 +178,23 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
             {"effective_model_revision",Text(r.effectiveModelRevision)},{"raw_potential",Number(r.rawPotential)}});
     }
     result["references"]=references;
-    QJsonArray candidates,rejections;
+    QJsonArray candidates,rejections,domains;
     if(const auto search=service.Search())
     {
         result["search_probes"]=Count(search->IssuedProbes());result["applied_edits"]=Count(search->AppliedEdits());
         result["accepted_parameters"]=parameters(search->Parameters());
         for(const auto& e:search->Evidence())candidates.append(QJsonObject{{"input_index",Count(e.inputIndex)},
             {"model_epoch",Count(e.modelEpoch)},{"parameters",parameters({e.parameters}).at(0)},
+            {"full_parameters",parameters(e.fullParameters)},
             {"model_revision",Text(e.modelRevision)},{"trial_id",Text(e.trialId)},{"anchor_trial_id",Text(e.anchorTrialId)},
             {"timing_low",Number(e.timingResidualLow)},{"timing_high",Number(e.timingResidualHigh)},
             {"amplitude_residual",Number(e.amplitudeResidual)},{"within_timing",e.withinTiming},
             {"within_amplitude",e.withinAmplitude},{"parameter_change_cost",Number(e.parameterChangeCost)}});
         for(const auto& r:search->Rejected())rejections.append(QJsonObject{{"trial_id",Text(r.trialId)},{"reason",Text(r.reason)}});
+        for(const auto& d:search->Domains())domains.append(EncodeResistanceDomainAssessment(d));
     }
     result["candidates"]=candidates;result["rejections"]=rejections;
+    result["resistance_domains"]=domains;
     result["certificate"]=QJsonValue(QJsonValue::Null);
     result["certificate_matches_actual_model"]=false;
     if(const auto& certificate=service.Certificate())

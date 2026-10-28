@@ -122,3 +122,23 @@ configured pattern hash и отдельный hash фактических stimul
 baseline/windows, observation reasons и native semantic identity до/после.
 Сериализация этого fixture не является готовым production экспортом всех
 ProbeObservation или адаптером нового CLI/scorer.
+
+## Absolute-clock precision
+
+Sampling gap проверяется сравнением absolute end с begin+maximumSampleGap;
+сравнение уже вычтенного интервала теряло масштаб binary64 roundoff при большом
+model time. Final measurement coverage использует тот же принцип. Specification
+отклоняется, если sampling period неразличим на фоне timestamp uncertainty.
+Это representational guard, не новый физический допуск или правило tau/dt.
+SyncTolerance, amplitude tolerances, Rdk scheduler и Reset semantics не меняются.
+Причина full-suite regression и текущая приёмка поддерживаются в корневом
+`Docs/StructTrain/TimeLearner/AbsoluteClockSampling.ru.md`.
+
+Normal full regression native source 967665382687abe82dbfd30ce54b712881ebf04c
+прошла на обоих workers: четыре maintained CTest groups, PulseLib 442 cases,
+432 pass / 10 helper skips / 0 failures. Независимый Python source 75e020f6:
+58/58 tests без skips; 16 completed / 208 trials, 20 stopped / 66 trials,
+восемь clock probes и 81 physical-domain record. Полные source/run scopes,
+primary artifacts и ограничения перечислены в корневом
+`Docs/StructTrain/TimeLearner/FullClockAcceptance.ru.md`. Это адресная приёмка
+native regression, не завершение всей physics matrix или научного плана.

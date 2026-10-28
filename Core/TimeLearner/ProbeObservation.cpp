@@ -34,6 +34,8 @@ ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specificati
        !spec.maximumSamples || spec.baseline.empty() || spec.windows.empty() ||
        spec.expectedStimulusIds.empty())
         throw std::invalid_argument("invalid_probe_specification");
+    if(!Detail::ResolvableTimeInterval(spec.begin,spec.end,spec.maximumSampleGap))
+        throw std::invalid_argument("insufficient_probe_timestamp_resolution");
     for(double baseline:spec.baseline)
         if(!Finite(baseline)) throw std::invalid_argument("nonfinite_probe_baseline");
     std::set<std::string> inputs,events;
@@ -70,7 +72,7 @@ void ProbeRecorder::Observe(double time,const std::vector<double>& potentials,
         const double interval=time-frames.back().time;
         if(!Finite(interval))
         { Reason("nonfinite_sample_interval"); coverageBroken=true; return; }
-        if(After(interval,spec.maximumSampleGap))
+        if(Detail::IntervalAfter(time,frames.back().time,spec.maximumSampleGap))
         { Reason("sample_gap"); coverageBroken=true; }
     }
     if(frames.size()>=spec.maximumSamples)

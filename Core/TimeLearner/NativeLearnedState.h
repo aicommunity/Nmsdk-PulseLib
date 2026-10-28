@@ -15,8 +15,9 @@ struct PreparedNativeLearnedState {
     int controllerVersion=1,calculateMode=0,structureBuildMode=1;
     ~PreparedNativeLearnedState();
 };
-// Complete certified completed-stage boundary, distinct from physical archive,
-// parameter overlay and a mid-probe dynamics checkpoint. Exact is recomputed.
+// Certified completed or explicitly stopped stage boundary. A stopped package
+// has diagnostic state_kind and null certificate, preserving incomplete capture
+// and observations without a success claim. Never a mid-probe dynamics checkpoint.
 QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId);

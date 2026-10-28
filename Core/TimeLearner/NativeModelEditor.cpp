@@ -5,6 +5,7 @@
 #include "../NPulseSynapse.h"
 #include "../NConstGenerator.h"
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -399,6 +400,147 @@ NativeIntegrationAssessment AssessNativeIntegration(RDK::UEPtr<NPulseNeuron> neu
         Require(!result.channels.empty(),"missing_native_channels");result.valid=true;
     }
     catch(const std::exception& error){result.reason=error.what();}
+    return result;
+}
+
+const char* ResistanceDomainStatusName(ResistanceDomainStatus status)
+{
+    switch(status){case ResistanceDomainStatus::Available:return "available";
+    case ResistanceDomainStatus::Unavailable:return "unavailable";
+    case ResistanceDomainStatus::Unsupported:return "unsupported";
+    case ResistanceDomainStatus::Failed:return "failed";}return "unknown";
+}
+
+ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor& executor,const NativeProbeBindings& b,
+    const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec,
+    std::size_t inputIndex,bool scaleInhibitionWithInput)
+{
+    ResistanceDomainAssessment result;result.inputIndex=inputIndex;result.geometry=requested;
+    QJsonObject before;UEPtr<NPulseGeneratorTransit> source;
+    try
+    {
+        Require(executor.AtEditBoundary(),"native_domain_requires_consumed_probe_boundary");
+        Require(b.owner && b.neuron && b.dataset && b.owner->GetComponentL("Neuron",true).Get()==b.neuron.Get(),"invalid_native_domain_binding");
+        Require(!b.legacyPhysicsPending && !b.postTuneActive,"conflicting_native_domain_controller");
+        Require(spec.normalization==Normalization::TipResistance,"native_resistance_domain_requires_n1");
+        Require(inputIndex<requested.size() && inputIndex!=requested.size()-1,"native_reference_input_not_tunable");
+        Require(Positive(spec.maximumResistanceRatio) && spec.maximumResistanceRatio>=1. &&
+            std::isfinite(spec.configuredMinimumResistance) && spec.configuredMinimumResistance>=0.,"invalid_native_resistance_policy");
+        source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_domain_stimulus_source");
+        const auto previous=ReadNativeInputParameters(b,attachments);const auto plan=MakePlan(b,previous,requested,spec);
+        UEPtr<UContainer> live(b.neuron.Get());UniformTree(live,b.neuron->GetTimeStep());
+        const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
+        before=NmsdkTools::IdentifyModel(live,ports);Require(before["valid"].toBool(),"invalid_live_domain_identity");
+        result.baseModelRevision=before["sha256"].toString().toStdString();
+        auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(live,ports));Lease lease{preview};
+        Require(bool(preview),"failed_domain_preview");Transform(preview,*source,plan,nullptr);CheckRemovedListeners(b.neuron,preview);
+        std::vector<int> positions;for(const auto& p:requested)positions.push_back(p.length);
+        auto previewBindings=b;previewBindings.neuron=preview;
+        Require(ReadNativeInputParameters(previewBindings,positions)==requested,"domain_preview_readback_mismatch");
+        const auto identity=NmsdkTools::IdentifyModel(preview,ports);Require(identity["valid"].toBool(),"invalid_domain_preview_identity");
+        result.previewModelRevision=identity["sha256"].toString().toStdString();
+        result.previewModelJson=QJsonDocument(identity["model"].toObject()).toJson(QJsonDocument::Compact).toStdString();
+        result.sourceAmplitude=source->Amplitude.GetData();result.branch=b.branch;
+        result.maximumResistanceRatio=spec.maximumResistanceRatio;
+        result.configuredMinimumResistance=spec.configuredMinimumResistance;
+        // Record declared control dependencies, never infer scaling by equal
+        // numeric Rs. Multiple logical owners lock a shared physical bank.
+        std::map<NPulseSynapse*,std::set<std::size_t>> controls;
+        for(std::size_t i=0;i<requested.size();++i)
+        {
+            auto synapse=preview->GetComponentL<NPulseSynapse>(MembranePath(b.branch,i,requested[i].length)+".ExcSynapse1",true);
+            Require(bool(synapse),"unsupported_domain_excitation_bank");controls[synapse.Get()].insert(i);
+        }
+        if(scaleInhibitionWithInput)for(const auto& rule:spec.inhibition)
+        {
+            auto synapse=preview->GetComponentL<NPulseSynapse>(MembranePath(b.branch,rule.inputIndex,
+                requested[rule.inputIndex].length+rule.offset)+".InhSynapse1",true);
+            Require(bool(synapse),"unsupported_domain_inhibition_bank");controls[synapse.Get()].insert(rule.inputIndex);
+        }
+        for(const auto& [synapse,owners]:controls)
+        {
+            result.controls.push_back({synapse->GetLongName(preview.Get()),std::vector<std::size_t>(owners.begin(),owners.end())});
+            if(owners.count(inputIndex) && owners.size()>1)result.lockedBySharedBank=true;
+        }
+        std::sort(result.controls.begin(),result.controls.end(),[](const auto& a,const auto& b){return a.synapsePath<b.synapsePath;});
+        const auto calculate=[&] {
+            auto membrane=preview->GetComponentL<NPulseMembrane>(MembranePath(b.branch,inputIndex,requested[inputIndex].length),true);
+            Require(membrane && membrane->GetNumPosChannels()>0,"missing_domain_target_channel");
+            auto target=dynamic_cast<NPulseChannel*>(membrane->GetPosChannel(0));
+            Require(target && Positive(target->RestingResistance.GetData()),"invalid_domain_target_channel");
+            const double rm=target->RestingResistance.GetData(),upper=rm*spec.maximumResistanceRatio;
+            double lower=std::max(rm/spec.maximumResistanceRatio,spec.configuredMinimumResistance);
+            Require(Positive(upper) && Positive(lower),"nonfinite_native_resistance_domain");
+            std::vector<UEPtr<UContainer>> nodes;Collect(preview,nodes);
+            for(const auto& node:nodes)if(auto channel=dynamic_cast<NPulseChannelCommon*>(node.Get()))
+            {
+                Require(typeid(*channel)==typeid(NPulseChannel),"unsupported_channel_integrator");
+                auto c=static_cast<NPulseChannel*>(channel);
+                StaticParameters({&c->Capacity,&c->Resistance,&c->RestingResistance,&c->FBResistance,&c->UseAverageSynapsis});
+                double variable=0.,fixed=0.;
+                for(std::size_t k=0;k<c->SynapticInputs->size();++k)
+                {
+                    auto synapse=dynamic_cast<NPulseSynapse*>(c->SynapticInputs.GetItem(int(k)));
+                    Require(synapse && c->SynapticInputs.GetItemOutputName(int(k))=="Output","unsupported_channel_conductance_source");
+                    const double g=SecretionBound(*synapse,source->Amplitude.GetData());const auto owners=controls.find(synapse);
+                    if(owners!=controls.end() && owners->second.count(inputIndex))variable+=g*requested[inputIndex].resistance;
+                    else fixed+=g;
+                }
+                if(c->UseAverageSynapsis.GetData() && !c->SynapticInputs->empty())
+                {variable/=c->SynapticInputs->size();fixed/=c->SynapticInputs->size();}
+                const double capacity=c->Capacity.GetData(),frequency=c->GetTimeStep();
+                Require(Positive(capacity) && Positive(frequency) && std::isfinite(variable) && std::isfinite(fixed),"nonfinite_domain_channel_coefficients");
+                double channelLower=0.;
+                for(double r:{c->Resistance.GetData(),c->RestingResistance.GetData(),c->FBResistance.GetData()})
+                {
+                    Require(Positive(r),"invalid_channel_resistance");const double q=capacity*r*frequency;
+                    Require(Positive(q),"nonfinite_domain_channel_scale");
+                    if(variable==0.)
+                    {
+                        const double gain=(1.+fixed*r)*(1.+fixed*r)/q;
+                        if(!std::isfinite(gain) || gain>=2.)
+                        {result.status=ResistanceDomainStatus::Unavailable;result.reason="fixed_channel_not_strictly_stable";return;}
+                        continue;
+                    }
+                    const double available=(std::sqrt(q)-1.)/r-fixed;
+                    if(!Positive(available))
+                    {result.status=ResistanceDomainStatus::Unavailable;result.reason="no_finite_native_no_crossing_domain";return;}
+                    const double bound=variable/available;Require(Positive(bound),"nonfinite_native_resistance_floor");
+                    channelLower=std::max(channelLower,bound);
+                }
+                if(variable>0.)
+                {
+                    // Round into the admissible half-line without introducing
+                    // a physical percentage/timestep slack.
+                    channelLower=std::nextafter(channelLower,std::numeric_limits<double>::infinity());
+                    Require(Positive(channelLower),"nonfinite_native_resistance_floor");lower=std::max(lower,channelLower);
+                    result.channels.push_back({node->GetLongName(preview.Get()),variable,fixed,channelLower});
+                }
+            }
+            result.minimumResistance=lower;result.maximumResistance=upper;
+            if(result.lockedBySharedBank)
+            {
+                const auto value=requested[inputIndex].resistance;
+                result.minimumResistance=std::max(lower,value);result.maximumResistance=std::min(upper,value);
+            }
+            result.status=result.minimumResistance<=result.maximumResistance?ResistanceDomainStatus::Available:ResistanceDomainStatus::Unavailable;
+            result.reason=result.status==ResistanceDomainStatus::Unavailable?"empty_native_resistance_domain":
+                (result.lockedBySharedBank?"shared_bank_locks_resistance":"native_no_crossing_domain_v1");
+        };
+        calculate();
+        preview->BreakLinks();preview->GetStorage()->ReturnObject(preview);lease.object=0;
+        Require(NmsdkTools::IdentifyModel(live,ports)==before,"live_graph_changed_during_domain_preview");
+    }
+    catch(const std::exception& error)
+    {
+        result.status=ResistanceDomainStatus::Unsupported;result.reason=error.what();
+        if(!before.isEmpty())try
+        {
+            if(NmsdkTools::IdentifyModel(UEPtr<UContainer>(b.neuron.Get()),{{&source->Output,"burst"}})!=before)
+            {result.modelMayHaveChanged=true;result.status=ResistanceDomainStatus::Failed;}
+        }
+        catch(...){result.modelMayHaveChanged=true;result.status=ResistanceDomainStatus::Failed;}
+    }
     return result;
 }
 

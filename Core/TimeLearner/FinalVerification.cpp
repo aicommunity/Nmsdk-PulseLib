@@ -66,7 +66,7 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
        After(s.maximumSampleGap,p.maximumSampleGap))fail("observation_protocol_mismatch");
     if(o.sampleCount<3 || o.sampleCount>s.maximumSamples)fail("invalid_observation_sample_count");
     const double covered=(double(o.sampleCount)-1.)*s.maximumSampleGap;
-    if(!Finite(covered) || After(s.end-s.begin,covered))fail("incomplete_declared_sampling");
+    if(!Finite(covered) || Detail::IntervalAfter(s.end,s.begin,covered))fail("incomplete_declared_sampling");
     const std::set<std::string> expected(p.stimulusIds.begin(),p.stimulusIds.end());
     if(std::set<std::string>(s.expectedStimulusIds.begin(),s.expectedStimulusIds.end())!=expected ||
        o.stimuli.size()!=expected.size())fail("stimulus_set_mismatch");

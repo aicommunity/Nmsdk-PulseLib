@@ -25,3 +25,27 @@ conversion и controller certificate. Спецификации форматов 
 [identity](../../../../Docs/StructTrain/TimeLearner/ModelIdentity.ru.md),
 [archive](../../../../Docs/StructTrain/TimeLearner/ModelArchive.ru.md),
 [ports](../../../../Docs/StructTrain/TimeLearner/ModelBoundary.ru.md).
+
+## Перенос состояния learner
+
+`NativeLearnedState.h` над физическим архивом переносит Dataset, configuration,
+references и сертификат завершённой solo-границы через `ExportNativeLearnedState`
+и `ImportNativeLearnedState` обоих learner. Завершённый пакет имеет
+`kind=timelearner_completed_state`, schema 1. Проверяются закрытие storage-классов,
+эффективные параметры/связи и повторное воспроизведение доказательств сертификата.
+При отказе подключения нового Neuron возвращаются прежние Dataset и Neuron;
+полная приёмка общей версии ещё требует maintained-suite gate.
+
+В ветке `stage05/stopped-training-state` добавляется отдельный диагностический
+`timelearner_stopped_state`, schema 1. Он содержит исходную физическую модель,
+причину остановки, все фактические попытки проб и валидный префикс references,
+но всегда `certificate=null`. Незавершённая проба сохраняется как censored
+evidence, а не как checkpoint её интегратора. После import управление выключено;
+новый warm run захватывает незавершённую цель только на исходной модели/epoch,
+либо требует явного cold restart/retarget. Explicit target invalidation удаляет
+прежний capture plan, включая callbacks. Reset не подменяет retarget.
+
+Подробности и границы приёмки:
+[завершённая граница](../../../../Docs/StructTrain/TimeLearner/NativeLearnedState.ru.md),
+[остановленная граница](../../../../Docs/StructTrain/TimeLearner/StoppedTrainingState.ru.md).
+Recognition conversion, PostTune и calibrated transfer ещё не покрыты этим API.

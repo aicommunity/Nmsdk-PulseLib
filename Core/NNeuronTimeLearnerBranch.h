@@ -799,6 +799,7 @@ public: // Methods
  }
  std::vector<TimeLearner::InputParameters> ReadNativeParameters();
  TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested);
+ TimeLearner::ResistanceDomainAssessment AssessNativeResistanceDomain(const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex);
  const std::string& NativeModelEditFailure() const { return NativeEditFailure; }
  void BeginNativeTraining(TimeLearner::NativeTrainingPlan plan,bool recaptureReferences=false);
  const TimeLearner::NativeTrainingService& NativeTrainingController() const { return NativeTrainingControl; }
