@@ -259,7 +259,7 @@ NativeModelBuildResult ReconstructNativeLearnerNeuron(UNet& owner,const NmsdkToo
         Require(bool(candidate) && !candidate->GetOwner(),"invalid_reconstruction_candidate");
         Require(NmsdkTools::IdentifyModel(candidate,sources)==identity,"reconstruction_preview_changed_model");
         // Keep the original object alive until attachment and full readback pass.
-        owner.DelComponent("Neuron",false);detached=true;
+        detached=true;owner.DelComponent("Neuron",false);
         UEPtr<UContainer> child=candidate;Require(owner.AddComponent(child)!=ForbiddenId,"reconstruction_attach_failed");
         restoreOrder();
         Require(candidate->IsReady() && candidate->IsInit() &&
