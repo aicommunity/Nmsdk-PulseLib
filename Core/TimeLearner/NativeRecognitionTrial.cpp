@@ -161,7 +161,7 @@ void NativeRecognitionTrialExecutor::BeforeChildren(const NativeProbeBindings& b
             std::vector<NameT> names;node->GetComponentsList(names);
             for(const auto& name:names)collect(node->GetComponent(name,true));
         };
-        collect(b.neuron);collect(b.dataset);
+        collect(b.neuron.Get());collect(b.dataset.Get());
         Require(b.somas.size()==(b.branch?1u:std::size_t(b.inputCount)),"missing_recognition_somas");
         Require(revision(true)==current->modelBefore,"recognition_prepare_changed_model");
         current->armed=true;queued=false;running=true;Check(b);
