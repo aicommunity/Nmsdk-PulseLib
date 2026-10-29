@@ -22,6 +22,7 @@ See file license.txt for more information
 #include "NNeuronPostTrainTune.h"
 #include "NNeuronTimeLearnerStructuralAmp.h"
 #include "TimeLearner/NativeProbe.h"
+#include "TimeLearner/NativeRecognitionTrial.h"
 #include "TimeLearner/NativeModelEditor.h"
 #include "TimeLearner/NativeTrainingService.h"
 #include "TimeLearner/NativeModelBuilder.h"
@@ -787,6 +788,9 @@ public: // Methods
  TimeLearner::NativeModelBuildResult ImportNativeLearnedState(const QJsonObject& package,const std::string& implementationId);
  // Frozen recognition has no installed training certificate; import is explicit.
  bool HasNativeRecognitionState() const {return bool(NativeRecognition);}
+ void QueueNativeRecognitionTrial(TimeLearner::NativeRecognitionTrialRequest request);
+ std::optional<TimeLearner::NativeRecognitionTrialObservation> TakeNativeRecognitionTrialResult();
+ void CancelNativeRecognitionTrial(const std::string& reason);
  QJsonObject ExportNativeRecognitionState(const std::string& implementationId);
  TimeLearner::NativeModelBuildResult ImportNativeRecognitionState(const QJsonObject& package,const std::string& implementationId);
  

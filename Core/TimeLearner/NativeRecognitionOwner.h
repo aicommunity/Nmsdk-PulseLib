@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeRecognitionState.h"
 #include "NativeModelOwner.h"
+#include "NativeRecognitionTrial.h"
 #include <cmath>
 
 namespace NMSDK::TimeLearner {
@@ -16,6 +17,7 @@ struct NativeRecognitionHold {
     std::string revision,configurationText;
     int controllerVersion=1,calculateMode=0,structureBuildMode=1;
     double threshold=0.;
+    NativeRecognitionTrialExecutor trials;
     std::shared_ptr<NmsdkTools::ModelRevisionObserver> observer=std::make_shared<NmsdkTools::ModelRevisionObserver>();
 };
 
@@ -60,7 +62,7 @@ template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner
     NativeProbeExecutor& probe,NativeTrainingService& service,std::string& failure,std::unique_ptr<NativeRecognitionHold>& hold)
 {
     NativeModelBuildResult result;const bool wasOwned=owned;
-    if(NativeTrainingIsActive(service) || probe.Status()==NativeProbeStatus::Queued || probe.Status()==NativeProbeStatus::Running)
+    if((hold && (hold->trials.Busy() || hold->trials.HasResult())) || NativeTrainingIsActive(service) || probe.Status()==NativeProbeStatus::Queued || probe.Status()==NativeProbeStatus::Running)
     {result.reason="native_recognition_import_requires_idle_boundary";return result;}
     try
     {
@@ -94,5 +96,15 @@ template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner
         if(result.modelMayHaveChanged){failure=result.reason;service.FailConfiguration(result.reason);}
     }
     return result;
+}
+
+template<class Owner> void BeforeNativeRecognitionTrial(Owner& owner,NativeRecognitionHold& h,
+    const NativeProbeBindings& bindings,double time)
+{
+    h.trials.BeforeChildren(bindings,time,[&](const MDMatrix<double>& pattern) {
+        auto dataset=owner.template GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
+        if(!dataset)throw std::runtime_error("missing_recognition_dataset");
+        AssignNativeTarget(*dataset,pattern);h.presentation=pattern;
+    },[&](bool full) { CheckNativeRecognitionHold(owner,h,full);return h.revision; });
 }
 }

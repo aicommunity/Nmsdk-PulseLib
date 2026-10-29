@@ -4027,8 +4027,9 @@ bool NNeuronTimeLearner::ABeforeCalculate(void)
   {
    if(!NativeEditFailure.empty())throw std::runtime_error(NativeEditFailure);
    TimeLearner::CheckNativeRecognitionHold(*this,*NativeRecognition);
+   TimeLearner::BeforeNativeRecognitionTrial(*this,*NativeRecognition,NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
   }
-  catch(const std::exception& error){NativeEditFailure=error.what();ForceSkipComponentCalculation();}
+  catch(const std::exception& error){NativeEditFailure=error.what();NativeRecognition->trials.Cancel(error.what());ForceSkipComponentCalculation();}
   return true;
  }
  if(ControllerVersion.GetData()==2 && NativeEditFailure.empty() && IsNeedToTrain.GetData() &&
@@ -4206,6 +4207,21 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeLearnedState
  return result;
 }
 
+void NNeuronTimeLearner::QueueNativeRecognitionTrial(TimeLearner::NativeRecognitionTrialRequest request)
+{
+ if(!NativeRecognition || !NativeEditFailure.empty())throw std::logic_error("recognition_model_not_available");
+ TimeLearner::CheckNativeRecognitionHold(*this,*NativeRecognition,true);
+ NativeRecognition->trials.Queue(std::move(request));
+}
+std::optional<TimeLearner::NativeRecognitionTrialObservation> NNeuronTimeLearner::TakeNativeRecognitionTrialResult()
+{
+ if(!NativeRecognition)return {};
+ return NativeRecognition->trials.TakeResult();
+}
+void NNeuronTimeLearner::CancelNativeRecognitionTrial(const std::string& reason)
+{
+ if(NativeRecognition)NativeRecognition->trials.Cancel(reason);
+}
 QJsonObject NNeuronTimeLearner::ExportNativeRecognitionState(const std::string& implementationId)
 {
  if(!NativeRecognition)throw std::logic_error("native_recognition_state_not_installed");
@@ -4332,6 +4348,7 @@ bool NNeuronTimeLearner::AReset(void)
 {
  if(NativeRecognition)
  {
+  NativeRecognition->trials.Cancel("learner_reset");
   CapApplyPending=false;CountIteration=0;IterationActive=false;TrainingPhase.SetDataDirect(kPhaseDone);return true;
  }
  if(NativeTrainingOwned)
@@ -7198,9 +7215,10 @@ bool NNeuronTimeLearner::ACalculate(void)
   try
   {
    TimeLearner::CheckNativeRecognitionHold(*this,*NativeRecognition);
+   NativeRecognition->trials.AfterChildren(NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
    if(auto current=GetComponentL<NPulseNeuron>("Neuron",true))Output=current->Output;
   }
-  catch(const std::exception& error){NativeEditFailure=error.what();}
+  catch(const std::exception& error){NativeEditFailure=error.what();NativeRecognition->trials.Cancel(error.what());}
   return true;
  }
  if(!NativeEditFailure.empty())
