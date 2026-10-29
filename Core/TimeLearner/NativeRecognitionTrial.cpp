@@ -48,7 +48,8 @@ void NativeRecognitionTrialExecutor::Queue(NativeRecognitionTrialRequest request
         (request.label=="target" || request.label=="foil"),"invalid_recognition_trial_identity");
     Require(request.resetPolicy==RecognitionResetPolicy::PerTrial ||
         request.resetPolicy==RecognitionResetPolicy::PreserveNeuronDynamics,"invalid_recognition_reset_policy");
-    Require(Detail::Finite(request.duration) && request.duration>0. && request.maximumSamples>=2,
+    Require(Detail::Finite(request.duration) && request.duration>0. && request.maximumSamples>=2 &&
+        double(request.maximumSamples)<=9007199254740991.,
         "invalid_recognition_trial_budget");
     Require(request.pattern.GetCols()==1 && request.pattern.GetRows()>0,"invalid_recognition_pattern_shape");
     QJsonArray values;
@@ -167,6 +168,7 @@ void NativeRecognitionTrialExecutor::BeforeChildren(const NativeProbeBindings& b
         current->armed=true;queued=false;running=true;Check(b);
     }
     catch(const std::exception& e){Finish(e.what(),false);}
+    catch(...){Finish("recognition_preparation_exception",false);}
 }
 
 void NativeRecognitionTrialExecutor::AfterChildren(const NativeProbeBindings& b,double time)
@@ -219,6 +221,7 @@ void NativeRecognitionTrialExecutor::AfterChildren(const NativeProbeBindings& b,
         }
     }
     catch(const std::exception& e){Finish(e.what(),current && current->complete);}
+    catch(...){Finish("recognition_observation_exception",current && current->complete);}
 }
 
 void NativeRecognitionTrialExecutor::Stop()
@@ -238,8 +241,10 @@ void NativeRecognitionTrialExecutor::Finish(const std::string& reason,bool compl
     current->reason=reason;current->complete=complete;current->valid=valid && complete && current->armed;
     try { Stop(); }
     catch(const std::exception& e){current->valid=false;current->reason+=";"+std::string(e.what());}
+    catch(...){current->valid=false;current->reason+=";recognition_stop_exception";}
     try { if(revision)current->modelAfter=revision(true); }
     catch(const std::exception& e){current->valid=false;current->reason+=";"+std::string(e.what());}
+    catch(...){current->valid=false;current->reason+=";recognition_revision_exception";}
     if(current->modelAfter!=current->modelBefore)current->valid=false;
     result=std::move(current);current.reset();queued=false;running=false;
     revision={};physical.reset();watched.clear();source={};zone={};
