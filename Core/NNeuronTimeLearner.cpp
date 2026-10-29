@@ -1,4 +1,5 @@
 #include "TimeLearner/NativeLearnedOwner.h"
+#include "TimeLearner/NativeRecognitionOwner.h"
 #include "TimeLearner/ConfiguredNativeOwner.h"
 // ===========================================================
 // Version:        3.0.2
@@ -2776,6 +2777,7 @@ bool NNeuronTimeLearner::SetLTZThreshold(const double &value)
 /// Raise/clear training flag; applies Training/Fixed LTZ threshold
 bool NNeuronTimeLearner::SetIsNeedToTrain(const bool &value)
 {
+ if(NativeRecognition)return !value;
  if(ControllerVersion.GetData()==2)
  {
   if(NativeTrainingOwned)
@@ -3951,6 +3953,12 @@ bool NNeuronTimeLearner::ADefault(void)
 /// Build after parameters; may call BuildStructure
 bool NNeuronTimeLearner::ABuild(void)
 {
+ if(NativeRecognition)
+ {
+  try{TimeLearner::CheckNativeRecognitionHold(*this,*NativeRecognition,true);CapApplyPending=false;}
+  catch(const std::exception& error){NativeEditFailure=error.what();}
+  return true;
+ }
  if(ConfiguredModelInitialized.GetData() && !NativeModelDeclaration)
  {
   NativeTrainingOwned=true;NativeEditFailure="configured_trained_model_requires_explicit_state_import";
@@ -4013,6 +4021,16 @@ bool NNeuronTimeLearner::ABuild(void)
 /// Sources (generators) before Neuron — Dataset calc contract
 bool NNeuronTimeLearner::ABeforeCalculate(void)
 {
+ if(NativeRecognition)
+ {
+  try
+  {
+   if(!NativeEditFailure.empty())throw std::runtime_error(NativeEditFailure);
+   TimeLearner::CheckNativeRecognitionHold(*this,*NativeRecognition);
+  }
+  catch(const std::exception& error){NativeEditFailure=error.what();ForceSkipComponentCalculation();}
+  return true;
+ }
  if(ControllerVersion.GetData()==2 && NativeEditFailure.empty() && IsNeedToTrain.GetData() &&
     NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Idle)
  {
@@ -4057,6 +4075,7 @@ bool NNeuronTimeLearner::ABeforeCalculate(void)
 
 bool NNeuronTimeLearner::ABeforeDefault(void)
 {
+ NativeRecognition.reset();
  NativeConfiguredPlan.reset();NativeConfiguredSinks={};NativeConfiguredText.clear();
  NativeModelDeclaration.reset();
  NativeTrainingOwned=false;NativeTrainingControl.InvalidateTarget();
@@ -4143,6 +4162,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ConstructNativeModel(Tim
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Constructed)
  {
+  NativeRecognition.reset();
   OldDendriteLength=DendriteLength.GetData();LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
   CapApplyPending=false;TrainingPhase.SetDataDirect(kPhaseSync);Ready=false;
  }
@@ -4150,6 +4170,8 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ConstructNativeModel(Tim
 }
 TimeLearner::NativeModelBuildResult NNeuronTimeLearner::AdoptNativeModel(TimeLearner::NativeModelSpec specification)
 {
+ if(NativeRecognition)
+ {TimeLearner::NativeModelBuildResult result;result.reason="native_recognition_cannot_be_adopted_as_solo";return result;}
  auto result=TimeLearner::InitializeNativeOwnedModel(*this,std::move(specification),false,true,
    NativeTrainingOwned,NativeModelDeclaration,NativeProbeControl,NativeTrainingControl,NativeEditFailure);
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
@@ -4162,6 +4184,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::AdoptNativeModel(TimeLea
 }
 QJsonObject NNeuronTimeLearner::ExportNativeLearnedState(const std::string& implementationId)
 {
+ if(NativeRecognition)throw std::logic_error("native_recognition_state_is_not_learned_solo");
  if(NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Queued || NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Running)
   throw std::logic_error("native_learned_export_during_probe");
  ValidateNativeModelDeclaration();
@@ -4175,6 +4198,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeLearnedState
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
  {
+  NativeRecognition.reset();
   NativeConfiguredSinks={};
   OldDendriteLength=DendriteLength.GetData();LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
   CapApplyPending=false;TrainingPhase.SetDataDirect(NativeTrainingControl.Certificate() && NativeTrainingControl.Certificate()->Exact()?kPhaseDone:kPhaseFailed);Ready=false;
@@ -4182,8 +4206,30 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeLearnedState
  return result;
 }
 
+QJsonObject NNeuronTimeLearner::ExportNativeRecognitionState(const std::string& implementationId)
+{
+ if(!NativeRecognition)throw std::logic_error("native_recognition_state_not_installed");
+ if(!NativeEditFailure.empty())throw std::logic_error(NativeEditFailure);
+ if(NativeRecognition->package["implementation_id"].toString().toStdString()!=implementationId)
+  throw std::invalid_argument("recognition_implementation_mismatch");
+ TimeLearner::CheckNativeRecognitionHold(*this,*NativeRecognition,true);return NativeRecognition->package;
+}
+TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeRecognitionState(const QJsonObject& package,const std::string& implementationId)
+{
+ auto result=TimeLearner::InstallNativeRecognitionState(*this,false,package,implementationId,NativeTrainingOwned,NativeModelDeclaration,
+  NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition);
+ Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
+ if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
+ {
+  NativeConfiguredSinks={};OldDendriteLength=DendriteLength.GetData();
+  LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
+  CapApplyPending=false;TrainingPhase.SetDataDirect(kPhaseDone);Ready=false;
+ }
+ return result;
+}
 void NNeuronTimeLearner::BeginNativeTraining(TimeLearner::NativeTrainingPlan plan,bool recaptureReferences)
 {
+ if(NativeRecognition)throw std::logic_error("native_recognition_requires_explicit_solo_import_or_cold_model");
  if(TimeLearner::NativeTrainingIsActive(NativeTrainingControl))
   throw std::logic_error("native_training_already_active");
  NativeTrainingOwned=true;NativeProbeControl.ResetControl();
@@ -4226,6 +4272,8 @@ TimeLearner::ResistanceDomainAssessment NNeuronTimeLearner::AssessNativeResistan
 }
 TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested)
 {
+ if(NativeRecognition)
+ {TimeLearner::NativeEditResult result;result.reason="native_recognition_model_is_frozen";return result;}
  TimeLearner::NativeEditResult result;
  try
  {
@@ -4282,6 +4330,10 @@ void NNeuronTimeLearner::UpdateComputationOrder(void)
 /// Reset runtime counters / iteration state
 bool NNeuronTimeLearner::AReset(void)
 {
+ if(NativeRecognition)
+ {
+  CapApplyPending=false;CountIteration=0;IterationActive=false;TrainingPhase.SetDataDirect(kPhaseDone);return true;
+ }
  if(NativeTrainingOwned)
  {
   CapApplyPending=false;CountIteration=0;IterationActive=false;
@@ -7140,6 +7192,17 @@ bool NNeuronTimeLearner::Training(void)
 /// Main calculate tick for the learner
 bool NNeuronTimeLearner::ACalculate(void)
 {
+ if(NativeRecognition)
+ {
+  if(!NativeEditFailure.empty())return true;
+  try
+  {
+   TimeLearner::CheckNativeRecognitionHold(*this,*NativeRecognition);
+   if(auto current=GetComponentL<NPulseNeuron>("Neuron",true))Output=current->Output;
+  }
+  catch(const std::exception& error){NativeEditFailure=error.what();}
+  return true;
+ }
  if(!NativeEditFailure.empty())
  {
   if(NativeTrainingOwned)

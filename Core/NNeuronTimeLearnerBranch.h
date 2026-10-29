@@ -33,7 +33,7 @@ See file license.txt for more information
 #include <cstring>
 
 namespace NMSDK {
-namespace TimeLearner { class NativePostTuneOwnerBoundary; }
+namespace TimeLearner { class NativePostTuneOwnerBoundary; struct NativeRecognitionHold; }
 
 using namespace RDK;
 
@@ -784,6 +784,7 @@ public: // Methods
  /// Explicit native probe ownership; released by native learner Reset/Default.
  /// Completion is an observation status, never proof that training converged.
  void QueueNativeProbe(TimeLearner::NativeProbeRequest request) {
+  if(NativeRecognition)throw std::logic_error("recognition_requires_frozen_evaluation_runner");
   if(NativeTrainingOwned && (NativeTrainingControl.State()==TimeLearner::NativeTrainingState::CapturingReferences ||
       NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Searching))
    throw std::logic_error("native_training_owns_probe_runner");
@@ -811,6 +812,10 @@ public: // Methods
  TimeLearner::NativeModelBuildResult AdoptNativeModel(TimeLearner::NativeModelSpec specification);
  QJsonObject ExportNativeLearnedState(const std::string& implementationId);
  TimeLearner::NativeModelBuildResult ImportNativeLearnedState(const QJsonObject& package,const std::string& implementationId);
+ // Frozen recognition has no installed training certificate; import is explicit.
+ bool HasNativeRecognitionState() const {return bool(NativeRecognition);}
+ QJsonObject ExportNativeRecognitionState(const std::string& implementationId);
+ TimeLearner::NativeModelBuildResult ImportNativeRecognitionState(const QJsonObject& package,const std::string& implementationId);
  
  // --------------------------
  // Parameter setters
@@ -963,6 +968,7 @@ protected:
  std::string NativeConfiguredText;
  void ValidateNativeModelDeclaration();
  bool NativeTrainingOwned=false;
+ std::unique_ptr<TimeLearner::NativeRecognitionHold> NativeRecognition;
  unsigned NativeTrainingEditDepth=0;
  std::string NativeEditFailure;
  unsigned NativeLifecycleDepth=0;

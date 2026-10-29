@@ -14,6 +14,9 @@ struct PreparedNativeRecognitionState {
     RDK::UEPtr<RDK::UStorage> storage;
     RDK::UEPtr<NPulseNeuron> neuron;
     RDK::UEPtr<NDatasetMatrix> dataset;
+    ConfiguredNativeTraining configuration;
+    std::string configurationText;
+    int controllerVersion=1,calculateMode=0,structureBuildMode=1;
     std::vector<InputParameters> parameters;
     std::string modelRevision,sourceSoloRevision;
     QJsonObject conversionRecord;
