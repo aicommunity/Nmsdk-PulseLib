@@ -168,8 +168,21 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
         else
         {
             const auto certificate = training["certificate"].toObject();
-            if(certificate["state_identity"] != identity["sha256"] || certificate["status"] != training["status"])
+            // Versioned recognition metadata retains the original solo proof;
+            // it must not relabel that proof as verification of a scaled graph.
+            const bool recognition=state=="recognition" && metadata.contains("recognition_schema_version");
+            const auto expectedIdentity=recognition?metadata["conversion"].toObject()["source_solo_identity"]:identity["sha256"];
+            if(certificate["state_identity"] != expectedIdentity || certificate["status"] != training["status"])
                 Fail("certificate_model_mismatch", "certificate does not identify the exported state");
+            if(recognition)
+            {
+                const auto verification=metadata["recognition_verification"].toObject();
+                if(metadata["recognition_schema_version"]!=QJsonValue(1) || training["scope"]!=QJsonValue("source_solo") ||
+                   verification["status"]!=QJsonValue("unverified") || verification["model_identity"]!=identity["sha256"] ||
+                   !verification.contains("certificate") || !verification["certificate"].isNull() ||
+                   metadata["conversion"].toObject()["mode"]!=QJsonValue("parallel"))
+                    Fail("invalid_recognition_verification", "converted state requires separate verification");
+            }
         }
     }
     const auto calibration = metadata["calibration"].toObject();
@@ -447,6 +460,22 @@ try
     return LoadSnapshot(snapshot,model->GetStorage(),model->GetEnvironment(),sources);
 }
 catch(const UException& error) { Fail("native_edit_clone_failed",QString::fromStdString(error.what())); }
+
+QJsonObject ExportPhysicalGraphForEdit(UEPtr<UContainer> model,const ModelBoundarySources& sources)
+{
+    if(!model || !dynamic_pointer_cast<NMSDK::NPulseNeuron>(model))
+        Fail("invalid_edit_snapshot_context","native neuron required");
+    auto snapshot=Snapshot(model,sources);CheckSnapshot(snapshot);return snapshot;
+}
+UEPtr<UContainer> ImportPhysicalGraphForEdit(const QJsonObject& snapshot,UEPtr<UStorage> storage,
+    UEPtr<UEnvironment> environment,const ModelBoundarySources& sources)
+{
+    if(!storage || !environment)Fail("invalid_edit_snapshot_context","storage/environment required");
+    Lease candidate{storage,LoadSnapshot(snapshot,storage,environment,sources),!sources.empty()};
+    if(!dynamic_pointer_cast<NMSDK::NPulseNeuron>(candidate.object))
+        Fail("invalid_edit_snapshot_context","native neuron required");
+    return candidate.Release();
+}
 
 QJsonObject ExportDatasetSnapshot(UEPtr<UContainer> dataset)
 {
