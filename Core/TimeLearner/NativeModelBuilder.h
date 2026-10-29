@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeModelEditor.h"
 #include "ModelIdentity.h"
+#include <functional>
 
 namespace NMSDK::TimeLearner {
 struct NativeInitialInput {
@@ -38,6 +39,11 @@ void ValidateNativeModelSpec(const NativeModelSpec& specification);
 // Uniform physics comes entirely from images. No Default or Calculate calls.
 NativeModelBuildResult ConstructNativeLearnerModel(RDK::UNet& owner,const NativeModelSpec& specification,
                                                   bool explicitColdReplacement=false);
+using NativeModelPrecommitCheck=std::function<void(const NativeModelSpec&,const std::vector<InputParameters>&,const MDMatrix<double>&)>;
+// Validate owner metadata against the actual private preview before replacing
+// live children; retain the existing overload and its ABI.
+NativeModelBuildResult ConstructNativeLearnerModel(RDK::UNet& owner,const NativeModelSpec& specification,
+    bool explicitColdReplacement,const NativeModelPrecommitCheck& beforeCommit);
 // Read-only validation of the current learned graph, not an initial-parameter
 // overlay. Attachments are current learned values; Rs/C may differ from initial.
 NativeModelBuildResult InspectNativeLearnerModel(RDK::UNet& owner,const NativeModelSpec& specification,
