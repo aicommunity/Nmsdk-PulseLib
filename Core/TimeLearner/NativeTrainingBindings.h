@@ -8,6 +8,7 @@ double NativeTrainingWallTime();
 template<class Learner> NativeTrainingAdapter BindNativeTraining(Learner& owner,NativeProbeExecutor& probe,unsigned& editDepth)
 {
     NativeTrainingAdapter result;
+    result.trainingRequested=[&owner]{return owner.IsNeedToTrain.GetData();};
     result.readParameters=[&owner]{return owner.ReadNativeParameters();};
     auto observer=std::make_shared<NmsdkTools::ModelRevisionObserver>();
     const auto revision=[&owner,observer](bool full) {
