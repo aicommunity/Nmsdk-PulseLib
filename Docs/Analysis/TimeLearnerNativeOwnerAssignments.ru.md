@@ -40,10 +40,31 @@ failures и восемь matching passes. Training tolerance fixture — 1 s д�
 проверяемой границы, не научный критерий сходимости.
 Артефакты всех пяти попыток опубликованы в корневом репозитории:
 `Reports/StructTrain/TimeLearner/s04-owner-bindings-m40`, evidence commit
-`1c55f903d9d30e1367a30461c5f5f7b1a92f30c3`. Проверка Elder ещё не выполнена;
+`1c55f903d9d30e1367a30461c5f5f7b1a92f30c3`. Elder normal впоследствии подтвердил эти controls в адресном gate ниже;
 этот новый код не покрывается старой full regression c7266dcb.
 
 Режим CalculateMode/внешнее управление IsNeedToTrain и остальные
 controller/threshold flags этим подэтапом не переопределяются: полный аудит этих
 записей и production recognition/PostTune wiring остаются открытыми.
 Build/Reset/Calculate bool и scheduler не изменяются; nested Calculate нет.
+
+## Editor metadata: последующая проверка
+
+ApplyNativeParameters теперь до изменения графа проверяет DendriteLength,
+NumSynapse и TipSynapseResistance тем же общим visitor. После Applied зеркалирует
+подтверждённые значения без записи во внешние источники. Baseline root03fd6e47
+на обоих workers: 6 actual conflicting failures + 6 matching passes; A1 без
+consumed probe boundary сохранён как fixture error.
+
+Fixed PulseLib 0ca75b3e5b7354ee801645d5d0d73b3f942cb645, native root
+796a73075b930d634c905355541e47187aed6f5f: на Elder normal и M40 ASan
+46/46 native tests без skips/failures (14 editor, 4 cold training, 12 editor
+bindings, 16 construction/import). Independent Python 07e66559a4030537ed24605fcdb676838b94b257:
+по 2/2 tests, 12 complete boundary probes / 4332 samples, включая model
+revision binding и corruption rejection. В root опубликованы s04-editor-fixed-elder1
+(073b2906e6926f026f9a2c55ee1b69475f49a9ff) и s04-editor-fixed-m40
+(37e6326c98bcd74d859ff3381acf90514763905a); по 530 stored / 528 raw hashes
+проверены локально. Baseline пакеты: 2c08b5b4 / 1e9e52f2, по 331/329 hashes.
+
+Это адресная приёмка изменений ownership в рабочей ветке. External control
+flags, diagnostic bindings и полный recognition/PostTune контур ещё открыты.
