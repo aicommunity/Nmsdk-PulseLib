@@ -3,6 +3,7 @@
 #include "NativeTrainingBindings.h"
 #include "ConfiguredNativeTraining.h"
 #include "ProbeEvidenceJson.h"
+#include <QJsonArray>
 #include <bit>
 #include <cstdint>
 #include <tuple>
@@ -120,8 +121,13 @@ private:
             {"attempt",QString::number(qulonglong(c.SessionAttempt()))},{"epoch",QString::number(qulonglong(c.ModelEpoch()))},
             {"capture_revision",QString::fromStdString(c.CaptureRevision())},
             {"capture_epoch",QString::number(qulonglong(c.CaptureEpoch()))},
+            {"reference_packets",Packets(c.ReferencePackets())},
+            {"final_packets",Packets(c.FinalPackets())},
+            {"observed_packets",Packets(c.ObservedPackets())},
             {"certificate",c.Certificate()?QJsonValue(EncodeTrainingCertificate(*c.Certificate())):QJsonValue(QJsonValue::Null)}};
     }
+    static QJsonArray Packets(const std::vector<NativeProbeResult>& packets)
+    {QJsonArray result;for(const auto& packet:packets)result.append(EncodeNativeProbeEvidence(packet));return result;}
     template<class P> static void Local(const P& property)
     {Require(!property.IsConnected() && !property.UsesExternalDataSource(),"posttune_boundary_connected_owner_property");}
     template<class Owner> static void CheckLocalProperties(Owner& owner)
