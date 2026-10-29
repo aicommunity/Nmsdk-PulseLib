@@ -186,7 +186,7 @@ bool NPulseLTZoneCommon::ADefault(void)
 
  OutputPotential.Assign(1,1,0.0);
  OutputFrequency.Assign(1,1,0.0);
- OutputPulseTimes.Assign(1,1,0.0);
+ OutputPulseTimes.Assign(1,0,0.0);
 
  return true;
 }
@@ -213,7 +213,9 @@ bool NPulseLTZoneCommon::AReset(void)
  PulseFlag=false;
  OutputPotential.ToZero();
  OutputFrequency.ToZero();
- OutputPulseTimes.ToZero();
+ // Event timestamps are not a sampled signal: zero is a valid spike time.
+ // Clearing their values would fabricate events at t=0 after Reset.
+ OutputPulseTimes.Resize(1,0);
 
  return true;
 }
