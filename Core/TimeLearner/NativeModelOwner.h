@@ -38,20 +38,33 @@ template<class Property,class Value> void AssignNativeOwnerValue(Property& prope
     if(property.IsConnected() || property.UsesExternalDataSource())return;
     if(!NativeOwnerValueEqual(property.GetData(),expected))property.SetDataDirect(expected);
 }
+// The editor proves preview/readback == requested before committing physical
+// changes. Validate the same three owner fields before entering that editor.
+template<class Owner,class Visitor> void VisitNativeParameterMirror(Owner& owner,
+    const std::vector<InputParameters>& actual,Visitor visit)
+{
+    std::vector<int> positions,counts;std::vector<double> resistances;
+    for(const auto& p:actual){positions.push_back(p.length);counts.push_back(p.synapses);resistances.push_back(p.resistance);}
+    visit(owner.DendriteLength,positions);visit(owner.NumSynapse,counts);visit(owner.TipSynapseResistance,resistances);
+}
+template<class Owner> void CheckNativeParameterMirrorAssignments(const Owner& owner,const std::vector<InputParameters>& actual)
+{VisitNativeParameterMirror(owner,actual,[](const auto& p,const auto& value){CheckNativeOwnerAssignment(p,value);});}
+template<class Owner> void MirrorNativeParameters(Owner& owner,const std::vector<InputParameters>& actual)
+{
+    CheckNativeParameterMirrorAssignments(owner,actual);
+    VisitNativeParameterMirror(owner,actual,[](auto& p,const auto& value){AssignNativeOwnerValue(p,value);});
+}
 // One field list validates the private preview and mirrors owner metadata.
 // Equal read-only sources stay connected and never receive a write.
 template<class Owner,class Visitor> void VisitNativeModelMirror(Owner& owner,const NativeModelSpec& s,
     const std::vector<InputParameters>& actual,const MDMatrix<double>& pattern,Visitor visit)
 {
-    std::vector<int> positions,counts;std::vector<double> resistances;
-    for(const auto& p:actual){positions.push_back(p.length);counts.push_back(p.synapses);resistances.push_back(p.resistance);}
     visit(owner.NumInputDendrite,int(actual.size()));visit(owner.NeuronClassName,s.neuronClass);
     visit(owner.PulseGeneratorClassName,s.generatorClass);
     visit(owner.NormalizationMode,s.normalization==Normalization::SynapseCount?0:1);
     visit(owner.MaxDendriteLength,s.editPolicy.maximumCableLength);
     visit(owner.MaxSynapseToMembraneResistanceRatio,s.editPolicy.maximumResistanceRatio);
-    visit(owner.DendriteLength,positions);visit(owner.NumSynapse,counts);
-    visit(owner.TipSynapseResistance,resistances);visit(owner.InputPattern,pattern);
+    VisitNativeParameterMirror(owner,actual,visit);visit(owner.InputPattern,pattern);
 }
 template<class Owner> void CheckNativeModelMirrorAssignments(const Owner& owner,const NativeModelSpec& s,
     const std::vector<InputParameters>& actual,const MDMatrix<double>& pattern)

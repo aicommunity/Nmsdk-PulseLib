@@ -4233,17 +4233,16 @@ TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeParameters(const st
    throw std::logic_error("native_training_owns_model_editor");
   if(NormalizationMode.GetData()!=0 && NormalizationMode.GetData()!=1)
    throw std::runtime_error("invalid_native_normalization_mode");
+  TimeLearner::CheckNativeParameterMirrorAssignments(*this,requested);
   const auto spec=TimeLearner::NativeOwnerEditSpec(*this,NativeModelDeclaration,requested,
    PreferConfiguredResistanceMinFloor.GetData()?std::max(0.,ConfiguredResistanceMin.GetData()):0.);
   result=TimeLearner::ApplyNativeInputParameters(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),requested,spec);
   if(result.status==TimeLearner::NativeEditStatus::Applied)
   {
-   std::vector<int> lengths,counts;std::vector<double> resistances;
-   for(const auto& value:result.effective){lengths.push_back(value.length);counts.push_back(value.synapses);resistances.push_back(value.resistance);}
-   // A completed structural edit is readback, not a request for learner Build.
-   DendriteLength.SetDataDirect(lengths);OldDendriteLength=lengths;
-   NumSynapse.SetDataDirect(counts);TipSynapseResistance.SetDataDirect(resistances);
-   LoadedTipSynapseResistance=resistances;HasLoadedTipSynapseResistance=true;
+   // Mirror the verified physical readback without writing connected sources.
+   TimeLearner::MirrorNativeParameters(*this,result.effective);
+   OldDendriteLength=DendriteLength.GetData();
+   LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
    if(!result.minimumResistance.empty())
    {
     ResistanceMinByInput.SetDataDirect(result.minimumResistance);ResistanceMaxByInput.SetDataDirect(result.maximumResistance);
