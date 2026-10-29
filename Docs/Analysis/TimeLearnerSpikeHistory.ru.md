@@ -13,6 +13,11 @@ static child генератора. Адресный native тест исполь
 model scheduler; настоящий onset в t=0 сохраняется, удержание импульса не
 дублирует событие, раздельные импульсы дают раздельные timestamps.
 
-Baseline воспроизведён на Elder-1 и M40; fixed gate пока не принят полностью.
+Baseline воспроизведён на Elder-1 и M40 (по два ожидаемых native failures).
+Fixed root d13620e1e / Core 1de63d0: по 12/12 native pass без skips, M40 ASan.
+Проверены два реальных события и пустая история после Reset. Оригинальные
+outer-shell statuses=1 сохранены; отдельная диагностика подтверждает ошибку
+clear_console в login .bash_logout под set -e при SHLVL=1. Native statuses=0.
+Пакеты опубликованы, по 98 stored / 96 raw hashes проверены локально.
 Состояние и ограничения: корневой Docs/StructTrain/TimeLearner/SpikeHistoryReset.ru.md.
 Наличие этого исправления не является результатом научной оценки распознавания.
