@@ -33,6 +33,7 @@ See file license.txt for more information
 #include <cstring>
 
 namespace NMSDK {
+namespace TimeLearner { class NativePostTuneOwnerBoundary; }
 
 using namespace RDK;
 
@@ -41,6 +42,7 @@ using namespace RDK;
 /// soma has no excitatory inputs). Reverse sequential sync + joint amp normalize.
 class RDK_LIB_TYPE NNeuronTimeLearnerBranch: public UNet
 {
+ friend class TimeLearner::NativePostTuneOwnerBoundary;
 public:
  /// Missing property in existing configs means legacy version 1.
  UProperty<int, NNeuronTimeLearnerBranch, ptPubParameter> ControllerVersion;
