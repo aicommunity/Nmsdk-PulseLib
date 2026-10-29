@@ -209,6 +209,13 @@ std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeRecognitionState(co
     auto result=std::make_unique<PreparedNativeRecognitionState>();result->storage=storage;
     result->neuron=m.neuron;m.neuron=0;result->dataset=m.dataset;m.dataset=0;result->parameters=m.parameters;
     result->modelRevision=package["model_revision"].toString().toStdString();result->sourceSoloRevision=source["model_revision"].toString().toStdString();
+    result->configuration=std::move(m.configuration);
+    // Recognition has every declared input connected; muted solo adoption is
+    // no longer an allowed effective graph for this state.
+    result->configuration.model.allowMutedInputBaseline=false;
+    result->configurationText=m.configurationText;
+    result->controllerVersion=m.controllerVersion;result->calculateMode=m.calculateMode;
+    result->structureBuildMode=m.structureBuildMode;
     result->conversionRecord=expected.record;return result;
 }
 }
