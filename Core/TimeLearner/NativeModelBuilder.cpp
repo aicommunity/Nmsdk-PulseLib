@@ -430,6 +430,9 @@ NativeModelBuildResult CommitNativeLearnerChildren(UNet& owner,const NativeModel
     }
 }
 NativeModelBuildResult ConstructNativeLearnerModel(UNet& owner,const NativeModelSpec& s,bool explicitColdReplacement)
+{return ConstructNativeLearnerModel(owner,s,explicitColdReplacement,{});}
+NativeModelBuildResult ConstructNativeLearnerModel(UNet& owner,const NativeModelSpec& s,bool explicitColdReplacement,
+    const NativeModelPrecommitCheck& beforeCommit)
 {
     NativeModelBuildResult r;NewObjects lease{owner};
     try
@@ -491,6 +494,7 @@ NativeModelBuildResult ConstructNativeLearnerModel(UNet& owner,const NativeModel
         preview.branch=s.branch;preview.inputCount=int(s.inputs.size());
         const auto expected=InspectBuiltModel(owner,s,positions,preview);
         Require(expected.status==NativeModelBuildStatus::Adopted,expected.reason.c_str());
+        if(beforeCommit)beforeCommit(s,expected.effective,dataset->MatrixData.GetData());
         r.modelMayHaveChanged=true;
         if(explicitColdReplacement){owner.DelComponent("Neuron",true);owner.DelComponent("DatasetMatrix",true);}
         UEPtr<UContainer> child=dataset;Require(owner.AddComponent(child)!=ForbiddenId,"native_dataset_attach_failed");lease.datasetAttached=true;

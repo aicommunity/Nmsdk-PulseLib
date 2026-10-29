@@ -21,19 +21,61 @@ template<class Owner> void CheckNativeOwnerOverrides(const Owner& owner)
        owner.OverrideInhSynapseResistance.GetData()!=0.)
         throw std::invalid_argument("native_model_requires_images_instead_of_parent_overrides");
 }
-template<class Owner> void MirrorNativeModel(Owner& owner,const NativeModelSpec& s,const std::vector<InputParameters>& actual,
-                                            const MDMatrix<double>& pattern)
+
+template<class Value> bool NativeOwnerValueEqual(const Value& a,const Value& b)
+{
+    if constexpr(requires{a.GetRows();a.GetCols();})return NativeTrainingPatternEqual(a,b);
+    else return a==b;
+}
+template<class Property,class Value> void CheckNativeOwnerAssignment(const Property& property,const Value& expected)
+{
+    if((property.IsConnected() || property.UsesExternalDataSource()) && !NativeOwnerValueEqual(property.GetData(),expected))
+        throw std::invalid_argument("native_model_owner_assignment_is_external:"+property.GetName());
+}
+template<class Property,class Value> void AssignNativeOwnerValue(Property& property,const Value& expected)
+{
+    CheckNativeOwnerAssignment(property,expected);
+    if(property.IsConnected() || property.UsesExternalDataSource())return;
+    if(!NativeOwnerValueEqual(property.GetData(),expected))property.SetDataDirect(expected);
+}
+// The editor proves preview/readback == requested before committing physical
+// changes. Validate the same three owner fields before entering that editor.
+template<class Owner,class Visitor> void VisitNativeParameterMirror(Owner& owner,
+    const std::vector<InputParameters>& actual,Visitor visit)
 {
     std::vector<int> positions,counts;std::vector<double> resistances;
     for(const auto& p:actual){positions.push_back(p.length);counts.push_back(p.synapses);resistances.push_back(p.resistance);}
-    owner.NumInputDendrite.SetDataDirect(int(actual.size()));owner.NeuronClassName.SetDataDirect(s.neuronClass);
-    owner.PulseGeneratorClassName.SetDataDirect(s.generatorClass);
-    owner.NormalizationMode.SetDataDirect(s.normalization==Normalization::SynapseCount?0:1);
-    owner.MaxDendriteLength.SetDataDirect(s.editPolicy.maximumCableLength);
-    owner.MaxSynapseToMembraneResistanceRatio.SetDataDirect(s.editPolicy.maximumResistanceRatio);
-    owner.DendriteLength.SetDataDirect(positions);owner.NumSynapse.SetDataDirect(counts);
-    owner.TipSynapseResistance.SetDataDirect(resistances);owner.InputPattern.SetDataDirect(pattern);
+    visit(owner.DendriteLength,positions);visit(owner.NumSynapse,counts);visit(owner.TipSynapseResistance,resistances);
 }
+template<class Owner> void CheckNativeParameterMirrorAssignments(const Owner& owner,const std::vector<InputParameters>& actual)
+{VisitNativeParameterMirror(owner,actual,[](const auto& p,const auto& value){CheckNativeOwnerAssignment(p,value);});}
+template<class Owner> void MirrorNativeParameters(Owner& owner,const std::vector<InputParameters>& actual)
+{
+    CheckNativeParameterMirrorAssignments(owner,actual);
+    VisitNativeParameterMirror(owner,actual,[](auto& p,const auto& value){AssignNativeOwnerValue(p,value);});
+}
+// One field list validates the private preview and mirrors owner metadata.
+// Equal read-only sources stay connected and never receive a write.
+template<class Owner,class Visitor> void VisitNativeModelMirror(Owner& owner,const NativeModelSpec& s,
+    const std::vector<InputParameters>& actual,const MDMatrix<double>& pattern,Visitor visit)
+{
+    visit(owner.NumInputDendrite,int(actual.size()));visit(owner.NeuronClassName,s.neuronClass);
+    visit(owner.PulseGeneratorClassName,s.generatorClass);
+    visit(owner.NormalizationMode,s.normalization==Normalization::SynapseCount?0:1);
+    visit(owner.MaxDendriteLength,s.editPolicy.maximumCableLength);
+    visit(owner.MaxSynapseToMembraneResistanceRatio,s.editPolicy.maximumResistanceRatio);
+    VisitNativeParameterMirror(owner,actual,visit);visit(owner.InputPattern,pattern);
+}
+template<class Owner> void CheckNativeModelMirrorAssignments(const Owner& owner,const NativeModelSpec& s,
+    const std::vector<InputParameters>& actual,const MDMatrix<double>& pattern)
+{VisitNativeModelMirror(owner,s,actual,pattern,[](const auto& p,const auto& value){CheckNativeOwnerAssignment(p,value);});}
+template<class Owner> void MirrorNativeModel(Owner& owner,const NativeModelSpec& s,const std::vector<InputParameters>& actual,
+    const MDMatrix<double>& pattern)
+{
+    CheckNativeModelMirrorAssignments(owner,s,actual,pattern);
+    VisitNativeModelMirror(owner,s,actual,pattern,[](auto& p,const auto& value){AssignNativeOwnerValue(p,value);});
+}
+
 template<class Owner> NativeModelBuildResult ValidateNativeOwner(Owner& owner,const NativeModelSpec& s)
 {
     CheckNativeOwnerOverrides(owner);
@@ -71,10 +113,12 @@ template<class Owner> NativeModelBuildResult InitializeNativeOwnedModel(Owner& o
         if(s.branch!=branch)throw std::invalid_argument("native_model_learner_topology_mismatch");
         owned=true; // Suppress legacy AAddComponent dataset repair during commit.
         std::vector<int> positions;for(const auto& p:s.inputs)positions.push_back(p.attachment);
-        result=adopt?InspectNativeLearnerModel(owner,s,positions):ConstructNativeLearnerModel(owner,s,true);
+        result=adopt?InspectNativeLearnerModel(owner,s,positions):ConstructNativeLearnerModel(owner,s,true,
+            [&owner](const auto& declaration,const auto& actual,const auto& pattern){CheckNativeModelMirrorAssignments(owner,declaration,actual,pattern);});
         if(result.status!=NativeModelBuildStatus::Constructed && result.status!=NativeModelBuildStatus::Adopted)
         {owned=wasOwned;if(result.modelMayHaveChanged){owned=true;failure=result.reason;service.FailConfiguration(result.reason);}return result;}
         const auto dataset=owner.template GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
+        CheckNativeModelMirrorAssignments(owner,s,result.effective,dataset->MatrixData.GetData());
         for(std::size_t i=0;i<s.inputs.size();++i)
         {
             if(adopt && (s.inputs[i].synapses!=result.effective[i].synapses ||

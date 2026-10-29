@@ -17,6 +17,7 @@ template<class Owner> NativeModelBuildResult InstallNativeLearnedState(Owner& ow
         if(prepared->configuration.model.branch!=branch)throw std::invalid_argument("native_learned_import_topology_mismatch");
         // Prepare all controller state and copies before replacing live children.
         auto restoredDeclaration=prepared->configuration.model;
+        CheckNativeModelMirrorAssignments(owner,restoredDeclaration,prepared->parameters,prepared->dataset->MatrixData.GetData());
         owned=true;
         result=CommitNativeLearnerChildren(owner,restoredDeclaration,prepared->parameters,prepared->neuron,prepared->dataset);
         if(result.status!=NativeModelBuildStatus::Adopted)
