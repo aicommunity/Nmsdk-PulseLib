@@ -55,3 +55,20 @@ Test и production wiring остаются открытыми. Source solo certi
 образами; Restore не создаёт parent overrides и не вызывает nested Calculate.
 
 Подробный root документ: Docs/StructTrain/TimeLearner/PostTuneBoundaryTransaction.ru.md.
+
+## Полная интеграционная проверка 29.10.2026
+
+Root 912ef71b36fbc040c6177a82070a796ee5eb99de / PulseLib
+c7266dcb93ec51a765125bc30647cf1b59129c91: normal Release на Elder-1 и M40
+по 491 native cases, 480 passed / 11 helper-role skips / 0 failures; три
+выбранные Rdk CTest groups pass. Независимый Python source
+54b3d56073ebbe9e2cc3ef9edacb5085bf817293: по 114 tests без skips/failures/errors.
+Полные пакеты опубликованы в root Reports/StructTrain/TimeLearner:
+s08-integrated-elder1 (bc37077f18adce02c9d90b2aecdc2b75fc8e6b4f),
+s08-integrated-m40 (182191b9534f62257687b97b24f9f7fc936dd71e).
+По 3268 stored / 3266 raw hashes проверены локально.
+
+Этот gate разрешает приёмку указанного source scope; production PostTune
+candidate loop, полная controller/threshold transaction, frozen recognition
+и весь исходный план не завершены. Позднейшие owner metadata guards и Rdk
+BOM/config изменения в этот native source не входят.
