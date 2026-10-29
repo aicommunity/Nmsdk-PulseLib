@@ -23,6 +23,7 @@ public:
         auto result=std::unique_ptr<NativePostTuneOwnerBoundary>(new NativePostTuneOwnerBoundary);
         result->capturedOwner=&owner;
         result->graph=NativeLearnerGraphCheckpoint::Capture(owner);
+        result->ownerLifecycle=owner.ObserveLifecycle();
         const auto values=Values(Properties(owner));
         const auto local=Values(LocalControl(owner));
         const auto configuration=Values(Configuration(owner));
@@ -54,6 +55,10 @@ public:
         try
         {
             Require(&owner==capturedOwner,"posttune_boundary_different_owner");
+            // Check the retained native lifetime BEFORE invoking callbacks
+            // whose typed owner reference may otherwise belong to a recycled
+            // storage instance at the same address.
+            Require(ownerLifecycle.IsCurrent(),"posttune_boundary_owner_lifecycle_changed");
             checkScope();
             result=graph->Restore(owner);refresh();
             if(result.status!=NativeModelBuildStatus::Adopted)return result;
@@ -71,6 +76,7 @@ public:
 private:
     NativePostTuneOwnerBoundary()=default;
     RDK::UNet* capturedOwner=nullptr;
+    RDK::UModuleLifecycleObservation ownerLifecycle;
     std::unique_ptr<NativeLearnerGraphCheckpoint> graph;
     std::function<void()> checkScope,restorePolicy,refresh;
     static void Require(bool value,const char* reason){if(!value)throw std::logic_error(reason);}
