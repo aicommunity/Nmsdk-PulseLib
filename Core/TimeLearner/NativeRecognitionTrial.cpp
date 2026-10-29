@@ -190,8 +190,17 @@ void NativeRecognitionTrialExecutor::AfterChildren(const NativeProbeBindings& b,
                 Detail::Finite(soma->SumPotential(0,0)),"invalid_recognition_soma_sample");
             sample.somaPotentials.push_back(soma->SumPotential(0,0));
         }
-        Events(source->OutputPulseTimes.GetData(),time,current->begin,lastStimulus,current->stimulusTimes);
-        Events(zone->OutputPulseTimes.GetData(),time,current->begin,lastSpike,current->spikeTimes);
+        auto stimuli=current->stimulusTimes,spikes=current->spikeTimes;
+        auto stimulusWatermark=lastStimulus,spikeWatermark=lastSpike;
+        Events(source->OutputPulseTimes.GetData(),time,current->begin,stimulusWatermark,stimuli);
+        Events(zone->OutputPulseTimes.GetData(),time,current->begin,spikeWatermark,spikes);
+        Require(zone->Output.GetRows()==1 && zone->Output.GetCols()==1 && Detail::Finite(zone->Output(0,0)),
+            "invalid_recognition_lt_sample");
+        sample.ltOutput=zone->Output(0,0);
+        for(int i=0;i<source->OutputPulseTimes.GetCols();++i)sample.stimulusHistory.push_back(source->OutputPulseTimes(0,i));
+        for(int i=0;i<zone->OutputPulseTimes.GetCols();++i)sample.spikeHistory.push_back(zone->OutputPulseTimes(0,i));
+        current->stimulusTimes=std::move(stimuli);current->spikeTimes=std::move(spikes);
+        lastStimulus=stimulusWatermark;lastSpike=spikeWatermark;
         current->samples.push_back(std::move(sample));lastSample=time;current->closedAt=time;
         if(!Detail::After(current->end,time))
         {
@@ -227,11 +236,11 @@ void NativeRecognitionTrialExecutor::Finish(const std::string& reason,bool compl
 {
     if(!current)return;
     current->reason=reason;current->complete=complete;current->valid=valid && complete && current->armed;
+    try { Stop(); }
+    catch(const std::exception& e){current->valid=false;current->reason+=";"+std::string(e.what());}
     try { if(revision)current->modelAfter=revision(true); }
     catch(const std::exception& e){current->valid=false;current->reason+=";"+std::string(e.what());}
     if(current->modelAfter!=current->modelBefore)current->valid=false;
-    try { Stop(); }
-    catch(const std::exception& e){current->valid=false;current->reason+=";"+std::string(e.what());}
     result=std::move(current);current.reset();queued=false;running=false;
     revision={};physical.reset();watched.clear();source={};zone={};
 }
@@ -244,7 +253,8 @@ QJsonObject NativeRecognitionTrialJson(const NativeRecognitionTrialObservation& 
 {
     QJsonArray pattern;for(int i=0;i<o.request.pattern.GetRows();++i)pattern.append(o.request.pattern(i,0));
     QJsonArray samples;for(const auto& s:o.samples)samples.append(QJsonObject{
-        {"time",s.time},{"stimulus",s.stimulus},{"soma",Numbers(s.somaPotentials)}});
+        {"time",s.time},{"stimulus",s.stimulus},{"lt_output",s.ltOutput},
+        {"soma",Numbers(s.somaPotentials)},{"stimulus_history",Numbers(s.stimulusHistory)},{"spike_history",Numbers(s.spikeHistory)}});
     QJsonArray relativeStimuli,relativeSpikes;
     if(!o.stimulusTimes.empty())
     {

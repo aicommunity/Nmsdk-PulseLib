@@ -13,8 +13,8 @@ struct NativeRecognitionTrialRequest {
     std::size_t maximumSamples=1000000;
 };
 struct NativeRecognitionTrialSample {
-    double time=0.,stimulus=0.;
-    std::vector<double> somaPotentials;
+    double time=0.,stimulus=0.,ltOutput=0.;
+    std::vector<double> somaPotentials,stimulusHistory,spikeHistory;
 };
 struct NativeRecognitionTrialObservation {
     NativeRecognitionTrialRequest request;
