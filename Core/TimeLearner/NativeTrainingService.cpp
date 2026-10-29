@@ -101,6 +101,7 @@ void NativeTrainingService::BeforeTick(const NativeTrainingAdapter& a,double mod
     if(!Active(state))return;
     try
     {
+        if(a.trainingRequested && !a.trainingRequested()){ExternalStop(a);return;}
         CheckBudget(a,modelTime,wallTime);if(!Active(state) || waiting)return;
         if(state==NativeTrainingState::CapturingReferences)
         {
@@ -150,6 +151,7 @@ void NativeTrainingService::AfterTick(const NativeTrainingAdapter& a,double mode
     if(!Active(state))return;
     try
     {
+        if(a.trainingRequested && !a.trainingRequested()){ExternalStop(a);return;}
         CheckBudget(a,modelTime,wallTime);if(!Active(state) || !waiting)return;
         const auto status=a.probeState();
         if(status==NativeProbeStatus::Queued || status==NativeProbeStatus::Running)return;

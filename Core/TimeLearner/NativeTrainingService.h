@@ -31,6 +31,9 @@ struct NativeTrainingAdapter {
     std::function<void(const std::string&)> cancel;
     std::function<std::string()> readFullModelRevision;
     std::function<ResistanceDomainAssessment(const std::vector<InputParameters>&,std::size_t)> assessResistanceDomain;
+    // Native property connections can change without invoking the owner setter.
+    // Pure controller adapters may omit this provider (always requested).
+    std::function<bool()> trainingRequested;
 };
 
 class NativeTrainingService {
