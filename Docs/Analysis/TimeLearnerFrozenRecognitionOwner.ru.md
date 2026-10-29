@@ -53,3 +53,16 @@ learner и fresh-process owner требуют отдельных controls. По�
 foil runner, реальные spike timestamps, threshold confirmation и independent
 scientific evaluation ещё не реализованы. RecordSpikes=false, scientific
 verdict и recognition certificate — null. Этот подэтап не закрывает весь этап 8.
+
+## Последующая проверка нового Test owner
+
+Для двух configured 2 kHz профилей (Classic N0 identity, Branch N1 scaled)
+ограничение о новом destination/fresh process снято: native7de61282 по 2/2
+new factory owner cases, nativeabad4a68 по 2/2 fresh-process imports на каждом
+worker. Source Train graph сохраняется, default controller=1 до import
+восстанавливается в V2. Independent ab4a2f7a: по 12/12 Python tests без skips,
+28 primary source trials / 762 paired / 762 fresh-process samples, byte-exact.
+Root reports s08-fresh-owner-elder1 (73b1427fd479e3a0d4c8d81799c859daec33fcf6)
+и s08-fresh-owner-m40 (f079e7073cc58a06c276e131f9b264067ae7fbaa):
+по 108 stored / 106 raw hashes проверены локально. Общая matrix и cross-worker
+owner replay остаются отдельными checks; spike/evaluation verdict не добавлен.
