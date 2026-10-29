@@ -13,16 +13,40 @@ native tests. Исходный normal A1 дополнительно: 24 native /
 16570 exact waveform pairs. Owner Reset failure воспроизведён на pre-guard
 baseline; научная причинность для исторических экспериментов не утверждается.
 A1 ASan был намеренно прерван SIGTERM; его частичные данные не являются PASS.
-Independent A2 audit и Git-публикация raw data ожидают восстановления jump host.
+После восстановления связи independent A2 завершён на обоих workers:
+по 2 Python tests, 16570 exact sample pairs, 20 Elder / 8 полных M40 A1 CSV
+совпадают с A2. Пакеты s08-boundary-elder1 и s08-boundary-m40 опубликованы в root
+Git; локально сверены 426 stored / 424 raw и 241 / 239 hashes соответственно.
 
-NativePostTuneOwnerBoundary — более поздняя рабочая реализация. Она ещё не
-собрана/проверена и не покрывается результатами выше. Поддерживает только
+NativePostTuneOwnerBoundary — более поздняя реализация PulseLib
+`c7266dcb93ec51a765125bc30647cf1b59129c91`, native root
+`912ef71b36fbc040c6177a82070a796ee5eb99de`. На Elder normal и M40 ASan
+завершены по 23/23 native cases: девять owner-policy и 14 graph/guard regressions.
+Это отдельный source scope, не результат старой A2 проверки. Поддерживает только
 native-owned idle scope: source training controller не копируется/сбрасывается,
 проверяются его identity, goal, declaration/configuration и lifecycle. После
 восстановления графа обновляются private child aliases и адресно возвращаются
 owner threshold policy, L/Ns/Rs/bounds и loaded-value bookkeeping. Setter не
 вызывается, связанных или external owner properties быть не должно: в Rdk
 SetDataDirect может писать в external data source. Retarget не перезаписывается.
+
+Шесть положительных случаев охватывают Classic/Branch N0/N1 при 2 кГц и N1
+при 20 кГц, изменение параметров/threshold policy, возврат исходного состояния и
+native waveform. Три отрицательных — connected scalar, retarget и намеренная
+подмена reference trial IDs при равном certificate/state/epoch. Последняя
+является corruption control над настоящими packets, не новыми наблюдениями.
+Fixture объявляет sync tolerance 1 с: она проверяет boundary, а не сходимость
+при default 0.02 с. При CalculateMode=1 управление снимается внешним setter
+после Exact; при CalculateMode=0 проверяется штатное автоматическое завершение.
+
+Independent Python A1 664ced234 и A2 54b3d5607: по 4/4 tests на каждом worker,
+42 actual training packets, 8646 waveform sample pairs. A2 дополнительно
+сверяет sample-count summary с первичными CSV, без нового native расчёта.
+Проверены production audit_probe, привязка final trial IDs к certificate и
+byte-exact replay. Полный training summary с повторным выводом всех условий
+сходимости этим fixture не экспортируется и не объявляется проверенным.
+M40 использует ASan detect_leaks=0. Публикация и текущие full regression gates
+отражаются в поддерживаемых root документах; full-source приёмка пока открыта.
 
 Это не готовый общий PostTune controller и не полный legacy checkpoint.
 Candidate history/selection/commit, real-threshold calibration, frozen independent
