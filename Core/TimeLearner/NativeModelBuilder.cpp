@@ -1,5 +1,6 @@
 #include "NativeModelBuilder.h"
 #include "ModelIdentity.h"
+#include "ModelArchive.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <cmath>
@@ -234,6 +235,149 @@ static NativeModelBuildResult InspectBuiltModel(UNet& owner,const NativeModelSpe
 }
 NativeModelBuildResult InspectNativeLearnerModel(UNet& owner,const NativeModelSpec& s,const std::vector<int>& attachments)
 {return InspectBuiltModel(owner,s,attachments,Bindings(owner,s));}
+NativeModelBuildResult ReconstructNativeLearnerNeuron(UNet& owner,const NmsdkTools::ModelBoundarySources& sources)
+{
+    NativeModelBuildResult result;UEPtr<NPulseNeuron> original,candidate;
+    std::vector<NameT> order;owner.GetComponentsList(order);bool detached=false,committed=false;
+    QJsonObject identity;
+    const auto restoreOrder=[&] {
+        for(std::size_t i=0;i<order.size();++i)
+        {
+            std::vector<NameT> now;owner.GetComponentsList(now);const auto at=std::find(now.begin(),now.end(),order[i]);
+            Require(at!=now.end(),"reconstruction_owner_member_lost");
+            const int offset=int(i)-int(at-now.begin());
+            if(offset)Require(owner.ChangeComponentPosition(order[i],offset),"reconstruction_order_restore_failed");
+        }
+    };
+    try
+    {
+        Require(owner.GetStorage() && owner.GetEnvironment(),"missing_reconstruction_context");
+        original=owner.GetComponentL<NPulseNeuron>("Neuron",true);Require(bool(original),"missing_reconstruction_neuron");
+        CheckReplacement(owner);
+        identity=NmsdkTools::IdentifyModel(original,sources);
+        candidate=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(original,sources));
+        Require(bool(candidate) && !candidate->GetOwner(),"invalid_reconstruction_candidate");
+        Require(NmsdkTools::IdentifyModel(candidate,sources)==identity,"reconstruction_preview_changed_model");
+        // Keep the original object alive until attachment and full readback pass.
+        detached=true;owner.DelComponent("Neuron",false);
+        UEPtr<UContainer> child=candidate;Require(owner.AddComponent(child)!=ForbiddenId,"reconstruction_attach_failed");
+        restoreOrder();
+        Require(candidate->IsReady() && candidate->IsInit() &&
+            NmsdkTools::IdentifyModel(candidate,sources)==identity,"reconstruction_attachment_changed_model");
+        committed=true;result.status=NativeModelBuildStatus::Adopted;
+        result.modelRevision=identity.value("sha256").toString().toStdString();result.modelMayHaveChanged=true;
+        original->BreakLinks();owner.GetStorage()->ReturnObject(original);original=0;return result;
+    }
+    catch(const std::exception& error)
+    {
+        result.reason=error.what();result.status=committed?NativeModelBuildStatus::Failed:NativeModelBuildStatus::Rejected;
+        result.modelMayHaveChanged=committed;
+        if(detached && !committed)try
+        {
+            if(candidate && candidate->GetOwner().Get()==&owner)owner.DelComponent("Neuron",false);
+            if(original && !original->GetOwner())
+            {UEPtr<UContainer> child=original;Require(owner.AddComponent(child)!=ForbiddenId,"reconstruction_rollback_attach_failed");}
+            restoreOrder();
+            Require(original && NmsdkTools::IdentifyModel(original,sources)==identity,"reconstruction_rollback_changed_model");
+        }
+        catch(...){result.status=NativeModelBuildStatus::Failed;result.modelMayHaveChanged=true;result.reason+=";reconstruction_rollback_failed";}
+        if(candidate && !candidate->GetOwner())
+        {candidate->BreakLinks();owner.GetStorage()->ReturnObject(candidate);}
+        return result;
+    }
+}
+std::unique_ptr<NativeLearnerGraphCheckpoint> NativeLearnerGraphCheckpoint::Capture(UNet& owner)
+{
+    Require(owner.GetStorage() && owner.GetEnvironment(),"missing_boundary_checkpoint_context");
+    auto neuron=owner.GetComponentL<NPulseNeuron>("Neuron",true);
+    auto dataset=owner.GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
+    Require(neuron && dataset,"missing_boundary_checkpoint_children");
+    auto source=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+    Require(bool(source),"missing_boundary_checkpoint_generator");
+    CheckReplacement(owner);Tree(neuron,owner.GetTimeStep());Tree(dataset,owner.GetTimeStep());
+    auto result=std::unique_ptr<NativeLearnerGraphCheckpoint>(new NativeLearnerGraphCheckpoint);
+    result->capturedOwner=&owner;result->capturedStorage=owner.GetStorage().Get();
+    result->capturedEnvironment=owner.GetEnvironment().Get();result->frequency=owner.GetTimeStep();
+    result->ownerLifecycle=owner.ObserveLifecycle();
+    owner.GetComponentsList(result->order);
+    result->neuronSnapshot=NmsdkTools::ExportPhysicalGraphForEdit(neuron,{{&source->Output,"burst"}});
+    result->datasetSnapshot=NmsdkTools::ExportDatasetSnapshot(dataset);
+    return result;
+}
+NativeModelBuildResult NativeLearnerGraphCheckpoint::Restore(UNet& owner) const
+{
+    NativeModelBuildResult result;
+    UEPtr<NPulseNeuron> neuron,oldNeuron;UEPtr<NDatasetMatrix> dataset,oldDataset;
+    std::vector<NameT> previousOrder;owner.GetComponentsList(previousOrder);
+    bool detached=false,committed=false;
+    const auto restoreOrder=[&](const std::vector<NameT>& expected) {
+        for(std::size_t i=0;i<expected.size();++i)
+        {
+            std::vector<NameT> now;owner.GetComponentsList(now);
+            const auto found=std::find(now.begin(),now.end(),expected[i]);
+            Require(found!=now.end(),"boundary_checkpoint_owner_member_lost");
+            const auto offset=int(i)-int(found-now.begin());
+            if(offset)Require(owner.ChangeComponentPosition(expected[i],offset),"boundary_checkpoint_order_restore_failed");
+        }
+    };
+    try
+    {
+        Require(&owner==capturedOwner && owner.GetStorage().Get()==capturedStorage &&
+            owner.GetEnvironment().Get()==capturedEnvironment && owner.GetTimeStep()==frequency,
+            "boundary_checkpoint_context_changed");
+        Require(ownerLifecycle.IsCurrent(),"boundary_checkpoint_owner_lifecycle_changed");
+        auto previousSet=previousOrder,originalSet=order;
+        std::sort(previousSet.begin(),previousSet.end());std::sort(originalSet.begin(),originalSet.end());
+        Require(previousSet==originalSet,"boundary_checkpoint_owner_members_changed");
+        CheckReplacement(owner);
+        oldNeuron=owner.GetComponentL<NPulseNeuron>("Neuron",true);
+        oldDataset=owner.GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
+        Require(oldNeuron && oldDataset,"missing_boundary_checkpoint_current_children");
+        // Both previews are private and fully initialized before touching the
+        // live graph. The saved input ports bind to the NEW Dataset source.
+        dataset=dynamic_pointer_cast<NDatasetMatrix>(NmsdkTools::ImportDatasetSnapshot(
+            datasetSnapshot,owner.GetStorage(),owner.GetEnvironment()));
+        auto source=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+        Require(bool(source),"missing_boundary_checkpoint_restored_generator");
+        const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
+        neuron=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ImportPhysicalGraphForEdit(
+            neuronSnapshot,owner.GetStorage(),owner.GetEnvironment(),ports));
+        Tree(neuron,frequency);Tree(dataset,frequency);
+        // Do not release old objects until BOTH attachments and readbacks pass.
+        detached=true;owner.DelComponent("Neuron",false);owner.DelComponent("DatasetMatrix",false);
+        UEPtr<UContainer> child=dataset;Require(owner.AddComponent(child)!=ForbiddenId,"boundary_checkpoint_dataset_attach_failed");
+        child=neuron;Require(owner.AddComponent(child)!=ForbiddenId,"boundary_checkpoint_neuron_attach_failed");
+        restoreOrder(order);
+        Require(NmsdkTools::IdentifyModel(neuron,ports)==neuronSnapshot["identity"].toObject() &&
+            NmsdkTools::IdentifyModel(dataset)==datasetSnapshot["identity"].toObject(),
+            "boundary_checkpoint_attachment_changed_model");
+        Tree(neuron,frequency);Tree(dataset,frequency);
+        committed=true;result.status=NativeModelBuildStatus::Adopted;result.modelMayHaveChanged=true;
+        result.modelRevision=neuronSnapshot["identity"].toObject()["sha256"].toString().toStdString();
+        oldNeuron->BreakLinks();oldDataset->BreakLinks();
+        owner.GetStorage()->ReturnObject(oldNeuron);owner.GetStorage()->ReturnObject(oldDataset);
+        return result;
+    }
+    catch(const std::exception& error)
+    {
+        result.status=committed?NativeModelBuildStatus::Failed:NativeModelBuildStatus::Rejected;
+        result.reason=error.what();result.modelMayHaveChanged=committed;
+        if(detached && !committed)try
+        {
+            if(neuron && neuron->GetOwner().Get()==&owner)owner.DelComponent("Neuron",false);
+            if(dataset && dataset->GetOwner().Get()==&owner)owner.DelComponent("DatasetMatrix",false);
+            if(oldDataset && !oldDataset->GetOwner())
+            {UEPtr<UContainer> child=oldDataset;Require(owner.AddComponent(child)!=ForbiddenId,"boundary_checkpoint_rollback_dataset_failed");}
+            if(oldNeuron && !oldNeuron->GetOwner())
+            {UEPtr<UContainer> child=oldNeuron;Require(owner.AddComponent(child)!=ForbiddenId,"boundary_checkpoint_rollback_neuron_failed");}
+            restoreOrder(previousOrder);
+        }
+        catch(...){result.status=NativeModelBuildStatus::Failed;result.modelMayHaveChanged=true;result.reason+=";boundary_checkpoint_rollback_failed";}
+        if(neuron && !neuron->GetOwner()){neuron->BreakLinks();owner.GetStorage()->ReturnObject(neuron);}
+        if(dataset && !dataset->GetOwner()){dataset->BreakLinks();owner.GetStorage()->ReturnObject(dataset);}
+        return result;
+    }
+}
 NativeModelBuildResult CommitNativeLearnerChildren(UNet& owner,const NativeModelSpec& s,
     const std::vector<InputParameters>& expected,UEPtr<NPulseNeuron> neuron,UEPtr<NDatasetMatrix> dataset)
 {
