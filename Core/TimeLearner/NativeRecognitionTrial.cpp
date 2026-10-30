@@ -93,6 +93,9 @@ void NativeRecognitionTrialExecutor::Check(const NativeProbeBindings& b) const
         ?1./source->PulseLength.GetData():0.;
     Require(source->Frequency.GetData()==expected,"recognition_generator_control_changed");
     Require(revision(false)==current->modelBefore,"recognition_model_changed");
+    if(current->request.recordThresholdPotential)
+        Require(!zone->Potential.IsConnected() && !zone->Potential.UsesExternalDataSource(),
+            "recognition_threshold_potential_source_changed");
 }
 
 void NativeRecognitionTrialExecutor::BeforeChildren(const NativeProbeBindings& b,double time,
@@ -143,6 +146,13 @@ void NativeRecognitionTrialExecutor::BeforeChildren(const NativeProbeBindings& b
         source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
         zone=b.neuron->GetComponentL<NPulseLTZoneCommon>("LTZone",true);
         Require(source && zone,"unsupported_recognition_ltzone");
+        if(current->request.recordThresholdPotential)
+        {
+            Require(!zone->Potential.IsConnected() && !zone->Potential.UsesExternalDataSource(),
+                "recognition_threshold_potential_source_is_external");
+            current->thresholdPotentialPath="$."+zone->GetLongName(b.neuron.Get())+".Potential";
+            current->thresholdPotentialClass=zone->GetCompClassName();
+        }
         b.dataset->Reset();
         if(current->request.resetPolicy==RecognitionResetPolicy::PerTrial)b.neuron->Reset();
         else
@@ -199,6 +209,11 @@ void NativeRecognitionTrialExecutor::AfterChildren(const NativeProbeBindings& b,
         Require(zone->Output.GetRows()==1 && zone->Output.GetCols()==1 && Detail::Finite(zone->Output(0,0)),
             "invalid_recognition_lt_sample");
         sample.ltOutput=zone->Output(0,0);
+        if(current->request.recordThresholdPotential)
+        {
+            sample.thresholdPotential=zone->Potential.GetData();
+            Require(Detail::Finite(sample.thresholdPotential),"nonfinite_recognition_threshold_potential");
+        }
         for(int i=0;i<source->OutputPulseTimes.GetCols();++i)sample.stimulusHistory.push_back(source->OutputPulseTimes(0,i));
         for(int i=0;i<zone->OutputPulseTimes.GetCols();++i)sample.spikeHistory.push_back(zone->OutputPulseTimes(0,i));
         current->stimulusTimes=std::move(stimuli);current->spikeTimes=std::move(spikes);
@@ -257,16 +272,21 @@ std::optional<NativeRecognitionTrialObservation> NativeRecognitionTrialExecutor:
 QJsonObject NativeRecognitionTrialJson(const NativeRecognitionTrialObservation& o)
 {
     QJsonArray pattern;for(int i=0;i<o.request.pattern.GetRows();++i)pattern.append(o.request.pattern(i,0));
-    QJsonArray samples;for(const auto& s:o.samples)samples.append(QJsonObject{
+    QJsonArray samples;for(const auto& s:o.samples)
+    {
+        QJsonObject frame{
         {"time",s.time},{"stimulus",s.stimulus},{"lt_output",s.ltOutput},
-        {"soma",Numbers(s.somaPotentials)},{"stimulus_history",Numbers(s.stimulusHistory)},{"spike_history",Numbers(s.spikeHistory)}});
+        {"soma",Numbers(s.somaPotentials)},{"stimulus_history",Numbers(s.stimulusHistory)},{"spike_history",Numbers(s.spikeHistory)}};
+        if(o.request.recordThresholdPotential)frame["lt_potential"]=s.thresholdPotential;
+        samples.append(frame);
+    }
     QJsonArray relativeStimuli,relativeSpikes;
     if(!o.stimulusTimes.empty())
     {
         for(double t:o.stimulusTimes)relativeStimuli.append(t-o.stimulusTimes.front());
         for(double t:o.spikeTimes)relativeSpikes.append(t-o.stimulusTimes.front());
     }
-    return {{"kind","native_recognition_trial"},{"schema_version",1},
+    QJsonObject result{{"kind","native_recognition_trial"},{"schema_version",o.request.recordThresholdPotential?2:1},
         {"run_id",QString::fromStdString(o.request.runId)},{"trial_id",QString::fromStdString(o.request.trialId)},
         {"sample_id",QString::fromStdString(o.request.sampleId)},{"label",QString::fromStdString(o.request.label)},
         {"pattern_hash",QString::fromStdString(o.request.patternHash)},{"pattern_isi",pattern},
@@ -281,5 +301,13 @@ QJsonObject NativeRecognitionTrialJson(const NativeRecognitionTrialObservation& 
         {"relative_stimulus_times",relativeStimuli},{"relative_spike_times",relativeSpikes},
         {"spike_count",double(o.spikeTimes.size())},{"samples",samples},
         {"evaluation_verdict",QJsonValue(QJsonValue::Null)}};
+    if(o.request.recordThresholdPotential)
+    {
+        result["threshold_potential_source"]=o.thresholdPotentialPath.empty()?QJsonValue(QJsonValue::Null):QJsonValue(QJsonObject{
+            {"path",QString::fromStdString(o.thresholdPotentialPath)},
+            {"class",QString::fromStdString(o.thresholdPotentialClass)},
+            {"sample_phase","native_after_children"},{"units","model_units_SI_unverified"}});
+    }
+    return result;
 }
 }
