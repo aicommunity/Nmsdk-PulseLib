@@ -35,3 +35,11 @@ Candidate metadata помечает `calibrated=false`; source graph не мен
 историческим августовским результатом. Подробные версии, failed attempts,
 CLI select/confirm и compact artifacts: корневой документ
 `Docs/StructTrain/TimeLearner/NativeThresholdCalibration.ru.md`.
+
+Рабочее усиление следующего подэтапа: общий
+`ValidateNativeRecognitionObservation` сверяет записанную request с объявленной,
+число и точную native grid отсчётов, закрытие окна, finite soma/stimulus/LT values,
+покадровые stimulus/spike histories и итоговые event arrays. Данные continuous
+stream до начала окна не становятся событиями текущей пробы. Предложение порога
+теперь вызывает эту проверку до использования экстремумов. Изменение требует
+отдельного серверного gate; прежняя приёмка Core 7f17735 его не подтверждает.

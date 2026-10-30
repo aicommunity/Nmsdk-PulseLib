@@ -2,6 +2,7 @@
 #include "ModelIdentity.h"
 #include "NumericChecks.h"
 #include "NativeTrainingBindings.h"
+#include "NativeRecognitionObservationValidation.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <cmath>
@@ -56,6 +57,7 @@ NativeThresholdProposal ProposeNativeThreshold(const std::vector<NativeRecogniti
         const Key key{o.request.runId,o.request.trialId};const auto found=wanted.find(key);
         Require(found!=wanted.end() && seen.insert(key).second,"unexpected_calibration_characterization_id");
         const auto& q=*found->second;
+        ValidateNativeRecognitionObservation(q,o);
         Require(o.request.sampleId==q.sampleId && o.request.label==q.label && o.request.patternHash==q.patternHash &&
             o.request.resetPolicy==q.resetPolicy && o.request.duration==q.duration && NativeTrainingPatternEqual(o.request.pattern,q.pattern),
             "calibration_characterization_request_changed");
