@@ -22,9 +22,7 @@ NativeThresholdProposal ProposeNativeThreshold(const std::vector<NativeRecogniti
     const std::vector<NativeRecognitionTrialObservation>& observations,const std::string& trainingPatternHash,
     const CalibrationResponseWindow& window,double minimumThreshold,double maximumThreshold)
 {
-    Require(window.anchor==CalibrationAnchor::Onset || window.anchor==CalibrationAnchor::LastStimulus,"unknown_calibration_anchor");
-    Require(Detail::Finite(window.beginOffset) && window.beginOffset>=0. &&
-        (!window.endOffset || (Detail::Finite(*window.endOffset) && *window.endOffset>=window.beginOffset)),"invalid_calibration_response_window");
+    ValidateCalibrationResponseWindow(window);
     Require(Detail::Finite(minimumThreshold) && Detail::Finite(maximumThreshold) && minimumThreshold>0. &&
         minimumThreshold<=maximumThreshold,"invalid_calibration_threshold_bounds");
     Require(!trainingPatternHash.empty() && expected.size()>=2 && observations.size()==expected.size(),"incomplete_calibration_characterization");
@@ -72,10 +70,7 @@ NativeThresholdProposal ProposeNativeThreshold(const std::vector<NativeRecogniti
             EqualTime(o.end,o.begin+q.duration) && EqualTime(o.closedAt,o.end) && !o.samples.empty() &&
             EqualTime(o.samples.front().time,o.begin) && EqualTime(o.samples.back().time,o.end) &&
             !o.stimulusTimes.empty(),"incomplete_calibration_characterization_window");
-        const double anchor=window.anchor==CalibrationAnchor::Onset?o.stimulusTimes.front():o.stimulusTimes.back();
-        const double begin=anchor+window.beginOffset,end=window.endOffset?anchor+*window.endOffset:o.end;
-        Require(Detail::Finite(begin) && Detail::Finite(end) && !Detail::After(o.begin,begin) &&
-            !Detail::After(begin,end) && !Detail::After(end,o.end),"calibration_response_window_outside_observation");
+        const auto [begin,end]=CalibrationResponseBounds(window,o.begin,o.end,o.stimulusTimes.front(),o.stimulusTimes.back());
         std::optional<double> inside,outside,full;std::optional<double> previous;
         for(const auto& sample:o.samples)
         {

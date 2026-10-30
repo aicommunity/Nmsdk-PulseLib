@@ -1,14 +1,8 @@
 #pragma once
 #include "NativeRecognitionTrial.h"
+#include "NativeCalibrationCriterion.h"
 
 namespace NMSDK::TimeLearner {
-enum class CalibrationAnchor { Onset,LastStimulus };
-struct CalibrationResponseWindow {
-    CalibrationAnchor anchor=CalibrationAnchor::LastStimulus;
-    double beginOffset=0.;
-    std::optional<double> endOffset;
-    bool rejectTargetOutsideWindow=true;
-};
 struct NativeThresholdProposal {
     std::optional<double> threshold;
     QJsonObject evidence;
