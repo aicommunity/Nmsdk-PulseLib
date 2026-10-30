@@ -49,6 +49,8 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
     ValidateVerificationProtocol(protocol);
     if(config.runId.empty() || config.initialModelRevision.empty() || !config.maximumProbes || !config.maximumEdits ||
         !config.maximumCandidatesPerInput || !config.maximumSweeps || config.resistanceSubdivisionDepth>20 ||
+        config.n0CandidateRepeats<1 || config.n0CandidateRepeats>128 ||
+        (config.normalization==Normalization::TipResistance && config.n0CandidateRepeats!=1) ||
         (config.normalization!=Normalization::SynapseCount && config.normalization!=Normalization::TipResistance) ||
         protocol.schemaVersion!=3 || config.bounds.size()!=protocol.inputs.size() || initial.size()!=protocol.inputs.size() || initial.empty())
         throw std::invalid_argument("invalid_bounded_training_configuration");
@@ -120,6 +122,7 @@ void BoundedTrainingSession::BeginInput()
 {
     const auto index=order.at(position);const auto& b=config.bounds[index];const auto& p=current[index];
     background=current;lengths.clear();counts.clear();resistances.clear();best.reset();anchor.reset();anchorTrial.clear();
+    candidateMeasurements.clear();
     lengthIndex=normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
     initialCandidatePending=requireResistanceDomains;domainReady=false;domainLength=domainNormalizer=domainVariant=0;
     domainGeometry.clear();domainScope.clear();visitedDomainCandidates.clear();
@@ -328,7 +331,7 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
             {rejected.push_back({{},"best_candidate_no_longer_legal"});Stop(TrainingStatus::InvalidModel);return {};}
         }
         else ++candidates;
-        phase=Phase::Anchor;anchor.reset();anchorTrial.clear();
+        phase=Phase::Anchor;anchor.reset();anchorTrial.clear();candidateMeasurements.clear();
         // A compatibility graph can have the same L/Ns/Rs but different
         // effective stimulus bindings. Realize the assessed geometry explicitly
         // before treating its normalized preview scope as a measured point.
@@ -378,6 +381,8 @@ void BoundedTrainingSession::Applied(std::size_t actionSerial,const std::vector<
 void BoundedTrainingSession::Reject(const std::string& reason)
 {
     rejected.push_back({pending?pending->trialId:std::string{},reason});pending.reset();armed.reset();
+    if(config.n0CandidateRepeats>1 && phase!=Phase::Verify)
+    {RecordIncompleteCandidateRepeats(reason);anchor.reset();anchorTrial.clear();phase=Phase::Anchor;}
     if(invalid++>=config.maximumInvalidObservations)Stop(TrainingStatus::InvalidObservation);
 }
 
@@ -440,6 +445,7 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
     e.timingResidualLow=measurement.arrival-anchor->plateauEnd;
     e.timingResidualHigh=measurement.plateauEnd-anchor->arrival;
     e.amplitudeResidual=measurement.rawPotential-reference.rawPotential;
+    e.measuredRawPotential=measurement.rawPotential;
     for(std::size_t i=0;i<current.size();++i)
         e.parameterChangeCost+=std::fabs(double(current[i].length)-background[i].length)+
             std::fabs(double(current[i].synapses)-background[i].synapses)+
@@ -449,13 +455,60 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
     e.withinTiming=std::max(std::fabs(e.timingResidualLow),std::fabs(e.timingResidualHigh))<=config.tolerances.sync;
     e.withinAmplitude=std::fabs(e.amplitudeResidual)<=AmplitudeTolerance(config,reference);
     evidence.push_back(e);
+    if(config.normalization==Normalization::SynapseCount && config.n0CandidateRepeats>1)
+    {
+        candidateMeasurements.push_back(e);
+        if(candidateMeasurements.size()<config.n0CandidateRepeats)
+        {phase=Phase::Anchor;anchor.reset();anchorTrial.clear();return;}
+        CandidateRepeatEvidence group;group.inputIndex=index;group.modelEpoch=epoch;
+        group.modelRevision=revision;group.fullParameters=current;
+        group.minimumRawPotential=group.maximumRawPotential=e.measuredRawPotential;
+        group.withinTiming=group.withinAmplitude=true;
+        for(const auto& sample:candidateMeasurements)
+        {
+            if(sample.inputIndex!=index || sample.modelEpoch!=epoch || sample.modelRevision!=revision || sample.fullParameters!=current)
+            {Stop(TrainingStatus::InvalidModel);return;}
+            group.trialIds.push_back(sample.trialId);group.anchorTrialIds.push_back(sample.anchorTrialId);
+            const double potential=sample.measuredRawPotential;
+            group.rawPotentials.push_back(potential);
+            group.minimumRawPotential=std::min(group.minimumRawPotential,potential);
+            group.maximumRawPotential=std::max(group.maximumRawPotential,potential);
+            group.withinTiming=group.withinTiming && sample.withinTiming;
+            group.withinAmplitude=group.withinAmplitude && sample.withinAmplitude;
+            if(std::fabs(sample.timingResidualLow)>std::fabs(e.timingResidualLow))e.timingResidualLow=sample.timingResidualLow;
+            if(std::fabs(sample.timingResidualHigh)>std::fabs(e.timingResidualHigh))e.timingResidualHigh=sample.timingResidualHigh;
+            if(std::fabs(sample.amplitudeResidual)>std::fabs(e.amplitudeResidual))e.amplitudeResidual=sample.amplitudeResidual;
+        }
+        e.withinTiming=group.withinTiming;e.withinAmplitude=group.withinAmplitude;
+        candidateRepeats.push_back(std::move(group));candidateMeasurements.clear();
+    }
     if(!best || Rank(e,config,reference)<Rank(*best,config,reference))best=e;
     if(restoringBest || (e.withinTiming && e.withinAmplitude))AdvanceInput();
     else {phase=Phase::Candidate;anchor.reset();anchorTrial.clear();}
 }
 
+void BoundedTrainingSession::RecordIncompleteCandidateRepeats(const std::string& reason)
+{
+    if(candidateMeasurements.empty())return;
+    const auto& first=candidateMeasurements.front();
+    CandidateRepeatEvidence group;group.inputIndex=first.inputIndex;group.modelEpoch=first.modelEpoch;
+    group.modelRevision=first.modelRevision;group.fullParameters=first.fullParameters;
+    group.minimumRawPotential=group.maximumRawPotential=first.measuredRawPotential;
+    group.withinTiming=group.withinAmplitude=true;group.complete=false;group.reason=reason;
+    for(const auto& sample:candidateMeasurements)
+    {
+        group.trialIds.push_back(sample.trialId);group.anchorTrialIds.push_back(sample.anchorTrialId);
+        group.rawPotentials.push_back(sample.measuredRawPotential);
+        group.minimumRawPotential=std::min(group.minimumRawPotential,sample.measuredRawPotential);
+        group.maximumRawPotential=std::max(group.maximumRawPotential,sample.measuredRawPotential);
+        group.withinTiming=group.withinTiming && sample.withinTiming;
+        group.withinAmplitude=group.withinAmplitude && sample.withinAmplitude;
+    }
+    candidateRepeats.push_back(std::move(group));candidateMeasurements.clear();
+}
+
 void BoundedTrainingSession::Stop(TrainingStatus terminal)
-{status=terminal;pending.reset();armed.reset();anchor.reset();}
+{RecordIncompleteCandidateRepeats(TrainingStatusName(terminal));status=terminal;pending.reset();armed.reset();anchor.reset();}
 
 void BoundedTrainingSession::ExternalStop()
 {

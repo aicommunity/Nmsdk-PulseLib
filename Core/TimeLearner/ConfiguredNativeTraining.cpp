@@ -120,6 +120,8 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
     Require(c.search.normalization==c.model.normalization && c.search.bounds.size()==size && c.search.maximumProbes &&
         c.search.maximumEdits && c.search.maximumCandidatesPerInput && c.search.maximumSweeps && c.search.resistanceSubdivisionDepth<=20,
         "invalid_configured_native_search");
+    Require(c.search.n0CandidateRepeats>=1 && c.search.n0CandidateRepeats<=128 &&
+        (c.search.normalization==Normalization::SynapseCount || c.search.n0CandidateRepeats==1),"invalid_n0_candidate_repeats");
     Require(c.search.initialModelRevision.empty() && c.search.initialModelEpoch==0,"configuration_is_not_controller_checkpoint");
     for(double value:{c.search.tolerances.amplitudeAbsolute,c.search.tolerances.amplitudeRelative,c.search.tolerances.sync})
         Require(std::isfinite(value) && value>=0.,"invalid_configured_native_tolerance");
@@ -162,7 +164,7 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
         {"minimum_synapses",b.minimumSynapses},{"maximum_synapses",b.maximumSynapses},{"minimum_resistance",Numeric(b.minimumResistance)},
         {"maximum_resistance",Numeric(b.maximumResistance)}});
     const auto& source=c.stimulusProfile;
-    return {{"kind","timelearner_native_cold_configuration"},{"schema_version",1},{"model",EncodeNativeModelSpec(c.model)},
+    QJsonObject result{{"kind","timelearner_native_cold_configuration"},{"schema_version",1},{"model",EncodeNativeModelSpec(c.model)},
         {"stimulus_profile",QJsonObject{{"generator_class",QString::fromStdString(source.generatorClass)},
             {"amplitude",Numeric(source.amplitude)},{"pulse_length",Numeric(source.pulseLength)},{"frequency_hz",Numeric(source.frequencyHz)},
             {"frequency_deviation",Numeric(source.frequencyDeviation)},{"use_transit_signal",source.useTransitSignal},{"use_pattern_output",source.usePatternOutput}}},
@@ -176,13 +178,21 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
                 {"amplitude_relative",Numeric(c.search.tolerances.amplitudeRelative)},{"sync",Numeric(c.search.tolerances.sync)}}}}},
         {"maximum_reference_probes",Integer(c.maximumReferenceProbes)},{"maximum_invalid_reference_probes",Integer(c.maximumInvalidReferenceProbes)},
         {"maximum_model_seconds",Numeric(c.maximumModelSeconds)},{"maximum_wall_seconds",Numeric(c.maximumWallSeconds)}};
+    if(c.search.n0CandidateRepeats!=1)
+    {
+        result["schema_version"]=2;
+        auto search=result["search"].toObject();search["n0_candidate_repeats"]=Integer(c.search.n0CandidateRepeats);
+        result["search"]=search;
+    }
+    return result;
 }
 ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
 {
     Keys(o,{"kind","schema_version","model","stimulus_profile","run_id","protocol_revision","sample_id","duration","maximum_sample_gap","minimum_amplitude",
         "maximum_samples","record_spikes","peak_selection","windows","search","maximum_reference_probes","maximum_invalid_reference_probes",
         "maximum_model_seconds","maximum_wall_seconds"});
-    Require(Text(o["kind"])=="timelearner_native_cold_configuration" && Int(o["schema_version"])==1,"unsupported_native_configuration_schema");
+    const int schema=Int(o["schema_version"]);
+    Require(Text(o["kind"])=="timelearner_native_cold_configuration" && (schema==1 || schema==2),"unsupported_native_configuration_schema");
     ConfiguredNativeTraining c;c.model=DecodeNativeModelSpec(Object(o["model"]));c.runId=Text(o["run_id"]);
     const auto source=Object(o["stimulus_profile"]);Keys(source,{"generator_class","amplitude","pulse_length","frequency_hz",
         "frequency_deviation","use_transit_signal","use_pattern_output"});
@@ -195,7 +205,14 @@ ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
     c.peakSelection=selection=="isolated_window"?PeakSelectionPolicy::IsolatedWindow:PeakSelectionPolicy::AssignedBurstWave;
     for(const auto& v:Array(o["windows"]))
     {const auto w=Object(v);Keys(w,{"begin","end"});c.windows.emplace_back(Number(w["begin"]),Number(w["end"]));}
-    const auto s=Object(o["search"]);Keys(s,{"maximum_probes","maximum_edits","maximum_candidates_per_input","maximum_sweeps",
+    auto s=Object(o["search"]);
+    if(schema==2)
+    {
+        c.search.n0CandidateRepeats=Count(s["n0_candidate_repeats"],128);
+        Require(c.search.n0CandidateRepeats>=2 && c.model.normalization==Normalization::SynapseCount,"invalid_n0_candidate_repeats");
+        s.remove("n0_candidate_repeats");
+    }
+    Keys(s,{"maximum_probes","maximum_edits","maximum_candidates_per_input","maximum_sweeps",
         "maximum_invalid_observations","resistance_subdivision_depth","bounds","tolerances"});
     c.search.normalization=c.model.normalization;c.search.runId=c.runId;
     c.search.maximumProbes=Count(s["maximum_probes"]);c.search.maximumEdits=Count(s["maximum_edits"]);

@@ -168,6 +168,12 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         {"maximum_candidates_per_input",Count(cfg.maximumCandidatesPerInput)},{"maximum_sweeps",Count(cfg.maximumSweeps)},
         {"maximum_invalid_observations",Count(cfg.maximumInvalidObservations)},
         {"resistance_subdivision_depth",int(cfg.resistanceSubdivisionDepth)},{"bounds",bounds}};
+    if(cfg.n0CandidateRepeats>1)
+    {
+        result["schema_version"]=2;
+        auto configuration=result["configuration"].toObject();
+        configuration["n0_candidate_repeats"]=Count(cfg.n0CandidateRepeats);result["configuration"]=configuration;
+    }
     QJsonArray references;
     if(service.References())
     {
@@ -192,6 +198,24 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
             {"within_amplitude",e.withinAmplitude},{"parameter_change_cost",Number(e.parameterChangeCost)}});
         for(const auto& r:search->Rejected())rejections.append(QJsonObject{{"trial_id",Text(r.trialId)},{"reason",Text(r.reason)}});
         for(const auto& d:search->Domains())domains.append(EncodeResistanceDomainAssessment(d));
+        if(cfg.n0CandidateRepeats>1)
+        {
+            QJsonArray groups;
+            for(const auto& group:search->CandidateRepeats())
+            {
+                QJsonArray trials,anchors,rawPotentials;
+                for(const auto& id:group.trialIds)trials.append(Text(id));
+                for(const auto& id:group.anchorTrialIds)anchors.append(Text(id));
+                for(const auto value:group.rawPotentials)rawPotentials.append(Number(value));
+                groups.append(QJsonObject{{"input_index",Count(group.inputIndex)},{"model_epoch",Count(group.modelEpoch)},
+                    {"model_revision",Text(group.modelRevision)},{"full_parameters",parameters(group.fullParameters)},
+                    {"trial_ids",trials},{"anchor_trial_ids",anchors},{"minimum_raw_potential",Number(group.minimumRawPotential)},
+                    {"maximum_raw_potential",Number(group.maximumRawPotential)},{"within_timing",group.withinTiming},
+                    {"within_amplitude",group.withinAmplitude},{"raw_potentials",rawPotentials},{"valid",true},
+                    {"complete",group.complete},{"reason",Text(group.reason)}});
+            }
+            result["candidate_repeat_groups"]=groups;
+        }
     }
     result["candidates"]=candidates;result["rejections"]=rejections;
     result["resistance_domains"]=domains;

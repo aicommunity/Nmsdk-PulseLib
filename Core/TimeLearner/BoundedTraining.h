@@ -18,6 +18,9 @@ struct BoundedTrainingConfig {
     // A finite, explicitly declared search mesh; its exhaustion never proves
     // physical infeasibility or a global monotonicity assumption.
     unsigned resistanceSubdivisionDepth=4;
+    // One preserves historical protocol. New N0 protocols may explicitly
+    // require repeated native anchor/input pairs for every measured candidate.
+    std::size_t n0CandidateRepeats=1;
     Normalization normalization=Normalization::SynapseCount;
     VerificationTolerances tolerances;
     std::vector<InputSearchBounds> bounds;
@@ -35,11 +38,23 @@ struct CandidateEvidence {
     InputParameters parameters;
     std::string modelRevision,trialId,anchorTrialId;
     double timingResidualLow=0.,timingResidualHigh=0.,amplitudeResidual=0.;
+    double measuredRawPotential=0.;
     double parameterChangeCost=0.;
     bool withinTiming=false,withinAmplitude=false;
     std::vector<InputParameters> fullParameters;
 };
 struct TrainingRejection { std::string trialId,reason; };
+struct CandidateRepeatEvidence {
+    std::size_t inputIndex=0,modelEpoch=0;
+    std::string modelRevision;
+    std::vector<InputParameters> fullParameters;
+    std::vector<std::string> trialIds,anchorTrialIds;
+    std::vector<double> rawPotentials;
+    double minimumRawPotential=0.,maximumRawPotential=0.;
+    bool withinTiming=false,withinAmplitude=false;
+    bool complete=true;
+    std::string reason="required_measurements_collected";
+};
 // Shared preflight before paying for reference measurements. Uses the same
 // bounds/physical-bank legality and tolerances as the actual decision session.
 void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const BoundedTrainingConfig& configuration,
@@ -70,6 +85,7 @@ public:
     const std::optional<TrainingCertificate>& Certificate() const;
     const std::vector<CandidateEvidence>& Evidence() const { return evidence; }
     const std::vector<TrainingRejection>& Rejected() const { return rejected; }
+    const std::vector<CandidateRepeatEvidence>& CandidateRepeats() const { return candidateRepeats; }
     const std::vector<ResistanceDomainAssessment>& Domains() const { return domains; }
     const std::vector<InputParameters>& Parameters() const { return current; }
     const std::string& ModelRevision() const { return revision; }
@@ -101,6 +117,8 @@ private:
     std::vector<std::pair<std::string,std::vector<InputParameters>>> visitedDomainCandidates;
     std::vector<ResistanceDomainAssessment> domains;
     std::vector<CandidateEvidence> evidence;
+    std::vector<CandidateEvidence> candidateMeasurements;
+    std::vector<CandidateRepeatEvidence> candidateRepeats;
     std::vector<TrainingRejection> rejected;
     std::set<std::string> seenTrials;
     std::unique_ptr<FinalVerificationSession> verification;
@@ -115,6 +133,7 @@ private:
     DynamicCandidate NextDomainCandidate(std::vector<InputParameters>& parameters);
     void AdvanceDomainGeometry();
     void Reject(const std::string& reason);
+    void RecordIncompleteCandidateRepeats(const std::string& reason);
     void Stop(TrainingStatus terminal);
 };
 const char* TrainingStatusName(TrainingStatus status);

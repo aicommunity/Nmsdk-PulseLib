@@ -1,8 +1,12 @@
 # Configured TimeLearner V2: cold JSON/XML
 
 `ControllerVersion=1` — default и прежние конфигурации; `2` — native cold
-declaration из `ControllerConfiguration`. Schema JSON — 1, отдельная от номера
-контроллера. `ConfiguredNativeTraining` содержит storage ModelSpec, реальный
+declaration из `ControllerConfiguration`. Schema JSON отдельна от номера
+контроллера: 1 сохраняет исходный протокол (одна проба кандидата N0), 2 требует
+`search.n0_candidate_repeats` от 2 до 128 и разрешена только для N0. N1 с этим
+фактором отвергается. [Повторы N0](TimeLearnerN0CandidateRepeats.ru.md) описывают
+измерения и отдельную schema 2 training summary; эти номера не меняют схему
+primary observation. `ConfiguredNativeTraining` содержит storage ModelSpec, реальный
 StimulusProfile, начальные ISI, окна, допуски и конечные бюджеты. Кодеки и native
 plan builder находятся в Core/TimeLearner/ConfiguredNativeTraining.
 
