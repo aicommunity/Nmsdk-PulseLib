@@ -89,7 +89,9 @@ std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeThresholdCandidate(
     Require(!implementation.empty() && package["implementation_id"]==QJsonValue(Text(implementation)),
         "threshold_candidate_implementation_mismatch");
     Require(package["threshold"].isDouble(),"invalid_threshold_candidate_value");
-    const auto algorithm=Object(package["candidate_record"])["algorithm"];
+    // Materialize the value: operator[] on the temporary QJsonObject returns
+    // a QJsonValueRef whose owner would expire at the end of this statement.
+    const QJsonValue algorithm=Object(package["candidate_record"])["algorithm"];
     Require(algorithm==QJsonValue("explicit-native-threshold-v1") || algorithm==QJsonValue("explicit-native-threshold-v2"),
         "unknown_threshold_candidate_algorithm");
     const auto source=Object(package["source_recognition"]);
