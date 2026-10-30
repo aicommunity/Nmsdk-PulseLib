@@ -22,3 +22,8 @@ tests, все 3528 samples byte-exact к Git-пакету Elder, включая 
 Fresh root получает штатные Init/Reset всего дерева до первого Calculate.
 Ошибки прежних fixtures сохранены отдельно. Эти данные подтверждают transport,
 не научную разделимость, реальную калибровку или завершённый PostTune.
+
+Последующее расширение: importer принимает отдельно версионированный immutable
+threshold candidate, проверяя единственное изменение реального LTZone.Threshold.
+Это не calibrated recognition certificate. Описание и открытые ограничения:
+[TimeLearnerThresholdCalibration](TimeLearnerThresholdCalibration.ru.md).
