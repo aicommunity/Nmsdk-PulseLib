@@ -211,7 +211,8 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
                     {"model_revision",Text(group.modelRevision)},{"full_parameters",parameters(group.fullParameters)},
                     {"trial_ids",trials},{"anchor_trial_ids",anchors},{"minimum_raw_potential",Number(group.minimumRawPotential)},
                     {"maximum_raw_potential",Number(group.maximumRawPotential)},{"within_timing",group.withinTiming},
-                    {"within_amplitude",group.withinAmplitude},{"raw_potentials",rawPotentials},{"valid",true},{"complete",true}});
+                    {"within_amplitude",group.withinAmplitude},{"raw_potentials",rawPotentials},{"valid",true},
+                    {"complete",group.complete},{"reason",Text(group.reason)}});
             }
             result["candidate_repeat_groups"]=groups;
         }

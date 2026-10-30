@@ -52,6 +52,8 @@ struct CandidateRepeatEvidence {
     std::vector<double> rawPotentials;
     double minimumRawPotential=0.,maximumRawPotential=0.;
     bool withinTiming=false,withinAmplitude=false;
+    bool complete=true;
+    std::string reason="required_measurements_collected";
 };
 // Shared preflight before paying for reference measurements. Uses the same
 // bounds/physical-bank legality and tolerances as the actual decision session.
@@ -131,6 +133,7 @@ private:
     DynamicCandidate NextDomainCandidate(std::vector<InputParameters>& parameters);
     void AdvanceDomainGeometry();
     void Reject(const std::string& reason);
+    void RecordIncompleteCandidateRepeats(const std::string& reason);
     void Stop(TrainingStatus terminal);
 };
 const char* TrainingStatusName(TrainingStatus status);

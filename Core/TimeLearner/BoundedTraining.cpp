@@ -382,7 +382,7 @@ void BoundedTrainingSession::Reject(const std::string& reason)
 {
     rejected.push_back({pending?pending->trialId:std::string{},reason});pending.reset();armed.reset();
     if(config.n0CandidateRepeats>1 && phase!=Phase::Verify)
-    {candidateMeasurements.clear();anchor.reset();anchorTrial.clear();phase=Phase::Anchor;}
+    {RecordIncompleteCandidateRepeats(reason);anchor.reset();anchorTrial.clear();phase=Phase::Anchor;}
     if(invalid++>=config.maximumInvalidObservations)Stop(TrainingStatus::InvalidObservation);
 }
 
@@ -487,8 +487,28 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
     else {phase=Phase::Candidate;anchor.reset();anchorTrial.clear();}
 }
 
+void BoundedTrainingSession::RecordIncompleteCandidateRepeats(const std::string& reason)
+{
+    if(candidateMeasurements.empty())return;
+    const auto& first=candidateMeasurements.front();
+    CandidateRepeatEvidence group;group.inputIndex=first.inputIndex;group.modelEpoch=first.modelEpoch;
+    group.modelRevision=first.modelRevision;group.fullParameters=first.fullParameters;
+    group.minimumRawPotential=group.maximumRawPotential=first.measuredRawPotential;
+    group.withinTiming=group.withinAmplitude=true;group.complete=false;group.reason=reason;
+    for(const auto& sample:candidateMeasurements)
+    {
+        group.trialIds.push_back(sample.trialId);group.anchorTrialIds.push_back(sample.anchorTrialId);
+        group.rawPotentials.push_back(sample.measuredRawPotential);
+        group.minimumRawPotential=std::min(group.minimumRawPotential,sample.measuredRawPotential);
+        group.maximumRawPotential=std::max(group.maximumRawPotential,sample.measuredRawPotential);
+        group.withinTiming=group.withinTiming && sample.withinTiming;
+        group.withinAmplitude=group.withinAmplitude && sample.withinAmplitude;
+    }
+    candidateRepeats.push_back(std::move(group));candidateMeasurements.clear();
+}
+
 void BoundedTrainingSession::Stop(TrainingStatus terminal)
-{status=terminal;pending.reset();armed.reset();anchor.reset();}
+{RecordIncompleteCandidateRepeats(TrainingStatusName(terminal));status=terminal;pending.reset();armed.reset();anchor.reset();}
 
 void BoundedTrainingSession::ExternalStop()
 {
