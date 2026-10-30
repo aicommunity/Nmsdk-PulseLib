@@ -76,9 +76,14 @@ spike-контракта. Для них новый candidate/probe выдаёт 
 нужен проверенный адаптер. Ordinary schema-1 frozen observations и legacy v1
 package load этим не отключаются.
 
-Это исправление пока требует нового server gate. Проверка отдельной LT-зоны
-не является проверкой структурного обучения всей IaF/Cable модели.
-# Native чтение сохранённых наблюдений
+Signed normal gate root `0afbf97c4ba9df4591eebe9a41fb916e02d1903e`, PulseLib
+`479084f4c35d61f60ef9b37eb0da246bc8dec87a` прошёл на Elder: 6/6 native
+и 6/6 independent Python checks без ошибок и skips. Первичные данные находятся
+в корневом `Reports/StructTrain/TimeLearner/s08-threshold-contract-normal-a2`.
+ASan и полная повторная матрица остаются отдельными проверками. Проверка отдельной
+LT-зоны не является проверкой структурного обучения всей IaF/Cable модели.
+
+## Native чтение сохранённых наблюдений
 
 `DecodeNativeRecognitionObservation(object, expected)` и
 `ParseNativeRecognitionObservation(text, expected, maximumBytes)` восстанавливают
