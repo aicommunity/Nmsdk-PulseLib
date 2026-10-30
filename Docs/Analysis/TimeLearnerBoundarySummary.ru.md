@@ -24,3 +24,23 @@ warm restart выполняется новая попытка на сохран�
 Реальные адресные baseline/fixed проверки и ограничения:
 [RepeatBoundaryState](../../../../Docs/StructTrain/TimeLearner/RepeatBoundaryState.ru.md).
 До их завершения develop merge и полная матрица не объявляются.
+
+Адресная runtime проверка исправления Core
+`7b5939c5744877ba1a762393d78f7183853fd5c0` завершена: baseline дал ровно
+двадцать ожидаемых assertion failures на каждом worker, fixed A3 прошёл
+51/51 native tests на Elder и M40 ASan. Независимый corrected readback прошёл
+77/77, затем объединённый Python контур — 92/92 на каждом worker, без skips/
+errors. M40 producer 8d73c0f и reader 02cf154 различались только анализом;
+эквивалентность C++/gitlinks проверена отдельно, native job не перезапускался.
+
+Все новые 338 probes / 507 trial–soma pairs каждого producer имеют полные
+native graphics в M40 cache. По выбранной пользователем компактной политике
+полные первичные данные, модели и runtime/source provenance опубликованы
+lossless archive с шестью source-bound контрольными PNG. Pack/verify/extract
+прошли 10/10 checks и 5/5 real boundary evidence checks после распаковки на
+каждом worker. Raw bytes и исходная CapturedPerInput цель сохраняются.
+
+Это приёмка компонентного исправления сводки и адресного native transfer,
+а не полных этапов export/import, PostTune/calibration или всей mode/physics
+матрицы. Новая full-cache regeneration и согласованный root merge описываются
+в корневом отчёте отдельно; здесь не заявляется общий scientific PASS.
