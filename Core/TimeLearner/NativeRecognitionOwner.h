@@ -17,6 +17,7 @@ struct NativeRecognitionHold {
     std::string revision,configurationText;
     int controllerVersion=1,calculateMode=0,structureBuildMode=1;
     double threshold=0.;
+    bool calibrationConfirmed=false;
     NativeRecognitionTrialExecutor trials;
     std::shared_ptr<NmsdkTools::ModelRevisionObserver> observer=std::make_shared<NmsdkTools::ModelRevisionObserver>();
 };
@@ -29,8 +30,9 @@ template<class Owner,class Visitor> void VisitNativeRecognitionControls(Owner& o
     visit(owner.SyncCapacitanceTrim,0);visit(owner.EnablePostTrainTuning,false);
     visit(owner.AutoCalibrateFixedLTZThreshold,false);visit(owner.UseFixedLTZThreshold,true);
     visit(owner.LTZThreshold,h.threshold);visit(owner.FixedLTZThreshold,h.threshold);
-    // Inherited fixed threshold is not the result of calibration on Test.
-    visit(owner.CalibratedFixedLTZThreshold,0.);
+    // Explicit status lives in the validated package/hold, not this legacy
+    // numeric mirror (zero itself is an admissible calibrated threshold).
+    visit(owner.CalibratedFixedLTZThreshold,h.calibrationConfirmed?h.threshold:0.);
 }
 
 template<class Owner> void CheckNativeRecognitionHold(Owner& owner,NativeRecognitionHold& h,bool full=false)
@@ -74,6 +76,7 @@ template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner
         next->stimulus=prepared->configuration.stimulusProfile;next->revision=prepared->modelRevision;
         next->configurationText=prepared->configurationText;next->controllerVersion=prepared->controllerVersion;
         next->calculateMode=prepared->calculateMode;next->structureBuildMode=prepared->structureBuildMode;
+        next->calibrationConfirmed=prepared->calibrationConfirmed;
         const auto threshold=package["neuron"].toObject()["metadata"].toObject()["calibration"].toObject()["threshold"];
         if(!threshold.isDouble() || !std::isfinite(threshold.toDouble()))throw std::invalid_argument("invalid_recognition_threshold");
         next->threshold=threshold.toDouble();
