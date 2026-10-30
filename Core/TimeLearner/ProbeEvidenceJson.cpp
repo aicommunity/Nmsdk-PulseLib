@@ -158,6 +158,10 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         {"actual_model_revision",Text(actualModelRevision)},{"model_epoch",Count(service.ModelEpoch())},
         {"actual_parameters",parameters(actualParameters)},{"tolerances",tolerances},
         {"reference_probes",Count(service.IssuedReferenceProbes())},{"contains_evaluation_verdict",false}};
+    // A model boundary retains physical parameters and final proof, not the
+    // search object. Make that distinction explicit instead of inventing an
+    // accepted candidate or leaving a repeated-summary array undefined.
+    result["search_history_retained"]=bool(service.Search());
     QJsonArray bounds;
     for(const auto& b:cfg.bounds)bounds.append(QJsonObject{{"minimum_length",b.minimumLength},{"maximum_length",b.maximumLength},
         {"minimum_synapses",b.minimumSynapses},{"maximum_synapses",b.maximumSynapses},
@@ -173,6 +177,7 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         result["schema_version"]=2;
         auto configuration=result["configuration"].toObject();
         configuration["n0_candidate_repeats"]=Count(cfg.n0CandidateRepeats);result["configuration"]=configuration;
+        result["candidate_repeat_groups"]=QJsonArray{};
     }
     QJsonArray references;
     if(service.References())
