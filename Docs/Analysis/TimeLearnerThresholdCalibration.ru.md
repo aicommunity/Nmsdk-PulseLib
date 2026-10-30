@@ -103,3 +103,39 @@ API не вызывает Calculate/Build/Reset, не меняет модель 
 calibrated=true. Это необходимый путь повторной проверки сохранённых первичных
 данных для будущего calibrated model import, а не готовый calibrated export.
 Серверная проверка этой добавки ещё требуется отдельно от предшествующих gates.
+
+## Калиброванное recognition state: реализация, ожидающая проверки
+
+`CreateNativeCalibratedState` принимает immutable threshold candidate, объявленный
+протокол/partition/attempt/clock, criterion и две полные матрицы — search выбранного
+кандидата и свежее confirmation. Обе матрицы должны пройти общий native assessment
+на одной физической revision/frequency, с одинаковыми sample/pattern/reset/duration
+и в одинаковом порядке. Run IDs различаются; confirmation начинается строго после
+всей search matrix. Невалидная, молчащая target или повторно использованная матрица
+отклоняется. Поддержаны historical_same_matrix и frozen_independent_calibration;
+само название второго протокола не доказывает статистическую независимость.
+
+Пакет `timelearner_calibrated_recognition_state`, schema 1, хранит source candidate,
+полные requests/raw observations обеих матриц и пересчитанные assessments.
+Изменяется calibration metadata, но не физическая model revision, storage images,
+Rs/C, топология или solo certificate. Recognition verification остаётся unverified,
+recognition certificate — null. `grid_selection_verified`, `execution_attested`
+и `statistical_independence_verified` явно false: это подтверждение выбранного
+кандидата, а не скрытая проверка всей сетки, native execution attestation или Test.
+
+`PrepareNativeRecognitionState` диспетчеризует новый формат. Import повторно читает
+raw observations по сохранённым requests, пересчитывает обе оценки и весь expected
+package; подписанный заново, но изменённый claim не принимается. Только после
+этого штатный native archive import строит модель. Внутренний calibrationConfirmed
+отделён от значения порога: нулевой порог не означает отсутствие калибровки.
+Legacy numeric mirror CalibratedFixedLTZThreshold отражает подтверждённый порог;
+статус следует читать из проверенного пакета, а не сравнивать mirror с нулём.
+
+Proof format ограничен 10000 requests на матрицу, 10000 ISI на паттерн и 10000000
+maximum_samples на request; превышение не округляется и не обрезается.
+Сохранение не является mid-trial checkpoint. Владелец устанавливает пакет только
+на idle boundary через существующий transactional native child import.
+Добавлены Classic/Branch 2000-Гц controls import/export, Reset/Build, frozen probes,
+отказа повторных/плохих проб и rollback при повреждённом claim. Серверная проверка
+ещё не завершена; CLI/scorer нового формата, полный grid/controller transaction,
+PostTune и independent Test остаются открытыми.
