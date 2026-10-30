@@ -23,7 +23,7 @@ NativeThresholdProposal ProposeNativeThreshold(const std::vector<NativeRecogniti
     const CalibrationResponseWindow& window,double minimumThreshold,double maximumThreshold)
 {
     ValidateCalibrationResponseWindow(window);
-    Require(Detail::Finite(minimumThreshold) && Detail::Finite(maximumThreshold) && minimumThreshold>0. &&
+    Require(Detail::Finite(minimumThreshold) && Detail::Finite(maximumThreshold) &&
         minimumThreshold<=maximumThreshold,"invalid_calibration_threshold_bounds");
     Require(!trainingPatternHash.empty() && expected.size()>=2 && observations.size()==expected.size(),"incomplete_calibration_characterization");
     using Key=std::pair<std::string,std::string>;
@@ -113,7 +113,7 @@ NativeThresholdProposal ProposeNativeThreshold(const std::vector<NativeRecogniti
     if(result.threshold)status="proposed";
     QJsonArray orderedRecords;for(const auto& [key,record]:records)orderedRecords.append(record);
     result.evidence={{"kind","timelearner_threshold_proposal"},{"schema_version",1},
-        {"algorithm","nonspiking-native-ltz-bracket-v1"},{"model_revision",Text(revision)},
+        {"algorithm","nonspiking-native-ltz-bracket-v2"},{"model_revision",Text(revision)},
         {"training_pattern_hash",Text(trainingPatternHash)},{"threshold_potential_path",Text(path)},
         {"threshold_potential_class",Text(zoneClass)},{"minimum_threshold",minimumThreshold},{"maximum_threshold",maximumThreshold},
         {"anchor",window.anchor==CalibrationAnchor::Onset?"onset":"last_stimulus"},{"begin_offset",window.beginOffset},

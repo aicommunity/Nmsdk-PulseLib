@@ -3,7 +3,7 @@
 `Core/TimeLearner/NativeThresholdCandidate.h` создаёт immutable candidate из
 полного `timelearner_recognition_state`. Единственное разрешённое физическое
 изменение — реальный `LTZone.Threshold`. Образы storage, topology, bindings и
-solo proof сохраняются. Вложенные candidates, nonfinite/неположительный порог
+solo proof сохраняются. Вложенные candidates, nonfinite порог
 и подменённые records отклоняются. Import заново выводит ожидаемую модель
 через native archive path; дополнительный Calculate не вызывается.
 
@@ -53,4 +53,28 @@ stream до начала окна не становятся событиями �
 Silent target даёт FN, а не успешное распознавание. Schema-1 и schema-2 данные
 проверяются одним validator. Измеренная готовность не означает calibrated commit
 или training certificate. Независимый Python scorer должен подтвердить native
-assessment перед приёмкой нового контура. API ещё не собран на servers.
+assessment перед приёмкой нового контура. Первый scoped 2000-Гц gate пройден;
+полный gate и independent readback ещё не приняты.
+
+## Контракт знака и фактическая реализация LT-зоны
+
+Первоначальный `explicit-native-threshold-v1` разрешал только положительные
+пороги. Это ограничение не следует из NLTZone и противоречит штатным storage
+образам `NPulseLTZoneIaF`/`NPulseLTZoneCable` с Threshold=-0.055, ThresholdOff=-0.07.
+Рабочий v2 допускает любой конечный порог, включая ноль и отрицательные значения;
+v1 packages по-прежнему читаются с исходным positive-only контрактом. Bounds
+`nonspiking-native-ltz-bracket-v2` также могут быть отрицательными. Baseline
+experiments сохраняют явно объявленный диапазон 1e-6..1.
+
+Проверка scalar spike threshold использует фактический C++-тип. Storage image
+`NPulseLTZoneIzhikevich` в CreateClassSamples создан через `new NPulseLTZoneThreshold`,
+а не через одноимённый C++ класс. Bio/IaF/Cable images также являются образами
+Threshold с другими параметрами. Поддержаны stock Threshold и leaky NPulseLTZone;
+NPSimpleLTZone кодирует частоту, continuous LT-зоны не дают требуемого порогового
+spike-контракта. Для них новый candidate/probe выдаёт явную диагностику, а не
+трактует любое поле Potential как operand сравнения. Для иных C++ реализаций
+нужен проверенный адаптер. Ordinary schema-1 frozen observations и legacy v1
+package load этим не отключаются.
+
+Это исправление пока требует нового server gate. Проверка отдельной LT-зоны
+не является проверкой структурного обучения всей IaF/Cable модели.

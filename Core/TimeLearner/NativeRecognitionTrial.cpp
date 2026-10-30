@@ -1,4 +1,5 @@
 #include "NativeRecognitionTrial.h"
+#include "NativeThresholdSupport.h"
 #include "NativeModelBuilder.h"
 #include "NativeModelEditor.h"
 #include "NativeTrainingBindings.h"
@@ -148,6 +149,7 @@ void NativeRecognitionTrialExecutor::BeforeChildren(const NativeProbeBindings& b
         Require(source && zone,"unsupported_recognition_ltzone");
         if(current->request.recordThresholdPotential)
         {
+            RequireNativeScalarSpikeThreshold(*zone);
             Require(!zone->Potential.IsConnected() && !zone->Potential.UsesExternalDataSource(),
                 "recognition_threshold_potential_source_is_external");
             current->thresholdPotentialPath="$."+zone->GetLongName(b.neuron.Get())+".Potential";

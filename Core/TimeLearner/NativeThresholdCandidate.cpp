@@ -1,4 +1,5 @@
 #include "NativeThresholdCandidate.h"
+#include "NativeThresholdSupport.h"
 #include "../NPulseLTZoneCommon.h"
 #include <QJsonArray>
 #include <cmath>
@@ -16,9 +17,9 @@ struct Candidate {
     QJsonObject metadata,identity,record;
 };
 Candidate Construct(const QJsonObject& source,double threshold,RDK::UEPtr<RDK::UStorage> storage,
-    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
+    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation,int algorithmVersion=2)
 {
-    Require(std::isfinite(threshold) && threshold>0.,"invalid_threshold_candidate_value");
+    Require(std::isfinite(threshold) && (algorithmVersion==2 || threshold>0.),"invalid_threshold_candidate_value");
     // Do not accept a candidate as its own source, or recursively rebuild an
     // arbitrary chain of speculative changes. Conversion is applied only once.
     Require(source["kind"]==QJsonValue("timelearner_recognition_state") && source["schema_version"]==QJsonValue(1),
@@ -32,6 +33,7 @@ Candidate Construct(const QJsonObject& source,double threshold,RDK::UEPtr<RDK::U
     // relative to the neuron. Keep the semantic path in the provenance.
     auto zone=c.model->neuron->GetComponentL<NPulseLTZoneCommon>(path.mid(2).toStdString(),true);
     Require(bool(zone),"threshold_candidate_missing_ltzone");
+    if(algorithmVersion==2)RequireNativeScalarSpikeThreshold(*zone);
     Require(!zone->Threshold.IsConnected() && !zone->Threshold.UsesExternalDataSource(),
         "threshold_candidate_connected_threshold");
     const double original=zone->Threshold.GetData();
@@ -41,7 +43,7 @@ Candidate Construct(const QJsonObject& source,double threshold,RDK::UEPtr<RDK::U
     Require(bool(generator),"threshold_candidate_missing_generator");
     c.identity=NmsdkTools::IdentifyModel(c.model->neuron,{{&generator->Output,"burst"}});
     Require(c.identity["valid"]==QJsonValue(true),"threshold_candidate_invalid_identity");
-    c.record={{"schema_version",1},{"algorithm","explicit-native-threshold-v1"},
+    c.record={{"schema_version",1},{"algorithm",algorithmVersion==2?"explicit-native-threshold-v2":"explicit-native-threshold-v1"},
         {"source_recognition_sha256",source["sha256"]},{"source_model_revision",source["model_revision"]},
         {"model_revision",c.identity["sha256"]},{"ltzone_path",path},
         {"original_threshold",original},{"threshold",threshold},{"calibrated",false}};
@@ -87,8 +89,12 @@ std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeThresholdCandidate(
     Require(!implementation.empty() && package["implementation_id"]==QJsonValue(Text(implementation)),
         "threshold_candidate_implementation_mismatch");
     Require(package["threshold"].isDouble(),"invalid_threshold_candidate_value");
+    const auto algorithm=Object(package["candidate_record"])["algorithm"];
+    Require(algorithm==QJsonValue("explicit-native-threshold-v1") || algorithm==QJsonValue("explicit-native-threshold-v2"),
+        "unknown_threshold_candidate_algorithm");
     const auto source=Object(package["source_recognition"]);
-    auto expected=Construct(source,package["threshold"].toDouble(),storage,environment,implementation);
+    auto expected=Construct(source,package["threshold"].toDouble(),storage,environment,implementation,
+        algorithm==QJsonValue("explicit-native-threshold-v2")?2:1);
     const auto archive=Object(package["neuron"]);
     Require(package["candidate_record"]==QJsonValue(expected.record) && package["model_revision"]==expected.identity["sha256"] &&
         package["dataset"]==source["dataset"] && archive["metadata"]==QJsonValue(expected.metadata) &&
