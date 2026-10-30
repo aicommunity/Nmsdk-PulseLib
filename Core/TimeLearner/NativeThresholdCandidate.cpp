@@ -27,8 +27,10 @@ Candidate Construct(const QJsonObject& source,double threshold,RDK::UEPtr<RDK::U
     const auto archive=Object(source["neuron"]);c.metadata=Object(archive["metadata"]);
     auto calibration=Object(c.metadata["calibration"]);
     const auto path=calibration["ltzone_path"].toString();
-    Require(!path.isEmpty(),"threshold_candidate_missing_ltzone_path");
-    auto zone=c.model->neuron->GetComponentL<NPulseLTZoneCommon>(path.toStdString(),true);
+    Require(path.startsWith("$."),"threshold_candidate_invalid_ltzone_path");
+    // Identity paths are rooted at '$'; native GetComponentL uses names
+    // relative to the neuron. Keep the semantic path in the provenance.
+    auto zone=c.model->neuron->GetComponentL<NPulseLTZoneCommon>(path.mid(2).toStdString(),true);
     Require(bool(zone),"threshold_candidate_missing_ltzone");
     Require(!zone->Threshold.IsConnected() && !zone->Threshold.UsesExternalDataSource(),
         "threshold_candidate_connected_threshold");
