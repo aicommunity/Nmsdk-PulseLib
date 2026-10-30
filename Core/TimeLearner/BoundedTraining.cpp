@@ -470,6 +470,7 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
             {Stop(TrainingStatus::InvalidModel);return;}
             group.trialIds.push_back(sample.trialId);group.anchorTrialIds.push_back(sample.anchorTrialId);
             const double potential=sample.measuredRawPotential;
+            group.rawPotentials.push_back(potential);
             group.minimumRawPotential=std::min(group.minimumRawPotential,potential);
             group.maximumRawPotential=std::max(group.maximumRawPotential,potential);
             group.withinTiming=group.withinTiming && sample.withinTiming;

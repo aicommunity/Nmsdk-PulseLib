@@ -49,6 +49,7 @@ struct CandidateRepeatEvidence {
     std::string modelRevision;
     std::vector<InputParameters> fullParameters;
     std::vector<std::string> trialIds,anchorTrialIds;
+    std::vector<double> rawPotentials;
     double minimumRawPotential=0.,maximumRawPotential=0.;
     bool withinTiming=false,withinAmplitude=false;
 };

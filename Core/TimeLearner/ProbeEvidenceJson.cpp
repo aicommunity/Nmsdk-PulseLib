@@ -203,14 +203,15 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
             QJsonArray groups;
             for(const auto& group:search->CandidateRepeats())
             {
-                QJsonArray trials,anchors;
+                QJsonArray trials,anchors,rawPotentials;
                 for(const auto& id:group.trialIds)trials.append(Text(id));
                 for(const auto& id:group.anchorTrialIds)anchors.append(Text(id));
+                for(const auto value:group.rawPotentials)rawPotentials.append(Number(value));
                 groups.append(QJsonObject{{"input_index",Count(group.inputIndex)},{"model_epoch",Count(group.modelEpoch)},
                     {"model_revision",Text(group.modelRevision)},{"full_parameters",parameters(group.fullParameters)},
                     {"trial_ids",trials},{"anchor_trial_ids",anchors},{"minimum_raw_potential",Number(group.minimumRawPotential)},
                     {"maximum_raw_potential",Number(group.maximumRawPotential)},{"within_timing",group.withinTiming},
-                    {"within_amplitude",group.withinAmplitude},{"complete",true}});
+                    {"within_amplitude",group.withinAmplitude},{"raw_potentials",rawPotentials},{"valid",true},{"complete",true}});
             }
             result["candidate_repeat_groups"]=groups;
         }
