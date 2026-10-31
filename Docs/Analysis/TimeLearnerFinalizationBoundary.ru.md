@@ -1,10 +1,23 @@
-# Неизменяемая граница Train → finalization: runtime-приёмка ожидается
+# Неизменяемая граница Train → finalization: адресные проверки
 
 NativeFinalizationBoundary хранит значения, а не ссылки на owner/storage или
 checkpoint динамики. CaptureNativeFinalizationBoundary читает настоящий экспорт
 Solo, исходные phase parameters и фактические связи параметров (путь provider,
 имя свойства, порядок sources, connected/external kind). Getter не пишет во
-внешний источник и не вызывает Build/Init/Reset/Calculate.
+внешний источник и не вызывает Build/Init/Reset/Calculate исходного owner.
+Экспорт штатно создаёт и инициализирует отдельные rehearsal/image instances;
+это не прозрачный checkpoint динамики и не отсутствие любых storage-операций.
+
+31.10.2026: root a282fe9a56cd49c09bc81da128b2f1e4c8283417,
+PulseLib f8929f906d24f8824450b9542445bcb9016f9337: normal 24/24 (20.492 s),
+ASan 24/24 (128.163 s), без skips; leak checking выключен. Сравнение сохраняет
+native XML целиком и допускает только наблюдавшийся переход InputFeedbackSignal
+NPMembraneBio с пустой матрицы в нулевую 1×1. Причина этого перехода в native
+allocation/reuse пока не доказана. Независимый reader проверяет capture/replay и
+отклоняет 16 corrupt controls на каждом worker. Это не training evidence audit,
+не scientific verdict и не завершение configured phase dispatcher.
+Подробности и первичные доказательства — в корневом
+[NativeFinalizationBoundary](../../../../Docs/StructTrain/TimeLearner/NativeFinalizationBoundary.ru.md).
 
 Допустима только ready/initialized Solo-модель с Finished training service и
 полностью освобождённой границей probe: ни queued/running, ни непотреблённого
