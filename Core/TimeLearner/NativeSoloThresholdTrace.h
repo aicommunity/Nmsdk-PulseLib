@@ -45,6 +45,7 @@ public:
             !frames.empty() && Equal(frames[0].toObject()["time"].toDouble(),spec.begin);
         const bool valid=complete && result.status==NativeProbeStatus::Completed && result.prepared &&
             result.observation->valid && !result.requiresFreshVerification && result.reasons.empty() &&
+            result.requestedSpecification && EncodeNativeProbeSpecification(*result.requestedSpecification,true)==requested &&
             result.observation->specification.runId==spec.runId && result.observation->specification.trialId==spec.trialId &&
             result.observation->specification.modelRevision==spec.modelRevision &&
             EncodeNativeProbeSpecification(result.observation->specification)==EncodeNativeProbeSpecification(spec) &&
@@ -111,6 +112,7 @@ private:
     void Observe(RDK::UEPtr<NPulseLTZoneCommon> zone,const NativeProbeSample& frame)
     {
         Require(armed && !closed && zone.Get()==sourcePointer && sourceLife.IsCurrent(),"solo_threshold_source_lifecycle_changed");
+        Require(!zone->Potential.IsConnected() && !zone->Potential.UsesExternalDataSource(),"solo_threshold_potential_source_is_external");
         Require(frame.effectiveModelRevision==prepared.effectiveModelRevision && zone->Threshold.GetData()==threshold,
             "solo_threshold_model_changed");
         Require(std::size_t(frames.size())<spec.maximumSamples,"solo_threshold_recording_budget_exhausted");
