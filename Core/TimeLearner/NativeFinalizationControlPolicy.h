@@ -6,7 +6,7 @@ namespace NMSDK::TimeLearner {
 // Only the measurement/final threshold mirrors may change during finalization.
 // All other public controls and their declared sources remain owned by the
 // original request. This policy never writes into an external provider.
-template<class Owner> void CheckNativeFinalizationControls(const Owner& owner,const QJsonObject& boundary)
+template<class Owner> void CheckNativeFinalizationControls(const Owner& owner,const QJsonObject& boundary,bool closed=false)
 {
     if(boundary.isEmpty())return;
     auto expected=boundary["controls"].toObject();auto current=ReadNativeFinalizationControls(owner);
@@ -14,10 +14,11 @@ template<class Owner> void CheckNativeFinalizationControls(const Owner& owner,co
         throw std::logic_error("native_finalization_c_trim_not_yet_supported");
     if(!expected["parameters"].toObject()["IsNeedToTrain"].toBool())
         throw std::logic_error("native_finalization_requires_active_request");
-    if(!owner.IsNeedToTrain.GetData())throw std::logic_error("native_finalization_external_stop");
+    if(!closed && !owner.IsNeedToTrain.GetData())throw std::logic_error("native_finalization_external_stop");
     auto parameters=expected["parameters"].toObject(),actual=current["parameters"].toObject();
     for(const auto* name:{"UseFixedLTZThreshold","FixedLTZThreshold","LTZThreshold"})
     {parameters.remove(name);actual.remove(name);}
+    if(closed){parameters.remove("IsNeedToTrain");actual.remove("IsNeedToTrain");}
     if(actual!=parameters || current["bindings"]!=expected["bindings"])
         throw std::logic_error("native_finalization_controls_changed");
 }

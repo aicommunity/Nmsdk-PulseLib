@@ -20,6 +20,7 @@ struct NativeRecognitionHold {
     double threshold=0.;
     bool calibrationConfirmed=false;
     QJsonObject finalizationBoundary; // Empty for ordinary frozen evaluation.
+    bool finalizationClosed=false; // Administrative lease, never a calibration claim.
     // Ephemeral instance identity: not a physical parameter or checkpoint.
     // A new import gets a new control block even for byte-identical packages.
     std::shared_ptr<const void> contextLifetime=std::make_shared<const unsigned char>(0);
@@ -36,7 +37,7 @@ template<class Owner,class Visitor> void VisitNativeRecognitionControls(Owner& o
     visit(owner.StructureBuildMode,managed?controls["StructureBuildMode"].toInt():h.structureBuildMode);
     visit(owner.ConfiguredModelInitialized,true);
     visit(owner.ControllerConfiguration,managed?controls["ControllerConfiguration"].toString().toStdString():h.configurationText);
-    visit(owner.IsNeedToTrain,managed);
+    if(!managed || !h.finalizationClosed)visit(owner.IsNeedToTrain,managed);
     visit(owner.SyncCapacitanceTrim,0);
     visit(owner.EnablePostTrainTuning,managed && controls["EnablePostTrainTuning"].toBool());
     visit(owner.AutoCalibrateFixedLTZThreshold,managed && controls["AutoCalibrateFixedLTZThreshold"].toBool());
@@ -49,7 +50,7 @@ template<class Owner,class Visitor> void VisitNativeRecognitionControls(Owner& o
 
 template<class Owner> void CheckNativeRecognitionHold(Owner& owner,NativeRecognitionHold& h,bool full=false)
 {
-    CheckNativeFinalizationControls(owner,h.finalizationBoundary);
+    CheckNativeFinalizationControls(owner,h.finalizationBoundary,h.finalizationClosed);
     CheckNativeOwnerOverrides(owner);
     const auto same=[](const auto& p,const auto& value) {
         if(!NativeOwnerValueEqual(p.GetData(),value))

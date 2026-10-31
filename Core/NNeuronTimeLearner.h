@@ -35,7 +35,7 @@ See file license.txt for more information
 #include <cstring>
 
 namespace NMSDK {
-namespace TimeLearner { class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; }
+namespace TimeLearner { class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; }
 
 using namespace RDK;
 
@@ -807,6 +807,13 @@ public: // Methods
      const TimeLearner::NativeFinalizationBoundary& boundary);
  TimeLearner::NativeModelBuildResult ReplaceNativeRecognitionState(const QJsonObject& package,const std::string& implementationId);
  QJsonObject NativeFinalizationIntent() const;
+ /// Explicit phase on an installed recognition model; native ticks own Advance.
+ void BeginNativePostTunePhase(const TimeLearner::NativePostTuneTransactionSpec& specification,const std::string& implementationId);
+ bool NativePostTunePhaseDone() const;
+ QJsonObject NativePostTunePhaseReport() const;
+ QJsonObject NativePostTunePhaseExecution() const;
+ void CancelNativePostTunePhase(const std::string& reason);
+
  
  // --------------------------
  // Parameter setters
@@ -963,6 +970,11 @@ protected:
  void ValidateNativeModelDeclaration();
  bool NativeTrainingOwned=false;
  std::unique_ptr<TimeLearner::NativeRecognitionHold> NativeRecognition;
+ std::shared_ptr<TimeLearner::NativeOwnedPostTunePhase> NativePostTunePhase;
+ unsigned NativePostTunePhaseDepth=0;
+ void InterruptNativePostTunePhase(const std::string& reason);
+ void FinishNativePostTunePhase();
+
  unsigned NativeTrainingEditDepth=0;
  std::string NativeEditFailure;
  unsigned NativeLifecycleDepth=0;
