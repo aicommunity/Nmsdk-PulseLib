@@ -166,5 +166,10 @@ Report сохраняет final_model_matrix, recorded_final_samples и
 final_threshold_responses_observed. Неполная матрица остаётся active_matrix,
 а final responses не отмечаются проверенными. Старые codecs controls v1/v2
 отвергают новое поле при сериализации, чтобы оно не терялось молча.
-Production job schema, evidence reader и configured public-property dispatch
-пока не поддерживают этот новый вариант; runtime-проверки ещё не завершены.
+Typed API проверен на source PulseLib 09f72c78295b1244303658c6b58f60f741796c52:
+normal 20/20 native cases (126.287 s), ASan 20/20 (834.511 s), без skips.
+Codecs schema 3 добавлены в 56707d7e9d93d01f91c0e14bd6bcf5d788744b28;
+Console/worker и reader поддерживают явную schema 3 (null либо finite threshold).
+На обоих workers прошли 5 codec и 10 reader checks. Production jobs и
+визуальные отчёты ещё проходят приёмку. Configured public-property dispatch
+остаётся неподключённым; это не поддержка всех optional learner controls.
