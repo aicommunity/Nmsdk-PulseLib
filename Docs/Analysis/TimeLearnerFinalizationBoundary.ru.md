@@ -19,6 +19,14 @@ allocation/reuse пока не доказана. Независимый reader �
 Подробности и первичные доказательства — в корневом
 [NativeFinalizationBoundary](../../../../Docs/StructTrain/TimeLearner/NativeFinalizationBoundary.ru.md).
 
+Для этих replay опубликованы четыре temporal reports, 12 complete trial-soma pairs,
+все target/foil и soma channels, с реальными входными импульсами. PNG 1920×960,
+detail ≥8 pixels/native tick; 3/3 server report checks, без skips. Полный cache
+на M40 Data; в Git компактные metadata и четыре выбранных PNG. Выбранные
+Classic/Branch target/first-soma overview/detail просмотрены; это не visual
+acceptance всех foil/других somas/connected figures или всего cache. Научного
+PASS и реализации configured dispatcher этим не заявляется.
+
 Допустима только ready/initialized Solo-модель с Finished training service и
 полностью освобождённой границей probe: ни queued/running, ни непотреблённого
 результата/физического routing state. NativeProbeOwnsControl сам по себе этого
