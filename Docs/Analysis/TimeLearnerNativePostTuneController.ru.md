@@ -52,6 +52,16 @@ members / 335060 bytes и 12 selected PNG; полные отчёты остаю�
 Выбранные PNG просмотрены в 1920×960, полная visual acceptance/PDF/SVG не приняты.
 Нет независимого Test, доказательства вклада структурного обучения или 8/8.
 
+Общий путь controls: `NativePostTuneConfiguration` выделяет строгий codec
+девяти controls из Console в PulseLib. Root d48837f1 / PulseLib 30f737c8:
+3/3 native cases без skips, все 18 опубликованных job declarations, direct
+numeric bindings и отрицательные проверки. Два owned Console A/B (Classic Auto,
+Branch SearchSynthetic) сохранили побайтно transaction и конечную модель
+исходного bundle 3c1751f9; portable audits прошли. Новый proof bb80e56c:
+103 members / 630420 bytes. Алгоритм и физика не менялись. Это prerequisite
+configured phase plan, не работающий dispatch: оба optional guards остаются;
+PostTune без auto calibration и phase continuation требуют отдельной реализации.
+
 Полная постановка, budgets, режимы и
 остальные обязательства: `Docs/StructTrain/TimeLearner/NativePostTuneController.ru.md`
 корня. Public learner property dispatch, continuation и полная mode/profile/frequency
