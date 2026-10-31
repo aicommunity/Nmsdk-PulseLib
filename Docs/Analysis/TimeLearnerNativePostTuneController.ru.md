@@ -101,3 +101,17 @@ Public learner properties к fixed API не подключены;
 Согласованные root primary bundles: s08-native-posttune-fixed-normal-a2
 (134 members, исправление пропущенных input/source в старой упаковке) и
 s08-native-posttune-fixed-asan-a1 (117 members). Все bytes/hashes перепроверены.
+
+## Прерывание перед lifecycle teardown: непроверенный подэтап
+
+NativePostTuneTransaction и NativeThresholdCalibrationTransaction получают
+InterruptOwnerLifecycle(reason): только terminal RecoveryRequired и диагностика,
+без доступа к owner, отмены физической пробы, import, Build/Init/Reset или rollback.
+PostTune рекурсивно прерывает принадлежащую ему calibration transaction.
+Завершённая транзакция остаётся неизменной. Native lifecycle выполняет физическую
+очистку; source_restored не устанавливается. Обычный Cancel сохраняет прежний
+legal-boundary rollback. Эта операция нужна будущим configured phase hooks;
+сами hooks и phase dispatch пока не подключены.
+
+Подготовлены 16 real-component cases Classic/Branch для Reset, Default,
+уничтожения scope и вложенной calibration; server acceptance ещё ожидается.

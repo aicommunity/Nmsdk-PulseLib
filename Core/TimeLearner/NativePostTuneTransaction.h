@@ -97,6 +97,21 @@ public:
         }
         catch(const std::exception& error){Fail(error.what());}
     }
+    // Lifecycle hooks must not run a model import/rollback while the owner is
+    // resetting, defaulting or being returned to storage. Detach the controller
+    // without reading or writing its owner; the native lifecycle owns cleanup.
+    // Partial observations remain diagnostic, never evidence of restoration.
+    void InterruptOwnerLifecycle(const std::string& why)
+    {
+        if(Done())return;
+        if(calibration)
+        {
+            calibration->InterruptOwnerLifecycle(why);
+            calibrationReport=calibration->Report();
+        }
+        status=NativePostTuneTransactionStatus::RecoveryRequired;
+        reason=why.empty()?"owner_lifecycle_interrupted":why;
+    }
     void Cancel(const std::string& why)
     {
         if(Done())return;

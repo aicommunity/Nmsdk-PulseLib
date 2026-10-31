@@ -108,6 +108,14 @@ public:
         }
         catch(const std::exception& error){Fail(error.what());}
     }
+    // Non-mutating detach for Reset/Default/teardown hooks. Ordinary Cancel
+    // still performs guarded rollback at an idle outer boundary.
+    void InterruptOwnerLifecycle(const std::string& why)
+    {
+        if(Done())return;
+        status=NativeCalibrationTransactionStatus::RecoveryRequired;
+        reason=why.empty()?"owner_lifecycle_interrupted":why;
+    }
     void Cancel(const std::string& why)
     {
         if(Done())return;
