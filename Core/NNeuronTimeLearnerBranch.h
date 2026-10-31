@@ -794,6 +794,9 @@ public: // Methods
   NativeProbeControl.Queue(std::move(request));
  }
  bool NativeProbeOwnsControl() const { return NativeProbeControl.OwnsControl(); }
+ bool IsNativeProbeAtEditBoundary() const {
+  return NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Idle || NativeProbeControl.AtEditBoundary();
+ }
  TimeLearner::NativeProbeStatus NativeProbeState() const { return NativeProbeControl.Status(); }
  std::optional<TimeLearner::NativeProbeResult> TakeNativeProbeResult() {
   if(NativeTrainingOwned && (NativeTrainingControl.State()==TimeLearner::NativeTrainingState::CapturingReferences ||
