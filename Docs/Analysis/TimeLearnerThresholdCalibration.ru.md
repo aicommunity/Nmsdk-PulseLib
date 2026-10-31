@@ -1,7 +1,8 @@
 # Native threshold candidates и измеренное предложение порога
 
 Текущий проверенный подэтап 31.10: общий native grid transaction driver
-Classic/Branch N1/2000 Hz прошёл 2/2 normal cases и 17/17 независимых checks.
+Classic/Branch N1/2000 Hz прошёл 2/2 normal и 2/2 ASan cases,
+а также 17/17 независимых checks на каждом снимке.
 Он исполняет полный разрешённый prefix порогов, независимо перестраивает
 выбранный candidate, подтверждает его и выполняет commit либо source rollback.
 Clock/frequency/owner mutation controls не разрешают чужой rollback. Raw grid
@@ -12,8 +13,9 @@ Clock/frequency/owner mutation controls не разрешают чужой rollb
 Soma/input PNG/SVG/PDF; renderer 4b714c757 прошёл 27/27 checks на M40.
 Дальнейшее уточнение легенд actual LT spike и выбранных full-response/peak
 панелей проходит отдельную visual проверку; весь cache не загружается в Git.
-Исходное обучение остаётся search_unresolved. ASan нового driver, production
-CLI/worker, весь PostTune, независимый Test и полная матрица остаются открытыми.
+Исходное обучение остаётся search_unresolved. Scoped ASan driver и
+ASan reports (27/27 checks) приняты; production CLI/worker, весь PostTune,
+независимый Test и полная mode/profile/frequency matrix остаются открытыми.
 Нижние записи сохраняют chronology своих snapshots; оперативная сводка —
 корневой Docs/StructTrain/TimeLearner/CurrentStatus-2026-10-31.ru.md.
 
@@ -237,3 +239,10 @@ Driver дополнительно фиксирует owner storage/environment/f
 не записывая старую модель поверх изменённого контекста. Добавлены реальные
 clock/frequency mutation controls; их приёмка относится к следующему снимку,
 а не к ещё выполняющемуся baseline gate.
+
+Уточнение приёмки: normal 2/2 + 17/17 опубликованы в 2dc5825f; ASan
+2/2 + 17/17 — в 350520ae. All-pattern visual metadata для ASan опубликованы
+в 838c1963: 16 reports, 10 complete matrices, 30 trial/soma pairs, 27/27
+checks. Обе модели, пороги и raw fresh-confirmation observations совпали
+с normal контролем. Это повторяемость deterministic fixtures, а не
+независимые научные обучения. Полный визуальный просмотр cache не заявлен.
