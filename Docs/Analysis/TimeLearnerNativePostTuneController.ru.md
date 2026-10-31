@@ -177,3 +177,36 @@ Reports/StructTrain/TimeLearner/s08-native-posttune-probe-{normal,asan}-a1.
 Visual cache содержит все 30 complete trial-soma responses; 8 selected PNG
 просмотрены, полный cache/PDF/SVG не принят вручную. Configured public-property dispatch
 остаётся неподключённым; это не поддержка всех optional learner controls.
+
+
+## Фаза, принадлежащая learner (31.10, приёмка продолжается)
+
+Оба TimeLearner имеют BeginNativePostTunePhase / NativePostTunePhaseDone /
+NativePostTunePhaseReport / NativePostTunePhaseExecution / CancelNativePostTunePhase.
+На уже установленной Recognition-модели фаза продвигает общую транзакцию в
+ABeforeCalculate, затем штатный scheduler рассчитывает детей. Вложенного
+Calculate нет. Внутренние import/Build/Init/Reset защищены собственным depth scope;
+внешний Reset/UnInit прерывает без обещания rollback (RecoveryRequired).
+Конкурирующие model import и trial queue/take/cancel блокируются.
+
+Требуется единая ненулевая частота поддерева. По завершении снимается только
+локальный запрос при CalculateMode=0; подключённый источник не изменяется.
+Административное закрытие не означает Calibrated или Exact. Исходный boundary
+сохраняется, а последующее снятие Need не меняет выбранную физическую модель.
+Default удаляет фазу, Reset сохраняет диагностический report. Checkpoint посреди
+пробы и автоматический dispatcher из живого Train пока не реализованы.
+
+Код ecdbd9944f46a45efafba7d1547b2fbd3e75d084; root fixtures
+4820405e5a6cba98007b0e6816f5a243d307e05a. Normal/a4: 75/75 native checks,
+213.461 s, no skips; independent reader и ASan пока не приняты. Новый набор
+содержит восемь completed topology/mode/local/connected cases и два Reset.
+Replay fixture восстанавливает локальный административный запрос однократно,
+не вызывая публичный setter нового обучения; ordinary frozen import может
+заменять локальные mirrors, но не внешний provider. Эти tests не доказывают
+переход живого Train в PostTune. Полный этап 8 остаётся открытым.
+
+Полная maintained спецификация: корневой
+Docs/StructTrain/TimeLearner/NativeOwnedPostTunePhase.ru.md. Временные отчёты
+строятся общим renderer по полным фактическим матрицам: все каналы сомы,
+реальные входы, overview и увеличения без прореживания. Полные рисунки — кэш
+M40, primary и выбранные иллюстрации — компактные Git artifacts.
