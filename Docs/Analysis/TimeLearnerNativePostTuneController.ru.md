@@ -23,7 +23,21 @@ checks без skips; это N1/2000 Гц/два входа, не полная п
 Все 24 parent reports/raw matrices и модели сохраняются; положительные пары,
 search_unresolved и ошибки/отмены различаются. Source Train не становится Exact.
 
+ASan того же native-контроллера завершён: 10/10 native (3733.602 s), 19/19
+original reader (158.845 s), затем 20/20 strict-container reader на тех же данных
+(159.205 s), без native rerun. Leak detection выключен; весь профильный matrix
+этим не закрыт. Normal production Console root ffd5b15a2 / Python 74f49a5f0
+выполнил 18 PostTune jobs, прежние calibration regressions и адресные portable
+проверки. Связанные первичные данные: root bundle 3c1751f9. Отдельный ASan Console
+ещё выполняется. Калибровка двух паттернов не является восьмипаттерновой серией.
+
+Native visual bundle d94309d8 покрывает 24 parent reports, 61 completed matrices,
+184 trial-soma pairs и 8668 cache files на Data M40. 20 evidence и 9 report/plot
+checks прошли; 16 selected PNG просмотрены в исходном размере. Конечное окно
+не доказывает settling/отсутствие более поздних событий. Полная visual acceptance
+и новые production Console waveforms остаются открытыми.
+
 Полная постановка, budgets, режимы и
 остальные обязательства: `Docs/StructTrain/TimeLearner/NativePostTuneController.ru.md`
-корня. Public learner/Console dispatch, continuation и полная mode/profile/frequency
+корня. Public learner property dispatch, continuation и полная mode/profile/frequency
 matrix остаются незавершёнными. Legacy ControllerVersion=1 не заменяется этим API.
