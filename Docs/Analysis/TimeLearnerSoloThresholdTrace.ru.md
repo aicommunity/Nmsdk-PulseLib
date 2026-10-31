@@ -50,6 +50,27 @@ validity, sample coverage и frequency. Valid записи дополнител�
 Компактные proofs опубликованы в корневом Reports/StructTrain/TimeLearner:
 s08-native-solo-threshold-trace-normal-a1 и s08-native-solo-threshold-trace-asan-a1.
 Каждый хранит 133 файла в сжатом архиве, в том числе два полных original portable
-Train runs / 84 artifacts. Новые временные графики ещё не подготовлены; этот
-подэтап не закрывает visual acceptance, configured dispatcher, калибровку или
-весь этап 8.
+Train runs / 84 artifacts. Временные графики подготовлены отдельно; этот подэтап не закрывает полную
+visual acceptance, configured dispatcher, калибровку или весь этап 8.
+
+## Временные отчёты
+
+Root 2ced776d00f8677cc61b595deedf4ceea09142a9: восемь отчётов, 12 soma и
+8 LTZone traces с настоящим общим входом. Overview и native-tick zooms без
+прореживания; actual spike events. Прерванные пробы показывают только записанный
+участок; foil-кривые не выдумываются. Это не all-pattern recognition.
+M40 report gate: 2/2, 19.414 s вместе с rendering, без skips. Восемь source JSON
+не изменились. Полный кэш: 284 файла / 15624091 bytes на M40 Data. Компактный
+корневой proof s08-native-solo-threshold-visual-asan-a1 хранит 44 metadata members /
+73124 bytes и 8 PNG. Все hashes и восемь source bindings проверены.
+Выбранные 1920×960 soma[0] nonspiking / LTZone spiking overview и первый zoom
+просмотрены для обеих топологий. Остальные виды имеют автоматическое покрытие.
+При threshold=0 фактический spike возникает в time zero, до первого stimulus;
+это положительный контроль регистратора, а не успешная классификация.
+
+При переносе target-reference формулы сохранить явный выбор samples: legacy
+UpdateIterLTZPotential учитывает только ltz>0, тогда как raw recorder сохраняет
+все конечные значения, включая нулевой baseline и отрицательный post-spike
+recovery. Подставлять raw minimum в legacy gap_fraction без отдельного решения
+нельзя. Свежие nonspiking extrema не подтверждают выбранный spiking threshold;
+нужен реальный confirmation-прогон. Сам расчёт и dispatcher остаются открыты.
