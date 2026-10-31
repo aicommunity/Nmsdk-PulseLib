@@ -1,4 +1,4 @@
-# Свежая LTZ-трасса штатной Solo-пробы: runtime-приёмка ожидается
+# Свежая LTZ-трасса штатной Solo-пробы: адресные runtime-проверки
 
 NativeSoloThresholdTrace дополняет NativeProbeRequest через штатные onPrepared /
 onSample callbacks. Native executor по-прежнему один владеет routing, физическим
@@ -33,5 +33,23 @@ clamps, реальная spiking confirmation и automatic dispatcher ещё н�
 Адресные интеграционные сценарии: Classic/Branch × обычный burst, реальный
 spiking threshold, Reset, изменение физического порога между native ticks.
 Используются настоящие storage/Environment и сохранённый Source Solo; это replay
-measurement, не новое независимое обучение. До завершения серверных проверок
-runtime-приёмка не заявляется. Source Train outcome не меняется.
+measurement, не новое независимое обучение. Source Train outcome не меняется.
+
+## Проверки 31.10.2026
+
+Native root a87bb8fc16d5ad0a48b5b337efb11c72c6d26724 / PulseLib
+cd3e7d0b6f5b68b18a4f61c3e87468eb9012b419: normal 33/33 (27.605 s),
+ASan 33/33 (161.506 s), без skips; ASan leak checking выключен.
+Включены восемь новых сценариев и 25 lifecycle/boundary/codec regressions.
+Независимый production reader root fe7adfd36dbb8f6826052186504fa5bd593e61e2:
+normal 2/2 (0.192 s), ASan 2/2 (0.156 s). На каждом worker проверены восемь
+реальных записей и десять повторно подписанных повреждений extrema, spikes,
+validity, sample coverage и frequency. Valid записи дополнительно сверяются
+с штатным peak audit по lossless CSV-проекции настоящих samples.
+
+Компактные proofs опубликованы в корневом Reports/StructTrain/TimeLearner:
+s08-native-solo-threshold-trace-normal-a1 и s08-native-solo-threshold-trace-asan-a1.
+Каждый хранит 133 файла в сжатом архиве, в том числе два полных original portable
+Train runs / 84 artifacts. Новые временные графики ещё не подготовлены; этот
+подэтап не закрывает visual acceptance, configured dispatcher, калибровку или
+весь этап 8.
