@@ -210,3 +210,29 @@ Docs/StructTrain/TimeLearner/NativeOwnedPostTunePhase.ru.md. Временные 
 строятся общим renderer по полным фактическим матрицам: все каналы сомы,
 реальные входы, overview и увеличения без прореживания. Полные рисунки — кэш
 M40, primary и выбранные иллюстрации — компактные Git artifacts.
+
+
+Обновление приёмки 01.11.2026: native owner phase прошла 75/75 normal
+(213.461 s) и 75/75 ASan (1445.556 s), no skips, ASan leak checking off.
+Независимые readers: 2/2 на worker, десять actual records и сто corrupt-receipt
+controls на каждом; полные source closure и archive hashes проверены.
+Normal proof root864e7f1dd142173e0181e478f1de4be3be5e09eb; ASan proof
+rooteca0b84e2ff025b1d65f0672ef1b214502e3c139. Native код: PulseLib ecdbd9944f46a45efafba7d1547b2fbd3e75d084,
+fixtures root4820405e5a6cba98007b0e6816f5a243d307e05a. Это адресная приёмка
+N1/2000Hz Classic/Branch × CalculateMode0/1 × local/connected + двух Reset,
+а не всех режимов TimeLearner.
+
+Графические отчёты: 2/2 автоматических checks, 48 полных trial-soma pairs,
+2324 cache files / 197348346 bytes на M40; Git metadata 111 members / 90036
+compressed bytes и восемь PNG / 1139977 bytes. Все источники связаны с ASan
+primary archive. Выбранные восемь PNG target/foil overview/first zoom первого
+канала сомы просмотрены в 1920×960: читаемые кривые/импульсы/подписи, без
+перекрытия легенд. Full-cache manual acceptance остаётся false; rest-state и
+поведение после окна этими рисунками не подтверждены. Приёмка выбранных
+изображений: root055aa7c10, SELECTED_VISUAL_REVIEW.json.
+
+Отдельный следующий подэтап root08ae95430 переводит production Console на
+встроенную фазу и execution schema2. Его 20 PostTune + 6 calibration controls
+проверяются отдельно; эти результаты нельзя выводить из адресного native gate.
+Live Train handoff, C-trim, UnInit/Cancel negative controls и полная матрица
+моделей/частот остаются открытыми. Полный этап 8 не завершён.
