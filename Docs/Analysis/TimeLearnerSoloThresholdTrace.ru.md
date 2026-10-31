@@ -134,3 +134,25 @@ s08-native-training-threshold-visual-asan-a1: 8 metadata members / 32452 bytes �
 Shared Y LTZone подавляет малое положительное отклонение отрицательным recovery;
 для визуального принятия crossing нужен отдельный positive-amplitude detail.
 Полная visual acceptance не заявляется.
+
+
+### Исправление amplitude-detail и legend layout
+
+Недостаток positive crossing view предыдущего proof/a1 исправлен в root
+164a8d5dcd575f32a5c99f22534307d0e80fbe75. При отрицательном recovery и настоящем
+положительном отклонении добавляются явно помеченные positive-threshold-detail
+views с линией фактического scalar threshold. Исходный full-recovery view,
+все soma/input samples и actual spike markers сохранены. Отдельный top margin
+для четырёх строк legend предотвращает перекрытие поля графика.
+
+Proof s08-native-training-threshold-visual-asan-a3: 2/2 real-data report tests,
+2 reports / 5 channel-trace pairs, 8 metadata members / 33844 bytes, 4 selected
+LTZ PNG; cache M40 140 files / 8352286 bytes, render/checks 10.332 s. Все hashes,
+primary/proposal bindings проверены; первичные записи не менялись. Четыре
+1920×960 overview/first zoom positive-detail просмотрены: crossing читаем,
+легенда выше осей. Промежуточный a2 прошёл автоматические проверки, но manual QA
+выявил legend overlap; он помечен superseded, не принят визуально.
+
+Прохождение threshold после первого stimulus не доказывает правильный момент
+срабатывания на target, foil rejection или конечное parallel recognition.
+Остальные виды имеют автоматическое покрытие; полной visual acceptance нет.

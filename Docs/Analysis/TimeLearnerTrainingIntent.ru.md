@@ -28,6 +28,33 @@ Solo не получает выдуманный train-time запрос. Воз�
 Нативные сценарии добавлены для Classic/Branch × CalculateMode 0/1 × local/
 connected request: старт, поздняя смена fraction, честный BudgetExhausted,
 Mode-0 completion, отклонённый import, Reset без изменения learned parameters,
-новая сессия, внешний stop, no-op target и retarget. Серверная приёмка ожидается.
+новая сессия, внешний stop, no-op target и retarget. Адресные серверные проверки завершены (см. ниже).
 Это control-only пробы с малым declared budget, не независимое успешное Train и
 не all-pattern recognition; завершённые waveform-ответы не выдумываются.
+
+
+## Проверки 31.10.2026
+
+Native root 6062fb58c4324a61da0e6346e77a5e8fb53e31ee /
+PulseLib 86cd84326419d8d14f59a05a8d182450322fd903: normal 61/61 (50.707 s),
+ASan 61/61 (316.845 s), без skips; ASan leak checking выключен. Восемь новых
+request lifecycle controls, 20 existing connected-stop controls и 33 boundary/
+lifecycle/codec/Solo regressions. Отдельные successful graph replacements с
+заранее непустым intent пока не проверены; код очистки в этих entry points
+реализован, но общий import regression не заменяет такую адресную проверку.
+
+Независимый reader root f0278fba6733be92b4560bf31c719f516bae73c6:
+normal 2/2 (0.040 s), ASan 2/2 (0.033 s), по 24 snapshots / 8 records и
+32 re-signed corrupt controls на worker. Reader проверяет сохранённые значения,
+схему, bindings и SHA. Промежуточные native assertions о Reset/stop/import
+проверены нативными тестами, а не выдуманы из трёх JSON-снимков; отдельная
+execution attestation не заявляется.
+
+Корневые proofs s08-native-training-intent-normal-a1 и
+s08-native-training-intent-asan-a1: по 321 members; 941804 / 954948 compressed
+bytes, все hashes проверены. Включены полные исходные portable fixtures /
+84 artifacts для genuine Solo regressions. Immutable runtime before/after
+подтверждены внутри задания, предыдущий завершённый runtime использован повторно.
+
+Configured phase dispatcher, сравнение original/current controls при переходе,
+сохранение intent в model checkpoint и вся приёмка этапа 8 остаются открыты.
