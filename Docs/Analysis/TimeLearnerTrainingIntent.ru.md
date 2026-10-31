@@ -60,7 +60,7 @@ Configured phase dispatcher, сравнение original/current controls при
 сохранение intent в model checkpoint и вся приёмка этапа 8 остаются открыты.
 
 
-## Подключение к finalization boundary: runtime ожидается
+## Подключение к finalization boundary: адресная runtime-проверка
 
 CheckNativeTrainingIntent вызывается production CaptureNativeFinalizationBoundary
 до экспорта Solo. Проверяются session/run/protocol/pattern binding, исходные
@@ -78,5 +78,46 @@ legacy imported Solo без запроса продолжает schema 1. Во �
 В восемь native lifecycle cases добавлены фактическое отклонение drift,
 schema-2 diagnostic stopped boundary и успешный import при непустом intent.
 Независимый reader поддерживает исторический schema 1; новые tests требуют schema 2
-и проверяют source/session/control binding и запись успешного import. Серверные
-проверки этой новой связки ещё не выполнены.
+и проверяют source/session/control binding и запись успешного import. Серверные проверки этой связки завершены ниже.
+
+
+### Проверки связи с boundary и successful import
+
+Native root 934a9c90fb541d9b9b1f10c4405a3c7d9f2d0bfc /
+PulseLib b46a796f979807a3d37821cc20ff00c5b8c06197: normal 61/61 (52.422 s),
+ASan 61/61 (336.200 s), без skips, ASan leak checking выключен. Во всех восьми
+Classic/Branch × mode0/1 × local/connected cases реальный drift отклонён до
+экспорта без изменения модели; schema-2 stopped boundary принят диагностически;
+ImportNativeLearnedState его настоящего Solo завершился Adopted и очистил
+предварительно непустой intent. Прежний открытый successful-import gate закрыт
+именно этим адресным поведением. Отклонённый import сохраняет исходный intent.
+
+Independent reader: по 3/3; normal 3.334 s, ASan 3.002 s вместе с повторным чтением
+cases. По 24 snapshots / 8 records и 64 re-signed corrupt controls на worker.
+Отдельно на каждом worker проверены 20 границ: 10 schema1 и 10 schema2. Шесть
+прежних schema1 JSON взяты из принятого native gate root6062fb58c; остальные
+записи — новые standalone и embedded boundaries. Это проверка схем/связности,
+не attestation исполнения и не повторное доказательство всей training physics.
+
+Начальная сборка db9215afa остановилась до runtime: в тестовом файле отсутствовал
+явный include NativeFinalizationBoundary.h. Исправление — root934a9c90f;
+неуспешные compiler/checkout receipts сохранены вместе с итоговыми данными.
+Корневые proofs: s08-native-training-intent-binding-normal-a1 и
+s08-native-training-intent-binding-asan-a1. Автоматический переход Train →
+conversion/PostTune/calibration и intent checkpoint/export по-прежнему открыты.
+
+
+Оба опубликованных binding proofs содержат по 337 members: normal 968040 bytes,
+ASan 986948 bytes. Все stored/member hashes локально сверены после --no-ff merge;
+связи с original portable sources сохранены. Проверенные request/import cases —
+N1, 2000Hz; они не закрывают полную normalization/profile/frequency матрицу.
+
+Для следующей интеграции перепроверен UContainer::Calculate: BeforeCalculate
+предшествует обновлению ActiveComponents cache и единственному native child loop.
+При этом UContainer::Reset обнуляет CalcCounter, SkipComponentCalculation,
+ComponentReCalculation и wall-time counters, а Build вызывает AfterBuild/Reset.
+NativeRecognitionTransactionScope::Install сейчас использует owner Build/Init/Reset
+между тиками. Перенос Advance в owner hook потребует явного владения такими
+внутренними lifecycle-переходами и отдельного отличия от внешнего Reset/UnInit;
+нельзя считать его простой заменой внешнего цикла одним вызовом Calculate.
+Это постановка следующего изменения, не его runtime-приёмка.
