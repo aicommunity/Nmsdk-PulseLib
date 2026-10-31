@@ -307,3 +307,8 @@ SearchUnresolved, все полные frozen observations valid; ни один �
 b839e879: 7/7 normal/ASan; one-tick Train сохраняет diagnostic stopped state,
 который native conversion отклоняет. Это scoped integration, не полная матрица
 моделей и не подтверждение научной разделимости.
+
+Отдельная legacy inference-попытка и TL-037 описаны в
+[TimeLearnerLegacyInferenceObservations](TimeLearnerLegacyInferenceObservations.ru.md).
+Она не включается автоматически production V2 worker и не заменяет native
+full-grid/fresh-confirmation proof.
