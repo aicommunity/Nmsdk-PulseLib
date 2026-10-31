@@ -246,3 +246,21 @@ clock/frequency mutation controls; их приёмка относится к с�
 checks. Обе модели, пороги и raw fresh-confirmation observations совпали
 с normal контролем. Это повторяемость deterministic fixtures, а не
 независимые научные обучения. Полный визуальный просмотр cache не заявлен.
+
+## Владение recognition queue/context
+
+На сохранённых реальных моделях воспроизведены три дефекта обоих learner:
+чужой result забирался до проверки ID и после него выполнялся source rollback;
+внешнее чтение собственного result оставляло driver в Running; identical-package
+import без owner Build/Reset не менял package hash или owner lifecycle и тоже
+оставлял driver в ожидании. Baseline root e2a129376: 0/6 адресных controls.
+
+Read-only context observation теперь идентифицирует control block конкретного
+NativeRecognitionHold, а не адрес объекта/physical model hash. Перед Take и
+Cancel проверяется ожидаемая run/trial identity. Потеря владения даёт
+RecoveryRequired без чтения чужого result или перезаписи чужой модели.
+Собственный import обновляет observation; Reset/clock/frequency guards
+сохранены. Token является ephemeral control state, не Rdk property, storage
+образом или serialized dynamic checkpoint. Build/Init/Reset/Calculate семантика
+не изменена. Исправленный снимок требует отдельной normal/ASan приёмки,
+включая normal grid flow и retained observer при повторном import.

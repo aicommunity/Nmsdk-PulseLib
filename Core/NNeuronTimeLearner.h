@@ -789,6 +789,8 @@ public: // Methods
  // Frozen recognition has no installed training certificate; import is explicit.
  bool HasNativeRecognitionState() const {return bool(NativeRecognition);}
  bool IsNativeRecognitionTrialIdle() const;
+ std::weak_ptr<const void> ObserveNativeRecognitionContext() const;
+ bool HasNativeRecognitionTrialIdentity(const std::string& runId,const std::string& trialId) const;
  void QueueNativeRecognitionTrial(TimeLearner::NativeRecognitionTrialRequest request);
  std::optional<TimeLearner::NativeRecognitionTrialObservation> TakeNativeRecognitionTrialResult();
  void CancelNativeRecognitionTrial(const std::string& reason);

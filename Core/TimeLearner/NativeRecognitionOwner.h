@@ -18,6 +18,9 @@ struct NativeRecognitionHold {
     int controllerVersion=1,calculateMode=0,structureBuildMode=1;
     double threshold=0.;
     bool calibrationConfirmed=false;
+    // Ephemeral instance identity: not a physical parameter or checkpoint.
+    // A new import gets a new control block even for byte-identical packages.
+    std::shared_ptr<const void> contextLifetime=std::make_shared<const unsigned char>(0);
     NativeRecognitionTrialExecutor trials;
     std::shared_ptr<NmsdkTools::ModelRevisionObserver> observer=std::make_shared<NmsdkTools::ModelRevisionObserver>();
 };

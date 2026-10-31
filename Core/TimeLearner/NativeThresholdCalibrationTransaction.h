@@ -37,7 +37,7 @@ public:
         Require(owner.IsNativeRecognitionTrialIdle(),"calibration_transaction_requires_idle_recognition");
         source=owner.ExportNativeRecognitionState(implementation);
         Require(source["kind"]==QJsonValue("timelearner_recognition_state"),"calibration_transaction_requires_base_recognition");
-        expectedPackage=source;storage=owner.GetStorage().Get();environment=owner.GetEnvironment().Get();
+        expectedPackage=source;recognitionContext=owner.ObserveNativeRecognitionContext();storage=owner.GetStorage().Get();environment=owner.GetEnvironment().Get();
         frequency=owner.GetTimeStep();lastClock=environment->GetTime().GetDoubleTime();Validate();
     }
     NativeThresholdCalibrationTransaction(const NativeThresholdCalibrationTransaction&)=delete;
@@ -56,6 +56,7 @@ public:
             CheckLifecycle();
             if(waiting)
             {
+                CheckTrialOwnership();
                 auto observation=owner.TakeNativeRecognitionTrialResult();
                 if(!observation)return;
                 waiting=false;
@@ -150,6 +151,7 @@ private:
     NativeThresholdGridSpec spec;
     std::string implementation,targetHash,reason;
     RDK::UModuleLifecycleObservation lifecycle;
+    std::weak_ptr<const void> recognitionContext;
     RDK::UStorage* storage=nullptr;RDK::UEnvironment* environment=nullptr;
     unsigned frequency=0;double lastClock=0.;
     QJsonObject source,expectedPackage,calibratedPackage;
@@ -221,11 +223,19 @@ private:
     void CheckLifecycle()
     {
         Require(lifecycle.IsCurrent(),"calibration_transaction_owner_lifecycle_changed");
+        const auto context=owner.ObserveNativeRecognitionContext();
+        Require(!recognitionContext.expired() && !recognitionContext.owner_before(context) &&
+            !context.owner_before(recognitionContext),"calibration_transaction_recognition_context_replaced");
         Require(owner.GetStorage().Get()==storage && owner.GetEnvironment().Get()==environment &&
             owner.GetTimeStep()==frequency,"calibration_transaction_context_changed");
         const double now=environment->GetTime().GetDoubleTime();
         Require(Detail::Finite(now) && !Detail::After(lastClock,now),"calibration_transaction_clock_moved_backwards");
         lastClock=now;
+    }
+    void CheckTrialOwnership() const
+    {
+        Require(!current.requests.empty() && owner.HasNativeRecognitionTrialIdentity(
+            current.requests.back().runId,current.requests.back().trialId),"calibration_transaction_trial_ownership_changed");
     }
     void CheckPackage()
     {
@@ -241,6 +251,7 @@ private:
         // Native lifecycle, once per imported graph. bool results are not error
         // channels. Full effective readback/export is the verification.
         owner.Build();owner.Init();owner.Reset();lifecycle=owner.ObserveLifecycle();
+        recognitionContext=owner.ObserveNativeRecognitionContext();
         expectedPackage=package;CheckPackage();
     }
     void Restore(NativeCalibrationTransactionStatus terminal,const std::string& why)
@@ -249,6 +260,7 @@ private:
         Require(owner.ExportNativeRecognitionState(implementation)==expectedPackage,"calibration_transaction_refuses_foreign_rollback");
         if(waiting)
         {
+            CheckTrialOwnership();
             owner.CancelNativeRecognitionTrial("calibration_transaction_cancel");
             const auto result=owner.TakeNativeRecognitionTrialResult();
             Require(result && result->request.runId==current.requests.back().runId &&

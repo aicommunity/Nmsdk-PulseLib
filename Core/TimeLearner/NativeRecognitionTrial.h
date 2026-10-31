@@ -36,6 +36,10 @@ public:
     void Queue(NativeRecognitionTrialRequest request);
     bool Busy() const { return queued || running; }
     bool HasResult() const { return bool(result); }
+    bool HasIdentity(const std::string& runId,const std::string& trialId) const {
+        const auto* value=current?&*current:result?&*result:nullptr;
+        return value && value->request.runId==runId && value->request.trialId==trialId;
+    }
     void BeforeChildren(const NativeProbeBindings& bindings,double time,
         const std::function<void(const MDMatrix<double>&)>& applyPresentation,
         const std::function<std::string(bool)>& readRevision);

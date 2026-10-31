@@ -4207,6 +4207,15 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeLearnedState
  return result;
 }
 
+std::weak_ptr<const void> NNeuronTimeLearner::ObserveNativeRecognitionContext() const
+{
+ if(NativeRecognition)return NativeRecognition->contextLifetime;
+ return {};
+}
+bool NNeuronTimeLearner::HasNativeRecognitionTrialIdentity(const std::string& runId,const std::string& trialId) const
+{
+ return NativeRecognition && NativeRecognition->trials.HasIdentity(runId,trialId);
+}
 bool NNeuronTimeLearner::IsNativeRecognitionTrialIdle() const
 {
  return NativeRecognition && !NativeRecognition->trials.Busy() && !NativeRecognition->trials.HasResult();
