@@ -31,14 +31,14 @@ enum class NativeCalibrationTransactionStatus {
 template<class Owner> class NativeThresholdCalibrationTransaction {
 public:
     NativeThresholdCalibrationTransaction(Owner& owner,NativeThresholdGridSpec specification,
-        std::string implementationId)
+        std::string implementationId,std::shared_ptr<NativeRecognitionTransactionScope<Owner>> sharedScope={})
         :owner(owner),spec(std::move(specification)),implementation(std::move(implementationId)),
-         scope(owner,implementation,"calibration_transaction")
+         scope(sharedScope?std::move(sharedScope):std::make_shared<NativeRecognitionTransactionScope<Owner>>(owner,implementation,"calibration_transaction"))
     {
         Require(owner.IsNativeRecognitionTrialIdle(),"calibration_transaction_requires_idle_recognition");
         source=owner.ExportNativeRecognitionState(implementation);
         Require(source["kind"]==QJsonValue("timelearner_recognition_state"),"calibration_transaction_requires_base_recognition");
-        expectedPackage=source;Validate();
+        expectedPackage=source;scope->CheckOwner(owner,implementation);scope->CheckPackage(source);Validate();
     }
     NativeThresholdCalibrationTransaction(const NativeThresholdCalibrationTransaction&)=delete;
     NativeThresholdCalibrationTransaction& operator=(const NativeThresholdCalibrationTransaction&)=delete;
@@ -150,7 +150,7 @@ private:
     Owner& owner;
     NativeThresholdGridSpec spec;
     std::string implementation,targetHash,reason;
-    NativeRecognitionTransactionScope<Owner> scope;
+    std::shared_ptr<NativeRecognitionTransactionScope<Owner>> scope;
     QJsonObject source,expectedPackage,calibratedPackage;
     NativeCalibrationMatrix current,confirmation;
     std::vector<Record> records;
@@ -218,23 +218,23 @@ private:
         Candidate(spec.thresholds.front());
     }
     void CheckLifecycle()
-    {scope.CheckLifecycle();}
+    {scope->CheckLifecycle();}
     void CheckTrialOwnership() const
     {
         Require(!current.requests.empty(),"calibration_transaction_trial_ownership_changed");
-        scope.CheckTrialOwnership(current.requests.back().runId,current.requests.back().trialId);
+        scope->CheckTrialOwnership(current.requests.back().runId,current.requests.back().trialId);
     }
     void CheckPackage()
-    {scope.CheckPackage(expectedPackage);}
+    {scope->CheckPackage(expectedPackage);}
     void Install(const QJsonObject& package)
-    {scope.Install(package,expectedPackage);}
+    {scope->Install(package,expectedPackage);}
     void Restore(NativeCalibrationTransactionStatus terminal,const std::string& why)
     {
-        scope.CheckRollback(expectedPackage);
+        scope->CheckRollback(expectedPackage);
         if(waiting)
         {
             Require(!current.requests.empty(),"calibration_transaction_trial_ownership_changed");
-            current.observations.push_back(scope.CancelOwned(current.requests.back(),"calibration_transaction_cancel"));waiting=false;
+            current.observations.push_back(scope->CancelOwned(current.requests.back(),"calibration_transaction_cancel"));waiting=false;
         }
         Install(source);sourceRestored=true;status=terminal;reason=why;
     }

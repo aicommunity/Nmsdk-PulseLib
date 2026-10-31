@@ -22,6 +22,8 @@ public:
     }
     NativeRecognitionTransactionScope(const NativeRecognitionTransactionScope&)=delete;
     NativeRecognitionTransactionScope& operator=(const NativeRecognitionTransactionScope&)=delete;
+    void CheckOwner(Owner& candidate,const std::string& implementationId) const
+    {Require(&candidate==&owner && implementationId==implementation,"shared_scope_owner_mismatch");}
     void CheckLifecycle()
     {
         Require(lifecycle.IsCurrent(),"owner_lifecycle_changed");
