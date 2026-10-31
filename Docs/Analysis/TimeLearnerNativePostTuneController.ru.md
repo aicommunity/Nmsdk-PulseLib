@@ -102,7 +102,7 @@ Public learner properties к fixed API не подключены;
 (134 members, исправление пропущенных input/source в старой упаковке) и
 s08-native-posttune-fixed-asan-a1 (117 members). Все bytes/hashes перепроверены.
 
-## Прерывание перед lifecycle teardown: непроверенный подэтап
+## Прерывание перед lifecycle teardown: проверенный API, hooks ещё не подключены
 
 NativePostTuneTransaction и NativeThresholdCalibrationTransaction получают
 InterruptOwnerLifecycle(reason): только terminal RecoveryRequired и диагностика,
@@ -113,5 +113,30 @@ PostTune рекурсивно прерывает принадлежащую ем
 legal-boundary rollback. Эта операция нужна будущим configured phase hooks;
 сами hooks и phase dispatch пока не подключены.
 
-Подготовлены 16 real-component cases Classic/Branch для Reset, Default,
-уничтожения scope и вложенной calibration; server acceptance ещё ожидается.
+Root ba33ee20 / PulseLib 979aea4: 16/16 real-component cases Classic/Branch
+для Reset, Default, уничтожения scope и вложенной calibration прошли normal
+(69.737 s) и ASan (422.196 s). По 12/12 прежних fixed/codec regressions
+(68.354 / 409.622 s), 8/8 independent reader (53.229 / 44.282 s), без skips.
+Все 10 прежних fixed JSON records в каждой сборке byte-exact против исходных
+proof snapshots. Root bundles native-phase-lifecycle-interrupt-normal-a1
+(146 members) / asan-a1 (149) включают полные source fixtures и actual reports;
+все bytes/hashes повторно проверены. Leak detection off.
+
+Visual normal: 16 diagnostic reports / 20 complete trial-soma reactions;
+8 selected PNG просмотрены в 1920x960, полный cache/PDF/SVG не принят.
+Actual test executable/dependency identity отдельно захвачена после тестов:
+это не pre-run или owned-process аттестация первоначальных native invocations.
+
+Native cancellation сохраняет result до TakeResult. Detach перед Reset не
+разрешает молча стирать чужие результаты или импортировать модель из hook:
+phase controller должен отдельно потребить только свой cancelled result на
+legal boundary с проверкой context/trial identity. Сам phase dispatch пока
+не подключён, оба optional-mode guards остаются.
+
+Для phase plan дополнительно подтверждено: AutoCalibrate, PostTrainMid и
+probe silent threshold — независимые controls; legacy и native mode enums
+имеют разный порядок и требуют явного сопоставления. Branch EndOfLearning при
+PostTune=false всё равно входит в parallel-peak calibration, даже если
+AutoCalibrate=false (Rs scaling ограничен N1 отдельно). Нельзя считать такой
+legacy run frozen-threshold только по этим исходным флагам. Подробный контракт
+сохранён в root Docs/StructTrain/TimeLearner/CalibrationPropertyContracts.ru.md.
