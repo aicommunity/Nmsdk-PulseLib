@@ -4408,6 +4408,8 @@ void NNeuronTimeLearner::BeginNativeTraining(TimeLearner::NativeTrainingPlan pla
   if(NativeLiveFinalization)
   {
    ValidateNativeFinalizationPlan();
+   NativeLiveFinalization->RequireArmed();
+   TimeLearner::ValidateNativeOwnedPhaseFrequency(*this);
    NativeLiveFinalization->CheckTrainingDesign(*this,false);
   }
   else if(EnablePostTrainTuning.GetData() || AutoCalibrateFixedLTZThreshold.GetData())
@@ -4423,8 +4425,16 @@ void NNeuronTimeLearner::BeginNativeTraining(TimeLearner::NativeTrainingPlan pla
   NativeTrainingRequestIntent.Capture(requestControls,NativeTrainingControl,startedTime);
   if(NativeLiveFinalization)NativeLiveFinalization->Started(*this);
  }
- catch(const std::exception& error){NativeTrainingControl.FailConfiguration(error.what());}
- catch(...){NativeTrainingControl.FailConfiguration("native_training_start_exception");}
+ catch(const std::exception& error)
+ {
+  NativeTrainingControl.FailConfiguration(error.what());
+  if(NativeLiveFinalization)NativeLiveFinalization->FailConfiguration(error.what());
+ }
+ catch(...)
+ {
+  NativeTrainingControl.FailConfiguration("native_training_start_exception");
+  if(NativeLiveFinalization)NativeLiveFinalization->FailConfiguration("native_training_start_exception");
+ }
 }
 TimeLearner::ResistanceDomainAssessment NNeuronTimeLearner::AssessNativeResistanceDomain(
  const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex)

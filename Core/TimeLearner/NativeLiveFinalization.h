@@ -70,6 +70,10 @@ public:
         CheckControls(owner);request=owner.NativeTrainingRequest();
         Require(!request.isEmpty(),"live_finalization_training_request_missing");status="training";
     }
+    void RequireArmed() const {Require(status=="armed","live_finalization_requires_new_declaration");}
+    void FailConfiguration(const std::string& why) {
+        if(status=="armed" || status=="training")Fail(why);
+    }
     template<class Owner> void CheckTrainingDesign(const Owner& owner,bool branch) const {
         QJsonArray pattern;const auto& target=owner.InputPattern.GetData();
         Require(target.GetRows()>0 && target.GetCols()==1,"live_finalization_target_dimension_invalid");
