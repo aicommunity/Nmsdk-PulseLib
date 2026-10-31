@@ -29,7 +29,11 @@ original reader (158.845 s), затем 20/20 strict-container reader на те�
 этим не закрыт. Normal production Console root ffd5b15a2 / Python 74f49a5f0
 выполнил 18 PostTune jobs, прежние calibration regressions и адресные portable
 проверки. Связанные первичные данные: root bundle 3c1751f9. Отдельный ASan Console
-ещё выполняется. Калибровка двух паттернов не является восьмипаттерновой серией.
+тоже завершён: 18 PostTune jobs, 6 calibration regressions и адресные CLI/stop
+controls; 4/4 PostTune, 8/8 calibration и 4/4 provenance reader checks без skips.
+ASan bundle 88c47ddf: 1089 members / 6054552 bytes. Использовались сохранённые
+normal модели; это не независимое переобучение. Калибровка двух паттернов
+не является восьмипаттерновой серией. N0 gate добавлен отдельно и ещё не принят.
 
 Native visual bundle d94309d8 покрывает 24 parent reports, 61 completed matrices,
 184 trial-soma pairs и 8668 cache files на Data M40. 20 evidence и 9 report/plot
