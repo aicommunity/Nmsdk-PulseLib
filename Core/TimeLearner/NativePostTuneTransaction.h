@@ -5,6 +5,7 @@
 namespace NMSDK::TimeLearner {
 enum class NativePostTuneMetric { Auto, LTZone, SomaSum };
 enum class NativePostTuneControllerMode { Off, KeepDone, CanonRmin, FlatLastR, SearchSynthetic };
+enum class NativePostTuneFinalization { Calibrate, KeepFixedThreshold };
 struct NativePostTuneTransactionSpec {
     NativePostTuneControllerMode mode=NativePostTuneControllerMode::KeepDone;
     NativePostTuneMetric metric=NativePostTuneMetric::Auto;
@@ -13,9 +14,10 @@ struct NativePostTuneTransactionSpec {
     unsigned searchPasses=12;
     std::size_t maximumCandidates=256,maximumRecordedSamples=2000000;
     NativeThresholdGridSpec calibration;
+    NativePostTuneFinalization finalization=NativePostTuneFinalization::Calibrate;
 };
 enum class NativePostTuneTransactionStatus {
-    Running,Calibrated,SearchUnresolved,BudgetExhausted,Cancelled,Failed,RecoveryRequired
+    Running,Calibrated,SearchUnresolved,BudgetExhausted,Cancelled,Failed,RecoveryRequired,WeightsSelected
 };
 
 // Full-pattern weight search followed by the existing REAL threshold grid and
@@ -44,7 +46,10 @@ public:
     bool IsCalibrating() const {return bool(calibration);}
     NativePostTuneTransactionStatus Status() const {return status;}
     const std::string& Reason() const {return reason;}
-    const QJsonObject& CalibratedPackage() const {return finalPackage;}
+    const QJsonObject& CalibratedPackage() const {return status==NativePostTuneTransactionStatus::Calibrated?finalPackage:emptyPackage;}
+    // A fixed-threshold result remains a recognition candidate with its
+    // measured selection proof in Report(), never a calibrated-state proof.
+    const QJsonObject& FinalPackage() const {return finalPackage;}
     void Advance()
     {
         if(Done())return;
@@ -129,6 +134,16 @@ public:
             {"status",StatusName(status)},{"reason",QString::fromStdString(reason)},{"source_restored",sourceRestored},
             {"calibrated_package",finalPackage},{"dynamic_checkpoint",false},{"statistical_independence_verified",false},
             {"evaluation_verdict",QJsonValue(QJsonValue::Null)}};
+        if(spec.finalization==NativePostTuneFinalization::KeepFixedThreshold)
+        {
+            result["schema_version"]=2;result["algorithm"]="bounded-coordinate-fixed-threshold-native-driver-v1";
+            result["finalization"]="keep_fixed_threshold";result["calibration_status"]="fixed";
+            result["calibrated_package"]=QJsonObject{};
+            result["selected_package"]=status==NativePostTuneTransactionStatus::WeightsSelected?
+                QJsonValue(finalPackage):QJsonValue(QJsonValue::Null);
+            result["selection_proof_embedded_in_model"]=false;
+            result["recognition_success_confirmed"]=false;
+        }
         result["sha256"]=NmsdkTools::CanonicalModelDataSha256(result);return result;
     }
 private:
@@ -136,7 +151,7 @@ private:
     Owner& owner;NativePostTuneTransactionSpec spec;std::string implementation,reason,searchTermination;
     std::shared_ptr<NativeRecognitionTransactionScope<Owner>> scope;
     std::unique_ptr<NativeThresholdCalibrationTransaction<Owner>> calibration;
-    NativeRecognitionSpec baseSpec;QJsonObject source,expected,finalPackage,calibrationReport;QJsonArray rejected;
+    NativeRecognitionSpec baseSpec;QJsonObject source,expected,finalPackage,emptyPackage,calibrationReport;QJsonArray rejected;
     NativeCalibrationMatrix current;std::vector<Record> records;std::optional<std::size_t> best;
     std::set<std::string> seen;std::size_t inputCount=0,proposals=0,recordedSamples=0,coordinate=0;
     unsigned pass=0,multiplier=0;bool branch=false,installed=false,waiting=false,sourceRestored=false;
@@ -152,6 +167,7 @@ private:
     static const char* StatusName(NativePostTuneTransactionStatus s)
     {
         switch(s){case NativePostTuneTransactionStatus::Running:return "running";case NativePostTuneTransactionStatus::Calibrated:return "calibrated";
+        case NativePostTuneTransactionStatus::WeightsSelected:return "weights_selected";
         case NativePostTuneTransactionStatus::SearchUnresolved:return "search_unresolved";case NativePostTuneTransactionStatus::BudgetExhausted:return "budget_exhausted";
         case NativePostTuneTransactionStatus::Cancelled:return "cancelled";case NativePostTuneTransactionStatus::Failed:return "failed";
         default:return "recovery_required";}
@@ -159,6 +175,8 @@ private:
     bool LtzMetric() const {return spec.metric==NativePostTuneMetric::LTZone || (spec.metric==NativePostTuneMetric::Auto && !branch);}
     void Validate()
     {
+        Require(spec.finalization==NativePostTuneFinalization::Calibrate ||
+            spec.finalization==NativePostTuneFinalization::KeepFixedThreshold,"unknown_post_tune_finalization");
         ModeName(spec.mode);Require(spec.metric==NativePostTuneMetric::Auto || spec.metric==NativePostTuneMetric::LTZone ||
             spec.metric==NativePostTuneMetric::SomaSum,"unknown_post_tune_metric");
         Require(inputCount>0 && inputCount<=32 && spec.maximumCandidates>0 && spec.maximumCandidates<=4096 &&
@@ -167,8 +185,11 @@ private:
         Require(!spec.calibration.confirmation.attemptId.empty() && spec.calibration.trials.size()>=2 &&
             spec.calibration.trials.size()<=10000,"invalid_post_tune_design");
         DecodeNativeThresholdConfirmationSpec(EncodeNativeThresholdConfirmationSpec(spec.calibration.confirmation));
-        Require(!spec.calibration.thresholds.empty() && spec.calibration.thresholds.size()<=256 &&
-            spec.calibration.maximumCandidates>0 && spec.calibration.maximumCandidates<=256,"invalid_post_tune_calibration_budget");
+        if(spec.finalization==NativePostTuneFinalization::Calibrate)
+            Require(!spec.calibration.thresholds.empty() && spec.calibration.thresholds.size()<=256 &&
+                spec.calibration.maximumCandidates>0 && spec.calibration.maximumCandidates<=256,"invalid_post_tune_calibration_budget");
+        else Require(spec.calibration.thresholds.empty() && spec.calibration.maximumCandidates==0,
+            "fixed_post_tune_has_unused_calibration_grid");
         std::set<double> thresholds;for(double t:spec.calibration.thresholds)
             Require(Detail::Finite(t) && thresholds.insert(t).second,"invalid_post_tune_threshold");
         const auto target=source["source_solo"].toObject()["protocol"].toObject()["pattern_hash"].toString().toStdString();
@@ -194,7 +215,8 @@ private:
         // touching the owner's physical graph, even for the synthetic seed.
         auto s=baseSpec;s.postTune=InitialProposal();
         ConvertNativeSoloToRecognition(source["source_solo"].toObject(),s,owner.GetStorage(),owner.GetEnvironment(),implementation);
-        CreateNativeThresholdCandidate(source,spec.calibration.thresholds.front(),owner.GetStorage(),owner.GetEnvironment(),implementation);
+        if(spec.finalization==NativePostTuneFinalization::Calibrate)
+            CreateNativeThresholdCandidate(source,spec.calibration.thresholds.front(),owner.GetStorage(),owner.GetEnvironment(),implementation);
     }
     NativePostTuneSpec InitialProposal() const
     {
@@ -242,6 +264,19 @@ private:
         if(!best || !(records[*best].gap>spec.minimumPositiveGap))
         {Restore(searchTermination=="candidate_budget_exhausted"?NativePostTuneTransactionStatus::BudgetExhausted:
             NativePostTuneTransactionStatus::SearchUnresolved,"no_positive_measured_gap");return;}
+        if(spec.finalization==NativePostTuneFinalization::KeepFixedThreshold)
+        {
+            // No threshold candidate, threshold search, silent-threshold
+            // workaround or fabricated calibration proof. Weight selection
+            // alone never asserts target detection or absence of false spikes.
+            const auto threshold=[](const QJsonObject& p) {
+                return p.value("neuron").toObject().value("metadata").toObject()
+                    .value("calibration").toObject().value("threshold");
+            };
+            Require(threshold(records[*best].candidate)==threshold(source),"fixed_post_tune_changed_threshold");
+            scope->Install(records[*best].candidate,expected);scope->CheckPackage(expected);
+            finalPackage=expected;status=NativePostTuneTransactionStatus::WeightsSelected;return;
+        }
         std::size_t matrixBudget=0;for(const auto& q:spec.calibration.trials)
         {
             const auto bound=ObservationSampleBound(q);

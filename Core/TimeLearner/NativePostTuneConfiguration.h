@@ -10,4 +10,9 @@ namespace NMSDK::TimeLearner {
 QJsonObject EncodeNativePostTuneControls(const NativePostTuneTransactionSpec& specification);
 NativePostTuneTransactionSpec DecodeNativePostTuneControls(const QJsonObject& controls,
     NativeThresholdGridSpec calibration);
+// Explicit schema 2 adds finalization; schema 1 always means Calibrate.
+// Serializing fixed finalization through the old codec is rejected.
+QJsonObject EncodeNativePostTuneControlsV2(const NativePostTuneTransactionSpec& specification);
+NativePostTuneTransactionSpec DecodeNativePostTuneControlsV2(const QJsonObject& controls,
+    NativeThresholdGridSpec calibration);
 }

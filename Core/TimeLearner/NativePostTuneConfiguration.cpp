@@ -65,6 +65,7 @@ NativePostTuneTransactionSpec DecodeNativePostTuneControls(const QJsonObject& p,
 }
 QJsonObject EncodeNativePostTuneControls(const NativePostTuneTransactionSpec& spec)
 {
+    Require(spec.finalization==NativePostTuneFinalization::Calibrate,"post_tune_controls_v1_requires_calibration");
     QJsonArray bounds;
     for(const auto& b:spec.resistanceBounds)bounds.append(QJsonObject{{"minimum",Numeric(b.minimum)},{"maximum",Numeric(b.maximum)}});
     QJsonObject result{{"mode",Mode(spec.mode)},{"metric",Metric(spec.metric)},
@@ -73,5 +74,27 @@ QJsonObject EncodeNativePostTuneControls(const NativePostTuneTransactionSpec& sp
         {"maximum_candidates",double(spec.maximumCandidates)},{"maximum_recorded_samples",double(spec.maximumRecordedSamples)},
         {"minimum_positive_gap",Numeric(spec.minimumPositiveGap)}};
     DecodeNativePostTuneControls(result,{});return result;
+}
+QJsonObject EncodeNativePostTuneControlsV2(const NativePostTuneTransactionSpec& spec)
+{
+    Require(spec.finalization==NativePostTuneFinalization::Calibrate ||
+        spec.finalization==NativePostTuneFinalization::KeepFixedThreshold,"unknown_post_tune_finalization");
+    auto legacy=spec;legacy.finalization=NativePostTuneFinalization::Calibrate;
+    auto result=EncodeNativePostTuneControls(legacy);result["schema_version"]=2;
+    result["finalization"]=spec.finalization==NativePostTuneFinalization::Calibrate?"calibrate":"keep_fixed_threshold";
+    return result;
+}
+NativePostTuneTransactionSpec DecodeNativePostTuneControlsV2(const QJsonObject& controls,NativeThresholdGridSpec calibration)
+{
+    Keys(controls,{"schema_version","finalization","mode","metric","canonical_floor","canonical_last",
+        "resistance_bounds","search_passes","maximum_candidates","maximum_recorded_samples","minimum_positive_gap"});
+    Require(Number(controls["schema_version"])==2.,"unsupported_post_tune_controls_schema");
+    Require(controls["finalization"]==QJsonValue("calibrate") ||
+        controls["finalization"]==QJsonValue("keep_fixed_threshold"),"unknown_post_tune_finalization");
+    auto legacy=controls;legacy.remove("schema_version");legacy.remove("finalization");
+    auto result=DecodeNativePostTuneControls(legacy,std::move(calibration));
+    result.finalization=controls["finalization"]==QJsonValue("calibrate")?
+        NativePostTuneFinalization::Calibrate:NativePostTuneFinalization::KeepFixedThreshold;
+    return result;
 }
 }
