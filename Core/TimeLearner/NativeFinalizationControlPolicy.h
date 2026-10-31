@@ -10,6 +10,8 @@ template<class Owner> void CheckNativeFinalizationControls(const Owner& owner,co
 {
     if(boundary.isEmpty())return;
     auto expected=boundary["controls"].toObject();auto current=ReadNativeFinalizationControls(owner);
+    if(expected["parameters"].toObject()["SyncCapacitanceTrim"].toInt()!=0)
+        throw std::logic_error("native_finalization_c_trim_not_yet_supported");
     if(!expected["parameters"].toObject()["IsNeedToTrain"].toBool())
         throw std::logic_error("native_finalization_requires_active_request");
     if(!owner.IsNeedToTrain.GetData())throw std::logic_error("native_finalization_external_stop");
