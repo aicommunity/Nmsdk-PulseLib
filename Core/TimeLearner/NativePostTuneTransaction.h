@@ -20,7 +20,7 @@ enum class NativePostTuneTransactionStatus {
     Running,Calibrated,SearchUnresolved,BudgetExhausted,Cancelled,Failed,RecoveryRequired,WeightsSelected
 };
 
-// Full-pattern weight search followed by the existing REAL threshold grid and
+// Full-pattern weight search with explicit fixed-threshold finalization or the REAL threshold grid and
 // fresh confirmation. Advance runs between native ticks; never Calculate here.
 // The same guarded scope is handed to calibration, so an identical foreign
 // import cannot masquerade as the model installed by either controller.

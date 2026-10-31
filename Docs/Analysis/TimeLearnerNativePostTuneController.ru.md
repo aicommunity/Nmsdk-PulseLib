@@ -60,9 +60,36 @@ Branch SearchSynthetic) сохранили побайтно transaction и ко�
 исходного bundle 3c1751f9; portable audits прошли. Новый proof bb80e56c:
 103 members / 630420 bytes. Алгоритм и физика не менялись. Это prerequisite
 configured phase plan, не работающий dispatch: оба optional guards остаются;
-PostTune без auto calibration и phase continuation требуют отдельной реализации.
+Production fixed job и configured phase continuation требуют отдельной реализации.
 
 Полная постановка, budgets, режимы и
 остальные обязательства: `Docs/StructTrain/TimeLearner/NativePostTuneController.ru.md`
 корня. Public learner property dispatch, continuation и полная mode/profile/frequency
 matrix остаются незавершёнными. Legacy ControllerVersion=1 не заменяется этим API.
+
+## Проверенная граница fixed-threshold API (31.10.2026)
+
+PulseLib 03d1ea86 / normal root 3d922ba2 / ASan root 38cd68a0:
+12/12 native cases в обеих сборках (67.946 / 401.903 s), включая восемь
+fixed controls и четыре codec cases. По два owned schema-1 Console A/B
+сохранили исходные transaction/model bytes. Leak detection выключен.
+Отдельный N0 ASan также завершён: 2/2 native, 3351.650 s; 12/12 reader,
+136.129 s. Эти результаты заменяют прежние отметки pending для данных jobs,
+но не принимают полную mode/profile/frequency matrix.
+
+NativePostTuneFinalization::KeepFixedThreshold выбирает реально измеренную
+weight-модель, сохраняет исходный порог и выдаёт WeightsSelected. Требует
+пустой threshold grid и нулевой calibration budget. FinalPackage возвращает
+выбранную модель; CalibratedPackage пуст. Source Solo/outcome не повышаются
+до Exact. Selection proof хранится в parent sidecar; silent target остаётся FN.
+Проверены native roundtrip и отдельная последующая calibration transaction.
+При RecoveryRequired восстановление owner не предполагается; derived audit
+считает calibration state unverified даже при raw declared fixed policy.
+
+Python transaction analyze/report уже поддерживает schema 2. Production
+Console/job/worker и public learner properties пока к fixed API не подключены;
+оба optional-mode guards остаются. Не удалять их без отдельного phase plan,
+сохранения Solo outcome до import и legal-boundary lifecycle orchestration.
+Согласованные root primary bundles: s08-native-posttune-fixed-normal-a2
+(134 members, исправление пропущенных input/source в старой упаковке) и
+s08-native-posttune-fixed-asan-a1 (117 members). Все bytes/hashes перепроверены.
