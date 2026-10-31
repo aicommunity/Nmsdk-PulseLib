@@ -272,6 +272,20 @@ training остаётся search_unresolved. Это приёмка конкре�
 Для production Console опубликованы strict request/specification codecs из
 NativeCalibratedState: job input и persisted proof используют один decoder,
 включая проверку точного набора полей через повторное кодирование. Это API
-добавление не меняет алгоритм, критерий или физику. Новый Console entry point
-пока требует собственной build/runtime приёмки; результаты ownership gates
-не являются проверкой production запуска.
+добавление не меняет алгоритм, критерий или физику. Собственная приёмка Console
+на PulseLib a5671e9: по шесть production jobs на normal/ASan, Classic/Branch
+N1/2000 Hz, с Calibrated/NonSeparable/BudgetExhausted. Reader 819f0d9 прошёл
+6/6 на каждом наборе, включая реальные owned CLI run, первичные snapshots и
+portable RunManifest. Дополнительные 2/2 controls проверили model-tick stop с
+восстановлением source и strict parser/mode rejections; 11/11 provenance/runtime
+checks — scope процесса и полноту flags. Полные первичные bundles:
+normal d663fd43 + d879109a, ASan 1d248c88. Отдельно сохранён более ранний
+частично перекрывающийся reader 0d8494b, без подмены его precursor manifest.
+
+RunManifest связывает полный grid/confirmation с моделью и runtime. Отдельный
+schema-1 model proof по-прежнему доказывает только выбранный candidate и fresh
+confirmation. Physical revisions, thresholds и полные confirmation observations
+normal/ASan совпали; это deterministic fixtures, не независимые retrains.
+Source training search_unresolved сохранён. Стартовые process mappings не
+обещают полного позднего plugin census. Полный ConditionSpec/pipeline,
+Train/export/evaluate scheduler и PostTune/mode/profile matrix остаются открытыми.
