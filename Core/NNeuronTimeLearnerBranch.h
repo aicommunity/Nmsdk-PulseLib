@@ -34,7 +34,7 @@ See file license.txt for more information
 #include <cstring>
 
 namespace NMSDK {
-namespace TimeLearner { class NativePostTuneOwnerBoundary; struct NativeRecognitionHold; }
+namespace TimeLearner { class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; }
 
 using namespace RDK;
 
@@ -826,6 +826,11 @@ public: // Methods
  void CancelNativeRecognitionTrial(const std::string& reason);
  QJsonObject ExportNativeRecognitionState(const std::string& implementationId);
  TimeLearner::NativeModelBuildResult ImportNativeRecognitionState(const QJsonObject& package,const std::string& implementationId);
+ // Explicit active-request import; ordinary frozen import keeps its old policy.
+ TimeLearner::NativeModelBuildResult ImportNativeFinalizationState(const QJsonObject& package,const std::string& implementationId,
+     const TimeLearner::NativeFinalizationBoundary& boundary);
+ TimeLearner::NativeModelBuildResult ReplaceNativeRecognitionState(const QJsonObject& package,const std::string& implementationId);
+ QJsonObject NativeFinalizationIntent() const;
  
  // --------------------------
  // Parameter setters
@@ -970,6 +975,8 @@ public: // Methods
  static UComponent* NewStatic(void);
 
 protected:
+ TimeLearner::NativeModelBuildResult ImportNativeRecognitionStateWithBoundary(const QJsonObject& package,const std::string& implementationId,
+     const QJsonObject& boundary);
  TimeLearner::NativeProbeExecutor NativeProbeControl;
  TimeLearner::NativeTrainingService NativeTrainingControl;
  std::optional<TimeLearner::NativeModelSpec> NativeModelDeclaration;

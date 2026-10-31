@@ -2,6 +2,7 @@
 #include "NativeRecognitionState.h"
 #include "NativeModelOwner.h"
 #include "NativeRecognitionTrial.h"
+#include "NativeFinalizationControlPolicy.h"
 #include <cmath>
 
 namespace NMSDK::TimeLearner {
@@ -18,6 +19,7 @@ struct NativeRecognitionHold {
     int controllerVersion=1,calculateMode=0,structureBuildMode=1;
     double threshold=0.;
     bool calibrationConfirmed=false;
+    QJsonObject finalizationBoundary; // Empty for ordinary frozen evaluation.
     // Ephemeral instance identity: not a physical parameter or checkpoint.
     // A new import gets a new control block even for byte-identical packages.
     std::shared_ptr<const void> contextLifetime=std::make_shared<const unsigned char>(0);
@@ -27,11 +29,18 @@ struct NativeRecognitionHold {
 
 template<class Owner,class Visitor> void VisitNativeRecognitionControls(Owner& owner,const NativeRecognitionHold& h,Visitor visit)
 {
-    visit(owner.ControllerVersion,h.controllerVersion);visit(owner.CalculateMode,h.calculateMode);
-    visit(owner.StructureBuildMode,h.structureBuildMode);visit(owner.ConfiguredModelInitialized,true);
-    visit(owner.ControllerConfiguration,h.configurationText);visit(owner.IsNeedToTrain,false);
-    visit(owner.SyncCapacitanceTrim,0);visit(owner.EnablePostTrainTuning,false);
-    visit(owner.AutoCalibrateFixedLTZThreshold,false);visit(owner.UseFixedLTZThreshold,true);
+    const auto controls=h.finalizationBoundary["controls"].toObject()["parameters"].toObject();
+    const bool managed=!h.finalizationBoundary.isEmpty();
+    visit(owner.ControllerVersion,managed?controls["ControllerVersion"].toInt():h.controllerVersion);
+    visit(owner.CalculateMode,managed?controls["CalculateMode"].toInt():h.calculateMode);
+    visit(owner.StructureBuildMode,managed?controls["StructureBuildMode"].toInt():h.structureBuildMode);
+    visit(owner.ConfiguredModelInitialized,true);
+    visit(owner.ControllerConfiguration,managed?controls["ControllerConfiguration"].toString().toStdString():h.configurationText);
+    visit(owner.IsNeedToTrain,managed);
+    visit(owner.SyncCapacitanceTrim,0);
+    visit(owner.EnablePostTrainTuning,managed && controls["EnablePostTrainTuning"].toBool());
+    visit(owner.AutoCalibrateFixedLTZThreshold,managed && controls["AutoCalibrateFixedLTZThreshold"].toBool());
+    visit(owner.UseFixedLTZThreshold,true);
     visit(owner.LTZThreshold,h.threshold);visit(owner.FixedLTZThreshold,h.threshold);
     // Explicit status lives in the validated package/hold, not this legacy
     // numeric mirror (zero itself is an admissible calibrated threshold).
@@ -40,6 +49,7 @@ template<class Owner,class Visitor> void VisitNativeRecognitionControls(Owner& o
 
 template<class Owner> void CheckNativeRecognitionHold(Owner& owner,NativeRecognitionHold& h,bool full=false)
 {
+    CheckNativeFinalizationControls(owner,h.finalizationBoundary);
     CheckNativeOwnerOverrides(owner);
     const auto same=[](const auto& p,const auto& value) {
         if(!NativeOwnerValueEqual(p.GetData(),value))
@@ -64,7 +74,8 @@ template<class Owner> void CheckNativeRecognitionHold(Owner& owner,NativeRecogni
 template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner& owner,bool branch,const QJsonObject& package,
     const std::string& implementation,bool& owned,std::optional<NativeModelSpec>& declaration,
     std::optional<ConfiguredNativeTraining>& configured,std::string& configuredText,
-    NativeProbeExecutor& probe,NativeTrainingService& service,std::string& failure,std::unique_ptr<NativeRecognitionHold>& hold)
+    NativeProbeExecutor& probe,NativeTrainingService& service,std::string& failure,std::unique_ptr<NativeRecognitionHold>& hold,
+    const QJsonObject& finalizationBoundary={})
 {
     NativeModelBuildResult result;const bool wasOwned=owned;
     if((hold && (hold->trials.Busy() || hold->trials.HasResult())) || NativeTrainingIsActive(service) || probe.Status()==NativeProbeStatus::Queued || probe.Status()==NativeProbeStatus::Running)
@@ -72,9 +83,13 @@ template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner
     try
     {
         CheckNativeOwnerOverrides(owner);
+        CheckNativeFinalizationControls(owner,finalizationBoundary);
+        if(!finalizationBoundary.isEmpty() && NativeFinalizationSourceSolo(package)!=finalizationBoundary["source_solo"].toObject())
+            throw std::logic_error("native_finalization_candidate_source_changed");
         auto prepared=PrepareNativeRecognitionState(package,owner.GetStorage(),owner.GetEnvironment(),implementation);
         if(prepared->configuration.model.branch!=branch)throw std::invalid_argument("native_recognition_import_topology_mismatch");
         auto next=std::make_unique<NativeRecognitionHold>();next->package=package;next->model=prepared->configuration.model;
+        next->finalizationBoundary=finalizationBoundary;
         next->parameters=prepared->parameters;next->target=prepared->dataset->MatrixData.GetData();next->presentation=next->target;
         next->stimulus=prepared->configuration.stimulusProfile;next->revision=prepared->modelRevision;
         next->configurationText=prepared->configurationText;next->controllerVersion=prepared->controllerVersion;

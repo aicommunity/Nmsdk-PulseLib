@@ -5015,8 +5015,31 @@ QJsonObject NNeuronTimeLearnerBranch::ExportNativeRecognitionState(const std::st
 }
 TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeRecognitionState(const QJsonObject& package,const std::string& implementationId)
 {
+ return ImportNativeRecognitionStateWithBoundary(package,implementationId,{});
+}
+TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeFinalizationState(const QJsonObject& package,const std::string& implementationId,
+ const TimeLearner::NativeFinalizationBoundary& boundary)
+{
+ try{TimeLearner::ValidateNativeFinalizationEntry(*this,boundary,implementationId);}
+ catch(const std::exception& error){TimeLearner::NativeModelBuildResult result;result.reason=error.what();return result;}
+ return ImportNativeRecognitionStateWithBoundary(package,implementationId,boundary.Document());
+}
+TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ReplaceNativeRecognitionState(const QJsonObject& package,const std::string& implementationId)
+{
+ if(!NativeRecognition){TimeLearner::NativeModelBuildResult result;result.reason="native_recognition_replacement_requires_hold";return result;}
+ // Copy before replacement destroys the old hold.
+ const auto boundary=NativeRecognition->finalizationBoundary;
+ return ImportNativeRecognitionStateWithBoundary(package,implementationId,boundary);
+}
+QJsonObject NNeuronTimeLearnerBranch::NativeFinalizationIntent() const
+{
+ return NativeRecognition?NativeRecognition->finalizationBoundary:QJsonObject{};
+}
+TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeRecognitionStateWithBoundary(const QJsonObject& package,const std::string& implementationId,
+ const QJsonObject& boundary)
+{
  auto result=TimeLearner::InstallNativeRecognitionState(*this,true,package,implementationId,NativeTrainingOwned,NativeModelDeclaration,
-  NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition);
+  NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition,boundary);
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
  {

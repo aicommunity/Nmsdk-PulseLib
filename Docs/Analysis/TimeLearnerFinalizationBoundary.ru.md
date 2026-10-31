@@ -27,6 +27,33 @@ Classic/Branch target/first-soma overview/detail просмотрены; это 
 acceptance всех foil/других somas/connected figures или всего cache. Научного
 PASS и реализации configured dispatcher этим не заявляется.
 
+## Active request import: новая реализация, runtime-проверка ожидается
+
+ImportNativeFinalizationState принимает явный NativeFinalizationBoundary,
+захваченный при завершённом Solo и активном request. Перед импортом повторно
+проверяет исходную модель, весь XML (кроме указанного feedback cache перехода),
+training outcome/evidence, controls и bindings. Stopped boundary запрещён.
+Recognition candidate обязан происходить из точного frozen source_solo.
+
+В managed hold Need остаётся true, CalculateMode и исходные PostTune/AutoCalibrate
+не подменяются frozen mirrors. Read-only policy сохраняет значения и sources
+всех controls; изменяться могут только три threshold mirrors. Снятие фактического
+Need даёт native_finalization_external_stop, включая connected provider без
+вызова setter. Policy ничего не пишет в provider и не считает stop сходимостью.
+
+ReplaceNativeRecognitionState сохраняет текущий role/intent при import кандидата
+и rollback; общий NativeRecognitionTransactionScope использует этот путь.
+Обычный ImportNativeRecognitionState остаётся явным переходом к frozen policy:
+Need/PostTune/AutoCalibrate=false. NativeFinalizationIntent возвращает копию
+исходного immutable document; model export не подменяет его поздними mirrors.
+
+Новые адресные тесты: Classic/Branch × CalculateMode 0/1 с настоящим connected
+request, полным fixed PostTune, различными measurement/final thresholds,
+отклонением чужого source, внешним stop и явным frozen import. Старые frozen
+контуры проверяются отдельно. Эта реализация ещё не подключает configured
+phase dispatcher, не определяет target-reference/mid/parallel-peak протоколы
+и не снимает guards optional modes. Не считать её полной приёмкой этапа 8.
+
 Допустима только ready/initialized Solo-модель с Finished training service и
 полностью освобождённой границей probe: ни queued/running, ни непотреблённого
 результата/физического routing state. NativeProbeOwnsControl сам по себе этого

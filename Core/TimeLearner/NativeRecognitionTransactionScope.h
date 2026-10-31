@@ -46,7 +46,7 @@ public:
     void Install(const QJsonObject& package,QJsonObject& expected)
     {
         CheckPackage(expected);
-        const auto result=owner.ImportNativeRecognitionState(package,implementation);
+        const auto result=owner.ReplaceNativeRecognitionState(package,implementation);
         Require(result.status==NativeModelBuildStatus::Adopted,"native_import_failed");
         // bool returns are not error channels. Read back the whole package.
         owner.Build();owner.Init();owner.Reset();lifecycle=owner.ObserveLifecycle();
