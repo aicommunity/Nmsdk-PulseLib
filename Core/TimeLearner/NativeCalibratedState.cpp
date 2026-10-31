@@ -95,12 +95,26 @@ NativeThresholdConfirmationSpec ReadSpec(const QJsonObject& object)
     Require(Spec(s)==object,"calibration_proof_spec_encoding_mismatch");return s;
 }
 QJsonObject Proof(const QJsonObject& candidate,const NativeThresholdConfirmationSpec& spec,
-    const NativeCalibrationMatrix& search,const NativeCalibrationMatrix& confirmation,double frequency)
+    const NativeCalibrationMatrix& search,const NativeCalibrationMatrix& confirmation,
+    const PreparedNativeRecognitionState& model)
 {
     ReadSpec(Spec(spec));
     Require(search.requests.size()>=2 && search.requests.size()<=10000 &&
         confirmation.requests.size()>=2 && confirmation.requests.size()<=10000,"incomplete_calibration_proof_matrix");
     for(const auto* matrix:{&search,&confirmation})for(const auto& q:matrix->requests)ReadRequest(Request(q));
+    const auto calibration=Object(Object(candidate["neuron"])["metadata"])["calibration"].toObject();
+    const auto path=String(calibration["ltzone_path"]);
+    Require(path.rfind("$.",0)==0,"invalid_calibrated_ltzone_path");
+    auto zone=model.neuron->GetComponentL<NPulseLTZoneCommon>(path.substr(2),true);
+    Require(bool(zone),"missing_calibrated_ltzone");
+    const std::size_t channels=model.configuration.model.branch?1:model.parameters.size();
+    for(const auto* matrix:{&search,&confirmation})for(const auto& o:matrix->observations)
+    {
+        Require(!o.samples.empty() && o.samples.front().somaPotentials.size()==channels,
+            "native_confirmation_soma_binding_mismatch");
+        if(o.request.recordThresholdPotential)Require(o.thresholdPotentialPath==path+".Potential" &&
+            o.thresholdPotentialClass==zone->GetCompClassName(),"native_confirmation_threshold_binding_mismatch");
+    }
     Require((spec.protocol=="historical_same_matrix" || spec.protocol=="frozen_independent_calibration") &&
         !spec.dataPartitionId.empty() && !spec.attemptId.empty() && !spec.clockId.empty(),"invalid_native_confirmation_spec");
     const auto source=Object(candidate["source_recognition"]),solo=Object(source["source_solo"]);
@@ -122,7 +136,8 @@ QJsonObject Proof(const QJsonObject& candidate,const NativeThresholdConfirmation
     for(const auto& o:search.observations)searchEnd=std::max(searchEnd,o.end);
     for(const auto& o:confirmation.observations)confirmationBegin=std::min(confirmationBegin,o.begin);
     Require(Detail::After(confirmationBegin,searchEnd),"native_confirmation_reused_or_overlapping_measurements");
-    Require(search.observations.front().frequencyHz==frequency && confirmation.observations.front().frequencyHz==frequency &&
+    Require(search.observations.front().frequencyHz==model.configuration.model.frequencyHz &&
+        confirmation.observations.front().frequencyHz==model.configuration.model.frequencyHz &&
         search.observations.front().samples.front().somaPotentials.size()==confirmation.observations.front().samples.front().somaPotentials.size(),
         "native_confirmation_physical_context_changed");
     return Signed({{"kind","native_selected_threshold_confirmation"},{"schema_version",1},
@@ -160,7 +175,7 @@ QJsonObject CreateNativeCalibratedState(const QJsonObject& candidate,const Nativ
 {
     auto model=PrepareNativeThresholdCandidate(candidate,storage,environment,implementation);
     CheckThresholdRole(*model,candidate);
-    return Package(candidate,Proof(candidate,spec,search,confirmation,model->configuration.model.frequencyHz));
+    return Package(candidate,Proof(candidate,spec,search,confirmation,*model));
 }
 std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeCalibratedState(const QJsonObject& package,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
@@ -169,7 +184,7 @@ std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeCalibratedState(con
     auto prepared=PrepareNativeThresholdCandidate(candidate,storage,environment,implementation);
     CheckThresholdRole(*prepared,candidate);
     const auto expected=Package(candidate,Proof(candidate,ReadSpec(Object(proof["specification"])),
-        ReadMatrix(Object(proof["search"])),ReadMatrix(Object(proof["confirmation"])),prepared->configuration.model.frequencyHz));
+        ReadMatrix(Object(proof["search"])),ReadMatrix(Object(proof["confirmation"])),*prepared));
     Require(package==expected,"native_calibrated_state_derivation_mismatch");
     auto generator=prepared->dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     prepared->neuron->BreakLinks();storage->ReturnObject(prepared->neuron);prepared->neuron=0;
