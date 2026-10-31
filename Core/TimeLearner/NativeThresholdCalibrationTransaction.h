@@ -2,6 +2,7 @@
 #include "NativeCalibratedState.h"
 #include "NativeRecognitionObservationValidation.h"
 #include "ModelIdentity.h"
+#include "../../../../Rdk/Core/Engine/UEnvironment.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <map>
