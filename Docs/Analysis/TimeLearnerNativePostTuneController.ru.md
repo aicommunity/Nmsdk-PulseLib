@@ -170,6 +170,10 @@ Typed API проверен на source PulseLib 09f72c78295b1244303658c6b58f60f7
 normal 20/20 native cases (126.287 s), ASan 20/20 (834.511 s), без skips.
 Codecs schema 3 добавлены в 56707d7e9d93d01f91c0e14bd6bcf5d788744b28;
 Console/worker и reader поддерживают явную schema 3 (null либо finite threshold).
-На обоих workers прошли 5 codec и 10 reader checks. Production jobs и
-визуальные отчёты ещё проходят приёмку. Configured public-property dispatch
+На обоих workers прошли 5 codec и 10 reader checks. Production jobs проверены: по 8 owned cases / 4 malformed controls на worker.
+Legacy/null сохраняют прежние transaction/model bytes; все 10 прежних fixed
+native records также byte-exact. Полные primary proofs опубликованы в root
+Reports/StructTrain/TimeLearner/s08-native-posttune-probe-{normal,asan}-a1.
+Visual cache содержит все 30 complete trial-soma responses; 8 selected PNG
+просмотрены, полный cache/PDF/SVG не принят вручную. Configured public-property dispatch
 остаётся неподключённым; это не поддержка всех optional learner controls.
