@@ -268,3 +268,10 @@ import, и два normal grid flow. Независимый reader 322b118 про
 каждом наборе с первичными source-моделями и полными observations. Source
 training остаётся search_unresolved. Это приёмка конкретных ownership
 регрессий; production worker, полный PostTune и mode/profile matrix открыты.
+
+Для production Console опубликованы strict request/specification codecs из
+NativeCalibratedState: job input и persisted proof используют один decoder,
+включая проверку точного набора полей через повторное кодирование. Это API
+добавление не меняет алгоритм, критерий или физику. Новый Console entry point
+пока требует собственной build/runtime приёмки; результаты ownership gates
+не являются проверкой production запуска.

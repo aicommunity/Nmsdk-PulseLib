@@ -171,6 +171,9 @@ void CheckThresholdRole(PreparedNativeRecognitionState& model,const QJsonObject&
 }
 QJsonObject EncodeNativeCalibrationRequest(const NativeRecognitionTrialRequest& request){return Request(request);}
 QJsonObject EncodeNativeCalibrationMatrix(const NativeCalibrationMatrix& matrix){return Matrix(matrix);}
+NativeRecognitionTrialRequest DecodeNativeCalibrationRequest(const QJsonObject& request){return ReadRequest(request);}
+QJsonObject EncodeNativeThresholdConfirmationSpec(const NativeThresholdConfirmationSpec& specification){return Spec(specification);}
+NativeThresholdConfirmationSpec DecodeNativeThresholdConfirmationSpec(const QJsonObject& specification){return ReadSpec(specification);}
 QJsonObject CreateNativeCalibratedState(const QJsonObject& candidate,const NativeThresholdConfirmationSpec& spec,
     const NativeCalibrationMatrix& search,const NativeCalibrationMatrix& confirmation,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
