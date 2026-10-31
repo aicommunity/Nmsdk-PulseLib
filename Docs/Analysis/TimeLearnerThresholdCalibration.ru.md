@@ -136,6 +136,22 @@ maximum_samples на request; превышение не округляется �
 Сохранение не является mid-trial checkpoint. Владелец устанавливает пакет только
 на idle boundary через существующий transactional native child import.
 Добавлены Classic/Branch 2000-Гц controls import/export, Reset/Build, frozen probes,
-отказа повторных/плохих проб и rollback при повреждённом claim. Серверная проверка
-ещё не завершена; CLI/scorer нового формата, полный grid/controller transaction,
-PostTune и independent Test остаются открытыми.
+отказа повторных/плохих проб и rollback при повреждённом claim.
+
+Normal snapshot root `0f53ab4ec420b921f766cbd78a7fd10d248b8a86`, PulseLib
+`ce7e81e002c802412ce50c1f2b2f76ffa7215b2a` прошёл 2/2 native cases и 9/9
+independent checks: Classic/Branch N1 при 2000 Гц. Данные и обе версии моделей
+сохранены в корневом `Reports/StructTrain/TimeLearner/s08-calibrated-normal-a2`
+(581 files, 1797464-byte archive, commit 9746ea4ba908b3030762fd6c276809142f27b8ce).
+Reader/CLI calibrated-state и обычный frozen scorer проверяют proof и новые
+observations; они не подтверждают native execution или independent Test.
+
+M40 визуальные отчёты root ff432f559 прошли 3 report и 5 plotting checks.
+Полные 12 trial/soma pairs остаются cache; выбранные PNG/metadata опубликованы.
+В данном двухпаттерновом контроле reset-per-trial пары удовлетворяют criterion,
+но preserve-dynamics target даёт outside spike и FN (общие counts 3/4).
+Order/position и reset policy здесь не разделены, причинного вывода об одном
+reset нет. Source solo proof не превращён в recognition certificate.
+
+ASan всего calibrated API, полный grid/controller transaction, PostTune,
+остальные modes/profiles/frequencies и independent Test остаются открытыми.
