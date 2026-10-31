@@ -27,7 +27,7 @@ Classic/Branch target/first-soma overview/detail просмотрены; это 
 acceptance всех foil/других somas/connected figures или всего cache. Научного
 PASS и реализации configured dispatcher этим не заявляется.
 
-## Active request import: новая реализация, runtime-проверка ожидается
+## Active request import: normal и базовый ASan проверены
 
 ImportNativeFinalizationState принимает явный NativeFinalizationBoundary,
 захваченный при завершённом Solo и активном request. Перед импортом повторно
@@ -53,6 +53,19 @@ request, полным fixed PostTune, различными measurement/final thr
 контуры проверяются отдельно. Эта реализация ещё не подключает configured
 phase dispatcher, не определяет target-reference/mid/parallel-peak протоколы
 и не снимает guards optional modes. Не считать её полной приёмкой этапа 8.
+
+Normal: root c0496d253 / PulseLib ec3d7b4 — 44/44, 191.796 s; root a05416971 /
+PulseLib aca4b33 с ранним unsupported C-trim guard — 18/18, 68.693 s; без skips.
+Независимый reader root 8e3e66786: 2/2, 23.196 s, четыре transactions и 20 corrupt
+controls. Он проверяет original Train primaries и явно отличает сохранённый
+training CalculateMode от post-import replay CalculateMode; outcome остаётся
+search_unresolved. Базовый ASan c0496d253 прошёл 44/44 (1353.853 s), без skips,
+leak checking выключен. Автоматический dispatcher и полная матрица ещё открыты.
+Сверка frozen artifacts дополнительно обнаружила наследование Environment clock
+между fresh jobs в корневом helper. Отдельный root 87e36a376 исправляет его через
+native Reset на пустой границе: normal 45/45 (196.890 s), отдельный актуальный
+ASan 45-case gate ещё ожидается. Полная публикация новых ASan primaries и
+временные отчёты managed transactions ещё не завершены.
 
 Допустима только ready/initialized Solo-модель с Finished training service и
 полностью освобождённой границей probe: ни queued/running, ни непотреблённого
