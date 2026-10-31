@@ -74,3 +74,22 @@ UpdateIterLTZPotential учитывает только ltz>0, тогда как 
 recovery. Подставлять raw minimum в legacy gap_fraction без отдельного решения
 нельзя. Свежие nonspiking extrema не подтверждают выбранный spiking threshold;
 нужен реальный confirmation-прогон. Сам расчёт и dispatcher остаются открыты.
+
+## Target-reference proposal: реализация, runtime ожидается
+
+NativeTrainingThresholdReference использует только ClosedReport реального recorder,
+не принимает произвольный импортированный JSON. Копия evidence не изменяет recorder.
+Требуются завершённая valid nonspiking проба и совпадение current/base model revision.
+Обе legacy-формулы сохранены: gap = positiveMin + fraction*(positiveMax-positiveMin),
+peak = fraction*positiveMax; далее явные min/max clamps. Positive samples — строго
+ltz>0 после native children; baseline исключён. Legacy span guard 1e-9 сохранён.
+Fraction допускает любое конечное значение, как исходная формула; не вводится
+скрытое ограничение [0,1]. Неконечный результат не публикуется как число.
+
+Proposal хранит источник, границы, extrema/count, unclamped/clipped значения и
+requires_spiking_confirmation=true. Он не пишет в нейрон и не утверждает
+calibrated/PASS. Runtime-проверка двух формул, обоих clamps, stale/ineligible
+источников и настоящего Solo burst на выбранном пороге пока ожидается.
+Даже успешный Solo burst не подтверждает конечную recognition-модель или foil
+responses. Выбор фаз, их automatic dispatcher и отдельная финальная проверка
+конечного состояния по-прежнему открыты.

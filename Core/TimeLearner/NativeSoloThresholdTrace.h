@@ -55,14 +55,24 @@ public:
             result.prepared->baseModelRevision==prepared.baseModelRevision &&
             result.prepared->effectiveModelRevision==prepared.effectiveModelRevision &&
             result.currentBaseRevision==prepared.baseModelRevision;
-        return Report(native,complete,valid,result.observation?result.observation->endReason:NativeProbeStatusName(result.status));
+        finishedReport=Report(native,complete,valid,result.observation?result.observation->endReason:NativeProbeStatusName(result.status));
+        return *finishedReport;
     }
     QJsonObject Interrupt(const std::string& reason)
     {
         Require(!closed && !reason.empty(),"invalid_solo_threshold_interruption");closed=true;
         // Reset may deliberately discard the executor result. Keep real sampled
         // values, but do not manufacture a cancelled NativeProbeResult.
-        return Report(QJsonValue(QJsonValue::Null),false,false,reason);
+        finishedReport=Report(QJsonValue(QJsonValue::Null),false,false,reason);
+        return *finishedReport;
+    }
+    // Immutable value copy of a genuinely closed recorder. No JSON import or
+    // owner access: a caller cannot turn an externally edited report into a
+    // trusted production reference through this API.
+    QJsonObject ClosedReport() const
+    {
+        Require(finishedReport.has_value(),"solo_threshold_trace_not_finished");
+        return *finishedReport;
     }
 private:
     QJsonObject Report(const QJsonValue& native,bool complete,bool valid,const std::string& reason) const
@@ -87,6 +97,7 @@ private:
     RDK::UModuleLifecycleObservation sourceLife;
     ProbeSpec spec;PreparedVerificationProbe prepared;
     QJsonObject source,requested;QJsonArray frames;
+    std::optional<QJsonObject> finishedReport;
     double baseline=0.,threshold=0.;
     std::optional<double> minimum,maximum,last,lastSpike;
     std::vector<double> spikes;
