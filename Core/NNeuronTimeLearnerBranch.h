@@ -844,6 +844,7 @@ public: // Methods
  bool HasNativeFinalizationPlan() const;
  void ValidateNativeFinalizationPlan() const;
  bool NativeLiveFinalizationDone() const;
+ void CancelNativeLiveFinalization(const std::string& reason);
  QJsonObject NativeLiveFinalizationReport() const;
 
  

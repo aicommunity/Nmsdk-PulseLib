@@ -4781,6 +4781,7 @@ bool NNeuronTimeLearnerBranch::ABeforeCalculate(void)
  {
   NativeLiveFinalization->ObservePhase(*this);
   if(NativeLiveFinalization->BlocksCalculation()){ForceSkipComponentCalculation();return true;}
+  if(NativeLiveFinalization->CancelledBeforeEntry())return true;
  }
 
  if(NativeRecognition)
@@ -5154,6 +5155,20 @@ void NNeuronTimeLearnerBranch::ValidateNativeFinalizationPlan() const
 {
  if(!NativeLiveFinalization)throw std::logic_error("live_finalization_plan_missing");
  NativeLiveFinalization->CheckControls(*this);
+}
+void NNeuronTimeLearnerBranch::CancelNativeLiveFinalization(const std::string& reason)
+{
+ if(!NativeLiveFinalization || NativeLiveFinalization->Done())return;
+ if(TimeLearner::NativeTrainingIsActive(NativeTrainingControl))
+ {
+  NativeTrainingControl.ExternalStop(TimeLearner::BindNativeTraining(*this,NativeProbeControl,NativeTrainingEditDepth));
+  NativeLiveFinalization->TrainingFinished(*this,Environment->GetTime().GetDoubleTime());
+ }
+ if(NativePostTunePhase && !NativePostTunePhase->Done())CancelNativePostTunePhase(reason);
+ NativeLiveFinalization->ObservePhase(*this);
+ NativeLiveFinalization->CancelBeforeEntry(reason);
+ if(CalculateMode.GetData()==0 && !IsNeedToTrain.IsConnected() && !IsNeedToTrain.UsesExternalDataSource())
+  IsNeedToTrain.SetDataDirect(false);
 }
 bool NNeuronTimeLearnerBranch::NativeLiveFinalizationDone() const {return NativeLiveFinalization && NativeLiveFinalization->Done();}
 QJsonObject NNeuronTimeLearnerBranch::NativeLiveFinalizationReport() const {return NativeLiveFinalization?NativeLiveFinalization->Report():QJsonObject{};}
@@ -8554,6 +8569,11 @@ bool NNeuronTimeLearnerBranch::Training(void)
 /// Main calculate tick for the learner
 bool NNeuronTimeLearnerBranch::ACalculate(void)
 {
+ if(NativeLiveFinalization && NativeLiveFinalization->CancelledBeforeEntry())
+ {
+  if(auto current=GetComponentL<NPulseNeuron>("Neuron",true))Output=current->Output;
+  return true;
+ }
  if(NativeRecognition)
  {
   if(!NativeEditFailure.empty())return true;

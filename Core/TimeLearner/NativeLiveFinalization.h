@@ -152,6 +152,12 @@ public:
     void Interrupt(const std::string& why) {
         if(status=="training" || status=="queued" || status=="post_tune") {status="interrupted";reason=why;}
     }
+    void CancelBeforeEntry(const std::string& why) {
+        if(status=="armed" || status=="training" || status=="queued") {
+            status="cancelled";reason=why.empty()?"external_cancel":why;
+        }
+    }
+    bool CancelledBeforeEntry() const {return status=="cancelled";}
     bool Pending() const {return status=="queued" || status=="post_tune";}
     bool BlocksCalculation() const {return status=="failed" || status=="recovery_required";}
     bool Done() const {return status!="armed" && status!="training" && !Pending();}
