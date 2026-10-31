@@ -1,5 +1,22 @@
 # Native threshold candidates и измеренное предложение порога
 
+Текущий проверенный подэтап 31.10: общий native grid transaction driver
+Classic/Branch N1/2000 Hz прошёл 2/2 normal cases и 17/17 независимых checks.
+Он исполняет полный разрешённый prefix порогов, независимо перестраивает
+выбранный candidate, подтверждает его и выполняет commit либо source rollback.
+Clock/frequency/owner mutation controls не разрешают чужой rollback. Raw grid
+и proof опубликованы в корневом s08-calibration-grid-normal-a2 (2dc5825f).
+Полный grid пока не встроен в standalone model proof schema 1.
+
+Все 10 завершённых матриц (30 trial/soma pairs) получили полный набор
+Soma/input PNG/SVG/PDF; renderer 4b714c757 прошёл 27/27 checks на M40.
+Дальнейшее уточнение легенд actual LT spike и выбранных full-response/peak
+панелей проходит отдельную visual проверку; весь cache не загружается в Git.
+Исходное обучение остаётся search_unresolved. ASan нового driver, production
+CLI/worker, весь PostTune, независимый Test и полная матрица остаются открытыми.
+Нижние записи сохраняют chronology своих snapshots; оперативная сводка —
+корневой Docs/StructTrain/TimeLearner/CurrentStatus-2026-10-31.ru.md.
+
 `Core/TimeLearner/NativeThresholdCandidate.h` создаёт immutable candidate из
 полного `timelearner_recognition_state`. Единственное разрешённое физическое
 изменение — реальный `LTZone.Threshold`. Образы storage, topology, bindings и
