@@ -113,7 +113,9 @@ ASan 986948 bytes. Все stored/member hashes локально сверены �
 N1, 2000Hz; они не закрывают полную normalization/profile/frequency матрицу.
 
 Для следующей интеграции перепроверен UContainer::Calculate: BeforeCalculate
-предшествует обновлению ActiveComponents cache и единственному native child loop.
+предшествует обновлению ActiveComponents cache и обходу native children.
+Движок допускает повтор обхода по ComponentReCalculation; новый controller
+не должен запрашивать его для пробы.
 При этом UContainer::Reset обнуляет CalcCounter, SkipComponentCalculation,
 ComponentReCalculation и wall-time counters, а Build вызывает AfterBuild/Reset.
 NativeRecognitionTransactionScope::Install сейчас использует owner Build/Init/Reset
