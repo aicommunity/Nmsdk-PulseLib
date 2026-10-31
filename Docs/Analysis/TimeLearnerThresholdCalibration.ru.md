@@ -262,5 +262,9 @@ RecoveryRequired без чтения чужого result или перезапи
 Собственный import обновляет observation; Reset/clock/frequency guards
 сохранены. Token является ephemeral control state, не Rdk property, storage
 образом или serialized dynamic checkpoint. Build/Init/Reset/Calculate семантика
-не изменена. Исправленный снимок требует отдельной normal/ASan приёмки,
-включая normal grid flow и retained observer при повторном import.
+не изменена. На root 0b89622 / PulseLib fad7aed приняты normal 8/8 и ASan
+8/8: шесть interference controls, включая retained observer при повторном
+import, и два normal grid flow. Независимый reader 322b118 прошёл 4/4 на
+каждом наборе с первичными source-моделями и полными observations. Source
+training остаётся search_unresolved. Это приёмка конкретных ownership
+регрессий; production worker, полный PostTune и mode/profile matrix открыты.
