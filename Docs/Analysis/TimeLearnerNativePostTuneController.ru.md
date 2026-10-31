@@ -86,8 +86,9 @@ weight-модель, сохраняет исходный порог и выда�
 При RecoveryRequired восстановление owner не предполагается; derived audit
 считает calibration state unverified даже при raw declared fixed policy.
 
-Python transaction analyze/report уже поддерживает schema 2. Production
-Console/job/worker и public learner properties пока к fixed API не подключены;
+Python transaction analyze/report поддерживает schema 2. Root 2d6ab1a0
+добавляет production Console/job/worker schema 2; их отдельная серверная приёмка
+ещё выполняется. Public learner properties к fixed API не подключены;
 оба optional-mode guards остаются. Не удалять их без отдельного phase plan,
 сохранения Solo outcome до import и legal-boundary lifecycle orchestration.
 Согласованные root primary bundles: s08-native-posttune-fixed-normal-a2
