@@ -10,7 +10,7 @@ Solo, исходные phase parameters и фактические связи п�
 полностью освобождённой границей probe: ни queued/running, ни непотреблённого
 результата/физического routing state. NativeProbeOwnsControl сам по себе этого
 не доказывает; новый IsNativeProbeAtEditBoundary учитывает состояние executor.
-Lifecycle, session/epoch/outcome и значения/связи controls сравниваются до и
+Lifecycle всех живых descendants, session/epoch/outcome и значения/связи controls сравниваются до и
 после экспорта. Исходный training outcome/certificate сохраняется без повышения.
 
 Stopped package по умолчанию отвергается; явный allowDiagnostic сохраняет
@@ -42,3 +42,12 @@ target-reference/parallel-peak/mid dispatch. Родительскую модел
 Приёмка: реальные Classic/Branch source packages, source bindings, queued probe,
 external stop и распознавание полного объявленного набора после import; неизменность
 снимка после Default/teardown; отсутствие зависимости от порядка public enums.
+
+
+Снимок фиксирует finalization intent именно в момент Capture, а не историю
+изменения параметров во время Train. Будущий dispatcher должен отдельно
+замораживать декларацию при Start и различать собственные переходы controls.
+Нельзя поднимать IsNeedToTrain после восстановления Finished ради тестового
+снимка: для ControllerVersion=2 это штатный запрос новой сессии/ResetControl.
+Connected provider может иметь true без вызова setter; этот реальный случай
+проверяется отдельно. Принимается фактический request value, а не желаемый.
