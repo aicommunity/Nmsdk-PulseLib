@@ -27,8 +27,9 @@ valid / proposal_eligible=false; cancelled result не выдумывается.
 Classic сохраняет полный поток на всех кончиках. Branch сохраняет штатное mute
 активного подключения. Recorder не превращает Branch solo в parallel recognition,
 не подменяет burst single-pulse стимулом и не изменяет математическую цель
-CapturedPerInput. Выбор входа/фазы для target-reference, формулы mode/fraction/
-clamps, реальная spiking confirmation и automatic dispatcher ещё не реализованы.
+CapturedPerInput. Выбор входа/фазы и automatic dispatcher ещё не реализованы.
+Формулы mode/fraction/clamps и реальный выбранный Solo threshold проверены ниже;
+подтверждение конечной recognition-модели остаётся открытым.
 
 Адресные интеграционные сценарии: Classic/Branch × обычный burst, реальный
 spiking threshold, Reset, изменение физического порога между native ticks.
@@ -73,9 +74,10 @@ UpdateIterLTZPotential учитывает только ltz>0, тогда как 
 все конечные значения, включая нулевой baseline и отрицательный post-spike
 recovery. Подставлять raw minimum в legacy gap_fraction без отдельного решения
 нельзя. Свежие nonspiking extrema не подтверждают выбранный spiking threshold;
-нужен реальный confirmation-прогон. Сам расчёт и dispatcher остаются открыты.
+нужен реальный confirmation-прогон. Расчёт и Solo confirmation проверены ниже;
+configured dispatcher и final recognition confirmation остаются открыты.
 
-## Target-reference proposal: реализация, runtime ожидается
+## Target-reference proposal: адресные runtime-проверки
 
 NativeTrainingThresholdReference использует только ClosedReport реального recorder,
 не принимает произвольный импортированный JSON. Копия evidence не изменяет recorder.
@@ -88,8 +90,47 @@ Fraction допускает любое конечное значение, как
 
 Proposal хранит источник, границы, extrema/count, unclamped/clipped значения и
 requires_spiking_confirmation=true. Он не пишет в нейрон и не утверждает
-calibrated/PASS. Runtime-проверка двух формул, обоих clamps, stale/ineligible
-источников и настоящего Solo burst на выбранном пороге пока ожидается.
+calibrated/PASS. Две формулы, оба clamps, stale/ineligible источники и настоящий Solo burst
+на выбранном пороге проверены на обоих workers.
 Даже успешный Solo burst не подтверждает конечную recognition-модель или foil
 responses. Выбор фаз, их automatic dispatcher и отдельная финальная проверка
 конечного состояния по-прежнему открыты.
+
+### Проверки target-reference 31.10.2026
+
+Первый gate root 3d6bd14a677d3d28309d5fd9988f573d805120a2 /
+PulseLib 273ae17d44b4118689c64b912d0e44595419d12a:
+normal 33/33 (26.766 s), ASan 33/33 (170.859 s).
+После исключения выдуманных общих defaults API требует все четыре параметра явно:
+root b922aaa20119c559367d12b50c6185543890014d /
+PulseLib 909647499fc9877fa1ad066d6330cb39326adbd1;
+normal 8/8 (6.835 s), ASan 8/8 (44.246 s), без skips, leak checking выключен.
+Public defaults не менялись: Classic fraction=0.85/min=0.0115/max=0.05;
+Branch fraction=0.99/min=0.0115/max=1.0. Интеграционный fixture явно задаёт
+fraction=0.5 и свои bounds; это не новые defaults продукта.
+
+Независимые readers на последнем gate: normal 4/4 (0.704 s), ASan 4/4 (0.571 s),
+без skips. На worker: 14 proposals, две actual выбранные Solo-пробы и 28 signed
+corruption controls (10 trace + 16 proposal + 2 confirmation). Порог Classic
+0.0016869611261023931, Branch 0.0014856928851619267; в каждом полном окне
+зарегистрирован один настоящий spike. Это не 8/8 recognition: foil-пробы и
+конечная parallel-модель здесь не проверяются. Источник — сохранённый Solo с
+исходным Train outcome search_unresolved, не новое холодное обучение.
+
+Latest job повторно использует завершённый runtime только после проверки живых
+процессов; snapshots before/after одинаковы внутри задания. Перед повторным Elder
+запуском удалены только 8 GNU ar caches завершённого старого Solo runtime,
+86079652 logical bytes; top-level executable hashes сохранены. Исторические
+логи и unique primary data не удалялись. Failed low-disk попытка сохранена.
+
+
+Два подтверждающих Solo burst отрисованы тем же production renderer: 5 полных
+channel-trace pairs (3 soma, 2 LTZone), без прореживания; source JSON неизменны.
+M40 cache — 110 files / 6426888 bytes, rendering/checks 8.010 s. Git proof
+s08-native-training-threshold-visual-asan-a1: 8 metadata members / 32452 bytes и
+8 selected PNG. Все hashes и связи с двумя настоящими proposal/confirmation
+записями проверены. Выбранные soma[0]/LTZone overview/first zoom обеих топологий
+просмотрены при 1920×960. Soma/input scale читаем; spike после первого stimulus.
+Shared Y LTZone подавляет малое положительное отклонение отрицательным recovery;
+для визуального принятия crossing нужен отдельный positive-amplitude detail.
+Полная visual acceptance не заявляется.
