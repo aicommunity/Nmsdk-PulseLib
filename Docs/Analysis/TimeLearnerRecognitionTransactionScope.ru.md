@@ -15,4 +15,12 @@ Destructor scope ничего не откатывает: завершение п
 отдельным от нового алгоритма PostTune. Старый calibration controller использует
 этот же helper с прежним diagnostic prefix. Приёмка требует A/B на обоих workers:
 прежний immutable binary и новая сборка, реальные grid/ownership tests и сравнение
-всех записанных физических CSV. До таких receipts это непроверенная переработка.
+всех записанных физических CSV.
+
+Механический root efb25123 / Core fbf6b73 завершил такой A/B на normal и ASan:
+два grid cases и восемь ownership controls у каждого бинарника, четыре независимых
+checks на каждый ownership набор. Все 28 CSV и восемь JSON совпали точно. Первый
+A1 с восемью missing-fixture skips сохранён как непринятый; actual grid cases
+приняты отдельным recovery receipt, ownership cases выполнены отдельно без skips.
+Shared-scope передача в новый PostTune/calibration controller является следующим
+изменением: normal Core c8a1995 проверен отдельно, его ASan ещё выполняется.

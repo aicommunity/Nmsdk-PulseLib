@@ -16,7 +16,14 @@ Calculate по-прежнему принадлежит штатному schedule
 источника не переносится на новый recognition graph. Raw matrices/history
 сохраняются в parent report; статистическая независимость не утверждается.
 
-Это рабочий, ещё не принятый контроллер. Полная постановка, budgets, режимы и
+Normal root 44a1598a / Core c8a1995 прошёл 10 native cases и 19 independent
+checks без skips; это N1/2000 Гц/два входа, не полная приёмка контроллера.
+Исправлен ложный recording-budget stop: учитывается физическое число отсчётов
+`min(cap, ceil(duration*frequency)+2)`, а не весь разрешённый safety cap.
+Все 24 parent reports/raw matrices и модели сохраняются; положительные пары,
+search_unresolved и ошибки/отмены различаются. Source Train не становится Exact.
+
+Полная постановка, budgets, режимы и
 остальные обязательства: `Docs/StructTrain/TimeLearner/NativePostTuneController.ru.md`
 корня. Public learner/Console dispatch, continuation и полная mode/profile/frequency
 matrix остаются незавершёнными. Legacy ControllerVersion=1 не заменяется этим API.
