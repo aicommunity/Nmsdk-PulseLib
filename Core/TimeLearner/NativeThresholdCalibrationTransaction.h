@@ -36,7 +36,8 @@ public:
         Require(owner.IsNativeRecognitionTrialIdle(),"calibration_transaction_requires_idle_recognition");
         source=owner.ExportNativeRecognitionState(implementation);
         Require(source["kind"]==QJsonValue("timelearner_recognition_state"),"calibration_transaction_requires_base_recognition");
-        expectedPackage=source;Validate();
+        expectedPackage=source;storage=owner.GetStorage().Get();environment=owner.GetEnvironment().Get();
+        frequency=owner.GetTimeStep();lastClock=environment->GetTime().GetDoubleTime();Validate();
     }
     NativeThresholdCalibrationTransaction(const NativeThresholdCalibrationTransaction&)=delete;
     NativeThresholdCalibrationTransaction& operator=(const NativeThresholdCalibrationTransaction&)=delete;
@@ -148,6 +149,8 @@ private:
     NativeThresholdGridSpec spec;
     std::string implementation,targetHash,reason;
     RDK::UModuleLifecycleObservation lifecycle;
+    RDK::UStorage* storage=nullptr;RDK::UEnvironment* environment=nullptr;
+    unsigned frequency=0;double lastClock=0.;
     QJsonObject source,expectedPackage,calibratedPackage;
     NativeCalibrationMatrix current,confirmation;
     std::vector<Record> records;
@@ -214,8 +217,15 @@ private:
         // image aliases. Remaining candidates use the same immutable physics.
         Candidate(spec.thresholds.front());
     }
-    void CheckLifecycle() const
-    {Require(lifecycle.IsCurrent(),"calibration_transaction_owner_lifecycle_changed");}
+    void CheckLifecycle()
+    {
+        Require(lifecycle.IsCurrent(),"calibration_transaction_owner_lifecycle_changed");
+        Require(owner.GetStorage().Get()==storage && owner.GetEnvironment().Get()==environment &&
+            owner.GetTimeStep()==frequency,"calibration_transaction_context_changed");
+        const double now=environment->GetTime().GetDoubleTime();
+        Require(Detail::Finite(now) && !Detail::After(lastClock,now),"calibration_transaction_clock_moved_backwards");
+        lastClock=now;
+    }
     void CheckPackage()
     {
         CheckLifecycle();
