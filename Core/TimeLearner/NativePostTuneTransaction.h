@@ -157,6 +157,11 @@ private:
     unsigned pass=0,multiplier=0;bool branch=false,installed=false,waiting=false,sourceRestored=false;
     NativePostTuneTransactionStatus status=NativePostTuneTransactionStatus::Running;
     static void Require(bool value,const char* why){if(!value)throw std::logic_error(why);}
+    static QJsonValue Threshold(const QJsonObject& p)
+    {
+        return p.value("neuron").toObject().value("metadata").toObject()
+            .value("calibration").toObject().value("threshold");
+    }
     static const char* ModeName(NativePostTuneControllerMode mode)
     {
         switch(mode){case NativePostTuneControllerMode::Off:return "off";case NativePostTuneControllerMode::KeepDone:return "keep_done";
@@ -188,8 +193,13 @@ private:
         if(spec.finalization==NativePostTuneFinalization::Calibrate)
             Require(!spec.calibration.thresholds.empty() && spec.calibration.thresholds.size()<=256 &&
                 spec.calibration.maximumCandidates>0 && spec.calibration.maximumCandidates<=256,"invalid_post_tune_calibration_budget");
-        else Require(spec.calibration.thresholds.empty() && spec.calibration.maximumCandidates==0,
-            "fixed_post_tune_has_unused_calibration_grid");
+        else
+        {
+            Require(spec.calibration.thresholds.empty() && spec.calibration.maximumCandidates==0,
+                "fixed_post_tune_has_unused_calibration_grid");
+            const auto fixed=Threshold(source);
+            Require(fixed.isDouble() && Detail::Finite(fixed.toDouble()),"fixed_post_tune_requires_known_threshold");
+        }
         std::set<double> thresholds;for(double t:spec.calibration.thresholds)
             Require(Detail::Finite(t) && thresholds.insert(t).second,"invalid_post_tune_threshold");
         const auto target=source["source_solo"].toObject()["protocol"].toObject()["pattern_hash"].toString().toStdString();
@@ -269,11 +279,7 @@ private:
             // No threshold candidate, threshold search, silent-threshold
             // workaround or fabricated calibration proof. Weight selection
             // alone never asserts target detection or absence of false spikes.
-            const auto threshold=[](const QJsonObject& p) {
-                return p.value("neuron").toObject().value("metadata").toObject()
-                    .value("calibration").toObject().value("threshold");
-            };
-            Require(threshold(records[*best].candidate)==threshold(source),"fixed_post_tune_changed_threshold");
+            Require(Threshold(records[*best].candidate)==Threshold(source),"fixed_post_tune_changed_threshold");
             scope->Install(records[*best].candidate,expected);scope->CheckPackage(expected);
             finalPackage=expected;status=NativePostTuneTransactionStatus::WeightsSelected;return;
         }
