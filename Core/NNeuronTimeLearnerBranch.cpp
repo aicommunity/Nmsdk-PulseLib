@@ -1,3 +1,4 @@
+#include "TimeLearner/NativeLiveFinalization.h"
 #include "TimeLearner/NativeLearnedOwner.h"
 #include "TimeLearner/NativeRecognitionOwner.h"
 #include "TimeLearner/NativeOwnedPostTunePhaseImpl.h"
@@ -4762,12 +4763,24 @@ bool NNeuronTimeLearnerBranch::ABuild(void)
 /// Sources (generators) before Neuron — Dataset calc contract
 bool NNeuronTimeLearnerBranch::ABeforeCalculate(void)
 {
+ if(NativeLiveFinalization)
+ {
+  const auto phase=NativeLiveFinalization;
+  TimeLearner::NativeLifecycleScope scope(NativeLiveFinalizationDepth);
+  phase->BeforeTick(*this,Environment->GetTime().GetDoubleTime());
+ }
+
  if(NativePostTunePhase && !NativePostTunePhase->Done())
  {
   const auto phase=NativePostTunePhase;
   TimeLearner::NativeLifecycleScope scope(NativePostTunePhaseDepth);
   phase->BeforeTick(Environment->GetTime().GetDoubleTime());
   FinishNativePostTunePhase();
+ }
+ if(NativeLiveFinalization)
+ {
+  NativeLiveFinalization->ObservePhase(*this);
+  if(NativeLiveFinalization->BlocksCalculation()){ForceSkipComponentCalculation();return true;}
  }
 
  if(NativeRecognition)
@@ -4825,7 +4838,7 @@ bool NNeuronTimeLearnerBranch::ABeforeCalculate(void)
 
 bool NNeuronTimeLearnerBranch::ABeforeDefault(void)
 {
- InterruptNativePostTunePhase("learner_default");NativePostTunePhase.reset();
+ InterruptNativePostTunePhase("learner_default");NativePostTunePhase.reset();NativeLiveFinalization.reset();
  NativeRecognition.reset();
  NativeConfiguredPlan.reset();NativeConfiguredSinks={};NativeConfiguredText.clear();
  NativeModelDeclaration.reset();
@@ -5094,6 +5107,8 @@ void NNeuronTimeLearnerBranch::FinishNativePostTunePhase()
 }
 void NNeuronTimeLearnerBranch::InterruptNativePostTunePhase(const std::string& reason)
 {
+ if(NativeLiveFinalization && !NativeLiveFinalizationDepth && !NativePostTunePhaseDepth)
+  NativeLiveFinalization->Interrupt(reason);
  if(!NativePostTunePhase || NativePostTunePhase->Done())return;
  if(NativePostTunePhaseDepth){NativePostTunePhase->InternalLifecycle(reason);return;}
  NativePostTunePhase->Interrupt(reason);FinishNativePostTunePhase();
@@ -5127,21 +5142,45 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeRecogn
  }
  return result;
 }
+void NNeuronTimeLearnerBranch::ConfigureNativeFinalization(const TimeLearner::NativeLiveFinalizationSpec& specification)
+{
+ if(NativeRecognition || TimeLearner::NativeTrainingIsActive(NativeTrainingControl) ||
+    (NativeLiveFinalization && NativeLiveFinalization->Pending()))
+  throw std::logic_error("live_finalization_configuration_requires_idle_solo");
+ NativeLiveFinalization=std::make_shared<TimeLearner::NativeLiveFinalization>(specification);
+}
+bool NNeuronTimeLearnerBranch::HasNativeFinalizationPlan() const {return bool(NativeLiveFinalization);}
+void NNeuronTimeLearnerBranch::ValidateNativeFinalizationPlan() const
+{
+ if(!NativeLiveFinalization)throw std::logic_error("live_finalization_plan_missing");
+ NativeLiveFinalization->CheckControls(*this);
+}
+bool NNeuronTimeLearnerBranch::NativeLiveFinalizationDone() const {return NativeLiveFinalization && NativeLiveFinalization->Done();}
+QJsonObject NNeuronTimeLearnerBranch::NativeLiveFinalizationReport() const {return NativeLiveFinalization?NativeLiveFinalization->Report():QJsonObject{};}
 void NNeuronTimeLearnerBranch::BeginNativeTraining(TimeLearner::NativeTrainingPlan plan,bool recaptureReferences)
 {
  if(NativeRecognition)throw std::logic_error("native_recognition_requires_explicit_solo_import_or_cold_model");
  if(TimeLearner::NativeTrainingIsActive(NativeTrainingControl))
   throw std::logic_error("native_training_already_active");
+ if(NativeLiveFinalization && (IsNeedToTrain.IsConnected() || IsNeedToTrain.UsesExternalDataSource()) && !IsNeedToTrain.GetData())
+  throw std::logic_error("live_finalization_external_request_not_active");
  NativeTrainingRequestIntent.Clear();
  NativeTrainingOwned=true;NativeProbeControl.ResetControl();
  if(recaptureReferences)NativeTrainingControl.InvalidateTarget();else NativeTrainingControl.ResetControl();
- IsNeedToTrain.SetDataDirect(true);TrainingPhase.SetDataDirect(kPhaseSync);
+ if(!NativeLiveFinalization || (!IsNeedToTrain.IsConnected() && !IsNeedToTrain.UsesExternalDataSource()))
+  IsNeedToTrain.SetDataDirect(true);
+ TrainingPhase.SetDataDirect(kPhaseSync);
  try
  {
   if(!IsReady() || !IsInit())throw std::invalid_argument("native_training_requires_initialized_ready_learner");
   if(!NativeEditFailure.empty())throw std::invalid_argument("native_model_requires_repair_after_failed_edit");
   if(SyncCapacitanceTrim.GetData()>0)throw std::invalid_argument("native_training_capacitance_trim_not_yet_supported");
-  if(EnablePostTrainTuning.GetData() || AutoCalibrateFixedLTZThreshold.GetData())
+  if(NativeLiveFinalization)
+  {
+   ValidateNativeFinalizationPlan();
+   NativeLiveFinalization->CheckTrainingDesign(*this,true);
+  }
+  else if(EnablePostTrainTuning.GetData() || AutoCalibrateFixedLTZThreshold.GetData())
    throw std::invalid_argument("native_training_post_tune_calibration_not_yet_supported");
   const auto neuron=GetComponentL<NPulseNeuron>("Neuron",true);
   if(!neuron || neuron->UseElementDefaults.GetData())
@@ -5152,6 +5191,7 @@ void NNeuronTimeLearnerBranch::BeginNativeTraining(TimeLearner::NativeTrainingPl
   NativeTrainingControl.Start(std::move(plan),TimeLearner::BindNativeTraining(*this,NativeProbeControl,NativeTrainingEditDepth),
       Environment->GetTime().GetDoubleTime(),TimeLearner::NativeTrainingWallTime());
   NativeTrainingRequestIntent.Capture(requestControls,NativeTrainingControl,startedTime);
+  if(NativeLiveFinalization)NativeLiveFinalization->Started(*this);
  }
  catch(const std::exception& error){NativeTrainingControl.FailConfiguration(error.what());}
  catch(...){NativeTrainingControl.FailConfiguration("native_training_start_exception");}
@@ -8534,8 +8574,14 @@ bool NNeuronTimeLearnerBranch::ACalculate(void)
        Environment->GetTime().GetDoubleTime(),TimeLearner::NativeTrainingWallTime());
    if(NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Finished)
    {
+    if(NativeLiveFinalization)
+     NativeLiveFinalization->TrainingFinished(*this,Environment->GetTime().GetDoubleTime());
     TrainingPhase.SetDataDirect(NativeTrainingControl.Outcome()==TimeLearner::TrainingStatus::Exact?kPhaseDone:kPhaseFailed);
-    if(CalculateMode.GetData()==0)IsNeedToTrain.SetDataDirect(false);
+    if(CalculateMode.GetData()==0 && (!NativeLiveFinalization || !NativeLiveFinalization->Pending()))
+    {
+     if(!NativeLiveFinalization || (!IsNeedToTrain.IsConnected() && !IsNeedToTrain.UsesExternalDataSource()))
+      IsNeedToTrain.SetDataDirect(false);
+    }
    }
    if(auto current=GetComponentL<NPulseNeuron>("Neuron",true))Output=current->Output;
    return true;

@@ -35,7 +35,7 @@ See file license.txt for more information
 #include <cstring>
 
 namespace NMSDK {
-namespace TimeLearner { class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; }
+namespace TimeLearner { class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; class NativeLiveFinalization; struct NativeLiveFinalizationSpec; }
 
 using namespace RDK;
 
@@ -813,6 +813,12 @@ public: // Methods
  QJsonObject NativePostTunePhaseReport() const;
  QJsonObject NativePostTunePhaseExecution() const;
  void CancelNativePostTunePhase(const std::string& reason);
+ // Explicit live Train declaration; compatibility configs without it retain their old guards.
+ void ConfigureNativeFinalization(const TimeLearner::NativeLiveFinalizationSpec& specification);
+ bool HasNativeFinalizationPlan() const;
+ void ValidateNativeFinalizationPlan() const;
+ bool NativeLiveFinalizationDone() const;
+ QJsonObject NativeLiveFinalizationReport() const;
 
  
  // --------------------------
@@ -972,6 +978,8 @@ protected:
  std::unique_ptr<TimeLearner::NativeRecognitionHold> NativeRecognition;
  std::shared_ptr<TimeLearner::NativeOwnedPostTunePhase> NativePostTunePhase;
  unsigned NativePostTunePhaseDepth=0;
+ std::shared_ptr<TimeLearner::NativeLiveFinalization> NativeLiveFinalization;
+ unsigned NativeLiveFinalizationDepth=0;
  void InterruptNativePostTunePhase(const std::string& reason);
  void FinishNativePostTunePhase();
 
