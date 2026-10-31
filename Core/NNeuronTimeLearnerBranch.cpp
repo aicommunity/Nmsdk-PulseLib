@@ -4977,6 +4977,19 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeLearne
  return result;
 }
 
+std::weak_ptr<const void> NNeuronTimeLearnerBranch::ObserveNativeRecognitionContext() const
+{
+ if(NativeRecognition)return NativeRecognition->contextLifetime;
+ return {};
+}
+bool NNeuronTimeLearnerBranch::HasNativeRecognitionTrialIdentity(const std::string& runId,const std::string& trialId) const
+{
+ return NativeRecognition && NativeRecognition->trials.HasIdentity(runId,trialId);
+}
+bool NNeuronTimeLearnerBranch::IsNativeRecognitionTrialIdle() const
+{
+ return NativeRecognition && !NativeRecognition->trials.Busy() && !NativeRecognition->trials.HasResult();
+}
 void NNeuronTimeLearnerBranch::QueueNativeRecognitionTrial(TimeLearner::NativeRecognitionTrialRequest request)
 {
  if(!NativeRecognition || !NativeEditFailure.empty())throw std::logic_error("recognition_model_not_available");
@@ -7436,6 +7449,16 @@ bool NNeuronTimeLearnerBranch::MaybeStartInferenceMidProbes(void)
  const int n = NumInputDendrite.GetData();
  if(n < 1)
   return false;
+ // A new saved-matrix inference attempt owns fresh observations. Equal
+ // sample cardinality is not evidence that an earlier sample was visited.
+ PostTuneSampleState.clear();
+ PostTuneRunInvalid = false;
+ PostTuneRunTerminal = PostTrainTune::kResultNone;
+ PostTuneResult = PostTrainTune::kResultNone;
+ PostTrainTuneComplete = false;
+ Stage0SepHave = false;
+ Stage0SepTgt = Stage0SepMaxFoil = Stage0SepGap = Stage0SepMargin =
+  std::numeric_limits<double>::quiet_NaN();
  PostTuneTargetIsi.assign(static_cast<size_t>(n), 0.0);
  // Prefer sample 0 of current Dataset Matrix (Test pack A target).
  if(Dataset && Dataset->MaxSpikesPerFeature.GetData() == n
@@ -7487,6 +7510,7 @@ bool NNeuronTimeLearnerBranch::MaybeStartInferenceMidProbes(void)
   if(ns >= 2)
   {
    PostTuneMetrics.assign(static_cast<size_t>(ns), 0.0);
+   PostTuneSampleState.assign(static_cast<size_t>(ns), PostTrainTune::SampleMetricState());
    PostTuneFreeRunActive = true;
    PostTuneLiveSomaMax = 0.0;
    PostTuneLastDatasetIter = -1;

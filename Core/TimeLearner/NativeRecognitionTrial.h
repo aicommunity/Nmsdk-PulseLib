@@ -11,14 +11,19 @@ struct NativeRecognitionTrialRequest {
     double duration=0.;
     RecognitionResetPolicy resetPolicy=RecognitionResetPolicy::PerTrial;
     std::size_t maximumSamples=1000000;
+    // Opt-in schema 2: the actual LTZone decision potential, not soma amplitude
+    // or spike output reconstructed as an analogue measurement.
+    bool recordThresholdPotential=false;
 };
 struct NativeRecognitionTrialSample {
     double time=0.,stimulus=0.,ltOutput=0.;
+    double thresholdPotential=0.;
     std::vector<double> somaPotentials,stimulusHistory,spikeHistory;
 };
 struct NativeRecognitionTrialObservation {
     NativeRecognitionTrialRequest request;
     std::string modelBefore,modelAfter,reason;
+    std::string thresholdPotentialPath,thresholdPotentialClass;
     double begin=0.,end=0.,closedAt=0.,frequencyHz=0.;
     bool armed=false,complete=false,valid=false;
     std::vector<double> stimulusTimes,spikeTimes;
@@ -31,6 +36,10 @@ public:
     void Queue(NativeRecognitionTrialRequest request);
     bool Busy() const { return queued || running; }
     bool HasResult() const { return bool(result); }
+    bool HasIdentity(const std::string& runId,const std::string& trialId) const {
+        const auto* value=current?&*current:result?&*result:nullptr;
+        return value && value->request.runId==runId && value->request.trialId==trialId;
+    }
     void BeforeChildren(const NativeProbeBindings& bindings,double time,
         const std::function<void(const MDMatrix<double>&)>& applyPresentation,
         const std::function<std::string(bool)>& readRevision);
