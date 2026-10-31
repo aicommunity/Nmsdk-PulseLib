@@ -98,4 +98,21 @@ NativePostTuneTransactionSpec DecodeNativePostTuneControlsV2(const QJsonObject& 
         NativePostTuneFinalization::Calibrate:NativePostTuneFinalization::KeepFixedThreshold;
     return result;
 }
+QJsonObject EncodeNativePostTuneControlsV3(const NativePostTuneTransactionSpec& spec)
+{
+    auto inherited=spec;inherited.weightProbeThreshold.reset();
+    auto result=EncodeNativePostTuneControlsV2(inherited);result["schema_version"]=3;
+    result["weight_probe_threshold"]=spec.weightProbeThreshold?QJsonValue(Numeric(*spec.weightProbeThreshold)):QJsonValue(QJsonValue::Null);
+    return result;
+}
+NativePostTuneTransactionSpec DecodeNativePostTuneControlsV3(const QJsonObject& controls,NativeThresholdGridSpec calibration)
+{
+    Keys(controls,{"schema_version","finalization","weight_probe_threshold","mode","metric","canonical_floor","canonical_last",
+        "resistance_bounds","search_passes","maximum_candidates","maximum_recorded_samples","minimum_positive_gap"});
+    Require(Number(controls["schema_version"])==3.,"unsupported_post_tune_controls_schema");
+    auto inherited=controls;inherited.remove("weight_probe_threshold");inherited["schema_version"]=2;
+    auto result=DecodeNativePostTuneControlsV2(inherited,std::move(calibration));
+    if(!controls["weight_probe_threshold"].isNull())result.weightProbeThreshold=Number(controls["weight_probe_threshold"]);
+    return result;
+}
 }

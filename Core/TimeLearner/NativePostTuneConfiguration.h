@@ -15,4 +15,8 @@ NativePostTuneTransactionSpec DecodeNativePostTuneControls(const QJsonObject& co
 QJsonObject EncodeNativePostTuneControlsV2(const NativePostTuneTransactionSpec& specification);
 NativePostTuneTransactionSpec DecodeNativePostTuneControlsV2(const QJsonObject& controls,
     NativeThresholdGridSpec calibration);
+// Schema 3 declares separate measurement physics; null keeps inheritance.
+QJsonObject EncodeNativePostTuneControlsV3(const NativePostTuneTransactionSpec& specification);
+NativePostTuneTransactionSpec DecodeNativePostTuneControlsV3(const QJsonObject& controls,
+    NativeThresholdGridSpec calibration);
 }
