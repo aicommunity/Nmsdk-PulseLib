@@ -33,13 +33,24 @@ original reader (158.845 s), затем 20/20 strict-container reader на те�
 controls; 4/4 PostTune, 8/8 calibration и 4/4 provenance reader checks без skips.
 ASan bundle 88c47ddf: 1089 members / 6054552 bytes. Использовались сохранённые
 normal модели; это не независимое переобучение. Калибровка двух паттернов
-не является восьмипаттерновой серией. N0 gate добавлен отдельно и ещё не принят.
+не является восьмипаттерновой серией. Отдельный N0 normal gate на source root
+fe45166a прошёл Classic/Branch, 2/2 native (459.529 s), затем 12/12 evidence
+checks (157.913 s), без skips. Bundle 437c92cd: 220 members / 3601844 bytes;
+физика и допуски не ослаблялись. N0 ASan выполняется отдельно и ещё не принят.
 
 Native visual bundle d94309d8 покрывает 24 parent reports, 61 completed matrices,
 184 trial-soma pairs и 8668 cache files на Data M40. 20 evidence и 9 report/plot
 checks прошли; 16 selected PNG просмотрены в исходном размере. Конечное окно
 не доказывает settling/отсутствие более поздних событий. Полная visual acceptance
-и новые production Console waveforms остаются открытыми.
+остаётся открытой.
+
+Новые production Console waveforms также построены: renderer root 4c497f41d,
+18 run-bound reports, 59 completed matrices, 178 trial-soma pairs, 8437 cache
+files. По 8/8 report/plot checks на исходном и последнем reader 7e8d97f3f,
+без skips (13.076 / 12.419 s). Compact bundle fd4f9f2b хранит 422 metadata
+members / 335060 bytes и 12 selected PNG; полные отчёты остаются кэшем M40.
+Выбранные PNG просмотрены в 1920×960, полная visual acceptance/PDF/SVG не приняты.
+Нет независимого Test, доказательства вклада структурного обучения или 8/8.
 
 Полная постановка, budgets, режимы и
 остальные обязательства: `Docs/StructTrain/TimeLearner/NativePostTuneController.ru.md`
