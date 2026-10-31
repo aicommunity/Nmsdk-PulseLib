@@ -289,3 +289,21 @@ normal/ASan совпали; это deterministic fixtures, не независи
 Source training search_unresolved сохранён. Стартовые process mappings не
 обещают полного позднего plugin census. Полный ConditionSpec/pipeline,
 Train/export/evaluate scheduler и PostTune/mode/profile matrix остаются открытыми.
+
+В корневой Console добавлены отдельные native Train/export/evaluate операции
+и owned CLI: [контракт](../../../../Docs/StructTrain/TimeLearner/NativePipelineWorker.ru.md).
+Холодный Train использует class-image definitions из profile archives, но не
+импортирует обученный instance. Начальный граф и параметры читаются до включения
+IsNeedToTrain. Общий helper устанавливает частоту до TakeObject/Build и сохраняет
+штатные scheduler/Init/Reset; nested Calculate и анализ bool Build/Reset отсутствуют.
+Factory default EnablePostTrainTuning=true не означает поддержку PostTune этим
+путём: первый worker явно задаёт optional modes Off до Build. Он не меняет
+legacy defaults и не расширяет приёмку ControllerVersion=2 на C-trim/PostTune.
+
+Native root d5ef1fa: normal/ASan по четыре cold cases Classic/Branch × N0/N1,
+12 фаз Train/export/frozen evaluation, 2000 Гц. Все training outcomes
+SearchUnresolved, все полные frozen observations valid; ни один не повышен
+до Exact. Owned CLI и source-primary snapshots проверены отдельно. Root tests
+b839e879: 7/7 normal/ASan; one-tick Train сохраняет diagnostic stopped state,
+который native conversion отклоняет. Это scoped integration, не полная матрица
+моделей и не подтверждение научной разделимости.
