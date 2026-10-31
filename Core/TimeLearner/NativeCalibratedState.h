@@ -7,6 +7,9 @@ struct NativeCalibrationMatrix {
     std::vector<NativeRecognitionTrialRequest> requests;
     std::vector<NativeRecognitionTrialObservation> observations;
 };
+// Shared production encoding used by the proof and transaction report.
+QJsonObject EncodeNativeCalibrationRequest(const NativeRecognitionTrialRequest& request);
+QJsonObject EncodeNativeCalibrationMatrix(const NativeCalibrationMatrix& matrix);
 struct NativeThresholdConfirmationSpec {
     std::string protocol="historical_same_matrix";
     std::string dataPartitionId,attemptId,clockId;

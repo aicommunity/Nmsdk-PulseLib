@@ -169,6 +169,8 @@ void CheckThresholdRole(PreparedNativeRecognitionState& model,const QJsonObject&
     Require(bool(zone),"missing_calibrated_ltzone");RequireNativeScalarSpikeThreshold(*zone);
 }
 }
+QJsonObject EncodeNativeCalibrationRequest(const NativeRecognitionTrialRequest& request){return Request(request);}
+QJsonObject EncodeNativeCalibrationMatrix(const NativeCalibrationMatrix& matrix){return Matrix(matrix);}
 QJsonObject CreateNativeCalibratedState(const QJsonObject& candidate,const NativeThresholdConfirmationSpec& spec,
     const NativeCalibrationMatrix& search,const NativeCalibrationMatrix& confirmation,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)

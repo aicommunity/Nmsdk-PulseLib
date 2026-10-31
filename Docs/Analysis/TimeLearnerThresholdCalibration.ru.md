@@ -179,3 +179,37 @@ FN=1,TN=2,FP=0. Порядок и reset policy смешаны, причинны�
 Это исправление времени жизни C++ объекта; отдельный runtime gate нового
 снимка обязателен. На прежние успешные gates как доказательство этого
 исправления не ссылаемся.
+
+## Native grid transaction (рабочая реализация)
+
+`NativeThresholdCalibrationTransaction<Owner>` — общий outer-loop driver
+для Classic/Branch. Конструктор проверяет исходный frozen recognition package,
+полный trial design, реальные pattern hashes, баланс target/foil по каждому
+reset policy, частоту/окна/бюджеты и scalar-threshold capability. До первой
+команды live граф не меняется. `Advance()` вызывается между native model ticks;
+`Calculate` и продвижение времени выполняет только штатный runner/scheduler.
+
+Для каждого порога разрешённого budget prefix модель заново выводится из
+одного source и устанавливается через public native import/Build/Init/Reset.
+Далее очередью исполняются полные объявленные пробы. После всего prefix
+выбирается первый кандидат с нулём target violations и foil responses.
+Он независимо перестраивается, затем проходит свежую матрицу подтверждения.
+Только после неё calibrated package импортируется и проверяется export readback.
+Неуспех полного grid — NonSeparable, ограниченного prefix — BudgetExhausted.
+Это локальные результаты объявленного набора порогов, не физическая невозможность.
+
+Отмена, отрицательный результат и контролируемая ошибка восстанавливают
+полный исходный recognition package. Mid-trial dynamics checkpoint не обещан.
+Внешний Reset/подмена owner приводит к RecoveryRequired: нельзя молча
+перезаписывать чужое состояние старым snapshot. Незавершённые пробы и причины
+сохраняются в transaction report. Деструктор незавершённого driver вызывает
+отмену; копирование driver запрещено. Owner idle query учитывает queued, running
+и непрочитанный результат, поэтому второй driver не забирает чужую пробу.
+
+Transaction report хранит весь grid, сырые matrices и выбранный package.
+Существующий schema-1 model proof продолжает проверять выбранный порог и
+fresh confirmation; полного grid внутри него нет. Поле
+`grid_selection_embedded_in_model_proof=false` сохраняет это ограничение.
+Нужны отдельный независимый audit transaction report, production CLI/worker
+интеграция, нормальная и ASan приёмка и последующее расширение матрицы.
+Текущий код не объявляется завершением этапа 8.

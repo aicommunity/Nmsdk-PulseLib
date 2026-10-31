@@ -4977,6 +4977,10 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeLearne
  return result;
 }
 
+bool NNeuronTimeLearnerBranch::IsNativeRecognitionTrialIdle() const
+{
+ return NativeRecognition && !NativeRecognition->trials.Busy() && !NativeRecognition->trials.HasResult();
+}
 void NNeuronTimeLearnerBranch::QueueNativeRecognitionTrial(TimeLearner::NativeRecognitionTrialRequest request)
 {
  if(!NativeRecognition || !NativeEditFailure.empty())throw std::logic_error("recognition_model_not_available");
