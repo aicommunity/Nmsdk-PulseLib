@@ -64,8 +64,19 @@ leak checking выключен. Автоматический dispatcher и по�
 Сверка frozen artifacts дополнительно обнаружила наследование Environment clock
 между fresh jobs в корневом helper. Отдельный root 87e36a376 исправляет его через
 native Reset на пустой границе: normal 45/45 (196.890 s), отдельный актуальный
-ASan 45-case gate ещё ожидается. Полная публикация новых ASan primaries и
-временные отчёты managed transactions ещё не завершены.
+ASan 45/45 (1370.820 s), без skips, leak checking выключен. Полные normal/ASan
+primaries опубликованы в корне; каждый содержит два original portable runs /
+84 artifacts. Reader на clock-isolated данных: normal 2/2 (23.695 s), ASan 2/2
+(20.228 s), по 20 negative controls. Все archive/member/inventory SHA проверены.
+
+Для actual managed transactions опубликованы четыре temporal reports / 24 pairs
+и дополнительный legacy entry-point control / 4 pairs. Все 60 original source
+files неизменны: новый общий data renderer принимает replay package отдельно,
+не перезаписывая исторические source files. Git содержит metadata и восемь PNG;
+full cache на M40 Data (1334 files / 111753950 bytes). Выбранные target/first-soma
+overview/detail при weight/final thresholds просмотрены в 1920×960; full cache,
+foil/другие somas/mode1/SVG/PDF вручную не приняты. Численных повторов для графиков
+нет. Configured automatic dispatcher и полная матрица по-прежнему открыты.
 
 Допустима только ready/initialized Solo-модель с Finished training service и
 полностью освобождённой границей probe: ни queued/running, ни непотреблённого
