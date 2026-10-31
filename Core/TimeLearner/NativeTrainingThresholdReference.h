@@ -4,8 +4,12 @@
 namespace NMSDK::TimeLearner {
 enum class NativeTrainingThresholdMode { GapFraction=0, PeakFraction=1 };
 struct NativeTrainingThresholdSpec {
-    NativeTrainingThresholdMode mode=NativeTrainingThresholdMode::GapFraction;
-    double fraction=.7,minimum=0.,maximum=1.;
+    NativeTrainingThresholdMode mode;
+    double fraction,minimum,maximum;
+    // No invented common defaults: Classic/Branch expose different native
+    // defaults. The orchestrator must supply its captured public controls.
+    NativeTrainingThresholdSpec(NativeTrainingThresholdMode m,double f,double low,double high):
+        mode(m),fraction(f),minimum(low),maximum(high){}
 };
 
 // A target-only Solo reference proposal, not the target/foil calibration
