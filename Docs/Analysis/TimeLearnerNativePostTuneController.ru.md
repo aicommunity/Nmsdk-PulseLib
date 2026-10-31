@@ -87,8 +87,15 @@ weight-модель, сохраняет исходный порог и выда�
 считает calibration state unverified даже при raw declared fixed policy.
 
 Python transaction analyze/report поддерживает schema 2. Root 2d6ab1a0
-добавляет production Console/job/worker schema 2; их отдельная серверная приёмка
-ещё выполняется. Public learner properties к fixed API не подключены;
+добавляет production Console/job/worker schema 2; scoped normal/ASan проверка
+завершена: по шесть owned jobs и четыре malformed Console jobs без native output.
+Fixed обоих learner: weights_selected; Classic calibration: calibrated, Branch:
+search_unresolved. Legacy и v2 calibrate сохраняют исходные model/transaction bytes.
+По 3 preflight и 4 final worker checks (final включает preflight); shared validator
+проверен на всех 18 прежних portable runs. Root bundles fixed-console-normal-a1
+(317 members) и fixed-console-asan-a1 (322) замыкают по шесть snapshots / 252
+artifact entries. Leak detection off; полная матрица не принята.
+Public learner properties к fixed API не подключены;
 оба optional-mode guards остаются. Не удалять их без отдельного phase plan,
 сохранения Solo outcome до import и legal-boundary lifecycle orchestration.
 Согласованные root primary bundles: s08-native-posttune-fixed-normal-a2
