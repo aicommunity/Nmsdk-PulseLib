@@ -20,6 +20,9 @@ struct PreparedNativeRecognitionState {
     std::vector<InputParameters> parameters;
     std::string modelRevision,sourceSoloRevision;
     QJsonObject conversionRecord;
+    // Set only by the validated calibrated-state import path. A zero threshold
+    // is valid, so calibration status cannot be inferred from its numeric value.
+    bool calibrationConfirmed=false;
     ~PreparedNativeRecognitionState();
 };
 QJsonObject EncodeNativeRecognitionSpec(const NativeRecognitionSpec& specification);

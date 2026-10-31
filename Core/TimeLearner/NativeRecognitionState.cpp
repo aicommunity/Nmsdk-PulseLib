@@ -1,4 +1,6 @@
 #include "NativeRecognitionState.h"
+#include "NativeThresholdCandidate.h"
+#include "NativeCalibratedState.h"
 #include "../NPulseChannel.h"
 #include "../NPulseSynapse.h"
 #include <QJsonArray>
@@ -187,6 +189,10 @@ PreparedNativeRecognitionState::~PreparedNativeRecognitionState()
 std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeRecognitionState(const QJsonObject& package,
     UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
 {
+    if(package["kind"]==QJsonValue("timelearner_calibrated_recognition_state"))
+        return PrepareNativeCalibratedState(package,storage,environment,implementation);
+    if(package["kind"]==QJsonValue("timelearner_recognition_threshold_candidate"))
+        return PrepareNativeThresholdCandidate(package,storage,environment,implementation);
     Keys(package,{"kind","schema_version","dynamic_checkpoint","state_kind","implementation_id","source_solo",
         "conversion_spec","conversion_record","recognition_inputs","model_revision","recognition_certificate","dataset","neuron","sha256"});
     Require(package["kind"]==QJsonValue("timelearner_recognition_state") && package["schema_version"]==QJsonValue(1) &&

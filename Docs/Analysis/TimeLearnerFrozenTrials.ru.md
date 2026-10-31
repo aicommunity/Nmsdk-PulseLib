@@ -29,3 +29,10 @@ Classic N0 / Branch N1 при 2 kHz и двух storage thresholds (1 и 0.0001)
 в Git; по 414 stored / 412 raw hashes сверены локально. Порог не меняется
 после Train; automatic calibration, все физические профили, дополнительные
 Reset/recovery controls и общий experiment job остаются открытыми.
+
+Дополнение 31.10: opt-in schema 2 сохраняет реальный LTZone.Potential для
+предложения порога. Поле `recordThresholdPotential` по умолчанию выключено;
+старые наблюдения не дополняются вымышленной аналоговой трассой. Native executor
+по-прежнему закрывает всё declared window и требует прочитать результат до import.
+Новые candidate/proposal API и границы их приёмки:
+[TimeLearnerThresholdCalibration](TimeLearnerThresholdCalibration.ru.md).
