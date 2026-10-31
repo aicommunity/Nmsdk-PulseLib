@@ -85,7 +85,7 @@ public:
                 scope->Install(candidate,expected);installed=true;
             }
             auto q=spec.calibration.trials[current.requests.size()];
-            if(q.maximumSamples>spec.maximumRecordedSamples-recordedSamples)
+            if(ObservationSampleBound(q)>spec.maximumRecordedSamples-recordedSamples)
             {Restore(NativePostTuneTransactionStatus::BudgetExhausted,"weight_observation_budget");return;}
             q.runId=spec.calibration.confirmation.attemptId+"/weights/"+std::to_string(records.size());
             owner.QueueNativeRecognitionTrial(q);current.requests.push_back(std::move(q));waiting=true;
@@ -177,14 +177,14 @@ private:
         for(const auto& q:spec.calibration.trials)
         {
             DecodeNativeCalibrationRequest(EncodeNativeCalibrationRequest(q));
-            Require(q.pattern.GetRows()==int(inputCount) && ids.insert(q.trialId).second &&
+            Require(q.pattern.GetRows()==int(inputCount) && q.pattern.GetCols()==1 && ids.insert(q.trialId).second &&
                 ((q.label=="target")== (q.patternHash==target)) && (q.label=="target" || q.label=="foil") &&
                 (!LtzMetric() || q.recordThresholdPotential),"invalid_post_tune_trial_or_metric");
             const auto signature=std::make_pair(q.label,q.patternHash);const auto sample=samples.emplace(q.sampleId,signature);
             Require(sample.second || sample.first->second==signature,"post_tune_sample_collision");
             double span=0.;for(int i=0;i<q.pattern.GetRows();++i)span+=q.pattern(i,0);
             const double ticks=q.duration*owner.GetTimeStep();
-            Require(Detail::Finite(span) && q.duration>span && Detail::Finite(ticks) &&
+            Require(Detail::Finite(span) && q.duration>span && Detail::Finite(ticks) && ticks>=1. &&
                 !Detail::After(ticks,std::round(ticks)) && !Detail::After(std::round(ticks),ticks) &&
                 ticks+1.<=double(q.maximumSamples),"post_tune_window_or_sample_budget_invalid");
             labels[q.resetPolicy].insert(q.label);
@@ -194,6 +194,7 @@ private:
         // touching the owner's physical graph, even for the synthetic seed.
         auto s=baseSpec;s.postTune=InitialProposal();
         ConvertNativeSoloToRecognition(source["source_solo"].toObject(),s,owner.GetStorage(),owner.GetEnvironment(),implementation);
+        CreateNativeThresholdCandidate(source,spec.calibration.thresholds.front(),owner.GetStorage(),owner.GetEnvironment(),implementation);
     }
     NativePostTuneSpec InitialProposal() const
     {
@@ -243,9 +244,10 @@ private:
             NativePostTuneTransactionStatus::SearchUnresolved,"no_positive_measured_gap");return;}
         std::size_t matrixBudget=0;for(const auto& q:spec.calibration.trials)
         {
-            if(q.maximumSamples>spec.maximumRecordedSamples-matrixBudget)
+            const auto bound=ObservationSampleBound(q);
+            if(bound>spec.maximumRecordedSamples-matrixBudget)
             {Restore(NativePostTuneTransactionStatus::BudgetExhausted,"calibration_observation_budget");return;}
-            matrixBudget+=q.maximumSamples;
+            matrixBudget+=bound;
         }
         const auto matrices=std::min(spec.calibration.maximumCandidates,spec.calibration.thresholds.size())+1;
         if(matrixBudget>(spec.maximumRecordedSamples-recordedSamples)/matrices)
@@ -262,7 +264,8 @@ private:
         {status=NativePostTuneTransactionStatus::RecoveryRequired;reason=calibration->Reason();return;}
         if(calibration->Status()==NativeCalibrationTransactionStatus::Calibrated)
         {
-            finalPackage=calibration->CalibratedPackage();expected=finalPackage;scope->CheckPackage(expected);
+            const auto complete=calibration->CalibratedPackage();scope->CheckPackage(complete);
+            finalPackage=complete;expected=complete;
             calibration.reset();status=NativePostTuneTransactionStatus::Calibrated;return;
         }
         const auto childStatus=calibration->Status();const auto why=calibration->Reason();
@@ -275,6 +278,14 @@ private:
         scope->CheckRollback(expected);
         if(waiting){current.observations.push_back(scope->CancelOwned(current.requests.back(),"post_tune_cancel"));waiting=false;}
         scope->Install(source,expected);sourceRestored=true;status=terminal;reason=why;
+    }
+    std::size_t ObservationSampleBound(const NativeRecognitionTrialRequest& q) const
+    {
+        // The validated single-frequency runner samples once per native tick.
+        // maximumSamples is a safety cap, not a request to allocate that many
+        // frames. Include both boundaries and one rounding/closure guard tick.
+        const auto physical=std::size_t(std::ceil(q.duration*owner.GetTimeStep()))+2;
+        return std::min(q.maximumSamples,physical);
     }
     void Fail(const std::string& why)
     {
