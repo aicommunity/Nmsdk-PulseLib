@@ -1,9 +1,12 @@
 #pragma once
 #include "NativePostTuneConfiguration.h"
 #include <QJsonArray>
+#include <algorithm>
 #include <cmath>
+#include <set>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace NMSDK::TimeLearner {
 
@@ -95,13 +98,21 @@ template<class Owner> NativeFinalizationBoundary CaptureNativeFinalizationBounda
     require(owner.IsNativeProbeAtEditBoundary(),"finalization_boundary_requires_consumed_probe_boundary");
     const auto& service=owner.NativeTrainingController();
     require(service.State()==NativeTrainingState::Finished,"finalization_boundary_requires_finished_training");
-    const auto lifecycle=owner.ObserveLifecycle();const auto controls=ReadNativeFinalizationControls(owner);
+    std::vector<RDK::UModuleLifecycleObservation> lifecycles;std::set<RDK::UContainer*> seen;
+    const auto watch=[&](auto&& visit,RDK::UContainer* node)->void {
+        require(node && seen.insert(node).second,"invalid_finalization_owner_tree");
+        lifecycles.push_back(node->ObserveLifecycle());
+        std::vector<RDK::NameT> names;node->GetComponentsList(names);
+        for(const auto& name:names)visit(visit,node->GetComponent(name,true).Get());
+    };
+    watch(watch,&owner);const auto controls=ReadNativeFinalizationControls(owner);
     const auto outcome=service.Outcome();const auto attempt=service.SessionAttempt(),epoch=service.ModelEpoch();
     const auto solo=owner.ExportNativeLearnedState(implementationId);
     const bool stopped=solo["kind"]==QJsonValue("timelearner_stopped_state");
     require(solo["kind"]==QJsonValue("timelearner_completed_state") || stopped,"invalid_finalization_solo_boundary");
     require(!stopped || allowDiagnostic,"finalization_boundary_stopped_training_requires_diagnostic_opt_in");
-    require(lifecycle.IsCurrent() && owner.IsNativeProbeAtEditBoundary() &&
+    require(std::all_of(lifecycles.begin(),lifecycles.end(),[](const auto& life){return life.IsCurrent();}) &&
+        owner.IsNativeProbeAtEditBoundary() &&
         service.State()==NativeTrainingState::Finished && service.Outcome()==outcome &&
         service.SessionAttempt()==attempt && service.ModelEpoch()==epoch &&
         ReadNativeFinalizationControls(owner)==controls,"finalization_boundary_changed_during_capture");
