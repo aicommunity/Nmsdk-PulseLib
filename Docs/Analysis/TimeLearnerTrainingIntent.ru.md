@@ -58,3 +58,25 @@ bytes, все hashes проверены. Включены полные исхо�
 
 Configured phase dispatcher, сравнение original/current controls при переходе,
 сохранение intent в model checkpoint и вся приёмка этапа 8 остаются открыты.
+
+
+## Подключение к finalization boundary: runtime ожидается
+
+CheckNativeTrainingIntent вызывается production CaptureNativeFinalizationBoundary
+до экспорта Solo. Проверяются session/run/protocol/pattern binding, исходные
+публичные controls и все их источники. Из сравнения значений исключён только
+живой IsNeedToTrain: mode-0 local completion и внешний stop могут снять его,
+источники сигнала остаются неизменными. Отдельные stopped/active-entry правила
+не ослабляются. Изменение fraction, режима или переподключение source запрещает
+захват; сам исходный запрос не переписывается и модель не изменяется.
+
+Boundary с настоящим train-time request получает schema 2 и хранит полный intent;
+legacy imported Solo без запроса продолжает schema 1. Во время capture проверяется
+также неизменность самого intent. Это связывает границу с исходным запросом,
+но не добавляет автоматический dispatcher или mid-probe checkpoint.
+
+В восемь native lifecycle cases добавлены фактическое отклонение drift,
+schema-2 diagnostic stopped boundary и успешный import при непустом intent.
+Независимый reader поддерживает исторический schema 1; новые tests требуют schema 2
+и проверяют source/session/control binding и запись успешного import. Серверные
+проверки этой новой связки ещё не выполнены.

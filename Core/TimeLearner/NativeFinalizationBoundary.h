@@ -1,5 +1,6 @@
 #pragma once
 #include "NativePostTuneConfiguration.h"
+#include "NativeTrainingIntentPolicy.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <cmath>
@@ -106,6 +107,8 @@ template<class Owner> NativeFinalizationBoundary CaptureNativeFinalizationBounda
         for(const auto& name:names)visit(visit,node->GetComponent(name,true).Get());
     };
     watch(watch,&owner);const auto controls=ReadNativeFinalizationControls(owner);
+    const auto trainingRequest=owner.NativeTrainingRequest();
+    CheckNativeTrainingIntent(trainingRequest,controls,service);
     const auto outcome=service.Outcome();const auto attempt=service.SessionAttempt(),epoch=service.ModelEpoch();
     const auto solo=owner.ExportNativeLearnedState(implementationId);
     const bool stopped=solo["kind"]==QJsonValue("timelearner_stopped_state");
@@ -115,7 +118,8 @@ template<class Owner> NativeFinalizationBoundary CaptureNativeFinalizationBounda
         owner.IsNativeProbeAtEditBoundary() &&
         service.State()==NativeTrainingState::Finished && service.Outcome()==outcome &&
         service.SessionAttempt()==attempt && service.ModelEpoch()==epoch &&
-        ReadNativeFinalizationControls(owner)==controls,"finalization_boundary_changed_during_capture");
+        ReadNativeFinalizationControls(owner)==controls && owner.NativeTrainingRequest()==trainingRequest,
+        "finalization_boundary_changed_during_capture");
     const auto parameters=controls["parameters"].toObject();
     const bool postTune=parameters["EnablePostTrainTuning"].toBool();
     if(postTune) {
@@ -134,6 +138,9 @@ template<class Owner> NativeFinalizationBoundary CaptureNativeFinalizationBounda
         {"phase_requests",QJsonObject{{"target_reference",targetReference},{"post_tune",postTune},
             {"post_train_mid",parameters["EnablePostTrainMidThreshold"]},{"legacy_parallel_peak",parallelPeak}}},
         {"dynamic_checkpoint",false},{"mid_probe_resume_supported",false},{"recognition_success",QJsonValue(QJsonValue::Null)}};
+    if(!trainingRequest.isEmpty()) {
+        value["schema_version"]=2;value["training_request"]=trainingRequest;
+    }
     value["sha256"]=NmsdkTools::CanonicalModelDataSha256(value);
     return NativeFinalizationBoundary(std::move(value));
 }
