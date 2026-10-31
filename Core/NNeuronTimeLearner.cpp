@@ -6459,6 +6459,16 @@ bool NNeuronTimeLearner::MaybeStartInferenceMidProbes(void)
  const int n = NumInputDendrite.GetData();
  if(n < 1)
   return false;
+ // A new saved-matrix inference attempt owns fresh observations. Equal
+ // sample cardinality is not evidence that an earlier sample was visited.
+ PostTuneSampleState.clear();
+ PostTuneRunInvalid = false;
+ PostTuneRunTerminal = PostTrainTune::kResultNone;
+ PostTuneResult = PostTrainTune::kResultNone;
+ PostTrainTuneComplete = false;
+ Stage0SepHave = false;
+ Stage0SepTgt = Stage0SepMaxFoil = Stage0SepGap = Stage0SepMargin =
+  std::numeric_limits<double>::quiet_NaN();
  PostTuneTargetIsi.assign(static_cast<size_t>(n), 0.0);
  if(Dataset && Dataset->MaxSpikesPerFeature.GetData() == n
     && Dataset->MatrixData.GetRows() >= n)
@@ -6524,6 +6534,7 @@ bool NNeuronTimeLearner::MaybeStartInferenceMidProbes(void)
   if(ns >= 2)
   {
    PostTuneMetrics.assign(static_cast<size_t>(ns), 0.0);
+   PostTuneSampleState.assign(static_cast<size_t>(ns), PostTrainTune::SampleMetricState());
    PostTuneFreeRunActive = true;
    PostTuneLiveSomaMax = 0.0;
    PostTuneLastDatasetIter = -1;
