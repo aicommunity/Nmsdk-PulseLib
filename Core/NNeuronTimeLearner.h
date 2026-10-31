@@ -25,6 +25,7 @@ See file license.txt for more information
 #include "TimeLearner/NativeRecognitionTrial.h"
 #include "TimeLearner/NativeModelEditor.h"
 #include "TimeLearner/NativeTrainingService.h"
+#include "TimeLearner/NativeTrainingIntent.h"
 #include "TimeLearner/NativeModelBuilder.h"
 #include "TimeLearner/ConfiguredNativeTraining.h"
 #include "../../../Rdk/Deploy/Include/rdk.h"
@@ -34,7 +35,7 @@ See file license.txt for more information
 #include <cstring>
 
 namespace NMSDK {
-namespace TimeLearner { class NativePostTuneOwnerBoundary; struct NativeRecognitionHold; }
+namespace TimeLearner { class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; }
 
 using namespace RDK;
 
@@ -767,6 +768,9 @@ public: // Methods
   NativeProbeControl.Queue(std::move(request));
  }
  bool NativeProbeOwnsControl() const { return NativeProbeControl.OwnsControl(); }
+ bool IsNativeProbeAtEditBoundary() const {
+  return NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Idle || NativeProbeControl.AtEditBoundary();
+ }
  TimeLearner::NativeProbeStatus NativeProbeState() const { return NativeProbeControl.Status(); }
  std::optional<TimeLearner::NativeProbeResult> TakeNativeProbeResult() {
   if(NativeTrainingOwned && (NativeTrainingControl.State()==TimeLearner::NativeTrainingState::CapturingReferences ||
@@ -780,6 +784,8 @@ public: // Methods
  const std::string& NativeModelEditFailure() const { return NativeEditFailure; }
  void BeginNativeTraining(TimeLearner::NativeTrainingPlan plan,bool recaptureReferences=false);
  const TimeLearner::NativeTrainingService& NativeTrainingController() const { return NativeTrainingControl; }
+ /// Immutable declaration of this live attempt; absent after import/reset/retarget.
+ QJsonObject NativeTrainingRequest() const {return NativeTrainingRequestIntent.Read();}
  // Explicit cold construction may replace factory-owned children after preview;
  // adoption is read-only and never infers whether a supplied graph was trained.
  TimeLearner::NativeModelBuildResult ConstructNativeModel(TimeLearner::NativeModelSpec specification);
@@ -788,11 +794,26 @@ public: // Methods
  TimeLearner::NativeModelBuildResult ImportNativeLearnedState(const QJsonObject& package,const std::string& implementationId);
  // Frozen recognition has no installed training certificate; import is explicit.
  bool HasNativeRecognitionState() const {return bool(NativeRecognition);}
+ bool IsNativeRecognitionTrialIdle() const;
+ std::weak_ptr<const void> ObserveNativeRecognitionContext() const;
+ bool HasNativeRecognitionTrialIdentity(const std::string& runId,const std::string& trialId) const;
  void QueueNativeRecognitionTrial(TimeLearner::NativeRecognitionTrialRequest request);
  std::optional<TimeLearner::NativeRecognitionTrialObservation> TakeNativeRecognitionTrialResult();
  void CancelNativeRecognitionTrial(const std::string& reason);
  QJsonObject ExportNativeRecognitionState(const std::string& implementationId);
  TimeLearner::NativeModelBuildResult ImportNativeRecognitionState(const QJsonObject& package,const std::string& implementationId);
+ // Explicit active-request import; ordinary frozen import keeps its old policy.
+ TimeLearner::NativeModelBuildResult ImportNativeFinalizationState(const QJsonObject& package,const std::string& implementationId,
+     const TimeLearner::NativeFinalizationBoundary& boundary);
+ TimeLearner::NativeModelBuildResult ReplaceNativeRecognitionState(const QJsonObject& package,const std::string& implementationId);
+ QJsonObject NativeFinalizationIntent() const;
+ /// Explicit phase on an installed recognition model; native ticks own Advance.
+ void BeginNativePostTunePhase(const TimeLearner::NativePostTuneTransactionSpec& specification,const std::string& implementationId);
+ bool NativePostTunePhaseDone() const;
+ QJsonObject NativePostTunePhaseReport() const;
+ QJsonObject NativePostTunePhaseExecution() const;
+ void CancelNativePostTunePhase(const std::string& reason);
+
  
  // --------------------------
  // Parameter setters
@@ -937,8 +958,11 @@ public: // Methods
  static UComponent* NewStatic(void);
 
 protected:
+ TimeLearner::NativeModelBuildResult ImportNativeRecognitionStateWithBoundary(const QJsonObject& package,const std::string& implementationId,
+     const QJsonObject& boundary);
  TimeLearner::NativeProbeExecutor NativeProbeControl;
  TimeLearner::NativeTrainingService NativeTrainingControl;
+ TimeLearner::NativeTrainingIntent NativeTrainingRequestIntent;
  std::optional<TimeLearner::NativeModelSpec> NativeModelDeclaration;
  std::optional<TimeLearner::ConfiguredNativeTraining> NativeConfiguredPlan;
  TimeLearner::ConfiguredNativeEvidenceSinks NativeConfiguredSinks;
@@ -946,6 +970,11 @@ protected:
  void ValidateNativeModelDeclaration();
  bool NativeTrainingOwned=false;
  std::unique_ptr<TimeLearner::NativeRecognitionHold> NativeRecognition;
+ std::shared_ptr<TimeLearner::NativeOwnedPostTunePhase> NativePostTunePhase;
+ unsigned NativePostTunePhaseDepth=0;
+ void InterruptNativePostTunePhase(const std::string& reason);
+ void FinishNativePostTunePhase();
+
  unsigned NativeTrainingEditDepth=0;
  std::string NativeEditFailure;
  unsigned NativeLifecycleDepth=0;

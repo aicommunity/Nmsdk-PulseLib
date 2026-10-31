@@ -1,5 +1,14 @@
 # NPulseLTZoneIzhikevich — LT-зона модели Ижикевича
 
+Уточнение регистрации 31.10.2026: storage-образ с именем
+`NPulseLTZoneIzhikevich` в `NPulseLibrary::CreateClassSamples` создаётся как
+`new NPulseLTZoneThreshold` с Threshold=30 и NumChannelsInGroup=1. Его реальная
+проверка — `Potential >= Threshold`. Приведённое ниже описание одноимённого
+C++ класса не доказывает, что TakeObject этого имени вернёт именно этот тип.
+Фактический C++ класс `NPulseLTZoneIzhikevich` использует PrePotential и требует
+отдельного адаптера при прямой регистрации. Нельзя выбирать измеряемую величину
+или подбирать порог только по имени storage-образа.
+
 ## RU
 
 ### Назначение

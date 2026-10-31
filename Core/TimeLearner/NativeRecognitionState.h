@@ -1,14 +1,27 @@
 #pragma once
 #include "NativeLearnedState.h"
+#include <optional>
 
 namespace NMSDK::TimeLearner {
 enum class RecognitionConversionMode { Identity, HistoricalBranchN1 };
 struct RecognitionResistanceBounds { double minimum=0.,maximum=0.; };
+enum class NativePostTuneMode { Off, KeepDone, CanonRmin, FlatLastR, SearchSyntheticCandidate };
+struct NativePostTuneSpec {
+    NativePostTuneMode mode=NativePostTuneMode::Off;
+    // Anchor to the recognition graph before this edit, not the solo graph.
+    std::string sourceModelRevision;
+    double canonicalFloor=0.,canonicalLast=0.;
+    std::vector<double> requestedResistances;
+    std::vector<RecognitionResistanceBounds> resistanceBounds;
+};
 struct NativeRecognitionSpec {
     RecognitionConversionMode mode=RecognitionConversionMode::Identity;
     // Explicit experiment conditions for scaled conversion. Native hard
     // ratio/floor limits are intersected and recorded separately.
     std::vector<RecognitionResistanceBounds> resistanceBounds;
+    // A candidate is a reproducible edit, not a measured search outcome or a
+    // calibration certificate. Absence preserves schema-1 packages exactly.
+    std::optional<NativePostTuneSpec> postTune;
 };
 struct PreparedNativeRecognitionState {
     RDK::UEPtr<RDK::UStorage> storage;
@@ -20,6 +33,9 @@ struct PreparedNativeRecognitionState {
     std::vector<InputParameters> parameters;
     std::string modelRevision,sourceSoloRevision;
     QJsonObject conversionRecord;
+    // Set only by the validated calibrated-state import path. A zero threshold
+    // is valid, so calibration status cannot be inferred from its numeric value.
+    bool calibrationConfirmed=false;
     ~PreparedNativeRecognitionState();
 };
 QJsonObject EncodeNativeRecognitionSpec(const NativeRecognitionSpec& specification);

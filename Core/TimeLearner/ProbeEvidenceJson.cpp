@@ -73,6 +73,8 @@ QJsonObject Prepared(const PreparedVerificationProbe& p)
  {"base_model_revision",Text(p.baseModelRevision)},{"effective_model_revision",Text(p.effectiveModelRevision)},
  {"model_epoch",Count(p.modelEpoch)},{"selected_input_index",p.selectedInputIndex?Count(*p.selectedInputIndex):QJsonValue(QJsonValue::Null)}};}
 }
+QJsonObject EncodeNativeProbeSpecification(const ProbeSpec& specification,bool relativeToTrialStart)
+{return Spec(specification,relativeToTrialStart?"relative_to_trial_start":"absolute_model_time");}
 QJsonObject EncodeNativeProbeEvidence(const NativeProbeResult& result)
 {
     return {{"kind","timelearner_native_probe_evidence"},{"evidence_schema_version",2},
