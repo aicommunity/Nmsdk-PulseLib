@@ -155,3 +155,27 @@ reset нет. Source solo proof не превращён в recognition certifica
 
 ASan всего calibrated API, полный grid/controller transaction, PostTune,
 остальные modes/profiles/frequencies и independent Test остаются открытыми.
+
+## Обновлённая scoped приёмка 31.10
+
+Normal и ASan на снимке ce7e81e прошли persistence 2/2, calibrated-state
+2/2 и независимый reader 9/9. Первичные source CSV, модели, raw proof и
+полные manifest доступны в корневых bundles s08-calibrated-normal-a2 и
+s08-calibrated-asan-a2. Последний содержит 1171 файл в 3093212-byte архиве.
+Полный normal signed gate: 16 native + 35 independent checks; исправление
+glob в reader не потребовало повторного Train. Более ранние статусы выше
+относятся к своим снимкам и не заменяют эту сводку.
+
+На normal/ASan frozen данных report/plot проверки 8/8 прошли. Git хранит
+выбранные рисунки и compressed primary; полные читаемые графики — M40 cache.
+Исходное обучение обеих двухпаттерновых моделей имеет search_unresolved.
+Калибровка reset-per-trial пары подтверждена; последующий набор даёт TP=1,
+FN=1,TN=2,FP=0. Порядок и reset policy смешаны, причинный вывод недопустим.
+Это не независимый Test, не August replay и не завершение этапа 8.
+
+При ревизии native owner import найдено ещё одно сохранение QJsonValueRef
+из временного объекта в Qt 5: чтение calibration.threshold могло обращаться
+к уже уничтоженному QJsonObject. Теперь сохраняется owning QJsonValue.
+Это исправление времени жизни C++ объекта; отдельный runtime gate нового
+снимка обязателен. На прежние успешные gates как доказательство этого
+исправления не ссылаемся.

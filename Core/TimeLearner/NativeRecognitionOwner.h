@@ -77,7 +77,9 @@ template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner
         next->configurationText=prepared->configurationText;next->controllerVersion=prepared->controllerVersion;
         next->calculateMode=prepared->calculateMode;next->structureBuildMode=prepared->structureBuildMode;
         next->calibrationConfirmed=prepared->calibrationConfirmed;
-        const auto threshold=package["neuron"].toObject()["metadata"].toObject()["calibration"].toObject()["threshold"];
+        // Qt 5 operator[] on a temporary object returns QJsonValueRef.
+        // Materialize an owning value before the temporary calibration dies.
+        const QJsonValue threshold=package["neuron"].toObject()["metadata"].toObject()["calibration"].toObject()["threshold"];
         if(!threshold.isDouble() || !std::isfinite(threshold.toDouble()))throw std::invalid_argument("invalid_recognition_threshold");
         next->threshold=threshold.toDouble();
         CheckNativeModelMirrorAssignments(owner,next->model,next->parameters,next->target);
