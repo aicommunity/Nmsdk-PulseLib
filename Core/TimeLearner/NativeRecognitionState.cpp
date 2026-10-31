@@ -26,12 +26,63 @@ const char* Mode(RecognitionConversionMode mode)
     case RecognitionConversionMode::HistoricalBranchN1:return "historical_branch_n1_v1";}
     throw std::invalid_argument("unknown_recognition_conversion");
 }
+const char* PostMode(NativePostTuneMode mode)
+{
+    switch(mode){case NativePostTuneMode::Off:return "off";case NativePostTuneMode::KeepDone:return "keep_done";
+    case NativePostTuneMode::CanonRmin:return "canon_rmin";case NativePostTuneMode::FlatLastR:return "flat_last_r";
+    case NativePostTuneMode::SearchSyntheticCandidate:return "search_synthetic_candidate";}
+    throw std::invalid_argument("unknown_native_post_tune_mode");
+}
+void ValidatePost(const NativePostTuneSpec& p)
+{
+    PostMode(p.mode);
+    Require(p.sourceModelRevision.size()==64 && std::all_of(p.sourceModelRevision.begin(),p.sourceModelRevision.end(),
+        [](char c){return (c>='0' && c<='9') || (c>='a' && c<='f');}),"invalid_post_tune_source_revision");
+    const bool canon=p.mode==NativePostTuneMode::CanonRmin,flat=p.mode==NativePostTuneMode::FlatLastR;
+    const bool synthetic=p.mode==NativePostTuneMode::SearchSyntheticCandidate;
+    const bool edit=canon || flat || synthetic;
+    Require(canon?Positive(p.canonicalFloor):p.canonicalFloor==0.,"unused_or_invalid_post_tune_floor");
+    Require(canon || flat?Positive(p.canonicalLast):p.canonicalLast==0.,"unused_or_invalid_post_tune_last");
+    Require(synthetic?!p.requestedResistances.empty():p.requestedResistances.empty(),"unused_or_missing_post_tune_requests");
+    Require(edit?!p.resistanceBounds.empty():p.resistanceBounds.empty(),"unused_or_missing_post_tune_bounds");
+    for(double r:p.requestedResistances)Require(Positive(r),"invalid_post_tune_request");
+    for(const auto& b:p.resistanceBounds)Require(Positive(b.minimum) && Positive(b.maximum) && b.minimum<=b.maximum,"invalid_post_tune_bounds");
+}
+QJsonArray Bounds(const std::vector<RecognitionResistanceBounds>& bounds)
+{QJsonArray a;for(const auto& b:bounds)a.append(QJsonObject{{"minimum",b.minimum},{"maximum",b.maximum}});return a;}
+std::vector<RecognitionResistanceBounds> DecodeBounds(const QJsonValue& value)
+{
+    std::vector<RecognitionResistanceBounds> result;
+    for(const auto& v:Array(value)){const auto b=Object(v);Keys(b,{"minimum","maximum"});result.push_back({Number(b["minimum"]),Number(b["maximum"])});}
+    return result;
+}
+QJsonObject EncodePost(const NativePostTuneSpec& p)
+{
+    ValidatePost(p);QJsonArray requested;for(double r:p.requestedResistances)requested.append(r);
+    return {{"mode",PostMode(p.mode)},{"source_model_revision",Text(p.sourceModelRevision)},
+        {"canonical_floor",p.canonicalFloor},{"canonical_last",p.canonicalLast},
+        {"requested_resistances",requested},{"resistance_bounds",Bounds(p.resistanceBounds)}};
+}
+NativePostTuneSpec DecodePost(const QJsonObject& o)
+{
+    Keys(o,{"mode","source_model_revision","canonical_floor","canonical_last","requested_resistances","resistance_bounds"});
+    NativePostTuneSpec p;bool found=false;
+    for(auto mode:{NativePostTuneMode::Off,NativePostTuneMode::KeepDone,NativePostTuneMode::CanonRmin,
+                  NativePostTuneMode::FlatLastR,NativePostTuneMode::SearchSyntheticCandidate})
+        if(o["mode"]==QJsonValue(PostMode(mode))){p.mode=mode;found=true;}
+    Require(found && o["source_model_revision"].isString(),"invalid_post_tune_mode_or_source");
+    p.sourceModelRevision=o["source_model_revision"].toString().toStdString();
+    p.canonicalFloor=Number(o["canonical_floor"]);p.canonicalLast=Number(o["canonical_last"]);
+    for(const auto& value:Array(o["requested_resistances"]))p.requestedResistances.push_back(Number(value));
+    p.resistanceBounds=DecodeBounds(o["resistance_bounds"]);ValidatePost(p);return p;
+}
 void Validate(const NativeRecognitionSpec& s)
 {
     Mode(s.mode);
     Require(s.mode!=RecognitionConversionMode::Identity || s.resistanceBounds.empty(),"identity_conversion_has_unused_bounds");
     Require(s.mode!=RecognitionConversionMode::HistoricalBranchN1 || !s.resistanceBounds.empty(),"scaled_conversion_requires_bounds");
     for(const auto& b:s.resistanceBounds)Require(Positive(b.minimum) && Positive(b.maximum) && b.minimum<=b.maximum,"invalid_recognition_bounds");
+    if(s.postTune)ValidatePost(*s.postTune);
 }
 QJsonArray Parameters(const std::vector<InputParameters>& parameters)
 {QJsonArray r;for(const auto& p:parameters)r.append(QJsonObject{{"length",p.length},{"synapses",p.synapses},{"resistance",p.resistance}});return r;}
@@ -121,6 +172,57 @@ Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UE
         const auto actual=s.Input.GetDataSources();
         Require(actual.size()==1 && actual.front()==&generator->Output && s.Resistance.GetData()==bank.resistance,"recognition_effective_readback_mismatch");
     }
+    QJsonObject postRecord;
+    if(spec.postTune)
+    {
+        const auto& p=*spec.postTune;
+        const auto base=NmsdkTools::IdentifyModel(m.neuron,{{&generator->Output,"burst"}});
+        Require(base["valid"].toBool() && base["sha256"]==QJsonValue(Text(p.sourceModelRevision)),"post_tune_source_revision_mismatch");
+        const bool edit=p.mode!=NativePostTuneMode::Off && p.mode!=NativePostTuneMode::KeepDone;
+        Require(!edit || p.resistanceBounds.size()==n,"post_tune_bounds_dimension_mismatch");
+        Require(p.mode!=NativePostTuneMode::SearchSyntheticCandidate || p.requestedResistances.size()==n,"post_tune_requests_dimension_mismatch");
+        std::map<std::string,double> requests;QJsonArray postDecisions;
+        for(std::size_t i=0;i<n;++i)
+        {
+            auto& input=m.parameters[i];const double previous=input.resistance;
+            double requested=previous,low=previous,high=previous;
+            if(p.mode==NativePostTuneMode::CanonRmin)requested=i+1==n?p.canonicalLast:p.canonicalFloor;
+            else if(p.mode==NativePostTuneMode::FlatLastR)requested=p.canonicalLast;
+            else if(p.mode==NativePostTuneMode::SearchSyntheticCandidate)requested=p.requestedResistances[i];
+            auto membrane=m.neuron->GetComponentL<NPulseMembrane>(Membrane(declaration.branch,i,input.length),true);
+            Require(bool(membrane),"missing_post_tune_membrane");
+            if(edit)
+            {
+                Require(membrane->GetNumPosChannels()>0,"missing_post_tune_channel");
+                auto channel=dynamic_cast<NPulseChannel*>(membrane->GetPosChannel(0));Require(channel,"unsupported_post_tune_channel");
+                const double rm=channel->RestingResistance.GetData(),ratio=declaration.editPolicy.maximumResistanceRatio;
+                Require(Positive(rm) && Positive(ratio) && ratio>=1.,"invalid_post_tune_native_bounds");
+                low=std::max({p.resistanceBounds[i].minimum,rm/ratio,declaration.editPolicy.configuredMinimumResistance});
+                high=std::min(p.resistanceBounds[i].maximum,rm*ratio);
+                Require(Positive(low) && Positive(high) && low<=high,"empty_post_tune_resistance_interval");
+            }
+            const double applied=std::clamp(requested,low,high);
+            for(int k=1;k<=input.synapses;++k)
+            {
+                auto synapse=membrane->GetComponentL<NPulseSynapseCommon>("ExcSynapse"+std::to_string(k),true);
+                Require(bool(synapse),"missing_post_tune_synapse");const auto path=synapse->GetLongName(m.neuron.Get());
+                auto [it,inserted]=requests.emplace(path,applied);
+                Require(inserted || it->second==applied,"shared_post_tune_bank_conflict");
+            }
+            postDecisions.append(QJsonObject{{"input_index",double(i)},{"previous_resistance",previous},
+                {"requested_resistance",requested},{"minimum_resistance",low},{"maximum_resistance",high},
+                {"applied_resistance",applied},{"clipped",applied!=requested}});
+            input.resistance=applied;
+        }
+        for(const auto& [path,value]:requests)
+        {
+            auto& s=*banks.at(path).synapse;
+            if(s.Resistance.GetData()!=value)s.Resistance=value;
+            Require(s.Resistance.GetData()==value,"post_tune_effective_readback_mismatch");
+        }
+        postRecord={{"mode",PostMode(p.mode)},{"source_model_revision",base["sha256"]},{"decisions",postDecisions},
+            {"selection_status","candidate_unmeasured"},{"calibration_status","unconfirmed"}};
+    }
     const auto integration=AssessNativeIntegration(m.neuron,generator->Amplitude.GetData());
     Require(integration.valid,integration.reason.c_str());
     NativeProbeBindings bindings;bindings.neuron=m.neuron;bindings.branch=declaration.branch;bindings.inputCount=int(n);
@@ -131,6 +233,7 @@ Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UE
     converted.record={{"schema_version",1},{"algorithm",Mode(spec.mode)},{"source_solo_sha256",source["sha256"]},
         {"source_solo_identity",source["model_revision"]},{"result_identity",converted.identity["sha256"]},
         {"decisions",decisions},{"activated_synapses",activation},{"inhibition_policy","preserve_source"}};
+    if(spec.postTune){converted.record["schema_version"]=2;converted.record["post_tune"]=postRecord;}
     return converted;
 }
 QJsonObject Metadata(const QJsonObject& source,const Converted& c)
@@ -150,18 +253,21 @@ QJsonObject Metadata(const QJsonObject& source,const Converted& c)
 }
 QJsonObject EncodeNativeRecognitionSpec(const NativeRecognitionSpec& s)
 {
-    Validate(s);QJsonArray bounds;for(const auto& b:s.resistanceBounds)bounds.append(QJsonObject{{"minimum",b.minimum},{"maximum",b.maximum}});
-    return {{"schema_version",1},{"mode",Mode(s.mode)},{"resistance_bounds",bounds}};
+    Validate(s);QJsonObject result{{"schema_version",s.postTune?2:1},{"mode",Mode(s.mode)},{"resistance_bounds",Bounds(s.resistanceBounds)}};
+    if(s.postTune)result["post_tune"]=EncodePost(*s.postTune);
+    return result;
 }
 NativeRecognitionSpec DecodeNativeRecognitionSpec(const QJsonObject& o)
 {
-    Keys(o,{"schema_version","mode","resistance_bounds"});Require(o["schema_version"]==QJsonValue(1),"unsupported_recognition_spec_schema");
+    const bool post=o["schema_version"]==QJsonValue(2);
+    if(post)Keys(o,{"schema_version","mode","resistance_bounds","post_tune"});
+    else {Keys(o,{"schema_version","mode","resistance_bounds"});Require(o["schema_version"]==QJsonValue(1),"unsupported_recognition_spec_schema");}
     NativeRecognitionSpec s;const auto mode=o["mode"];
     if(mode==QJsonValue("identity"))s.mode=RecognitionConversionMode::Identity;
     else if(mode==QJsonValue("historical_branch_n1_v1"))s.mode=RecognitionConversionMode::HistoricalBranchN1;
     else throw std::invalid_argument("unknown_recognition_conversion");
-    for(const auto& value:Array(o["resistance_bounds"]))
-    {const auto b=Object(value);Keys(b,{"minimum","maximum"});s.resistanceBounds.push_back({Number(b["minimum"]),Number(b["maximum"])});}
+    s.resistanceBounds=DecodeBounds(o["resistance_bounds"]);
+    if(post)s.postTune=DecodePost(Object(o["post_tune"]));
     Validate(s);return s;
 }
 QJsonObject ConvertNativeSoloToRecognition(const QJsonObject& source,const NativeRecognitionSpec& spec,
