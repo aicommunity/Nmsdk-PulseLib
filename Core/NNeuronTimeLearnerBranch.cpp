@@ -3548,7 +3548,7 @@ bool NNeuronTimeLearnerBranch::SetIsNeedToTrain(const bool &value)
  {
   if(NativeTrainingOwned)
   {
-   if(value && !IsNeedToTrain.GetData()){NativeTrainingControl.ResetControl();NativeProbeControl.ResetControl();}
+   if(value && !IsNeedToTrain.GetData()){NativeTrainingRequestIntent.Clear();NativeTrainingControl.ResetControl();NativeProbeControl.ResetControl();}
    if(!value)NativeTrainingControl.ExternalStop(TimeLearner::BindNativeTraining(*this,NativeProbeControl,NativeTrainingEditDepth));
   }
   return true;
@@ -3703,7 +3703,7 @@ bool NNeuronTimeLearnerBranch::SetInputPattern(const MDMatrix<double> &value)
  {
   if(!Dataset || !TimeLearner::ValidNativeTarget(value,std::size_t(NumInputDendrite.GetData())))return false;
   if(TimeLearner::NativeTrainingPatternEqual(value,InputPattern.GetData()))return true;
-  NativeProbeControl.Cancel("training_target_changed");NativeTrainingControl.InvalidateTarget();
+  NativeTrainingRequestIntent.Clear();NativeProbeControl.Cancel("training_target_changed");NativeTrainingControl.InvalidateTarget();
   NativeTrainingControl.FailConfiguration("training_target_changed_requires_new_plan");
   try{TimeLearner::AssignNativeTarget(*Dataset,value);return true;}
   catch(const std::exception& error){NativeEditFailure=error.what();return false;}
@@ -4818,11 +4818,13 @@ bool NNeuronTimeLearnerBranch::ABeforeDefault(void)
  NativeRecognition.reset();
  NativeConfiguredPlan.reset();NativeConfiguredSinks={};NativeConfiguredText.clear();
  NativeModelDeclaration.reset();
+ NativeTrainingRequestIntent.Clear();
  NativeTrainingOwned=false;NativeTrainingControl.InvalidateTarget();
  NativeEditFailure.clear();NativeProbeControl.ResetControl();UNet::ABeforeDefault();return true;
 }
 bool NNeuronTimeLearnerBranch::ABeforeReset(void)
 {
+ if(!NativeLifecycleDepth)NativeTrainingRequestIntent.Clear();
  if(NativeTrainingOwned)
  {
   if(!NativeLifecycleDepth)NativeTrainingControl.ResetControl();
@@ -4933,6 +4935,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ConstructNativeMod
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Constructed)
  {
+  NativeTrainingRequestIntent.Clear();
   NativeRecognition.reset();
   OldDendriteLength=DendriteLength.GetData();LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
   CapApplyPending=false;TrainingPhase.SetDataDirect(kPhaseSync);Ready=false;
@@ -4948,6 +4951,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::AdoptNativeModel(T
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
  {
+  NativeTrainingRequestIntent.Clear();
   OldDendriteLength=DendriteLength.GetData();LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
   CapApplyPending=false;TrainingPhase.SetDataDirect(kPhaseSync);Ready=false;
  }
@@ -4969,6 +4973,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeLearne
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
  {
+  NativeTrainingRequestIntent.Clear();
   NativeRecognition.reset();
   NativeConfiguredSinks={};
   OldDendriteLength=DendriteLength.GetData();LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
@@ -5043,6 +5048,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeRecogn
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
  {
+  NativeTrainingRequestIntent.Clear();
   NativeConfiguredSinks={};OldDendriteLength=DendriteLength.GetData();
   LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
   CapApplyPending=false;TrainingPhase.SetDataDirect(kPhaseDone);Ready=false;
@@ -5054,6 +5060,7 @@ void NNeuronTimeLearnerBranch::BeginNativeTraining(TimeLearner::NativeTrainingPl
  if(NativeRecognition)throw std::logic_error("native_recognition_requires_explicit_solo_import_or_cold_model");
  if(TimeLearner::NativeTrainingIsActive(NativeTrainingControl))
   throw std::logic_error("native_training_already_active");
+ NativeTrainingRequestIntent.Clear();
  NativeTrainingOwned=true;NativeProbeControl.ResetControl();
  if(recaptureReferences)NativeTrainingControl.InvalidateTarget();else NativeTrainingControl.ResetControl();
  IsNeedToTrain.SetDataDirect(true);TrainingPhase.SetDataDirect(kPhaseSync);
@@ -5068,8 +5075,11 @@ void NNeuronTimeLearnerBranch::BeginNativeTraining(TimeLearner::NativeTrainingPl
   if(!neuron || neuron->UseElementDefaults.GetData())
    throw std::invalid_argument("native_training_requires_storage_owned_physics");
   ValidateNativeModelDeclaration();
+  const auto requestControls=TimeLearner::ReadNativeFinalizationControls(*this);
+  const double startedTime=Environment->GetTime().GetDoubleTime();
   NativeTrainingControl.Start(std::move(plan),TimeLearner::BindNativeTraining(*this,NativeProbeControl,NativeTrainingEditDepth),
       Environment->GetTime().GetDoubleTime(),TimeLearner::NativeTrainingWallTime());
+  NativeTrainingRequestIntent.Capture(requestControls,NativeTrainingControl,startedTime);
  }
  catch(const std::exception& error){NativeTrainingControl.FailConfiguration(error.what());}
  catch(...){NativeTrainingControl.FailConfiguration("native_training_start_exception");}

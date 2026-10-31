@@ -25,6 +25,7 @@ See file license.txt for more information
 #include "TimeLearner/NativeRecognitionTrial.h"
 #include "TimeLearner/NativeModelEditor.h"
 #include "TimeLearner/NativeTrainingService.h"
+#include "TimeLearner/NativeTrainingIntent.h"
 #include "TimeLearner/NativeModelBuilder.h"
 #include "TimeLearner/ConfiguredNativeTraining.h"
 #include "../../../Rdk/Deploy/Include/rdk.h"
@@ -810,6 +811,8 @@ public: // Methods
  const std::string& NativeModelEditFailure() const { return NativeEditFailure; }
  void BeginNativeTraining(TimeLearner::NativeTrainingPlan plan,bool recaptureReferences=false);
  const TimeLearner::NativeTrainingService& NativeTrainingController() const { return NativeTrainingControl; }
+ /// Immutable declaration of this live attempt; absent after import/reset/retarget.
+ QJsonObject NativeTrainingRequest() const {return NativeTrainingRequestIntent.Read();}
  // Explicit cold construction may replace factory-owned children after preview;
  // adoption is read-only and never infers whether a supplied graph was trained.
  TimeLearner::NativeModelBuildResult ConstructNativeModel(TimeLearner::NativeModelSpec specification);
@@ -979,6 +982,7 @@ protected:
      const QJsonObject& boundary);
  TimeLearner::NativeProbeExecutor NativeProbeControl;
  TimeLearner::NativeTrainingService NativeTrainingControl;
+ TimeLearner::NativeTrainingIntent NativeTrainingRequestIntent;
  std::optional<TimeLearner::NativeModelSpec> NativeModelDeclaration;
  std::optional<TimeLearner::ConfiguredNativeTraining> NativeConfiguredPlan;
  TimeLearner::ConfiguredNativeEvidenceSinks NativeConfiguredSinks;
