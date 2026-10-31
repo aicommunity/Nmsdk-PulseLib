@@ -15,6 +15,9 @@ struct NativePostTuneTransactionSpec {
     std::size_t maximumCandidates=256,maximumRecordedSamples=2000000;
     NativeThresholdGridSpec calibration;
     NativePostTuneFinalization finalization=NativePostTuneFinalization::Calibrate;
+    // Explicit measurement physics, independent of the final recognition
+    // threshold. Absence preserves the original transaction/report exactly.
+    std::optional<double> weightProbeThreshold;
 };
 enum class NativePostTuneTransactionStatus {
     Running,Calibrated,SearchUnresolved,BudgetExhausted,Cancelled,Failed,RecoveryRequired,WeightsSelected
@@ -44,6 +47,7 @@ public:
     ~NativePostTuneTransaction(){if(!Done())Cancel("transaction_destroyed");}
     bool Done() const {return status!=NativePostTuneTransactionStatus::Running;}
     bool IsCalibrating() const {return bool(calibration);}
+    bool IsVerifyingFinalModel() const {return finalVerification;}
     NativePostTuneTransactionStatus Status() const {return status;}
     const std::string& Reason() const {return reason;}
     const QJsonObject& CalibratedPackage() const {return status==NativePostTuneTransactionStatus::Calibrated?finalPackage:emptyPackage;}
@@ -56,6 +60,7 @@ public:
         try
         {
             if(calibration){AdvanceCalibration();return;}
+            if(finalVerification){AdvanceFinalVerification();return;}
             scope->CheckLifecycle();
             if(waiting)
             {
@@ -70,7 +75,8 @@ public:
             scope->CheckPackage(expected);
             if(installed && current.observations.size()==spec.calibration.trials.size())
             {
-                const double gap=MeasureGap(current);records.push_back({expected,std::move(current),gap});current={};
+                const double gap=MeasureGap(current);
+                records.push_back({spec.weightProbeThreshold?currentFinalCandidate:expected,expected,std::move(current),gap});current={};
                 if(!best || gap>records[*best].gap)best=records.size()-1;
                 installed=false;
             }
@@ -84,6 +90,10 @@ public:
                         owner.GetStorage(),owner.GetEnvironment(),implementation);}
                 catch(const std::exception& error)
                 {rejected.append(QJsonObject{{"proposal",double(proposals-1)},{"reason",QString::fromStdString(error.what())}});return;}
+                currentFinalCandidate=candidate;
+                if(spec.weightProbeThreshold)
+                    candidate=CreateNativeThresholdCandidate(candidate,*spec.weightProbeThreshold,
+                        owner.GetStorage(),owner.GetEnvironment(),implementation);
                 const auto identity=candidate["model_revision"].toString().toStdString();
                 if(!seen.insert(identity).second)
                 {rejected.append(QJsonObject{{"proposal",double(proposals-1)},{"reason","duplicate_effective_model"}});return;}
@@ -159,17 +169,32 @@ public:
             result["selection_proof_embedded_in_model"]=false;
             result["recognition_success_confirmed"]=false;
         }
+        if(spec.weightProbeThreshold)
+        {
+            result["schema_version"]=3;
+            result["algorithm"]="bounded-coordinate-explicit-weight-threshold-native-driver-v1";
+            result["finalization"]=spec.finalization==NativePostTuneFinalization::Calibrate?"calibrate":"keep_fixed_threshold";
+            result["weight_probe_threshold"]=*spec.weightProbeThreshold;
+            QJsonArray measured;
+            for(const auto& r:records)measured.append(r.measurementCandidate);
+            result["weight_measurement_candidates"]=measured;
+            result["final_model_matrix"]=EncodeNativeCalibrationMatrix(finalMatrix);
+            result["recorded_final_samples"]=double(finalRecordedSamples);
+            result["final_threshold_responses_observed"]=finalVerified || status==NativePostTuneTransactionStatus::Calibrated;
+        }
         result["sha256"]=NmsdkTools::CanonicalModelDataSha256(result);return result;
     }
 private:
-    struct Record {QJsonObject candidate;NativeCalibrationMatrix matrix;double gap;};
+    struct Record {QJsonObject candidate,measurementCandidate;NativeCalibrationMatrix matrix;double gap;};
     Owner& owner;NativePostTuneTransactionSpec spec;std::string implementation,reason,searchTermination;
     std::shared_ptr<NativeRecognitionTransactionScope<Owner>> scope;
     std::unique_ptr<NativeThresholdCalibrationTransaction<Owner>> calibration;
     NativeRecognitionSpec baseSpec;QJsonObject source,expected,finalPackage,emptyPackage,calibrationReport;QJsonArray rejected;
-    NativeCalibrationMatrix current;std::vector<Record> records;std::optional<std::size_t> best;
+    NativeCalibrationMatrix current,finalMatrix;QJsonObject currentFinalCandidate;
+    std::vector<Record> records;std::optional<std::size_t> best;
     std::set<std::string> seen;std::size_t inputCount=0,proposals=0,recordedSamples=0,coordinate=0;
     unsigned pass=0,multiplier=0;bool branch=false,installed=false,waiting=false,sourceRestored=false;
+    bool finalVerification=false,finalVerified=false;std::size_t finalRecordedSamples=0;
     NativePostTuneTransactionStatus status=NativePostTuneTransactionStatus::Running;
     static void Require(bool value,const char* why){if(!value)throw std::logic_error(why);}
     static QJsonValue Threshold(const QJsonObject& p)
@@ -195,6 +220,7 @@ private:
     bool LtzMetric() const {return spec.metric==NativePostTuneMetric::LTZone || (spec.metric==NativePostTuneMetric::Auto && !branch);}
     void Validate()
     {
+        Require(!spec.weightProbeThreshold || Detail::Finite(*spec.weightProbeThreshold),"invalid_post_tune_weight_probe_threshold");
         Require(spec.finalization==NativePostTuneFinalization::Calibrate ||
             spec.finalization==NativePostTuneFinalization::KeepFixedThreshold,"unknown_post_tune_finalization");
         ModeName(spec.mode);Require(spec.metric==NativePostTuneMetric::Auto || spec.metric==NativePostTuneMetric::LTZone ||
@@ -239,7 +265,9 @@ private:
         // Pure native preview validates all mode-specific fields/bounds before
         // touching the owner's physical graph, even for the synthetic seed.
         auto s=baseSpec;s.postTune=InitialProposal();
-        ConvertNativeSoloToRecognition(source["source_solo"].toObject(),s,owner.GetStorage(),owner.GetEnvironment(),implementation);
+        const auto preview=ConvertNativeSoloToRecognition(source["source_solo"].toObject(),s,owner.GetStorage(),owner.GetEnvironment(),implementation);
+        if(spec.weightProbeThreshold)
+            CreateNativeThresholdCandidate(preview,*spec.weightProbeThreshold,owner.GetStorage(),owner.GetEnvironment(),implementation);
         if(spec.finalization==NativePostTuneFinalization::Calibrate)
             CreateNativeThresholdCandidate(source,spec.calibration.thresholds.front(),owner.GetStorage(),owner.GetEnvironment(),implementation);
     }
@@ -296,6 +324,13 @@ private:
             // alone never asserts target detection or absence of false spikes.
             Require(Threshold(records[*best].candidate)==Threshold(source),"fixed_post_tune_changed_threshold");
             scope->Install(records[*best].candidate,expected);scope->CheckPackage(expected);
+            if(spec.weightProbeThreshold)
+            {
+                // The weight matrix belongs to different threshold physics.
+                // Acquire fresh complete responses on the actual final model;
+                // this verifies observation coverage, never separability.
+                current={};finalVerification=true;return;
+            }
             finalPackage=expected;status=NativePostTuneTransactionStatus::WeightsSelected;return;
         }
         std::size_t matrixBudget=0;for(const auto& q:spec.calibration.trials)
@@ -311,6 +346,31 @@ private:
         // Start afresh from the immutable selected archive, not its probe dynamics.
         scope->Install(records[*best].candidate,expected);
         calibration=std::make_unique<NativeThresholdCalibrationTransaction<Owner>>(owner,spec.calibration,implementation,scope);
+    }
+    void AdvanceFinalVerification()
+    {
+        scope->CheckLifecycle();
+        if(waiting)
+        {
+            const auto& q=current.requests.back();scope->CheckTrialOwnership(q.runId,q.trialId);
+            auto observation=owner.TakeNativeRecognitionTrialResult();if(!observation)return;
+            waiting=false;ValidateNativeRecognitionObservation(q,*observation);
+            Require(observation->modelBefore==expected["model_revision"].toString().toStdString(),"post_tune_final_observation_revision_changed");
+            finalRecordedSamples+=observation->samples.size();
+            Require(finalRecordedSamples<=spec.maximumRecordedSamples-recordedSamples,"post_tune_final_recording_budget_exceeded");
+            current.observations.push_back(std::move(*observation));
+        }
+        scope->CheckPackage(expected);
+        if(current.observations.size()==spec.calibration.trials.size())
+        {
+            finalMatrix=std::move(current);current={};finalVerification=false;finalVerified=true;
+            finalPackage=expected;status=NativePostTuneTransactionStatus::WeightsSelected;return;
+        }
+        auto q=spec.calibration.trials[current.requests.size()];
+        if(ObservationSampleBound(q)>spec.maximumRecordedSamples-recordedSamples-finalRecordedSamples)
+        {Restore(NativePostTuneTransactionStatus::BudgetExhausted,"final_model_observation_budget");return;}
+        q.runId=spec.calibration.confirmation.attemptId+"/final-model";
+        owner.QueueNativeRecognitionTrial(q);current.requests.push_back(std::move(q));waiting=true;
     }
     void AdvanceCalibration()
     {

@@ -140,3 +140,31 @@ PostTune=false всё равно входит в parallel-peak calibration, да
 AutoCalibrate=false (Rs scaling ограничен N1 отдельно). Нельзя считать такой
 legacy run frozen-threshold только по этим исходным флагам. Подробный контракт
 сохранён в root Docs/StructTrain/TimeLearner/CalibrationPropertyContracts.ru.md.
+
+
+## Явная физика порога измерения весов: реализация ожидает приёмки
+
+NativePostTuneTransactionSpec.weightProbeThreshold задаёт независимый порог
+только измерительных матриц весов. Отсутствующее значение сохраняет прежний
+алгоритм и JSON schema 1/2. При наличии значения report имеет schema 3:
+weight_measurement_candidates содержит реальные threshold-candidate packages,
+а candidates[].candidate — конечные recognition packages с исходным порогом.
+Матрицы весов относятся к revision measurement candidate, не final candidate.
+
+Каждый кандидат строится из immutable Solo штатным conversion/import, затем
+из него создаётся отдельный native threshold candidate. Общие storage-образы
+не изменяются. Выбранные индивидуальные Rs остаются частью конечного пакета.
+KeepFixedThreshold устанавливает конечный пакет и выполняет свежую полную
+матрицу при исходном пороге; только после неё возвращает WeightsSelected.
+Это наблюдение реакций, а не критерий распознавания или certificate Exact.
+Budget/cancel восстанавливают полный source; lifecycle detach не делает import.
+При Calibrate конечный пакет передаётся существующей реальной grid/confirmation
+процедуре, без переноса доказательств между разными порогами.
+
+Суммарный maximumRecordedSamples включает весовые и конечные пробы.
+Report сохраняет final_model_matrix, recorded_final_samples и
+final_threshold_responses_observed. Неполная матрица остаётся active_matrix,
+а final responses не отмечаются проверенными. Старые codecs controls v1/v2
+отвергают новое поле при сериализации, чтобы оно не терялось молча.
+Production job schema, evidence reader и configured public-property dispatch
+пока не поддерживают этот новый вариант; runtime-проверки ещё не завершены.

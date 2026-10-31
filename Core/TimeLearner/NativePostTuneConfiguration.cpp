@@ -65,6 +65,7 @@ NativePostTuneTransactionSpec DecodeNativePostTuneControls(const QJsonObject& p,
 }
 QJsonObject EncodeNativePostTuneControls(const NativePostTuneTransactionSpec& spec)
 {
+    Require(!spec.weightProbeThreshold,"post_tune_controls_requires_explicit_weight_threshold_schema");
     Require(spec.finalization==NativePostTuneFinalization::Calibrate,"post_tune_controls_v1_requires_calibration");
     QJsonArray bounds;
     for(const auto& b:spec.resistanceBounds)bounds.append(QJsonObject{{"minimum",Numeric(b.minimum)},{"maximum",Numeric(b.maximum)}});
