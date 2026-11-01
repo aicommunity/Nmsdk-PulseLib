@@ -122,7 +122,7 @@ void BoundedTrainingSession::BeginInput()
 {
     const auto index=order.at(position);const auto& b=config.bounds[index];const auto& p=current[index];
     background=current;lengths.clear();counts.clear();resistances.clear();best.reset();anchor.reset();anchorTrial.clear();
-    candidateMeasurements.clear();
+    candidateMeasurements.clear();n0Priority.clear();issuedN0Candidates.clear();
     lengthIndex=normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
     initialCandidatePending=requireResistanceDomains;domainReady=false;domainLength=domainNormalizer=domainVariant=0;
     domainGeometry.clear();domainScope.clear();visitedDomainCandidates.clear();
@@ -165,7 +165,24 @@ void BoundedTrainingSession::BeginInput()
 bool BoundedTrainingSession::NextCandidate(std::vector<InputParameters>& parameters)
 {
     const auto index=order.at(position);
-    const std::size_t normalizers=config.normalization==Normalization::SynapseCount?counts.size():resistances.size();
+    const bool n0=config.normalization==Normalization::SynapseCount;
+    const auto issue=[&](std::vector<InputParameters>& candidate) {
+        if(!PrepareCandidate(candidate))return false;
+        if(n0)
+        {
+            if(std::find(issuedN0Candidates.begin(),issuedN0Candidates.end(),candidate)!=issuedN0Candidates.end())return false;
+            issuedN0Candidates.push_back(candidate);
+        }
+        return true;
+    };
+    // These are proposals from completed measurements, never assumed solutions.
+    // Required repeats occur inside Consume and bypass candidate deduplication.
+    while(!n0Priority.empty())
+    {
+        parameters=std::move(n0Priority.front());n0Priority.erase(n0Priority.begin());
+        if(issue(parameters))return true;
+    }
+    const std::size_t normalizers=n0?counts.size():resistances.size();
     // First evaluate the current normalizer at each length; then the next
     // normalizer at each length. No monotonicity or bracket is inferred.
     while(normalizerIndex<normalizers)
@@ -174,7 +191,7 @@ bool BoundedTrainingSession::NextCandidate(std::vector<InputParameters>& paramet
         parameters=background;parameters[index].length=lengths[lengthIndex++];
         if(config.normalization==Normalization::SynapseCount)parameters[index].synapses=counts[normalizerIndex];
         else parameters[index].resistance=resistances[normalizerIndex];
-        if(PrepareCandidate(parameters))return true;
+        if(issue(parameters))return true;
     }
     return false;
 }
@@ -482,7 +499,26 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
         e.withinTiming=group.withinTiming;e.withinAmplitude=group.withinAmplitude;
         candidateRepeats.push_back(std::move(group));candidateMeasurements.clear();
     }
-    if(!best || Rank(e,config,reference)<Rank(*best,config,reference))best=e;
+    const bool improved=!best || Rank(e,config,reference)<Rank(*best,config,reference);
+    if(improved)best=e;
+    if(improved && !restoringBest && config.normalization==Normalization::SynapseCount &&
+        e.withinTiming && !e.withinAmplitude)
+    {
+        // Normalize near a measured timing-ready geometry before spending the
+        // remaining budget on distant lengths. No amplitude monotonicity or
+        // preservation of timing is inferred, and both neighbors remain legal
+        // full-model candidates with fresh anchor/input measurements.
+        const auto& bound=config.bounds[index];
+        for(const int delta:{1,-1})
+        {
+            auto candidate=e.fullParameters;candidate[index].synapses+=delta;
+            if(candidate[index].synapses<bound.minimumSynapses || candidate[index].synapses>bound.maximumSynapses ||
+                !PrepareCandidate(candidate))continue;
+            if(std::find(issuedN0Candidates.begin(),issuedN0Candidates.end(),candidate)==issuedN0Candidates.end() &&
+                std::find(n0Priority.begin(),n0Priority.end(),candidate)==n0Priority.end())
+                n0Priority.push_back(std::move(candidate));
+        }
+    }
     if(restoringBest || (e.withinTiming && e.withinAmplitude))AdvanceInput();
     else {phase=Phase::Candidate;anchor.reset();anchorTrial.clear();}
 }

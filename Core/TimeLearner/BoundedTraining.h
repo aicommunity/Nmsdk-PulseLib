@@ -102,6 +102,7 @@ private:
     std::vector<std::size_t> order;
     std::vector<int> lengths,counts;
     std::vector<double> resistances;
+    std::vector<std::vector<InputParameters>> n0Priority,issuedN0Candidates;
     std::size_t lengthIndex=0,normalizerIndex=0,position=0,sweep=0,candidates=0;
     std::size_t serial=0,epoch=0,probes=0,edits=0,invalid=0;
     std::string revision,anchorTrial;
