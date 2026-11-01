@@ -298,8 +298,9 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
     // All retained observations were validated against this session's fixed
     // stimulus profile. A different effective source amplitude cannot borrow
     // their bracket even when the normalized neuron graph hash is unchanged.
-    if(config.resistanceSubdivisionDepth>0 && Finite(assessment.sourceAmplitude) &&
-       assessment.sourceAmplitude==references.Protocol().stimulusProfile.amplitude)
+    const auto& stimulus=references.Protocol().stimulusProfile;
+    if(config.resistanceSubdivisionDepth>0 && stimulus && Finite(assessment.sourceAmplitude) &&
+       assessment.sourceAmplitude==stimulus->amplitude)
     {
         std::vector<MeasuredResistancePoint> points;
         for(const auto& [scope,measurement]:resistanceMeasurements)
