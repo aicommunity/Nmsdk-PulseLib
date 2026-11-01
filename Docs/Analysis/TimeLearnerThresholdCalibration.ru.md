@@ -325,8 +325,8 @@ owned PostTune после естественного Finished. Это отдел
 Normal14 operations проверяют четыре живых Train, четыре отдельных frozen
 same-matrix evaluate, четыре partial schema2 и две partial schema1 controls.
 Train outcomes остаются SearchUnresolved; все frozen пары дают target0/foil0
-spikes. Это FN, не улучшение классификации. ASan production повтор и новый
-visual report gate пока открыты. Target-only AutoCalibrateFixedLTZThreshold,
+spikes. Это FN, не улучшение классификации. Актуальная normal/ASan/visual
+область обновляется в корневом контракте ниже. Target-only AutoCalibrateFixedLTZThreshold,
 Branch parallel-peak и C-trim новым dispatcher пока не поддерживаются.
 
 Актуальный контракт и SHA/proof links:

@@ -69,8 +69,9 @@ PostTune cancel использует native transactional rollback. Codec сох
 декларацию, а не mid-probe checkpoint; bool Build/Reset/Calculate не являются
 каналом ошибок.
 
-Production Console Train schema2 прошёл normal14 operations и последующий
-4-check portable reader; ASan production и его временные отчёты ожидаются.
+Production Console Train schema2 имеет scoped normal/ASan14-operation
+проверки и complete portable readers. Текущая visual-приёмка и полные SHA
+обновляются в корневом NativeLiveFinalization.
 Native Cancel/codec отдельно проверены ASan9/9 и reader8/8. Проверенная
 область — два входа, N1/2000Hz, Classic/Branch, fixed/grid. Это не общая
 рекомендация версии2 для всех профилей. Источники и scopes находятся в корневом
