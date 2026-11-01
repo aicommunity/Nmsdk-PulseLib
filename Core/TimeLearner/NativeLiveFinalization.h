@@ -180,4 +180,46 @@ private:
     static void Require(bool value,const char* why) {if(!value)throw std::logic_error(why);}
     void Fail(const std::string& why) {status="failed";reason=why;}
 };
+
+// Persist only an immutable declaration. This is not a controller/dynamics
+// checkpoint; decoding never constructs Rdk objects or applies a model.
+inline QJsonObject EncodeNativeLiveFinalizationSpec(const NativeLiveFinalizationSpec& spec) {
+    return NativeLiveFinalization(spec).Report()["plan"].toObject();
+}
+inline NativeLiveFinalizationSpec DecodeNativeLiveFinalizationSpec(const QJsonObject& value) {
+    const auto require=[](bool valid,const char* reason) {
+        if(!valid)throw std::invalid_argument(reason);
+    };
+    require(value["kind"]==QJsonValue("native_live_finalization_plan") &&
+        value["schema_version"].isDouble() && value["schema_version"].toDouble()==1. &&
+        value["implementation_id"].isString() && !value["implementation_id"].toString().isEmpty() &&
+        value["conversion"].isObject() && value["post_tune"].isObject() &&
+        value["trials"].isArray() && value["thresholds"].isArray() && value["confirmation"].isObject(),
+        "invalid_live_finalization_plan_schema");
+    const auto maximum=value["maximum_calibration_candidates"];
+    require(maximum.isDouble() && Detail::Finite(maximum.toDouble()) &&
+        maximum.toDouble()>=0. && maximum.toDouble()<=256. && std::floor(maximum.toDouble())==maximum.toDouble(),
+        "invalid_live_finalization_calibration_budget");
+    NativeThresholdGridSpec grid;
+    grid.maximumCandidates=std::size_t(maximum.toDouble());
+    grid.confirmation=DecodeNativeThresholdConfirmationSpec(value["confirmation"].toObject());
+    require(value["trials"].toArray().size()<=10000 && value["thresholds"].toArray().size()<=256,
+        "live_finalization_plan_budget_exceeded");
+    for(const auto& q:value["trials"].toArray()) {
+        require(q.isObject(),"invalid_live_finalization_trial_schema");
+        grid.trials.push_back(DecodeNativeCalibrationRequest(q.toObject()));
+    }
+    for(const auto& t:value["thresholds"].toArray()) {
+        require(t.isDouble() && Detail::Finite(t.toDouble()),"invalid_live_finalization_threshold");
+        grid.thresholds.push_back(t.toDouble());
+    }
+    NativeLiveFinalizationSpec spec;
+    spec.implementationId=value["implementation_id"].toString().toStdString();
+    spec.conversion=DecodeNativeRecognitionSpec(value["conversion"].toObject());
+    spec.postTune=DecodeNativePostTuneControlsV3(value["post_tune"].toObject(),std::move(grid));
+    // Exact reconstruction also rejects unknown fields, invalid signatures,
+    // silently defaulted properties and unsupported nested schema variants.
+    require(EncodeNativeLiveFinalizationSpec(spec)==value,"live_finalization_plan_readback_mismatch");
+    return spec;
+}
 }
