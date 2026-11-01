@@ -17,7 +17,17 @@ InitEstDelayPerSeg допускает конечное значение <=0 дл
 2000/20000 Гц, два последовательных TakeObject/ReturnObject, по30 назначений
 NaN/+Inf/-Inf на case. Все4 cases выявили нарушение: из120 назначений84
 были приняты. Исходные process_error/returncode1 сохраняются как baseline,
-а не как успешный тест. Проверка исправления normal/ASan ещё не завершена.
+а не как успешный тест.
+
+Исправление Core `ecf35a6c322f58fc9c4ffdfb998bf882f990252a` принято адресно:
+на каждом worker4/4 property cases и21/21 native lifecycle/copy/XML/scheduler
+regressions без skips;120 неконечных назначений отклонены с сохранением значения.
+Normal primary — `fff3d9ddf116c39abaf22ab5fa8b13025efd350b`, ASan —
+`afe5bdf4b56deddf4a6021853b1ad76d145a494e`. Первоначальный ASan regression
+завершился timeout1800 s; повтор только21 regressions на том же frozen runtime
+с лимитом3600 s прошёл за1997.296 wall s. Оба исхода сохранены, runtime не
+пересобирался; это не независимые обучения. Root acceptance фиксирует child
+merge с тем же tested Core. Полные режимы/профили и остальные свойства открыты.
 
 Configured V2 берёт окна и tolerances из строгой ControllerConfiguration,
 а не из этих legacy timing properties. Проверка property setter не заменяет
