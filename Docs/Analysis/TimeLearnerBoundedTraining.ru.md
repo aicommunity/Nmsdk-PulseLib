@@ -2,7 +2,7 @@
 
 Внутренний контроллер `Core/TimeLearner/BoundedTraining` принимает захваченные
 CapturedPerInput references, индивидуальные границы, исходные эффективные L/Ns/Rs
-и fingerprint модели. NextAction выдаёт Edit или Probe; адаптер выполняет действие
+и fingerprint модели. NextAction выдаёт Edit, Probe или ResistanceDomain; адаптер выполняет действие
 между пробами через штатные компоненты и подтверждает readback. Контроллер сам
 не вызывает Build/Reset/Calculate и не меняет storage-образы.
 
@@ -10,7 +10,7 @@ CapturedPerInput references, индивидуальные границы, исх
 входов. Проверка данных общая с FinalVerification. Перебор ограничен бюджетами
 проб, изменений, кандидатов и проходов; внешняя временная граница передаётся
 через ExhaustBudget, явная остановка — через ExternalStop. N0 исследует целые
-длины/Ns до 128, N1 — длины и конечную объявленную сетку индивидуальных Rs.
+длины/Ns до 128, N1 — длины и конечную объявленную seed-сетку индивидуальных Rs.
 Глобальная монотонность не предполагается. Последний вход фиксирован. Для Branch
 позиции невозрастают; изменение общего кабеля инвалидирует все свежие измерения.
 
@@ -19,6 +19,17 @@ CapturedPerInput references, индивидуальные границы, исх
 обязательно проверяет отдельный FinalVerificationSession по всем входам.
 Вне допуска после конечного числа проходов — SearchUnresolved, а не доказанная
 физическая недостижимость. Успешность распознавания проверяется отдельно.
+
+В feature N1 measured refinement добавлен `MeasuredResistanceSearch`: после
+трёх разных согласованных измерений одной полной геометрии и normalized physical
+scope предлагается геометрическая середина между соседними Rs с ошибками разных
+знаков. Текущая domain source amplitude должна совпадать с immutable protocol.
+Каждая точка заново проходит native edit/probe; final gate не меняется.
+Немонотонность, timing-invalid точки или несогласованные повторы сохраняют mesh
+fallback. N0, depth=0 и standalone callers без physical-domain ownership не
+меняются. Полная спецификация и состояние серверных сборок находятся в корневом
+`Docs/StructTrain/TimeLearner/MeasuredResistanceRefinement.ru.md`.
+Runtime-приёмка этой feature ещё не завершена; наличие кода не объявляет Exact.
 
 Текущий native service доступен через ControllerVersion=2; реализованы native
 структурные адаптеры и versioned export/import в проверенной области. Полная
@@ -76,3 +87,10 @@ fixtures подтверждают улучшение порядка предло
 Полная матрица N0/N1, physical applicability, quantized/best-effort semantics,
 C-trim и научные контроли по-прежнему открыты. Подробные source SHA, primary
 и visual receipts: корневой Docs/StructTrain/TimeLearner/N0CandidateOrdering.ru.md.
+
+Впоследствии root develop merge `2b5af8c191b6ea20dff0f8b676e702db8c53c82f`
+принял адресные physical N0 proposal controls на обоих workers и N=1/2/4/5
+dimension controls. Измеренная последовательность L1/Ns1 → L2/Ns1 → L2/Ns2 →
+L3/Ns1 подтверждена для Classic/Branch; все четыре proposal Train остаются
+SearchUnresolved. Это проверка физического пути proposal, а не классификация
+или доказанное преимущество policy. См. корневой NativeDimensionControls.ru.md.
