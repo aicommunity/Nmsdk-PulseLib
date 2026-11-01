@@ -46,11 +46,14 @@ uniform physics storage-образов, параметры обучения ил
 
 Этот режим не вызывает BuildStructure и не должен пересоздавать физику.
 Однако LoadComponent через UNet заменяет дочерние объекты. Classic и Branch
-привязывают именованный Neuron в AAddComponent и повторно разрешают Neuron /
-DatasetMatrix в ABeforeBuild. Это служебные ссылки на фактический граф, а не
+разрешают именованные Neuron / DatasetMatrix в ABeforeBuild и ABeforeReset.
+UNet сначала добавляет дочерний объект с именем образа, а затем LoadComponent
+присваивает окончательное сохранённое имя; AAddComponent ещё не гарантирует
+возможность узнать роль по этому имени. При N=1 неизменившиеся параметры могут
+оставить Ready=true, поэтому одного ABeforeBuild также недостаточно. Это служебные ссылки на фактический граф, а не
 восстановление физической модели из parent defaults.
 
-ABuild после legacy ветвей подготавливает DendriteNeuronAmplitude и
+ABuild после legacy ветвей и явная граница Reset подготавливают DendriteNeuronAmplitude и
 SomaNeuronAmplitude размером (N+1)×1 через TimeLearner/LegacyReadout.h. Матрицы
 правильной формы сохраняются, включая явно загруженное состояние. Загрузка
 только Parameters также получает правильные буферы; наличие State-файла не
@@ -59,8 +62,8 @@ SomaNeuronAmplitude размером (N+1)×1 через TimeLearner/LegacyReado
 меняет Rs/C, классы, связи или частоту.
 
 BeforeCalculate проверяет инвариант формы до штатного обхода детей. Нарушение
-даёт NativeModelEditFailure=legacy_readout_shape_requires_build и пропуск
-расчёта, без исправляющего resize на тике. Последующий реальный Build при Ready=false подготавливает
+даёт NativeModelEditFailure=legacy_readout_shape_requires_reset_or_build и пропуск
+расчёта, без исправляющего resize на тике. Последующий Reset либо реальный Build при Ready=false подготавливает
 этот workspace и снимает именно эту диагностику. Обычный вызов Build при
 Ready=true остаётся штатным no-op: он не снимает ошибку и не исправляет буфер.
 Нельзя использовать самоприсваивания параметров или цепочки пробуждающих
@@ -69,7 +72,9 @@ Branch внутри Calculate удалено. Native-owned V2 и recognition п�
 свои самостоятельные lifecycle/ownership ветви.
 
 Runtime-приёмка изменений выполняется отдельно. Исходный d1c3df4cd0749e5869b977fb5e69417400ce1112
-уже дал16/16 отказов реального XML/readout контроля на normal и ASan: физическая
-сома реагирует, а learner cached output остаётся0. Расширенный контроль добавляет
-Parameters-only, State и проверку размеров до первого тика. Полная матрица
+дал32/32 отказа расширенного реального XML/readout контроля на normal и ASan: физическая
+сома реагирует, а learner cached output остаётся0. Из них12 Parameters-only случаев N>1 имеют два значения вместо N+1;
+20 State/N=1 случаев имеют верный размер, но нулевую реакцию learner при
+ненулевой реакции сомы. Проверены Parameters-only/State, N1/2/4/6 и обе частоты.
+Реальные исправленные прогоны и широкая регрессия проверяются отдельно. Полная матрица
 исходного плана и научная эффективность этим контролем не закрываются.

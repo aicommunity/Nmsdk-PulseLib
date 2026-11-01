@@ -3,13 +3,14 @@
 
 #include <stdexcept>
 #include <limits>
+#include <string>
 
 namespace NMSDK { namespace TimeLearner {
 
-constexpr const char* LegacyReadoutShapeFailure="legacy_readout_shape_requires_build";
+constexpr const char* LegacyReadoutShapeFailure="legacy_readout_shape_requires_reset_or_build";
 
 // These are learner observations, not physical membrane parameters or a
-// dynamic checkpoint. Prepare them at Build, including full-graph mode0.
+// dynamic checkpoint. Prepare them at Build/Reset, including full-graph mode0.
 template<class Learner> bool LegacyReadoutsReady(Learner& owner)
 {
  const int count=owner.NumInputDendrite.GetData();
@@ -29,6 +30,17 @@ template<class Learner> void PrepareLegacyReadouts(Learner& owner)
   owner.DendriteNeuronAmplitude.Assign(count+1,1,0.0);
  if(owner.SomaNeuronAmplitude.GetRows()!=count+1 || owner.SomaNeuronAmplitude.GetCols()!=1)
   owner.SomaNeuronAmplitude.Assign(count+1,1,0.0);
+}
+
+template<class Learner> void InitializeLegacyReadouts(Learner& owner,std::string& failure)
+{
+ try
+ {
+  PrepareLegacyReadouts(owner);
+  if(failure==LegacyReadoutShapeFailure || failure=="legacy_input_count_must_be_positive" ||
+     failure=="legacy_readout_rows_not_representable")failure.clear();
+ }
+ catch(const std::exception& error){failure=error.what();}
 }
 
 }}
