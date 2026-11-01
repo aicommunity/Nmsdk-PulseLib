@@ -1,4 +1,5 @@
 #include "TimeLearner/NativeLiveFinalization.h"
+#include "TimeLearner/LegacyReadout.h"
 #include "TimeLearner/NativeLearnedOwner.h"
 #include "TimeLearner/NativeRecognitionOwner.h"
 #include "TimeLearner/NativeOwnedPostTunePhaseImpl.h"
@@ -3361,13 +3362,20 @@ bool NNeuronTimeLearner::ADelComponent(UEPtr<UContainer> comp)
  return true;
 }
 
+// UNet adds a child before LoadComponent assigns its final saved name.
+// Resolve roles at lifecycle boundaries, after the complete graph is present.
+void NNeuronTimeLearner::BindLegacyGraphRoles()
+{
+ Neuron = GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
+ Dataset = GetComponentL<NDatasetMatrix>(std::string("DatasetMatrix"), true);
+}
+
 /// Hook before Build
 bool NNeuronTimeLearner::ABeforeBuild(void)
 {
  if(ControllerVersion.GetData()==2 || ConfiguredModelInitialized.GetData())return true;
  if(NativeTrainingOwned)return true;
- if(!Dataset)
-  Dataset = GetComponentL<NDatasetMatrix>(std::string("DatasetMatrix"), true);
+ BindLegacyGraphRoles();
  if(Dataset)
   SyncInputPatternToDataset();
  return true;
@@ -3996,6 +4004,8 @@ bool NNeuronTimeLearner::ABuild(void)
   if(!res)
    return false;
  }
+ TimeLearner::InitializeLegacyReadouts(*this,NativeEditFailure);
+ if(!NativeEditFailure.empty())return true;
  if(IsParametricNormalization())
  {
   if(Neuron && !UpdateResistanceBoundsFromMembranes())
@@ -4093,6 +4103,11 @@ bool NNeuronTimeLearner::ABeforeCalculate(void)
       NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Cancelled)ForceSkipComponentCalculation();
   return true;
  }
+ if(!TimeLearner::LegacyReadoutsReady(*this))
+ {
+  NativeEditFailure=TimeLearner::LegacyReadoutShapeFailure;
+  ForceSkipComponentCalculation();return true;
+ }
  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))
   ForceSkipComponentCalculation();
  return true;
@@ -4119,6 +4134,12 @@ bool NNeuronTimeLearner::ABeforeReset(void)
  }
  if(!NativeLifecycleDepth)NativeProbeControl.ResetControl();
  else NativeProbeControl.Cancel("learner_implicit_reset");
+ if(!NativeTrainingOwned && !NativeRecognition && ControllerVersion.GetData()!=2 &&
+    !ConfiguredModelInitialized.GetData())
+ {
+  BindLegacyGraphRoles();
+  TimeLearner::InitializeLegacyReadouts(*this,NativeEditFailure);
+ }
  UNet::ABeforeReset();return true;
 }
 bool NNeuronTimeLearner::Build(void)
