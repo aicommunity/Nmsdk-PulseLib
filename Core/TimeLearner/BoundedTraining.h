@@ -15,8 +15,9 @@ struct BoundedTrainingConfig {
     std::string runId,initialModelRevision;
     std::size_t initialModelEpoch=0,maximumProbes=0,maximumEdits=0;
     std::size_t maximumCandidatesPerInput=0,maximumSweeps=1,maximumInvalidObservations=0;
-    // A finite, explicitly declared search mesh; its exhaustion never proves
-    // physical infeasibility or a global monotonicity assumption.
+    // Finite declared seed mesh. Native N1 with nonzero depth may prioritize
+    // measured-bracket refinements within the same overall candidate budget.
+    // Exhaustion never proves infeasibility or global monotonicity.
     unsigned resistanceSubdivisionDepth=4;
     // One preserves historical protocol. New N0 protocols may explicitly
     // require repeated native anchor/input pairs for every measured candidate.
@@ -115,6 +116,8 @@ private:
     std::size_t domainLength=0,domainNormalizer=0,domainVariant=0;
     std::vector<InputParameters> domainGeometry;
     std::string domainScope;
+    std::string candidateResistanceScope;
+    std::vector<std::pair<std::string,CandidateEvidence>> resistanceMeasurements;
     std::vector<std::pair<std::string,std::vector<InputParameters>>> visitedDomainCandidates;
     std::vector<ResistanceDomainAssessment> domains;
     std::vector<CandidateEvidence> evidence;
