@@ -1,4 +1,5 @@
 #include "TimeLearner/NativeLiveFinalization.h"
+#include "TimeLearner/LegacyReadout.h"
 #include "TimeLearner/NativeLearnedOwner.h"
 #include "TimeLearner/NativeRecognitionOwner.h"
 #include "TimeLearner/NativeOwnedPostTunePhaseImpl.h"
@@ -4109,13 +4110,20 @@ bool NNeuronTimeLearnerBranch::ADelComponent(UEPtr<UContainer> comp)
  return true;
 }
 
+// UNet adds a child before LoadComponent assigns its final saved name.
+// Resolve roles at lifecycle boundaries, after the complete graph is present.
+void NNeuronTimeLearnerBranch::BindLegacyGraphRoles()
+{
+ Neuron = GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
+ Dataset = GetComponentL<NDatasetMatrix>(std::string("DatasetMatrix"), true);
+}
+
 /// Hook before Build
 bool NNeuronTimeLearnerBranch::ABeforeBuild(void)
 {
  if(ControllerVersion.GetData()==2 || ConfiguredModelInitialized.GetData())return true;
  if(NativeTrainingOwned)return true;
- if(!Dataset)
-  Dataset = GetComponentL<NDatasetMatrix>(std::string("DatasetMatrix"), true);
+ BindLegacyGraphRoles();
  if(Dataset)
   SyncInputPatternToDataset();
  return true;
@@ -4732,6 +4740,8 @@ bool NNeuronTimeLearnerBranch::ABuild(void)
    return false;
   }
  }
+ TimeLearner::InitializeLegacyReadouts(*this,NativeEditFailure);
+ if(!NativeEditFailure.empty())return true;
  if(IsParametricNormalization())
  {
   if(Neuron && !UpdateResistanceBoundsFromMembranes())
@@ -4832,6 +4842,11 @@ bool NNeuronTimeLearnerBranch::ABeforeCalculate(void)
       NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Cancelled)ForceSkipComponentCalculation();
   return true;
  }
+ if(!TimeLearner::LegacyReadoutsReady(*this))
+ {
+  NativeEditFailure=TimeLearner::LegacyReadoutShapeFailure;
+  ForceSkipComponentCalculation();return true;
+ }
  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))
   ForceSkipComponentCalculation();
  return true;
@@ -4858,6 +4873,12 @@ bool NNeuronTimeLearnerBranch::ABeforeReset(void)
  }
  if(!NativeLifecycleDepth)NativeProbeControl.ResetControl();
  else NativeProbeControl.Cancel("learner_implicit_reset");
+ if(!NativeTrainingOwned && !NativeRecognition && ControllerVersion.GetData()!=2 &&
+    !ConfiguredModelInitialized.GetData())
+ {
+  BindLegacyGraphRoles();
+  TimeLearner::InitializeLegacyReadouts(*this,NativeEditFailure);
+ }
  UNet::ABeforeReset();return true;
 }
 bool NNeuronTimeLearnerBranch::Build(void)
@@ -8633,10 +8654,6 @@ bool NNeuronTimeLearnerBranch::ACalculate(void)
    return true;
   }
   
-  if(DendriteNeuronAmplitude.GetRows() < 1 + NumInputDendrite)
-   DendriteNeuronAmplitude.Assign(1 + NumInputDendrite, 1, 0.0);
-  if(SomaNeuronAmplitude.GetRows() < 1 + NumInputDendrite)
-   SomaNeuronAmplitude.Assign(1 + NumInputDendrite, 1, 0.0);
   DendriteNeuronAmplitude(0, 0) = 0;
   for(int i = 0; i < NumInputDendrite; i++)
   {

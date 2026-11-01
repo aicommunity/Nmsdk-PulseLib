@@ -1012,6 +1012,9 @@ protected:
   double GetTargetMembraneResistance(int dendrite_index0) const;
   bool CheckResistanceLimitFailure(void);
  
+ /// Resolve actual named legacy graph roles after Load/Copy.
+ void BindLegacyGraphRoles();
+
  /// Hook before Build
  virtual bool ABeforeBuild(void);
  
