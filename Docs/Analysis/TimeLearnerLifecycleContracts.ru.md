@@ -78,3 +78,24 @@ Runtime-приёмка изменений выполняется отдельн�
 ненулевой реакции сомы. Проверены Parameters-only/State, N1/2/4/6 и обе частоты.
 Реальные исправленные прогоны и широкая регрессия проверяются отдельно. Полная матрица
 исходного плана и научная эффективность этим контролем не закрываются.
+
+### Warm learner Reset: отдельное исправление public readouts
+
+Адресный baseline root16638b7ad0a822e80ac023a3b97b15a6f756d2e5,
+Pulse92241d3/Rdk1699d365 на Elder завершил8 native tests с8 отказами:
+физическая Soma.SumPotential после Reset возвращается к начальному rest,
+SomaNeuronAmplitude до следующего Calculate сохраняет последний отклик.
+Это свежие storage модели Classic/Branch N2/4 при2000/20000Гц;
+не hot XML checkpoint и не новая научная selectivity серия.
+
+В AAfterReset обеих legacy topology добавлено чтение уже сброшенных дочерних
+мембран и публикация soma/dendrite readouts. Branch rows1..N являются историей
+пиков: они и соответствующие private peak/time vectors очищаются отдельно.
+Проверка целостности входных векторов/чисел предшествует публикации; ошибка
+идёт через NativeEditFailure. Физические C/R/topology и shared prototype не
+меняются; вложенного Calculate или дополнительного Reset нет. Все lifecycle
+bool остаютсяtrue. Native V2/owned recognition используют прежние ветви.
+
+Реализация ещё ожидает normal/ASan runtime приёмки и адресного повторения
+loaded-graph controls. Полный контракт всех controller histories, горячего
+checkpoint и остальных физических профилей этим подэтапом не доказан.

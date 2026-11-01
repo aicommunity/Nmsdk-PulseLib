@@ -4,10 +4,38 @@
 #include <stdexcept>
 #include <limits>
 #include <string>
+#include <vector>
+#include <cmath>
 
 namespace NMSDK { namespace TimeLearner {
 
 constexpr const char* LegacyReadoutShapeFailure="legacy_readout_shape_requires_reset_or_build";
+constexpr const char* LegacyResetReadoutFailure="legacy_reset_readout_invalid_physical_model";
+
+// Called only after native child Reset. These are measured physical rest values,
+// not a universal zero baseline or a write into any membrane parameter.
+template<class Learner> void PublishLegacyResetReadouts(Learner& owner,
+ const std::vector<double>& dendrites,const std::vector<double>& somas,
+ const bool sharedSoma,std::string& failure)
+{
+ const int count=owner.NumInputDendrite.GetData();
+ if(count<1 || dendrites.size()!=static_cast<size_t>(count) ||
+    somas.size()!=static_cast<size_t>(sharedSoma?1:count))
+ {failure=LegacyResetReadoutFailure;return;}
+ double dendriteTotal=0.0,somaTotal=0.0;
+ for(double value:dendrites){if(!std::isfinite(value)){failure=LegacyResetReadoutFailure;return;}dendriteTotal+=value;}
+ for(double value:somas){if(!std::isfinite(value)){failure=LegacyResetReadoutFailure;return;}somaTotal+=value;}
+ if(!std::isfinite(dendriteTotal) || !std::isfinite(somaTotal)){failure=LegacyResetReadoutFailure;return;}
+ owner.DendriteNeuronAmplitude(0,0)=dendriteTotal;
+ owner.SomaNeuronAmplitude(0,0)=somaTotal;
+ for(int i=0;i<count;++i)
+ {
+  owner.DendriteNeuronAmplitude(i+1,0)=dendrites[static_cast<size_t>(i)];
+  // Branch rows1..N are iteration peak history, not additional physical somas.
+  owner.SomaNeuronAmplitude(i+1,0)=sharedSoma?0.0:somas[static_cast<size_t>(i)];
+ }
+ if(failure==LegacyResetReadoutFailure)failure.clear();
+}
 
 // These are learner observations, not physical membrane parameters or a
 // dynamic checkpoint. Prepare them at Build/Reset, including full-graph mode0.
