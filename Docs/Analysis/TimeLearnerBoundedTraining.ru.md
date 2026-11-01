@@ -64,6 +64,15 @@ required repeats и финальное свежее восстановление
 
 Baseline root31934548524ab0da77311f4fc046db05cdf69b81/Coref23d1b8d на M40
 воспроизвёл потерю локального бюджета в двух controlled kernel cases. Новый
-Core и regression cases ещё проходят серверную приёмку; это не заявление
-о физической сходимости или успешной классификации. Подробности и последующие
-receipts: корневой Docs/StructTrain/TimeLearner/N0CandidateOrdering.ru.md.
+Corec25db29404b544311a3256336c0c43991a384e12 прошёл scoped regression
+на обоих workers:31/31 native cases и4/4 actual-data checks, затем3/3 configured
+N0-repeat cases и3/3 repeat-data checks. В каждом случае сохранены реальные
+JSON/CSV и negative certificates; source root942e5df4559467a9a19c56755f945ce6501e7780.
+ASan leak detection выключен. Временные отчёты покрывают4 base training phases
+(56trials/84soma pairs) и2 configured repeat phases(48/72). Контролируемые kernel
+fixtures подтверждают улучшение порядка предложений; реальные native controls
+проверяют регрессии и остаются SearchUnresolved, не классификационным PASS.
+
+Полная матрица N0/N1, physical applicability, quantized/best-effort semantics,
+C-trim и научные контроли по-прежнему открыты. Подробные source SHA, primary
+и visual receipts: корневой Docs/StructTrain/TimeLearner/N0CandidateOrdering.ru.md.
