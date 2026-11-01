@@ -1,4 +1,5 @@
 #include "TimeLearner/NativeLiveFinalization.h"
+#include "TimeLearner/LegacyReadout.h"
 #include "TimeLearner/NativeLearnedOwner.h"
 #include "TimeLearner/NativeRecognitionOwner.h"
 #include "TimeLearner/NativeOwnedPostTunePhaseImpl.h"
@@ -3344,6 +3345,8 @@ UComponent* NNeuronTimeLearner::NewStatic(void)
 bool NNeuronTimeLearner::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  (void)pointer;
+ if(comp->GetName()=="Neuron")
+  Neuron=dynamic_pointer_cast<NPulseNeuron>(comp);
  UEPtr<NDatasetMatrix> dataset = dynamic_pointer_cast<NDatasetMatrix>(comp);
  if(dataset)
  {
@@ -3366,8 +3369,10 @@ bool NNeuronTimeLearner::ABeforeBuild(void)
 {
  if(ControllerVersion.GetData()==2 || ConfiguredModelInitialized.GetData())return true;
  if(NativeTrainingOwned)return true;
- if(!Dataset)
-  Dataset = GetComponentL<NDatasetMatrix>(std::string("DatasetMatrix"), true);
+ // Full-graph Load/Copy replaces children without invoking BuildStructure.
+ // Resolve the actual named roles instead of retaining prototype/workspace pointers.
+ Neuron = GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
+ Dataset = GetComponentL<NDatasetMatrix>(std::string("DatasetMatrix"), true);
  if(Dataset)
   SyncInputPatternToDataset();
  return true;
@@ -3996,6 +4001,14 @@ bool NNeuronTimeLearner::ABuild(void)
   if(!res)
    return false;
  }
+ try
+ {
+  TimeLearner::PrepareLegacyReadouts(*this);
+  if(NativeEditFailure==TimeLearner::LegacyReadoutShapeFailure ||
+     NativeEditFailure=="legacy_input_count_must_be_positive" ||
+     NativeEditFailure=="legacy_readout_rows_not_representable")NativeEditFailure.clear();
+ }
+ catch(const std::exception& error){NativeEditFailure=error.what();return true;}
  if(IsParametricNormalization())
  {
   if(Neuron && !UpdateResistanceBoundsFromMembranes())
@@ -4092,6 +4105,11 @@ bool NNeuronTimeLearner::ABeforeCalculate(void)
       NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Rejected ||
       NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Cancelled)ForceSkipComponentCalculation();
   return true;
+ }
+ if(!TimeLearner::LegacyReadoutsReady(*this))
+ {
+  NativeEditFailure=TimeLearner::LegacyReadoutShapeFailure;
+  ForceSkipComponentCalculation();return true;
  }
  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))
   ForceSkipComponentCalculation();
