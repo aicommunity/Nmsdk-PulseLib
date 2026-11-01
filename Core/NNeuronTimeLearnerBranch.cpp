@@ -4881,6 +4881,27 @@ bool NNeuronTimeLearnerBranch::ABeforeReset(void)
  }
  UNet::ABeforeReset();return true;
 }
+bool NNeuronTimeLearnerBranch::AAfterReset(void)
+{
+ UNet::AAfterReset();
+ if(NativeTrainingOwned || NativeRecognition || ControllerVersion.GetData()==2 ||
+    ConfiguredModelInitialized.GetData() || !TimeLearner::LegacyReadoutsReady(*this))return true;
+ std::fill(MaxIterSomaAmp.begin(),MaxIterSomaAmp.end(),0.0);
+ std::fill(TimeOfMaxIterSomaAmp.begin(),TimeOfMaxIterSomaAmp.end(),0.0);
+ std::vector<double> dendrites,somas;
+ if(Neuron)
+ {
+  for(int i=0;i<NumInputDendrite.GetData();++i)
+  {
+   auto membrane=GetInputMembraneForPulse(i);if(!membrane)break;
+   dendrites.push_back(membrane->SumPotential(0,0));
+  }
+  auto soma=Neuron->GetComponentL<NPulseMembrane>(MakeBranchSomaName(),true);
+  if(soma)somas.push_back(soma->SumPotential(0,0));
+ }
+ TimeLearner::PublishLegacyResetReadouts(*this,dendrites,somas,true,NativeEditFailure);
+ return true;
+}
 bool NNeuronTimeLearnerBranch::Build(void)
 {
  if(!IsReady())InterruptNativePostTunePhase("learner_build");

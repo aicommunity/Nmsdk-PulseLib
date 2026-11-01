@@ -1016,6 +1016,7 @@ protected:
  TimeLearner::NativeProbeBindings NativeProbeModelBindings();
  virtual bool ABeforeDefault(void) override;
  virtual bool ABeforeReset(void) override;
+ virtual bool AAfterReset(void) override;
  // --------------------------
  // Component management
  // --------------------------

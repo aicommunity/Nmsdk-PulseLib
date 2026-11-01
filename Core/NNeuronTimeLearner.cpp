@@ -4142,6 +4142,24 @@ bool NNeuronTimeLearner::ABeforeReset(void)
  }
  UNet::ABeforeReset();return true;
 }
+bool NNeuronTimeLearner::AAfterReset(void)
+{
+ UNet::AAfterReset();
+ if(NativeTrainingOwned || NativeRecognition || ControllerVersion.GetData()==2 ||
+    ConfiguredModelInitialized.GetData() || !TimeLearner::LegacyReadoutsReady(*this))return true;
+ std::vector<double> dendrites,somas;
+ if(Neuron)for(int i=0;i<NumInputDendrite.GetData();++i)
+ {
+  auto dendrite=Neuron->GetComponentL<NPulseMembrane>(MakeLearnerDendriteName(i+1,1),true);
+  if(!dendrite && i<int(DendriteLength.size()) && DendriteLength[i]>1)
+   dendrite=Neuron->GetComponentL<NPulseMembrane>(MakeLearnerDendriteName(i+1,DendriteLength[i]),true);
+  auto soma=Neuron->GetComponentL<NPulseMembrane>(MakeLearnerSomaName(i+1),true);
+  if(!dendrite || !soma)break;
+  dendrites.push_back(dendrite->SumPotential(0,0));somas.push_back(soma->SumPotential(0,0));
+ }
+ TimeLearner::PublishLegacyResetReadouts(*this,dendrites,somas,false,NativeEditFailure);
+ return true;
+}
 bool NNeuronTimeLearner::Build(void)
 {
  if(!IsReady())InterruptNativePostTunePhase("learner_build");
