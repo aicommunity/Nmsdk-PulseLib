@@ -22,4 +22,6 @@ NaN/+Inf/-Inf на case. Все4 cases выявили нарушение: из12
 Configured V2 берёт окна и tolerances из строгой ControllerConfiguration,
 а не из этих legacy timing properties. Проверка property setter не заменяет
 проверку production JSON parser, алгоритма поиска или полной физической матрицы.
-Открытые ветви false в legacy ABuild/AReset требуют отдельного исправления.
+Ветви false внутренних legacy ABuild/AReset не означают false публичных
+Build/Reset: UContainer не читает bool этих hooks. Остаточную согласованность
+hooks следует рассматривать отдельно, сохраняя раннюю остановку и диагностику.
