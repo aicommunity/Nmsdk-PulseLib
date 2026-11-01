@@ -94,3 +94,29 @@ dimension controls. Измеренная последовательность L1
 L3/Ns1 подтверждена для Classic/Branch; все четыре proposal Train остаются
 SearchUnresolved. Это проверка физического пути proposal, а не классификация
 или доказанное преимущество policy. См. корневой NativeDimensionControls.ru.md.
+
+## Адресный контроль N1 measured refinement
+
+Актуальный helper/kernel PulseLib `521df5450c3655e0f08b3a01a7aed7d18351c250`
+проверен normal a3 (40/40 выбранных C++ cases) и ASan a2 (32/32). Последний
+ASan набор включает весь изменённый kernel и реальные read-only domain previews;
+все десять native-domain regressions ранее прошли на a1 отдельного прототипа.
+Leak detection выключен. Реальный ненулевой refinement пока проверен при
+2000 Гц, двух входах и двух топологиях; это не полная матрица.
+
+В одинаковых cold jobs Classic и Branch исходная finite mesh V2 давала
+SearchUnresolved на обоих workers. Новый measured refinement дал Exact:
+Rs[0]=64369082.70599112, L[0]=2, Ns[0]=1, опорный вход сохранён. Свежий
+all-input gate измерил амплитудный остаток около -9.574e-7 при исходном допуске
+1e-5 и timing около -0.019 s при допуске0.02 s. Собственные reference amplitudes
+не уравнивались. Каждый worker прошёл 2/2 проверок первичных данных.
+
+Primary proofs в корневом Git: normal
+`bcbd30f1d87e352825e6c8400c5b929eff184ae5`, ASan
+`44858d7fb92a330470f50741fb862f9f8db23840`. Полные temporal caches охватывают
+292 пары probe/soma baseline и142 нового поиска; по три production report
+checks, с actual input overlays. Все24 выбранных PNG просмотрены1920x960;
+полная ручная проверка cache не заявлена. Visual source:
+`e0adf29b2db4fb918e1c6a5c8a1994dfbb2a03cb`, отдельный selected QA в корне.
+Эта проверка сходимости не доказывает классификацию и не является replay
+августовских результатов либо сравнением legacy V1/V2.
