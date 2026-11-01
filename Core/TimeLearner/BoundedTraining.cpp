@@ -1,5 +1,6 @@
 #include "BoundedTraining.h"
 #include "NumericChecks.h"
+#include "MeasuredResistanceSearch.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -126,6 +127,7 @@ void BoundedTrainingSession::BeginInput()
     lengthIndex=normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
     initialCandidatePending=requireResistanceDomains;domainReady=false;domainLength=domainNormalizer=domainVariant=0;
     domainGeometry.clear();domainScope.clear();visitedDomainCandidates.clear();
+    candidateResistanceScope.clear();resistanceMeasurements.clear();
     // Nearest integers first. Enumeration is bounded by the declared candidate
     // budget, even for a very large physical length range.
     UniquePush(lengths,p.length);
@@ -205,6 +207,7 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
     if(initialCandidatePending)
     {
         initialCandidatePending=false;parameters=background;
+        candidateResistanceScope.clear();
         visitedDomainCandidates.push_back({revision,parameters});return DynamicCandidate::Candidate;
     }
     while(domainLength<lengths.size())
@@ -248,7 +251,8 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
                 return item.first==domainScope && item.second==parameters;
             });
             if(seen!=visitedDomainCandidates.end())continue;
-            visitedDomainCandidates.push_back({domainScope,parameters});return DynamicCandidate::Candidate;
+            visitedDomainCandidates.push_back({domainScope,parameters});
+            candidateResistanceScope=domainScope;return DynamicCandidate::Candidate;
         }
         AdvanceDomainGeometry();
     }
@@ -289,6 +293,24 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
             const double fraction=double(numerator)/double(denominator);
             const double value=std::exp(std::log(low)+fraction*(std::log(high)-std::log(low)));
             if(Finite(value) && value>=low && value<=high)UniquePush(resistances,value);
+        }
+    }
+    if(config.resistanceSubdivisionDepth>0)
+    {
+        std::vector<MeasuredResistancePoint> points;
+        for(const auto& [scope,measurement]:resistanceMeasurements)
+        {
+            if(scope!=domainScope || measurement.fullParameters.size()!=domainGeometry.size())continue;
+            auto geometry=measurement.fullParameters;
+            geometry[pending->inputIndex].resistance=domainGeometry[pending->inputIndex].resistance;
+            if(geometry!=domainGeometry)continue;
+            points.push_back({measurement.parameters.resistance,measurement.amplitudeResidual,measurement.withinTiming});
+        }
+        if(const auto refined=ProposeMeasuredResistanceRefinement(points,low,high,
+                AmplitudeTolerance(config,references.Inputs().at(pending->inputIndex))))
+        {
+            resistances.erase(std::remove(resistances.begin(),resistances.end(),*refined),resistances.end());
+            resistances.insert(resistances.begin(),*refined);
         }
     }
     domainNormalizer=0;domainReady=true;pending.reset();
@@ -472,6 +494,8 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
     e.withinTiming=std::max(std::fabs(e.timingResidualLow),std::fabs(e.timingResidualHigh))<=config.tolerances.sync;
     e.withinAmplitude=std::fabs(e.amplitudeResidual)<=AmplitudeTolerance(config,reference);
     evidence.push_back(e);
+    if(requireResistanceDomains && !restoringBest && !candidateResistanceScope.empty())
+        resistanceMeasurements.push_back({candidateResistanceScope,e});
     if(config.normalization==Normalization::SynapseCount && config.n0CandidateRepeats>1)
     {
         candidateMeasurements.push_back(e);
