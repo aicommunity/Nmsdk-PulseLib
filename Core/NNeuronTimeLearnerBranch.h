@@ -970,6 +970,9 @@ public: // Methods
  
  /// Floor for DelayUseOf agree margin (sec)
  bool SetDelayAgreeMarginMin(const double &value);
+
+ /// Finite seed; nonpositive values retain the default-delay fallback.
+ bool SetInitEstDelayPerSeg(const double &value);
  
  /// One-shot request to reset to untrained structure/state
  bool SetResetToUntrainedState(const bool &value);

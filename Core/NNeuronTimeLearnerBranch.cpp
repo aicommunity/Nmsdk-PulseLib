@@ -3230,7 +3230,7 @@ EnableRmaxLengthEscape("EnableRmaxLengthEscape", this),
  ExperimentMode("ExperimentMode", this, &NNeuronTimeLearnerBranch::SetExperimentMode),
  EnableDebug("EnableDebug", this, &NNeuronTimeLearnerBranch::SetEnableDebug),
  EnableTrainingAudit("EnableTrainingAudit", this),
- InitEstDelayPerSeg("InitEstDelayPerSeg", this),
+ InitEstDelayPerSeg("InitEstDelayPerSeg", this, &NNeuronTimeLearnerBranch::SetInitEstDelayPerSeg),
  RminNoImproveMinProgress("RminNoImproveMinProgress", this),
  ResyncAfterNormalization("ResyncAfterNormalization", this),
  ResyncAfterNormalizationCount("ResyncAfterNormalizationCount", this),
@@ -4016,7 +4016,7 @@ bool NNeuronTimeLearnerBranch::SetNumSynapse(const std::vector<int> &value)
 /// Min gap after previous first impulse before next burst (sec)
 bool NNeuronTimeLearnerBranch::SetIterationGap(const double &value)
 {
- if(value < 0.0)
+ if(!std::isfinite(value) || value < 0.0)
   return false;
  return true;
 }
@@ -4024,7 +4024,7 @@ bool NNeuronTimeLearnerBranch::SetIterationGap(const double &value)
 /// |dt| below this => dendrite synchronized (sec)
 bool NNeuronTimeLearnerBranch::SetSyncTolerance(const double &value)
 {
- if(value < 0.0)
+ if(!std::isfinite(value) || value < 0.0)
   return false;
  return true;
 }
@@ -4032,7 +4032,7 @@ bool NNeuronTimeLearnerBranch::SetSyncTolerance(const double &value)
 /// Half-width of soma peak search window (sec)
 bool NNeuronTimeLearnerBranch::SetPeakMeasureMargin(const double &value)
 {
- if(value < 0.0)
+ if(!std::isfinite(value) || value < 0.0)
   return false;
  return true;
 }
@@ -4040,9 +4040,15 @@ bool NNeuronTimeLearnerBranch::SetPeakMeasureMargin(const double &value)
 /// Floor for DelayUseOf agree margin (sec)
 bool NNeuronTimeLearnerBranch::SetDelayAgreeMarginMin(const double &value)
 {
- if(value < 0.0)
+ if(!std::isfinite(value) || value < 0.0)
   return false;
  return true;
+}
+
+/// Preserve the finite nonpositive fallback domain; reject nonfinite seeds.
+bool NNeuronTimeLearnerBranch::SetInitEstDelayPerSeg(const double &value)
+{
+ return std::isfinite(value);
 }
 
 /// One-shot request to reset to untrained structure/state

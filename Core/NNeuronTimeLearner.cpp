@@ -3266,7 +3266,7 @@ bool NNeuronTimeLearner::SetNumSynapse(const std::vector<int> &value)
 /// Min gap after previous first impulse before next burst (sec)
 bool NNeuronTimeLearner::SetIterationGap(const double &value)
 {
- if(value < 0.0)
+ if(!std::isfinite(value) || value < 0.0)
   return false;
  return true;
 }
@@ -3274,7 +3274,7 @@ bool NNeuronTimeLearner::SetIterationGap(const double &value)
 /// |dt| below this => dendrite synchronized (sec)
 bool NNeuronTimeLearner::SetSyncTolerance(const double &value)
 {
- if(value < 0.0)
+ if(!std::isfinite(value) || value < 0.0)
   return false;
  return true;
 }
@@ -3282,7 +3282,7 @@ bool NNeuronTimeLearner::SetSyncTolerance(const double &value)
 /// Half-width of soma peak search window (sec)
 bool NNeuronTimeLearner::SetPeakMeasureMargin(const double &value)
 {
- if(value < 0.0)
+ if(!std::isfinite(value) || value < 0.0)
   return false;
  return true;
 }
@@ -3290,7 +3290,7 @@ bool NNeuronTimeLearner::SetPeakMeasureMargin(const double &value)
  /// Floor for DelayUseOf agree margin (sec)
  bool NNeuronTimeLearner::SetDelayAgreeMarginMin(const double &value)
  {
-  if(value < 0.0)
+  if(!std::isfinite(value) || value < 0.0)
    return false;
   return true;
  }
@@ -3298,7 +3298,7 @@ bool NNeuronTimeLearner::SetPeakMeasureMargin(const double &value)
  /// Cable delay per segment (sec); must stay positive for length steps
  bool NNeuronTimeLearner::SetEstDelayPerSeg(const double &value)
  {
-  if(value <= 0.0)
+  if(!std::isfinite(value) || value <= 0.0)
    return false;
   return true;
  }
