@@ -312,3 +312,22 @@ b839e879: 7/7 normal/ASan; one-tick Train сохраняет diagnostic stopped 
 [TimeLearnerLegacyInferenceObservations](TimeLearnerLegacyInferenceObservations.ru.md).
 Она не включается автоматически production V2 worker и не заменяет native
 full-grid/fresh-confirmation proof.
+
+## Живой Train и production schema2,01.11
+
+Следующий worker явно объявляет finalization_plan до cold Train и позволяет
+owned PostTune после естественного Finished. Это отдельная schema2 job, не
+изменение прежнего worker schema1 с optional modes Off. Source Solo/summary
+сохраняются до замены графа; выбранная/restored recognition-модель экспортируется
+отдельно. Калибровочная сетка и fresh confirmation входят в finalization report.
+Внешний tick budget/cancel не создаёт обычного recognition Test package.
+
+Normal14 operations проверяют четыре живых Train, четыре отдельных frozen
+same-matrix evaluate, четыре partial schema2 и две partial schema1 controls.
+Train outcomes остаются SearchUnresolved; все frozen пары дают target0/foil0
+spikes. Это FN, не улучшение классификации. Актуальная normal/ASan/visual
+область обновляется в корневом контракте ниже. Target-only AutoCalibrateFixedLTZThreshold,
+Branch parallel-peak и C-trim новым dispatcher пока не поддерживаются.
+
+Актуальный контракт и SHA/proof links:
+[NativeLiveFinalization](../../../../Docs/StructTrain/TimeLearner/NativeLiveFinalization.ru.md).

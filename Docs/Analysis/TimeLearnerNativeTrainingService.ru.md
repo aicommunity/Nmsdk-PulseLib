@@ -54,6 +54,25 @@ observations/CSV и четыре отрицательных сертификат
 
 Актуальный журнал, области
 приёмки и оставшиеся задачи — корневой Docs/StructTrain/TimeLearner/
-NativeTrainingService.ru.md. C-trim, PostTune/calibration, полный trained-state
-transfer и конфигурационный dispatch ещё обязательны. Native builder реализован
-отдельным API-подэтапом; это не завершает всю production mode matrix.
+NativeTrainingService.ru.md. В последующих подэтапах добавлены configured
+native builder, versioned model transfer и owned PostTune/calibration. Текущий
+живой переход и production job описаны в
+[NativeLiveFinalization](../../../../Docs/StructTrain/TimeLearner/NativeLiveFinalization.ru.md).
+Полная C-trim/model/lifecycle matrix остаётся открытой.
+
+Обновление01.11: ConfigureNativeFinalization задаёт immutable conversion/phase
+plan до Train. После Finished source boundary захватывается до импорта и
+сброса controller; native scheduler рассчитывает детей один раз.
+CancelNativeLiveFinalization закрывает partial probe через штатный ExternalStop,
+не записывает connected Need и не допускает повторного старта cancelled plan.
+PostTune cancel использует native transactional rollback. Codec сохраняет
+декларацию, а не mid-probe checkpoint; bool Build/Reset/Calculate не являются
+каналом ошибок.
+
+Production Console Train schema2 имеет scoped normal/ASan14-operation
+проверки и complete portable readers. Текущая visual-приёмка и полные SHA
+обновляются в корневом NativeLiveFinalization.
+Native Cancel/codec отдельно проверены ASan9/9 и reader8/8. Проверенная
+область — два входа, N1/2000Hz, Classic/Branch, fixed/grid. Это не общая
+рекомендация версии2 для всех профилей. Источники и scopes находятся в корневом
+NativeLiveFinalization; SearchUnresolved не превращается в Exact.

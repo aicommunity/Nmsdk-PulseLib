@@ -6,7 +6,8 @@ template<class Owner> ConfiguredNativeTraining PrepareConfiguredNativeOwner(Owne
 {
     auto c=ParseConfiguredNativeTraining(owner.ControllerConfiguration.GetData());
     if(c.model.branch!=branch)throw std::invalid_argument("configured_native_topology_mismatch");
-    if(owner.SyncCapacitanceTrim.GetData()>0 || owner.EnablePostTrainTuning.GetData() || owner.AutoCalibrateFixedLTZThreshold.GetData())
+    if(owner.HasNativeFinalizationPlan())owner.ValidateNativeFinalizationPlan();
+    else if(owner.SyncCapacitanceTrim.GetData()>0 || owner.EnablePostTrainTuning.GetData() || owner.AutoCalibrateFixedLTZThreshold.GetData())
         throw std::invalid_argument("configured_native_optional_mode_not_yet_supported");
     if(!hasDeclaration)
     {
