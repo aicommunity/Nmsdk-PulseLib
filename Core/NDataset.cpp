@@ -250,32 +250,22 @@ bool NDataset::PrepareDataset(void)
     return true;
 }
 
-bool NDataset::ACalculate(void)
+void NDataset::PreparePlaybackData(void)
 {
     if(ReloadDataset)
     {
-        const FileLoadResult result = TreatDataFromFile();
-        if(result == FileLoadResult::Invalid)
-            return false;
-        if(result == FileLoadResult::Loaded)
-        {
-            if(!ApplyFromMatrices())
-                return false;
-            ReloadDataset = false;
-            SyncGenerators();
-            ResetDelay = true;
-        }
-        else
-        {
-            // Unavailable: idle empty — keep ReloadDataset for retry
-            NumSamples = 0;
-            NumFeatures = 0;
-            NumClasses = 0;
-            LastPlayedIteration = -1;
-            SyncGenerators();
-        }
+        // File loading changes matrices and the generator graph. Complete the
+        // owner's native Build/AfterBuild/Reset transaction before arming this
+        // tick. Applying matrices here and leaving Ready=false makes the next
+        // tick's automatic Build reset playback again, shifting onset by dt.
+        // ABuild owns parsing/validation and SyncGenerators owns initialization
+        // of runtime-created children. Missing files remain idle/retryable.
+        Ready = false;
+        const auto marker=OperationFailureSequence();
+        Build();
+        if(!IsReady() || HasOperationFailureSince(marker))
+            RDK_THROW(EStringError("dataset_playback_reload_build_failed"));
     }
-    return NDatasetBase::ACalculate();
 }
 
 }

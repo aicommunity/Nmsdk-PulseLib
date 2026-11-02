@@ -51,7 +51,7 @@ std::string CalcActualSourceFilePath(const std::string &file_name);
 
 virtual bool PrepareDataset(void);
 virtual bool ADefault(void);
-virtual bool ACalculate(void);
+virtual void PreparePlaybackData(void);
 };
 
 }

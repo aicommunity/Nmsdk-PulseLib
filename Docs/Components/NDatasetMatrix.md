@@ -8,6 +8,14 @@
 
 Default: `1×1×1`, слот `(0,0)=0.0`.
 
+Registry выставляет `NumFeatures`, `NumSamples`, `MatrixData`, `MatrixClasses`
+публичными параметрами. Их базовые C++ свойства объявлены states, поэтому
+нельзя выводить фактический save/load-контракт только из NDatasetBase.h.
+`MaxSpikesPerFeature` и `AdvanceSampleAfterBurst` также остаются параметрами.
+Настройку размеров выполнять перед заполнением payload; затем прочитать
+эффективные размеры и матрицы. Повторная структурная настройка может менять
+layout и не является прозрачным checkpoint сохранённой динамики.
+
 ### Несколько сэмплов
 
 1. Задать `NumSamples=N` → матрица станет `(N*M)×F`.
@@ -18,3 +26,12 @@ Default: `1×1×1`, слот `(0,0)=0.0`.
 ### Favorites
 
 `NumSamples`, `NumFeatures`, `MaxSpikesPerFeature`, `MatrixData`, `MatrixClasses`, `Delay`, `Iteration`, `AdvanceSampleAfterBurst`, `LoopSamples`, `CurrentClass`.
+
+### Измеренное время и границы проверки
+
+Нативный normal gate20 проверяет76 настоящих source/soma recordings при2000/
+20000Hz, continuous/timed, gap0/5/30ms, shifted origins до1e9s, near-grid onset
+и cutoff на первом onset. Сравниваются все отсчёты, ширина и повторение pulse.
+Normal/ASan source gates25/25 прошли, весь83-CSV набор совпал побайтно;
+это не проверка классификации либо всех
+поддерживаемых learner profiles. Подробнее: [DatasetClockPlayback](../Analysis/DatasetClockPlayback.ru.md).
