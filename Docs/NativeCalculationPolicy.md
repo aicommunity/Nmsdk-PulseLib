@@ -20,14 +20,15 @@ sample. An explicit cancellation/reset from the callback retains its outcome.
 A partial or complete invalid observation remains diagnostic evidence.
 
 NativeTrainingAdapter.validateExecution is populated by BindNativeTraining;
-the service invokes it before Start/actions. Pure controller adapters may omit
+the service invokes it before Start/actions and after recorded observations/sinks, before accepting
+references or a certificate. Pure controller adapters may omit
 it and do not attest any Rdk graph. Revision reads deliberately remain usable
 under an invalid execution policy so failed observations can close and physical
 checkpoints can be restored. Generic Build/import/export/standalone model edits
 and rollback do not gain this execution restriction. Owned finalization and
 the production Console preflight validate scheduling before execution.
 
-Implementation/62 declared native fixture cases are pending server acceptance.
+Implementation/64 declared native fixture cases are pending server acceptance.
 The two-case Elder baseline accepted both large positive limits without policy
 diagnostics; this proves a capability-validation gap, not actual wall skips.
 Full lifecycle/storage/physics matrices remain open; root documentation contains

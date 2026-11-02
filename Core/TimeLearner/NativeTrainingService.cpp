@@ -162,6 +162,10 @@ void NativeTrainingService::AfterTick(const NativeTrainingAdapter& a,double mode
         if(plan.observationSink)plan.observationSink(*result);
         if(result->status!=NativeProbeStatus::Completed || !result->prepared || !result->observation)
         {Finish(TrainingStatus::InvalidObservation,result->reasons.empty()?"native_training_probe_failed":result->reasons.front());return;}
+        // Preserve the actual packet first. An observation sink can change an
+        // owner policy after the window closed; it must not cause acceptance
+        // of references or a certificate under an unsupported execution scope.
+        if(a.validateExecution)a.validateExecution();
         Require(result->currentBaseRevision==a.readModelRevision(),"native_training_probe_revision_mismatch");
         if(state==NativeTrainingState::CapturingReferences)
         {
