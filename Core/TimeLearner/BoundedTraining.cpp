@@ -373,7 +373,12 @@ void BoundedTrainingSession::FinishVerification()
     case VerificationStatus::Exact:Stop(TrainingStatus::Exact);return;
     case VerificationStatus::BudgetExhausted:Stop(TrainingStatus::BudgetExhausted,"final_verification_probe_budget_exhausted");return;
     case VerificationStatus::ExternalStop:Stop(TrainingStatus::ExternalStop);return;
-    case VerificationStatus::InvalidObservation:Stop(TrainingStatus::InvalidObservation);return;
+    case VerificationStatus::InvalidObservation:
+    {
+        const auto& failures=verification->Rejected();
+        Stop(TrainingStatus::InvalidObservation,failures.empty()?"final_verification_invalid_observation":
+            "final_verification:"+failures.back().reason);return;
+    }
     case VerificationStatus::OutsideTolerance:
         // A measured negative final pass is not convergence. With no adjustable
         // inputs it is unresolved; otherwise a required next sweep prevented by
