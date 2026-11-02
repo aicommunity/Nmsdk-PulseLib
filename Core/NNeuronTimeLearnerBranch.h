@@ -829,6 +829,7 @@ public: // Methods
  void CancelNativeRecognitionTrial(const std::string& reason);
  QJsonObject ExportNativeRecognitionState(const std::string& implementationId);
  TimeLearner::NativeModelBuildResult ImportNativeRecognitionState(const QJsonObject& package,const std::string& implementationId);
+ TimeLearner::NativeModelBuildResult ImportNativeDiagnosticRecognitionState(const QJsonObject& package,const std::string& implementationId);
  // Explicit active-request import; ordinary frozen import keeps its old policy.
  TimeLearner::NativeModelBuildResult ImportNativeFinalizationState(const QJsonObject& package,const std::string& implementationId,
      const TimeLearner::NativeFinalizationBoundary& boundary);
@@ -995,7 +996,7 @@ public: // Methods
 
 protected:
  TimeLearner::NativeModelBuildResult ImportNativeRecognitionStateWithBoundary(const QJsonObject& package,const std::string& implementationId,
-     const QJsonObject& boundary);
+     const QJsonObject& boundary,bool diagnostic=false);
  TimeLearner::NativeProbeExecutor NativeProbeControl;
  TimeLearner::NativeTrainingService NativeTrainingControl;
  TimeLearner::NativeTrainingIntent NativeTrainingRequestIntent;

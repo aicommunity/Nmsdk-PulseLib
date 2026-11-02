@@ -128,7 +128,10 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
     }
     RequiredString(metadata, "implementation_id");
     const auto state = RequiredString(metadata, "state_kind");
-    if(state != "model_spec" && state != "learned_solo" && state != "recognition" && state != "diagnostic") Fail("invalid_state_kind", state);
+    if(state != "model_spec" && state != "learned_solo" && state != "recognition" && state != "diagnostic" && state != "diagnostic_recognition") Fail("invalid_state_kind", state);
+    const bool diagnostic=state=="diagnostic" || state=="diagnostic_recognition";
+    const bool recognition=(state=="recognition" || state=="diagnostic_recognition") && metadata.contains("recognition_schema_version");
+    if(state=="diagnostic_recognition" && !recognition)Fail("invalid_recognition_verification", "diagnostic conversion requires explicit recognition metadata");
     if(!metadata["training"].isObject() || !metadata["calibration"].isObject() || !metadata["conversion"].isObject())
         Fail("incomplete_model_metadata", "training/calibration/conversion required");
     const auto training = metadata["training"].toObject();
@@ -139,7 +142,7 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
     }
     else
     {
-        const std::set<QString> statuses=state=="diagnostic"?
+        const std::set<QString> statuses=diagnostic?
             std::set<QString>{"search_unresolved","budget_exhausted","external_stop","invalid_model","invalid_observation"}:
             std::set<QString>{"exact","quantized","best_effort","search_unresolved","budget_exhausted","external_stop"};
         if(!statuses.count(status)) Fail("invalid_training_metadata", status);
@@ -148,13 +151,13 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
         if((trainer != "Classic" && trainer != "Branch") || (normalization != "N0" && normalization != "N1"))
             Fail("invalid_training_metadata", "trainer/normalization");
         const auto target = training["target_pattern"].toArray(), references = training["captured_per_input"].toArray();
-        if(target.isEmpty() || (state=="diagnostic"?references.size()>target.size():target.size()!=references.size()))
+        if(target.isEmpty() || (diagnostic?references.size()>target.size():target.size()!=references.size()))
             Fail("invalid_training_metadata", "target/reference dimension");
         for(const auto& value : target)
             if(!value.isDouble() || !std::isfinite(value.toDouble()) || value.toDouble() < 0.) Fail("invalid_training_metadata", "target value");
         for(const auto& value : references)
             if(!value.isDouble() || !std::isfinite(value.toDouble())) Fail("invalid_training_metadata", "reference value");
-        if(state=="diagnostic")
+        if(diagnostic)
         {
             if(!training["certificate"].isNull() || !training["reference_complete"].isBool() ||
                 training["reference_complete"].toBool()!=(target.size()==references.size()))
@@ -170,19 +173,18 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
             const auto certificate = training["certificate"].toObject();
             // Versioned recognition metadata retains the original solo proof;
             // it must not relabel that proof as verification of a scaled graph.
-            const bool recognition=state=="recognition" && metadata.contains("recognition_schema_version");
             const auto expectedIdentity=recognition?metadata["conversion"].toObject()["source_solo_identity"]:identity["sha256"];
             if(certificate["state_identity"] != expectedIdentity || certificate["status"] != training["status"])
                 Fail("certificate_model_mismatch", "certificate does not identify the exported state");
-            if(recognition)
-            {
-                const auto verification=metadata["recognition_verification"].toObject();
-                if(metadata["recognition_schema_version"]!=QJsonValue(1) || training["scope"]!=QJsonValue("source_solo") ||
-                   verification["status"]!=QJsonValue("unverified") || verification["model_identity"]!=identity["sha256"] ||
-                   !verification.contains("certificate") || !verification["certificate"].isNull() ||
-                   metadata["conversion"].toObject()["mode"]!=QJsonValue("parallel"))
-                    Fail("invalid_recognition_verification", "converted state requires separate verification");
-            }
+        }
+        if(recognition)
+        {
+            const auto verification=metadata["recognition_verification"].toObject();
+            if(metadata["recognition_schema_version"]!=QJsonValue(1) || training["scope"]!=QJsonValue("source_solo") ||
+               verification["status"]!=QJsonValue("unverified") || verification["model_identity"]!=identity["sha256"] ||
+               !verification.contains("certificate") || !verification["certificate"].isNull() ||
+               metadata["conversion"].toObject()["mode"]!=QJsonValue("parallel"))
+                Fail("invalid_recognition_verification", "converted state requires separate verification");
         }
     }
     const auto calibration = metadata["calibration"].toObject();
@@ -211,7 +213,7 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
     const auto conversion = metadata["conversion"].toObject();
     const auto mode = RequiredString(conversion, "mode");
     if(mode != "none" && mode != "parallel") Fail("invalid_conversion_metadata", mode);
-    if(state != "recognition" && mode != "none") Fail("invalid_conversion_metadata", "solo/spec cannot be converted");
+    if(state != "recognition" && state != "diagnostic_recognition" && mode != "none") Fail("invalid_conversion_metadata", "solo/spec cannot be converted");
     if(mode == "parallel")
     {
         if(RequiredString(conversion, "source_solo_identity").size() != 64 || conversion["factors"].toArray().isEmpty())
