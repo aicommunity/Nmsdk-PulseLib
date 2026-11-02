@@ -113,6 +113,10 @@ void BeginSpikeTrainSample(double now);
 /// Advance one-shot schedule; after burst+Delay restart or advance Iteration
 void UpdateSpikeTrainPlayback(double now);
 
+/// Elapsed model seconds from an integer microsecond anchor; subtract before
+/// converting to double so a translated absolute clock cannot change pulses.
+double ElapsedNativeTime(ULongTime start) const;
+
 /// True when all scheduled spikes for the sample have been fired and pulses ended
 bool IsBurstFullyComplete(void) const;
 
@@ -133,7 +137,15 @@ std::vector<int> NextSpikeIndex;
 /// End time of active one-shot pulse per feature (0 = idle)
 std::vector<double> OneShotEndTime;
 
-/// Wall-clock start of current sample playback
+/// Native anchors are playback dynamics, not serialized model parameters or
+/// a mid-probe checkpoint. Begin/Fire recreate them through the native flow.
+std::vector<ULongTime> OneShotStartNativeTime;
+std::vector<double> OneShotDuration;
+ULongTime SampleStartNativeTime;
+ULongTime OperatingStartNativeTime;
+double OperatingStartStamp;
+
+/// Model-clock start of current sample playback, in seconds (diagnostic view)
 double SampleStartTime;
 
 /// Relative end of burst (last spike abs time + pulse length), from SampleStart

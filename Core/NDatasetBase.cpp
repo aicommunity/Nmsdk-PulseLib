@@ -5,8 +5,33 @@
 
 #include <vector>
 #include <algorithm>
+#include <cmath>
+#include <limits>
 
 namespace NMSDK {
+
+namespace {
+double PlaybackRoundoff(double elapsed,double duration)
+{
+    if(!std::isfinite(elapsed) || !std::isfinite(duration))
+        RDK_THROW(EStringError("nonfinite_dataset_playback_time"));
+    // Preserve the existing 1e-12 onset/repeat allowance. The extra term only
+    // accounts for arithmetic on a long RELATIVE interval, never clock origin
+    // or a fraction of the integration timestep.
+    return std::max(1e-12,16.*std::numeric_limits<double>::epsilon()*
+        std::max({1.,std::abs(elapsed),std::abs(duration)}));
+}
+bool PlaybackReached(double elapsed,double duration)
+{
+    const auto tolerance=PlaybackRoundoff(elapsed,duration);
+    return elapsed>=duration || duration-elapsed<=tolerance;
+}
+bool PlaybackAfter(double elapsed,double duration)
+{
+    const auto tolerance=PlaybackRoundoff(elapsed,duration);
+    return elapsed>duration && elapsed-duration>tolerance;
+}
+}
 
 NDatasetBase::NDatasetBase(void)
 : PulseGeneratorClassName("PulseGeneratorClassName", this, &NDatasetBase::SetPulseGeneratorClassName),
@@ -26,6 +51,9 @@ NDatasetBase::NDatasetBase(void)
   OperatingTime("OperatingTime", this),
   ResetDelay("ResetDelay", this),
   NumClasses("NumClasses", this),
+  SampleStartNativeTime(0),
+  OperatingStartNativeTime(0),
+  OperatingStartStamp(0.),
   SampleStartTime(0.0),
   SampleBurstEndRel(0.0),
   LastPlayedIteration(-1)
@@ -137,6 +165,10 @@ bool NDatasetBase::ADefault(void)
     SampleSpikeAbsTimes.clear();
     NextSpikeIndex.clear();
     OneShotEndTime.clear();
+    OneShotStartNativeTime.clear();
+    OneShotDuration.clear();
+    SampleStartNativeTime=OperatingStartNativeTime=0;
+    OperatingStartStamp=0.;
     SampleStartTime = 0.0;
     SampleBurstEndRel = 0.0;
     LastPlayedIteration = -1;
@@ -156,6 +188,8 @@ void NDatasetBase::RebuildSpikeAbsTimesForIteration(void)
     SampleSpikeAbsTimes.assign(features > 0 ? features : 0, std::vector<double>());
     NextSpikeIndex.assign(features > 0 ? features : 0, 0);
     OneShotEndTime.assign(features > 0 ? features : 0, 0.0);
+    OneShotStartNativeTime.assign(features > 0 ? features : 0, 0);
+    OneShotDuration.assign(features > 0 ? features : 0, 0.);
     SampleBurstEndRel = 0.0;
 
     if(features <= 0 || max_spikes < 1)
@@ -223,7 +257,11 @@ void NDatasetBase::FireOneShot(int feature_index, NPulseGeneratorTransit* gen, d
     gen->Reset();
 
     if(feature_index >= 0 && feature_index < int(OneShotEndTime.size()))
+    {
         OneShotEndTime[feature_index] = now + pulse_len;
+        OneShotStartNativeTime[feature_index]=Environment->GetTime().GetTime();
+        OneShotDuration[feature_index]=pulse_len;
+    }
 }
 
 void NDatasetBase::BeginSpikeTrainSample(double now)
@@ -234,6 +272,7 @@ void NDatasetBase::BeginSpikeTrainSample(double now)
         Iteration.SetDataDirect(0);
 
     SampleStartTime = now;
+    SampleStartNativeTime=Environment->GetTime().GetTime();
     LastPlayedIteration = Iteration;
 
     int cls = 0;
@@ -262,9 +301,16 @@ bool NDatasetBase::IsBurstFullyComplete(void) const
     return true;
 }
 
+double NDatasetBase::ElapsedNativeTime(ULongTime start) const
+{
+    const auto now=Environment->GetTime().GetTime();
+    if(now<start)RDK_THROW(EStringError("dataset_playback_clock_moved_backwards_without_restart"));
+    return double(now-start)/1e6;
+}
+
 void NDatasetBase::UpdateSpikeTrainPlayback(double now)
 {
-    const double t_rel = now - SampleStartTime;
+    const double t_rel = ElapsedNativeTime(SampleStartNativeTime);
     const int features = std::min(int(NumFeatures), int(Generators.size()));
 
     for(int f = 0; f < features; f++)
@@ -275,7 +321,7 @@ void NDatasetBase::UpdateSpikeTrainPlayback(double now)
 
         if(f < int(OneShotEndTime.size()) && OneShotEndTime[f] > 0.0)
         {
-            if(now < OneShotEndTime[f])
+            if(!PlaybackReached(ElapsedNativeTime(OneShotStartNativeTime[f]),OneShotDuration[f]))
                 continue;
             gen->Frequency = 0.0;
             OneShotEndTime[f] = 0.0;
@@ -295,12 +341,12 @@ void NDatasetBase::UpdateSpikeTrainPlayback(double now)
             continue;
 
         const double t_fire = abs_times[next_idx];
-        if(t_rel + 1e-12 >= t_fire)
+        if(PlaybackReached(t_rel,t_fire))
             FireOneShot(f, gen, now);
     }
 
     const double repeat_at = SampleBurstEndRel + (Delay > 0.0 ? double(Delay) : 0.0);
-    if(IsBurstFullyComplete() && t_rel + 1e-12 >= repeat_at)
+    if(IsBurstFullyComplete() && PlaybackReached(t_rel,repeat_at))
     {
         if(AdvanceSampleAfterBurst && NumSamples > 0)
         {
@@ -444,9 +490,16 @@ bool NDatasetBase::ACalculate(void)
         {
             BeginSpikeTrainSample(now);
             OperatingTime = now;
+            OperatingStartNativeTime=Environment->GetTime().GetTime();
+            OperatingStartStamp=now;
             ResetDelay = false;
         }
-        if(now - OperatingTime > TimeGeneration)
+        // Component-owned OperatingTime uses the native anchor across repeated
+        // samples. An explicit external state override retains its old seconds
+        // interpretation; it does not rewrite our native start on every tick.
+        const double elapsed=OperatingTime.GetData()==OperatingStartStamp ?
+            ElapsedNativeTime(OperatingStartNativeTime) : now-OperatingTime.GetData();
+        if(PlaybackAfter(elapsed,TimeGeneration.GetData()))
         {
             SilenceGenerators();
             return true;
