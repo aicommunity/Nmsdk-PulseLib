@@ -443,6 +443,42 @@ QJsonArray CaptureModelImageDefinitions(UEPtr<UContainer> model,const ModelBound
     if(!model || !model->GetStorage() || !model->GetEnvironment())Fail("invalid_archive_context","model/storage/environment");
     return ImageDefinitions(model->GetStorage(),model->GetEnvironment(),Identity(model,boundarySources),additionalImageRoots);
 }
+QString ModelImageDefinitionsFingerprint(const QJsonArray& definitions)
+{
+    if(definitions.isEmpty() || definitions.size()>4096)Fail("invalid_image_definition_count","1..4096 required");
+    QJsonObject semantic;std::set<QString> names;std::map<QString,std::set<QString>> edges;
+    for(const auto& value:definitions)
+    {
+        if(!value.isObject())Fail("invalid_image_definition","object required");
+        const auto definition=value.toObject();const auto name=RequiredString(definition,"name");
+        const auto kind=RequiredString(definition,"kind");
+        if(definition.size()!=5 || !names.insert(name).second || !definition["base_class"].isString() ||
+            !definition["snapshot"].isObject() || !definition["dependencies"].isArray() ||
+            (kind!="native_required" && kind!="derived_image"))Fail("invalid_image_definition",name);
+        const auto snapshot=definition["snapshot"].toObject();CheckSnapshot(snapshot);
+        auto expected=Classes(snapshot["identity"].toObject());expected.erase(name);
+        const auto base=definition["base_class"].toString();if(!base.isEmpty())expected.insert(base);
+        std::set<QString> actual;
+        for(const auto& dependency:definition["dependencies"].toArray())
+            if(!dependency.isString() || !actual.insert(dependency.toString()).second)Fail("invalid_image_dependencies",name);
+        if(expected!=actual || (kind=="derived_image" && base.isEmpty()) ||
+            (kind=="native_required" && !base.isEmpty()))Fail("invalid_image_dependencies",name);
+        edges.emplace(name,std::move(actual));
+        semantic[name]=QJsonObject{{"kind",kind},{"base_class",base},
+            {"model",snapshot["identity"].toObject()["model"]}};
+    }
+    for(const auto& value:definitions)for(const auto& dependency:value.toObject()["dependencies"].toArray())
+        if(!names.count(dependency.toString()))Fail("missing_image_dependency",dependency.toString());
+    std::set<QString> done,visiting;
+    std::function<void(const QString&,unsigned)> visit=[&](const QString& name,unsigned depth) {
+        if(done.count(name))return;
+        if(depth>128 || !visiting.insert(name).second)Fail("image_dependency_cycle_or_depth",name);
+        for(const auto& next:edges.at(name))visit(next,depth+1);
+        visiting.erase(name);done.insert(name);
+    };
+    for(const auto& name:names)visit(name,0);
+    return CanonicalModelDataSha256(semantic);
+}
 
 QJsonObject ExportModelArchive(UEPtr<UContainer> model, const QJsonObject& metadata,
                                const ModelBoundarySources& boundarySources,const std::vector<std::string>& additionalImageRoots)
