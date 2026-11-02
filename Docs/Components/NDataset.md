@@ -42,13 +42,13 @@ class;feat0;feat1
 
 ABuild читает файл, проверяет форму матриц и через SyncGenerators приводит
 число Generator1..N к числу фич. Missing file — idle/retryable, а открытый
-неправильный файл — ошибка Build в Ready/operation diagnostics. Bool Build
+файл с распознанной ошибкой формы — ошибка Build в Ready/operation diagnostics. Bool Build
 не является признаком успешной загрузки.
 
 Runtime reload — структурная операция владельца до следующего предъявления:
 native Build (ABuild → SyncGenerators/Init новых детей) → AfterBuild/Reset → arming. Не
 подменять её прямыми присваиваниями матриц после начала импульсов. Новый путь
-проверен normal missing→two features→one feature при2000/20000Hz; ASan pending.
+проверен normal/ASan missing→two features→one feature при2000/20000Hz.
 Источники времени/границы проверки: [DatasetClockPlayback](../Analysis/DatasetClockPlayback.ru.md).
 
 ### Открытый дефект проверки числовых полей

@@ -32,5 +32,6 @@ layout и не является прозрачным checkpoint сохранён
 Нативный normal gate20 проверяет76 настоящих source/soma recordings при2000/
 20000Hz, continuous/timed, gap0/5/30ms, shifted origins до1e9s, near-grid onset
 и cutoff на первом onset. Сравниваются все отсчёты, ширина и повторение pulse.
-ASan нового source ещё pending; это не проверка классификации либо всех
+Normal/ASan source gates25/25 прошли, весь83-CSV набор совпал побайтно;
+это не проверка классификации либо всех
 поддерживаемых learner profiles. Подробнее: [DatasetClockPlayback](../Analysis/DatasetClockPlayback.ru.md).

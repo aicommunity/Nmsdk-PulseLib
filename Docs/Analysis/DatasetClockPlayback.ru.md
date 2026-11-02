@@ -98,3 +98,24 @@ File parser вызывается штатным ABuild, без второго п
 Unavailable остаётся retryable; ошибку Build нельзя замаскировать его bool=true.
 Физика generators не записывается заново на каждом tick. Кандидат ещё требует
 normal file2, native dispatch3, regression matrix20 и ASan; приёмки пока нет.
+
+## Подтверждённый normal/ASan scope, 03.11
+
+Проверенный Core `9ab6d57f0118ad6564ffd8421d7ab2a7a4040fe2`: normal25/25 и
+ASan25/25 native,41/41 Python/JUnit controls на каждом запуске.20 clock cases
+дают76 полных source/soma записей;2 file lifecycle cases проверяют missing→
+two features→one feature,3 dispatch cases проверяют native call counts.
+В обоих запусках подтверждены actual mappings; ASan содержит libasan.
+
+Root primary commits: normal `91fd3930ba29d0255c9b2cc2a339ebfa8afe7116`,
+ASan `6173d8324f7db784bf1f69efef8a60a8893ca081`. Все199 normal и198 ASan members
+проверены, весь набор83 CSV совпал побайтно.24 из41 readers используют прежние
+normal C₀ packages, а не новые ASan C₀ transfer данные; это явно разные scopes.
+Full temporal cache76/3888 PNG находится на M40;16 selected PNG непосредственно
+просмотрены, включая большие origins, near-grid и timed cutoff. Только этот
+subset считается визуально проверенным; LT events не собирались.
+
+Source-кандидат ещё не принят в develop: запущена более широкая normal
+регрессия202 kernel/configured/native/diagnostic/archive/inherited cases.
+Полный learner mode/physics/scientific scope остаётся открытым. Parser
+atoi/atof/extra-field defect не исправлен этим clock/lifecycle изменением.

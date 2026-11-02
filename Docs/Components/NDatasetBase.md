@@ -34,6 +34,9 @@ MatrixData(sample * M + spikeSlot, feature)
   `2` воспроизводит непрерывные пачки. Defaults: режим2, `Delay=0`,
   `TimeGeneration=5s`, `Iteration=0`, `ResetDelay=true`, `LoopSamples=true`.
   Delay отсчитывается после завершения последнего pulse, не от его onset.
+  Timed cutoff задаёт жёсткую границу источника: pulse, пересекающий
+  TimeGeneration, может быть остановлен на этой границе. Полное окно
+  наблюдения хвоста сомы следует задавать отдельно от длительности генерации.
 
 При единой частоте ancestry и generators управление выполняется в native
 BeforeCalculate, дети рассчитываются штатным scheduler. Внутренние integer
