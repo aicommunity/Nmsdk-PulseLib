@@ -574,7 +574,15 @@ void VerifyOnlyCapacitiesChanged(const QJsonObject& before,const QJsonObject& af
 }
 bool HasBaselineMembrane(const QJsonObject& baseline,const std::string& path)
 {
-    if(path.rfind("Dendrite",0)!=0 || path.find('.')!=std::string::npos)return false;
+    if(path.rfind("Dendrite",0)!=0)return false;
+    const auto separator=path.find('_',8);
+    if(separator==std::string::npos || separator==8 || separator+1>=path.size())return false;
+    const auto positiveDigits=[&](std::size_t begin,std::size_t end) {
+        if(path[begin]<'1' || path[begin]>'9')return false;
+        for(auto i=begin+1;i<end;++i)if(path[i]<'0' || path[i]>'9')return false;
+        return true;
+    };
+    if(!positiveDigits(8,separator) || !positiveDigits(separator+1,path.size()))return false;
     const auto prefix=QString::fromStdString(path)+'.';
     const auto channels=baseline["channels"].toObject();
     for(auto it=channels.begin();it!=channels.end();++it)if(it.key().startsWith(prefix))return true;
