@@ -7,6 +7,15 @@ Build/Calculate bool остаётся true. После исправления ф
 заново готовит расписание. Исправление проверяется активным corrupt/recover
 сценарием при 2000 и20000 Гц отдельно от cold parser.
 
+Адресная приёмка03.11: cold normal26/ASan26 и integrated normal53/ASan53
+пройдены; в integrated на каждом worker также17 independent reader checks.
+Root evidence: normal `5c94d5490be958145989c5d019015c6acd0ccd51`, ASan
+`33b95d5b173691ce0df067efe65b8954c098d079`; все261 members каждого проверены,
+actual libasan mappings подтверждены. Полный набор85 CSV и52 cold input/JSON
+файлов совпал побайтно между normal/ASan. Baseline обоих workers имел ровно
+два hot-reload failures при полном inventory53, сохранён отдельно. Это не
+сертификат обучения, классификации или всей lifecycle/physics матрицы.
+
 ## RU
 
 ### Назначение
