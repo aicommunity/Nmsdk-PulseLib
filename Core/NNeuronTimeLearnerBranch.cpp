@@ -1,4 +1,5 @@
 #include "TimeLearner/NativeLiveFinalization.h"
+#include <QJsonDocument>
 #include "TimeLearner/LegacyReadout.h"
 #include "TimeLearner/NativeLearnedOwner.h"
 #include "TimeLearner/NativeRecognitionOwner.h"
