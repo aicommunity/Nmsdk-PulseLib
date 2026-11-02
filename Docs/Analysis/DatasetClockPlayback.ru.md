@@ -1,7 +1,7 @@
 # Время предъявления NDatasetBase
 
 Исправление требует серверной приёмки. Оно относится к штатному burst playback
-NDatasetMatrix/NDatasetFile через NDatasetBase, а не меняет задачу обучения.
+NDatasetMatrix и файлового NDataset через NDatasetBase, а не меняет задачу обучения.
 
 Baseline матрица корня:12 cases, timed/continuous,2000/20000Hz, Delay0/5/30ms,
 origins0/0.1/1s, реальные генератор/синапс/сома и полные0.25s traces. При
@@ -43,7 +43,8 @@ Timed mode сохраняет исходное правило: остановк�
 Default очищает новые runtime caches; Begin/Fire создают их. Reset по-прежнему
 ставит ResetDelay, и первый штатный Calculate запускает новую последовательность.
 Дополнительного Calculate, Build или Reset learner нет. Структурная настройка,
-storage physics, morphology, индивидуальные Rs/C и computing order не меняются.
+storage physics, morphology, индивидуальные Rs/C и порядок обхода дочерних
+компонентов Rdk не меняются.
 Диагностические SampleStartTime/OneShotEndTime остаются абсолютными seconds.
 Новые caches не являются полным checkpoint динамики Copy/XML.
 
@@ -53,3 +54,32 @@ learned/frozen transfer regression и normal/ASan, а также читаемы�
 самого NPulseGenerator/NPulseGeneratorTransit требуют своего clock audit.
 Изменённые реальные предъявления маркируются новым кодом/протоколом; это не
 опровержение исторических августовских наблюдений.
+
+## Фаза управления дочерними генераторами
+
+Адресный B2 показал: integer-clock исправляет origin invariance записанных
+серий, но ACalculate вызывается после children (Rdk UContainer.cpp). Первый
+импульс поэтому опаздывает на tick, а немедленный Begin следующей пачки может
+стереть последний high sample текущей. В реальном CSV2000Hz при Delay0
+первый pulse имеет2 samples, последний только1. Это отдельный дефект от
+roundoff; одной заменой double clock он не исправляется.
+
+Для одинаковой частоты dataset, его ancestor chain и generator children
+управление теперь выполняется в штатном ABeforeCalculate. Нативный scheduler
+по-прежнему рассчитывает каждого ребёнка; вложенного Calculate нет. ACalculate
+пропускает повторное управление. Для multirate source hierarchy сохраняется
+прежний gated after-children путь: Before hooks в Rdk сами по себе не gated.
+Это compatibility path, не объявление multirate поддержанным новым learner.
+WasPlaybackHandledBeforeChildren — read-only diagnostic последнего tick.
+
+Файловый NDataset подготавливает pending reload через PreparePlaybackData в
+той же выбранной фазе. Invalid file/matrix выдаёт диагностику через native
+exception. Unavailable остаётся idle с повторной попыткой. SyncGenerators
+инициализирует новые/unready children при уже initialized owner до arming;
+в cold Build сохраняется штатный Init. File reload и multirate требуют
+отдельных native tests, наряду с повтором matrix20 и learned transfer14.
+
+Новый fixture record schema2 объявляет origin_and_pulse_program_v1: фактический
+phase, first onset, полную ширину каждого импульса, repeat и timed cutoff.
+Record schema1 остаётся historical adapter с неизвестным полным набором
+assertions. Проверки ещё не завершены; новый before-control код не принят.

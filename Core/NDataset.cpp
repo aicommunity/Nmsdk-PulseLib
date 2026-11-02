@@ -250,17 +250,17 @@ bool NDataset::PrepareDataset(void)
     return true;
 }
 
-bool NDataset::ACalculate(void)
+void NDataset::PreparePlaybackData(void)
 {
     if(ReloadDataset)
     {
         const FileLoadResult result = TreatDataFromFile();
         if(result == FileLoadResult::Invalid)
-            return false;
+            RDK_THROW(EStringError("invalid_dataset_playback_file"));
         if(result == FileLoadResult::Loaded)
         {
             if(!ApplyFromMatrices())
-                return false;
+                RDK_THROW(EStringError("invalid_dataset_playback_matrices"));
             ReloadDataset = false;
             SyncGenerators();
             ResetDelay = true;
@@ -275,7 +275,6 @@ bool NDataset::ACalculate(void)
             SyncGenerators();
         }
     }
-    return NDatasetBase::ACalculate();
 }
 
 }

@@ -55,6 +55,7 @@ NDatasetBase::NDatasetBase(void)
   SampleStartNativeTime(0),
   OperatingStartNativeTime(0),
   OperatingStartStamp(0.),
+  PlaybackHandledBefore(false),
   SampleStartTime(0.0),
   SampleBurstEndRel(0.0),
   LastPlayedIteration(-1)
@@ -140,6 +141,7 @@ bool NDatasetBase::ADelComponent(UEPtr<UContainer> comp)
 bool NDatasetBase::AReset(void)
 {
     ResetDelay = true;
+    PlaybackHandledBefore=false;
     return true;
 }
 
@@ -170,6 +172,7 @@ bool NDatasetBase::ADefault(void)
     OneShotDuration.clear();
     SampleStartNativeTime=OperatingStartNativeTime=0;
     OperatingStartStamp=0.;
+    PlaybackHandledBefore=false;
     SampleStartTime = 0.0;
     SampleBurstEndRel = 0.0;
     LastPlayedIteration = -1;
@@ -428,7 +431,19 @@ bool NDatasetBase::SyncGenerators(void)
      UEPtr<NPulseGeneratorTransit> generator =
          AddMissingComponent<NPulseGeneratorTransit>(std::string("Generator")+sntoa(i+1), PulseGeneratorClassName);
      if(generator)
+     {
       generator->SetCoord(MVector<double,3>(5+i*6, 1.7, 0));
+      // Runtime file reload can create children before the next native child
+      // traversal. The initialized structural owner prepares those children
+      // before playback may reset/arm them. Cold Build still uses native Init.
+      if(IsInit() && (!generator->IsInit() || !generator->IsReady()))
+      {
+       const auto marker=generator->OperationFailureSequence();
+       generator->Init();
+       if(!generator->IsInit() || !generator->IsReady() || generator->HasOperationFailureSince(marker))
+        RDK_THROW(EStringError("dataset_generator_initialization_failed"));
+      }
+     }
     }
     return true;
 }
@@ -463,14 +478,56 @@ bool NDatasetBase::ABuild(void)
     return SyncGenerators();
 }
 
+bool NDatasetBase::HasSinglePlaybackClock(void) const
+{
+    const auto frequency=TimeStep.GetData();
+    if(frequency<=0)return false;
+    for(auto owner=GetOwner();owner;owner=owner->GetOwner())
+        if(owner->TimeStep.GetData()!=frequency)return false;
+    for(const auto* generator:Generators)
+        if(!generator || generator->TimeStep.GetData()!=frequency)return false;
+    return true;
+}
+
+bool NDatasetBase::ABeforeCalculate(void)
+{
+    UNet::ABeforeCalculate();
+    PlaybackHandledBefore=false;
+    // ACalculate is AFTER children in Rdk. Updating/resetting the generator
+    // there delays onset and can erase the final high sample on a zero-gap
+    // repeat. A single-clock controller runs before its native children once.
+    if(HasSinglePlaybackClock())
+    {
+        PreparePlaybackData();
+        PlaybackHandledBefore=HasSinglePlaybackClock();
+        if(PlaybackHandledBefore)AdvancePlayback();
+    }
+    return true;
+}
+
 bool NDatasetBase::ACalculate(void)
+{
+    // Before hooks are not frequency-gated like ACalculate. Preserve the
+    // legacy after-children/gated path for multirate source hierarchies.
+    if(!PlaybackHandledBefore)
+    {
+        PreparePlaybackData();
+        AdvancePlayback();
+    }
+    return true;
+}
+
+void NDatasetBase::PreparePlaybackData(void) {}
+
+void NDatasetBase::AdvancePlayback(void)
 {
     if(StateGeneration == 0)
     {
         SilenceGenerators();
-        return true;
+        return;
     }
 
+    if(!Environment)RDK_THROW(EStringError("dataset_playback_requires_environment"));
     const double now = Environment->GetTime().GetDoubleTime();
     const bool iteration_changed = (LastPlayedIteration != int(Iteration));
 
@@ -482,7 +539,7 @@ bool NDatasetBase::ACalculate(void)
             ResetDelay = false;
         }
         UpdateSpikeTrainPlayback(now);
-        return true;
+        return;
     }
 
     if(StateGeneration == 1)
@@ -503,12 +560,12 @@ bool NDatasetBase::ACalculate(void)
         if(PlaybackAfter(elapsed,TimeGeneration.GetData()))
         {
             SilenceGenerators();
-            return true;
+            return;
         }
         UpdateSpikeTrainPlayback(now);
-        return true;
+        return;
     }
-    return false;
+    RDK_THROW(EStringError("invalid_dataset_playback_mode"));
 }
 
 int NDatasetBase::GetCurrentSampleId() const

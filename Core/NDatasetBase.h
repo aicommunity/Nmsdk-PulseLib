@@ -116,6 +116,11 @@ void UpdateSpikeTrainPlayback(double now);
 /// Elapsed model seconds from an integer microsecond anchor; subtract before
 /// converting to double so a translated absolute clock cannot change pulses.
 double ElapsedNativeTime(ULongTime start) const;
+bool HasSinglePlaybackClock(void) const;
+/// File-backed implementations prepare pending data before advancing playback
+/// in the selected native phase; this never calculates child components.
+virtual void PreparePlaybackData(void);
+void AdvancePlayback(void);
 
 /// True when all scheduled spikes for the sample have been fired and pulses ended
 bool IsBurstFullyComplete(void) const;
@@ -126,6 +131,7 @@ int CalcNumClasses(const MDMatrix<int> &matrix_classes) const;
 virtual bool ADefault(void);
 virtual bool ABuild(void);
 virtual bool AReset(void);
+virtual bool ABeforeCalculate(void);
 virtual bool ACalculate(void);
 
 /// Absolute spike times for current Iteration, per feature
@@ -144,6 +150,7 @@ std::vector<double> OneShotDuration;
 ULongTime SampleStartNativeTime;
 ULongTime OperatingStartNativeTime;
 double OperatingStartStamp;
+bool PlaybackHandledBefore;
 
 /// Model-clock start of current sample playback, in seconds (diagnostic view)
 double SampleStartTime;
@@ -155,6 +162,8 @@ double SampleBurstEndRel;
 int LastPlayedIteration;
 
 public:
+/// Diagnostic phase of the most recent native tick; not a model parameter.
+bool WasPlaybackHandledBeforeChildren() const { return PlaybackHandledBefore; }
 /// Sample id currently (or last) playing; prefers LastPlayedIteration when set
 int GetCurrentSampleId() const;
 int GetNextSpikeIndex(int feature_index) const;
