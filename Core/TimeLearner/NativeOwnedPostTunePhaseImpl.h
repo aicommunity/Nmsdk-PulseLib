@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeOwnedPostTunePhase.h"
 #include "NativePostTuneTransaction.h"
+#include "NativeCalculationPolicy.h"
 #include <set>
 
 namespace NMSDK::TimeLearner {
@@ -37,6 +38,7 @@ private:
 
 template<class Owner> void ValidateNativeOwnedPhaseFrequency(Owner& owner)
 {
+    RequireNativeCalculationSchedule(owner);
     const auto frequency=owner.GetTimeStep();std::set<RDK::UContainer*> seen;
     const auto visit=[&](auto&& self,RDK::UContainer* node)->void {
         if(!node || !seen.insert(node).second || !frequency || node->GetTimeStep()!=frequency)
