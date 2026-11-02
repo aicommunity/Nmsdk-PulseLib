@@ -19,13 +19,32 @@ auto Rank(const CandidateEvidence& e,const BoundedTrainingConfig& cfg,const Capt
 {
     const double time=std::max(std::fabs(e.timingResidualLow),std::fabs(e.timingResidualHigh));
     const double amplitude=std::fabs(e.amplitudeResidual);
-    // Zero tolerances are exact requirements; no implicit timestep/percent floor.
-    const auto normalized=[](double error,double tolerance) {
-        return tolerance>0.?error/tolerance:(error==0.?0.:std::numeric_limits<double>::infinity());
-    };
-    const double residual=normalized(time,cfg.tolerances.sync)+
-        normalized(amplitude,AmplitudeTolerance(cfg,reference));
-    return std::tuple{!e.withinTiming,!e.withinAmplitude,residual,e.parameterChangeCost};
+    const double amplitudeTolerance=AmplitudeTolerance(cfg,reference);
+    // Zero is an exact requirement, not an implicit epsilon. Keep its measured
+    // error as a separate ordered axis instead of making all nonzero errors
+    // indistinguishable infinities. Timing precedes amplitude when both are zero.
+    const double exactTime=cfg.tolerances.sync==0.?time:0.;
+    const double exactAmplitude=amplitudeTolerance==0.?amplitude:0.;
+    const double residual=(cfg.tolerances.sync>0.?time/cfg.tolerances.sync:0.)+
+        (amplitudeTolerance>0.?amplitude/amplitudeTolerance:0.);
+    const bool overflow=!Finite(residual);
+    double magnitude=residual;
+    if(overflow)
+    {
+        // Preserve the same positive normalized sum after double division/add
+        // overflow. Do not rely on long double being wider on every platform.
+        const double absent=-std::numeric_limits<double>::infinity();
+        const double logTime=cfg.tolerances.sync>0. && time>0.?
+            std::log(time)-std::log(cfg.tolerances.sync):absent;
+        const double logAmplitude=amplitudeTolerance>0. && amplitude>0.?
+            std::log(amplitude)-std::log(amplitudeTolerance):absent;
+        const double high=std::max(logTime,logAmplitude),low=std::min(logTime,logAmplitude);
+        magnitude=high+std::log1p(std::exp(low-high));
+    }
+    // Finite normalized sums precede overflowing ones; ordinary finite positive
+    // tolerance ranks are unchanged, including their original cost tie-break.
+    return std::tuple{!e.withinTiming,!e.withinAmplitude,exactTime,exactAmplitude,
+        overflow,magnitude,e.parameterChangeCost};
 }
 bool ParametersLegal(const VerificationProtocol& protocol,const BoundedTrainingConfig& config,
                      const std::vector<InputParameters>& parameters)
