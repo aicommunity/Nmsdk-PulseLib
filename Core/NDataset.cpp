@@ -4,13 +4,53 @@
 #include "NDataset.h"
 
 #include <fstream>
-#include <sstream>
-#include <cstring>
 #include <vector>
+#include <charconv>
+#include <cmath>
+#include <limits>
+#include <system_error>
 
 namespace NMSDK {
 
 namespace {
+
+bool IsSpace(char value)
+{
+    return value==' ' || value=='\t' || value=='\r' || value=='\n' || value=='\f' || value=='\v';
+}
+
+std::string TrimToken(const std::string& value)
+{
+    const auto first=value.find_first_not_of(" \t\r\n\f\v");
+    if(first==std::string::npos)return {};
+    return value.substr(first,value.find_last_not_of(" \t\r\n\f\v")-first+1);
+}
+
+bool ParseInteger(std::string token,int& value)
+{
+    token=TrimToken(token);
+    if(!token.empty() && token[0]=='+')
+    {
+        token.erase(0,1);
+        if(!token.empty() && (token[0]=='+' || token[0]=='-'))return false;
+    }
+    if(token.empty())return false;
+    const auto parsed=std::from_chars(token.data(),token.data()+token.size(),value);
+    return parsed.ec==std::errc{} && parsed.ptr==token.data()+token.size();
+}
+
+bool ParseFiniteDouble(std::string token,double& value)
+{
+    token=TrimToken(token);
+    if(!token.empty() && token[0]=='+')
+    {
+        token.erase(0,1);
+        if(!token.empty() && (token[0]=='+' || token[0]=='-'))return false;
+    }
+    if(token.empty())return false;
+    const auto parsed=std::from_chars(token.data(),token.data()+token.size(),value,std::chars_format::general);
+    return parsed.ec==std::errc{} && parsed.ptr==token.data()+token.size() && std::isfinite(value);
+}
 
 int CountDelimiter(const std::string &line, char delimiter)
 {
@@ -18,19 +58,28 @@ int CountDelimiter(const std::string &line, char delimiter)
     for(size_t i = 0; i < line.length(); i++)
     {
         if(line[i] == delimiter)
+        {
+            if(count==std::numeric_limits<int>::max())return -1;
             count++;
+        }
     }
     return count;
 }
 
 bool ParseMaxSpikesFromMeta(const std::string &line, int &max_spikes)
 {
-    const char *key = "MaxSpikes=";
-    const size_t pos = line.find(key);
-    if(pos == std::string::npos)
-        return false;
-    max_spikes = atoi(line.c_str() + pos + std::strlen(key));
-    return max_spikes >= 1;
+    auto text=TrimToken(line);
+    if(text.empty() || text[0]!='#')return false;
+    text=TrimToken(text.substr(1));
+    const std::string name="NDataset",key="MaxSpikes=";
+    if(text.compare(0,name.size(),name)!=0)return false;
+    text=text.substr(name.size());
+    if(text.empty())return false;
+    if(text[0]==';')text=TrimToken(text.substr(1));
+    else if(IsSpace(text[0]))text=TrimToken(text);
+    else return false;
+    if(text.compare(0,key.size(),key)!=0)return false;
+    return ParseInteger(text.substr(key.size()),max_spikes) && max_spikes>=1;
 }
 
 /// Parse one data row: optional leading class token, then exactly num_features doubles.
@@ -42,29 +91,32 @@ bool ParseFeatureRow(const std::string &line, char delimiter, int num_features,
     values.clear();
     values.reserve(num_features);
 
-    std::stringstream stream(line);
-    std::string token;
-
+    // Preserve empty terminal fields: stringstream/getline alone would hide
+    // a trailing delimiter. Every supplied field must have a declared owner.
+    std::vector<std::string> fields;
+    size_t begin=0;
+    for(;;)
+    {
+        const auto end=line.find(delimiter,begin);
+        fields.push_back(line.substr(begin,end==std::string::npos?end:end-begin));
+        if(end==std::string::npos)break;
+        begin=end+1;
+    }
+    size_t offset=0;
     if(parse_class)
     {
-        if(!std::getline(stream, token, delimiter))
-            return false;
-        class_out = atoi(token.c_str());
+        if(fields.empty() || !ParseInteger(fields[0],class_out))return false;
+        offset=1;
     }
-    else
+    else if(fields.size()==size_t(num_features)+1 && TrimToken(fields[0]).empty())offset=1;
+    if(fields.size()!=size_t(num_features)+offset)return false;
+    for(size_t index=offset;index<fields.size();++index)
     {
-        // Leading empty field before first ';' (";v0;v1") — consume and ignore
-        if(!line.empty() && line[0] == delimiter)
-        {
-            if(!std::getline(stream, token, delimiter))
-                return false;
-        }
+        double value=0.;
+        if(!ParseFiniteDouble(fields[index],value))return false;
+        values.push_back(value);
     }
-
-    while(std::getline(stream, token, delimiter) && int(values.size()) < num_features)
-        values.push_back(atof(token.c_str()));
-
-    return int(values.size()) == num_features;
+    return true;
 }
 
 } // namespace
@@ -177,15 +229,19 @@ NDataset::FileLoadResult NDataset::TreatDataFromFile(void)
         return FileLoadResult::Invalid;
 
     int max_spikes = 1;
-    bool has_meta = false;
-    if(!line.empty() && line[0] == '#' && line.find("NDataset") != std::string::npos)
+    // UTF-8 BOM and ASCII whitespace are transport formatting, not data.
+    if(line.compare(0,3,"\xEF\xBB\xBF")==0)line.erase(0,3);
+    line=TrimToken(line);
+    if(!line.empty() && line[0] == '#')
     {
         if(!ParseMaxSpikesFromMeta(line, max_spikes))
             return FileLoadResult::Invalid;
-        has_meta = true;
         if(!std::getline(file_dataset, line))
             return FileLoadResult::Invalid;
     }
+
+    line=TrimToken(line);
+    if(line.empty() || line[0]=='#')return FileLoadResult::Invalid;
 
     // Header: semicolon count == NumFeatures
     const int num_features = CountDelimiter(line, delimiter);
@@ -195,12 +251,16 @@ NDataset::FileLoadResult NDataset::TreatDataFromFile(void)
     std::vector<std::string> data_lines;
     while(std::getline(file_dataset, line))
     {
-        if(!line.empty())
+        if(!TrimToken(line).empty())
             data_lines.push_back(line);
     }
     file_dataset.close();
 
     if(data_lines.empty())
+        return FileLoadResult::Invalid;
+    // MDMatrix dimensions/indexing are ints; validate products before casting
+    // or allocating. This is a representation bound, not an experiment limit.
+    if(data_lines.size()>size_t(std::numeric_limits<int>::max())/size_t(num_features))
         return FileLoadResult::Invalid;
     if(int(data_lines.size()) % max_spikes != 0)
         return FileLoadResult::Invalid;
@@ -232,7 +292,6 @@ NDataset::FileLoadResult NDataset::TreatDataFromFile(void)
         }
     }
 
-    (void)has_meta;
     MaxSpikesPerFeature = max_spikes;
     MatrixData = matrix_data;
     MatrixClasses = matrix_classes;
@@ -243,7 +302,14 @@ bool NDataset::PrepareDataset(void)
 {
     const FileLoadResult result = TreatDataFromFile();
     if(result == FileLoadResult::Invalid)
+    {
+        // A rejected reload must not leave a previously high output visible
+        // to consumers while native Build/Calculate report the failure. Keep
+        // the last accepted matrix for inspection; it cannot drive playback
+        // until a valid native rebuild resets and rearms the source.
+        SilenceGenerators();
         return false;
+    }
     if(result == FileLoadResult::Loaded)
         ReloadDataset = false;
     // Unavailable: empty matrices, ReloadDataset stays true for a later retry

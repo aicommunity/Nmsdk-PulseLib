@@ -1,5 +1,21 @@
 # NDataset — датасет из файла
 
+Невалидный reload сохраняет последнюю принятую матрицу для диагностики, но
+штатно останавливает генераторы: прежний высокий выход не должен оставаться
+видимым потребителям. Ready/operation diagnostics отражают отказ; публичный
+Build/Calculate bool остаётся true. После исправления файла native Build/Reset
+заново готовит расписание. Исправление проверяется активным corrupt/recover
+сценарием при 2000 и20000 Гц отдельно от cold parser.
+
+Адресная приёмка03.11: cold normal26/ASan26 и integrated normal53/ASan53
+пройдены; в integrated на каждом worker также17 independent reader checks.
+Root evidence: normal `5c94d5490be958145989c5d019015c6acd0ccd51`, ASan
+`33b95d5b173691ce0df067efe65b8954c098d079`; все261 members каждого проверены,
+actual libasan mappings подтверждены. Полный набор85 CSV и52 cold input/JSON
+файлов совпал побайтно между normal/ASan. Baseline обоих workers имел ровно
+два hot-reload failures при полном inventory53, сохранён отдельно. Это не
+сертификат обучения, классификации или всей lifecycle/physics матрицы.
+
 ## RU
 
 ### Назначение
@@ -59,6 +75,26 @@ native Build (ABuild → SyncGenerators/Init новых детей) → AfterBui
 строгий reader должен проверять всю строку, integer range метки/MaxSpikes,
 конечность ISI и точную размерность; отсутствующие значения не достраивать.
 Это отдельный открытый пункт, а не уже выполненное исправление алгоритма.
+
+### Кандидат строгой проверки входа
+
+Числовые поля разбираются целиком через locale-independent from_chars:
+class и MaxSpikes — int с проверкой диапазона; ISI — конечный double.
+Принимаются десятичная точка, научная запись e/E, один знак, ASCII whitespace,
+CRLF, UTF-8 BOM в начале файла и пустые строки между data rows. Поздние слоты
+также допускают `v0;v1;...` без начального пустого поля класса.
+
+Число полей должно точно соответствовать header. Пустые числовые значения,
+мусор после числа, NaN/Inf, переполнение, лишний trailing delimiter и неизвестная
+metadata отклоняются, а не превращаются в0. Отрицательные ISI сохраняют
+прежнюю skip-семантику; канонический пропуск-1. MaxSpikes>=1, число строк кратно
+MaxSpikes. До allocation проверяется вместимость int-indexed MDMatrix.
+
+Missing file остаётся idle/retryable. Build сообщает распознанную ошибку через
+Ready/operation diagnostics; его bool всегдаtrue. На старом parser22 native
+cases воспроизвели15 ошибочных принятий; новый код ещё требует серверной
+проверки. Это cold file validation scope, не подтверждение hot-reload lifecycle
+или классификации; clock/reload исправление выполняется отдельно.
 
 ### Favorites
 
