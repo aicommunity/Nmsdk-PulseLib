@@ -2,8 +2,10 @@
 #include "NativeProbe.h"
 #include "BoundedTraining.h"
 #include "ResistanceDomain.h"
+#include <QJsonObject>
 
 namespace NMSDK::TimeLearner {
+struct NativeCapacitanceCorrection;
 struct NativeInhibitoryTarget { std::size_t inputIndex=0;int offset=1;double resistance=0.; };
 struct NativeEditSpec {
     Normalization normalization=Normalization::SynapseCount;
@@ -19,6 +21,10 @@ struct NativeEditResult {
     bool modelMayHaveChanged=false;
     std::vector<InputParameters> effective;
     std::vector<double> minimumResistance,maximumResistance;
+    // Joint-candidate rollback may restore equivalent physics in new children.
+    bool graphWasReplaced=false;
+    // Only committed bound C candidates return an extended immutable C0 map.
+    QJsonObject capacitanceBaseline;
 };
 struct IntegrationChannelBound {
     std::string path;
@@ -40,12 +46,21 @@ NativeIntegrationAssessment AssessNativeIntegration(RDK::UEPtr<NPulseNeuron> neu
 ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
     const std::vector<int>& attachments,const std::vector<InputParameters>& geometry,const NativeEditSpec& specification,
     std::size_t inputIndex,bool scaleInhibitionWithInput);
+ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
+    const std::vector<int>& attachments,const std::vector<InputParameters>& geometry,const NativeEditSpec& specification,
+    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection& capacitance);
 std::vector<InputParameters> ReadNativeInputParameters(const NativeProbeBindings& bindings,
                                                       const std::vector<int>& attachments);
 // Native Save/Load preview validates a candidate before changing the live graph.
 // No Calculate, learner Build/Reset, prototype mutation or per-tick repair.
 NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
     const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& specification);
+// One physical preview validates L/Ns/Rs/C together. No unstable intermediate
+// candidate is calculated. On live failure a native full-graph checkpoint is
+// restored; refresh child aliases when graphWasReplaced is true.
+NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
+    const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& specification,
+    const NativeCapacitanceCorrection& capacitance);
 const char* NativeEditStatusName(NativeEditStatus status);
 NativeEditSpec MakeNativeEditSpec(Normalization normalization,int maximumLength,const std::vector<InputParameters>& requested,
     bool nextSegment,bool segmentEI,int delta,double alpha,double maximumResistanceRatio,double configuredMinimumResistance,

@@ -3,6 +3,7 @@
 #include "NativeModelEditor.h"
 #include "ModelIdentity.h"
 #include "NativeCalculationPolicy.h"
+#include "NativeOperationChecks.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <cmath>
@@ -75,6 +76,7 @@ void NativeProbeExecutor::CheckLiveGraph(const NativeProbeBindings& b) const
     Require(SameLiveRoots() && b.neuron.Get()==physical->neuron.Get() &&
         b.dataset.Get()==physical->dataset.Get() && b.somas==physical->somas,"native_graph_replaced");
     Require(ownerLife.IsCurrent(),"native_lifecycle_changed");
+    NmsdkTools::RequireNativeOperationsUnchanged(*b.owner,operationSequence);
     RequireNativeCalculationScheduleAncestors(*b.owner);
     for(const auto& node:watched)
     {
@@ -138,6 +140,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
     try
     {
         Require(b.owner && b.neuron && b.dataset && b.inputCount>0,"missing_native_probe_graph");
+        operationSequence=b.owner->OperationFailureSequence();
         RequireNativeCalculationSchedule(*b.owner);
         physical.emplace(b); // UEPtr is a native weak handle, not const-assignable.
         ownerLife=b.owner->ObserveLifecycle();neuronLife=b.neuron->ObserveLifecycle();datasetLife=b.dataset->ObserveLifecycle();
@@ -221,6 +224,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         }
         oldDelay=b.dataset->Delay.GetData();oldAdvance=b.dataset->AdvanceSampleAfterBurst.GetData();sourceSaved=true;
         StopSource();b.neuron->Reset();b.dataset->Reset();
+        NmsdkTools::RequireNativeOperationsUnchanged(*b.owner,operationSequence);
         Require(ReadRevision(true)==request.baseModelRevision,"native_reset_changed_model");
         for(const auto& saved:savedInputs)
             Require(saved.lifetime.IsAlive() && b.owner->GetComponentL(saved.path,true).Get()==saved.synapse.Get(),
@@ -359,6 +363,8 @@ void NativeProbeExecutor::Finish(double time,const std::string& reason,NativePro
         {completed.reasons.push_back("native_base_revision_unavailable");completed.status=NativeProbeStatus::Rejected;}
         else if(completed.currentBaseRevision!=request.baseModelRevision)
         {completed.reasons.push_back("native_base_revision_changed");completed.status=NativeProbeStatus::Rejected;}
+        if(physical && ownerLife.IsAlive())
+            NmsdkTools::RequireNativeOperationsUnchanged(*physical->owner,operationSequence);
     }
     catch(const std::exception& error){completed.reasons.push_back(error.what());completed.status=NativeProbeStatus::Rejected;}
     completed.requiresFreshVerification=completed.status!=NativeProbeStatus::Completed ||

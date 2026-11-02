@@ -112,6 +112,7 @@ private:
     std::vector<SavedInput> savedInputs;
     std::vector<WatchedNode> watched;
     RDK::UModuleLifecycleObservation ownerLife,neuronLife,datasetLife,generatorLife;
+    std::uint64_t operationSequence=0;
     NPulseGeneratorTransit* capturedGenerator=nullptr;
     std::map<std::string,std::string> generatorParameters;
     std::optional<StimulusProfile> stimulusProfile;

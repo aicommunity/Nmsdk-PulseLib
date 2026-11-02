@@ -56,6 +56,7 @@ private:
     RDK::UEPtr<NPulseGeneratorTransit> source;
     RDK::UEPtr<NPulseLTZoneCommon> zone;
     RDK::UModuleLifecycleObservation ownerLife;
+    std::uint64_t operationSequence=0;
     std::vector<Watched> watched;
     std::set<std::pair<std::string,std::string>> seen;
     std::function<std::string(bool)> revision;

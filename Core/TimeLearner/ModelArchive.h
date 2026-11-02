@@ -1,8 +1,17 @@
 #pragma once
 #include "ModelIdentity.h"
+#include <QJsonArray>
 #include <stdexcept>
 
 namespace NmsdkTools {
+// Immutable storage image dependency closure for an initialized physical model.
+// Uses the same native image snapshots as ExportModelArchive, without exporting
+// dynamic model state or modifying a shared prototype.
+RDK_LIB_TYPE QJsonArray CaptureModelImageDefinitions(RDK::UEPtr<RDK::UContainer> model,
+    const ModelBoundarySources& boundarySources = {},const std::vector<std::string>& additionalImageRoots = {});
+// Validate the closed native definitions and hash their parameter/graph
+// semantics. Incidental XML formatting and temporary root names are excluded.
+RDK_LIB_TYPE QString ModelImageDefinitionsFingerprint(const QJsonArray& definitions);
 // Same-storage native Save/Load construction for a speculative boundary edit.
 // Preserves the physical graph/ports and initializes fresh dynamics. This is
 // neither Alloc/Copy nor a dynamic checkpoint or a training-result certificate.
