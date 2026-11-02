@@ -1,5 +1,10 @@
 # Физический механизм C-trim: явный per-channel baseline
 
+Последующая реализация [schema-2 переноса C₀](Analysis/TimeLearnerCapacitanceStateTransfer.ru.md)
+добавляет явно передаваемую поправку в completed/stopped package. Её серверная
+приёмка ещё не завершена; прежние отметки «не встроено в NativeLearnedState»
+ниже относятся к предыдущему срезу отдельного parameter-state codec.
+
 CaptureNativeCapacitanceBaseline получает реальные Capacity всех NPulseChannel
 текущего графа, включая отдельно Exc/Inh, Soma и LTMembrane. Schema1 содержит
 частоту, исходный model revision, path→C0 и canonical digest. Parent

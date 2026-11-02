@@ -4864,7 +4864,7 @@ bool NNeuronTimeLearnerBranch::ABeforeDefault(void)
  InterruptNativePostTunePhase("learner_default");NativePostTunePhase.reset();NativeLiveFinalization.reset();
  NativeRecognition.reset();
  NativeConfiguredPlan.reset();NativeConfiguredSinks={};NativeConfiguredText.clear();
- NativeModelDeclaration.reset();
+ NativeModelDeclaration.reset();NativeLearnedCapacitanceState={};
  NativeTrainingRequestIntent.Clear();
  NativeTrainingOwned=false;NativeTrainingControl.InvalidateTarget();
  NativeEditFailure.clear();NativeProbeControl.ResetControl();UNet::ABeforeDefault();return true;
@@ -5016,6 +5016,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ConstructNativeMod
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Constructed)
  {
+  NativeLearnedCapacitanceState={};
   if(!NativePostTunePhaseDepth)NativePostTunePhase.reset();
   NativeTrainingRequestIntent.Clear();
   NativeRecognition.reset();
@@ -5045,10 +5046,22 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::AdoptNativeModel(T
 }
 QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedState(const std::string& implementationId)
 {
+ if(NativeLearnedCapacitanceState.isEmpty())return ExportNativeLearnedStateWithCapacitance(implementationId,nullptr);
+ std::string revision;
+ const auto correction=TimeLearner::ParseNativeCapacitanceState(QJsonDocument(NativeLearnedCapacitanceState).toJson(QJsonDocument::Compact).toStdString(),revision);
+ return ExportNativeLearnedStateWithCapacitance(implementationId,&correction);
+}
+QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedState(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance)
+{return ExportNativeLearnedStateWithCapacitance(implementationId,&capacitance);}
+QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedStateWithCapacitance(const std::string& implementationId,
+ const TimeLearner::NativeCapacitanceCorrection* capacitance)
+{
  if(NativeRecognition)throw std::logic_error("native_recognition_state_is_not_learned_solo");
  if(NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Queued || NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Running)
   throw std::logic_error("native_learned_export_during_probe");
  ValidateNativeModelDeclaration();
+ if(capacitance)return TimeLearner::ExportNativeLearnedState(*this,*NativeModelDeclaration,NativeTrainingControl,ReadNativeParameters(),
+  ControllerVersion.GetData(),CalculateMode.GetData(),StructureBuildMode.GetData(),implementationId,*capacitance);
  return TimeLearner::ExportNativeLearnedState(*this,*NativeModelDeclaration,NativeTrainingControl,ReadNativeParameters(),
   ControllerVersion.GetData(),CalculateMode.GetData(),StructureBuildMode.GetData(),implementationId);
 }
@@ -5058,7 +5071,7 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeLearne
  {TimeLearner::NativeModelBuildResult result;result.reason="native_owned_post_tune_owns_model";return result;}
 
  auto result=TimeLearner::InstallNativeLearnedState(*this,true,package,implementationId,NativeTrainingOwned,NativeModelDeclaration,
-  NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure);
+  NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeLearnedCapacitanceState);
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
  {

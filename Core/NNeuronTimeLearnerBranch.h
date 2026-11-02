@@ -829,6 +829,8 @@ public: // Methods
  TimeLearner::NativeModelBuildResult ConstructNativeModel(TimeLearner::NativeModelSpec specification);
  TimeLearner::NativeModelBuildResult AdoptNativeModel(TimeLearner::NativeModelSpec specification);
  QJsonObject ExportNativeLearnedState(const std::string& implementationId);
+ QJsonObject ExportNativeLearnedState(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance);
+ QJsonObject ImportedNativeCapacitanceState() const {return NativeLearnedCapacitanceState;}
  TimeLearner::NativeModelBuildResult ImportNativeLearnedState(const QJsonObject& package,const std::string& implementationId);
  // Frozen recognition has no installed training certificate; import is explicit.
  bool HasNativeRecognitionState() const {return bool(NativeRecognition);}
@@ -1017,6 +1019,9 @@ protected:
  TimeLearner::NativeTrainingService NativeTrainingControl;
  TimeLearner::NativeTrainingIntent NativeTrainingRequestIntent;
  std::optional<TimeLearner::NativeModelSpec> NativeModelDeclaration;
+ QJsonObject NativeLearnedCapacitanceState;
+ QJsonObject ExportNativeLearnedStateWithCapacitance(const std::string& implementationId,
+     const TimeLearner::NativeCapacitanceCorrection* capacitance);
  std::optional<TimeLearner::ConfiguredNativeTraining> NativeConfiguredPlan;
  TimeLearner::ConfiguredNativeEvidenceSinks NativeConfiguredSinks;
  std::string NativeConfiguredText;

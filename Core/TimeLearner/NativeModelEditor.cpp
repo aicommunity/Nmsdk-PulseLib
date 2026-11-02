@@ -943,6 +943,7 @@ void ValidateAppliedNativeCapacitanceState(const NativeProbeBindings& b,const Na
     std::string revision;const auto correction=ParseNativeCapacitanceState(QJsonDocument(state).toJson(QJsonDocument::Compact).toStdString(),revision);
     Require(b.neuron && b.dataset && correction.baseline["model_spec"]==QJsonValue(EncodeNativeModelSpec(declaration)),
         "capacitance_declaration_mismatch");
+    UniformTree(b.neuron.Get(),declaration.frequencyHz);
     auto source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_capacitance_stimulus_source");
     Require(BindCapacitanceToGraph(b.neuron.Get(),*source,correction.baseline,false)==correction.baseline,"capacitance_baseline_changed");
     const auto plan=PlanCapacitances(b.neuron.Get(),correction.baseline,correction.membraneScales,correction.maximumRelativeChange);

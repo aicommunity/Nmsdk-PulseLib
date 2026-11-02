@@ -5,7 +5,7 @@ namespace NMSDK::TimeLearner {
 template<class Owner> NativeModelBuildResult InstallNativeLearnedState(Owner& owner,bool branch,const QJsonObject& package,
     const std::string& implementationId,bool& owned,std::optional<NativeModelSpec>& declaration,
     std::optional<ConfiguredNativeTraining>& configured,std::string& configuredText,
-    NativeProbeExecutor& probe,NativeTrainingService& service,std::string& failure)
+    NativeProbeExecutor& probe,NativeTrainingService& service,std::string& failure,QJsonObject& capacitanceState)
 {
     NativeModelBuildResult result;const bool wasOwned=owned;
     if(NativeTrainingIsActive(service) || probe.Status()==NativeProbeStatus::Queued || probe.Status()==NativeProbeStatus::Running)
@@ -17,6 +17,7 @@ template<class Owner> NativeModelBuildResult InstallNativeLearnedState(Owner& ow
         if(prepared->configuration.model.branch!=branch)throw std::invalid_argument("native_learned_import_topology_mismatch");
         // Prepare all controller state and copies before replacing live children.
         auto restoredDeclaration=prepared->configuration.model;
+        auto restoredCapacitance=prepared->capacitanceState;
         CheckNativeModelMirrorAssignments(owner,restoredDeclaration,prepared->parameters,prepared->dataset->MatrixData.GetData());
         owned=true;
         result=CommitNativeLearnerChildren(owner,restoredDeclaration,prepared->parameters,prepared->neuron,prepared->dataset);
@@ -30,7 +31,7 @@ template<class Owner> NativeModelBuildResult InstallNativeLearnedState(Owner& ow
         configured.emplace(std::move(prepared->configuration));
         owner.SyncCapacitanceTrim.SetDataDirect(0);owner.EnablePostTrainTuning.SetDataDirect(false);
         owner.AutoCalibrateFixedLTZThreshold.SetDataDirect(false);owner.IsNeedToTrain.SetDataDirect(false);
-        probe.ResetControl();service=std::move(prepared->service);failure.clear();
+        probe.ResetControl();service=std::move(prepared->service);capacitanceState=std::move(restoredCapacitance);failure.clear();
     }
     catch(const std::exception& error)
     {
