@@ -117,8 +117,8 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
     if(neuron && !neuron->GetOwner()){neuron->BreakLinks();storage->ReturnObject(neuron);}
     if(dataset && !dataset->GetOwner()){dataset->BreakLinks();storage->ReturnObject(dataset);}
 }
-QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
-    int version,int calculateMode,int structureMode,const std::string& implementationId)
+static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
+    int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance)
 {
     const bool stopped=!service.Certificate();
     Require(service.State()!=NativeTrainingState::CapturingReferences && service.State()!=NativeTrainingState::Searching &&
@@ -173,6 +173,13 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
         training["reference_complete"]=bool(service.References());training["capture_revision"]=Text(service.CaptureRevision());
         training["capture_epoch"]=Integer(service.CaptureEpoch());training["reason"]=Text(service.Reason());metadata["training"]=training;
     }
+    QJsonObject capacitanceState;
+    if(capacitance)
+    {
+        capacitanceState=EncodeNativeCapacitanceState(*capacitance,revision);
+        NativeProbeBindings bindings;bindings.neuron=neuron;bindings.dataset=dataset;
+        ValidateAppliedNativeCapacitanceState(bindings,declaration,capacitanceState);
+    }
     const auto archive=NmsdkTools::ExportModelArchive(neuron,metadata,ports,additional);
     QJsonObject package{{"kind",stopped?"timelearner_stopped_state":"timelearner_completed_state"},{"schema_version",1},{"dynamic_checkpoint",false},{"state_kind",stateKind},
         {"implementation_id",Text(implementationId)},{"controller_version",version},{"calculate_mode",calculateMode},{"structure_build_mode",structureMode},
@@ -187,8 +194,16 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
         package["capture_epoch"]=Integer(service.CaptureEpoch());package["reference_complete"]=bool(service.References());
         package["observed_packets"]=Packets(service.ObservedPackets());
     }
+    if(capacitance){package["schema_version"]=2;package["capacitance_state"]=capacitanceState;}
     package["sha256"]=NmsdkTools::CanonicalModelDataSha256(package);return package;
 }
+QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
+    const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation)
+{return ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,nullptr);}
+QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
+    const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
+    const NativeCapacitanceCorrection& capacitance)
+{return ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,&capacitance);}
 QJsonObject ParseNativeLearnedState(const std::string& text)
 {return ParseStrictNativeJsonObject(text,128*1024*1024);}
 std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
@@ -196,9 +211,10 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
 {
     auto body=package;body.remove("sha256");
     const bool stopped=package["kind"]==QJsonValue("timelearner_stopped_state");
-    Require((stopped?(package.size()==26 && package["state_kind"]==QJsonValue("diagnostic")):
-        (package.size()==21 && package["kind"]==QJsonValue("timelearner_completed_state") && package["state_kind"]==QJsonValue("learned_solo"))) &&
-        package["schema_version"]==QJsonValue(1) && package["dynamic_checkpoint"]==QJsonValue(false),"unsupported_learned_state_schema");
+    const bool withCapacitance=package["schema_version"]==QJsonValue(2);
+    Require((stopped?(package.size()==26+int(withCapacitance) && package["state_kind"]==QJsonValue("diagnostic")):
+        (package.size()==21+int(withCapacitance) && package["kind"]==QJsonValue("timelearner_completed_state") && package["state_kind"]==QJsonValue("learned_solo"))) &&
+        (withCapacitance || package["schema_version"]==QJsonValue(1)) && package["dynamic_checkpoint"]==QJsonValue(false),"unsupported_learned_state_schema");
     Require(package["sha256"].isString() && package["sha256"].toString()==NmsdkTools::CanonicalModelDataSha256(body),"learned_state_digest_mismatch");
     Require(!implementationId.empty() && package["implementation_id"]==QJsonValue(Text(implementationId)),"learned_state_implementation_mismatch");
     auto result=std::make_unique<PreparedNativeLearnedState>();result->storage=storage;
@@ -256,6 +272,12 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
     result->dataset=RDK::dynamic_pointer_cast<NDatasetMatrix>(NmsdkTools::ImportDatasetSnapshot(Object(package["dataset"]),storage,environment));
     CheckDataset(c,result->dataset);auto source=result->dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     result->neuron=RDK::dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ImportModelArchive(archive,storage,environment,Text(implementationId),{{&source->Output,"burst"}}));
+    if(withCapacitance)
+    {
+        NativeProbeBindings bindings;bindings.neuron=result->neuron;bindings.dataset=result->dataset;
+        const auto state=Object(package["capacitance_state"]);
+        ValidateAppliedNativeCapacitanceState(bindings,c.model,state);result->capacitanceState=state;
+    }
     result->configurationText=QJsonDocument(EncodeConfiguredNativeTraining(c)).toJson(QJsonDocument::Compact).toStdString();return result;
 }
 }

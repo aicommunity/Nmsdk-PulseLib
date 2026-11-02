@@ -6,6 +6,7 @@
 #include "ModelIdentity.h"
 #include "NumericChecks.h"
 #include "NativeCalculationPolicy.h"
+#include "NativeOperationChecks.h"
 #include <QJsonArray>
 #include <algorithm>
 
@@ -73,6 +74,7 @@ void NativeRecognitionTrialExecutor::Check(const NativeProbeBindings& b) const
         b.neuron.Get()==physical->neuron.Get() && b.dataset.Get()==physical->dataset.Get() && b.somas==physical->somas,
         "recognition_trial_graph_or_lifecycle_changed");
     RequireNativeCalculationScheduleAncestors(*b.owner);
+    NmsdkTools::RequireNativeOperationsUnchanged(*b.owner,operationSequence);
     for(const auto& node:watched)
     {
         Require(node.lifecycle.IsAlive() && b.owner->GetComponentL(node.path,true).Get()==node.node.Get(),
@@ -147,6 +149,7 @@ void NativeRecognitionTrialExecutor::BeforeChildren(const NativeProbeBindings& b
             "recognition_control_is_external");
         oldDelay=b.dataset->Delay.GetData();oldAdvance=b.dataset->AdvanceSampleAfterBurst.GetData();
         physical.emplace(b);ownerLife=b.owner->ObserveLifecycle();saved=true;
+        operationSequence=b.owner->OperationFailureSequence();
         applyPresentation(current->request.pattern);
         source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
         zone=b.neuron->GetComponentL<NPulseLTZoneCommon>("LTZone",true);
@@ -166,6 +169,7 @@ void NativeRecognitionTrialExecutor::BeforeChildren(const NativeProbeBindings& b
             std::vector<double> prior;
             Events(zone->OutputPulseTimes.GetData(),time,time,lastSpike,prior);
         }
+        NmsdkTools::RequireNativeOperationsUnchanged(*b.owner,operationSequence);
         Require(current->request.resetPolicy!=RecognitionResetPolicy::PerTrial || zone->OutputPulseTimes.GetCols()==0,
             "recognition_reset_retained_spikes");
         b.dataset->Delay=std::max(oldDelay,current->request.duration+2./frequency);
@@ -255,6 +259,7 @@ void NativeRecognitionTrialExecutor::Stop()
     physical->dataset->StateGeneration=0;
     if(source){source->Frequency=0.;source->Reset();}
     physical->dataset->Delay=oldDelay;physical->dataset->AdvanceSampleAfterBurst=oldAdvance;saved=false;
+    NmsdkTools::RequireNativeOperationsUnchanged(*physical->owner,operationSequence);
 }
 void NativeRecognitionTrialExecutor::Finish(const std::string& reason,bool complete,bool valid)
 {
