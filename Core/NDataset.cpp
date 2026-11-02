@@ -302,7 +302,14 @@ bool NDataset::PrepareDataset(void)
 {
     const FileLoadResult result = TreatDataFromFile();
     if(result == FileLoadResult::Invalid)
+    {
+        // A rejected reload must not leave a previously high output visible
+        // to consumers while native Build/Calculate report the failure. Keep
+        // the last accepted matrix for inspection; it cannot drive playback
+        // until a valid native rebuild resets and rearms the source.
+        SilenceGenerators();
         return false;
+    }
     if(result == FileLoadResult::Loaded)
         ReloadDataset = false;
     // Unavailable: empty matrices, ReloadDataset stays true for a later retry
