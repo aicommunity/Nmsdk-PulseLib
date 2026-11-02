@@ -37,6 +37,7 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
         value.probe.specification.waveAssignment==value.protocol.waveAssignment &&
         value.probe.specification.peakSelection==value.protocol.peakSelection,
         "native_training_protocol_mismatch");
+    if(a.validateExecution)a.validateExecution();
     const auto revision=a.readModelRevision();Require(!revision.empty(),"missing_native_training_model_revision");
     if(incompleteCaptureConstraint)
         Require(revision==incompleteCaptureConstraint->first && retainedEpoch==incompleteCaptureConstraint->second,
@@ -103,6 +104,7 @@ void NativeTrainingService::BeforeTick(const NativeTrainingAdapter& a,double mod
     {
         if(a.trainingRequested && !a.trainingRequested()){ExternalStop(a);return;}
         CheckBudget(a,modelTime,wallTime);if(!Active(state) || waiting)return;
+        if(a.validateExecution)a.validateExecution();
         if(state==NativeTrainingState::CapturingReferences)
         {
             if(referenceProbes>=plan.maximumReferenceProbes)

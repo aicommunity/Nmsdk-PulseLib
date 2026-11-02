@@ -34,6 +34,10 @@ struct NativeTrainingAdapter {
     // Native property connections can change without invoking the owner setter.
     // Pure controller adapters may omit this provider (always requested).
     std::function<bool()> trainingRequested;
+    // Native adapters validate their scheduler capability before Start/actions.
+    // Pure controller adapters may omit it; model revision reads remain usable
+    // while closing invalid/cancelled observations and restoring checkpoints.
+    std::function<void()> validateExecution;
 };
 
 class NativeTrainingService {

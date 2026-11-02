@@ -2,6 +2,7 @@
 #include "NumericChecks.h"
 #include "NativeModelEditor.h"
 #include "ModelIdentity.h"
+#include "NativeCalculationPolicy.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <cmath>
@@ -74,11 +75,13 @@ void NativeProbeExecutor::CheckLiveGraph(const NativeProbeBindings& b) const
     Require(SameLiveRoots() && b.neuron.Get()==physical->neuron.Get() &&
         b.dataset.Get()==physical->dataset.Get() && b.somas==physical->somas,"native_graph_replaced");
     Require(ownerLife.IsCurrent(),"native_lifecycle_changed");
+    RequireNativeCalculationScheduleAncestors(*b.owner);
     for(const auto& node:watched)
     {
         Require(node.lifecycle.IsAlive(),"native_graph_destroyed");
         Require(b.owner->GetComponentL(node.path,true).Get()==node.node.Get(),"native_graph_replaced");
         Require(node.node->IsReady() && node.node->IsInit(),"native_graph_not_ready");
+        RequireNativeCalculationScheduleNode(*node.node);
         Require(!node.stable || node.lifecycle.IsCurrent(),"native_lifecycle_changed");
     }
 }
@@ -135,6 +138,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
     try
     {
         Require(b.owner && b.neuron && b.dataset && b.inputCount>0,"missing_native_probe_graph");
+        RequireNativeCalculationSchedule(*b.owner);
         physical.emplace(b); // UEPtr is a native weak handle, not const-assignable.
         ownerLife=b.owner->ObserveLifecycle();neuronLife=b.neuron->ObserveLifecycle();datasetLife=b.dataset->ObserveLifecycle();
         Require(!b.unsafeIntegration,"native_integration_preflight_failed");
@@ -299,6 +303,12 @@ void NativeProbeExecutor::AfterChildren(const NativeProbeBindings& b,double time
         recorder->Observe(time,values,revision);
         if(request.onSample)
         {sample.potentials=std::move(values);request.onSample(sample);}
+        // An explicit callback cancellation/reset already owns the outcome.
+        if(state!=NativeProbeStatus::Running)return;
+        // A callback can change an inherited policy on the final sample too.
+        // Diagnose it before closing a successful observation, retaining the
+        // recorder and unrestricted revision reader for partial diagnostics.
+        CheckLiveGraph(b);
         if(!Detail::After(end,time))Finish(time,"window_closed",NativeProbeStatus::Completed);
     }
     catch(const std::exception& error){Failure(time,error.what());}

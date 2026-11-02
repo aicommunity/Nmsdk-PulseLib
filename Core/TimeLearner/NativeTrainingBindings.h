@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeTrainingService.h"
 #include "ModelIdentity.h"
+#include "NativeCalculationPolicy.h"
 
 namespace NMSDK::TimeLearner {
 double NativeTrainingWallTime();
@@ -8,6 +9,7 @@ double NativeTrainingWallTime();
 template<class Learner> NativeTrainingAdapter BindNativeTraining(Learner& owner,NativeProbeExecutor& probe,unsigned& editDepth)
 {
     NativeTrainingAdapter result;
+    result.validateExecution=[&owner]{RequireNativeCalculationSchedule(owner);};
     result.trainingRequested=[&owner]{return owner.IsNeedToTrain.GetData();};
     result.readParameters=[&owner]{return owner.ReadNativeParameters();};
     auto observer=std::make_shared<NmsdkTools::ModelRevisionObserver>();
