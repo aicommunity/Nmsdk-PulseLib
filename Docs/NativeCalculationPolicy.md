@@ -28,7 +28,10 @@ checkpoints can be restored. Generic Build/import/export/standalone model edits
 and rollback do not gain this execution restriction. Owned finalization and
 the production Console preflight validate scheduling before execution.
 
-Implementation/64 declared native fixture cases are pending server acceptance.
+Implementation/64 declared native fixture cases were pending at the initial
+checkpoint. The subsequent scoped normal/ASan acceptance and integrated163
+regression are complete; root44548f908365f5030445e4ced11a71147d044331 records
+the terminal ASan163 result with exact source/runtime and primary data.
 The two-case Elder baseline accepted both large positive limits without policy
 diagnostics; this proves a capability-validation gap, not actual wall skips.
 Full lifecycle/storage/physics matrices remain open; root documentation contains

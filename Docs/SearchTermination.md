@@ -30,3 +30,10 @@ separating InvalidObservation from a genuine no-adjustable-input control.
 Corrected seven-case baseline: four expected failures and three controls passed.
 Full original stages 5-8, quantized/best-effort semantics and other search limits
 are not declared accepted by this correction.
+
+The required explicit stopped-model diagnostic API and public Console/CLI path
+are now implemented and checked on both workers. Root proof
+44548f908365f5030445e4ced11a71147d044331 closes the pending ASan gates;
+normal proofs and exact acceptance scopes are recorded in parent repository
+Docs/StructTrain/TimeLearner/CompletedASanGates-2026-11-02.ru.md.
+An unfinished Train remains diagnostic-only with no convergence certificate.

@@ -38,5 +38,8 @@ Full temporal cache96 probes/144 soma pairs/864 PNG хранится на M40;
 родительский Docs/StructTrain/TimeLearner/FiniteCandidateRanking.ru.md.
 
 Адресная проверка не завершает весь stage7, исходный план0–12 или приёмку
-всех prerequisite features. Изменение остаётся в feature branch до завершения
-общей приёмки; версия2 в целом не объявляется рекомендуемой.
+всех вариантов prerequisite features. Адресные prerequisite gates завершены:
+root44548f908365f5030445e4ced11a71147d044331 содержит ASan163/163,
+recording18/18, public diagnostic6/6 и readers32/32. Normal результаты и
+temporal review опубликованы отдельно. Это достаточно для scoped merge
+проверенных исправлений, но версия2 в целом не объявляется рекомендуемой.
