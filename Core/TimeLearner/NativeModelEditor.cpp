@@ -615,10 +615,10 @@ QJsonObject CaptureNativeCapacitanceBaseline(const NativeProbeExecutor& executor
     Require(executor.Status()==NativeProbeStatus::Idle || executor.AtEditBoundary(),"capacitance_capture_requires_probe_boundary");
     Require(b.owner && b.neuron && b.dataset && b.owner->GetComponentL("Neuron",true).Get()==b.neuron.Get(),"invalid_capacitance_binding");
     auto source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_capacitance_stimulus_source");
-    UniformTree(b.neuron,b.neuron->GetTimeStep());
-    const auto identity=NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}});
+    UniformTree(b.neuron.Get(),b.neuron->GetTimeStep());
+    const auto identity=NmsdkTools::IdentifyModel(b.neuron.Get(),{{&source->Output,"burst"}});
     Require(identity["valid"].toBool(),"invalid_capacitance_model_identity");
-    QJsonObject channels;std::vector<UEPtr<UContainer>> nodes;Collect(b.neuron,nodes);
+    QJsonObject channels;std::vector<UEPtr<UContainer>> nodes;Collect(b.neuron.Get(),nodes);
     for(const auto& node:nodes)if(auto common=dynamic_cast<NPulseChannelCommon*>(node.Get()))
     {
         Require(typeid(*common)==typeid(NPulseChannel),"unsupported_capacitance_channel");
@@ -663,10 +663,13 @@ NativeCapacitanceEditResult ApplyNativeCapacitanceScale(NativeProbeExecutor& exe
             baseline["channels"].isObject(),"invalid_capacitance_baseline");
         source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_capacitance_stimulus_source");
         const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
-        UniformTree(b.neuron,b.neuron->GetTimeStep());before=NmsdkTools::IdentifyModel(b.neuron,ports);
+        UniformTree(b.neuron.Get(),b.neuron->GetTimeStep());before=NmsdkTools::IdentifyModel(b.neuron.Get(),ports);
         Require(before["valid"].toBool(),"invalid_capacitance_model_identity");
         result.beforeRevision=before["sha256"].toString().toStdString();
         const auto channels=baseline["channels"].toObject();std::map<std::string,double> targets;
+        Require(!channels.isEmpty(),"missing_capacitance_channels");
+        for(auto it=channels.begin();it!=channels.end();++it)
+            Require(!it.key().isEmpty() && it.value().isDouble() && Positive(it.value().toDouble()),"invalid_capacitance_baseline_channel");
         for(const auto& [path,scale]:scales)
         {
             Require(Positive(scale) && scale>=1.-maximumRelativeChange && scale<=1.+maximumRelativeChange,"capacitance_scale_outside_bounds");
@@ -685,18 +688,18 @@ NativeCapacitanceEditResult ApplyNativeCapacitanceScale(NativeProbeExecutor& exe
             }
             Require(count>0,"missing_capacitance_channels");
         }
-        auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(b.neuron,ports));Lease lease{preview};
+        auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(b.neuron.Get(),ports));Lease lease{preview};
         Require(bool(preview),"failed_capacitance_preview");assign(preview,targets);
         const auto stable=AssessNativeIntegration(preview,source->Amplitude.GetData());Require(stable.valid,stable.reason.c_str());
         const auto predicted=NmsdkTools::IdentifyModel(preview,ports);Require(predicted["valid"].toBool(),"invalid_capacitance_preview_identity");
         preview->BreakLinks();preview->GetStorage()->ReturnObject(preview);lease.object=0;
-        Require(NmsdkTools::IdentifyModel(b.neuron,ports)==before,"live_graph_changed_during_capacitance_preview");
+        Require(NmsdkTools::IdentifyModel(b.neuron.Get(),ports)==before,"live_graph_changed_during_capacitance_preview");
         if(previous!=targets)
         {
             result.modelMayHaveChanged=true;assign(b.neuron,targets);
-            const auto verified=NmsdkTools::VerifyModelIdentity(predicted,b.neuron,ports);
-            Require(verified["valid"].toBool() && verified["match"].toBool(),"live_capacitance_edit_differs_from_preview");
         }
+        const auto verified=NmsdkTools::VerifyModelIdentity(predicted,b.neuron.Get(),ports);
+        Require(verified["valid"].toBool() && verified["match"].toBool(),"live_capacitance_edit_differs_from_preview");
         result.afterRevision=predicted["sha256"].toString().toStdString();result.status=NativeEditStatus::Applied;
     }
     catch(const std::exception& error)
@@ -707,7 +710,7 @@ NativeCapacitanceEditResult ApplyNativeCapacitanceScale(NativeProbeExecutor& exe
             try
             {
                 assign(b.neuron,previous);
-                Require(NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}})==before,"capacitance_rollback_identity_mismatch");
+                Require(NmsdkTools::IdentifyModel(b.neuron.Get(),{{&source->Output,"burst"}})==before,"capacitance_rollback_identity_mismatch");
                 result.modelMayHaveChanged=false;
             }
             catch(const std::exception& rollback){result.reason+=";rollback:"+std::string(rollback.what());result.status=NativeEditStatus::Failed;}
