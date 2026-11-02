@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 namespace NMSDK {
 
@@ -14,7 +15,7 @@ namespace {
 double PlaybackRoundoff(double elapsed,double duration)
 {
     if(!std::isfinite(elapsed) || !std::isfinite(duration))
-        RDK_THROW(EStringError("nonfinite_dataset_playback_time"));
+        throw std::invalid_argument("nonfinite_dataset_playback_time");
     // Preserve the existing 1e-12 onset/repeat allowance. The extra term only
     // accounts for arithmetic on a long RELATIVE interval, never clock origin
     // or a fraction of the integration timestep.
