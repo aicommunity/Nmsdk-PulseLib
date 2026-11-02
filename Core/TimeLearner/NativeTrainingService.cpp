@@ -219,9 +219,7 @@ void NativeTrainingService::SyncOutcome()
     if(!search)return;retainedEpoch=search->ModelEpoch();const auto status=search->Status();
     if(status==TrainingStatus::Searching || status==TrainingStatus::Verifying)return;
     certificate=search->Certificate();
-    const auto& rejected=search->Rejected();
-    Finish(status,(status==TrainingStatus::InvalidModel || status==TrainingStatus::InvalidObservation) && !rejected.empty()?
-        rejected.back().reason:TrainingStatusName(status));
+    Finish(status,search->Reason().empty()?TrainingStatusName(status):search->Reason());
 }
 void NativeTrainingService::ExternalStop(const NativeTrainingAdapter& a)
 {
