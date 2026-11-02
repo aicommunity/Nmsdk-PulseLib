@@ -122,6 +122,7 @@ private:
     std::vector<ResistanceDomainAssessment> domains;
     std::vector<CandidateEvidence> evidence;
     std::vector<CandidateEvidence> candidateMeasurements;
+    std::vector<CandidateEvidence> lengthMeasurements;
     std::vector<CandidateRepeatEvidence> candidateRepeats;
     std::vector<TrainingRejection> rejected;
     std::set<std::string> seenTrials;
@@ -136,6 +137,7 @@ private:
     enum class DynamicCandidate { Candidate, NeedDomain, Exhausted };
     DynamicCandidate NextDomainCandidate(std::vector<InputParameters>& parameters);
     void AdvanceDomainGeometry();
+    void PrioritizeMeasuredLength(const CandidateEvidence& measurement);
     void Reject(const std::string& reason);
     void RecordIncompleteCandidateRepeats(const std::string& reason);
     void Stop(TrainingStatus terminal);

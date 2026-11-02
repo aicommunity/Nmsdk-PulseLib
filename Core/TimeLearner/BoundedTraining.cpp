@@ -1,6 +1,7 @@
 #include "BoundedTraining.h"
 #include "NumericChecks.h"
 #include "MeasuredResistanceSearch.h"
+#include "MeasuredLengthSearch.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -123,7 +124,7 @@ void BoundedTrainingSession::BeginInput()
 {
     const auto index=order.at(position);const auto& b=config.bounds[index];const auto& p=current[index];
     background=current;lengths.clear();counts.clear();resistances.clear();best.reset();anchor.reset();anchorTrial.clear();
-    candidateMeasurements.clear();n0Priority.clear();issuedN0Candidates.clear();
+    candidateMeasurements.clear();lengthMeasurements.clear();n0Priority.clear();issuedN0Candidates.clear();
     lengthIndex=normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
     initialCandidatePending=requireResistanceDomains;domainReady=false;domainLength=domainNormalizer=domainVariant=0;
     domainGeometry.clear();domainScope.clear();visitedDomainCandidates.clear();
@@ -200,6 +201,34 @@ bool BoundedTrainingSession::NextCandidate(std::vector<InputParameters>& paramet
 
 void BoundedTrainingSession::AdvanceDomainGeometry()
 {domainReady=false;if(++domainVariant==2){domainVariant=0;++domainLength;}}
+
+void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& measurement)
+{
+    if(restoringBest)return;
+    lengthMeasurements.push_back(measurement);
+    const auto input=measurement.inputIndex;
+    std::vector<MeasuredLengthPoint> points;
+    for(const auto& previous:lengthMeasurements)
+    {
+        if(previous.inputIndex!=input || previous.fullParameters.size()!=measurement.fullParameters.size())continue;
+        auto geometry=previous.fullParameters;
+        geometry[input].length=measurement.parameters.length;
+        if(geometry!=measurement.fullParameters)continue;
+        points.push_back({previous.parameters.length,previous.timingResidualLow,previous.timingResidualHigh});
+    }
+    const auto& bound=config.bounds[input];
+    const auto proposal=ProposeMeasuredLength(std::move(points),bound.minimumLength,bound.maximumLength,config.tolerances.sync);
+    if(!proposal)return;
+    auto candidate=measurement.fullParameters;candidate[input].length=*proposal;
+    if(!PrepareCandidate(candidate))return;
+    // Do not interrupt an assessed N1 geometry or bypass its domain checks.
+    // The next geometry is still assessed/applied through the native adapter.
+    // N0 uses its existing full-vector deduplication and repeated probes.
+    const std::size_t next=requireResistanceDomains?domainLength+1:lengthIndex;
+    if(next>lengths.size() || std::find(lengths.begin(),lengths.begin()+next,*proposal)!=lengths.begin()+next)return;
+    lengths.erase(std::remove(lengths.begin()+next,lengths.end(),*proposal),lengths.end());
+    lengths.insert(lengths.begin()+next,*proposal);
+}
 
 BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandidate(std::vector<InputParameters>& parameters)
 {
@@ -528,6 +557,7 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
         e.withinTiming=group.withinTiming;e.withinAmplitude=group.withinAmplitude;
         candidateRepeats.push_back(std::move(group));candidateMeasurements.clear();
     }
+    PrioritizeMeasuredLength(e);
     const bool improved=!best || Rank(e,config,reference)<Rank(*best,config,reference);
     if(improved)best=e;
     if(improved && !restoringBest && config.normalization==Normalization::SynapseCount &&
