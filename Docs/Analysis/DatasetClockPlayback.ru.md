@@ -83,3 +83,18 @@ exception. Unavailable остаётся idle с повторной попытк�
 phase, first onset, полную ширину каждого импульса, repeat и timed cutoff.
 Record schema1 остаётся historical adapter с неизвестным полным набором
 assertions. Проверки ещё не завершены; новый before-control код не принят.
+
+Normal B3 подтвердил20 matrix-clock cases/76 recordings и14 transfer cases.
+Последующий file lifecycle B4 воспроизвёл отдельный дефект: missing→load→growth
+и shrink оставляли Ready=false после присваивания матриц в BeforeCalculate.
+На следующем tick автоматический Build вызывал native AfterBuild→Reset,
+повторно сдвигая начало предъявления. Первый pulse был21 вместо20 при2000Hz
+и201 вместо200 при20000Hz; это реальный runtime failure, не исправление scorer.
+
+Следующий кандидат выполняет reload как структурную операцию владельца:
+Ready=false → native Build → ABuild/PrepareDataset/SyncGenerators → native
+AfterBuild/Reset → проверка Ready/operation diagnostics → arming текущего tick.
+File parser вызывается штатным ABuild, без второго предварительного чтения.
+Unavailable остаётся retryable; ошибку Build нельзя замаскировать его bool=true.
+Физика generators не записывается заново на каждом tick. Кандидат ещё требует
+normal file2, native dispatch3, regression matrix20 и ASan; приёмки пока нет.
