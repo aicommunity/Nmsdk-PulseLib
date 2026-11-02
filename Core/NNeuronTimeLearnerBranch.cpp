@@ -33,6 +33,7 @@ See file license.txt for more information
 #include <map>
 #include <sstream>
 #include "NNeuronTimeLearnerBranch.h"
+#include "TimeLearner/ConfiguredNativeTraining.h"
 #include "NNeuronTimeLearnerAmpReference.h"
 #include "NNeuronTimeLearnerScopedDefaults.h"
 #include "NNeuronPostTrainTune.h"
@@ -5290,6 +5291,9 @@ TimeLearner::ResistanceDomainAssessment NNeuronTimeLearnerBranch::AssessNativeRe
   if(NativeTrainingOwned && TimeLearner::NativeTrainingIsActive(NativeTrainingControl) && !NativeTrainingEditDepth)
    throw std::logic_error("native_training_owns_domain_preview");
   if(NormalizationMode.GetData()!=1)throw std::invalid_argument("native_resistance_domain_requires_n1");
+  if(capacitance && capacitance->baseline["schema_version"]==QJsonValue(2) &&
+   (!NativeModelDeclaration || capacitance->baseline["model_spec"]!=QJsonValue(TimeLearner::EncodeNativeModelSpec(*NativeModelDeclaration))))
+   throw std::invalid_argument("capacitance_declaration_mismatch");
   const auto policy=TimeLearner::NativeOwnerEditSpec(*this,NativeModelDeclaration,geometry,0.);
   if(capacitance)result=TimeLearner::AssessNativeInputResistanceDomain(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),
    geometry,policy,inputIndex,NativeModelDeclaration?NativeModelDeclaration->scaleInhibitionWithInput:true,*capacitance);
@@ -5304,6 +5308,16 @@ QJsonObject NNeuronTimeLearnerBranch::CaptureNativeCapacitanceBaseline()
 {
  return TimeLearner::CaptureNativeCapacitanceBaseline(NativeProbeControl,NativeProbeModelBindings());
 }
+QJsonObject NNeuronTimeLearnerBranch::CaptureBoundNativeCapacitanceBaseline()
+{
+ if(!NativeModelDeclaration)throw std::logic_error("capacitance_requires_native_model_declaration");
+ return TimeLearner::CaptureBoundNativeCapacitanceBaseline(NativeProbeControl,NativeProbeModelBindings(),*NativeModelDeclaration);
+}
+void NNeuronTimeLearnerBranch::ValidateAppliedNativeCapacitanceState(const QJsonObject& state)
+{
+ if(!NativeModelDeclaration)throw std::logic_error("capacitance_requires_native_model_declaration");
+ TimeLearner::ValidateAppliedNativeCapacitanceState(NativeProbeModelBindings(),*NativeModelDeclaration,state);
+}
 TimeLearner::NativeCapacitanceEditResult NNeuronTimeLearnerBranch::ApplyNativeCapacitanceScale(const QJsonObject& baseline,
  const std::map<std::string,double>& scales,double maximumRelativeChange)
 {
@@ -5314,6 +5328,9 @@ TimeLearner::NativeCapacitanceEditResult NNeuronTimeLearnerBranch::ApplyNativeCa
   if(NativeTrainingOwned && TimeLearner::NativeTrainingIsActive(NativeTrainingControl) && !NativeTrainingEditDepth)
    throw std::logic_error("native_training_owns_model_editor");
   TimeLearner::NativeLifecycleScope scope(NativeTrainingEditDepth);
+  if(baseline["schema_version"]==QJsonValue(2) &&
+   (!NativeModelDeclaration || baseline["model_spec"]!=QJsonValue(TimeLearner::EncodeNativeModelSpec(*NativeModelDeclaration))))
+   throw std::invalid_argument("capacitance_declaration_mismatch");
   result=TimeLearner::ApplyNativeCapacitanceScale(NativeProbeControl,NativeProbeModelBindings(),baseline,scales,maximumRelativeChange);
   if(result.modelMayHaveChanged && result.status==TimeLearner::NativeEditStatus::Failed)NativeEditFailure=result.reason;
  }
@@ -5341,6 +5358,9 @@ TimeLearner::NativeEditResult NNeuronTimeLearnerBranch::ApplyNativeParametersWit
   if(NormalizationMode.GetData()!=0 && NormalizationMode.GetData()!=1)
    throw std::runtime_error("invalid_native_normalization_mode");
   TimeLearner::CheckNativeParameterMirrorAssignments(*this,requested);
+  if(capacitance && capacitance->baseline["schema_version"]==QJsonValue(2) &&
+   (!NativeModelDeclaration || capacitance->baseline["model_spec"]!=QJsonValue(TimeLearner::EncodeNativeModelSpec(*NativeModelDeclaration))))
+   throw std::invalid_argument("capacitance_declaration_mismatch");
   const auto spec=TimeLearner::NativeOwnerEditSpec(*this,NativeModelDeclaration,requested,0.); // Configured floor is Classic-only.
   if(capacitance)result=TimeLearner::ApplyNativeInputParameters(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),requested,spec,*capacitance);
   else result=TimeLearner::ApplyNativeInputParameters(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),requested,spec);

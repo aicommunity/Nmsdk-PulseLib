@@ -2,6 +2,7 @@
 #include "NativeProbe.h"
 #include "BoundedTraining.h"
 #include "ResistanceDomain.h"
+#include <QJsonObject>
 
 namespace NMSDK::TimeLearner {
 struct NativeCapacitanceCorrection;
@@ -22,6 +23,8 @@ struct NativeEditResult {
     std::vector<double> minimumResistance,maximumResistance;
     // Joint-candidate rollback may restore equivalent physics in new children.
     bool graphWasReplaced=false;
+    // Only committed bound C candidates return an extended immutable C0 map.
+    QJsonObject capacitanceBaseline;
 };
 struct IntegrationChannelBound {
     std::string path;

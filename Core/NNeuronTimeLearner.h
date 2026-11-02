@@ -787,6 +787,8 @@ public: // Methods
      const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
      const TimeLearner::NativeCapacitanceCorrection& capacitance);
  QJsonObject CaptureNativeCapacitanceBaseline();
+ QJsonObject CaptureBoundNativeCapacitanceBaseline();
+ void ValidateAppliedNativeCapacitanceState(const QJsonObject& state);
  TimeLearner::NativeCapacitanceEditResult ApplyNativeCapacitanceScale(const QJsonObject& baseline,
      const std::map<std::string,double>& membraneScales,double maximumRelativeChange);
  TimeLearner::ResistanceDomainAssessment AssessNativeResistanceDomain(const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex);

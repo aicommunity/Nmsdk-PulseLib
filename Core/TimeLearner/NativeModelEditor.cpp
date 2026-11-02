@@ -1,6 +1,7 @@
 #include "NativeModelEditor.h"
 #include "NativeCapacitanceEdit.h"
 #include "NativeModelBuilder.h"
+#include "ConfiguredNativeTraining.h"
 #include "NativeOperationChecks.h"
 #include "ModelArchive.h"
 #include "ModelIdentity.h"
@@ -16,6 +17,8 @@
 #include <set>
 #include <stdexcept>
 #include <typeinfo>
+#include <cstring>
+#include <cstdint>
 
 namespace NMSDK::TimeLearner {
 namespace {
@@ -366,18 +369,145 @@ struct CapacitancePlan {
     std::map<std::string,double> targets,previous;
     QJsonObject applied;
 };
+QJsonObject SignedCapacitance(QJsonObject value)
+{value.remove("sha256");value["sha256"]=NmsdkTools::CanonicalModelDataSha256(value);return value;}
+bool Digest(const QJsonValue& value)
+{
+    if(!value.isString() || value.toString().size()!=64)return false;
+    for(const auto c:value.toString())if(!(c>='0' && c<='9') && !(c>='a' && c<='f'))return false;
+    return true;
+}
+double ParameterNumber(const QJsonObject& node,const QString& name)
+{
+    const auto parameter=node["parameters"].toObject()[name].toObject();
+    const auto data=parameter["data"].toObject();const auto text=data["value"].toString();
+    Require(parameter["binding"]==QJsonValue(false) && data["type"]==QJsonValue("binary64") && text.size()==16,
+        "invalid_capacitance_numeric_witness");
+    for(const auto c:text)Require((c>='0' && c<='9') || (c>='a' && c<='f'),"invalid_capacitance_numeric_witness");
+    bool ok=false;const std::uint64_t bits=text.toULongLong(&ok,16);double result;
+    std::memcpy(&result,&bits,sizeof(result));
+    Require(ok && std::isfinite(result),"invalid_capacitance_numeric_witness");return result;
+}
+QJsonObject ChannelPhysics(const QJsonObject& node)
+{
+    QJsonObject result;const auto parameters=node["parameters"].toObject();
+    for(const auto* name:{"Resistance","FBResistance","RestingResistance","Type"})
+    {
+        ParameterNumber(node,name);result[name]=parameters[name].toObject()["data"];
+    }
+    for(const auto* name:{"UseAveragePotential","UseAverageSynapsis"})
+    {
+        const auto parameter=parameters[name].toObject(),data=parameter["data"].toObject();
+        Require(parameter["binding"]==QJsonValue(false) && data["type"]==QJsonValue("boolean") && data["value"].isBool(),
+            "invalid_capacitance_boolean_witness");result[name]=data;
+    }
+    return result;
+}
+std::map<QString,QJsonObject> IdentityNodes(const QJsonObject& model)
+{
+    Require((model["schema_version"]==QJsonValue(1) || model["schema_version"]==QJsonValue(2)) &&
+        model["nodes"].isArray(),"invalid_capacitance_capture_model");
+    std::map<QString,QJsonObject> nodes;
+    for(const auto& entry:model["nodes"].toArray())
+    {
+        Require(entry.isObject(),"invalid_capacitance_capture_node");const auto node=entry.toObject();
+        Require(node["path"].isString() && nodes.emplace(node["path"].toString(),node).second,"invalid_capacitance_capture_node");
+    }
+    Require(nodes.count("$")>0,"missing_capacitance_capture_root");return nodes;
+}
+std::map<QString,QJsonObject> ImageRoots(const QJsonArray& definitions)
+{
+    std::map<QString,QJsonObject> result;
+    for(const auto& entry:definitions)
+    {
+        const auto definition=entry.toObject();const auto nodes=IdentityNodes(definition["snapshot"].toObject()["identity"].toObject()["model"].toObject());
+        Require(result.emplace(definition["name"].toString(),nodes.at("$")).second,"duplicate_capacitance_image");
+    }
+    return result;
+}
+void CheckCapacitanceDocument(const QJsonObject& baseline)
+{
+    const bool bound=baseline["schema_version"]==QJsonValue(2);
+    std::set<QString> keys{"kind","schema_version","model_revision","frequency_hz","channels","sha256"};
+    if(bound)for(const auto* key:{"model_spec","capture_model","storage_images","storage_images_sha256",
+        "channel_classes","channel_physics","channel_origins"})keys.insert(key);
+    const auto actual=baseline.keys();Require(std::set<QString>(actual.begin(),actual.end())==keys,"invalid_capacitance_baseline_schema");
+    Require(baseline["kind"]==QJsonValue("timelearner_capacitance_baseline") &&
+        (bound || baseline["schema_version"]==QJsonValue(1)) && SignedCapacitance(baseline)==baseline &&
+        Digest(baseline["model_revision"]) && baseline["frequency_hz"].isDouble() && Positive(baseline["frequency_hz"].toDouble()) &&
+        baseline["channels"].isObject() && !baseline["channels"].toObject().isEmpty(),"invalid_capacitance_baseline");
+    const auto channels=baseline["channels"].toObject();
+    for(auto it=channels.begin();it!=channels.end();++it)
+        Require(!it.key().isEmpty() && it.value().isDouble() && Positive(it.value().toDouble()),"invalid_capacitance_baseline_channel");
+    if(!bound)return;
+    Require(baseline["model_spec"].isObject() && baseline["capture_model"].isObject() && baseline["storage_images"].isArray() &&
+        baseline["channel_classes"].isObject() && baseline["channel_physics"].isObject() && baseline["channel_origins"].isObject(),
+        "invalid_bound_capacitance_baseline");
+    const auto declaration=DecodeNativeModelSpec(baseline["model_spec"].toObject());
+    Require(baseline["frequency_hz"]==QJsonValue(double(declaration.frequencyHz)) &&
+        baseline["model_revision"]==QJsonValue(NmsdkTools::CanonicalModelDataSha256(baseline["capture_model"])),
+        "capacitance_capture_identity_mismatch");
+    const auto captured=IdentityNodes(baseline["capture_model"].toObject());
+    Require(captured.at("$")["class"]==QJsonValue(QString::fromStdString(declaration.neuronClass)),"capacitance_capture_class_mismatch");
+    const auto definitions=baseline["storage_images"].toArray();
+    Require(baseline["storage_images_sha256"]==QJsonValue(NmsdkTools::ModelImageDefinitionsFingerprint(definitions)),
+        "capacitance_storage_images_digest_mismatch");
+    const auto roots=ImageRoots(definitions);const auto classes=baseline["channel_classes"].toObject();
+    const auto physics=baseline["channel_physics"].toObject(),origins=baseline["channel_origins"].toObject();
+    Require(channels.keys()==classes.keys() && channels.keys()==physics.keys() && channels.keys()==origins.keys(),"incomplete_capacitance_witnesses");
+    for(auto it=channels.begin();it!=channels.end();++it)
+    {
+        const auto path=QString("$.")+it.key(),cls=classes[it.key()].toString();
+        Require(!cls.isEmpty() && roots.count(cls)>0 && physics[it.key()].isObject(),"missing_capacitance_image_witness");
+        QJsonObject origin;
+        if(origins[it.key()]==QJsonValue("capture"))
+        {Require(captured.count(path)>0,"missing_capacitance_capture_channel");origin=captured.at(path);Require(origin["class"]==classes[it.key()],"capacitance_capture_class_mismatch");}
+        else
+        {Require(origins[it.key()]==QJsonValue("storage_image") && !captured.count(path),"invalid_capacitance_channel_origin");origin=roots.at(cls);}
+        Require(ParameterNumber(origin,"Capacity")==it.value().toDouble() && ChannelPhysics(origin)==physics[it.key()].toObject(),
+            "capacitance_channel_witness_mismatch");
+    }
+}
 void ValidateCapacitanceBaseline(UEPtr<NPulseNeuron> neuron,const QJsonObject& baseline,
     const std::map<std::string,double>& scales,double maximumRelativeChange)
 {
         Require(std::isfinite(maximumRelativeChange) && maximumRelativeChange>=0. && !scales.empty(),"invalid_capacitance_scale_policy");
-        const std::set<QString> keys{"kind","schema_version","model_revision","frequency_hz","channels","sha256"};
-        const auto baselineKeys=baseline.keys();
-        Require(std::set<QString>(baselineKeys.begin(),baselineKeys.end())==keys,"invalid_capacitance_baseline_schema");
-        auto body=baseline;body.remove("sha256");
-        Require(baseline["kind"]==QJsonValue("timelearner_capacitance_baseline") && baseline["schema_version"]==QJsonValue(1) &&
-            baseline["sha256"]==QJsonValue(NmsdkTools::CanonicalModelDataSha256(body)) && baseline["model_revision"].isString() &&
-            baseline["model_revision"].toString().size()==64 && baseline["frequency_hz"]==QJsonValue(double(neuron->GetTimeStep())) &&
-            baseline["channels"].isObject(),"invalid_capacitance_baseline");
+        CheckCapacitanceDocument(baseline);
+        Require(baseline["frequency_hz"]==QJsonValue(double(neuron->GetTimeStep())),"capacitance_baseline_frequency_mismatch");
+}
+QJsonObject BindCapacitanceToGraph(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,
+    const QJsonObject& baseline,bool permitNativeGrowth)
+{
+    CheckCapacitanceDocument(baseline);
+    if(baseline["schema_version"]!=QJsonValue(2))return baseline;
+    const auto declaration=DecodeNativeModelSpec(baseline["model_spec"].toObject());
+    const auto definitions=NmsdkTools::CaptureModelImageDefinitions(neuron,{{&source.Output,"burst"}},
+        {declaration.datasetClass,declaration.generatorClass});
+    Require(NmsdkTools::ModelImageDefinitionsFingerprint(definitions)==baseline["storage_images_sha256"].toString(),
+        "capacitance_storage_profile_changed");
+    const auto captured=IdentityNodes(baseline["capture_model"].toObject());
+    const auto current=Parameters(neuron,source),roots=ImageRoots(baseline["storage_images"].toArray());
+    auto result=baseline;auto channels=result["channels"].toObject(),classes=result["channel_classes"].toObject();
+    auto physics=result["channel_physics"].toObject(),origins=result["channel_origins"].toObject();
+    std::vector<UEPtr<UContainer>> nodes;Collect(neuron,nodes);
+    for(const auto& component:nodes)if(auto channel=dynamic_cast<NPulseChannelCommon*>(component.Get()))
+    {
+        Require(typeid(*channel)==typeid(NPulseChannel),"unsupported_capacitance_channel");
+        const auto key=QString::fromStdString(component->GetLongName(neuron.Get())),path=QString("$.")+key;
+        Require(current.count(path)>0,"missing_effective_capacitance_channel");const auto node=current.at(path);
+        if(!channels.contains(key))
+        {
+            Require(permitNativeGrowth && !captured.count(path),"missing_captured_capacitance_channel");
+            const auto cls=node["class"].toString();Require(roots.count(cls)>0,"missing_growth_capacitance_image");
+            const auto image=roots.at(cls);
+            Require(ChannelPhysics(node)==ChannelPhysics(image) && ParameterNumber(node,"Capacity")==ParameterNumber(image,"Capacity"),
+                "new_channel_differs_from_storage_image");
+            channels[key]=ParameterNumber(image,"Capacity");classes[key]=cls;physics[key]=ChannelPhysics(image);origins[key]="storage_image";
+        }
+        Require(node["class"]==classes[key] && ChannelPhysics(node)==physics[key].toObject(),"capacitance_channel_physics_changed");
+    }
+    result["channels"]=channels;result["channel_classes"]=classes;result["channel_physics"]=physics;result["channel_origins"]=origins;
+    result=SignedCapacitance(result);CheckCapacitanceDocument(result);return result;
 }
 CapacitancePlan PlanCapacitances(UEPtr<NPulseNeuron> neuron,const QJsonObject& baseline,
     const std::map<std::string,double>& scales,double maximumRelativeChange)
@@ -438,16 +568,18 @@ void VerifyOnlyCapacitiesChanged(const QJsonObject& before,const QJsonObject& af
     expected["nodes"]=nodes;
     Require(found==targets.size() && expected==after["model"].toObject(),"capacitance_edit_changed_other_model_semantics");
 }
-void ApplyCapacitanceCorrection(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,
+QJsonObject ApplyCapacitanceCorrection(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,
     const NativeCapacitanceCorrection* correction)
 {
-    if(!correction)return;
+    if(!correction)return {};
     Require(!neuron->UseElementDefaults.GetData(),"capacitance_edit_requires_storage_owned_physics");
-    const auto plan=PlanCapacitances(neuron,correction->baseline,correction->membraneScales,correction->maximumRelativeChange);
+    const auto baseline=BindCapacitanceToGraph(neuron,source,correction->baseline,true);
+    const auto plan=PlanCapacitances(neuron,baseline,correction->membraneScales,correction->maximumRelativeChange);
     const NmsdkTools::ModelBoundarySources ports{{&source.Output,"burst"}};
     const auto before=NmsdkTools::IdentifyModel(neuron,ports);
     if(plan.previous!=plan.targets)AssignCapacitances(neuron,plan.targets);
     VerifyOnlyCapacitiesChanged(before,NmsdkTools::IdentifyModel(neuron,ports),plan.targets);
+    return baseline;
 }
 struct Lease {
     UEPtr<UContainer> object;
@@ -698,13 +830,13 @@ static NativeEditResult ApplyNativeInputParametersImpl(NativeProbeExecutor& exec
         Require(NmsdkTools::IdentifyModel(live,ports)==before,"live_graph_changed_during_preview");
         if(capacitance)checkpoint=NativeLearnerGraphCheckpoint::Capture(*b.owner);
         result.modelMayHaveChanged=true;
-        Transform(b.neuron,*source,plan,b.owner);ApplyCapacitanceCorrection(b.neuron.Get(),*source,capacitance);
+        Transform(b.neuron,*source,plan,b.owner);const auto committedBaseline=ApplyCapacitanceCorrection(b.neuron.Get(),*source,capacitance);
         const auto after=NmsdkTools::VerifyModelIdentity(predicted,live,ports);
         if(!after["valid"].toBool() || !after["match"].toBool())
             throw std::runtime_error("live_edit_differs_from_native_preview:"+after["first_difference"].toString().toStdString());
         result.effective=ReadNativeInputParameters(b,positions);Require(result.effective==requested,"native_edit_readback_mismatch");
         result.minimumResistance=intervals.first;result.maximumResistance=intervals.second;
-        result.status=NativeEditStatus::Applied;
+        result.capacitanceBaseline=committedBaseline;result.status=NativeEditStatus::Applied;
     }
     catch(const std::exception& error)
     {
@@ -750,6 +882,82 @@ QJsonObject CaptureNativeCapacitanceBaseline(const NativeProbeExecutor& executor
     result["sha256"]=NmsdkTools::CanonicalModelDataSha256(result);return result;
 }
 
+QJsonObject CaptureBoundNativeCapacitanceBaseline(const NativeProbeExecutor& executor,const NativeProbeBindings& b,
+    const NativeModelSpec& declaration)
+{
+    ValidateNativeModelSpec(declaration);
+    auto result=CaptureNativeCapacitanceBaseline(executor,b);
+    Require(declaration.branch==b.branch && declaration.frequencyHz==b.neuron->GetTimeStep(),"capacitance_declaration_mismatch");
+    auto source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+    const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
+    const auto identity=NmsdkTools::IdentifyModel(b.neuron.Get(),ports);
+    const auto definitions=NmsdkTools::CaptureModelImageDefinitions(b.neuron.Get(),ports,
+        {declaration.datasetClass,declaration.generatorClass});
+    Require(NmsdkTools::IdentifyModel(b.neuron.Get(),ports)==identity,"capacitance_capture_changed_model");
+    result["schema_version"]=2;result["model_spec"]=EncodeNativeModelSpec(declaration);result["capture_model"]=identity["model"];
+    result["storage_images"]=definitions;result["storage_images_sha256"]=NmsdkTools::ModelImageDefinitionsFingerprint(definitions);
+    QJsonObject classes,physics,origins;const auto nodes=IdentityNodes(identity["model"].toObject());
+    const auto channels=result["channels"].toObject();
+    for(auto it=channels.begin();it!=channels.end();++it)
+    {
+        const auto node=nodes.at(QString("$.")+it.key());
+        classes[it.key()]=node["class"];physics[it.key()]=ChannelPhysics(node);origins[it.key()]="capture";
+    }
+    result["channel_classes"]=classes;result["channel_physics"]=physics;result["channel_origins"]=origins;
+    result=SignedCapacitance(result);CheckCapacitanceDocument(result);return result;
+}
+QJsonObject EncodeNativeCapacitanceState(const NativeCapacitanceCorrection& correction,const std::string& revision)
+{
+    CheckCapacitanceDocument(correction.baseline);
+    Require(correction.baseline["schema_version"]==QJsonValue(2) && Digest(QString::fromStdString(revision)) &&
+        std::isfinite(correction.maximumRelativeChange) && correction.maximumRelativeChange>=0. && !correction.membraneScales.empty(),
+        "invalid_capacitance_parameter_state");
+    QJsonObject scales;
+    for(const auto& [name,scale]:correction.membraneScales)
+    {
+        Require(!name.empty() && Positive(scale) && scale>=1.-correction.maximumRelativeChange && scale<=1.+correction.maximumRelativeChange,
+            "invalid_capacitance_parameter_scale");scales[QString::fromStdString(name)]=scale;
+    }
+    return SignedCapacitance({{"kind","timelearner_capacitance_parameter_state"},{"schema_version",1},
+        {"baseline",correction.baseline},{"membrane_scales",scales},{"maximum_relative_change",correction.maximumRelativeChange},
+        {"applied_model_revision",QString::fromStdString(revision)}});
+}
+NativeCapacitanceCorrection ParseNativeCapacitanceState(const std::string& text,std::string& revision)
+{
+    const auto state=ParseStrictNativeJsonObject(text);const auto names=state.keys();
+    Require(std::set<QString>(names.begin(),names.end())==std::set<QString>{"kind","schema_version","baseline","membrane_scales",
+        "maximum_relative_change","applied_model_revision","sha256"} &&
+        state["kind"]==QJsonValue("timelearner_capacitance_parameter_state") && state["schema_version"]==QJsonValue(1) &&
+        state["baseline"].isObject() && state["membrane_scales"].isObject() && state["maximum_relative_change"].isDouble() &&
+        Digest(state["applied_model_revision"]),"invalid_capacitance_parameter_state");
+    NativeCapacitanceCorrection result;result.baseline=state["baseline"].toObject();result.maximumRelativeChange=state["maximum_relative_change"].toDouble();
+    const auto scales=state["membrane_scales"].toObject();
+    for(auto it=scales.begin();it!=scales.end();++it)
+    {Require(it.value().isDouble(),"invalid_capacitance_parameter_scale");result.membraneScales[it.key().toStdString()]=it.value().toDouble();}
+    const auto actualRevision=state["applied_model_revision"].toString().toStdString();
+    Require(EncodeNativeCapacitanceState(result,actualRevision)==state,"capacitance_parameter_state_digest_mismatch");
+    revision=actualRevision;return result;
+}
+void ValidateAppliedNativeCapacitanceState(const NativeProbeBindings& b,const NativeModelSpec& declaration,const QJsonObject& state)
+{
+    std::string revision;const auto correction=ParseNativeCapacitanceState(QJsonDocument(state).toJson(QJsonDocument::Compact).toStdString(),revision);
+    Require(b.neuron && b.dataset && correction.baseline["model_spec"]==QJsonValue(EncodeNativeModelSpec(declaration)),
+        "capacitance_declaration_mismatch");
+    auto source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_capacitance_stimulus_source");
+    Require(BindCapacitanceToGraph(b.neuron.Get(),*source,correction.baseline,false)==correction.baseline,"capacitance_baseline_changed");
+    const auto plan=PlanCapacitances(b.neuron.Get(),correction.baseline,correction.membraneScales,correction.maximumRelativeChange);
+    Require(plan.targets==plan.previous,"capacitance_state_does_not_match_model");
+    const auto channels=correction.baseline["channels"].toObject();std::vector<UEPtr<UContainer>> nodes;Collect(b.neuron.Get(),nodes);
+    for(const auto& node:nodes)if(auto channel=dynamic_cast<NPulseChannel*>(node.Get()))
+    {
+        const auto name=node->GetLongName(b.neuron.Get());const auto target=plan.targets.find(name);
+        const auto c0=channels[QString::fromStdString(name)];Require(c0.isDouble(),"missing_capacitance_state_channel");
+        Require(channel->Capacity.GetData()==(target==plan.targets.end()?c0.toDouble():target->second),"incomplete_capacitance_parameter_scales");
+    }
+    const auto identity=NmsdkTools::IdentifyModel(b.neuron.Get(),{{&source->Output,"burst"}});
+    Require(identity["valid"].toBool() && identity["sha256"]==QJsonValue(QString::fromStdString(revision)),"capacitance_applied_model_revision_mismatch");
+}
+
 NativeCapacitanceEditResult ApplyNativeCapacitanceScale(NativeProbeExecutor& executor,const NativeProbeBindings& b,
     const QJsonObject& baseline,const std::map<std::string,double>& scales,double maximumRelativeChange)
 {
@@ -763,6 +971,7 @@ NativeCapacitanceEditResult ApplyNativeCapacitanceScale(NativeProbeExecutor& exe
         Require(!b.neuron->UseElementDefaults.GetData(),"capacitance_edit_requires_storage_owned_physics");
         ValidateCapacitanceBaseline(b.neuron.Get(),baseline,scales,maximumRelativeChange);
         source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_capacitance_stimulus_source");
+        Require(BindCapacitanceToGraph(b.neuron.Get(),*source,baseline,false)==baseline,"capacitance_baseline_changed");
         const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
         UniformTree(b.neuron.Get(),b.neuron->GetTimeStep());before=NmsdkTools::IdentifyModel(b.neuron.Get(),ports);
         Require(before["valid"].toBool(),"invalid_capacitance_model_identity");
