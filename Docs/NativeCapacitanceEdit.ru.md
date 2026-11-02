@@ -31,11 +31,13 @@ revision/epoch invalidation всех зависимых inputs, явная пр�
 Не следует подключать legacy DendriteCapacitance как якобы полный baseline:
 старая scalar-per-input запись уничтожает heterogeneous child physics.
 
-Серверная проверка нового API ещё не завершена. В корне объявлены8 native
+Standalone API прошёл8/8 на Elder normal и8/8 на M40 ASan: root evidence
+5acd3eebbf2c812a5e04e07bd0a14f88eb2ea4fb и23f0086845092feed0967112b1cd59583d086149.
+Все32 CSV byte-equal и32 packets equal между workers. Проверены native
 fixtures Classic/Branch×N0/N1×2000/20000Hz: heterogeneous Exc/Inh, LT/Soma
 preservation, native preview roundtrip, idempotence, real probe responses,
 NaN/Inf/bounds/unstable candidate rejection, restore и missing growth baseline.
-# Диагностика native операций (feature, требует серверной проверки)
+## Диагностика native операций и границы приёмки
 
 Совместное предложение L/Ns/Rs/C сначала проверяется на отдельной native модели.
 Rs domain вычисляется с новой C. Живой граф изменяется транзакционно с checkpoint;
