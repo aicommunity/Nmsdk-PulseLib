@@ -115,7 +115,9 @@ Full temporal cache76/3888 PNG находится на M40;16 selected PNG не�
 просмотрены, включая большие origins, near-grid и timed cutoff. Только этот
 subset считается визуально проверенным; LT events не собирались.
 
-Source-кандидат ещё не принят в develop: запущена более широкая normal
-регрессия202 kernel/configured/native/diagnostic/archive/inherited cases.
+Более широкая normal регрессия202 kernel/configured/native/diagnostic/archive/
+inherited cases завершена:202/202 native и8 JUnit/contract readers PASS.
+Root evidence `248660b2362308de583e72f1a0ec6b7aa139ef10`: все1 865 members
+проверены. Это основание ограниченной приёмки source-кандидата в develop.
 Полный learner mode/physics/scientific scope остаётся открытым. Parser
 atoi/atof/extra-field defect не исправлен этим clock/lifecycle изменением.

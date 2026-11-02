@@ -33,3 +33,9 @@ instances: в normal A1 обнаружен InputFeedbackSignal 0×0 → 1×1. St
 Это уменьшает одну подтверждённую причину нестабильных байтов. Другие различия
 исторических больших PostTune пакетов требуют отдельного анализа. Уникальные
 первичные результаты не удаляются, hashes старых пакетов не пересчитываются.
+
+Подтверждение 03.11: normal unit9/native20/readers24, evidence
+`69a1c928eed1f0248790ce1dd9c843b6c7d3bf12`, и ASan unit9/native20/readers24,
+`6d0d1d4c3fc50fe55f6c9b7a04d89a15d92259e4`, завершены успешно. Actual libasan
+во втором runtime подтверждён. Все122 normal/ASan CSV совпали побайтно;
+outer/member hashes обоих пакетов проверены. Это не полный dynamic checkpoint.
