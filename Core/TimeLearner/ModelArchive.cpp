@@ -76,6 +76,30 @@ void RequireMatch(const QJsonObject& identity, UEPtr<UContainer> model,
 QString XmlDigest(const QString& xml)
 { return QString::fromLatin1(QCryptographicHash::hash(xml.toUtf8(), QCryptographicHash::Sha256).toHex()); }
 
+// Cursor is the component node in a private serialization tree. StepDuration
+// is measured wall-time telemetry, not physics or a continuation checkpoint.
+// Keep scheduler limits, connection state and every other field intact. Never
+// write the live model or traverse arbitrary nodes just because of their name.
+void NormalizeSnapshotTelemetry(USerStorageXML& xml, UEPtr<UContainer> model)
+{
+    const auto fail = [&] { Fail("archive_serialization_failed", "native StepDuration/component layout"); };
+    if(xml.GetNumNodes("State") != 1 || !xml.SelectNode("State")) fail();
+    if(xml.GetNumNodes("StepDuration") != 1 || !xml.SelectNode("StepDuration")) fail();
+    if(xml.GetNumNodes() != 0 || xml.GetNodeAttribute("PType") != std::to_string(ptPubSysState) ||
+       !xml.SetNodeText("0")) fail();
+    xml.SelectUp(); xml.SelectUp();
+    if(xml.GetNumNodes("Components") != 1 || !xml.SelectNode("Components") ||
+       xml.GetNumNodes() != model->GetNumComponents()) fail();
+    for(int index = 0; index < model->GetNumComponents(); ++index)
+    {
+        const auto child = model->GetComponentByIndex(index);
+        if(!child || xml.GetNumNodes(child->GetName()) != 1 || !xml.SelectNode(child->GetName())) fail();
+        NormalizeSnapshotTelemetry(xml, child);
+        xml.SelectUp();
+    }
+    xml.SelectUp();
+}
+
 QJsonObject Snapshot(UEPtr<UContainer> model, const ModelBoundarySources& boundarySources = {})
 {
     auto net = dynamic_pointer_cast<UNet>(model);
@@ -84,6 +108,11 @@ QJsonObject Snapshot(UEPtr<UContainer> model, const ModelBoundarySources& bounda
     USerStorageXML xml;
     if(!xml.Create(GraphRoot) || !net->SaveComponent(&xml, true, ptPubParameter | ptPubState | pgSystem))
         Fail("archive_serialization_failed", model->GetName().c_str());
+    xml.SelectRoot();
+    if(xml.GetNumNodes(model->GetName()) != 1 || !xml.SelectNode(model->GetName()))
+        Fail("archive_serialization_failed", "native component root");
+    NormalizeSnapshotTelemetry(xml, model);
+    xml.SelectRoot();
     std::string bytes;
     if(!xml.Save(bytes)) Fail("archive_serialization_failed", "native XML Save");
     const auto text = QString::fromStdString(bytes);
