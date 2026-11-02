@@ -46,7 +46,7 @@ ABuild читает файл, проверяет форму матриц и че
 не является признаком успешной загрузки.
 
 Runtime reload — структурная операция владельца до следующего предъявления:
-native Build → AfterBuild/Reset → инициализация новых детей → arming. Не
+native Build (ABuild → SyncGenerators/Init новых детей) → AfterBuild/Reset → arming. Не
 подменять её прямыми присваиваниями матриц после начала импульсов. Новый путь
 проверен normal missing→two features→one feature при2000/20000Hz; ASan pending.
 Источники времени/границы проверки: [DatasetClockPlayback](../Analysis/DatasetClockPlayback.ru.md).
