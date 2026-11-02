@@ -93,11 +93,14 @@ struct Converted {
     QJsonObject record,identity;
 };
 Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UEPtr<UStorage> storage,
-                  UEPtr<UEnvironment> environment,const std::string& implementation)
+                  UEPtr<UEnvironment> environment,const std::string& implementation,bool diagnostic=false)
 {
     Validate(spec);
-    Require(source["kind"]==QJsonValue("timelearner_completed_state") && source["state_kind"]==QJsonValue("learned_solo"),
-            "recognition_requires_completed_solo");
+    if(diagnostic)
+        Require(source["kind"]==QJsonValue("timelearner_stopped_state") && source["state_kind"]==QJsonValue("diagnostic") &&
+            source["certificate"].isNull(),"diagnostic_recognition_requires_stopped_solo");
+    else Require(source["kind"]==QJsonValue("timelearner_completed_state") && source["state_kind"]==QJsonValue("learned_solo"),
+                 "recognition_requires_completed_solo");
     Converted converted;converted.model=PrepareNativeLearnedState(source,storage,environment,implementation);
     auto& m=*converted.model;const auto& declaration=m.configuration.model;const auto n=m.parameters.size();
     auto generator=m.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(generator),"missing_recognition_source");
@@ -238,7 +241,8 @@ Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UE
 }
 QJsonObject Metadata(const QJsonObject& source,const Converted& c)
 {
-    auto metadata=Object(Object(source["neuron"])["metadata"]);metadata["state_kind"]="recognition";
+    const bool diagnostic=source["kind"]==QJsonValue("timelearner_stopped_state");
+    auto metadata=Object(Object(source["neuron"])["metadata"]);metadata["state_kind"]=diagnostic?"diagnostic_recognition":"recognition";
     metadata["recognition_schema_version"]=1;
     auto training=Object(metadata["training"]);training["scope"]="source_solo";metadata["training"]=training;
     auto calibration=Object(metadata["calibration"]);calibration["protocol"]="fixed-inherited-from-solo";
@@ -270,21 +274,28 @@ NativeRecognitionSpec DecodeNativeRecognitionSpec(const QJsonObject& o)
     if(post)s.postTune=DecodePost(Object(o["post_tune"]));
     Validate(s);return s;
 }
-QJsonObject ConvertNativeSoloToRecognition(const QJsonObject& source,const NativeRecognitionSpec& spec,
-    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
+static QJsonObject ConvertPackage(const QJsonObject& source,const NativeRecognitionSpec& spec,
+    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation,bool diagnostic)
 {
-    auto c=Convert(source,spec,storage,environment,implementation);auto& m=*c.model;
+    auto c=Convert(source,spec,storage,environment,implementation,diagnostic);auto& m=*c.model;
     auto generator=m.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     const auto dataset=Object(source["dataset"]);std::vector<std::string> roots;
     for(const auto& name:Array(dataset["required_class_names"]))roots.push_back(name.toString().toStdString());
     const auto archive=NmsdkTools::ExportModelArchive(m.neuron,Metadata(source,c),{{&generator->Output,"burst"}},roots);
-    QJsonObject result{{"kind","timelearner_recognition_state"},{"schema_version",1},{"dynamic_checkpoint",false},
-        {"state_kind","recognition"},{"implementation_id",Text(implementation)},{"source_solo",source},
+    QJsonObject result{{"kind",diagnostic?"timelearner_diagnostic_recognition_state":"timelearner_recognition_state"},
+        {"schema_version",1},{"dynamic_checkpoint",false},
+        {"state_kind",diagnostic?"diagnostic_recognition":"recognition"},{"implementation_id",Text(implementation)},{"source_solo",source},
         {"conversion_spec",EncodeNativeRecognitionSpec(spec)},{"conversion_record",c.record},
         {"recognition_inputs",Parameters(m.parameters)},{"model_revision",c.identity["sha256"]},
         {"recognition_certificate",QJsonValue(QJsonValue::Null)},{"dataset",dataset},{"neuron",archive}};
     result["sha256"]=NmsdkTools::CanonicalModelDataSha256(result);return result;
 }
+QJsonObject ConvertNativeSoloToRecognition(const QJsonObject& source,const NativeRecognitionSpec& spec,
+    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
+{return ConvertPackage(source,spec,storage,environment,implementation,false);}
+QJsonObject ConvertNativeStoppedToDiagnosticRecognition(const QJsonObject& source,const NativeRecognitionSpec& spec,
+    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
+{return ConvertPackage(source,spec,storage,environment,implementation,true);}
 QJsonObject ParseNativeRecognitionState(const std::string& text)
 {return ParseStrictNativeJsonObject(text,256*1024*1024);}
 PreparedNativeRecognitionState::~PreparedNativeRecognitionState()
@@ -292,23 +303,23 @@ PreparedNativeRecognitionState::~PreparedNativeRecognitionState()
     if(neuron && !neuron->GetOwner()){neuron->BreakLinks();storage->ReturnObject(neuron);}
     if(dataset && !dataset->GetOwner()){dataset->BreakLinks();storage->ReturnObject(dataset);}
 }
-std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeRecognitionState(const QJsonObject& package,
-    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
+static std::unique_ptr<PreparedNativeRecognitionState> PrepareRecognitionPackage(const QJsonObject& package,
+    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation,bool diagnostic)
 {
-    if(package["kind"]==QJsonValue("timelearner_calibrated_recognition_state"))
+    if(!diagnostic && package["kind"]==QJsonValue("timelearner_calibrated_recognition_state"))
         return PrepareNativeCalibratedState(package,storage,environment,implementation);
-    if(package["kind"]==QJsonValue("timelearner_recognition_threshold_candidate"))
+    if(!diagnostic && package["kind"]==QJsonValue("timelearner_recognition_threshold_candidate"))
         return PrepareNativeThresholdCandidate(package,storage,environment,implementation);
     Keys(package,{"kind","schema_version","dynamic_checkpoint","state_kind","implementation_id","source_solo",
         "conversion_spec","conversion_record","recognition_inputs","model_revision","recognition_certificate","dataset","neuron","sha256"});
-    Require(package["kind"]==QJsonValue("timelearner_recognition_state") && package["schema_version"]==QJsonValue(1) &&
-        package["state_kind"]==QJsonValue("recognition") && package["dynamic_checkpoint"]==QJsonValue(false) &&
+    Require(package["kind"]==QJsonValue(diagnostic?"timelearner_diagnostic_recognition_state":"timelearner_recognition_state") && package["schema_version"]==QJsonValue(1) &&
+        package["state_kind"]==QJsonValue(diagnostic?"diagnostic_recognition":"recognition") && package["dynamic_checkpoint"]==QJsonValue(false) &&
         package["recognition_certificate"].isNull(),"unsupported_recognition_state_claim");
     auto body=package;body.remove("sha256");
     Require(package["sha256"]==QJsonValue(NmsdkTools::CanonicalModelDataSha256(body)),"recognition_digest_mismatch");
     Require(!implementation.empty() && package["implementation_id"]==QJsonValue(Text(implementation)),"recognition_implementation_mismatch");
     const auto source=Object(package["source_solo"]);
-    auto expected=Convert(source,DecodeNativeRecognitionSpec(Object(package["conversion_spec"])),storage,environment,implementation);
+    auto expected=Convert(source,DecodeNativeRecognitionSpec(Object(package["conversion_spec"])),storage,environment,implementation,diagnostic);
     Require(package["conversion_record"]==QJsonValue(expected.record) && package["recognition_inputs"]==QJsonValue(Parameters(expected.model->parameters)) &&
         package["model_revision"]==expected.identity["sha256"] && package["dataset"]==source["dataset"],"recognition_conversion_mismatch");
     const auto archive=Object(package["neuron"]);
@@ -330,4 +341,10 @@ std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeRecognitionState(co
     result->structureBuildMode=m.structureBuildMode;
     result->conversionRecord=expected.record;return result;
 }
+std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeRecognitionState(const QJsonObject& package,
+    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
+{return PrepareRecognitionPackage(package,storage,environment,implementation,false);}
+std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeDiagnosticRecognitionState(const QJsonObject& package,
+    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
+{return PrepareRecognitionPackage(package,storage,environment,implementation,true);}
 }

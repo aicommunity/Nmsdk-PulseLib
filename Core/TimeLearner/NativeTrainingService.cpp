@@ -37,6 +37,7 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
         value.probe.specification.waveAssignment==value.protocol.waveAssignment &&
         value.probe.specification.peakSelection==value.protocol.peakSelection,
         "native_training_protocol_mismatch");
+    if(a.validateExecution)a.validateExecution();
     const auto revision=a.readModelRevision();Require(!revision.empty(),"missing_native_training_model_revision");
     if(incompleteCaptureConstraint)
         Require(revision==incompleteCaptureConstraint->first && retainedEpoch==incompleteCaptureConstraint->second,
@@ -103,6 +104,7 @@ void NativeTrainingService::BeforeTick(const NativeTrainingAdapter& a,double mod
     {
         if(a.trainingRequested && !a.trainingRequested()){ExternalStop(a);return;}
         CheckBudget(a,modelTime,wallTime);if(!Active(state) || waiting)return;
+        if(a.validateExecution)a.validateExecution();
         if(state==NativeTrainingState::CapturingReferences)
         {
             if(referenceProbes>=plan.maximumReferenceProbes)
@@ -160,6 +162,10 @@ void NativeTrainingService::AfterTick(const NativeTrainingAdapter& a,double mode
         if(plan.observationSink)plan.observationSink(*result);
         if(result->status!=NativeProbeStatus::Completed || !result->prepared || !result->observation)
         {Finish(TrainingStatus::InvalidObservation,result->reasons.empty()?"native_training_probe_failed":result->reasons.front());return;}
+        // Preserve the actual packet first. An observation sink can change an
+        // owner policy after the window closed; it must not cause acceptance
+        // of references or a certificate under an unsupported execution scope.
+        if(a.validateExecution)a.validateExecution();
         Require(result->currentBaseRevision==a.readModelRevision(),"native_training_probe_revision_mismatch");
         if(state==NativeTrainingState::CapturingReferences)
         {
@@ -219,9 +225,7 @@ void NativeTrainingService::SyncOutcome()
     if(!search)return;retainedEpoch=search->ModelEpoch();const auto status=search->Status();
     if(status==TrainingStatus::Searching || status==TrainingStatus::Verifying)return;
     certificate=search->Certificate();
-    const auto& rejected=search->Rejected();
-    Finish(status,(status==TrainingStatus::InvalidModel || status==TrainingStatus::InvalidObservation) && !rejected.empty()?
-        rejected.back().reason:TrainingStatusName(status));
+    Finish(status,search->Reason().empty()?TrainingStatusName(status):search->Reason());
 }
 void NativeTrainingService::ExternalStop(const NativeTrainingAdapter& a)
 {

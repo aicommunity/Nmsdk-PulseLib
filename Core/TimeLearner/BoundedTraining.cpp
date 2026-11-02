@@ -358,7 +358,7 @@ void BoundedTrainingSession::AdvanceInput()
 
 void BoundedTrainingSession::BeginVerification()
 {
-    if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted);return;}
+    if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted,"maximum_probes_exhausted");return;}
     phase=Phase::Verify;status=TrainingStatus::Verifying;
     verification=std::make_unique<FinalVerificationSession>(references,VerificationConfig{
         config.runId+"/final/"+std::to_string(sweep),revision,config.maximumProbes-probes,
@@ -371,11 +371,20 @@ void BoundedTrainingSession::FinishVerification()
     {
     case VerificationStatus::Collecting:return;
     case VerificationStatus::Exact:Stop(TrainingStatus::Exact);return;
-    case VerificationStatus::BudgetExhausted:Stop(TrainingStatus::BudgetExhausted);return;
+    case VerificationStatus::BudgetExhausted:Stop(TrainingStatus::BudgetExhausted,"final_verification_probe_budget_exhausted");return;
     case VerificationStatus::ExternalStop:Stop(TrainingStatus::ExternalStop);return;
-    case VerificationStatus::InvalidObservation:Stop(TrainingStatus::InvalidObservation);return;
+    case VerificationStatus::InvalidObservation:
+    {
+        const auto& failures=verification->Rejected();
+        Stop(TrainingStatus::InvalidObservation,failures.empty()?"final_verification_invalid_observation":
+            "final_verification:"+failures.back().reason);return;
+    }
     case VerificationStatus::OutsideTolerance:
-        if(++sweep>=config.maximumSweeps || order.empty()){Stop(TrainingStatus::SearchUnresolved);return;}
+        // A measured negative final pass is not convergence. With no adjustable
+        // inputs it is unresolved; otherwise a required next sweep prevented by
+        // the declared iteration budget is explicitly budget exhaustion.
+        if(order.empty()){Stop(TrainingStatus::SearchUnresolved,"no_adjustable_inputs_outside_tolerance");return;}
+        if(++sweep>=config.maximumSweeps){Stop(TrainingStatus::BudgetExhausted,"maximum_sweeps_exhausted");return;}
         verification.reset();status=TrainingStatus::Searching;position=0;BeginInput();return;
     }
 }
@@ -398,7 +407,7 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
         else if(!exhausted)exhausted=!NextCandidate(candidate);
         if(exhausted)
         {
-            if(!best){Stop(TrainingStatus::SearchUnresolved);return {};}
+            if(!best){Stop(TrainingStatus::SearchUnresolved,"no_measured_candidate_in_declared_search");return {};}
             candidate=best->fullParameters;restoringBest=true;
             if(!PrepareCandidate(candidate))
             {rejected.push_back({{},"best_candidate_no_longer_legal"});Stop(TrainingStatus::InvalidModel);return {};}
@@ -413,12 +422,13 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
         if(candidate!=current || realizePreview)
         {
             if(edits>=config.maximumEdits || epoch==std::numeric_limits<std::size_t>::max())
-            {Stop(TrainingStatus::BudgetExhausted);return {};}
+            {Stop(TrainingStatus::BudgetExhausted,epoch==std::numeric_limits<std::size_t>::max()?
+                "model_epoch_exhausted":"maximum_edits_exhausted");return {};}
             pending=TrainingAction{TrainingActionKind::Edit,++serial,order.at(position),epoch,
                 config.runId,{},revision,std::move(candidate),false};return pending;
         }
     }
-    if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted);return {};}
+    if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted,"maximum_probes_exhausted");return {};}
     if(phase==Phase::Verify)
     {
         auto request=verification->NextRequest();
@@ -602,8 +612,13 @@ void BoundedTrainingSession::RecordIncompleteCandidateRepeats(const std::string&
     candidateRepeats.push_back(std::move(group));candidateMeasurements.clear();
 }
 
-void BoundedTrainingSession::Stop(TrainingStatus terminal)
-{RecordIncompleteCandidateRepeats(TrainingStatusName(terminal));status=terminal;pending.reset();armed.reset();anchor.reset();}
+void BoundedTrainingSession::Stop(TrainingStatus terminal,const std::string& diagnostic)
+{
+    stopReason=diagnostic.empty()?TrainingStatusName(terminal):diagnostic;
+    if(diagnostic.empty() && (terminal==TrainingStatus::InvalidModel || terminal==TrainingStatus::InvalidObservation) && !rejected.empty())
+        stopReason=rejected.back().reason;
+    RecordIncompleteCandidateRepeats(stopReason);status=terminal;pending.reset();armed.reset();anchor.reset();
+}
 
 void BoundedTrainingSession::ExternalStop()
 {
@@ -614,7 +629,7 @@ void BoundedTrainingSession::ExternalStop()
 void BoundedTrainingSession::ExhaustBudget()
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
-    if(verification)verification->ExhaustBudget();Stop(TrainingStatus::BudgetExhausted);
+    if(verification)verification->ExhaustBudget();Stop(TrainingStatus::BudgetExhausted,"adapter_execution_budget_exhausted");
 }
 
 const std::optional<TrainingCertificate>& BoundedTrainingSession::Certificate() const

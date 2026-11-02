@@ -83,6 +83,7 @@ public:
     // Adapter-owned wall/model-time deadline; cannot manufacture convergence.
     void ExhaustBudget();
     TrainingStatus Status() const { return status; }
+    const std::string& Reason() const { return stopReason; }
     const std::optional<TrainingCertificate>& Certificate() const;
     const std::vector<CandidateEvidence>& Evidence() const { return evidence; }
     const std::vector<TrainingRejection>& Rejected() const { return rejected; }
@@ -98,6 +99,7 @@ private:
     CapturedReferences references;
     BoundedTrainingConfig config;
     TrainingStatus status=TrainingStatus::Searching;
+    std::string stopReason;
     Phase phase=Phase::Candidate;
     std::vector<InputParameters> current,background;
     std::vector<std::size_t> order;
@@ -140,7 +142,7 @@ private:
     void PrioritizeMeasuredLength(const CandidateEvidence& measurement);
     void Reject(const std::string& reason);
     void RecordIncompleteCandidateRepeats(const std::string& reason);
-    void Stop(TrainingStatus terminal);
+    void Stop(TrainingStatus terminal,const std::string& reason={});
 };
 const char* TrainingStatusName(TrainingStatus status);
 }

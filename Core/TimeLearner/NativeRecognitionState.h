@@ -46,10 +46,17 @@ NativeRecognitionSpec DecodeNativeRecognitionSpec(const QJsonObject& object);
 // training retains its outcome; a stopped/partial package is rejected.
 QJsonObject ConvertNativeSoloToRecognition(const QJsonObject& solo,const NativeRecognitionSpec& specification,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);
+// Explicit diagnostic path for an immutable stopped solo package. Its distinct
+// kind/state_kind and null certificates must never satisfy completed training,
+// ordinary recognition import or calibrated-state validators.
+QJsonObject ConvertNativeStoppedToDiagnosticRecognition(const QJsonObject& stopped,const NativeRecognitionSpec& specification,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);
 QJsonObject ParseNativeRecognitionState(const std::string& text);
 // Re-derives the expected conversion from source_solo, checks the recorded
 // decision, then loads the actual recognition archive through native import.
 // No training service/certificate is installed in the returned frozen graph.
 std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeRecognitionState(const QJsonObject& package,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);
+std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeDiagnosticRecognitionState(const QJsonObject& package,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);
 }
