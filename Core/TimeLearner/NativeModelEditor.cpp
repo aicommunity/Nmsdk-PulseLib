@@ -1,4 +1,5 @@
 #include "NativeModelEditor.h"
+#include "NativeCapacitanceEdit.h"
 #include "ModelArchive.h"
 #include "ModelIdentity.h"
 #include "../NPulseChannel.h"
@@ -609,6 +610,112 @@ NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const 
     {result.reason=error.what();result.status=result.modelMayHaveChanged?NativeEditStatus::Failed:NativeEditStatus::Rejected;}
     return result;
 }
+QJsonObject CaptureNativeCapacitanceBaseline(const NativeProbeExecutor& executor,const NativeProbeBindings& b)
+{
+    Require(executor.Status()==NativeProbeStatus::Idle || executor.AtEditBoundary(),"capacitance_capture_requires_probe_boundary");
+    Require(b.owner && b.neuron && b.dataset && b.owner->GetComponentL("Neuron",true).Get()==b.neuron.Get(),"invalid_capacitance_binding");
+    auto source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_capacitance_stimulus_source");
+    UniformTree(b.neuron,b.neuron->GetTimeStep());
+    const auto identity=NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}});
+    Require(identity["valid"].toBool(),"invalid_capacitance_model_identity");
+    QJsonObject channels;std::vector<UEPtr<UContainer>> nodes;Collect(b.neuron,nodes);
+    for(const auto& node:nodes)if(auto common=dynamic_cast<NPulseChannelCommon*>(node.Get()))
+    {
+        Require(typeid(*common)==typeid(NPulseChannel),"unsupported_capacitance_channel");
+        auto channel=static_cast<NPulseChannel*>(common);StaticParameters({&channel->Capacity});
+        Require(Positive(channel->Capacity.GetData()),"invalid_capacitance_baseline");
+        channels[QString::fromStdString(node->GetLongName(b.neuron.Get()))]=channel->Capacity.GetData();
+    }
+    Require(!channels.isEmpty(),"missing_capacitance_channels");
+    QJsonObject result{{"kind","timelearner_capacitance_baseline"},{"schema_version",1},
+        {"model_revision",identity["sha256"]},{"frequency_hz",double(b.neuron->GetTimeStep())},{"channels",channels}};
+    result["sha256"]=NmsdkTools::CanonicalModelDataSha256(result);return result;
+}
+
+NativeCapacitanceEditResult ApplyNativeCapacitanceScale(NativeProbeExecutor& executor,const NativeProbeBindings& b,
+    const QJsonObject& baseline,const std::map<std::string,double>& scales,double maximumRelativeChange)
+{
+    NativeCapacitanceEditResult result;std::map<std::string,double> previous;
+    UEPtr<NPulseGeneratorTransit> source;QJsonObject before;
+    const auto assign=[&](UEPtr<NPulseNeuron> neuron,const std::map<std::string,double>& values) {
+        for(const auto& [path,value]:values)
+        {
+            auto channel=neuron->GetComponentL<NPulseChannel>(path,true);
+            Require(bool(channel),"missing_capacitance_edit_channel");channel->Capacity=value;
+            Require(channel->Capacity.GetData()==value,"capacitance_edit_readback_mismatch");
+        }
+        neuron->Init();neuron->Reset();
+    };
+    try
+    {
+        Require(executor.AtEditBoundary(),"capacitance_edit_requires_consumed_probe_boundary");
+        Require(!b.legacyPhysicsPending && !b.postTuneActive,"conflicting_capacitance_controller");
+        Require(b.owner && b.neuron && b.dataset && b.owner->GetComponentL("Neuron",true).Get()==b.neuron.Get(),"invalid_capacitance_binding");
+        Require(!b.neuron->UseElementDefaults.GetData(),"capacitance_edit_requires_storage_owned_physics");
+        Require(std::isfinite(maximumRelativeChange) && maximumRelativeChange>=0. && !scales.empty(),"invalid_capacitance_scale_policy");
+        const std::set<QString> keys{"kind","schema_version","model_revision","frequency_hz","channels","sha256"};
+        const auto baselineKeys=baseline.keys();
+        Require(std::set<QString>(baselineKeys.begin(),baselineKeys.end())==keys,"invalid_capacitance_baseline_schema");
+        auto body=baseline;body.remove("sha256");
+        Require(baseline["kind"]==QJsonValue("timelearner_capacitance_baseline") && baseline["schema_version"]==QJsonValue(1) &&
+            baseline["sha256"]==QJsonValue(NmsdkTools::CanonicalModelDataSha256(body)) && baseline["model_revision"].isString() &&
+            baseline["model_revision"].toString().size()==64 && baseline["frequency_hz"]==QJsonValue(double(b.neuron->GetTimeStep())) &&
+            baseline["channels"].isObject(),"invalid_capacitance_baseline");
+        source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_capacitance_stimulus_source");
+        const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
+        UniformTree(b.neuron,b.neuron->GetTimeStep());before=NmsdkTools::IdentifyModel(b.neuron,ports);
+        Require(before["valid"].toBool(),"invalid_capacitance_model_identity");
+        result.beforeRevision=before["sha256"].toString().toStdString();
+        const auto channels=baseline["channels"].toObject();std::map<std::string,double> targets;
+        for(const auto& [path,scale]:scales)
+        {
+            Require(Positive(scale) && scale>=1.-maximumRelativeChange && scale<=1.+maximumRelativeChange,"capacitance_scale_outside_bounds");
+            auto membrane=b.neuron->GetComponentL<NPulseMembrane>(path,true);
+            Require(membrane && membrane->GetOwner().Get()==b.neuron.Get() && membrane->GetName().rfind("Dendrite",0)==0,
+                "capacitance_scale_requires_dendritic_membrane");
+            std::vector<UEPtr<UContainer>> nodes;Collect(membrane,nodes);std::size_t count=0;
+            for(const auto& node:nodes)if(auto common=dynamic_cast<NPulseChannelCommon*>(node.Get()))
+            {
+                Require(typeid(*common)==typeid(NPulseChannel),"unsupported_capacitance_channel");
+                auto channel=static_cast<NPulseChannel*>(common);StaticParameters({&channel->Capacity});
+                const auto name=node->GetLongName(b.neuron.Get());const auto c0=channels[QString::fromStdString(name)];
+                Require(c0.isDouble() && Positive(c0.toDouble()) && Positive(c0.toDouble()*scale),"missing_or_invalid_channel_capacitance_baseline");
+                targets[name]=c0.toDouble()*scale;previous[name]=channel->Capacity.GetData();
+                result.appliedChannels[QString::fromStdString(name)]=QJsonObject{{"baseline",c0},{"scale",scale},{"capacity",targets[name]}};++count;
+            }
+            Require(count>0,"missing_capacitance_channels");
+        }
+        auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(b.neuron,ports));Lease lease{preview};
+        Require(bool(preview),"failed_capacitance_preview");assign(preview,targets);
+        const auto stable=AssessNativeIntegration(preview,source->Amplitude.GetData());Require(stable.valid,stable.reason.c_str());
+        const auto predicted=NmsdkTools::IdentifyModel(preview,ports);Require(predicted["valid"].toBool(),"invalid_capacitance_preview_identity");
+        preview->BreakLinks();preview->GetStorage()->ReturnObject(preview);lease.object=0;
+        Require(NmsdkTools::IdentifyModel(b.neuron,ports)==before,"live_graph_changed_during_capacitance_preview");
+        if(previous!=targets)
+        {
+            result.modelMayHaveChanged=true;assign(b.neuron,targets);
+            const auto verified=NmsdkTools::VerifyModelIdentity(predicted,b.neuron,ports);
+            Require(verified["valid"].toBool() && verified["match"].toBool(),"live_capacitance_edit_differs_from_preview");
+        }
+        result.afterRevision=predicted["sha256"].toString().toStdString();result.status=NativeEditStatus::Applied;
+    }
+    catch(const std::exception& error)
+    {
+        result.reason=error.what();result.status=NativeEditStatus::Rejected;
+        if(result.modelMayHaveChanged)
+        {
+            try
+            {
+                assign(b.neuron,previous);
+                Require(NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}})==before,"capacitance_rollback_identity_mismatch");
+                result.modelMayHaveChanged=false;
+            }
+            catch(const std::exception& rollback){result.reason+=";rollback:"+std::string(rollback.what());result.status=NativeEditStatus::Failed;}
+        }
+    }
+    return result;
+}
+
 const char* NativeEditStatusName(NativeEditStatus status)
 {switch(status){case NativeEditStatus::Applied:return "applied";case NativeEditStatus::Rejected:return "rejected";case NativeEditStatus::Failed:return "failed";}return "unknown";}
 

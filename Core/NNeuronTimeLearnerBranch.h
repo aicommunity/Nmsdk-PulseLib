@@ -24,6 +24,7 @@ See file license.txt for more information
 #include "TimeLearner/NativeProbe.h"
 #include "TimeLearner/NativeRecognitionTrial.h"
 #include "TimeLearner/NativeModelEditor.h"
+#include "TimeLearner/NativeCapacitanceEdit.h"
 #include "TimeLearner/NativeTrainingService.h"
 #include "TimeLearner/NativeTrainingIntent.h"
 #include "TimeLearner/NativeModelBuilder.h"
@@ -807,6 +808,9 @@ public: // Methods
  }
  std::vector<TimeLearner::InputParameters> ReadNativeParameters();
  TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested);
+ QJsonObject CaptureNativeCapacitanceBaseline();
+ TimeLearner::NativeCapacitanceEditResult ApplyNativeCapacitanceScale(const QJsonObject& baseline,
+     const std::map<std::string,double>& membraneScales,double maximumRelativeChange);
  TimeLearner::ResistanceDomainAssessment AssessNativeResistanceDomain(const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex);
  const std::string& NativeModelEditFailure() const { return NativeEditFailure; }
  void BeginNativeTraining(TimeLearner::NativeTrainingPlan plan,bool recaptureReferences=false);
