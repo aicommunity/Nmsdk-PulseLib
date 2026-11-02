@@ -4496,6 +4496,14 @@ void NNeuronTimeLearner::BeginNativeTraining(TimeLearner::NativeTrainingPlan pla
 }
 TimeLearner::ResistanceDomainAssessment NNeuronTimeLearner::AssessNativeResistanceDomain(
  const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex)
+{return AssessNativeResistanceDomainWithCapacitance(geometry,inputIndex,nullptr);}
+TimeLearner::ResistanceDomainAssessment NNeuronTimeLearner::AssessNativeResistanceDomain(
+ const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
+ const TimeLearner::NativeCapacitanceCorrection& capacitance)
+{return AssessNativeResistanceDomainWithCapacitance(geometry,inputIndex,&capacitance);}
+TimeLearner::ResistanceDomainAssessment NNeuronTimeLearner::AssessNativeResistanceDomainWithCapacitance(
+ const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
+ const TimeLearner::NativeCapacitanceCorrection* capacitance)
 {
  TimeLearner::ResistanceDomainAssessment result;result.geometry=geometry;result.inputIndex=inputIndex;
  try
@@ -4505,7 +4513,9 @@ TimeLearner::ResistanceDomainAssessment NNeuronTimeLearner::AssessNativeResistan
   if(NormalizationMode.GetData()!=1)throw std::invalid_argument("native_resistance_domain_requires_n1");
   const auto policy=TimeLearner::NativeOwnerEditSpec(*this,NativeModelDeclaration,geometry,
    PreferConfiguredResistanceMinFloor.GetData()?std::max(0.,ConfiguredResistanceMin.GetData()):0.);
-  result=TimeLearner::AssessNativeInputResistanceDomain(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),
+  if(capacitance)result=TimeLearner::AssessNativeInputResistanceDomain(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),
+   geometry,policy,inputIndex,NativeModelDeclaration?NativeModelDeclaration->scaleInhibitionWithInput:true,*capacitance);
+  else result=TimeLearner::AssessNativeInputResistanceDomain(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),
    geometry,policy,inputIndex,NativeModelDeclaration?NativeModelDeclaration->scaleInhibitionWithInput:true);
   if(result.modelMayHaveChanged)NativeEditFailure=result.reason;
  }
@@ -4534,20 +4544,29 @@ TimeLearner::NativeCapacitanceEditResult NNeuronTimeLearner::ApplyNativeCapacita
 }
 
 TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested)
+{return ApplyNativeParametersWithCapacitance(requested,nullptr);}
+TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested,
+ const TimeLearner::NativeCapacitanceCorrection& capacitance)
+{return ApplyNativeParametersWithCapacitance(requested,&capacitance);}
+TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeParametersWithCapacitance(const std::vector<TimeLearner::InputParameters>& requested,
+ const TimeLearner::NativeCapacitanceCorrection* capacitance)
 {
  if(NativeRecognition)
  {TimeLearner::NativeEditResult result;result.reason="native_recognition_model_is_frozen";return result;}
  TimeLearner::NativeEditResult result;
+ std::unique_ptr<TimeLearner::NativeLifecycleScope> lifecycle;
  try
  {
   if(NativeTrainingOwned && TimeLearner::NativeTrainingIsActive(NativeTrainingControl) && !NativeTrainingEditDepth)
    throw std::logic_error("native_training_owns_model_editor");
+  if(capacitance)lifecycle=std::make_unique<TimeLearner::NativeLifecycleScope>(NativeTrainingEditDepth);
   if(NormalizationMode.GetData()!=0 && NormalizationMode.GetData()!=1)
    throw std::runtime_error("invalid_native_normalization_mode");
   TimeLearner::CheckNativeParameterMirrorAssignments(*this,requested);
   const auto spec=TimeLearner::NativeOwnerEditSpec(*this,NativeModelDeclaration,requested,
    PreferConfiguredResistanceMinFloor.GetData()?std::max(0.,ConfiguredResistanceMin.GetData()):0.);
-  result=TimeLearner::ApplyNativeInputParameters(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),requested,spec);
+  if(capacitance)result=TimeLearner::ApplyNativeInputParameters(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),requested,spec,*capacitance);
+  else result=TimeLearner::ApplyNativeInputParameters(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),requested,spec);
   if(result.status==TimeLearner::NativeEditStatus::Applied)
   {
    // Mirror the verified physical readback without writing connected sources.
@@ -4577,6 +4596,11 @@ TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeParameters(const st
    result.status=TimeLearner::NativeEditStatus::Failed;
    NativeEditFailure=result.reason;
   }
+ }
+ if(capacitance)
+ {
+  Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
+  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
  }
  return result;
 }

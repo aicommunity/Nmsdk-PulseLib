@@ -1,5 +1,6 @@
 #include "NativeModelEditor.h"
 #include "NativeCapacitanceEdit.h"
+#include "NativeModelBuilder.h"
 #include "ModelArchive.h"
 #include "ModelIdentity.h"
 #include "../NPulseChannel.h"
@@ -415,6 +416,38 @@ void AssignCapacitances(UEPtr<NPulseNeuron> neuron,const std::map<std::string,do
         }
         neuron->Init();neuron->Reset();
 }
+void VerifyOnlyCapacitiesChanged(const QJsonObject& before,const QJsonObject& after,
+    const std::map<std::string,double>& targets)
+{
+    Require(before["valid"].toBool() && after["valid"].toBool(),"invalid_capacitance_preservation_identity");
+    auto expected=before["model"].toObject();auto nodes=expected["nodes"].toArray();
+    std::map<QString,QJsonObject> current;
+    for(const auto& entry:after["model"].toObject()["nodes"].toArray())
+    {auto node=entry.toObject();current.emplace(node["path"].toString(),node);}
+    std::size_t found=0;
+    for(int i=0;i<nodes.size();++i)
+    {
+        auto node=nodes[i].toObject();const auto path=node["path"].toString();
+        if(!targets.count(path.mid(2).toStdString()))continue;
+        Require(path.startsWith("$.") && current.count(path),"capacitance_preservation_channel_lost");
+        auto parameters=node["parameters"].toObject();
+        parameters["Capacity"]=current.at(path)["parameters"].toObject()["Capacity"];
+        node["parameters"]=parameters;nodes[i]=node;++found;
+    }
+    expected["nodes"]=nodes;
+    Require(found==targets.size() && expected==after["model"].toObject(),"capacitance_edit_changed_other_model_semantics");
+}
+void ApplyCapacitanceCorrection(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,
+    const NativeCapacitanceCorrection* correction)
+{
+    if(!correction)return;
+    Require(!neuron->UseElementDefaults.GetData(),"capacitance_edit_requires_storage_owned_physics");
+    const auto plan=PlanCapacitances(neuron,correction->baseline,correction->membraneScales,correction->maximumRelativeChange);
+    const NmsdkTools::ModelBoundarySources ports{{&source.Output,"burst"}};
+    const auto before=NmsdkTools::IdentifyModel(neuron,ports);
+    if(plan.previous!=plan.targets)AssignCapacitances(neuron,plan.targets);
+    VerifyOnlyCapacitiesChanged(before,NmsdkTools::IdentifyModel(neuron,ports),plan.targets);
+}
 struct Lease {
     UEPtr<UContainer> object;
     ~Lease(){if(object){if(auto net=dynamic_pointer_cast<UNet>(object))net->BreakLinks();object->GetStorage()->ReturnObject(object);}}
@@ -467,9 +500,9 @@ const char* ResistanceDomainStatusName(ResistanceDomainStatus status)
     case ResistanceDomainStatus::Failed:return "failed";}return "unknown";
 }
 
-ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor& executor,const NativeProbeBindings& b,
+static ResistanceDomainAssessment AssessNativeInputResistanceDomainImpl(NativeProbeExecutor& executor,const NativeProbeBindings& b,
     const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec,
-    std::size_t inputIndex,bool scaleInhibitionWithInput)
+    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection* capacitance)
 {
     ResistanceDomainAssessment result;result.inputIndex=inputIndex;result.geometry=requested;
     QJsonObject before;UEPtr<NPulseGeneratorTransit> source;
@@ -489,7 +522,7 @@ ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor
         before=NmsdkTools::IdentifyModel(live,ports);Require(before["valid"].toBool(),"invalid_live_domain_identity");
         result.baseModelRevision=before["sha256"].toString().toStdString();
         auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(live,ports));Lease lease{preview};
-        Require(bool(preview),"failed_domain_preview");Transform(preview,*source,plan,nullptr);CheckRemovedListeners(b.neuron,preview);
+        Require(bool(preview),"failed_domain_preview");Transform(preview,*source,plan,nullptr);ApplyCapacitanceCorrection(preview,*source,capacitance);CheckRemovedListeners(b.neuron,preview);
         std::vector<int> positions;for(const auto& p:requested)positions.push_back(p.length);
         auto previewBindings=b;previewBindings.neuron=preview;
         Require(ReadNativeInputParameters(previewBindings,positions)==requested,"domain_preview_readback_mismatch");
@@ -600,6 +633,15 @@ ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor
     return result;
 }
 
+ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor& executor,const NativeProbeBindings& b,
+    const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec,
+    std::size_t inputIndex,bool scaleInhibitionWithInput)
+{return AssessNativeInputResistanceDomainImpl(executor,b,attachments,requested,spec,inputIndex,scaleInhibitionWithInput,nullptr);}
+ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor& executor,const NativeProbeBindings& b,
+    const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec,
+    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection& capacitance)
+{return AssessNativeInputResistanceDomainImpl(executor,b,attachments,requested,spec,inputIndex,scaleInhibitionWithInput,&capacitance);}
+
 std::vector<InputParameters> ReadNativeInputParameters(const NativeProbeBindings& b,const std::vector<int>& attachments)
 {
     Require(bool(b.neuron) && attachments.size()==std::size_t(b.inputCount),"invalid_native_parameter_readback");
@@ -623,24 +665,25 @@ std::vector<InputParameters> ReadNativeInputParameters(const NativeProbeBindings
     return result;
 }
 
-NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const NativeProbeBindings& b,
-    const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec)
+static NativeEditResult ApplyNativeInputParametersImpl(NativeProbeExecutor& executor,const NativeProbeBindings& b,
+    const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec,const NativeCapacitanceCorrection* capacitance)
 {
     NativeEditResult result;
+    std::unique_ptr<NativeLearnerGraphCheckpoint> checkpoint;std::vector<InputParameters> initial;
     try
     {
         Require(executor.AtEditBoundary(),"native_edit_requires_consumed_probe_boundary");
         Require(b.owner && b.neuron && b.dataset && b.owner->GetComponentL("Neuron",true).Get()==b.neuron.Get(),"invalid_native_edit_binding");
         Require(!b.legacyPhysicsPending && !b.postTuneActive,"conflicting_native_edit_controller");
         auto source=b.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(source),"missing_edit_stimulus_source");
-        const auto previous=ReadNativeInputParameters(b,attachments);
+        const auto previous=ReadNativeInputParameters(b,attachments);initial=previous;
         const auto plan=MakePlan(b,previous,requested,spec);const auto frequency=b.neuron->GetTimeStep();
         UEPtr<UContainer> live(b.neuron.Get());UniformTree(live,frequency);
         const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
         auto before=NmsdkTools::IdentifyModel(live,ports);Require(before["valid"].toBool(),"invalid_live_edit_identity");
         auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(live,ports));Lease lease{preview};
         Require(bool(preview),"failed_edit_preview");
-        Transform(preview,*source,plan,nullptr);CheckRemovedListeners(b.neuron,preview);
+        Transform(preview,*source,plan,nullptr);ApplyCapacitanceCorrection(preview,*source,capacitance);CheckRemovedListeners(b.neuron,preview);
         std::vector<int> positions;for(const auto& input:requested)positions.push_back(input.length);
         auto previewBindings=b;previewBindings.neuron=preview;
         Require(ReadNativeInputParameters(previewBindings,positions)==requested,"preview_edit_readback_mismatch");
@@ -652,8 +695,9 @@ NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const 
         // live edit. No physical tick occurs on the preview or between edits.
         preview->BreakLinks();preview->GetStorage()->ReturnObject(preview);lease.object=0;
         Require(NmsdkTools::IdentifyModel(live,ports)==before,"live_graph_changed_during_preview");
+        if(capacitance)checkpoint=NativeLearnerGraphCheckpoint::Capture(*b.owner);
         result.modelMayHaveChanged=true;
-        Transform(b.neuron,*source,plan,b.owner);
+        Transform(b.neuron,*source,plan,b.owner);ApplyCapacitanceCorrection(b.neuron.Get(),*source,capacitance);
         const auto after=NmsdkTools::VerifyModelIdentity(predicted,live,ports);
         if(!after["valid"].toBool() || !after["match"].toBool())
             throw std::runtime_error("live_edit_differs_from_native_preview:"+after["first_difference"].toString().toStdString());
@@ -662,9 +706,27 @@ NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const 
         result.status=NativeEditStatus::Applied;
     }
     catch(const std::exception& error)
-    {result.reason=error.what();result.status=result.modelMayHaveChanged?NativeEditStatus::Failed:NativeEditStatus::Rejected;}
+    {
+        result.reason=error.what();result.status=result.modelMayHaveChanged?NativeEditStatus::Failed:NativeEditStatus::Rejected;
+        if(checkpoint && result.modelMayHaveChanged)
+        {
+            const auto restored=checkpoint->Restore(*b.owner);
+            result.graphWasReplaced=restored.modelMayHaveChanged;
+            if(restored.status==NativeModelBuildStatus::Adopted)
+            {result.modelMayHaveChanged=false;result.status=NativeEditStatus::Rejected;result.effective=initial;}
+            else result.reason+=";rollback:"+restored.reason;
+        }
+    }
     return result;
 }
+NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const NativeProbeBindings& b,
+    const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec)
+{return ApplyNativeInputParametersImpl(executor,b,attachments,requested,spec,nullptr);}
+NativeEditResult ApplyNativeInputParameters(NativeProbeExecutor& executor,const NativeProbeBindings& b,
+    const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec,
+    const NativeCapacitanceCorrection& capacitance)
+{return ApplyNativeInputParametersImpl(executor,b,attachments,requested,spec,&capacitance);}
+
 QJsonObject CaptureNativeCapacitanceBaseline(const NativeProbeExecutor& executor,const NativeProbeBindings& b)
 {
     Require(executor.Status()==NativeProbeStatus::Idle || executor.AtEditBoundary(),"capacitance_capture_requires_probe_boundary");
@@ -710,6 +772,7 @@ NativeCapacitanceEditResult ApplyNativeCapacitanceScale(NativeProbeExecutor& exe
         Require(bool(preview),"failed_capacitance_preview");AssignCapacitances(preview,targets);
         const auto stable=AssessNativeIntegration(preview,source->Amplitude.GetData());Require(stable.valid,stable.reason.c_str());
         const auto predicted=NmsdkTools::IdentifyModel(preview,ports);Require(predicted["valid"].toBool(),"invalid_capacitance_preview_identity");
+        VerifyOnlyCapacitiesChanged(before,predicted,targets);
         preview->BreakLinks();preview->GetStorage()->ReturnObject(preview);lease.object=0;
         Require(NmsdkTools::IdentifyModel(b.neuron.Get(),ports)==before,"live_graph_changed_during_capacitance_preview");
         if(previous!=targets)

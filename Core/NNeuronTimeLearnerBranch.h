@@ -808,6 +808,11 @@ public: // Methods
  }
  std::vector<TimeLearner::InputParameters> ReadNativeParameters();
  TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested);
+ TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested,
+     const TimeLearner::NativeCapacitanceCorrection& capacitance);
+ TimeLearner::ResistanceDomainAssessment AssessNativeResistanceDomain(
+     const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
+     const TimeLearner::NativeCapacitanceCorrection& capacitance);
  QJsonObject CaptureNativeCapacitanceBaseline();
  TimeLearner::NativeCapacitanceEditResult ApplyNativeCapacitanceScale(const QJsonObject& baseline,
      const std::map<std::string,double>& membraneScales,double maximumRelativeChange);
@@ -1001,6 +1006,11 @@ public: // Methods
 protected:
  TimeLearner::NativeModelBuildResult ImportNativeRecognitionStateWithBoundary(const QJsonObject& package,const std::string& implementationId,
      const QJsonObject& boundary,bool diagnostic=false);
+ TimeLearner::NativeEditResult ApplyNativeParametersWithCapacitance(
+     const std::vector<TimeLearner::InputParameters>& requested,const TimeLearner::NativeCapacitanceCorrection* capacitance);
+ TimeLearner::ResistanceDomainAssessment AssessNativeResistanceDomainWithCapacitance(
+     const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
+     const TimeLearner::NativeCapacitanceCorrection* capacitance);
  TimeLearner::NativeProbeExecutor NativeProbeControl;
  TimeLearner::NativeTrainingService NativeTrainingControl;
  TimeLearner::NativeTrainingIntent NativeTrainingRequestIntent;

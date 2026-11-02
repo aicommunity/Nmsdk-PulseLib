@@ -4,6 +4,11 @@
 #include <map>
 
 namespace NMSDK::TimeLearner {
+struct NativeCapacitanceCorrection {
+    QJsonObject baseline;
+    std::map<std::string,double> membraneScales;
+    double maximumRelativeChange=0.;
+};
 struct NativeCapacitanceEditResult {
     NativeEditStatus status=NativeEditStatus::Rejected;
     std::string reason,beforeRevision,afterRevision;
