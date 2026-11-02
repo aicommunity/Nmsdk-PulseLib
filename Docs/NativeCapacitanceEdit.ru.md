@@ -51,6 +51,17 @@ Calculate делает наблюдение невалидным; ошибка I
 Первый joint gate: 8/10; оба injected rollback не сработали ожидаемым образом.
 Этот отрицательный результат сохранён корневым evidence commit
 7364e82e219b1a63b6fa6f598dc7876dc2e59b02. Новые тесты отдельно фиксируют
-факт вызова fault hook и C в момент ошибки. До их исполнения диагноз остаётся
-source-level гипотезой, а откат не считается принятым.
+факт вызова fault hook и C в момент ошибки. Elder rootd8bf0419ef3e022514f77613e2f4a5acbe4e4875
+прошёл9 Rdk unit и12 native cases, evidence6bb5e09b897d0932f641f42aa8e966b935f713a9.
+Факт Reset fault при4nF, полное восстановление графа и следующая исправная
+проба подтверждены обоими rollback tests. M40 та же версия тоже завершила9/12
+под ASan; публикация полного результата ожидает отдельный regression owner.
+
+Дополнительный Rdk дефект: старый UContainer::Build при exception возвращал
+false. Native baseline738985c742f881e3fca3ff23229f68db7d3adf68 подтвердил это
+единственным failure. Rdkc3850711b2cd73f33956aae18a8db6cd1c4ead41 исправляет
+bool и переводит Connect/CreateStructure/Environment consumers на operation
+diagnostics. Root5d73cd0858abc1e93655d5fa10189225da990201 прошёл9 unit и13 native
+на Elder. ASan этого следующего Rdk patch ещё требуется. Полный C-trim controller,
+baseline persistence/growth и вся матрица данным результатом не закрываются.
 
