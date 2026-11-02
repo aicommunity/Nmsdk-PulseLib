@@ -1,4 +1,5 @@
 #include "ModelArchive.h"
+#include "NativeOperationChecks.h"
 #include "../../../../Rdk/Core/Engine/UClassImageRegistry.h"
 #include "../../../../Rdk/Core/Engine/UComponentFactory.h"
 #include "../NPulseNeuron.h"
@@ -319,7 +320,7 @@ UEPtr<UContainer> LoadSnapshot(const QJsonObject& snapshot, UEPtr<UStorage> stor
     TProjectLoadDiagnostics diagnostics;
     if(!object->LoadComponent(&xml, true, &diagnostics) || !diagnostics.errors.empty() || !diagnostics.warnings.empty())
         Fail("native_model_load_failed", object->GetName().c_str());
-    object->Init();
+    InitializeNative(object);
     const auto bindings = snapshot["identity"].toObject()["model"].toObject()["bindings"].toArray();
     std::set<QString> portTargets;
     for(const auto& entry : bindings)
@@ -407,7 +408,7 @@ QJsonObject ImageSnapshot(UEPtr<UStorage> storage, UEPtr<UEnvironment> environme
     else object = source.prototype->Alloc(storage, false);
     Lease lease{storage, object};
     if(!object) Fail("image_copy_failed", name);
-    object->SetEnvironment(environment); object->Init();
+    object->SetEnvironment(environment); InitializeNative(object);
     return Snapshot(object);
 }
 }

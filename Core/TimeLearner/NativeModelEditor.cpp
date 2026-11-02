@@ -1,6 +1,7 @@
 #include "NativeModelEditor.h"
 #include "NativeCapacitanceEdit.h"
 #include "NativeModelBuilder.h"
+#include "NativeOperationChecks.h"
 #include "ModelArchive.h"
 #include "ModelIdentity.h"
 #include "../NPulseChannel.h"
@@ -319,7 +320,7 @@ void Transform(UEPtr<NPulseNeuron> neuron,NPulseGeneratorTransit& source,const P
     }
     for(const auto& [name,target]:p.excitation)Require(bool(neuron->GetComponentL<NPulseMembrane>(name,true)),"attachment_outside_explicit_graph");
     for(const auto& [name,target]:p.inhibition)Require(bool(neuron->GetComponentL<NPulseMembrane>(name,true)),"inhibition_outside_explicit_graph");
-    neuron->Init();neuron->Reset();neuron->InvalidateActiveComponentsCache();
+    NmsdkTools::InitializeAndResetNative(neuron);neuron->InvalidateActiveComponentsCache();
     UniformTree(neuron,frequency);CheckPreserved(parameters,neuron,source,p);
 }
 void CheckRemovedListeners(UEPtr<NPulseNeuron> original,UEPtr<NPulseNeuron> candidate)
@@ -414,7 +415,7 @@ void AssignCapacitances(UEPtr<NPulseNeuron> neuron,const std::map<std::string,do
             Require(bool(channel),"missing_capacitance_edit_channel");channel->Capacity=value;
             Require(channel->Capacity.GetData()==value,"capacitance_edit_readback_mismatch");
         }
-        neuron->Init();neuron->Reset();
+        NmsdkTools::InitializeAndResetNative(neuron);
 }
 void VerifyOnlyCapacitiesChanged(const QJsonObject& before,const QJsonObject& after,
     const std::map<std::string,double>& targets)

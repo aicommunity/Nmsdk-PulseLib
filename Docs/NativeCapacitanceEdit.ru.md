@@ -35,3 +35,22 @@ revision/epoch invalidation всех зависимых inputs, явная пр�
 fixtures Classic/Branch×N0/N1×2000/20000Hz: heterogeneous Exc/Inh, LT/Soma
 preservation, native preview roundtrip, idempotence, real probe responses,
 NaN/Inf/bounds/unstable candidate rejection, restore и missing growth baseline.
+# Диагностика native операций (feature, требует серверной проверки)
+
+Совместное предложение L/Ns/Rs/C сначала проверяется на отдельной native модели.
+Rs domain вычисляется с новой C. Живой граф изменяется транзакционно с checkpoint;
+при восстановлении заменённого графа learner обновляет aliases и сообщает
+graphWasReplaced. Это ещё не включение C-trim в алгоритм ControllerVersion2.
+
+Init/Reset и сбор наблюдений теперь проверяют process-local operation ledger Rdk.
+Bool lifecycle не используется для распространения ошибок. Исключение дочернего
+Calculate делает наблюдение невалидным; ошибка Init/Reset запрещает принятие
+кандидата. Проверяется только новая ошибка после marker: старая история не
+блокирует следующую исправную пробу. Cleanup источника выполняется до проверки.
+
+Первый joint gate: 8/10; оба injected rollback не сработали ожидаемым образом.
+Этот отрицательный результат сохранён корневым evidence commit
+7364e82e219b1a63b6fa6f598dc7876dc2e59b02. Новые тесты отдельно фиксируют
+факт вызова fault hook и C в момент ошибки. До их исполнения диагноз остаётся
+source-level гипотезой, а откат не считается принятым.
+
