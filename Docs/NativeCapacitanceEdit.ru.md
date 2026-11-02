@@ -72,7 +72,7 @@ diagnostics. Root5d73cd0858abc1e93655d5fa10189225da990201 прошёл9 unit и1
 на Elder. ASan этого следующего Rdk patch ещё требуется. Полный C-trim controller,
 baseline persistence/growth и вся матрица данным результатом не закрываются.
 
-# Дополнение: привязанный baseline и рост структуры (проверка не завершена)
+# Дополнение: привязанный baseline и рост структуры (адресная приёмка)
 
 `CaptureBoundNativeCapacitanceBaseline` создаёт schema 2 отдельно от совместимого
 baseline schema 1. Документ содержит исходный semantic graph, NativeModelSpec,
@@ -93,9 +93,15 @@ Standalone schema 1 и запрет неизвестных новых канал
 масштабов, границу изменения и revision физической модели. Read-only
 `ValidateAppliedNativeCapacitanceState` проверяет уже построенную модель,
 включая каналы, пропущенные в карте масштабов, и model revision.
-Это отдельное состояние параметров, пока не встроенное автоматически в
-`NativeLearnedState`, и не checkpoint контроллера или динамики посреди пробы.
+Это отдельное состояние параметров: явный export включает его в schema2
+completed/stopped package, native import сохраняет для повторного export.
+Оно ещё не обновляется автоматически поиском C-trim и не является checkpoint
+контроллера или динамики посреди пробы.
 Полноценный поиск C-trim контроллером V2 пока не реализован; включать его в
 экспериментах по-прежнему нельзя. Новые проверки Classic/Branch × N0/N1 ×
-2000/20000 Гц добавлены; серверного подтверждения этого дополнения ещё нет.
+2000/20000 Гц прошли normal и ASan в объявленном explicit API scope.
+[Приёмка, primary commits и ограничения](Analysis/TimeLearnerCapacitanceStateTransfer.ru.md).
+Ранние pending-записи выше описывают свои промежуточные снимки: Rdk bool
+patch c3850711 уже имеет отдельную normal/ASan приёмку (9 unit/13 native,
+root evidence094bced1/12d5a246). Возвращаемый true не заменяет диагностику.
 
