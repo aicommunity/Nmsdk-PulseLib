@@ -4393,14 +4393,18 @@ QJsonObject NNeuronTimeLearner::NativeFinalizationIntent() const
 {
  return NativeRecognition?NativeRecognition->finalizationBoundary:QJsonObject{};
 }
+TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeDiagnosticRecognitionState(const QJsonObject& package,const std::string& implementationId)
+{
+ return ImportNativeRecognitionStateWithBoundary(package,implementationId,{},true);
+}
 TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeRecognitionStateWithBoundary(const QJsonObject& package,const std::string& implementationId,
- const QJsonObject& boundary)
+ const QJsonObject& boundary,bool diagnostic)
 {
  if(NativePostTunePhase && !NativePostTunePhase->Done() && !NativePostTunePhaseDepth)
  {TimeLearner::NativeModelBuildResult result;result.reason="native_owned_post_tune_owns_model";return result;}
 
  auto result=TimeLearner::InstallNativeRecognitionState(*this,false,package,implementationId,NativeTrainingOwned,NativeModelDeclaration,
-  NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition,boundary);
+  NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition,boundary,diagnostic);
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
  {

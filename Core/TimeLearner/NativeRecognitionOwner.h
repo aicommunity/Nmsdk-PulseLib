@@ -76,7 +76,7 @@ template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner
     const std::string& implementation,bool& owned,std::optional<NativeModelSpec>& declaration,
     std::optional<ConfiguredNativeTraining>& configured,std::string& configuredText,
     NativeProbeExecutor& probe,NativeTrainingService& service,std::string& failure,std::unique_ptr<NativeRecognitionHold>& hold,
-    const QJsonObject& finalizationBoundary={})
+    const QJsonObject& finalizationBoundary={},bool diagnostic=false)
 {
     NativeModelBuildResult result;const bool wasOwned=owned;
     if((hold && (hold->trials.Busy() || hold->trials.HasResult())) || NativeTrainingIsActive(service) || probe.Status()==NativeProbeStatus::Queued || probe.Status()==NativeProbeStatus::Running)
@@ -87,7 +87,9 @@ template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner
         CheckNativeFinalizationControls(owner,finalizationBoundary);
         if(!finalizationBoundary.isEmpty() && NativeFinalizationSourceSolo(package)!=finalizationBoundary["source_solo"].toObject())
             throw std::logic_error("native_finalization_candidate_source_changed");
-        auto prepared=PrepareNativeRecognitionState(package,owner.GetStorage(),owner.GetEnvironment(),implementation);
+        if(diagnostic && !finalizationBoundary.isEmpty())throw std::invalid_argument("diagnostic_recognition_cannot_finalize_training");
+        auto prepared=diagnostic?PrepareNativeDiagnosticRecognitionState(package,owner.GetStorage(),owner.GetEnvironment(),implementation):
+                                 PrepareNativeRecognitionState(package,owner.GetStorage(),owner.GetEnvironment(),implementation);
         if(prepared->configuration.model.branch!=branch)throw std::invalid_argument("native_recognition_import_topology_mismatch");
         auto next=std::make_unique<NativeRecognitionHold>();next->package=package;next->model=prepared->configuration.model;
         next->finalizationBoundary=finalizationBoundary;

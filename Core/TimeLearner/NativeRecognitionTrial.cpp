@@ -5,6 +5,7 @@
 #include "NativeTrainingBindings.h"
 #include "ModelIdentity.h"
 #include "NumericChecks.h"
+#include "NativeCalculationPolicy.h"
 #include <QJsonArray>
 #include <algorithm>
 
@@ -71,12 +72,14 @@ void NativeRecognitionTrialExecutor::Check(const NativeProbeBindings& b) const
     Require(physical && ownerLife.IsCurrent() && b.owner==physical->owner &&
         b.neuron.Get()==physical->neuron.Get() && b.dataset.Get()==physical->dataset.Get() && b.somas==physical->somas,
         "recognition_trial_graph_or_lifecycle_changed");
+    RequireNativeCalculationScheduleAncestors(*b.owner);
     for(const auto& node:watched)
     {
         Require(node.lifecycle.IsAlive() && b.owner->GetComponentL(node.path,true).Get()==node.node.Get(),
             "recognition_trial_graph_replaced");
         Require(node.node->IsReady() && node.node->IsInit() &&
             double(node.node->GetTimeStep())==current->frequencyHz,"unready_or_multirate_recognition_graph");
+        RequireNativeCalculationScheduleNode(*node.node);
         // Dataset's one-shot playback intentionally resets its generator.
         if(node.node.Get()!=source.Get())Require(node.lifecycle.IsCurrent(),"recognition_trial_lifecycle_changed");
     }
@@ -108,6 +111,7 @@ void NativeRecognitionTrialExecutor::BeforeChildren(const NativeProbeBindings& b
     {
         if(running){Check(b);return;}
         Require(b.owner && b.neuron && b.dataset && b.inputCount>0 && bool(readRevision),"missing_recognition_trial_graph");
+        RequireNativeCalculationSchedule(*b.owner);
         revision=readRevision;current->modelBefore=revision(true);
         Require(!current->modelBefore.empty(),"missing_recognition_model_revision");
         Require(current->request.pattern.GetRows()==b.inputCount,"recognition_input_dimension_mismatch");
