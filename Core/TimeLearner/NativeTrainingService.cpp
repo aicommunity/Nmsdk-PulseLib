@@ -5,6 +5,7 @@
 #include <cmath>
 #include <chrono>
 #include <stdexcept>
+#include <set>
 
 namespace NMSDK::TimeLearner {
 double NativeTrainingWallTime()
@@ -96,6 +97,20 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
         capacitanceHistory->currentVerified=true;
         if(!references)capacitanceHistory->captureWitnessId=id;
         capacitanceHistory->domainBaseWitnessIds.clear();
+        // The new attempt drops old observed/search packets. Keep only the
+        // reference witnesses that genuinely survive the same boundary reset.
+        std::map<std::string,std::string> keptTrials;
+        std::set<std::string> required{capacitanceHistory->captureWitnessId,id};
+        if(references)for(const auto& packet:referencePackets)
+        {
+            Require(bool(packet.requestedSpecification),"missing_restart_capacitance_trial_identity");
+            const auto found=capacitanceHistory->trialWitnessIds.find(packet.requestedSpecification->trialId);
+            Require(found!=capacitanceHistory->trialWitnessIds.end(),"missing_restart_reference_capacitance_witness");
+            keptTrials.emplace(*found);required.insert(found->second);
+        }
+        std::map<std::string,TrainingCapacitanceWitness> keptWitnesses;
+        for(const auto& key:required)keptWitnesses.emplace(key,capacitanceHistory->witnesses.at(key));
+        capacitanceHistory->trialWitnessIds=std::move(keptTrials);capacitanceHistory->witnesses=std::move(keptWitnesses);
     }
     plan=std::move(value);plan.search.initialModelRevision=revision;plan.probe.readModelRevision=a.readModelRevision;
     plan.probe.readFullModelRevision=a.readFullModelRevision;
@@ -397,6 +412,52 @@ void NativeTrainingService::RestoreStoppedBoundary(NativeTrainingPlan value,std:
     search.reset();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
     outcome=terminal;reason=diagnostic;state=NativeTrainingState::Finished;
     capacitanceHistory.reset();
+}
+void ValidateNativeTrainingCapacitanceBoundary(const NativeTrainingCapacitanceHistory& history,
+    const NativeTrainingService& service,const std::string& revision,const QJsonObject& actualState)
+{
+    Require(service.Plan().recordCapacitanceHistory && history.currentVerified && history.domainBaseWitnessIds.empty(),
+        "invalid_native_capacitance_boundary_scope");
+    const auto current=history.witnesses.find(history.currentWitnessId),capture=history.witnesses.find(history.captureWitnessId);
+    Require(current!=history.witnesses.end() && capture!=history.witnesses.end(),"missing_native_capacitance_boundary_witness");
+    Require(current->second.modelRevision==revision &&
+        QJsonDocument::fromJson(QByteArray::fromStdString(current->second.nativeStateJson)).object()==actualState,
+        "native_capacitance_boundary_does_not_match_current_state");
+    Require(capture->second.modelRevision==service.CaptureRevision(),"native_capacitance_capture_boundary_mismatch");
+    for(const auto& [id,witness]:history.witnesses)
+    {
+        Require(NativeTrainingCapacitanceWitnessId(witness)==id,"native_capacitance_boundary_id_mismatch");
+        PreservedBaseline(witness,current->second);
+    }
+    std::set<std::string> trials,required{history.currentWitnessId,history.captureWitnessId};
+    const auto packet=[&](const NativeProbeResult& p,const std::string& expectedRevision) {
+        Require(bool(p.requestedSpecification),"native_capacitance_boundary_packet_missing_identity");
+        const auto& trial=p.requestedSpecification->trialId;
+        const auto binding=history.trialWitnessIds.find(trial);
+        Require(binding!=history.trialWitnessIds.end(),"native_capacitance_boundary_trial_unwitnessed");
+        const auto witness=history.witnesses.find(binding->second);
+        Require(witness!=history.witnesses.end(),"native_capacitance_boundary_trial_witness_missing");
+        if(!expectedRevision.empty())Require(witness->second.modelRevision==expectedRevision,"native_capacitance_boundary_packet_context_mismatch");
+        if(p.currentBaseRevision.empty())
+            Require(p.status!=NativeProbeStatus::Completed && !p.prepared && !p.observation,
+                "native_capacitance_boundary_packet_revision_unknown");
+        else Require(witness->second.modelRevision==p.currentBaseRevision,"native_capacitance_boundary_packet_context_mismatch");
+        trials.insert(trial);required.insert(binding->second);
+    };
+    for(const auto& p:service.ReferencePackets())packet(p,service.CaptureRevision());
+    for(const auto& p:service.FinalPackets())packet(p,revision);
+    if(!service.Certificate())for(const auto& p:service.ObservedPackets())packet(p,{});
+    std::set<std::string> declared,stored;
+    for(const auto& [trial,id]:history.trialWitnessIds)declared.insert(trial);
+    for(const auto& [id,witness]:history.witnesses)stored.insert(id);
+    Require(trials==declared && required==stored,"native_capacitance_boundary_inventory_mismatch");
+}
+void NativeTrainingService::RestoreCapacitanceBoundary(NativeTrainingCapacitanceHistory history,
+    const std::string& revision,const QJsonObject& state)
+{
+    Require(!Active(this->state) && !search,"native_capacitance_restore_requires_completed_boundary");
+    ValidateNativeTrainingCapacitanceBoundary(history,*this,revision,state);
+    capacitanceHistory=std::move(history);
 }
 const char* NativeTrainingStateName(NativeTrainingState state)
 {switch(state){case NativeTrainingState::Idle:return "idle";case NativeTrainingState::CapturingReferences:return "capturing_references";

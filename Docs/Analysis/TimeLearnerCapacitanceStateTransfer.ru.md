@@ -72,3 +72,28 @@ cross-run эквивалентность не заявляем. Source clock def
 Остаются automatic C₀ ownership/search, XML/Copy persistence correction map,
 полная матрица профилей/режимов и научные эксперименты. В develop объединяется
 проверенный explicit API; SyncCapacitanceTrim On для V2 остаётся запрещённым.
+
+
+### Кандидат portable boundary schema3 (2026-11-03; серверная приёмка ожидается)
+
+ConfiguredNativeTraining schema3 явно задаёт `capacitance_history.record=true` и
+`maximum_relative_change`; schemas1/2 сохраняют прежний смысл. При первом native
+запуске configured learner связывает C₀ через штатный metadata-only binding до
+начала измерений. Повторный binding проверяет владельца, не захватывает новую
+базовую физику. Это ещё не включение алгоритма C-trim On.
+
+Completed/stopped model package schema3 сохраняет signed capacitance_state,
+исходное и текущее physical witnesses и точную привязку сохраняемых trial IDs.
+При экспорте история поиска удаляется; остаются references/finals, а у diagnostic
+boundary также реально наблюдавшиеся пробы. Это перенос завершённой границы,
+не checkpoint поиска или физической динамики. Import проверяет C/C₀ для каждого
+канала, классы, частоту, storage closure, origin/policy и сохранность heterogeneous
+baseline. Переподписанный digest не заменяет проверку физики. Повторный Start
+удаляет контексты проб прежней попытки, сохраняя действительные references и C₀.
+
+Корневой regression spec содержит209 cases: прежние197 и12 новых boundary
+controls. Новые случаи охватывают Classic/Branch, N0/N1, configured/manual,
+повторы N0, dormant state, completed/stopped, same/fresh-process transfer,
+rollback повреждённого пакета и остановку до первой пробы. Independent reader
+добавляет12 проверок первичных CSV и повреждённых связей. До серверного запуска
+эти изменения имеют статус «реализовано в коде», без runtime-подтверждения.

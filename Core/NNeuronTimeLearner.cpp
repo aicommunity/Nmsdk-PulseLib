@@ -4078,6 +4078,7 @@ bool NNeuronTimeLearner::ABeforeCalculate(void)
    if(!NativeConfiguredPlan || NativeConfiguredText!=ControllerConfiguration.GetData())
     throw std::invalid_argument("configured_native_model_requires_build");
    auto plan=TimeLearner::MakeConfiguredNativeTrainingPlan(*NativeConfiguredPlan);
+   if(plan.recordCapacitanceHistory)BindNativeTrainingCapacitance(NativeConfiguredPlan->capacitanceMaximumRelativeChange);
    plan.probe.onPrepared=NativeConfiguredSinks.onPrepared;plan.probe.onSample=NativeConfiguredSinks.onSample;
    plan.observationSink=NativeConfiguredSinks.onObservation;BeginNativeTraining(std::move(plan));
   }

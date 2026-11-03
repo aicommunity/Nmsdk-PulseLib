@@ -191,6 +191,7 @@ QJsonObject EncodeNativeTrainingCapacitanceWitness(const TrainingCapacitanceWitn
        DecodeNativeTrainingCapacitance(owned)!=witness.parameters ||
        NmsdkTools::ModelImageDefinitionsFingerprint(images.array())!=owned["baseline"].toObject()["storage_images_sha256"].toString())
         throw std::invalid_argument("inconsistent_training_capacitance_witness");
+    ValidateArchivedNativeCapacitanceState(owned,model,images.array());
     QJsonObject scales;
     for(const auto& [path,scale]:witness.parameters.membraneScales)scales[Text(path)]=Number(scale);
     return {{"kind","native_training_capacitance_witness"},{"schema_version",1},
@@ -198,6 +199,21 @@ QJsonObject EncodeNativeTrainingCapacitanceWitness(const TrainingCapacitanceWitn
         {"controller_parameters",QJsonObject{{"origin",Text(witness.parameters.origin)},
             {"maximum_relative_change",Number(witness.parameters.maximumRelativeChange)},{"membrane_scales",scales}}},
         {"model",model},{"native_state",owned},{"storage_images",images.array()}};
+}
+TrainingCapacitanceWitness DecodeNativeTrainingCapacitanceWitness(const QJsonObject& object)
+{
+    if(object["kind"]!=QJsonValue("native_training_capacitance_witness") || object["schema_version"]!=QJsonValue(1) ||
+       !object["model_revision"].isString() || !object["model"].isObject() || !object["native_state"].isObject() || !object["storage_images"].isArray())
+        throw std::invalid_argument("unsupported_native_training_capacitance_witness");
+    TrainingCapacitanceWitness result;
+    result.parameters=DecodeNativeTrainingCapacitance(object["native_state"].toObject());
+    result.modelRevision=object["model_revision"].toString().toStdString();
+    result.modelIdentityJson=QJsonDocument(object["model"].toObject()).toJson(QJsonDocument::Compact).toStdString();
+    result.nativeStateJson=QJsonDocument(object["native_state"].toObject()).toJson(QJsonDocument::Compact).toStdString();
+    result.storageImagesJson=QJsonDocument(object["storage_images"].toArray()).toJson(QJsonDocument::Compact).toStdString();
+    if(EncodeNativeTrainingCapacitanceWitness(result)!=object)
+        throw std::invalid_argument("noncanonical_native_training_capacitance_witness");
+    return result;
 }
 std::string NativeTrainingCapacitanceWitnessId(const TrainingCapacitanceWitness& witness)
 {

@@ -104,6 +104,10 @@ public:
     std::size_t ModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
     const BoundedTrainingConfig& Configuration() const { return plan.search; }
     const std::optional<NativeTrainingCapacitanceHistory>& CapacitanceHistory() const {return capacitanceHistory;}
+    // Install only the portable completed/stopped boundary evidence after
+    // normal proof replay and physical import. Never restores a search object.
+    void RestoreCapacitanceBoundary(NativeTrainingCapacitanceHistory history,
+        const std::string& actualModelRevision,const QJsonObject& actualState);
 private:
     NativeTrainingState state=NativeTrainingState::Idle;
     TrainingStatus outcome=TrainingStatus::Searching;
@@ -133,4 +137,6 @@ private:
     void ValidateTrialCapacitance(const NativeTrainingAdapter& adapter,const NativeProbeResult& result);
 };
 const char* NativeTrainingStateName(NativeTrainingState state);
+void ValidateNativeTrainingCapacitanceBoundary(const NativeTrainingCapacitanceHistory& history,
+    const NativeTrainingService& service,const std::string& actualModelRevision,const QJsonObject& actualState);
 }
