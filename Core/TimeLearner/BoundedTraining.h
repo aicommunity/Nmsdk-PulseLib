@@ -2,6 +2,7 @@
 #include "FinalVerification.h"
 #include "TrainingParameters.h"
 #include "ResistanceDomain.h"
+#include "TrainingCapacitance.h"
 #include <memory>
 
 namespace NMSDK::TimeLearner {
@@ -33,6 +34,7 @@ struct TrainingAction {
     std::string runId,trialId,baseModelRevision;
     std::vector<InputParameters> parameters;
     bool finalVerification=false;
+    std::optional<TrainingCapacitance> capacitance={};
 };
 struct CandidateEvidence {
     std::size_t inputIndex=0,modelEpoch=0;
@@ -43,6 +45,7 @@ struct CandidateEvidence {
     double parameterChangeCost=0.;
     bool withinTiming=false,withinAmplitude=false;
     std::vector<InputParameters> fullParameters;
+    std::optional<TrainingCapacitance> capacitance={};
 };
 struct TrainingRejection { std::string trialId,reason; };
 struct CandidateRepeatEvidence {
@@ -55,6 +58,7 @@ struct CandidateRepeatEvidence {
     bool withinTiming=false,withinAmplitude=false;
     bool complete=true;
     std::string reason="required_measurements_collected";
+    std::optional<TrainingCapacitance> capacitance={};
 };
 // Shared preflight before paying for reference measurements. Uses the same
 // bounds/physical-bank legality and tolerances as the actual decision session.
@@ -70,10 +74,11 @@ public:
     // Standalone callers may declare their own physical-domain responsibility.
     // Native N1 service always requests the explicit derived-domain actions.
     BoundedTrainingSession(CapturedReferences references,BoundedTrainingConfig config,
-                           std::vector<InputParameters> initial,bool requireResistanceDomains=false);
+                           std::vector<InputParameters> initial,bool requireResistanceDomains=false,
+                           std::optional<TrainingCapacitance> initialCapacitance={});
     std::optional<TrainingAction> NextAction();
     void Applied(std::size_t actionSerial,const std::vector<InputParameters>& effective,
-                 const std::string& actualModelRevision);
+                 const std::string& actualModelRevision,std::optional<TrainingCapacitance> effectiveCapacitance={});
     void DeclineEdit(std::size_t actionSerial,const std::string& reason,const std::string& unchangedModelRevision);
     void AssessedDomain(std::size_t actionSerial,const ResistanceDomainAssessment& assessment,
                         const std::string& unchangedModelRevision);
@@ -90,6 +95,7 @@ public:
     const std::vector<CandidateRepeatEvidence>& CandidateRepeats() const { return candidateRepeats; }
     const std::vector<ResistanceDomainAssessment>& Domains() const { return domains; }
     const std::vector<InputParameters>& Parameters() const { return current; }
+    const std::optional<TrainingCapacitance>& Capacitance() const { return currentCapacitance; }
     const std::string& ModelRevision() const { return revision; }
     std::size_t ModelEpoch() const { return epoch; }
     std::size_t IssuedProbes() const { return probes; }
@@ -102,6 +108,7 @@ private:
     std::string stopReason;
     Phase phase=Phase::Candidate;
     std::vector<InputParameters> current,background;
+    std::optional<TrainingCapacitance> currentCapacitance,backgroundCapacitance;
     std::vector<std::size_t> order;
     std::vector<int> lengths,counts;
     std::vector<double> resistances;
