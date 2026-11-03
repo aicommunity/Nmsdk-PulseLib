@@ -9,12 +9,17 @@ struct NativeCapacitanceCorrection {
     QJsonObject baseline;
     std::map<std::string,double> membraneScales;
     double maximumRelativeChange=0.;
+    // Schema 2 parameter state retains learned scales of removed membranes.
+    // They are never applied until native geometry contains that path again.
+    std::map<std::string,double> dormantMembraneScales;
 };
 struct NativeCapacitanceEditResult {
     NativeEditStatus status=NativeEditStatus::Rejected;
     std::string reason,beforeRevision,afterRevision;
     bool modelMayHaveChanged=false;
     QJsonObject appliedChannels;
+    // Prepared and validated on the preview before changing the live graph.
+    QJsonObject capacitanceState;
 };
 // Immutable per-channel effective C0, including independently configured LT,
 // soma, Exc and Inh channels. No parent default or arbitrary fallback.
@@ -40,4 +45,6 @@ void ValidateAppliedNativeCapacitanceState(const NativeProbeBindings& bindings,
 NativeCapacitanceEditResult ApplyNativeCapacitanceScale(NativeProbeExecutor& executor,
     const NativeProbeBindings& bindings,const QJsonObject& baseline,
     const std::map<std::string,double>& membraneScales,double maximumRelativeChange);
+NativeCapacitanceEditResult ApplyNativeCapacitanceScale(NativeProbeExecutor& executor,
+    const NativeProbeBindings& bindings,const NativeCapacitanceCorrection& correction);
 }

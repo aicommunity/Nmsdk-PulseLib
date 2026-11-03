@@ -803,7 +803,9 @@ public: // Methods
  TimeLearner::NativeModelBuildResult AdoptNativeModel(TimeLearner::NativeModelSpec specification);
  QJsonObject ExportNativeLearnedState(const std::string& implementationId);
  QJsonObject ExportNativeLearnedState(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance);
- QJsonObject ImportedNativeCapacitanceState() const {return NativeLearnedCapacitanceState;}
+ QJsonObject OwnedNativeCapacitanceState() const {return NativeLearnedCapacitanceState;}
+ // Compatibility alias: ownership now also starts at a successful bound edit.
+ QJsonObject ImportedNativeCapacitanceState() const {return OwnedNativeCapacitanceState();}
  TimeLearner::NativeModelBuildResult ImportNativeLearnedState(const QJsonObject& package,const std::string& implementationId);
  // Frozen recognition has no installed training certificate; import is explicit.
  bool HasNativeRecognitionState() const {return bool(NativeRecognition);}

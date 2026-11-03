@@ -25,6 +25,8 @@ struct NativeEditResult {
     bool graphWasReplaced=false;
     // Only committed bound C candidates return an extended immutable C0 map.
     QJsonObject capacitanceBaseline;
+    // Complete prospective C0/scales/revision, validated before live commit.
+    QJsonObject capacitanceState;
 };
 struct IntegrationChannelBound {
     std::string path;
