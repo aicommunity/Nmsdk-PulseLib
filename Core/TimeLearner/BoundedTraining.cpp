@@ -671,13 +671,15 @@ void BoundedTrainingSession::Stop(TrainingStatus terminal,const std::string& dia
 void BoundedTrainingSession::ExternalStop()
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
-    if(verification)verification->ExternalStop();Stop(TrainingStatus::ExternalStop);
+    if(verification){verification->ExternalStop();}
+    Stop(TrainingStatus::ExternalStop);
 }
 
 void BoundedTrainingSession::ExhaustBudget()
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
-    if(verification)verification->ExhaustBudget();Stop(TrainingStatus::BudgetExhausted,"adapter_execution_budget_exhausted");
+    if(verification){verification->ExhaustBudget();}
+    Stop(TrainingStatus::BudgetExhausted,"adapter_execution_budget_exhausted");
 }
 
 const std::optional<TrainingCertificate>& BoundedTrainingSession::Certificate() const
