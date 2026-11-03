@@ -1,3 +1,30 @@
+# C₀ owner: подтверждённый normal/ASan scope, 03.11
+
+Production Core30495d143795022ad444bf290d2ac30b7e140199 проверен:
+
+| Контроль | Результат | Evidence root commit |
+|---|---|---|
+| Normal native + independent readers |43/43 +26/26 PASS|7ec395554f0f8d506c08b587ba130025d0af1719|
+| ASan native + independent readers |43/43 +26/26 PASS|82f205d733dc64513ff3dd22ede7df3f9ab7a445|
+
+Normal primary1062 members и corrected reader11 members проверены независимо;
+normal C++/CMake/gitlinks совпадают с rootc63d1b7b9c08c7542398ca944bcc7cf22e5ea2b4.
+ASan выполнен непосредственно на этом root:1073 members/7814429 compressed bytes
+проверены, libasan.so.8 подтверждён actual loaded-files mapping. detect_leaks=0;
+проверка утечек не заявляется. Исправленный отрицательный Python control удаляет
+реальную nonunit correction; прежний неуспех сохранён, numerical data не исправлялись.
+
+Scope: Classic/Branch N0/N1,2k/20k native edits/bounds, joint C, rollback, dormant
+history, completed/stopped transfer, frozen/fresh-process responses в заявленных43
+cases. Это готовность к отдельной приёмке C₀ ownership/transport, не полные этапы
+4–8, не automatic C-search и не качество распознавания. Новые facade/witness/service
+APIs, tracked history и model/configuration schema3 после30495 имеют собственную
+неоконченную проверку и этим результатом не принимаются. Report/cache/selected
+waveform материалы имеют отдельный source scope в корневом CapacitanceOwnership.
+
+Ниже сохранён технический контракт; CapturedPerInput, tolerances и lifecycle
+Build/Reset/Calculate этим подэтапом не меняются.
+
 # C₀ owner: кандидат после explicit API
 
 Первый успешный bound edit сохраняет полное состояние C₀/scales в learner.
