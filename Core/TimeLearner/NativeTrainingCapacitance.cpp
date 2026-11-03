@@ -70,19 +70,20 @@ std::optional<TrainingCapacitanceWitness> ReadNativeTrainingCapacitanceWitness(
     const auto source=bindings.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     Require(bool(source),"missing_training_capacitance_witness_source");
     const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
-    const auto before=NmsdkTools::IdentifyModel(bindings.neuron,ports);
+    RDK::UEPtr<RDK::UContainer> live(bindings.neuron.Get());
+    const auto before=NmsdkTools::IdentifyModel(live,ports);
     Require(before["valid"].toBool(),"invalid_training_capacitance_witness_identity");
     std::vector<std::string> roots;
     for(const auto& definition:owned["baseline"].toObject()["storage_images"].toArray())
         roots.push_back(definition.toObject()["name"].toString().toStdString());
-    const auto images=NmsdkTools::CaptureModelImageDefinitions(bindings.neuron,ports,roots);
+    const auto images=NmsdkTools::CaptureModelImageDefinitions(live,ports,roots);
     // Capture the real registry, including baseline-only Dataset/growth images.
     // A copy of baseline definitions would not establish current storage physics.
     Require(NmsdkTools::ModelImageDefinitionsFingerprint(images)==
         owned["baseline"].toObject()["storage_images_sha256"].toString(),
         "training_capacitance_witness_storage_changed");
     ValidateAppliedNativeCapacitanceState(bindings,*declaration,owned);
-    const auto after=NmsdkTools::IdentifyModel(bindings.neuron,ports);
+    const auto after=NmsdkTools::IdentifyModel(live,ports);
     Require(after==before,"training_capacitance_witness_model_changed");
     TrainingCapacitanceWitness result;result.parameters=*parameters;
     result.modelRevision=before["sha256"].toString().toStdString();
