@@ -18,6 +18,8 @@ struct CapacitanceSearchPolicy {
     double minimumScale=0.8,maximumScale=1.2;
     unsigned subdivisionDepth=2;
     std::size_t maximumContexts=5,maximumMembranes=1024;
+    // Total retained L/Ns/Rs seed entries, reserved equally among C contexts.
+    std::size_t maximumCursorElements=131072;
 };
 struct BoundedTrainingConfig {
     std::string runId,initialModelRevision;

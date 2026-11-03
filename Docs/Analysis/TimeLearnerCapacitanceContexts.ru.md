@@ -1,3 +1,9 @@
+Уточнение K1: Core9aad0f7f208c61c91f38d54bc92c939c642fab5b прошёл Off A/B137
+на каждой стороне и отдельный kernel147/147 на Elder. Root evidence
+9ab8a63a892e4ad780ebd19bf2dfeaef648a04f3, все52 members и357 Git source hashes
+сверены независимо. Это pure decision scope. Добавление aggregate seed budget
+ниже является следующим изменением, ещё ожидающим своей проверки.
+
 # Совместные кандидаты L/Ns/Rs/C: конечные чередующиеся контексты
 
 Статус: отдельная экспериментальная ветка, серверная проверка ожидается.
@@ -50,3 +56,13 @@ Root tests CapacitanceContexts (10) используют настоящий deci
 state/anchor/dormant, per-C N1 domains и их подмену, N0 repeats, положительный
 Exact только после all-input проверки, повреждение Branch anchor и остановки.
 Эти тестовые сигналы не являются физиологическим экспериментом.
+
+
+Дополнение бюджета: maximumCursorElements задаёт общий предел сохранённых
+элементов seed-массивов L/Ns/Rs, с равным резервом на фактически созданный
+контекст. Длины/Ns проверяются до reference probes, все исходные массивы —
+до копирования контекстов. N1-domain проверяет резерв перед каждым добавлением
+Rs, включая measured refinement. Исчерпание даёт BudgetExhausted с причиной
+capacitance_cursor_inventory_budget_exhausted, а не ошибку интегратора или
+PhysicalInfeasible. Это предел seed inventory; он не объявляется пределом
+всей памяти Rdk либо полных waveform артефактов.

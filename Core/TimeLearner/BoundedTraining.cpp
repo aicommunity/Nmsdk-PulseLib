@@ -92,10 +92,20 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
         if(!Finite(policy.minimumScale) || !Finite(policy.maximumScale) || policy.minimumScale<=0. ||
             policy.minimumScale>1. || policy.maximumScale<1. || policy.maximumScale<policy.minimumScale ||
             policy.subdivisionDepth>20 || policy.maximumContexts<2 || policy.maximumContexts>4096 ||
-            policy.maximumContexts>config.maximumCandidatesPerInput || !policy.maximumMembranes)
+            policy.maximumContexts>config.maximumCandidatesPerInput || !policy.maximumMembranes || !policy.maximumCursorElements)
             throw std::invalid_argument("invalid_capacitance_search_policy");
+        const auto contexts=1+CapacitanceSeedScales(policy.minimumScale,policy.maximumScale,1.,
+            policy.subdivisionDepth,policy.maximumContexts-1).size();
+        const auto reserve=policy.maximumCursorElements/contexts;
         for(std::size_t i=0;i+1<config.bounds.size();++i)
         {
+            const auto& bound=config.bounds[i];
+            const auto lengths=std::min(config.maximumCandidatesPerInput,
+                std::size_t(std::int64_t(bound.maximumLength)-bound.minimumLength+1));
+            const auto counts=config.normalization==Normalization::SynapseCount?
+                std::size_t(bound.maximumSynapses-bound.minimumSynapses+1):0;
+            if(lengths>reserve || counts>reserve-lengths)
+                throw std::invalid_argument("capacitance_cursor_inventory_exceeds_declared_budget");
             const auto maximum=std::int64_t(config.bounds[i].maximumLength)-
                 (protocol.routing==ProbeRouting::BranchSoloBurst?config.bounds[i+1].minimumLength:0);
             if(maximum>0 && std::uint64_t(maximum)>policy.maximumMembranes)
@@ -218,9 +228,14 @@ void BoundedTrainingSession::BeginInput()
     if(config.capacitanceSearch)
     {
         const auto& policy=*config.capacitanceSearch;
+        const auto scales=CapacitanceSeedScales(policy.minimumScale,policy.maximumScale,1.,
+            policy.subdivisionDepth,policy.maximumContexts-1);
+        const auto reserve=policy.maximumCursorElements/(1+scales.size());
+        if(cursor.lengths.size()>reserve || cursor.counts.size()>reserve-cursor.lengths.size() ||
+            cursor.resistances.size()>reserve-cursor.lengths.size()-cursor.counts.size())
+            throw std::invalid_argument("capacitance_cursor_inventory_exceeds_declared_budget");
         capacitanceContexts.push_back({}); // Preserve the unchanged full map.
-        for(double scale:CapacitanceSeedScales(policy.minimumScale,policy.maximumScale,1.,
-                policy.subdivisionDepth,policy.maximumContexts-1))
+        for(double scale:scales)
         {
             auto next=cursor;
             // A changed C requires a fresh N1 domain; it cannot use the
@@ -401,9 +416,19 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
     if(low>high)
     {rejected.push_back({{},"resistance_domain_outside_declared_box"});pending.reset();AdvanceDomainGeometry();AdvanceCapacitanceContext();return;}
     cursor.domainGeometry=pending->parameters;cursor.domainScope=assessment.previewModelRevision;cursor.resistances.clear();
+    const auto canAppend=[&] {
+        if(capacitanceContexts.empty())return true;
+        const auto reserve=config.capacitanceSearch->maximumCursorElements/capacitanceContexts.size();
+        return cursor.lengths.size()+cursor.counts.size()+cursor.resistances.size()<reserve;
+    };
+    const auto add=[&](double value) {
+        if(std::find(cursor.resistances.begin(),cursor.resistances.end(),value)!=cursor.resistances.end())return true;
+        if(!canAppend()){Stop(TrainingStatus::BudgetExhausted,"capacitance_cursor_inventory_budget_exhausted");return false;}
+        UniquePush(cursor.resistances,value);return true;
+    };
     const double original=background[pending->inputIndex].resistance;
-    if(original>=low && original<=high)UniquePush(cursor.resistances,original);
-    UniquePush(cursor.resistances,low);UniquePush(cursor.resistances,high);
+    if(original>=low && original<=high && !add(original))return;
+    if(!add(low) || !add(high))return;
     for(unsigned level=1;level<=config.resistanceSubdivisionDepth && cursor.resistances.size()<config.maximumCandidatesPerInput;++level)
     {
         const std::size_t denominator=std::size_t(1)<<level;
@@ -411,7 +436,7 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
         {
             const double fraction=double(numerator)/double(denominator);
             const double value=std::exp(std::log(low)+fraction*(std::log(high)-std::log(low)));
-            if(Finite(value) && value>=low && value<=high)UniquePush(cursor.resistances,value);
+            if(Finite(value) && value>=low && value<=high && !add(value))return;
         }
     }
     // All retained observations were validated against this session's fixed
@@ -435,6 +460,7 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
                 AmplitudeTolerance(config,references.Inputs().at(pending->inputIndex))))
         {
             cursor.resistances.erase(std::remove(cursor.resistances.begin(),cursor.resistances.end(),*refined),cursor.resistances.end());
+            if(!canAppend()){Stop(TrainingStatus::BudgetExhausted,"capacitance_cursor_inventory_budget_exhausted");return;}
             cursor.resistances.insert(cursor.resistances.begin(),*refined);
         }
     }
