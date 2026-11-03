@@ -6,6 +6,13 @@
 namespace NMSDK::TimeLearner {
 // Strict signed native parameter-state codec; does not claim live readback.
 TrainingCapacitance DecodeNativeTrainingCapacitance(const QJsonObject& state);
+// Explicit metadata-only setup operation. First bind captures actual untrimmed
+// child physics; repeat bind validates the existing owner without recapture.
+// The caller commits the returned state only after this function succeeds.
+QJsonObject PrepareNativeTrainingCapacitanceBinding(
+    const NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
+    const std::optional<NativeModelSpec>& declaration,const QJsonObject& owned,
+    double maximumRelativeChange);
 // Read the actual native owner at a legal physical boundary. Absence is
 // unknown/unbound, never an invented unit baseline. No capture or live writes.
 std::optional<TrainingCapacitance> ReadNativeTrainingCapacitance(

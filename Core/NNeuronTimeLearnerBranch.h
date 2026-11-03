@@ -810,6 +810,7 @@ public: // Methods
  std::vector<TimeLearner::InputParameters> ReadNativeParameters();
  // Complete native C0/scales bridge; no implicit baseline capture or C search.
  std::optional<TimeLearner::TrainingCapacitance> ReadNativeTrainingCapacitance();
+ QJsonObject BindNativeTrainingCapacitance(double maximumRelativeChange);
  TimeLearner::NativeEditResult ApplyNativeTrainingParameters(
      const std::vector<TimeLearner::InputParameters>& requested,
      const std::optional<TimeLearner::TrainingCapacitance>& capacitance);

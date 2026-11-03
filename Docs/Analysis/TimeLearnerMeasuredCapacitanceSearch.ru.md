@@ -78,3 +78,28 @@ commit (полный model hash), проверяют неизменность li
 вычислить Rs bounds по тому же preview. Эти изменения ещё не собирались и не
 исполнялись; C-trim On и service dispatch остаются выключенными. Нужны отдельный
 SDK gate после bridge H3, readers и ASan; до этого merge в develop запрещён.
+
+
+## Explicit C₀ binding до первого search action (подготовлено)
+
+BindNativeTrainingCapacitance(maximumRelativeChange) — отдельная metadata-only
+операция setup, не физический edit. При первом вызове требуется Idle controller
+без references/search, декларация модели и legal native probe boundary.
+CaptureBoundNativeCapacitanceBaseline читает фактические C/physics дочерних
+каналов, graph и storage definitions; строится unit map всех известных путей.
+Encode/ValidateApplied и полный typed codec завершаются до присваивания owner.
+Не вызываются Build/Reset/Calculate/Default, не меняются модель, scheduler,
+prototypes, динамика или model epoch. Во время recognition и чужого training
+управления bind запрещён. Ошибки не передаются через lifecycle bool.
+
+Повторный вызов валидирует и возвращает существующий owner; он не recapture
+текущие уже trimmed C и не меняет policy. Для импорта/retarget нельзя сбрасывать
+owner и этим выдумывать утраченную историческую C₀. First bind описывает явно
+объявленную текущую исходную модель; он не доказывает её исторический cold start.
+
+Root NativeTrainingCapacitanceBinding содержит4 реальные Classic/Branch ×N0/N1
+fixtures с heterogeneous C. Проверяются initial Idle/no tick/no edit/lifecycle
+change, full graph identity при unit bind, повторный bind и отказ NaN/policy
+без изменения модели, а также retained original C₀ после реального trim и
+повторного bind. Сохраняются полные snapshots и actual probe/input/soma traces.
+Сборка/проверки pending; до их приёмки setup не подключён к NativeTrainingService.

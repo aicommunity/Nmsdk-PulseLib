@@ -1,6 +1,7 @@
 #include "NativeTrainingCapacitance.h"
 #include "ModelIdentity.h"
 #include <QJsonDocument>
+#include <cmath>
 #include <stdexcept>
 
 namespace NMSDK::TimeLearner {
@@ -56,6 +57,37 @@ std::optional<TrainingCapacitance> ReadNativeTrainingCapacitance(
     Require(bool(declaration),"training_capacitance_requires_model_declaration");
     ValidateAppliedNativeCapacitanceState(bindings,*declaration,owned);
     return DecodeNativeTrainingCapacitance(owned);
+}
+QJsonObject PrepareNativeTrainingCapacitanceBinding(
+    const NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
+    const std::optional<NativeModelSpec>& declaration,const QJsonObject& owned,
+    double maximumRelativeChange)
+{
+    Boundary(executor);
+    Require(std::isfinite(maximumRelativeChange) && maximumRelativeChange>=0.,
+        "invalid_training_capacitance_binding_policy");
+    Require(bool(declaration),"training_capacitance_requires_model_declaration");
+    if(!owned.isEmpty())
+    {
+        const auto current=ReadNativeTrainingCapacitance(executor,bindings,declaration,owned);
+        Require(current->maximumRelativeChange==maximumRelativeChange,
+            "training_capacitance_origin_or_policy_changed");
+        return owned;
+    }
+    NativeCapacitanceCorrection correction;
+    correction.baseline=CaptureBoundNativeCapacitanceBaseline(executor,bindings,*declaration);
+    correction.maximumRelativeChange=maximumRelativeChange;
+    const auto channels=correction.baseline["channels"].toObject();
+    for(auto it=channels.begin();it!=channels.end();++it)
+    {
+        const auto path=it.key().toStdString();const auto separator=path.find('.');
+        if(path.starts_with("Dendrite") && separator!=std::string::npos)
+            correction.membraneScales.emplace(path.substr(0,separator),1.);
+    }
+    const auto state=EncodeNativeCapacitanceState(correction,correction.baseline["model_revision"].toString().toStdString());
+    ValidateAppliedNativeCapacitanceState(bindings,*declaration,state);
+    DecodeNativeTrainingCapacitance(state); // Validate the complete controller map too.
+    return state;
 }
 std::optional<NativeCapacitanceCorrection> ResolveNativeTrainingCapacitance(
     const NativeProbeExecutor& executor,const NativeProbeBindings& bindings,

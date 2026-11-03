@@ -5052,6 +5052,19 @@ std::optional<TimeLearner::TrainingCapacitance> NNeuronTimeLearnerBranch::ReadNa
  return TimeLearner::ReadNativeTrainingCapacitance(NativeProbeControl,NativeProbeModelBindings(),
   NativeModelDeclaration,NativeLearnedCapacitanceState);
 }
+QJsonObject NNeuronTimeLearnerBranch::BindNativeTrainingCapacitance(double maximumRelativeChange)
+{
+ if(NativeRecognition)throw std::logic_error("native_recognition_model_is_frozen");
+ if(NativeTrainingOwned && TimeLearner::NativeTrainingIsActive(NativeTrainingControl) && !NativeTrainingEditDepth)
+  throw std::logic_error("native_training_owns_capacitance_binding");
+ if(NativeLearnedCapacitanceState.isEmpty() &&
+    (NativeTrainingControl.State()!=TimeLearner::NativeTrainingState::Idle || NativeTrainingControl.References() || NativeTrainingControl.Search()))
+  throw std::logic_error("training_capacitance_binding_requires_initial_model_boundary");
+ const auto prepared=TimeLearner::PrepareNativeTrainingCapacitanceBinding(NativeProbeControl,NativeProbeModelBindings(),
+  NativeModelDeclaration,NativeLearnedCapacitanceState,maximumRelativeChange);
+ NativeLearnedCapacitanceState=prepared;
+ return NativeLearnedCapacitanceState;
+}
 TimeLearner::NativeEditResult NNeuronTimeLearnerBranch::ApplyNativeTrainingParameters(
  const std::vector<TimeLearner::InputParameters>& requested,
  const std::optional<TimeLearner::TrainingCapacitance>& capacitance)
