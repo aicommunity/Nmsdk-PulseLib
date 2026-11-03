@@ -1,5 +1,7 @@
 #include "NativeTrainingCapacitance.h"
 #include "ModelIdentity.h"
+#include "ModelArchive.h"
+#include "../NPulseGeneratorTransit.h"
 #include <QJsonDocument>
 #include <cmath>
 #include <stdexcept>
@@ -57,6 +59,37 @@ std::optional<TrainingCapacitance> ReadNativeTrainingCapacitance(
     Require(bool(declaration),"training_capacitance_requires_model_declaration");
     ValidateAppliedNativeCapacitanceState(bindings,*declaration,owned);
     return DecodeNativeTrainingCapacitance(owned);
+}
+std::optional<TrainingCapacitanceWitness> ReadNativeTrainingCapacitanceWitness(
+    const NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
+    const std::optional<NativeModelSpec>& declaration,const QJsonObject& owned)
+{
+    const auto parameters=ReadNativeTrainingCapacitance(executor,bindings,declaration,owned);
+    if(!parameters)return {};
+    Require(bool(bindings.neuron) && bool(bindings.dataset),"missing_training_capacitance_witness_graph");
+    const auto source=bindings.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+    Require(bool(source),"missing_training_capacitance_witness_source");
+    const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
+    const auto before=NmsdkTools::IdentifyModel(bindings.neuron,ports);
+    Require(before["valid"].toBool(),"invalid_training_capacitance_witness_identity");
+    std::vector<std::string> roots;
+    for(const auto& definition:owned["baseline"].toObject()["storage_images"].toArray())
+        roots.push_back(definition.toObject()["name"].toString().toStdString());
+    const auto images=NmsdkTools::CaptureModelImageDefinitions(bindings.neuron,ports,roots);
+    // Capture the real registry, including baseline-only Dataset/growth images.
+    // A copy of baseline definitions would not establish current storage physics.
+    Require(NmsdkTools::ModelImageDefinitionsFingerprint(images)==
+        owned["baseline"].toObject()["storage_images_sha256"].toString(),
+        "training_capacitance_witness_storage_changed");
+    ValidateAppliedNativeCapacitanceState(bindings,*declaration,owned);
+    const auto after=NmsdkTools::IdentifyModel(bindings.neuron,ports);
+    Require(after==before,"training_capacitance_witness_model_changed");
+    TrainingCapacitanceWitness result;result.parameters=*parameters;
+    result.modelRevision=before["sha256"].toString().toStdString();
+    result.modelIdentityJson=QJsonDocument(before).toJson(QJsonDocument::Compact).toStdString();
+    result.nativeStateJson=QJsonDocument(owned).toJson(QJsonDocument::Compact).toStdString();
+    result.storageImagesJson=QJsonDocument(images).toJson(QJsonDocument::Compact).toStdString();
+    return result;
 }
 QJsonObject PrepareNativeTrainingCapacitanceBinding(
     const NativeProbeExecutor& executor,const NativeProbeBindings& bindings,

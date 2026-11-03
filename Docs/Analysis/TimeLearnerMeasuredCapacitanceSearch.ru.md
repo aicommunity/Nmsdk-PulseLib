@@ -131,3 +131,27 @@ snapshots используют тот же способ. Это actual registry 
 не имеет live consumer внутри neuron, всё равно означает profile mismatch.
 Код и snapshots требуют отдельного SDK/runtime gate; научный/algorithm verdict
 из отсутствовавших witnesses не выводится. C-trim/service остаются выключенными.
+
+## Per-revision witness API (подготовлено, runtime pending)
+
+`ReadNativeTrainingCapacitanceWitness` обоих learner использует общий read-only
+producer. Unbound owner возвращает None. На legal boundary валидируются полный
+native parameter state, actual C каждого канала и applied model revision.
+Затем снимаются полная semantic identity и actual storage closure по всем именам
+baseline (включая stimulus/dataset, dormant и growth-only images). Проверяется
+совпадение storage semantics с исходным профилем, повторно валидируется native
+state и сверяется identity до/после capture. Никаких Default/Build/Reset/Calculate,
+замен C₀, изменений controller epoch или физических параметров не выполняется.
+
+`TrainingCapacitanceWitness` содержит typed full map, model revision и opaque
+JSON identity/native state/storage definitions. Это boundary parameter evidence,
+не dynamics checkpoint и не certificate сходимости. Pure controller не разбирает
+native JSON. API пока не подключён к NativeTrainingService или summary schema3:
+нужны registry per-revision witnesses и отдельная независимая проверка истории.
+
+Root bridge tests дополняются сопоставлением каждого witness с независимым
+readback unbound/captured/growth/shrink/rejection/future-growth frames; lifecycle,
+epoch и граф должны сохраняться. Fault injection меняет actual child C при
+неизменном owner: witness обязан отказать без ремонта модели. Во время настоящей
+scheduled probe чтение также обязано отказать. Эти новые assertions ещё не
+выполнялись на сервере; текущий immutable H5 проверяет предыдущий snapshot.

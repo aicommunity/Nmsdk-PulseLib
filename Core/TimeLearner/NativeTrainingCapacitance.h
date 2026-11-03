@@ -18,6 +18,11 @@ QJsonObject PrepareNativeTrainingCapacitanceBinding(
 std::optional<TrainingCapacitance> ReadNativeTrainingCapacitance(
     const NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
     const std::optional<NativeModelSpec>& declaration,const QJsonObject& owned);
+// Capture actual graph and registry together with the validated parameter owner.
+// Unbound is unknown. Never captures/replaces C0 or drives native lifecycle.
+std::optional<TrainingCapacitanceWitness> ReadNativeTrainingCapacitanceWitness(
+    const NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
+    const std::optional<NativeModelSpec>& declaration,const QJsonObject& owned);
 // Translate the complete absolute controller map back to the existing joint
 // native editor. Current C0 witnesses stay owned by the component; the editor
 // partitions active/dormant paths on its actual prospective graph and captures

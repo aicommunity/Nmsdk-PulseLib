@@ -13,6 +13,14 @@ struct TrainingCapacitance {
     std::map<std::string,double> membraneScales;
     bool operator==(const TrainingCapacitance&) const=default;
 };
+// Immutable boundary evidence for one actual model revision. JSON remains
+// opaque to the pure controller; the native producer and independent reader
+// validate identity, C0, applied channels and the actual storage closure.
+// This is neither a dynamics checkpoint nor a convergence certificate.
+struct TrainingCapacitanceWitness {
+    TrainingCapacitance parameters;
+    std::string modelRevision,modelIdentityJson,nativeStateJson,storageImagesJson;
+};
 void ValidateTrainingCapacitance(const std::optional<TrainingCapacitance>& state);
 // Unit scales of newly discovered native paths do not change a historical
 // correction. Missing non-unit history, origin or policy changes do.

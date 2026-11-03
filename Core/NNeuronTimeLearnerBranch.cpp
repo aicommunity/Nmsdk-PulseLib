@@ -5052,6 +5052,11 @@ std::optional<TimeLearner::TrainingCapacitance> NNeuronTimeLearnerBranch::ReadNa
  return TimeLearner::ReadNativeTrainingCapacitance(NativeProbeControl,NativeProbeModelBindings(),
   NativeModelDeclaration,NativeLearnedCapacitanceState);
 }
+std::optional<TimeLearner::TrainingCapacitanceWitness> NNeuronTimeLearnerBranch::ReadNativeTrainingCapacitanceWitness()
+{
+ return TimeLearner::ReadNativeTrainingCapacitanceWitness(NativeProbeControl,NativeProbeModelBindings(),
+  NativeModelDeclaration,NativeLearnedCapacitanceState);
+}
 QJsonObject NNeuronTimeLearnerBranch::BindNativeTrainingCapacitance(double maximumRelativeChange)
 {
  if(NativeRecognition)throw std::logic_error("native_recognition_model_is_frozen");
