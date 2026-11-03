@@ -179,6 +179,10 @@ static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeMod
         capacitanceState=EncodeNativeCapacitanceState(*capacitance,revision);
         NativeProbeBindings bindings;bindings.neuron=neuron;bindings.dataset=dataset;
         ValidateAppliedNativeCapacitanceState(bindings,declaration,capacitanceState);
+        // Dormant heterogeneous channels can be the only consumers of an
+        // original image. Retain its definition for a fresh-process regrowth.
+        for(const auto& definition:capacitance->baseline["storage_images"].toArray())
+            additional.push_back(definition.toObject()["name"].toString().toStdString());
     }
     const auto archive=NmsdkTools::ExportModelArchive(neuron,metadata,ports,additional);
     QJsonObject package{{"kind",stopped?"timelearner_stopped_state":"timelearner_completed_state"},{"schema_version",1},{"dynamic_checkpoint",false},{"state_kind",stateKind},
