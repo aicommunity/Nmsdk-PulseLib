@@ -1,7 +1,7 @@
 #include "NativeTrainingCapacitance.h"
 #include "ModelIdentity.h"
 #include "ModelArchive.h"
-#include "../NPulseGeneratorTransit.h"
+#include "../NPulseGenerator.h"
 #include <QJsonDocument>
 #include <cmath>
 #include <stdexcept>
