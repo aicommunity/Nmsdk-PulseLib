@@ -88,10 +88,13 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
 }
 
 BoundedTrainingSession::BoundedTrainingSession(CapturedReferences refs,BoundedTrainingConfig cfg,
-                                             std::vector<InputParameters> initial,bool physicalDomains)
+                                             std::vector<InputParameters> initial,bool physicalDomains,
+                                             std::optional<TrainingCapacitance> initialCapacitance)
     :references(std::move(refs)),config(std::move(cfg)),current(std::move(initial)),
+     currentCapacitance(std::move(initialCapacitance)),
      epoch(config.initialModelEpoch),revision(config.initialModelRevision)
 {
+    ValidateTrainingCapacitance(currentCapacitance);
     requireResistanceDomains=physicalDomains && config.normalization==Normalization::TipResistance;
     ValidateBoundedTrainingInputs(references.Protocol(),config,current);
     if(current.size()!=references.Inputs().size())
@@ -142,43 +145,44 @@ bool BoundedTrainingSession::PrepareCandidate(std::vector<InputParameters>& para
 void BoundedTrainingSession::BeginInput()
 {
     const auto index=order.at(position);const auto& b=config.bounds[index];const auto& p=current[index];
-    background=current;lengths.clear();counts.clear();resistances.clear();best.reset();anchor.reset();anchorTrial.clear();
-    candidateMeasurements.clear();lengthMeasurements.clear();n0Priority.clear();issuedN0Candidates.clear();
-    lengthIndex=normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
-    initialCandidatePending=requireResistanceDomains;domainReady=false;domainLength=domainNormalizer=domainVariant=0;
-    domainGeometry.clear();domainScope.clear();visitedDomainCandidates.clear();
-    candidateResistanceScope.clear();resistanceMeasurements.clear();
+    background=current;cursor.lengths.clear();cursor.counts.clear();cursor.resistances.clear();best.reset();anchor.reset();anchorTrial.clear();
+    backgroundCapacitance=currentCapacitance;
+    candidateMeasurements.clear();cursor.lengthMeasurements.clear();cursor.n0Priority.clear();cursor.issuedN0Candidates.clear();
+    cursor.lengthIndex=cursor.normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
+    cursor.initialCandidatePending=requireResistanceDomains;cursor.domainReady=false;cursor.domainLength=cursor.domainNormalizer=cursor.domainVariant=0;
+    cursor.domainGeometry.clear();cursor.domainScope.clear();cursor.visitedDomainCandidates.clear();
+    cursor.candidateResistanceScope.clear();cursor.resistanceMeasurements.clear();
     // Nearest integers first. Enumeration is bounded by the declared candidate
     // budget, even for a very large physical length range.
-    UniquePush(lengths,p.length);
-    for(long long distance=1;lengths.size()<config.maximumCandidatesPerInput;++distance)
+    UniquePush(cursor.lengths,p.length);
+    for(long long distance=1;cursor.lengths.size()<config.maximumCandidatesPerInput;++distance)
     {
         const long long up=static_cast<long long>(p.length)+distance,down=static_cast<long long>(p.length)-distance;
         if(up>b.maximumLength && down<b.minimumLength)break;
-        if(up<=b.maximumLength)UniquePush(lengths,int(up));
-        if(down>=b.minimumLength && lengths.size()<config.maximumCandidatesPerInput)UniquePush(lengths,int(down));
+        if(up<=b.maximumLength)UniquePush(cursor.lengths,int(up));
+        if(down>=b.minimumLength && cursor.lengths.size()<config.maximumCandidatesPerInput)UniquePush(cursor.lengths,int(down));
     }
     if(config.normalization==Normalization::SynapseCount)
     {
-        UniquePush(counts,p.synapses);
-        for(int distance=1;counts.size()<std::size_t(b.maximumSynapses-b.minimumSynapses+1);++distance)
+        UniquePush(cursor.counts,p.synapses);
+        for(int distance=1;cursor.counts.size()<std::size_t(b.maximumSynapses-b.minimumSynapses+1);++distance)
         {
-            if(p.synapses+distance<=b.maximumSynapses)UniquePush(counts,p.synapses+distance);
-            if(p.synapses-distance>=b.minimumSynapses)UniquePush(counts,p.synapses-distance);
+            if(p.synapses+distance<=b.maximumSynapses)UniquePush(cursor.counts,p.synapses+distance);
+            if(p.synapses-distance>=b.minimumSynapses)UniquePush(cursor.counts,p.synapses-distance);
         }
     }
     else if(!requireResistanceDomains)
     {
-        UniquePush(resistances,p.resistance);
-        UniquePush(resistances,b.minimumResistance);UniquePush(resistances,b.maximumResistance);
-        for(unsigned level=1;level<=config.resistanceSubdivisionDepth && resistances.size()<config.maximumCandidatesPerInput;++level)
+        UniquePush(cursor.resistances,p.resistance);
+        UniquePush(cursor.resistances,b.minimumResistance);UniquePush(cursor.resistances,b.maximumResistance);
+        for(unsigned level=1;level<=config.resistanceSubdivisionDepth && cursor.resistances.size()<config.maximumCandidatesPerInput;++level)
         {
             const std::size_t denominator=std::size_t(1)<<level;
-            for(std::size_t numerator=1;numerator<denominator && resistances.size()<config.maximumCandidatesPerInput;numerator+=2)
+            for(std::size_t numerator=1;numerator<denominator && cursor.resistances.size()<config.maximumCandidatesPerInput;numerator+=2)
             {
                 const double fraction=double(numerator)/double(denominator);
                 const double value=std::exp(std::log(b.minimumResistance)+fraction*(std::log(b.maximumResistance)-std::log(b.minimumResistance)));
-                if(Finite(value) && value>=b.minimumResistance && value<=b.maximumResistance)UniquePush(resistances,value);
+                if(Finite(value) && value>=b.minimumResistance && value<=b.maximumResistance)UniquePush(cursor.resistances,value);
             }
         }
     }
@@ -192,44 +196,45 @@ bool BoundedTrainingSession::NextCandidate(std::vector<InputParameters>& paramet
         if(!PrepareCandidate(candidate))return false;
         if(n0)
         {
-            if(std::find(issuedN0Candidates.begin(),issuedN0Candidates.end(),candidate)!=issuedN0Candidates.end())return false;
-            issuedN0Candidates.push_back(candidate);
+            if(std::find(cursor.issuedN0Candidates.begin(),cursor.issuedN0Candidates.end(),candidate)!=cursor.issuedN0Candidates.end())return false;
+            cursor.issuedN0Candidates.push_back(candidate);
         }
         return true;
     };
     // These are proposals from completed measurements, never assumed solutions.
     // Required repeats occur inside Consume and bypass candidate deduplication.
-    while(!n0Priority.empty())
+    while(!cursor.n0Priority.empty())
     {
-        parameters=std::move(n0Priority.front());n0Priority.erase(n0Priority.begin());
+        parameters=std::move(cursor.n0Priority.front());cursor.n0Priority.erase(cursor.n0Priority.begin());
         if(issue(parameters))return true;
     }
-    const std::size_t normalizers=n0?counts.size():resistances.size();
+    const std::size_t normalizers=n0?cursor.counts.size():cursor.resistances.size();
     // First evaluate the current normalizer at each length; then the next
     // normalizer at each length. No monotonicity or bracket is inferred.
-    while(normalizerIndex<normalizers)
+    while(cursor.normalizerIndex<normalizers)
     {
-        if(lengthIndex==lengths.size()){lengthIndex=0;++normalizerIndex;continue;}
-        parameters=background;parameters[index].length=lengths[lengthIndex++];
-        if(config.normalization==Normalization::SynapseCount)parameters[index].synapses=counts[normalizerIndex];
-        else parameters[index].resistance=resistances[normalizerIndex];
+        if(cursor.lengthIndex==cursor.lengths.size()){cursor.lengthIndex=0;++cursor.normalizerIndex;continue;}
+        parameters=background;parameters[index].length=cursor.lengths[cursor.lengthIndex++];
+        if(config.normalization==Normalization::SynapseCount)parameters[index].synapses=cursor.counts[cursor.normalizerIndex];
+        else parameters[index].resistance=cursor.resistances[cursor.normalizerIndex];
         if(issue(parameters))return true;
     }
     return false;
 }
 
 void BoundedTrainingSession::AdvanceDomainGeometry()
-{domainReady=false;if(++domainVariant==2){domainVariant=0;++domainLength;}}
+{cursor.domainReady=false;if(++cursor.domainVariant==2){cursor.domainVariant=0;++cursor.domainLength;}}
 
 void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& measurement)
 {
     if(restoringBest)return;
-    lengthMeasurements.push_back(measurement);
+    cursor.lengthMeasurements.push_back(measurement);
     const auto input=measurement.inputIndex;
     std::vector<MeasuredLengthPoint> points;
-    for(const auto& previous:lengthMeasurements)
+    for(const auto& previous:cursor.lengthMeasurements)
     {
-        if(previous.inputIndex!=input || previous.fullParameters.size()!=measurement.fullParameters.size())continue;
+        if(previous.inputIndex!=input || previous.fullParameters.size()!=measurement.fullParameters.size() ||
+            !EquivalentTrainingCapacitance(previous.capacitance,measurement.capacitance))continue;
         auto geometry=previous.fullParameters;
         geometry[input].length=measurement.parameters.length;
         if(geometry!=measurement.fullParameters)continue;
@@ -243,26 +248,26 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
     // Do not interrupt an assessed N1 geometry or bypass its domain checks.
     // The next geometry is still assessed/applied through the native adapter.
     // N0 uses its existing full-vector deduplication and repeated probes.
-    const std::size_t next=requireResistanceDomains?domainLength+1:lengthIndex;
-    if(next>lengths.size() || std::find(lengths.begin(),lengths.begin()+next,*proposal)!=lengths.begin()+next)return;
-    lengths.erase(std::remove(lengths.begin()+next,lengths.end(),*proposal),lengths.end());
-    lengths.insert(lengths.begin()+next,*proposal);
+    const std::size_t next=requireResistanceDomains?cursor.domainLength+1:cursor.lengthIndex;
+    if(next>cursor.lengths.size() || std::find(cursor.lengths.begin(),cursor.lengths.begin()+next,*proposal)!=cursor.lengths.begin()+next)return;
+    cursor.lengths.erase(std::remove(cursor.lengths.begin()+next,cursor.lengths.end(),*proposal),cursor.lengths.end());
+    cursor.lengths.insert(cursor.lengths.begin()+next,*proposal);
 }
 
 BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandidate(std::vector<InputParameters>& parameters)
 {
     const auto input=order.at(position);
-    if(initialCandidatePending)
+    if(cursor.initialCandidatePending)
     {
-        initialCandidatePending=false;parameters=background;
-        candidateResistanceScope.clear();
-        visitedDomainCandidates.push_back({revision,parameters});return DynamicCandidate::Candidate;
+        cursor.initialCandidatePending=false;parameters=background;
+        cursor.candidateResistanceScope.clear();
+        cursor.visitedDomainCandidates.push_back({revision,parameters});return DynamicCandidate::Candidate;
     }
-    while(domainLength<lengths.size())
+    while(cursor.domainLength<cursor.lengths.size())
     {
-        if(!domainReady)
+        if(!cursor.domainReady)
         {
-            auto geometry=background;geometry[input].length=lengths[domainLength];
+            auto geometry=background;geometry[input].length=cursor.lengths[cursor.domainLength];
             const bool branch=references.Protocol().routing==ProbeRouting::BranchSoloBurst;
             const bool locked=branch && geometry[input].length==geometry[input+1].length;
             if(locked)geometry[input].resistance=geometry[input+1].resistance;
@@ -280,7 +285,7 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
             // Earlier Branch inputs are not yet visited in reverse order.
             // Separate their bank before varying this Rs; downstream/anchor
             // banks remain fixed. The whole geometry is explicit in the action.
-            if(domainVariant==1)
+            if(cursor.domainVariant==1)
             {
                 if(!branch || locked || input==0 || geometry[input].length==std::numeric_limits<int>::max())
                 {AdvanceDomainGeometry();continue;}
@@ -289,18 +294,19 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
             }
             pending=TrainingAction{TrainingActionKind::ResistanceDomain,++serial,input,epoch,
                 config.runId,{},revision,std::move(geometry),false};
+            pending->capacitance=RestoreTrainingCapacitance(backgroundCapacitance,currentCapacitance);
             return DynamicCandidate::NeedDomain;
         }
-        while(domainNormalizer<resistances.size())
+        while(cursor.domainNormalizer<cursor.resistances.size())
         {
-            parameters=domainGeometry;parameters[input].resistance=resistances[domainNormalizer++];
+            parameters=cursor.domainGeometry;parameters[input].resistance=cursor.resistances[cursor.domainNormalizer++];
             if(!PrepareCandidate(parameters))continue;
-            const auto seen=std::find_if(visitedDomainCandidates.begin(),visitedDomainCandidates.end(),[&](const auto& item) {
-                return item.first==domainScope && item.second==parameters;
+            const auto seen=std::find_if(cursor.visitedDomainCandidates.begin(),cursor.visitedDomainCandidates.end(),[&](const auto& item) {
+                return item.first==cursor.domainScope && item.second==parameters;
             });
-            if(seen!=visitedDomainCandidates.end())continue;
-            visitedDomainCandidates.push_back({domainScope,parameters});
-            candidateResistanceScope=domainScope;return DynamicCandidate::Candidate;
+            if(seen!=cursor.visitedDomainCandidates.end())continue;
+            cursor.visitedDomainCandidates.push_back({cursor.domainScope,parameters});
+            cursor.candidateResistanceScope=cursor.domainScope;return DynamicCandidate::Candidate;
         }
         AdvanceDomainGeometry();
     }
@@ -315,7 +321,8 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
         throw std::logic_error("unrequested_resistance_domain");
     domains.push_back(assessment);
     if(assessment.modelMayHaveChanged || unchangedModelRevision!=revision || assessment.baseModelRevision!=revision ||
-        assessment.inputIndex!=pending->inputIndex || assessment.geometry!=pending->parameters)
+        assessment.inputIndex!=pending->inputIndex || assessment.geometry!=pending->parameters ||
+        assessment.capacitance!=pending->capacitance)
     {rejected.push_back({{},"resistance_domain_context_mismatch:"+assessment.reason});Stop(TrainingStatus::InvalidModel);return;}
     if(assessment.status==ResistanceDomainStatus::Unavailable)
     {rejected.push_back({{},"resistance_domain_unavailable:"+assessment.reason});pending.reset();AdvanceDomainGeometry();return;}
@@ -329,18 +336,18 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
     {rejected.push_back({{},"invalid_resistance_domain_interval"});Stop(TrainingStatus::InvalidModel);return;}
     if(low>high)
     {rejected.push_back({{},"resistance_domain_outside_declared_box"});pending.reset();AdvanceDomainGeometry();return;}
-    domainGeometry=pending->parameters;domainScope=assessment.previewModelRevision;resistances.clear();
+    cursor.domainGeometry=pending->parameters;cursor.domainScope=assessment.previewModelRevision;cursor.resistances.clear();
     const double original=background[pending->inputIndex].resistance;
-    if(original>=low && original<=high)UniquePush(resistances,original);
-    UniquePush(resistances,low);UniquePush(resistances,high);
-    for(unsigned level=1;level<=config.resistanceSubdivisionDepth && resistances.size()<config.maximumCandidatesPerInput;++level)
+    if(original>=low && original<=high)UniquePush(cursor.resistances,original);
+    UniquePush(cursor.resistances,low);UniquePush(cursor.resistances,high);
+    for(unsigned level=1;level<=config.resistanceSubdivisionDepth && cursor.resistances.size()<config.maximumCandidatesPerInput;++level)
     {
         const std::size_t denominator=std::size_t(1)<<level;
-        for(std::size_t numerator=1;numerator<denominator && resistances.size()<config.maximumCandidatesPerInput;numerator+=2)
+        for(std::size_t numerator=1;numerator<denominator && cursor.resistances.size()<config.maximumCandidatesPerInput;numerator+=2)
         {
             const double fraction=double(numerator)/double(denominator);
             const double value=std::exp(std::log(low)+fraction*(std::log(high)-std::log(low)));
-            if(Finite(value) && value>=low && value<=high)UniquePush(resistances,value);
+            if(Finite(value) && value>=low && value<=high)UniquePush(cursor.resistances,value);
         }
     }
     // All retained observations were validated against this session's fixed
@@ -351,22 +358,23 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
        assessment.sourceAmplitude==stimulus->amplitude)
     {
         std::vector<MeasuredResistancePoint> points;
-        for(const auto& [scope,measurement]:resistanceMeasurements)
+        for(const auto& [scope,measurement]:cursor.resistanceMeasurements)
         {
-            if(scope!=domainScope || measurement.fullParameters.size()!=domainGeometry.size())continue;
+            if(scope!=cursor.domainScope || measurement.fullParameters.size()!=cursor.domainGeometry.size() ||
+                !EquivalentTrainingCapacitance(measurement.capacitance,pending->capacitance))continue;
             auto geometry=measurement.fullParameters;
-            geometry[pending->inputIndex].resistance=domainGeometry[pending->inputIndex].resistance;
-            if(geometry!=domainGeometry)continue;
+            geometry[pending->inputIndex].resistance=cursor.domainGeometry[pending->inputIndex].resistance;
+            if(geometry!=cursor.domainGeometry)continue;
             points.push_back({measurement.parameters.resistance,measurement.amplitudeResidual,measurement.withinTiming});
         }
         if(const auto refined=ProposeMeasuredResistanceRefinement(points,low,high,
                 AmplitudeTolerance(config,references.Inputs().at(pending->inputIndex))))
         {
-            resistances.erase(std::remove(resistances.begin(),resistances.end(),*refined),resistances.end());
-            resistances.insert(resistances.begin(),*refined);
+            cursor.resistances.erase(std::remove(cursor.resistances.begin(),cursor.resistances.end(),*refined),cursor.resistances.end());
+            cursor.resistances.insert(cursor.resistances.begin(),*refined);
         }
     }
-    domainNormalizer=0;domainReady=true;pending.reset();
+    cursor.domainNormalizer=0;cursor.domainReady=true;pending.reset();
 }
 
 void BoundedTrainingSession::AdvanceInput()
@@ -416,6 +424,7 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
     if(phase==Phase::Candidate)
     {
         std::vector<InputParameters> candidate;
+        auto candidateCapacitance=RestoreTrainingCapacitance(backgroundCapacitance,currentCapacitance);
         bool exhausted=candidates>=config.maximumCandidatesPerInput;
         if(!exhausted && requireResistanceDomains)
         {
@@ -428,6 +437,7 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
         {
             if(!best){Stop(TrainingStatus::SearchUnresolved,"no_measured_candidate_in_declared_search");return {};}
             candidate=best->fullParameters;restoringBest=true;
+            candidateCapacitance=RestoreTrainingCapacitance(best->capacitance,currentCapacitance);
             if(!PrepareCandidate(candidate))
             {rejected.push_back({{},"best_candidate_no_longer_legal"});Stop(TrainingStatus::InvalidModel);return {};}
         }
@@ -436,15 +446,16 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
         // A compatibility graph can have the same L/Ns/Rs but different
         // effective stimulus bindings. Realize the assessed geometry explicitly
         // before treating its normalized preview scope as a measured point.
-        const bool realizePreview=requireResistanceDomains && !restoringBest && domainReady &&
-            candidate==domainGeometry && domainScope!=revision;
-        if(candidate!=current || realizePreview)
+        const bool realizePreview=requireResistanceDomains && !restoringBest && cursor.domainReady &&
+            candidate==cursor.domainGeometry && cursor.domainScope!=revision;
+        if(candidate!=current || candidateCapacitance!=currentCapacitance || realizePreview)
         {
             if(edits>=config.maximumEdits || epoch==std::numeric_limits<std::size_t>::max())
             {Stop(TrainingStatus::BudgetExhausted,epoch==std::numeric_limits<std::size_t>::max()?
                 "model_epoch_exhausted":"maximum_edits_exhausted");return {};}
             pending=TrainingAction{TrainingActionKind::Edit,++serial,order.at(position),epoch,
-                config.runId,{},revision,std::move(candidate),false};return pending;
+                config.runId,{},revision,std::move(candidate),false};
+            pending->capacitance=std::move(candidateCapacitance);return pending;
         }
     }
     if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted,"maximum_probes_exhausted");return {};}
@@ -462,19 +473,26 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
         pending=TrainingAction{TrainingActionKind::Probe,actionSerial,index,epoch,config.runId,
             config.runId+"/search/"+std::to_string(actionSerial),revision,current,false};
     }
+    pending->capacitance=currentCapacitance;
     return pending;
 }
 
 void BoundedTrainingSession::Applied(std::size_t actionSerial,const std::vector<InputParameters>& effective,
-                                   const std::string& actualModelRevision)
+                                   const std::string& actualModelRevision,std::optional<TrainingCapacitance> effectiveCapacitance)
 {
     if(status!=TrainingStatus::Searching)return;
     if(!pending || pending->kind!=TrainingActionKind::Edit || pending->serial!=actionSerial)
         throw std::logic_error("unrequested_training_edit");
+    bool capacitanceMatches=false;
+    try {capacitanceMatches=TrainingCapacitanceReadbackMatches(pending->capacitance,effectiveCapacitance);}
+    catch(const std::invalid_argument&) {}
+    if(!capacitanceMatches)
+    {rejected.push_back({{},"effective_capacitance_readback_mismatch"});Stop(TrainingStatus::InvalidModel);return;}
     if(effective!=pending->parameters || !Legal(effective) || actualModelRevision.empty() || actualModelRevision==revision)
     {rejected.push_back({{},"effective_edit_readback_mismatch"});Stop(TrainingStatus::InvalidModel);return;}
-    current=effective;revision=actualModelRevision;++epoch;++edits;pending.reset();
-    if(requireResistanceDomains)domainReady=false;
+    current=effective;currentCapacitance=std::move(effectiveCapacitance);
+    revision=actualModelRevision;++epoch;++edits;pending.reset();
+    if(requireResistanceDomains)cursor.domainReady=false;
     // Every edit invalidates all current measurements, including Branch shared
     // cable dependencies. Earlier evidence remains historical, never reused.
     anchor.reset();anchorTrial.clear();
@@ -497,7 +515,7 @@ void BoundedTrainingSession::DeclineEdit(std::size_t actionSerial,const std::str
     if(unchangedModelRevision!=revision || unchangedModelRevision.empty() || restoringBest)
     {Stop(TrainingStatus::InvalidModel);return;}
     pending.reset();armed.reset();anchor.reset();anchorTrial.clear();phase=Phase::Candidate;
-    if(requireResistanceDomains)domainReady=false;
+    if(requireResistanceDomains)cursor.domainReady=false;
 }
 
 void BoundedTrainingSession::Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared)
@@ -543,6 +561,7 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
     const auto index=order.at(position);const auto& reference=references.Inputs()[index];
     CandidateEvidence e;e.inputIndex=index;e.modelEpoch=epoch;e.parameters=current[index];
     e.fullParameters=current;
+    e.capacitance=currentCapacitance;
     e.modelRevision=revision;e.trialId=trial;e.anchorTrialId=anchorTrial;
     e.timingResidualLow=measurement.arrival-anchor->plateauEnd;
     e.timingResidualHigh=measurement.plateauEnd-anchor->arrival;
@@ -552,13 +571,20 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
         e.parameterChangeCost+=std::fabs(double(current[i].length)-background[i].length)+
             std::fabs(double(current[i].synapses)-background[i].synapses)+
             std::fabs(std::log(current[i].resistance)-std::log(background[i].resistance));
+    if(currentCapacitance)
+        for(const auto& [path,scale]:currentCapacitance->membraneScales)
+        {
+            const auto before=backgroundCapacitance->membraneScales.find(path);
+            const double previous=before==backgroundCapacitance->membraneScales.end()?1.:before->second;
+            e.parameterChangeCost+=std::fabs(std::log(scale)-std::log(previous));
+        }
     if(!Finite(e.timingResidualLow) || !Finite(e.timingResidualHigh) || !Finite(e.amplitudeResidual))
     {Reject("nonfinite_training_residual");return;}
     e.withinTiming=std::max(std::fabs(e.timingResidualLow),std::fabs(e.timingResidualHigh))<=config.tolerances.sync;
     e.withinAmplitude=std::fabs(e.amplitudeResidual)<=AmplitudeTolerance(config,reference);
     evidence.push_back(e);
-    if(requireResistanceDomains && !restoringBest && !candidateResistanceScope.empty())
-        resistanceMeasurements.push_back({candidateResistanceScope,e});
+    if(requireResistanceDomains && !restoringBest && !cursor.candidateResistanceScope.empty())
+        cursor.resistanceMeasurements.push_back({cursor.candidateResistanceScope,e});
     if(config.normalization==Normalization::SynapseCount && config.n0CandidateRepeats>1)
     {
         candidateMeasurements.push_back(e);
@@ -566,11 +592,13 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
         {phase=Phase::Anchor;anchor.reset();anchorTrial.clear();return;}
         CandidateRepeatEvidence group;group.inputIndex=index;group.modelEpoch=epoch;
         group.modelRevision=revision;group.fullParameters=current;
+        group.capacitance=currentCapacitance;
         group.minimumRawPotential=group.maximumRawPotential=e.measuredRawPotential;
         group.withinTiming=group.withinAmplitude=true;
         for(const auto& sample:candidateMeasurements)
         {
-            if(sample.inputIndex!=index || sample.modelEpoch!=epoch || sample.modelRevision!=revision || sample.fullParameters!=current)
+            if(sample.inputIndex!=index || sample.modelEpoch!=epoch || sample.modelRevision!=revision || sample.fullParameters!=current ||
+                sample.capacitance!=currentCapacitance)
             {Stop(TrainingStatus::InvalidModel);return;}
             group.trialIds.push_back(sample.trialId);group.anchorTrialIds.push_back(sample.anchorTrialId);
             const double potential=sample.measuredRawPotential;
@@ -593,7 +621,7 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
         e.withinTiming && !e.withinAmplitude)
     {
         // Normalize near a measured timing-ready geometry before spending the
-        // remaining budget on distant lengths. No amplitude monotonicity or
+        // remaining budget on distant cursor.lengths. No amplitude monotonicity or
         // preservation of timing is inferred, and both neighbors remain legal
         // full-model candidates with fresh anchor/input measurements.
         const auto& bound=config.bounds[index];
@@ -602,9 +630,9 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
             auto candidate=e.fullParameters;candidate[index].synapses+=delta;
             if(candidate[index].synapses<bound.minimumSynapses || candidate[index].synapses>bound.maximumSynapses ||
                 !PrepareCandidate(candidate))continue;
-            if(std::find(issuedN0Candidates.begin(),issuedN0Candidates.end(),candidate)==issuedN0Candidates.end() &&
-                std::find(n0Priority.begin(),n0Priority.end(),candidate)==n0Priority.end())
-                n0Priority.push_back(std::move(candidate));
+            if(std::find(cursor.issuedN0Candidates.begin(),cursor.issuedN0Candidates.end(),candidate)==cursor.issuedN0Candidates.end() &&
+                std::find(cursor.n0Priority.begin(),cursor.n0Priority.end(),candidate)==cursor.n0Priority.end())
+                cursor.n0Priority.push_back(std::move(candidate));
         }
     }
     if(restoringBest || (e.withinTiming && e.withinAmplitude))AdvanceInput();
@@ -617,6 +645,7 @@ void BoundedTrainingSession::RecordIncompleteCandidateRepeats(const std::string&
     const auto& first=candidateMeasurements.front();
     CandidateRepeatEvidence group;group.inputIndex=first.inputIndex;group.modelEpoch=first.modelEpoch;
     group.modelRevision=first.modelRevision;group.fullParameters=first.fullParameters;
+    group.capacitance=first.capacitance;
     group.minimumRawPotential=group.maximumRawPotential=first.measuredRawPotential;
     group.withinTiming=group.withinAmplitude=true;group.complete=false;group.reason=reason;
     for(const auto& sample:candidateMeasurements)
@@ -642,13 +671,15 @@ void BoundedTrainingSession::Stop(TrainingStatus terminal,const std::string& dia
 void BoundedTrainingSession::ExternalStop()
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
-    if(verification)verification->ExternalStop();Stop(TrainingStatus::ExternalStop);
+    if(verification){verification->ExternalStop();}
+    Stop(TrainingStatus::ExternalStop);
 }
 
 void BoundedTrainingSession::ExhaustBudget()
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
-    if(verification)verification->ExhaustBudget();Stop(TrainingStatus::BudgetExhausted,"adapter_execution_budget_exhausted");
+    if(verification){verification->ExhaustBudget();}
+    Stop(TrainingStatus::BudgetExhausted,"adapter_execution_budget_exhausted");
 }
 
 const std::optional<TrainingCertificate>& BoundedTrainingSession::Certificate() const

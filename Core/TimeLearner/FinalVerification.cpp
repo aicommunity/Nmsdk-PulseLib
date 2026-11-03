@@ -325,7 +325,8 @@ void FinalVerificationSession::Invalidate(const std::string& newBaseRevision)
     for(const auto& input:accepted)
         if(input)rejected.push_back({input->trialId,"model_revision_invalidated"});
     config.currentModelRevision=newBaseRevision;certificate.reset();pending.reset();armed.reset();
-    for(auto& input:accepted)input.reset();position=0;
+    for(auto& input:accepted){input.reset();}
+    position=0;
     if(status==VerificationStatus::ExternalStop)return;
     if(epoch==std::numeric_limits<std::size_t>::max()){ExhaustBudget();return;}
     ++epoch;

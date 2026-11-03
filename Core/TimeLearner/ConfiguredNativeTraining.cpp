@@ -123,6 +123,8 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
     Require(c.search.n0CandidateRepeats>=1 && c.search.n0CandidateRepeats<=128 &&
         (c.search.normalization==Normalization::SynapseCount || c.search.n0CandidateRepeats==1),"invalid_n0_candidate_repeats");
     Require(c.search.initialModelRevision.empty() && c.search.initialModelEpoch==0,"configuration_is_not_controller_checkpoint");
+    Require(std::isfinite(c.capacitanceMaximumRelativeChange) && c.capacitanceMaximumRelativeChange>=0. &&
+        (c.recordCapacitanceHistory || c.capacitanceMaximumRelativeChange==0.),"invalid_configured_capacitance_history_policy");
     for(double value:{c.search.tolerances.amplitudeAbsolute,c.search.tolerances.amplitudeRelative,c.search.tolerances.sync})
         Require(std::isfinite(value) && value>=0.,"invalid_configured_native_tolerance");
     NativeTrainingPlan plan;auto& p=plan.protocol;p.schemaVersion=3;
@@ -154,7 +156,8 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
     }
     ValidateVerificationProtocol(p);plan.search=c.search;plan.search.runId=c.runId;
     plan.maximumReferenceProbes=c.maximumReferenceProbes;plan.maximumInvalidReferenceProbes=c.maximumInvalidReferenceProbes;
-    plan.maximumModelSeconds=c.maximumModelSeconds;plan.maximumWallSeconds=c.maximumWallSeconds;return plan;
+    plan.maximumModelSeconds=c.maximumModelSeconds;plan.maximumWallSeconds=c.maximumWallSeconds;
+    plan.recordCapacitanceHistory=c.recordCapacitanceHistory;return plan;
 }
 QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 {
@@ -184,16 +187,30 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
         auto search=result["search"].toObject();search["n0_candidate_repeats"]=Integer(c.search.n0CandidateRepeats);
         result["search"]=search;
     }
+    if(c.recordCapacitanceHistory)
+    {
+        result["schema_version"]=3;
+        auto search=result["search"].toObject();search["n0_candidate_repeats"]=Integer(c.search.n0CandidateRepeats);
+        result["search"]=search;
+        result["capacitance_history"]=QJsonObject{{"record",true},{"maximum_relative_change",Numeric(c.capacitanceMaximumRelativeChange)}};
+    }
     return result;
 }
 ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
 {
-    Keys(o,{"kind","schema_version","model","stimulus_profile","run_id","protocol_revision","sample_id","duration","maximum_sample_gap","minimum_amplitude",
+    const int schema=Int(o["schema_version"]);auto fields=o;
+    if(schema==3)fields.remove("capacitance_history");
+    Keys(fields,{"kind","schema_version","model","stimulus_profile","run_id","protocol_revision","sample_id","duration","maximum_sample_gap","minimum_amplitude",
         "maximum_samples","record_spikes","peak_selection","windows","search","maximum_reference_probes","maximum_invalid_reference_probes",
         "maximum_model_seconds","maximum_wall_seconds"});
-    const int schema=Int(o["schema_version"]);
-    Require(Text(o["kind"])=="timelearner_native_cold_configuration" && (schema==1 || schema==2),"unsupported_native_configuration_schema");
+    Require(Text(o["kind"])=="timelearner_native_cold_configuration" && (schema==1 || schema==2 || schema==3),"unsupported_native_configuration_schema");
     ConfiguredNativeTraining c;c.model=DecodeNativeModelSpec(Object(o["model"]));c.runId=Text(o["run_id"]);
+    if(schema==3)
+    {
+        const auto history=Object(o["capacitance_history"]);Keys(history,{"record","maximum_relative_change"});
+        Require(Boolean(history["record"]),"configured_capacitance_history_requires_recording");
+        c.recordCapacitanceHistory=true;c.capacitanceMaximumRelativeChange=Number(history["maximum_relative_change"]);
+    }
     const auto source=Object(o["stimulus_profile"]);Keys(source,{"generator_class","amplitude","pulse_length","frequency_hz",
         "frequency_deviation","use_transit_signal","use_pattern_output"});
     c.stimulusProfile={Text(source["generator_class"]),Number(source["amplitude"]),Number(source["pulse_length"]),Number(source["frequency_hz"]),
@@ -206,10 +223,10 @@ ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
     for(const auto& v:Array(o["windows"]))
     {const auto w=Object(v);Keys(w,{"begin","end"});c.windows.emplace_back(Number(w["begin"]),Number(w["end"]));}
     auto s=Object(o["search"]);
-    if(schema==2)
+    if(schema==2 || schema==3)
     {
         c.search.n0CandidateRepeats=Count(s["n0_candidate_repeats"],128);
-        Require(c.search.n0CandidateRepeats>=2 && c.model.normalization==Normalization::SynapseCount,"invalid_n0_candidate_repeats");
+        Require(schema==3 || (c.search.n0CandidateRepeats>=2 && c.model.normalization==Normalization::SynapseCount),"invalid_n0_candidate_repeats");
         s.remove("n0_candidate_repeats");
     }
     Keys(s,{"maximum_probes","maximum_edits","maximum_candidates_per_input","maximum_sweeps",

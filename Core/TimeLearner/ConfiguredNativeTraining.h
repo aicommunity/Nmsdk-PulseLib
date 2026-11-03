@@ -23,6 +23,8 @@ struct ConfiguredNativeTraining {
     BoundedTrainingConfig search;
     std::size_t maximumReferenceProbes=0,maximumInvalidReferenceProbes=0;
     double maximumModelSeconds=0.,maximumWallSeconds=0.;
+    bool recordCapacitanceHistory=false;
+    double capacitanceMaximumRelativeChange=0.;
 };
 QJsonObject EncodeNativeModelSpec(const NativeModelSpec& model);
 NativeModelSpec DecodeNativeModelSpec(const QJsonObject& object);

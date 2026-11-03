@@ -25,6 +25,7 @@ See file license.txt for more information
 #include "TimeLearner/NativeRecognitionTrial.h"
 #include "TimeLearner/NativeModelEditor.h"
 #include "TimeLearner/NativeCapacitanceEdit.h"
+#include "TimeLearner/TrainingCapacitance.h"
 #include "TimeLearner/NativeTrainingService.h"
 #include "TimeLearner/NativeTrainingIntent.h"
 #include "TimeLearner/NativeModelBuilder.h"
@@ -807,6 +808,18 @@ public: // Methods
   return NativeProbeControl.TakeResult();
  }
  std::vector<TimeLearner::InputParameters> ReadNativeParameters();
+ // Complete native C0/scales bridge; no implicit baseline capture or C search.
+ std::optional<TimeLearner::TrainingCapacitance> ReadNativeTrainingCapacitance();
+ std::optional<TimeLearner::TrainingCapacitanceWitness> ReadNativeTrainingCapacitanceWitness();
+ QJsonObject BindNativeTrainingCapacitance(double maximumRelativeChange);
+ TimeLearner::NativeEditResult ApplyNativeTrainingParameters(
+     const std::vector<TimeLearner::InputParameters>& requested,
+     const std::optional<TimeLearner::TrainingCapacitance>& capacitance);
+
+ TimeLearner::ResistanceDomainAssessment AssessNativeTrainingResistanceDomain(
+     const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
+     const std::optional<TimeLearner::TrainingCapacitance>& capacitance);
+
  TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested);
  TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested,
      const TimeLearner::NativeCapacitanceCorrection& capacitance);
@@ -1016,7 +1029,7 @@ protected:
      const std::vector<TimeLearner::InputParameters>& requested,const TimeLearner::NativeCapacitanceCorrection* capacitance);
  TimeLearner::ResistanceDomainAssessment AssessNativeResistanceDomainWithCapacitance(
      const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
-     const TimeLearner::NativeCapacitanceCorrection* capacitance);
+     const TimeLearner::NativeCapacitanceCorrection* capacitance,bool recordTrainingCapacitance=false);
  TimeLearner::NativeProbeExecutor NativeProbeControl;
  TimeLearner::NativeTrainingService NativeTrainingControl;
  TimeLearner::NativeTrainingIntent NativeTrainingRequestIntent;
