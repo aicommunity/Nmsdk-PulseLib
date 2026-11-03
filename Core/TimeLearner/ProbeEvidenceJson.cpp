@@ -176,6 +176,7 @@ QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& d
     return result;
 }
 QJsonObject EncodeNativeTrainingCapacitanceWitness(const TrainingCapacitanceWitness& witness)
+try
 {
     ValidateTrainingCapacitance(witness.parameters);
     const auto identity=QJsonDocument::fromJson(QByteArray::fromStdString(witness.modelIdentityJson));
@@ -199,6 +200,13 @@ QJsonObject EncodeNativeTrainingCapacitanceWitness(const TrainingCapacitanceWitn
         {"controller_parameters",QJsonObject{{"origin",Text(witness.parameters.origin)},
             {"maximum_relative_change",Number(witness.parameters.maximumRelativeChange)},{"membrane_scales",scales}}},
         {"model",model},{"native_state",owned},{"storage_images",images.array()}};
+}
+catch(const std::runtime_error& error)
+{
+    // Native validation helpers also serve live models and report runtime
+    // failures. Here their only input is an archived data envelope: preserve
+    // the exact diagnostic while exposing the codec's invalid-data contract.
+    throw std::invalid_argument(error.what());
 }
 TrainingCapacitanceWitness DecodeNativeTrainingCapacitanceWitness(const QJsonObject& object)
 {

@@ -18,6 +18,8 @@ struct ResistanceDomainAssessment;
 struct TrainingCapacitanceWitness;
 QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& assessment);
 // Versioned physical evidence for a history entry; no training verdict.
+// Invalid archived witness data is reported as invalid_argument, preserving
+// the native validation reason. Live model read failures are outside this codec.
 QJsonObject EncodeNativeTrainingCapacitanceWitness(const TrainingCapacitanceWitness& witness);
 TrainingCapacitanceWitness DecodeNativeTrainingCapacitanceWitness(const QJsonObject& witness);
 // Evidence identity includes dormant history/C0 inventory. Physical revision

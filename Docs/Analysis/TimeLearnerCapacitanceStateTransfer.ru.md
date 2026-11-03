@@ -97,3 +97,18 @@ controls. Новые случаи охватывают Classic/Branch, N0/N1, co
 rollback повреждённого пакета и остановку до первой пробы. Independent reader
 добавляет12 проверок первичных CSV и повреждённых связей. До серверного запуска
 эти изменения имеют статус «реализовано в коде», без runtime-подтверждения.
+
+
+### Ошибка типа исключения archive codec (03.11; runtime fix pending)
+
+H9b собрал schema3, но новый контроль переподписанного witness с повреждённой
+Capacity выявил runtime_error archived_capacitance_channel_mismatch вместо
+invalid_argument, принятого JSON encoder. NativeModelEditor использует runtime_error
+для живой физической модели; его pure-data validator переиспользуется codec.
+Encoder теперь нормализует именно runtime_error в invalid_argument с тем же
+текстом. Проверки physical C/C₀, digest, storage и всех узлов сохранены. Live
+ReadNativeTrainingCapacitanceWitness остаётся вне этой границы и продолжает
+сообщать runtime_error при фактическом повреждении модели. Никаких изменений
+Calculate/Build/Reset, данных, tolerances или отключения corruption control нет.
+Текущий H9b завершается для полного failure inventory; исправление ещё требует
+серверной проверки. Другие возможные schema3 ошибки не считаются исправленными.
