@@ -70,7 +70,44 @@ void RequireMatch(const QJsonObject& identity, UEPtr<UContainer> model,
 {
     auto check = VerifyModelIdentity(identity, model, boundarySources);
     if(!check["valid"].toBool() || !check["match"].toBool())
-        Fail("archive_model_mismatch", check["reason"].toString() + ": " + check["first_difference"].toString());
+    {
+        QString detail=check["reason"].toString()+": "+check["first_difference"].toString();
+        if(check["valid"].toBool() && check["first_difference"]==QJsonValue("model.bindings.size"))
+        {
+            // Keep identity strict. A bounded endpoint delta distinguishes a
+            // missing native connection from a duplicate link after rebuild.
+            const auto actual=IdentifyModel(model,boundarySources);
+            if(actual["valid"].toBool())
+            {
+                const auto expectedBindings=identity["model"].toObject()["bindings"].toArray();
+                const auto actualBindings=actual["model"].toObject()["bindings"].toArray();
+                const auto counts=[](const QJsonArray& bindings) {
+                    std::map<QByteArray,int> result;
+                    for(const auto& binding:bindings)++result[QJsonDocument(binding.toObject()).toJson(QJsonDocument::Compact)];
+                    return result;
+                };
+                const auto expected=counts(expectedBindings),observed=counts(actualBindings);
+                const auto delta=[](const auto& first,const auto& second) {
+                    QJsonArray entries;int total=0;
+                    for(const auto& [binding,count]:first)
+                    {
+                        const auto other=second.find(binding);
+                        const int missing=count-(other==second.end()?0:other->second);
+                        if(missing<=0)continue;
+                        total+=missing;
+                        if(entries.size()<8)entries.append(QJsonObject{{"count",missing},
+                            {"binding",QJsonDocument::fromJson(binding).object()}});
+                    }
+                    return QJsonObject{{"total",total},{"first_eight",entries}};
+                };
+                const QJsonObject diagnostic{{"expected_count",int(expectedBindings.size())},
+                    {"actual_count",int(actualBindings.size())},{"missing",delta(expected,observed)},
+                    {"unexpected",delta(observed,expected)}};
+                detail+="; binding_delta="+QString::fromUtf8(QJsonDocument(diagnostic).toJson(QJsonDocument::Compact));
+            }
+        }
+        Fail("archive_model_mismatch",detail);
+    }
 }
 
 QString XmlDigest(const QString& xml)
