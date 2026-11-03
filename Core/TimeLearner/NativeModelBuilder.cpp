@@ -491,17 +491,20 @@ NativeModelBuildResult ConstructNativeLearnerModel(UNet& owner,const NativeModel
             auto synapse=membrane->GetComponentL<NPulseSynapseCommon>("InhSynapse1",true);Require(bool(synapse),"missing_native_initial_inhibition_bank");
             synapse->Resistance=resistance;Connect(*synapse,*source);
         }
-        UEPtr<NPulseLTZoneCommon> initialZone;
         if(s.initialThreshold)
         {
-            initialZone=neuron->GetComponentL<NPulseLTZoneCommon>("LTZone",true);
+            auto initialZone=neuron->GetComponentL<NPulseLTZoneCommon>("LTZone",true);
             Require(bool(initialZone),"native_initial_threshold_zone_missing");
             RequireNativeScalarSpikeThreshold(*initialZone);
             initialZone->Threshold=*s.initialThreshold;
         }
         neuron->Init();Tree(neuron,s.frequencyHz);Tree(dataset,s.frequencyHz);
-        if(s.initialThreshold)Require(initialZone->Threshold.GetData()==*s.initialThreshold,
-            "native_initial_threshold_not_applied");
+        if(s.initialThreshold)
+        {
+            const auto effectiveZone=neuron->GetComponentL<NPulseLTZoneCommon>("LTZone",true);
+            Require(effectiveZone && effectiveZone->Threshold.GetData()==*s.initialThreshold,
+                "native_initial_threshold_not_applied");
+        }
         const auto integration=AssessNativeIntegration(neuron,source->Amplitude.GetData());Require(integration.valid,integration.reason.c_str());
         std::vector<int> positions;for(const auto& p:s.inputs)positions.push_back(p.attachment);
         NativeProbeBindings preview;preview.owner=&owner;preview.neuron=neuron;preview.dataset=dataset;
