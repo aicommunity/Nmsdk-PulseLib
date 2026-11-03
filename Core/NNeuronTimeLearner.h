@@ -787,6 +787,10 @@ public: // Methods
      const std::vector<TimeLearner::InputParameters>& requested,
      const std::optional<TimeLearner::TrainingCapacitance>& capacitance);
 
+ TimeLearner::ResistanceDomainAssessment AssessNativeTrainingResistanceDomain(
+     const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
+     const std::optional<TimeLearner::TrainingCapacitance>& capacitance);
+
  TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested);
  TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested,
      const TimeLearner::NativeCapacitanceCorrection& capacitance);
@@ -994,7 +998,7 @@ protected:
      const std::vector<TimeLearner::InputParameters>& requested,const TimeLearner::NativeCapacitanceCorrection* capacitance);
  TimeLearner::ResistanceDomainAssessment AssessNativeResistanceDomainWithCapacitance(
      const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
-     const TimeLearner::NativeCapacitanceCorrection* capacitance);
+     const TimeLearner::NativeCapacitanceCorrection* capacitance,bool recordTrainingCapacitance=false);
  TimeLearner::NativeProbeExecutor NativeProbeControl;
  TimeLearner::NativeTrainingService NativeTrainingControl;
  TimeLearner::NativeTrainingIntent NativeTrainingRequestIntent;

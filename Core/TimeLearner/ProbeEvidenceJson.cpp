@@ -1,5 +1,6 @@
 #include "ProbeEvidenceJson.h"
 #include "NativeTrainingService.h"
+#include "NativeTrainingCapacitance.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <cmath>
@@ -131,7 +132,7 @@ QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& d
         if(!document.isObject())throw std::invalid_argument("invalid_native_domain_preview_json");
         model=document.object();
     }
-    return {{"kind","native_resistance_domain_evidence"},{"schema_version",2},
+    QJsonObject result{{"kind","native_resistance_domain_evidence"},{"schema_version",2},
         {"status",ResistanceDomainStatusName(d.status)},{"reason",Text(d.reason)},{"input_index",Count(d.inputIndex)},
         {"base_model_revision",Text(d.baseModelRevision)},{"preview_model_revision",Text(d.previewModelRevision)},
         {"geometry",geometry},{"locked_by_shared_bank",d.lockedBySharedBank},{"model_may_have_changed",d.modelMayHaveChanged},
@@ -142,6 +143,36 @@ QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& d
         {"policy",QJsonObject{{"equations","explicit_npulsechannel_npulsesynapse_v1"},
             {"maximum_resistance_ratio",Number(d.maximumResistanceRatio)},
             {"configured_minimum_resistance",Number(d.configuredMinimumResistance)}}}};
+    if(d.capacitance)
+    {
+        const auto encode=[](const TrainingCapacitance& c) {
+            ValidateTrainingCapacitance(c);QJsonObject scales;
+            for(const auto& [path,scale]:c.membraneScales)scales[Text(path)]=Number(scale);
+            return QJsonObject{{"origin",Text(c.origin)},{"maximum_relative_change",Number(c.maximumRelativeChange)},
+                {"membrane_scales",scales}};
+        };
+        result["schema_version"]=3;result["requested_capacitance"]=encode(*d.capacitance);
+        result["effective_capacitance"]=QJsonValue(QJsonValue::Null);
+        result["capacitance_state"]=QJsonValue(QJsonValue::Null);
+        result["capacitance_storage_images"]=QJsonValue(QJsonValue::Null);
+        if(d.effectiveCapacitance)
+        {
+            const auto state=QJsonDocument::fromJson(QByteArray::fromStdString(d.capacitanceStateJson));
+            const auto images=QJsonDocument::fromJson(QByteArray::fromStdString(d.capacitanceImagesJson));
+            if(!state.isObject() || !images.isArray() || images.array().isEmpty() ||
+               DecodeNativeTrainingCapacitance(state.object())!=*d.effectiveCapacitance ||
+               !TrainingCapacitanceReadbackMatches(d.capacitance,d.effectiveCapacitance) ||
+               state.object()["applied_model_revision"]!=QJsonValue(Text(d.previewModelRevision)))
+                throw std::invalid_argument("invalid_training_domain_capacitance_witness");
+            result["effective_capacitance"]=encode(*d.effectiveCapacitance);
+            result["capacitance_state"]=state.object();result["capacitance_storage_images"]=images.array();
+        }
+        else if(d.status==ResistanceDomainStatus::Available || !d.capacitanceStateJson.empty() || !d.capacitanceImagesJson.empty())
+            throw std::invalid_argument("missing_training_domain_capacitance_witness");
+    }
+    else if(d.effectiveCapacitance || !d.capacitanceStateJson.empty() || !d.capacitanceImagesJson.empty())
+        throw std::invalid_argument("unversioned_training_domain_capacitance_witness");
+    return result;
 }
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)

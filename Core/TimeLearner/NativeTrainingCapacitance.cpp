@@ -40,6 +40,13 @@ TrainingCapacitance Parameters(const NativeCapacitanceCorrection& correction)
     ValidateTrainingCapacitance(result);return result;
 }
 }
+TrainingCapacitance DecodeNativeTrainingCapacitance(const QJsonObject& state)
+{
+    const auto correction=Parse(state);
+    Require(correction.baseline["schema_version"]==QJsonValue(2),
+        "training_capacitance_requires_bound_baseline");
+    return Parameters(correction);
+}
 std::optional<TrainingCapacitance> ReadNativeTrainingCapacitance(
     const NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
     const std::optional<NativeModelSpec>& declaration,const QJsonObject& owned)
@@ -48,7 +55,7 @@ std::optional<TrainingCapacitance> ReadNativeTrainingCapacitance(
     if(owned.isEmpty())return {};
     Require(bool(declaration),"training_capacitance_requires_model_declaration");
     ValidateAppliedNativeCapacitanceState(bindings,*declaration,owned);
-    return Parameters(Parse(owned));
+    return DecodeNativeTrainingCapacitance(owned);
 }
 std::optional<NativeCapacitanceCorrection> ResolveNativeTrainingCapacitance(
     const NativeProbeExecutor& executor,const NativeProbeBindings& bindings,

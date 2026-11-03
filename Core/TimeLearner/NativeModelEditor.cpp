@@ -1,6 +1,7 @@
 #include "NativeModelEditor.h"
 #include "NativeCapacitanceEdit.h"
 #include "NativeModelBuilder.h"
+#include "NativeTrainingCapacitance.h"
 #include "ConfiguredNativeTraining.h"
 #include "NativeOperationChecks.h"
 #include "ModelArchive.h"
@@ -686,7 +687,8 @@ const char* ResistanceDomainStatusName(ResistanceDomainStatus status)
 
 static ResistanceDomainAssessment AssessNativeInputResistanceDomainImpl(NativeProbeExecutor& executor,const NativeProbeBindings& b,
     const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec,
-    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection* capacitance)
+    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection* capacitance,
+    bool recordTrainingCapacitance=false)
 {
     ResistanceDomainAssessment result;result.inputIndex=inputIndex;result.geometry=requested;
     QJsonObject before;UEPtr<NPulseGeneratorTransit> source;
@@ -706,12 +708,31 @@ static ResistanceDomainAssessment AssessNativeInputResistanceDomainImpl(NativePr
         before=NmsdkTools::IdentifyModel(live,ports);Require(before["valid"].toBool(),"invalid_live_domain_identity");
         result.baseModelRevision=before["sha256"].toString().toStdString();
         auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(live,ports));Lease lease{preview};
-        Require(bool(preview),"failed_domain_preview");Transform(preview,*source,plan,nullptr);ApplyCapacitanceCorrection(preview,*source,capacitance);CheckRemovedListeners(b.neuron,preview);
+        Require(bool(preview),"failed_domain_preview");Transform(preview,*source,plan,nullptr);
+        NativeCapacitanceCorrection effectiveCapacitance;
+        ApplyCapacitanceCorrection(preview,*source,capacitance,&effectiveCapacitance);CheckRemovedListeners(b.neuron,preview);
         std::vector<int> positions;for(const auto& p:requested)positions.push_back(p.length);
         auto previewBindings=b;previewBindings.neuron=preview;
         Require(ReadNativeInputParameters(previewBindings,positions)==requested,"domain_preview_readback_mismatch");
         const auto identity=NmsdkTools::IdentifyModel(preview,ports);Require(identity["valid"].toBool(),"invalid_domain_preview_identity");
         result.previewModelRevision=identity["sha256"].toString().toStdString();
+        if(recordTrainingCapacitance)
+        {
+            Require(capacitance && effectiveCapacitance.baseline["schema_version"]==QJsonValue(2),
+                "training_domain_requires_bound_capacitance");
+            const auto state=EncodeNativeCapacitanceState(effectiveCapacitance,result.previewModelRevision);
+            ValidateAppliedNativeCapacitanceState(previewBindings,
+                DecodeNativeModelSpec(effectiveCapacitance.baseline["model_spec"].toObject()),state);
+            const auto parameters=DecodeNativeTrainingCapacitance(state);
+            const auto classes=effectiveCapacitance.baseline["channel_classes"].toObject();
+            std::vector<std::string> roots;
+            for(auto it=classes.begin();it!=classes.end();++it)roots.push_back(it.value().toString().toStdString());
+            const auto images=QJsonDocument(NmsdkTools::CaptureModelImageDefinitions(preview,ports,roots))
+                .toJson(QJsonDocument::Compact).toStdString();
+            result.effectiveCapacitance=parameters;result.capacitance=result.effectiveCapacitance;
+            result.capacitanceStateJson=QJsonDocument(state).toJson(QJsonDocument::Compact).toStdString();
+            result.capacitanceImagesJson=images;
+        }
         result.previewModelJson=QJsonDocument(identity["model"].toObject()).toJson(QJsonDocument::Compact).toStdString();
         result.sourceAmplitude=source->Amplitude.GetData();result.branch=b.branch;
         result.maximumResistanceRatio=spec.maximumResistanceRatio;
@@ -823,8 +844,9 @@ ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor
 {return AssessNativeInputResistanceDomainImpl(executor,b,attachments,requested,spec,inputIndex,scaleInhibitionWithInput,nullptr);}
 ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor& executor,const NativeProbeBindings& b,
     const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec,
-    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection& capacitance)
-{return AssessNativeInputResistanceDomainImpl(executor,b,attachments,requested,spec,inputIndex,scaleInhibitionWithInput,&capacitance);}
+    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection& capacitance,
+    bool recordTrainingCapacitance)
+{return AssessNativeInputResistanceDomainImpl(executor,b,attachments,requested,spec,inputIndex,scaleInhibitionWithInput,&capacitance,recordTrainingCapacitance);}
 
 std::vector<InputParameters> ReadNativeInputParameters(const NativeProbeBindings& b,const std::vector<int>& attachments)
 {

@@ -5314,6 +5314,29 @@ void NNeuronTimeLearnerBranch::BeginNativeTraining(TimeLearner::NativeTrainingPl
   if(NativeLiveFinalization)NativeLiveFinalization->FailConfiguration("native_training_start_exception");
  }
 }
+TimeLearner::ResistanceDomainAssessment NNeuronTimeLearnerBranch::AssessNativeTrainingResistanceDomain(
+ const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
+ const std::optional<TimeLearner::TrainingCapacitance>& requested)
+{
+ std::optional<TimeLearner::NativeCapacitanceCorrection> resolved;
+ try
+ {
+  resolved=TimeLearner::ResolveNativeTrainingCapacitance(NativeProbeControl,NativeProbeModelBindings(),
+   NativeModelDeclaration,NativeLearnedCapacitanceState,requested);
+ }
+ catch(const std::exception& error)
+ {
+  TimeLearner::ResistanceDomainAssessment failed;failed.geometry=geometry;failed.inputIndex=inputIndex;
+  failed.capacitance=requested;failed.reason=error.what();return failed;
+ }
+ // Preserve native failure/modelMayHaveChanged diagnostics after delegation.
+ auto result=AssessNativeResistanceDomainWithCapacitance(geometry,inputIndex,resolved?&*resolved:nullptr,bool(resolved));
+ if(requested && result.effectiveCapacitance &&
+    !TimeLearner::TrainingCapacitanceReadbackMatches(requested,result.effectiveCapacitance))
+ {result.status=TimeLearner::ResistanceDomainStatus::Unsupported;result.reason="training_domain_capacitance_readback_mismatch";}
+ result.capacitance=requested;
+ return result;
+}
 TimeLearner::ResistanceDomainAssessment NNeuronTimeLearnerBranch::AssessNativeResistanceDomain(
  const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex)
 {return AssessNativeResistanceDomainWithCapacitance(geometry,inputIndex,nullptr);}
@@ -5323,7 +5346,7 @@ TimeLearner::ResistanceDomainAssessment NNeuronTimeLearnerBranch::AssessNativeRe
 {return AssessNativeResistanceDomainWithCapacitance(geometry,inputIndex,&capacitance);}
 TimeLearner::ResistanceDomainAssessment NNeuronTimeLearnerBranch::AssessNativeResistanceDomainWithCapacitance(
  const std::vector<TimeLearner::InputParameters>& geometry,std::size_t inputIndex,
- const TimeLearner::NativeCapacitanceCorrection* capacitance)
+ const TimeLearner::NativeCapacitanceCorrection* capacitance,bool recordTrainingCapacitance)
 {
  TimeLearner::ResistanceDomainAssessment result;result.geometry=geometry;result.inputIndex=inputIndex;
  try
@@ -5338,7 +5361,7 @@ TimeLearner::ResistanceDomainAssessment NNeuronTimeLearnerBranch::AssessNativeRe
    throw std::invalid_argument("capacitance_declaration_mismatch");
   const auto policy=TimeLearner::NativeOwnerEditSpec(*this,NativeModelDeclaration,geometry,0.);
   if(capacitance)result=TimeLearner::AssessNativeInputResistanceDomain(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),
-   geometry,policy,inputIndex,NativeModelDeclaration?NativeModelDeclaration->scaleInhibitionWithInput:true,*capacitance);
+   geometry,policy,inputIndex,NativeModelDeclaration?NativeModelDeclaration->scaleInhibitionWithInput:true,*capacitance,recordTrainingCapacitance);
   else result=TimeLearner::AssessNativeInputResistanceDomain(NativeProbeControl,NativeProbeModelBindings(),DendriteLength.GetData(),
    geometry,policy,inputIndex,NativeModelDeclaration?NativeModelDeclaration->scaleInhibitionWithInput:true);
   if(result.modelMayHaveChanged)NativeEditFailure=result.reason;

@@ -50,3 +50,31 @@ prototypes. Четыре реальные SDK проверки Classic/Branch ×
 с тем же C, versioned codecs/readers, физические witnesses истории, C policy и
 ограниченный измеряемый поиск. CapturedPerInput, anchor/default tolerances и
 legacy absolute-F DendriteCapacitance не меняются. В develop bridge не принят.
+
+
+## Typed N1 domain и schema3: подготовлено, не принято
+
+Добавлен AssessNativeTrainingResistanceDomain в оба learner. Он строго
+разрешает complete requested map относительно действующего C₀ owner и передаёт
+тот же correction в существующий native preview L/Ns/Rs/C. Старые domain calls
+сохраняют schema2 и прежнее поведение; новая capability запрашивается явно.
+
+Новый результат различает requested и effective map: preview вправе добавить
+доказанные новые unit paths, но не менять requested значения/origin/policy.
+Сохраняются signed native state с applied preview revision и отдельно прочитанные
+storage images с dormant roots. Witnesses публикуются в result только после
+полной подготовки; ошибка подготовки не оставляет частично заполненного proof.
+
+EncodeResistanceDomainAssessment выбирает schema3 для typed request. Она хранит
+requested_capacitance, effective_capacitance, capacitance_state и
+capacitance_storage_images. Available без полного witness запрещён. Unsupported
+может иметь null effective proof, что не подтверждает физическую допустимость.
+Нельзя молча сериализовать новый C-контекст в schema2. Pure controller не владеет
+Qt/физикой: witnesses представлены непрозрачными JSON strings.
+
+Корневые native проверки связывают N1 preview с последующим фактическим joint
+commit (полный model hash), проверяют неизменность live model/owner и отказ при
+смене policy. Independent schema3 reader обязан проверить C₀/registry/C и заново
+вычислить Rs bounds по тому же preview. Эти изменения ещё не собирались и не
+исполнялись; C-trim On и service dispatch остаются выключенными. Нужны отдельный
+SDK gate после bridge H3, readers и ASan; до этого merge в develop запрещён.

@@ -4,6 +4,8 @@
 #include "TrainingCapacitance.h"
 
 namespace NMSDK::TimeLearner {
+// Strict signed native parameter-state codec; does not claim live readback.
+TrainingCapacitance DecodeNativeTrainingCapacitance(const QJsonObject& state);
 // Read the actual native owner at a legal physical boundary. Absence is
 // unknown/unbound, never an invented unit baseline. No capture or live writes.
 std::optional<TrainingCapacitance> ReadNativeTrainingCapacitance(
