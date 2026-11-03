@@ -29,10 +29,24 @@ OwnedNativeCapacitanceState — явный getter; ImportedNativeCapacitanceStat
 полный XML/Copy checkpoint этой private metadata автоматически не обещается.
 Все остальные native export/recognition frozen restrictions сохраняются.
 
-Это непроверенный кандидат ветки codex/timelearner-capacitance-owner, не принятый
-develop. В baseline Core8b41 owner state после bound edit пуст; исходный A1
-смешал этот факт с двумя ошибками fixture. Corrected baseline A2 выполняется
-отдельно без изменений Core. После него требуются regression explicit C₀ API,
-ownership/reset/growth, shrink/regrowth/dormant codec, completed/stopped transfer,
-frozen и failure/rollback controls, normal и ASan actual mappings. До их
-завершения реализация не объявляется runtime-подтверждённой.
+Это кандидат ветки codex/timelearner-capacitance-owner, ещё не принятый develop.
+В baseline Core8b41 owner state после bound edit пуст; исходный A1 смешал этот
+факт с двумя ошибками fixture. Corrected baseline A2 завершён отдельно без
+изменений Core:8/8 отрицательных cases, root evidence
+`a054904f31160271a87ea327353890f052d540f1`.
+
+Normal C2 на Pulse `f899ef024698afa7bc8e9a17f2307116368048da`, root
+`3a1b7fe1f0a2a958d034736613f2793abe16c5ec` завершил8 native и19 independent
+readers. Root evidence `a928fb92edd0880728a697da0fed6d7ede3e7d4a`: проверены
+все259 members, compressed archive10 491 579 bytes. Эта адресная проверка
+подтверждает C₀/scales и фактические L/Ns/Rs после Reset/growth/shrink/regrowth;
+она не требует равенства полного графа после разрешённого освобождения owned
+synapse banks. Реальные graph identities сохранены. Строгий full-graph
+preview/live и export/import contract остаётся обязательным.
+
+ASan owner8, transport43 (включая fresh-process dormant-image import), frozen
+и failure/rollback regressions, полный temporal render и visual QA ещё pending.
+До их завершения полной приёмки owner нет. Bounded C-trim search, native
+XML/Copy persistence всей private metadata и вся physics/mode матрица не
+подтверждены этим срезом. Подробный статус, handles и evidence находятся в
+корневом Docs/StructTrain/TimeLearner/CapacitanceOwnership.ru.md.
