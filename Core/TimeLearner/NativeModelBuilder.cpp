@@ -502,8 +502,9 @@ NativeModelBuildResult ConstructNativeLearnerModel(UNet& owner,const NativeModel
         if(s.initialThreshold)
         {
             const auto effectiveZone=neuron->GetComponentL<NPulseLTZoneCommon>("LTZone",true);
-            Require(effectiveZone && effectiveZone->Threshold.GetData()==*s.initialThreshold,
-                "native_initial_threshold_not_applied");
+            Require(bool(effectiveZone),"native_initial_threshold_not_applied");
+            RequireNativeScalarSpikeThreshold(*effectiveZone);
+            Require(effectiveZone->Threshold.GetData()==*s.initialThreshold,"native_initial_threshold_not_applied");
         }
         const auto integration=AssessNativeIntegration(neuron,source->Amplitude.GetData());Require(integration.valid,integration.reason.c_str());
         std::vector<int> positions;for(const auto& p:s.inputs)positions.push_back(p.attachment);
