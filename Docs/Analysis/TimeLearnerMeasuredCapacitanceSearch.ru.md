@@ -25,3 +25,28 @@ native comparisonScope provider, joint L/Ns/Rs/C preview/domain и bounded
 Полные contracts/tests/remaining steps находятся в корневом
 Docs/StructTrain/TimeLearner/MeasuredCapacitanceSearch.ru.md. Принятие automatic
 C₀ owner идёт отдельно; данный kernel не подтверждает его матрицу или physics.
+
+## Подготовленный native bridge полного C-состояния
+
+После unit130/130 normal и ASan (root proofs8214f206/88e96182) pure candidate
+state уже переносит полный absolute scale map. Подготовлены новые методы обоих
+learners ReadNativeTrainingCapacitance и ApplyNativeTrainingParameters,
+делегирующие общей реализации NativeTrainingCapacitance. Отсутствие bound C₀
+возвращает nullopt, а не выдуманную unit baseline. Владелец проверяет signed state,
+реальные C/physics и applied model revision. Origin вычисляется из immutable
+capture model revision, ModelSpec и storage-images fingerprint; расширение C₀
+witnesses после роста не должно менять origin.
+
+Полная controller map объединяет active/dormant scales и доказанные unit paths.
+Применение требует неизменных origin/политики и сохранения всей известной истории;
+новые paths и их C₀/active-dormant partition проверяет существующий совместный
+native L/Ns/Rs/C preview. Смена origin, потеря path, NaN и unbound baseline
+отклоняются до live mutation. Методы не вызывают Calculate/Default и не меняют
+prototypes. Четыре реальные SDK проверки Classic/Branch × N0/N1 при2000Hz
+подготовлены в root NativeTrainingCapacitanceBridge; runtime результат pending.
+
+Это пока механический API, не dispatch NativeTrainingService, не schema3 summary
+и не C-trim On. Следом обязательны подключение service/adapters, joint N1 domain
+с тем же C, versioned codecs/readers, физические witnesses истории, C policy и
+ограниченный измеряемый поиск. CapturedPerInput, anchor/default tolerances и
+legacy absolute-F DendriteCapacitance не меняются. В develop bridge не принят.

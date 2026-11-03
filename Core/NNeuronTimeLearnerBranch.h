@@ -25,6 +25,7 @@ See file license.txt for more information
 #include "TimeLearner/NativeRecognitionTrial.h"
 #include "TimeLearner/NativeModelEditor.h"
 #include "TimeLearner/NativeCapacitanceEdit.h"
+#include "TimeLearner/TrainingCapacitance.h"
 #include "TimeLearner/NativeTrainingService.h"
 #include "TimeLearner/NativeTrainingIntent.h"
 #include "TimeLearner/NativeModelBuilder.h"
@@ -807,6 +808,12 @@ public: // Methods
   return NativeProbeControl.TakeResult();
  }
  std::vector<TimeLearner::InputParameters> ReadNativeParameters();
+ // Complete native C0/scales bridge; no implicit baseline capture or C search.
+ std::optional<TimeLearner::TrainingCapacitance> ReadNativeTrainingCapacitance();
+ TimeLearner::NativeEditResult ApplyNativeTrainingParameters(
+     const std::vector<TimeLearner::InputParameters>& requested,
+     const std::optional<TimeLearner::TrainingCapacitance>& capacitance);
+
  TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested);
  TimeLearner::NativeEditResult ApplyNativeParameters(const std::vector<TimeLearner::InputParameters>& requested,
      const TimeLearner::NativeCapacitanceCorrection& capacitance);

@@ -5,6 +5,7 @@
 #include "TimeLearner/NativeRecognitionOwner.h"
 #include "TimeLearner/NativeOwnedPostTunePhaseImpl.h"
 #include "TimeLearner/ConfiguredNativeOwner.h"
+#include "TimeLearner/NativeTrainingCapacitance.h"
 // ===========================================================
 // Version:        3.0.2
 // ===========================================================
@@ -4266,6 +4267,24 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::AdoptNativeModel(TimeLea
   CapApplyPending=false;TrainingPhase.SetDataDirect(kPhaseSync);Ready=false;
  }
  return result;
+}
+std::optional<TimeLearner::TrainingCapacitance> NNeuronTimeLearner::ReadNativeTrainingCapacitance()
+{
+ return TimeLearner::ReadNativeTrainingCapacitance(NativeProbeControl,NativeProbeModelBindings(),
+  NativeModelDeclaration,NativeLearnedCapacitanceState);
+}
+TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeTrainingParameters(
+ const std::vector<TimeLearner::InputParameters>& requested,
+ const std::optional<TimeLearner::TrainingCapacitance>& capacitance)
+{
+ try
+ {
+  const auto correction=TimeLearner::ResolveNativeTrainingCapacitance(NativeProbeControl,NativeProbeModelBindings(),
+   NativeModelDeclaration,NativeLearnedCapacitanceState,capacitance);
+  return correction?ApplyNativeParameters(requested,*correction):ApplyNativeParameters(requested);
+ }
+ catch(const std::exception& error)
+ {TimeLearner::NativeEditResult result;result.reason=error.what();return result;}
 }
 QJsonObject NNeuronTimeLearner::ExportNativeLearnedState(const std::string& implementationId)
 {
