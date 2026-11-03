@@ -724,9 +724,11 @@ static ResistanceDomainAssessment AssessNativeInputResistanceDomainImpl(NativePr
             ValidateAppliedNativeCapacitanceState(previewBindings,
                 DecodeNativeModelSpec(effectiveCapacitance.baseline["model_spec"].toObject()),state);
             const auto parameters=DecodeNativeTrainingCapacitance(state);
-            const auto classes=effectiveCapacitance.baseline["channel_classes"].toObject();
             std::vector<std::string> roots;
-            for(auto it=classes.begin();it!=classes.end();++it)roots.push_back(it.value().toString().toStdString());
+            // C0 also binds the Dataset/generator and growth-only images.
+            // They need not occur among current neuron nodes/channel classes.
+            for(const auto& definition:effectiveCapacitance.baseline["storage_images"].toArray())
+                roots.push_back(definition.toObject()["name"].toString().toStdString());
             const auto images=QJsonDocument(NmsdkTools::CaptureModelImageDefinitions(preview,ports,roots))
                 .toJson(QJsonDocument::Compact).toStdString();
             result.effectiveCapacitance=parameters;result.capacitance=result.effectiveCapacitance;

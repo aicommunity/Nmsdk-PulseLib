@@ -113,3 +113,21 @@ unbound, граф и lifecycle неизменны. Это защищает от 
 перетолкования ранее измеренной модели как новой исходной C₀. Для этого выпуска
 root gate содержит140 SDK cases и23 structured Python checks (bridge8+domain8+
 binding7). Checks pending; C-trim On и native service integration не включены.
+
+
+## Полная registry closure в witnesses (исправление по фактическому H4 snapshot)
+
+C₀ baseline связывает не только neuron/channel images, но и dataset/generator
+из ModelSpec. CaptureModelImageDefinitions(neuron, ports, channel_classes) не
+включает их автоматически: Classes(identity) обходит только узлы и ClassName
+selectors самого neuron. На actual H4 Classic N0 captured frame подтверждено
+отсутствие NDatasetMatrix и NPulseGeneratorTransit относительно baseline.
+
+Typed domain теперь перечитывает storage по ВСЕМ именам baseline.storage_images,
+включая dormant, growth-only и stimulus/dataset definitions. Root bridge/binding
+snapshots используют тот же способ. Это actual registry readback, не подстановка
+сохранённых baseline definitions. Strict independent auditor не ослаблен.
+Добавлены semantic negative controls: удалить NDatasetMatrix definition, которая
+не имеет live consumer внутри neuron, всё равно означает profile mismatch.
+Код и snapshots требуют отдельного SDK/runtime gate; научный/algorithm verdict
+из отсутствовавших witnesses не выводится. C-trim/service остаются выключенными.
