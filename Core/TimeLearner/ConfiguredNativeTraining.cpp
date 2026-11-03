@@ -161,6 +161,7 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
 }
 QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 {
+    Require(!c.search.capacitanceSearch,"configured_capacitance_search_requires_new_schema");
     MakeConfiguredNativeTrainingPlan(c);QJsonArray windows,bounds;
     for(auto [begin,end]:c.windows)windows.append(QJsonObject{{"begin",Numeric(begin)},{"end",Numeric(end)}});
     for(const auto& b:c.search.bounds)bounds.append(QJsonObject{{"minimum_length",b.minimumLength},{"maximum_length",b.maximumLength},

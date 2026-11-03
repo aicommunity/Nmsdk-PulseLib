@@ -37,6 +37,8 @@ void PreservedBaseline(const TrainingCapacitanceWitness& previous,const Training
 void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingAdapter& a,double modelTime,double wallTime)
 {
     Require(state==NativeTrainingState::Idle,"native_training_requires_reset_before_restart");
+    Require(!value.search.capacitanceSearch || value.recordCapacitanceHistory,
+        "native_capacitance_search_requires_recorded_C0_history");
     Require(bool(a.readParameters) && bool(a.readModelRevision) && bool(a.apply) && bool(a.queue) &&
         bool(a.probeState) && bool(a.takeResult) && bool(a.cancel),"incomplete_native_training_adapter");
     Require(value.search.normalization!=Normalization::TipResistance || bool(a.assessResistanceDomain),
@@ -79,6 +81,7 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
     }
     auto initialWitness=value.recordCapacitanceHistory?a.readCapacitanceWitness():std::optional<TrainingCapacitanceWitness>{};
     Require(!value.recordCapacitanceHistory || bool(initialWitness),"native_training_capacitance_history_requires_bound_C0");
+    ValidateBoundedTrainingCapacitance(value.search,initialWitness?std::optional<TrainingCapacitance>(initialWitness->parameters):std::nullopt);
     Require((!capacitanceHistory || bool(initialWitness)) &&
         (bool(initialWitness)==bool(capacitanceHistory) || (!references && !incompleteCaptureConstraint)),
         "native_training_capacitance_context_changed_on_restart");

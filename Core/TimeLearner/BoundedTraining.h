@@ -12,6 +12,13 @@ struct InputSearchBounds {
     int minimumLength=1,maximumLength=1,minimumSynapses=1,maximumSynapses=128;
     double minimumResistance=0.,maximumResistance=0.;
 };
+struct CapacitanceSearchPolicy {
+    // Finite absolute C/C0 mesh. It includes the unchanged full state and
+    // independent per-scale normalizer/length cursors; no trend is assumed.
+    double minimumScale=0.8,maximumScale=1.2;
+    unsigned subdivisionDepth=2;
+    std::size_t maximumContexts=5,maximumMembranes=1024;
+};
 struct BoundedTrainingConfig {
     std::string runId,initialModelRevision;
     std::size_t initialModelEpoch=0,maximumProbes=0,maximumEdits=0;
@@ -26,6 +33,7 @@ struct BoundedTrainingConfig {
     Normalization normalization=Normalization::SynapseCount;
     VerificationTolerances tolerances;
     std::vector<InputSearchBounds> bounds;
+    std::optional<CapacitanceSearchPolicy> capacitanceSearch={};
 };
 enum class TrainingActionKind { Edit, Probe, ResistanceDomain };
 struct TrainingAction {
@@ -64,6 +72,11 @@ struct CandidateRepeatEvidence {
 // bounds/physical-bank legality and tolerances as the actual decision session.
 void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const BoundedTrainingConfig& configuration,
                                    const std::vector<InputParameters>& initial);
+
+// Native preflight calls this before reference probes; the standalone decision
+// session uses the same owner/policy contract.
+void ValidateBoundedTrainingCapacitance(const BoundedTrainingConfig& configuration,
+    const std::optional<TrainingCapacitance>& owned);
 
 // Common decision controller. Adapters alone apply edits/read back the graph,
 // prepare native probes and schedule children. No Rdk calls or physical reset
@@ -135,6 +148,18 @@ private:
         std::vector<CandidateEvidence> lengthMeasurements;
     };
     CandidateCursor cursor;
+    struct CapacitanceContext {
+        CandidateCursor suspended;
+        std::optional<double> absoluteScale={};
+        bool exhausted=false;
+    };
+    // The active cursor lives in cursor; only inactive cursors are suspended.
+    std::vector<CapacitanceContext> capacitanceContexts;
+    std::size_t activeCapacitanceContext=0,nextCapacitanceContext=0;
+    std::vector<std::pair<std::vector<InputParameters>,std::optional<TrainingCapacitance>>> issuedJointCandidates;
+    void SelectCapacitanceContext(std::size_t index);
+    void AdvanceCapacitanceContext();
+    std::optional<TrainingCapacitance> CandidateCapacitance(const std::vector<InputParameters>& parameters) const;
     bool requireResistanceDomains=false;
     std::vector<ResistanceDomainAssessment> domains;
     std::vector<CandidateEvidence> evidence;

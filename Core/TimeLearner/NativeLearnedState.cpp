@@ -180,6 +180,7 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
 static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
     int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance)
 {
+    Require(!service.Configuration().capacitanceSearch,"capacitance_search_boundary_requires_new_schema");
     const bool stopped=!service.Certificate();
     const bool tracked=service.Plan().recordCapacitanceHistory;
     Require(tracked==bool(service.CapacitanceHistory()) && (!tracked || capacitance),"learned_capacitance_history_requires_owned_state");

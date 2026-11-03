@@ -398,6 +398,17 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         result["certificate_matches_actual_model"]=service.References() && certificate->Matches(actualModelRevision,
             *service.References(),cfg.tolerances,ModelStateKind::LearnedSolo,service.ModelEpoch());
     }
+    if(cfg.capacitanceSearch)
+    {
+        const auto& policy=*cfg.capacitanceSearch;
+        result["schema_version"]=4;
+        auto configuration=result["configuration"].toObject();
+        configuration["capacitance_search"]=QJsonObject{{"minimum_scale",Number(policy.minimumScale)},
+            {"maximum_scale",Number(policy.maximumScale)},{"subdivision_depth",int(policy.subdivisionDepth)},
+            {"maximum_contexts",Count(policy.maximumContexts)},{"maximum_membranes",Count(policy.maximumMembranes)},
+            {"enumeration","round_robin_absolute_C0_v1"}};
+        result["configuration"]=configuration;
+    }
     return result;
 }
 }

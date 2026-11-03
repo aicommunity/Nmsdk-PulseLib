@@ -2,6 +2,8 @@
 #include "NumericChecks.h"
 #include "MeasuredResistanceSearch.h"
 #include "MeasuredLengthSearch.h"
+#include "MeasuredCapacitanceSearch.h"
+#include "CapacitanceRegion.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -84,7 +86,33 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
             b.maximumSynapses>128 || b.maximumSynapses<b.minimumSynapses ||
             !Finite(b.minimumResistance) || !Finite(b.maximumResistance) || b.minimumResistance<=0. || b.maximumResistance<b.minimumResistance)
             throw std::invalid_argument("invalid_per_input_search_bounds");
+    if(config.capacitanceSearch)
+    {
+        const auto& policy=*config.capacitanceSearch;
+        if(!Finite(policy.minimumScale) || !Finite(policy.maximumScale) || policy.minimumScale<=0. ||
+            policy.minimumScale>1. || policy.maximumScale<1. || policy.maximumScale<policy.minimumScale ||
+            policy.subdivisionDepth>20 || policy.maximumContexts<2 || policy.maximumContexts>4096 ||
+            policy.maximumContexts>config.maximumCandidatesPerInput || !policy.maximumMembranes)
+            throw std::invalid_argument("invalid_capacitance_search_policy");
+        for(std::size_t i=0;i+1<config.bounds.size();++i)
+        {
+            const auto maximum=std::int64_t(config.bounds[i].maximumLength)-
+                (protocol.routing==ProbeRouting::BranchSoloBurst?config.bounds[i+1].minimumLength:0);
+            if(maximum>0 && std::uint64_t(maximum)>policy.maximumMembranes)
+                throw std::invalid_argument("capacitance_search_region_exceeds_declared_budget");
+        }
+    }
     if(!ParametersLegal(protocol,config,initial))throw std::invalid_argument("initial_parameters_outside_search_domain");
+}
+
+void ValidateBoundedTrainingCapacitance(const BoundedTrainingConfig& config,
+    const std::optional<TrainingCapacitance>& owned)
+{
+    ValidateTrainingCapacitance(owned);
+    if(config.capacitanceSearch && (!owned ||
+        config.capacitanceSearch->minimumScale<1.-owned->maximumRelativeChange ||
+        config.capacitanceSearch->maximumScale>1.+owned->maximumRelativeChange))
+        throw std::invalid_argument("capacitance_search_requires_compatible_owned_C0");
 }
 
 BoundedTrainingSession::BoundedTrainingSession(CapturedReferences refs,BoundedTrainingConfig cfg,
@@ -94,7 +122,7 @@ BoundedTrainingSession::BoundedTrainingSession(CapturedReferences refs,BoundedTr
      currentCapacitance(std::move(initialCapacitance)),
      epoch(config.initialModelEpoch),revision(config.initialModelRevision)
 {
-    ValidateTrainingCapacitance(currentCapacitance);
+    ValidateBoundedTrainingCapacitance(config,currentCapacitance);
     requireResistanceDomains=physicalDomains && config.normalization==Normalization::TipResistance;
     ValidateBoundedTrainingInputs(references.Protocol(),config,current);
     if(current.size()!=references.Inputs().size())
@@ -144,6 +172,7 @@ bool BoundedTrainingSession::PrepareCandidate(std::vector<InputParameters>& para
 
 void BoundedTrainingSession::BeginInput()
 {
+    capacitanceContexts.clear();activeCapacitanceContext=nextCapacitanceContext=0;issuedJointCandidates.clear();
     const auto index=order.at(position);const auto& b=config.bounds[index];const auto& p=current[index];
     background=current;cursor.lengths.clear();cursor.counts.clear();cursor.resistances.clear();best.reset();anchor.reset();anchorTrial.clear();
     backgroundCapacitance=currentCapacitance;
@@ -186,6 +215,41 @@ void BoundedTrainingSession::BeginInput()
             }
         }
     }
+    if(config.capacitanceSearch)
+    {
+        const auto& policy=*config.capacitanceSearch;
+        capacitanceContexts.push_back({}); // Preserve the unchanged full map.
+        for(double scale:CapacitanceSeedScales(policy.minimumScale,policy.maximumScale,1.,
+                policy.subdivisionDepth,policy.maximumContexts-1))
+        {
+            auto next=cursor;
+            // A changed C requires a fresh N1 domain; it cannot use the
+            // current-graph initial-candidate shortcut.
+            if(requireResistanceDomains)next.initialCandidatePending=false;
+            capacitanceContexts.push_back({std::move(next),scale,false});
+        }
+    }
+}
+
+void BoundedTrainingSession::SelectCapacitanceContext(std::size_t index)
+{
+    if(capacitanceContexts.empty() || index==activeCapacitanceContext)return;
+    std::swap(cursor,capacitanceContexts.at(activeCapacitanceContext).suspended);
+    std::swap(cursor,capacitanceContexts.at(index).suspended);
+    activeCapacitanceContext=index;
+}
+void BoundedTrainingSession::AdvanceCapacitanceContext()
+{
+    if(!capacitanceContexts.empty())nextCapacitanceContext=(activeCapacitanceContext+1)%capacitanceContexts.size();
+}
+std::optional<TrainingCapacitance> BoundedTrainingSession::CandidateCapacitance(
+    const std::vector<InputParameters>& parameters) const
+{
+    auto result=RestoreTrainingCapacitance(backgroundCapacitance,currentCapacitance);
+    if(capacitanceContexts.empty() || !capacitanceContexts.at(activeCapacitanceContext).absoluteScale)return result;
+    const auto region=SelectCapacitanceRegion(references.Protocol().routing,parameters,order.at(position));
+    return MakeCapacitanceRegionRequest(*result,region,*capacitanceContexts[activeCapacitanceContext].absoluteScale,
+        config.capacitanceSearch->maximumMembranes);
 }
 
 bool BoundedTrainingSession::NextCandidate(std::vector<InputParameters>& parameters)
@@ -294,7 +358,7 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
             }
             pending=TrainingAction{TrainingActionKind::ResistanceDomain,++serial,input,epoch,
                 config.runId,{},revision,std::move(geometry),false};
-            pending->capacitance=RestoreTrainingCapacitance(backgroundCapacitance,currentCapacitance);
+            pending->capacitance=CandidateCapacitance(pending->parameters);
             return DynamicCandidate::NeedDomain;
         }
         while(cursor.domainNormalizer<cursor.resistances.size())
@@ -325,7 +389,7 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
         assessment.capacitance!=pending->capacitance)
     {rejected.push_back({{},"resistance_domain_context_mismatch:"+assessment.reason});Stop(TrainingStatus::InvalidModel);return;}
     if(assessment.status==ResistanceDomainStatus::Unavailable)
-    {rejected.push_back({{},"resistance_domain_unavailable:"+assessment.reason});pending.reset();AdvanceDomainGeometry();return;}
+    {rejected.push_back({{},"resistance_domain_unavailable:"+assessment.reason});pending.reset();AdvanceDomainGeometry();AdvanceCapacitanceContext();return;}
     if(assessment.status!=ResistanceDomainStatus::Available || assessment.previewModelRevision.empty())
     {rejected.push_back({{},"resistance_domain_unsupported:"+assessment.reason});Stop(TrainingStatus::InvalidModel);return;}
     const auto& bound=config.bounds.at(pending->inputIndex);
@@ -335,7 +399,7 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
         assessment.maximumResistance<assessment.minimumResistance)
     {rejected.push_back({{},"invalid_resistance_domain_interval"});Stop(TrainingStatus::InvalidModel);return;}
     if(low>high)
-    {rejected.push_back({{},"resistance_domain_outside_declared_box"});pending.reset();AdvanceDomainGeometry();return;}
+    {rejected.push_back({{},"resistance_domain_outside_declared_box"});pending.reset();AdvanceDomainGeometry();AdvanceCapacitanceContext();return;}
     cursor.domainGeometry=pending->parameters;cursor.domainScope=assessment.previewModelRevision;cursor.resistances.clear();
     const double original=background[pending->inputIndex].resistance;
     if(original>=low && original<=high)UniquePush(cursor.resistances,original);
@@ -426,13 +490,44 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
         std::vector<InputParameters> candidate;
         auto candidateCapacitance=RestoreTrainingCapacitance(backgroundCapacitance,currentCapacitance);
         bool exhausted=candidates>=config.maximumCandidatesPerInput;
-        if(!exhausted && requireResistanceDomains)
+        if(capacitanceContexts.empty())
         {
-            const auto next=NextDomainCandidate(candidate);
-            if(next==DynamicCandidate::NeedDomain)return pending;
-            exhausted=next==DynamicCandidate::Exhausted;
+            if(!exhausted && requireResistanceDomains)
+            {
+                const auto next=NextDomainCandidate(candidate);
+                if(next==DynamicCandidate::NeedDomain)return pending;
+                exhausted=next==DynamicCandidate::Exhausted;
+            }
+            else if(!exhausted)exhausted=!NextCandidate(candidate);
         }
-        else if(!exhausted)exhausted=!NextCandidate(candidate);
+        else if(!exhausted)
+        {
+            // One measured candidate per context turn, not an entire Ns/Rs
+            // mesh at one C. Pending domains retain their issuing context.
+            auto remainingContexts=std::count_if(capacitanceContexts.begin(),capacitanceContexts.end(),
+                [](const auto& context){return !context.exhausted;});
+            while(true)
+            {
+                if(!remainingContexts){exhausted=true;break;}
+                SelectCapacitanceContext(nextCapacitanceContext);
+                auto& context=capacitanceContexts[activeCapacitanceContext];
+                if(context.exhausted)
+                {
+                    AdvanceCapacitanceContext();continue;
+                }
+                const auto next=requireResistanceDomains?NextDomainCandidate(candidate):
+                    (NextCandidate(candidate)?DynamicCandidate::Candidate:DynamicCandidate::Exhausted);
+                if(next==DynamicCandidate::NeedDomain)return pending;
+                if(next==DynamicCandidate::Exhausted)
+                {context.exhausted=true;--remainingContexts;AdvanceCapacitanceContext();continue;}
+                candidateCapacitance=CandidateCapacitance(candidate);
+                const bool duplicate=std::any_of(issuedJointCandidates.begin(),issuedJointCandidates.end(),[&](const auto& issued) {
+                    return issued.first==candidate && EquivalentTrainingCapacitance(issued.second,candidateCapacitance);
+                });
+                if(duplicate){AdvanceCapacitanceContext();continue;}
+                issuedJointCandidates.push_back({candidate,candidateCapacitance});break;
+            }
+        }
         if(exhausted)
         {
             if(!best){Stop(TrainingStatus::SearchUnresolved,"no_measured_candidate_in_declared_search");return {};}
@@ -493,6 +588,7 @@ void BoundedTrainingSession::Applied(std::size_t actionSerial,const std::vector<
     current=effective;currentCapacitance=std::move(effectiveCapacitance);
     revision=actualModelRevision;++epoch;++edits;pending.reset();
     if(requireResistanceDomains)cursor.domainReady=false;
+    for(auto& context:capacitanceContexts)context.suspended.domainReady=false;
     // Every edit invalidates all current measurements, including Branch shared
     // cable dependencies. Earlier evidence remains historical, never reused.
     anchor.reset();anchorTrial.clear();
@@ -515,7 +611,9 @@ void BoundedTrainingSession::DeclineEdit(std::size_t actionSerial,const std::str
     if(unchangedModelRevision!=revision || unchangedModelRevision.empty() || restoringBest)
     {Stop(TrainingStatus::InvalidModel);return;}
     pending.reset();armed.reset();anchor.reset();anchorTrial.clear();phase=Phase::Candidate;
+    AdvanceCapacitanceContext();
     if(requireResistanceDomains)cursor.domainReady=false;
+    for(auto& context:capacitanceContexts)context.suspended.domainReady=false;
 }
 
 void BoundedTrainingSession::Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared)
@@ -636,7 +734,7 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
         }
     }
     if(restoringBest || (e.withinTiming && e.withinAmplitude))AdvanceInput();
-    else {phase=Phase::Candidate;anchor.reset();anchorTrial.clear();}
+    else {phase=Phase::Candidate;anchor.reset();anchorTrial.clear();AdvanceCapacitanceContext();}
 }
 
 void BoundedTrainingSession::RecordIncompleteCandidateRepeats(const std::string& reason)
