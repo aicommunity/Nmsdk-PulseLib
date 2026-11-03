@@ -180,10 +180,10 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
 static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
     int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance)
 {
-    Require(!service.Configuration().capacitanceSearch,"capacitance_search_boundary_requires_new_schema");
     const bool stopped=!service.Certificate();
     const bool tracked=service.Plan().recordCapacitanceHistory;
     Require(tracked==bool(service.CapacitanceHistory()) && (!tracked || capacitance),"learned_capacitance_history_requires_owned_state");
+    Require(!service.Configuration().capacitanceSearch || tracked,"learned_capacitance_search_requires_history");
     Require(service.State()!=NativeTrainingState::CapturingReferences && service.State()!=NativeTrainingState::Searching &&
         (stopped?(service.State()==NativeTrainingState::Finished && service.SessionAttempt()>0):bool(service.References())),
         "learned_state_requires_completed_or_stopped_boundary");
@@ -236,6 +236,12 @@ static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeMod
         training["reference_complete"]=bool(service.References());training["capture_revision"]=Text(service.CaptureRevision());
         training["capture_epoch"]=Integer(service.CaptureEpoch());training["reason"]=Text(service.Reason());metadata["training"]=training;
     }
+    if(c.search.capacitanceSearch)
+    {
+        auto training=metadata["training"].toObject();
+        training["capacitance_search"]=EncodeCapacitanceSearchPolicy(*c.search.capacitanceSearch);
+        metadata["training"]=training;
+    }
     QJsonObject capacitanceState;
     if(capacitance)
     {
@@ -266,7 +272,7 @@ static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeMod
     {
         auto history=BoundaryHistory(service);
         ValidateNativeTrainingCapacitanceBoundary(history,service,revision,capacitanceState);
-        package["schema_version"]=3;package["capacitance_history"]=EncodeBoundaryHistory(history);
+        package["schema_version"]=c.search.capacitanceSearch?4:3;package["capacitance_history"]=EncodeBoundaryHistory(history);
     }
     package["sha256"]=NmsdkTools::CanonicalModelDataSha256(package);return package;
 }
@@ -284,7 +290,8 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
 {
     auto body=package;body.remove("sha256");
     const bool stopped=package["kind"]==QJsonValue("timelearner_stopped_state");
-    const bool tracked=package["schema_version"]==QJsonValue(3);
+    const bool searchingCapacitance=package["schema_version"]==QJsonValue(4);
+    const bool tracked=searchingCapacitance || package["schema_version"]==QJsonValue(3);
     const bool withCapacitance=tracked || package["schema_version"]==QJsonValue(2);
     Require((stopped?(package.size()==26+int(withCapacitance)+int(tracked) && package["state_kind"]==QJsonValue("diagnostic")):
         (package.size()==21+int(withCapacitance)+int(tracked) && package["kind"]==QJsonValue("timelearner_completed_state") && package["state_kind"]==QJsonValue("learned_solo"))) &&
@@ -294,6 +301,7 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
     auto result=std::make_unique<PreparedNativeLearnedState>();result->storage=storage;
     result->configuration=DecodeConfiguredNativeTraining(Object(package["configuration"]));const auto& c=result->configuration;
     Require(c.recordCapacitanceHistory==tracked,"learned_configuration_capacitance_history_mismatch");
+    Require(bool(c.search.capacitanceSearch)==searchingCapacitance,"learned_configuration_capacitance_search_mismatch");
     const auto version=Count(package["controller_version"]),mode=Count(package["calculate_mode"]),structure=Count(package["structure_build_mode"]);
     Require((version==1 || version==2) && mode<=1 && structure<=1,"invalid_learned_state_component_options");
     result->controllerVersion=int(version);result->calculateMode=int(mode);result->structureBuildMode=int(structure);
@@ -339,6 +347,10 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
             "learned_capacitance_history_archive_mismatch");
     }
     const auto metadata=Object(archive["metadata"]),training=Object(metadata["training"]);
+    if(searchingCapacitance)
+        Require(training["capacitance_search"]==QJsonValue(EncodeCapacitanceSearchPolicy(*c.search.capacitanceSearch)),
+            "learned_state_archive_capacitance_search_mismatch");
+    else Require(!training.contains("capacitance_search"),"unversioned_learned_capacitance_search_policy");
     QJsonArray target;for(double value:c.model.initialIsi)target.append(value);
     const auto raw=RawReferences(protocol,result->service.ReferencePackets());
     Require(metadata["state_kind"]==package["state_kind"] && training["status"]==package["training_outcome"] &&

@@ -1,6 +1,7 @@
 #include "ProbeEvidenceJson.h"
 #include "NativeTrainingService.h"
 #include "NativeTrainingCapacitance.h"
+#include "ConfiguredNativeTraining.h"
 #include "ModelArchive.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -403,11 +404,7 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         const auto& policy=*cfg.capacitanceSearch;
         result["schema_version"]=4;
         auto configuration=result["configuration"].toObject();
-        configuration["capacitance_search"]=QJsonObject{{"minimum_scale",Number(policy.minimumScale)},
-            {"maximum_scale",Number(policy.maximumScale)},{"subdivision_depth",int(policy.subdivisionDepth)},
-            {"maximum_contexts",Count(policy.maximumContexts)},{"maximum_membranes",Count(policy.maximumMembranes)},
-            {"maximum_cursor_elements",Count(policy.maximumCursorElements)},
-            {"enumeration","round_robin_absolute_C0_v1"}};
+        configuration["capacitance_search"]=EncodeCapacitanceSearchPolicy(policy);
         result["configuration"]=configuration;
     }
     return result;

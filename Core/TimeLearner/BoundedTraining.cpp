@@ -66,6 +66,48 @@ bool ParametersLegal(const VerificationProtocol& protocol,const BoundedTrainingC
 }
 }
 
+void ValidateCapacitanceSearchPolicy(const CapacitanceSearchPolicy& policy)
+{
+    if(!Finite(policy.minimumScale) || !Finite(policy.maximumScale) || policy.minimumScale<=0. ||
+        policy.minimumScale>1. || policy.maximumScale<1. || policy.maximumScale<policy.minimumScale ||
+        policy.subdivisionDepth>20 || policy.maximumContexts<2 || policy.maximumContexts>4096 ||
+        !policy.maximumMembranes || !policy.maximumCursorElements)
+        throw std::invalid_argument("invalid_capacitance_search_policy");
+}
+void ValidateCapacitanceSearchPolicy(const BoundedTrainingConfig& config,ProbeRouting routing)
+{
+    if(config.capacitanceSearch && routing!=ProbeRouting::ClassicBurst && routing!=ProbeRouting::BranchSoloBurst)
+        throw std::invalid_argument("invalid_capacitance_search_routing");
+    if(config.capacitanceSearch)
+    {
+        const auto& policy=*config.capacitanceSearch;
+        ValidateCapacitanceSearchPolicy(policy);
+        if(policy.maximumContexts>config.maximumCandidatesPerInput)
+            throw std::invalid_argument("invalid_capacitance_search_policy");
+        const auto contexts=1+CapacitanceSeedScales(policy.minimumScale,policy.maximumScale,1.,
+            policy.subdivisionDepth,policy.maximumContexts-1).size();
+        const auto reserve=policy.maximumCursorElements/contexts;
+        for(std::size_t i=0;i+1<config.bounds.size();++i)
+        {
+            const auto& bound=config.bounds[i];
+            if(bound.minimumLength<1 || bound.maximumLength<bound.minimumLength ||
+                config.bounds[i+1].minimumLength<1 || bound.minimumSynapses<1 ||
+                bound.maximumSynapses<bound.minimumSynapses || bound.maximumSynapses>128)
+                throw std::invalid_argument("invalid_per_input_search_bounds");
+            const auto lengths=std::min(config.maximumCandidatesPerInput,
+                std::size_t(std::int64_t(bound.maximumLength)-bound.minimumLength+1));
+            const auto counts=config.normalization==Normalization::SynapseCount?
+                std::size_t(bound.maximumSynapses-bound.minimumSynapses+1):0;
+            if(lengths>reserve || counts>reserve-lengths)
+                throw std::invalid_argument("capacitance_cursor_inventory_exceeds_declared_budget");
+            const auto maximum=std::int64_t(config.bounds[i].maximumLength)-
+                (routing==ProbeRouting::BranchSoloBurst?config.bounds[i+1].minimumLength:0);
+            if(maximum>0 && std::uint64_t(maximum)>policy.maximumMembranes)
+                throw std::invalid_argument("capacitance_search_region_exceeds_declared_budget");
+        }
+    }
+}
+
 void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const BoundedTrainingConfig& config,
                                    const std::vector<InputParameters>& initial)
 {
@@ -86,32 +128,7 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
             b.maximumSynapses>128 || b.maximumSynapses<b.minimumSynapses ||
             !Finite(b.minimumResistance) || !Finite(b.maximumResistance) || b.minimumResistance<=0. || b.maximumResistance<b.minimumResistance)
             throw std::invalid_argument("invalid_per_input_search_bounds");
-    if(config.capacitanceSearch)
-    {
-        const auto& policy=*config.capacitanceSearch;
-        if(!Finite(policy.minimumScale) || !Finite(policy.maximumScale) || policy.minimumScale<=0. ||
-            policy.minimumScale>1. || policy.maximumScale<1. || policy.maximumScale<policy.minimumScale ||
-            policy.subdivisionDepth>20 || policy.maximumContexts<2 || policy.maximumContexts>4096 ||
-            policy.maximumContexts>config.maximumCandidatesPerInput || !policy.maximumMembranes || !policy.maximumCursorElements)
-            throw std::invalid_argument("invalid_capacitance_search_policy");
-        const auto contexts=1+CapacitanceSeedScales(policy.minimumScale,policy.maximumScale,1.,
-            policy.subdivisionDepth,policy.maximumContexts-1).size();
-        const auto reserve=policy.maximumCursorElements/contexts;
-        for(std::size_t i=0;i+1<config.bounds.size();++i)
-        {
-            const auto& bound=config.bounds[i];
-            const auto lengths=std::min(config.maximumCandidatesPerInput,
-                std::size_t(std::int64_t(bound.maximumLength)-bound.minimumLength+1));
-            const auto counts=config.normalization==Normalization::SynapseCount?
-                std::size_t(bound.maximumSynapses-bound.minimumSynapses+1):0;
-            if(lengths>reserve || counts>reserve-lengths)
-                throw std::invalid_argument("capacitance_cursor_inventory_exceeds_declared_budget");
-            const auto maximum=std::int64_t(config.bounds[i].maximumLength)-
-                (protocol.routing==ProbeRouting::BranchSoloBurst?config.bounds[i+1].minimumLength:0);
-            if(maximum>0 && std::uint64_t(maximum)>policy.maximumMembranes)
-                throw std::invalid_argument("capacitance_search_region_exceeds_declared_budget");
-        }
-    }
+    ValidateCapacitanceSearchPolicy(config,protocol.routing);
     if(!ParametersLegal(protocol,config,initial))throw std::invalid_argument("initial_parameters_outside_search_domain");
 }
 

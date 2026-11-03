@@ -28,6 +28,9 @@ struct ConfiguredNativeTraining {
 };
 QJsonObject EncodeNativeModelSpec(const NativeModelSpec& model);
 NativeModelSpec DecodeNativeModelSpec(const QJsonObject& object);
+// Single closed serializer shared by cold configuration and diagnostics.
+QJsonObject EncodeCapacitanceSearchPolicy(const CapacitanceSearchPolicy& policy);
+CapacitanceSearchPolicy DecodeCapacitanceSearchPolicy(const QJsonObject& object);
 QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& configuration);
 ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& object);
 // Reject duplicate keys (including escaped spellings), unknown fields, invalid

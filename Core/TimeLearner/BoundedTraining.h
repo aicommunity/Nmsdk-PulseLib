@@ -20,6 +20,7 @@ struct CapacitanceSearchPolicy {
     std::size_t maximumContexts=5,maximumMembranes=1024;
     // Total retained L/Ns/Rs seed entries, reserved equally among C contexts.
     std::size_t maximumCursorElements=131072;
+    bool operator==(const CapacitanceSearchPolicy&) const=default;
 };
 struct BoundedTrainingConfig {
     std::string runId,initialModelRevision;
@@ -74,6 +75,9 @@ struct CandidateRepeatEvidence {
 // bounds/physical-bank legality and tolerances as the actual decision session.
 void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const BoundedTrainingConfig& configuration,
                                    const std::vector<InputParameters>& initial);
+
+void ValidateCapacitanceSearchPolicy(const CapacitanceSearchPolicy& policy);
+void ValidateCapacitanceSearchPolicy(const BoundedTrainingConfig& configuration,ProbeRouting routing);
 
 // Native preflight calls this before reference probes; the standalone decision
 // session uses the same owner/policy contract.
