@@ -110,10 +110,7 @@ private:
     std::vector<InputParameters> current,background;
     std::optional<TrainingCapacitance> currentCapacitance,backgroundCapacitance;
     std::vector<std::size_t> order;
-    std::vector<int> lengths,counts;
-    std::vector<double> resistances;
-    std::vector<std::vector<InputParameters>> n0Priority,issuedN0Candidates;
-    std::size_t lengthIndex=0,normalizerIndex=0,position=0,sweep=0,candidates=0;
+    std::size_t position=0,sweep=0,candidates=0;
     std::size_t serial=0,epoch=0,probes=0,edits=0,invalid=0;
     std::string revision,anchorTrial;
     std::optional<ValidatedProbeMeasurement> anchor;
@@ -121,17 +118,27 @@ private:
     std::optional<PreparedVerificationProbe> armed;
     std::optional<CandidateEvidence> best;
     bool restoringBest=false;
-    bool requireResistanceDomains=false,initialCandidatePending=false,domainReady=false;
-    std::size_t domainLength=0,domainNormalizer=0,domainVariant=0;
-    std::vector<InputParameters> domainGeometry;
-    std::string domainScope;
-    std::string candidateResistanceScope;
-    std::vector<std::pair<std::string,CandidateEvidence>> resistanceMeasurements;
-    std::vector<std::pair<std::string,std::vector<InputParameters>>> visitedDomainCandidates;
+    // Enumeration state belongs to a single physical search context. Keeping
+    // it separate from measurements/references enables fair bounded traversal
+    // of joint physical candidates without resetting the training session.
+    struct CandidateCursor {
+        std::vector<int> lengths,counts;
+        std::vector<double> resistances;
+        std::vector<std::vector<InputParameters>> n0Priority,issuedN0Candidates;
+        std::size_t lengthIndex=0,normalizerIndex=0;
+        bool initialCandidatePending=false,domainReady=false;
+        std::size_t domainLength=0,domainNormalizer=0,domainVariant=0;
+        std::vector<InputParameters> domainGeometry;
+        std::string domainScope,candidateResistanceScope;
+        std::vector<std::pair<std::string,CandidateEvidence>> resistanceMeasurements;
+        std::vector<std::pair<std::string,std::vector<InputParameters>>> visitedDomainCandidates;
+        std::vector<CandidateEvidence> lengthMeasurements;
+    };
+    CandidateCursor cursor;
+    bool requireResistanceDomains=false;
     std::vector<ResistanceDomainAssessment> domains;
     std::vector<CandidateEvidence> evidence;
     std::vector<CandidateEvidence> candidateMeasurements;
-    std::vector<CandidateEvidence> lengthMeasurements;
     std::vector<CandidateRepeatEvidence> candidateRepeats;
     std::vector<TrainingRejection> rejected;
     std::set<std::string> seenTrials;

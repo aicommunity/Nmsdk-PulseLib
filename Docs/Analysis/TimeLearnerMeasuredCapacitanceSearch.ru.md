@@ -255,3 +255,22 @@ controls. Новые случаи охватывают Classic/Branch, N0/N1, co
 rollback повреждённого пакета и остановку до первой пробы. Independent reader
 добавляет12 проверок первичных CSV и повреждённых связей. До серверного запуска
 эти изменения имеют статус «реализовано в коде», без runtime-подтверждения.
+
+
+### Отделение состояния перебора (кандидат, 2026-11-03)
+
+BoundedTrainingSession группирует L/Ns/Rs enumeration counters, N0 priority/dedup,
+N1 domain geometry/scope/measurements и measured-length proposals в CandidateCursor.
+References, лучшая измеренная точка, бюджеты, epochs, повторные наблюдения и final
+verification остаются состоянием целого обучения. Это механический commit:
+обратная подстановка cursor.field → field восстанавливает прежний .cpp целиком,
+а типы/defaults перенесённых полей сохранены. C-search пока не включён.
+
+Цель следующего алгоритмического изменения — хранить отдельный enumeration cursor
+для каждого разрешённого C-контекста и обходить их без голодания одного контекста
+из-за всех Ns/Rs другого. Для N1 каждый совместный L/Ns/Rs/C кандидат по-прежнему
+проходит native effective-domain preview. У всех контекстов общий физический
+owner/C₀, budgets, глобальный best и неизменные CapturedPerInput references;
+после выбора остаётся свежая проверка всех входов. Перенос counters сам по себе
+не доказывает правильность алгоритма или интеграции: нужны отдельные серверные
+A/B pure decision tests и native boundary regressions перед приёмкой.
