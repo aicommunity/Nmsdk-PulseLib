@@ -76,6 +76,9 @@ NativeTrainingPlan Plan(const ConfiguredNativeTraining& c,const VerificationProt
 }
 ConfiguredNativeTraining Configuration(const NativeModelSpec& declaration,const NativeTrainingService& service)
 {
+    // Old packages cannot preserve reference witnesses/dormant parameter
+    // contexts. Do not silently export a tracked run as an untracked boundary.
+    Require(!service.Plan().recordCapacitanceHistory,"capacitance_history_requires_learned_state_schema3");
     const auto& plan=service.Plan();ConfiguredNativeTraining c;c.model=declaration;
     c.runId=plan.search.runId;c.protocolRevision=plan.protocol.revision;c.sampleId=plan.protocol.sampleId;
     Require(bool(plan.protocol.stimulusProfile),"learned_state_missing_stimulus_profile");c.stimulusProfile=*plan.protocol.stimulusProfile;

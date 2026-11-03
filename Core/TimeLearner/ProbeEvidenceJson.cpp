@@ -199,6 +199,10 @@ QJsonObject EncodeNativeTrainingCapacitanceWitness(const TrainingCapacitanceWitn
             {"maximum_relative_change",Number(witness.parameters.maximumRelativeChange)},{"membrane_scales",scales}}},
         {"model",model},{"native_state",owned},{"storage_images",images.array()}};
 }
+std::string NativeTrainingCapacitanceWitnessId(const TrainingCapacitanceWitness& witness)
+{
+    return NmsdkTools::CanonicalModelDataSha256(EncodeNativeTrainingCapacitanceWitness(witness)).toStdString();
+}
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)
 {
@@ -207,6 +211,24 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
             {"length",p.length},{"synapses",p.synapses},{"resistance",Number(p.resistance)}});return result;
     };
     const auto& cfg=service.Configuration();
+    const auto& history=service.CapacitanceHistory();
+    const auto encodeCapacitance=[](const TrainingCapacitance& value) {
+        ValidateTrainingCapacitance(value);QJsonObject scales;
+        for(const auto& [path,scale]:value.membraneScales)scales[Text(path)]=Number(scale);
+        return QJsonObject{{"origin",Text(value.origin)},{"maximum_relative_change",Number(value.maximumRelativeChange)},
+            {"membrane_scales",scales}};
+    };
+    const auto trialWitness=[&](const std::string& trial,const std::string& revision,
+        const std::optional<TrainingCapacitance>& capacitance=std::optional<TrainingCapacitance>{}) {
+        if(!history)throw std::invalid_argument("missing_training_capacitance_history");
+        const auto id=history->trialWitnessIds.find(trial);
+        if(id==history->trialWitnessIds.end())throw std::invalid_argument("unwitnessed_training_summary_trial");
+        const auto witness=history->witnesses.find(id->second);
+        if(witness==history->witnesses.end() || witness->second.modelRevision!=revision ||
+           (capacitance && witness->second.parameters!=*capacitance))
+            throw std::invalid_argument("training_summary_capacitance_context_mismatch");
+        return Text(id->second);
+    };
     QJsonObject tolerances{{"amplitude_absolute",Number(cfg.tolerances.amplitudeAbsolute)},
         {"amplitude_relative",Number(cfg.tolerances.amplitudeRelative)},{"sync",Number(cfg.tolerances.sync)}};
     QJsonObject result{{"kind","native_training_state_summary"},{"schema_version",1},
@@ -237,14 +259,46 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         configuration["n0_candidate_repeats"]=Count(cfg.n0CandidateRepeats);result["configuration"]=configuration;
         result["candidate_repeat_groups"]=QJsonArray{};
     }
+    if(history)
+    {
+        result["schema_version"]=3;
+        auto configuration=result["configuration"].toObject();
+        configuration["n0_candidate_repeats"]=Count(cfg.n0CandidateRepeats);result["configuration"]=configuration;
+        result["candidate_repeat_groups"]=QJsonArray{};
+        QJsonObject witnesses,trials;QJsonArray domainIds;
+        for(const auto& [id,witness]:history->witnesses)
+        {
+            if(NativeTrainingCapacitanceWitnessId(witness)!=id)throw std::invalid_argument("invalid_training_summary_witness_id");
+            witnesses[Text(id)]=EncodeNativeTrainingCapacitanceWitness(witness);
+        }
+        for(const auto& [trial,id]:history->trialWitnessIds)
+        {
+            if(!history->witnesses.count(id))throw std::invalid_argument("missing_training_summary_trial_witness");
+            trials[Text(trial)]=Text(id);
+        }
+        for(const auto& id:history->domainBaseWitnessIds)domainIds.append(Text(id));
+        const auto current=history->witnesses.find(history->currentWitnessId);
+        if(current==history->witnesses.end() || !history->witnesses.count(history->captureWitnessId))
+            throw std::invalid_argument("missing_training_summary_boundary_witness");
+        result["capacitance_history"]=QJsonObject{{"capture_witness_id",Text(history->captureWitnessId)},
+            {"current_witness_id",Text(history->currentWitnessId)},{"witnesses",witnesses},
+            {"trial_witness_ids",trials},{"resistance_domain_witness_ids",domainIds},{"current_verified",history->currentVerified}};
+        result["actual_capacitance_witness_id"]=history->currentVerified && current->second.modelRevision==actualModelRevision?
+            QJsonValue(Text(history->currentWitnessId)):QJsonValue(QJsonValue::Null);
+    }
     QJsonArray references;
     if(service.References())
     {
         result["reference_model_revision"]=Text(service.References()->InitialModelRevision());
         result["reference_model_epoch"]=Count(service.References()->InitialModelEpoch());
-        for(const auto& r:service.References()->Inputs())references.append(QJsonObject{
+        for(const auto& r:service.References()->Inputs())
+        {
+            QJsonObject reference{
             {"input_id",Text(r.id)},{"run_id",Text(r.runId)},{"trial_id",Text(r.trialId)},
-            {"effective_model_revision",Text(r.effectiveModelRevision)},{"raw_potential",Number(r.rawPotential)}});
+            {"effective_model_revision",Text(r.effectiveModelRevision)},{"raw_potential",Number(r.rawPotential)}};
+            if(history)reference["capacitance_witness_id"]=trialWitness(r.trialId,service.References()->InitialModelRevision());
+            references.append(reference);
+        }
     }
     result["references"]=references;
     QJsonArray candidates,rejections,domains;
@@ -252,15 +306,34 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
     {
         result["search_probes"]=Count(search->IssuedProbes());result["applied_edits"]=Count(search->AppliedEdits());
         result["accepted_parameters"]=parameters(search->Parameters());
-        for(const auto& e:search->Evidence())candidates.append(QJsonObject{{"input_index",Count(e.inputIndex)},
+        if(history)
+        {
+            if(!search->Capacitance())throw std::invalid_argument("missing_training_summary_accepted_capacitance");
+            result["accepted_capacitance"]=encodeCapacitance(*search->Capacitance());
+        }
+        for(const auto& e:search->Evidence())
+        {
+            QJsonObject candidate{{"input_index",Count(e.inputIndex)},
             {"model_epoch",Count(e.modelEpoch)},{"parameters",parameters({e.parameters}).at(0)},
             {"full_parameters",parameters(e.fullParameters)},
             {"model_revision",Text(e.modelRevision)},{"trial_id",Text(e.trialId)},{"anchor_trial_id",Text(e.anchorTrialId)},
             {"timing_low",Number(e.timingResidualLow)},{"timing_high",Number(e.timingResidualHigh)},
             {"amplitude_residual",Number(e.amplitudeResidual)},{"within_timing",e.withinTiming},
-            {"within_amplitude",e.withinAmplitude},{"parameter_change_cost",Number(e.parameterChangeCost)}});
+            {"within_amplitude",e.withinAmplitude},{"parameter_change_cost",Number(e.parameterChangeCost)}};
+            if(history)
+            {
+                if(!e.capacitance)throw std::invalid_argument("missing_training_candidate_capacitance");
+                candidate["capacitance"]=encodeCapacitance(*e.capacitance);
+                candidate["capacitance_witness_id"]=trialWitness(e.trialId,e.modelRevision,e.capacitance);
+                trialWitness(e.anchorTrialId,e.modelRevision,e.capacitance);
+            }
+            else if(e.capacitance)throw std::invalid_argument("unversioned_training_candidate_capacitance");
+            candidates.append(candidate);
+        }
         for(const auto& r:search->Rejected())rejections.append(QJsonObject{{"trial_id",Text(r.trialId)},{"reason",Text(r.reason)}});
         for(const auto& d:search->Domains())domains.append(EncodeResistanceDomainAssessment(d));
+        if(history && history->domainBaseWitnessIds.size()!=search->Domains().size())
+            throw std::invalid_argument("missing_training_domain_base_witness");
         if(cfg.n0CandidateRepeats>1)
         {
             QJsonArray groups;
@@ -270,12 +343,23 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
                 for(const auto& id:group.trialIds)trials.append(Text(id));
                 for(const auto& id:group.anchorTrialIds)anchors.append(Text(id));
                 for(const auto value:group.rawPotentials)rawPotentials.append(Number(value));
-                groups.append(QJsonObject{{"input_index",Count(group.inputIndex)},{"model_epoch",Count(group.modelEpoch)},
+                QJsonObject encoded{{"input_index",Count(group.inputIndex)},{"model_epoch",Count(group.modelEpoch)},
                     {"model_revision",Text(group.modelRevision)},{"full_parameters",parameters(group.fullParameters)},
                     {"trial_ids",trials},{"anchor_trial_ids",anchors},{"minimum_raw_potential",Number(group.minimumRawPotential)},
                     {"maximum_raw_potential",Number(group.maximumRawPotential)},{"within_timing",group.withinTiming},
                     {"within_amplitude",group.withinAmplitude},{"raw_potentials",rawPotentials},{"valid",true},
-                    {"complete",group.complete},{"reason",Text(group.reason)}});
+                    {"complete",group.complete},{"reason",Text(group.reason)}};
+                if(history)
+                {
+                    if(!group.capacitance)throw std::invalid_argument("missing_training_repeat_capacitance");
+                    encoded["capacitance"]=encodeCapacitance(*group.capacitance);
+                    QJsonArray witnessIds,anchorIds;
+                    for(const auto& trial:group.trialIds)witnessIds.append(trialWitness(trial,group.modelRevision,group.capacitance));
+                    for(const auto& trial:group.anchorTrialIds)anchorIds.append(trialWitness(trial,group.modelRevision,group.capacitance));
+                    encoded["capacitance_witness_ids"]=witnessIds;encoded["anchor_capacitance_witness_ids"]=anchorIds;
+                }
+                else if(group.capacitance)throw std::invalid_argument("unversioned_training_repeat_capacitance");
+                groups.append(encoded);
             }
             result["candidate_repeat_groups"]=groups;
         }

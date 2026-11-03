@@ -19,6 +19,9 @@ struct TrainingCapacitanceWitness;
 QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& assessment);
 // Versioned physical evidence for a history entry; no training verdict.
 QJsonObject EncodeNativeTrainingCapacitanceWitness(const TrainingCapacitanceWitness& witness);
+// Evidence identity includes dormant history/C0 inventory. Physical revision
+// alone cannot identify a complete training parameter state.
+std::string NativeTrainingCapacitanceWitnessId(const TrainingCapacitanceWitness& witness);
 // Diagnostic state summary, not a checkpoint/import format or a scientific
 // verdict. The actual graph/readback is supplied independently by the adapter.
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,

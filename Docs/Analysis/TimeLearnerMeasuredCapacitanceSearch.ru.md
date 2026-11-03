@@ -171,3 +171,62 @@ Root auditor дополнительно проверяет каждое effectiv
 dataset image, пропавший dormant correction, изменённый revision и физический C
 даже после пересчёта всех digests. Все эти новые codec assertions runtime pending;
 H6 проверяет только предыдущий read-only producer без нового encoder.
+
+## Tracked service и summary3 (новый snapshot, runtime pending)
+
+`NativeTrainingPlan.recordCapacitanceHistory` — explicit C++ evidence capability,
+по умолчанию false. При true native service требует уже bound C₀ и полный набор
+read-witness/joint-edit/typed-domain adapter capabilities. Сам сервис не захватывает
+C₀. `BindNativeTraining` предоставляет эти callbacks без физических действий при
+создании adapter; прежние configured plans флаг не включают. C-trim On по-прежнему
+не поддержан: это передача и проверка исходного C-состояния, ещё не C-search policy.
+
+На Start/границах действий сохраняются actual witnesses, в BoundedTrainingSession
+передаётся полный initial map; joint edit readback и N1 domain используют full map,
+включая dormant corrections. Каждая проба связывается со свидетельством до queue,
+а после TakeResult и пользовательского observation sink проверяются fresh graph,
+map и signed owner state. Внутри running probe witness не снимается. Невалидный
+read/edit сбрасывает current_verified; diagnostic summary не выдаёт прежнюю запись
+за актуальную только из-за совпавшего физического hash.
+
+Ключ registry — canonical SHA полного encoded witness, не model revision. При
+одинаковом физическом графе dormant history может различаться. Отдельно хранятся
+capture/current IDs, trial→witness IDs и base IDs assessments. Общие C₀ inventory
+entries сохраняются, новые записи допускаются только как native verified growth.
+Reset удерживает references и их witnesses, очищая search/domain transient state;
+retarget очищает полный history. Legacy boundary import не восстанавливает эту
+новую таблицу. Чтобы не терять provenance, export tracked run через прежний пакет
+явно отклоняется с capacitance_history_requires_learned_state_schema3. Реализация
+version3 learned-state package/import и включение record-флага из конфигов остаются
+отдельным обязательным следующим изменением; существующие schema1/2 не меняются.
+
+Summary3 сохраняет physical witnesses, C maps candidates/repeated groups и exact
+trial links. Root auditor сверяет actual child C, Ns, все bank Rs, stimulus bank
+bindings, origin/policy/baseline continuity, domain previews и required witnesses.
+После этого общий production measurement auditor повторно проверяет исходные
+references/residuals/repeats/final certificate. Явный require_certificate=false
+разрешает анализ completed diagnostic history, возвращая exact=None и отсутствие
+certificate; default остаётся строгим. Legacy summary с C-полями без version3
+отвергается. Ни один из этих результатов не является recognition verdict.
+
+Root fixture: шесть настоящих service runs Classic/Branch N0/N1, в том числе N0
+repeats2 с явно указанным engineering sync=.2; ещё два unbound rejection controls.
+Во всех runs retained scale Dendrite1_2=1.1 должен проходить через поиск L/Ns/Rs,
+native probes, fresh final gate и Reset. Новые API/assertions ещё не выполнялись
+на сервере; H5/H6/H7 pinned раньше этого snapshot. Старые numerical tolerances
+не менялись. Полные C-search, export/import3, mode/profile matrix остаются открыты.
+
+Добавлены ещё два native fault controls: после закрытия первого probe окно уже
+полно, observation sink меняет только dormant scale1.1→1.15 и пересчитывает native
+state digest. Физический model revision остаётся тем же. Service должен завершить
+InvalidObservation до принятия reference, не создавать certificate, отметить
+current_verified=false и actual_capacitance_witness_id=null. Это отличает полную
+историю параметров от одного физического hash. Root reader отдельно проверяет,
+что altered dormant state физически допустим для того же графа, однако не является
+состоянием, с которым была начата принятая проба.
+
+Итого planned new SDK cases10 и independent history checks12; witness checks11
+включают collision-контроль двух dormant states при одном model revision. Полный
+следующий normal gate197 также включает прежний SDK183 и4 legacy service cases.
+Wall budget новых service fixtures3600s выбран отдельно от model-time и residual
+tolerances с учётом measured ASan boundary overhead; он не ослабляет сходимость.
