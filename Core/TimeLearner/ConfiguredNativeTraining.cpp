@@ -15,6 +15,11 @@ void Keys(const QJsonObject& o,std::initializer_list<const char*> names)
     Require(o.size()==int(names.size()),"native_configuration_field_set_mismatch");
     for(auto name:names)Require(o.contains(name),"missing_native_configuration_field");
 }
+void Keys(const QJsonObject& o,const std::set<QString>& names)
+{
+    Require(o.size()==int(names.size()),"native_configuration_field_set_mismatch");
+    for(const auto& name:names)Require(o.contains(name),"missing_native_configuration_field");
+}
 double Number(const QJsonValue& v)
 {Require(v.isDouble() && std::isfinite(v.toDouble()),"invalid_native_configuration_number");return v.toDouble();}
 QJsonValue Numeric(double value)
@@ -77,7 +82,7 @@ QJsonObject EncodeNativeModelSpec(const NativeModelSpec& s)
         {"resistance",p.resistance?Numeric(*p.resistance):QJsonValue(QJsonValue::Null)}});
     for(double v:s.initialIsi)isi.append(Numeric(v));for(int v:s.allocatedCableLengths)allocation.append(v);
     for(const auto& r:s.editPolicy.inhibition)inhibition.append(QJsonObject{{"input_index",Integer(r.inputIndex)},{"offset",r.offset},{"resistance",Numeric(r.resistance)}});
-    return {{"schema_version",1},{"branch",s.branch},{"frequency_hz",double(s.frequencyHz)},
+    QJsonObject result{{"schema_version",int(s.schemaVersion)},{"branch",s.branch},{"frequency_hz",double(s.frequencyHz)},
         {"neuron_class",QString::fromStdString(s.neuronClass)},{"dataset_class",QString::fromStdString(s.datasetClass)},
         {"generator_class",QString::fromStdString(s.generatorClass)},{"neuron_structure_mode",s.neuronStructureMode},
         {"normalization",Norm(s.normalization)},{"inputs",inputs},{"initial_isi",isi},{"allocated_cable_lengths",allocation},
@@ -85,13 +90,20 @@ QJsonObject EncodeNativeModelSpec(const NativeModelSpec& s)
         {"maximum_resistance_ratio",Numeric(s.editPolicy.maximumResistanceRatio)},
         {"configured_minimum_resistance",Numeric(s.editPolicy.configuredMinimumResistance)},{"inhibition",inhibition},
         {"scale_inhibition_with_input",s.scaleInhibitionWithInput},{"allow_muted_input_baseline",s.allowMutedInputBaseline}};
+    if(s.initialThreshold)result["initial_threshold"]=Numeric(*s.initialThreshold);
+    return result;
 }
 NativeModelSpec DecodeNativeModelSpec(const QJsonObject& o)
 {
-    Keys(o,{"schema_version","branch","frequency_hz","neuron_class","dataset_class","generator_class","neuron_structure_mode",
+    const auto version=Int(o["schema_version"]);
+    Require(version==1 || version==2,"unsupported_native_model_spec_schema");
+    std::set<QString> keys{"schema_version","branch","frequency_hz","neuron_class","dataset_class","generator_class","neuron_structure_mode",
         "normalization","inputs","initial_isi","allocated_cable_lengths","maximum_cable_length","preserve_allocated_cable",
-        "maximum_resistance_ratio","configured_minimum_resistance","inhibition","scale_inhibition_with_input","allow_muted_input_baseline"});
-    Require(Int(o["schema_version"])==1,"unsupported_native_model_spec_schema");NativeModelSpec s;
+        "maximum_resistance_ratio","configured_minimum_resistance","inhibition","scale_inhibition_with_input","allow_muted_input_baseline"};
+    if(version==2){keys.insert("initial_threshold");}
+    Keys(o,keys);
+    NativeModelSpec s;s.schemaVersion=unsigned(version);
+    if(version==2)s.initialThreshold=Number(o["initial_threshold"]);
     s.branch=Boolean(o["branch"]);s.frequencyHz=unsigned(Count(o["frequency_hz"],std::numeric_limits<unsigned>::max()));
     s.neuronClass=Text(o["neuron_class"]);s.datasetClass=Text(o["dataset_class"]);s.generatorClass=Text(o["generator_class"]);
     s.neuronStructureMode=Int(o["neuron_structure_mode"]);s.normalization=Norm(o["normalization"]);s.editPolicy.normalization=s.normalization;

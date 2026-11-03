@@ -1,6 +1,7 @@
 #include "NativeModelBuilder.h"
 #include "ModelIdentity.h"
 #include "ModelArchive.h"
+#include "NativeThresholdSupport.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <cmath>
@@ -137,7 +138,10 @@ void AssignNativeTarget(NDatasetMatrix& dataset,const MDMatrix<double>& pattern)
 }
 void ValidateNativeModelSpec(const NativeModelSpec& s)
 {
-    Require(s.schemaVersion==1 && s.frequencyHz>0 && !s.neuronClass.empty() && !s.datasetClass.empty() && !s.generatorClass.empty() &&
+    Require((s.schemaVersion==1 || s.schemaVersion==2) &&
+        (s.schemaVersion==2)==bool(s.initialThreshold) &&
+        (!s.initialThreshold || std::isfinite(*s.initialThreshold)) &&
+        s.frequencyHz>0 && !s.neuronClass.empty() && !s.datasetClass.empty() && !s.generatorClass.empty() &&
         !s.inputs.empty() && s.inputs.size()<=std::size_t(std::numeric_limits<int>::max()) &&
         s.initialIsi.size()==s.inputs.size(),"invalid_native_model_specification");
     Require(s.neuronStructureMode>=0 && s.neuronStructureMode<=2 &&
@@ -487,7 +491,17 @@ NativeModelBuildResult ConstructNativeLearnerModel(UNet& owner,const NativeModel
             auto synapse=membrane->GetComponentL<NPulseSynapseCommon>("InhSynapse1",true);Require(bool(synapse),"missing_native_initial_inhibition_bank");
             synapse->Resistance=resistance;Connect(*synapse,*source);
         }
+        UEPtr<NPulseLTZoneCommon> initialZone;
+        if(s.initialThreshold)
+        {
+            initialZone=neuron->GetComponentL<NPulseLTZoneCommon>("LTZone",true);
+            Require(bool(initialZone),"native_initial_threshold_zone_missing");
+            RequireNativeScalarSpikeThreshold(*initialZone);
+            initialZone->Threshold=*s.initialThreshold;
+        }
         neuron->Init();Tree(neuron,s.frequencyHz);Tree(dataset,s.frequencyHz);
+        if(s.initialThreshold)Require(initialZone->Threshold.GetData()==*s.initialThreshold,
+            "native_initial_threshold_not_applied");
         const auto integration=AssessNativeIntegration(neuron,source->Amplitude.GetData());Require(integration.valid,integration.reason.c_str());
         std::vector<int> positions;for(const auto& p:s.inputs)positions.push_back(p.attachment);
         NativeProbeBindings preview;preview.owner=&owner;preview.neuron=neuron;preview.dataset=dataset;
