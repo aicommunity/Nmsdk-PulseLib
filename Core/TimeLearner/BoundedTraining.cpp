@@ -8,6 +8,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <string_view>
 #include <tuple>
 
 namespace NMSDK::TimeLearner {
@@ -63,6 +64,28 @@ bool ParametersLegal(const VerificationProtocol& protocol,const BoundedTrainingC
             (parameters[i-1].synapses!=p.synapses || parameters[i-1].resistance!=p.resistance))return false;
     }
     return true;
+}
+
+bool RegionScaleCanChange(const TrainingCapacitance& owned,const CapacitanceRegion& region,double scale)
+{
+    if(region.first>region.last)return false;
+    const auto prefix="Dendrite"+std::to_string(region.dendrite)+"_";
+    std::uint64_t known=0;
+    for(const auto& [path,currentScale]:owned.membraneScales)
+    {
+        if(!path.starts_with(prefix))continue;
+        std::string_view suffix(path);suffix.remove_prefix(prefix.size());
+        // The owner has already validated canonical positive decimal paths.
+        // More than ten digits cannot fall in an int-bounded cable. Inspect
+        // known paths only; do not expand a potentially enormous length box.
+        if(suffix.size()>10)continue;
+        std::int64_t segment=0;for(const char digit:suffix)segment=10*segment+(digit-'0');
+        if(segment<region.first || segment>region.last)continue;
+        if(currentScale!=scale)return true;
+        ++known;
+    }
+    // Future paths acquire a unit multiplier of their own native storage C0.
+    return scale!=1. && known<std::uint64_t(region.last-region.first)+1;
 }
 }
 
@@ -245,8 +268,25 @@ void BoundedTrainingSession::BeginInput()
     if(config.capacitanceSearch)
     {
         const auto& policy=*config.capacitanceSearch;
-        const auto scales=CapacitanceSeedScales(policy.minimumScale,policy.maximumScale,1.,
-            policy.subdivisionDepth,policy.maximumContexts-1);
+        const bool branch=references.Protocol().routing==ProbeRouting::BranchSoloBurst;
+        CapacitanceRegion possible{branch?1:index+1,1,b.maximumLength};
+        if(branch)
+        {
+            possible.first=std::int64_t(background[index+1].length)+1;
+            for(std::size_t upstream=0;upstream<index;++upstream)
+                possible.last=std::min(possible.last,std::int64_t(config.bounds[upstream].maximumLength));
+        }
+        std::vector<double> scales;
+        // One spare seed replaces a duplicate of the unchanged full state.
+        // Retain scale1 whenever it actually resets a warm correction; dormant
+        // corrections outside every possible selected path do not create a slot.
+        for(double scale:CapacitanceSeedScales(policy.minimumScale,policy.maximumScale,1.,
+                policy.subdivisionDepth,policy.maximumContexts))
+        {
+            if(!RegionScaleCanChange(*backgroundCapacitance,possible,scale))continue;
+            if(scales.size()==policy.maximumContexts-1)break;
+            scales.push_back(scale);
+        }
         const auto reserve=policy.maximumCursorElements/(1+scales.size());
         if(cursor.lengths.size()>reserve || cursor.counts.size()>reserve-cursor.lengths.size() ||
             cursor.resistances.size()>reserve-cursor.lengths.size()-cursor.counts.size())
