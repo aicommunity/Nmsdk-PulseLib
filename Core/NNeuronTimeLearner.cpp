@@ -4277,14 +4277,18 @@ TimeLearner::NativeEditResult NNeuronTimeLearner::ApplyNativeTrainingParameters(
  const std::vector<TimeLearner::InputParameters>& requested,
  const std::optional<TimeLearner::TrainingCapacitance>& capacitance)
 {
+ std::optional<TimeLearner::NativeCapacitanceCorrection> correction;
  try
  {
-  const auto correction=TimeLearner::ResolveNativeTrainingCapacitance(NativeProbeControl,NativeProbeModelBindings(),
+  correction=TimeLearner::ResolveNativeTrainingCapacitance(NativeProbeControl,NativeProbeModelBindings(),
    NativeModelDeclaration,NativeLearnedCapacitanceState,capacitance);
-  return correction?ApplyNativeParameters(requested,*correction):ApplyNativeParameters(requested);
  }
  catch(const std::exception& error)
  {TimeLearner::NativeEditResult result;result.reason=error.what();return result;}
+ // Only preparation above is known to precede all physical mutation. Preserve
+ // the existing editor's failure/rollback contract; do not relabel an escaped
+ // post-commit exception as an unchanged-model Rejected result.
+ return correction?ApplyNativeParameters(requested,*correction):ApplyNativeParameters(requested);
 }
 QJsonObject NNeuronTimeLearner::ExportNativeLearnedState(const std::string& implementationId)
 {
