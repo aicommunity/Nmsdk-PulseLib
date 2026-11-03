@@ -155,3 +155,19 @@ epoch и граф должны сохраняться. Fault injection меня�
 неизменном owner: witness обязан отказать без ремонта модели. Во время настоящей
 scheduled probe чтение также обязано отказать. Эти новые assertions ещё не
 выполнялись на сервере; текущий immutable H5 проверяет предыдущий snapshot.
+
+Следующее дополнение: `EncodeNativeTrainingCapacitanceWitness` сериализует
+version1 envelope с model revision, typed controller map, полной model identity,
+signed native state и actual storage closure. Encoder проверяет согласованность
+JSON/digests/revision/map/profile; физическое равенство C проверяется отдельно
+native producer и независимым Python auditor. Root bridge emits пять bound
+witness artifacts на case. Это подготовка таблицы истории для summary schema3,
+не смена действующего summary1/2 и не включение C-search/service.
+
+Root auditor дополнительно проверяет каждое effective child C по исходному C₀,
+связывает registry keys с revisions, требует witnesses всех запрошенных revisions,
+единство origin/policy и неизменность исходных полей/общих channel baselines
+между расширяемыми inventories. Reject-контроли включают boolean scale, удалённый
+dataset image, пропавший dormant correction, изменённый revision и физический C
+даже после пересчёта всех digests. Все эти новые codec assertions runtime pending;
+H6 проверяет только предыдущий read-only producer без нового encoder.

@@ -1,6 +1,7 @@
 #include "ProbeEvidenceJson.h"
 #include "NativeTrainingService.h"
 #include "NativeTrainingCapacitance.h"
+#include "ModelArchive.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <cmath>
@@ -173,6 +174,30 @@ QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& d
     else if(d.effectiveCapacitance || !d.capacitanceStateJson.empty() || !d.capacitanceImagesJson.empty())
         throw std::invalid_argument("unversioned_training_domain_capacitance_witness");
     return result;
+}
+QJsonObject EncodeNativeTrainingCapacitanceWitness(const TrainingCapacitanceWitness& witness)
+{
+    ValidateTrainingCapacitance(witness.parameters);
+    const auto identity=QJsonDocument::fromJson(QByteArray::fromStdString(witness.modelIdentityJson));
+    const auto state=QJsonDocument::fromJson(QByteArray::fromStdString(witness.nativeStateJson));
+    const auto images=QJsonDocument::fromJson(QByteArray::fromStdString(witness.storageImagesJson));
+    if(!identity.isObject() || !state.isObject() || !images.isArray() || images.array().isEmpty())
+        throw std::invalid_argument("malformed_training_capacitance_witness");
+    const auto model=identity.object(),owned=state.object();
+    if(model["valid"]!=QJsonValue(true) || !model["diagnostics"].isArray() || !model["diagnostics"].toArray().isEmpty() ||
+       !model["model"].isObject() || model["sha256"]!=QJsonValue(Text(witness.modelRevision)) ||
+       model["sha256"]!=QJsonValue(NmsdkTools::CanonicalModelDataSha256(model["model"])) ||
+       owned["applied_model_revision"]!=QJsonValue(Text(witness.modelRevision)) ||
+       DecodeNativeTrainingCapacitance(owned)!=witness.parameters ||
+       NmsdkTools::ModelImageDefinitionsFingerprint(images.array())!=owned["baseline"].toObject()["storage_images_sha256"].toString())
+        throw std::invalid_argument("inconsistent_training_capacitance_witness");
+    QJsonObject scales;
+    for(const auto& [path,scale]:witness.parameters.membraneScales)scales[Text(path)]=Number(scale);
+    return {{"kind","native_training_capacitance_witness"},{"schema_version",1},
+        {"model_revision",Text(witness.modelRevision)},
+        {"controller_parameters",QJsonObject{{"origin",Text(witness.parameters.origin)},
+            {"maximum_relative_change",Number(witness.parameters.maximumRelativeChange)},{"membrane_scales",scales}}},
+        {"model",model},{"native_state",owned},{"storage_images",images.array()}};
 }
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)
