@@ -103,3 +103,13 @@ change, full graph identity при unit bind, повторный bind и отк�
 без изменения модели, а также retained original C₀ после реального trim и
 повторного bind. Сохраняются полные snapshots и actual probe/input/soma traces.
 Сборка/проверки pending; до их приёмки setup не подключён к NativeTrainingService.
+
+
+Дополнительно подготовлены2 native guards Classic/Branch N1: реально измеряются
+reference probes, выполняются external stop и штатный Reset learner с сохранением
+references; последующий first bind должен отвергаться с
+training_capacitance_binding_requires_initial_model_boundary. Owner остаётся
+unbound, граф и lifecycle неизменны. Это защищает от rebase через Reset и
+перетолкования ранее измеренной модели как новой исходной C₀. Для этого выпуска
+root gate содержит140 SDK cases и23 structured Python checks (bridge8+domain8+
+binding7). Checks pending; C-trim On и native service integration не включены.
