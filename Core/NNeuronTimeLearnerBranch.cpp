@@ -4816,7 +4816,8 @@ bool NNeuronTimeLearnerBranch::ABeforeCalculate(void)
   return true;
  }
  if(ControllerVersion.GetData()==2 && NativeEditFailure.empty() && IsNeedToTrain.GetData() &&
-    NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Idle)
+    NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Idle &&
+    (!NativeProbeControl.OwnsControl() || NativeProbeControl.AtEditBoundary()))
  {
   try
   {
