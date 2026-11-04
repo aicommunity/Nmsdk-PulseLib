@@ -32,7 +32,7 @@ struct PreparedVerificationProbe {
     std::size_t modelEpoch=0;
     // Actual Branch solo selector, produced by the native adapter. Schema 3
     // binds it to protocol input order; Classic measures an unmuted full burst.
-    std::optional<std::size_t> selectedInputIndex;
+    std::optional<std::size_t> selectedInputIndex={};
 };
 struct ReferenceEvidence {
     PreparedVerificationProbe prepared;
