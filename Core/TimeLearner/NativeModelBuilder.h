@@ -25,6 +25,10 @@ struct NativeModelSpec {
     // Compatibility adoption may retain a Branch's native muted baseline.
     // Actual binding state remains part of the model hash; no implicit relink.
     bool allowMutedInputBaseline=false;
+    // Schema 2: an explicit per-instance construction value. Absence in schema
+    // 1 preserves the storage image. It is never reapplied by inspection,
+    // Reset, growth, learned-state import or recognition/calibration probes.
+    std::optional<double> initialThreshold;
 };
 enum class NativeModelBuildStatus { Constructed,Adopted,Rejected,Failed };
 struct NativeModelBuildResult {
