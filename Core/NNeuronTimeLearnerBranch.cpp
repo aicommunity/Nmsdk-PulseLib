@@ -42,6 +42,7 @@ See file license.txt for more information
 #include "NNeuronTimeLearnerResistanceBounds.h"
 #include "TimeLearner/LegacyController.h"
 #include "TimeLearner/NativeTrainingBindings.h"
+#include "TimeLearner/NativeLearnerLifecycle.h"
 #include "TimeLearner/NativeModelOwner.h"
 #include "TimeLearner/NativeCapacitanceOwner.h"
 #include "NPatternResponseAnalyzer.h"
@@ -4783,115 +4784,16 @@ bool NNeuronTimeLearnerBranch::ABuild(void)
 /// Sources (generators) before Neuron — Dataset calc contract
 bool NNeuronTimeLearnerBranch::ABeforeCalculate(void)
 {
- if(NativeLiveFinalization)
- {
-  const auto phase=NativeLiveFinalization;
-  TimeLearner::NativeLifecycleScope scope(NativeLiveFinalizationDepth);
-  phase->BeforeTick(*this,Environment->GetTime().GetDoubleTime());
- }
-
- if(NativePostTunePhase && !NativePostTunePhase->Done())
- {
-  const auto phase=NativePostTunePhase;
-  TimeLearner::NativeLifecycleScope scope(NativePostTunePhaseDepth);
-  phase->BeforeTick(Environment->GetTime().GetDoubleTime());
-  FinishNativePostTunePhase();
- }
- if(NativeLiveFinalization)
- {
-  NativeLiveFinalization->ObservePhase(*this);
-  if(NativeLiveFinalization->BlocksCalculation()){ForceSkipComponentCalculation();return true;}
-  if(NativeLiveFinalization->CancelledBeforeEntry())return true;
- }
-
- if(NativeRecognition)
- {
-  try
-  {
-   if(!NativeEditFailure.empty())throw std::runtime_error(NativeEditFailure);
-   TimeLearner::CheckNativeRecognitionHold(*this,*NativeRecognition);
-   TimeLearner::BeforeNativeRecognitionTrial(*this,*NativeRecognition,NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
-  }
-  catch(const std::exception& error){NativeEditFailure=error.what();NativeRecognition->trials.Cancel(error.what());ForceSkipComponentCalculation();}
-  return true;
- }
- if(ControllerVersion.GetData()==2 && NativeEditFailure.empty() && IsNeedToTrain.GetData() &&
-    NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Idle &&
-    (!NativeProbeControl.OwnsControl() || NativeProbeControl.AtEditBoundary()))
- {
-  try
-  {
-   if(!NativeConfiguredPlan || NativeConfiguredText!=ControllerConfiguration.GetData())
-    throw std::invalid_argument("configured_native_model_requires_build");
-   auto plan=TimeLearner::MakeConfiguredNativeTrainingPlan(*NativeConfiguredPlan);
-   if(plan.recordCapacitanceHistory)BindNativeTrainingCapacitance(NativeConfiguredPlan->capacitanceMaximumRelativeChange);
-   plan.probe.onPrepared=NativeConfiguredSinks.onPrepared;plan.probe.onSample=NativeConfiguredSinks.onSample;
-   plan.observationSink=NativeConfiguredSinks.onObservation;BeginNativeTraining(std::move(plan));
-  }
-  catch(const std::exception& error)
-  {NativeTrainingOwned=true;NativeEditFailure=error.what();NativeTrainingControl.FailConfiguration(error.what());}
- }
-
- if(!NativeEditFailure.empty()){ForceSkipComponentCalculation();return true;}
- if(NativeTrainingOwned)
- {
-  const auto adapter=TimeLearner::BindNativeTraining(*this,NativeProbeControl,NativeTrainingEditDepth);
-  NativeTrainingControl.BeforeTick(adapter,Environment->GetTime().GetDoubleTime(),TimeLearner::NativeTrainingWallTime());
-  if(NativeProbeControl.OwnsControl())
-   NativeProbeControl.BeforeChildren(NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
-  if(!NativeEditFailure.empty() || NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Rejected ||
-      NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Cancelled ||
-      (NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Finished &&
-       NativeTrainingControl.Outcome()==TimeLearner::TrainingStatus::InvalidModel &&
-       !NativeProbeControl.OwnsControl()))ForceSkipComponentCalculation();
-  return true;
- }
- if(NativeProbeControl.OwnsControl())
- {
-  NativeProbeControl.BeforeChildren(NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
-  if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()) ||
-      NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Rejected ||
-      NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Cancelled)ForceSkipComponentCalculation();
-  return true;
- }
- if(!TimeLearner::LegacyReadoutsReady(*this))
- {
-  NativeEditFailure=TimeLearner::LegacyReadoutShapeFailure;
-  ForceSkipComponentCalculation();return true;
- }
- if(IsIntegrationPreflightFailure(TrainingFailureReason.GetData()))
-  ForceSkipComponentCalculation();
- return true;
+ return TimeLearner::NativeLearnerLifecycle::BeforeCalculate(*this, IsIntegrationPreflightFailure);
 }
 
 bool NNeuronTimeLearnerBranch::ABeforeDefault(void)
 {
- InterruptNativePostTunePhase("learner_default");NativePostTunePhase.reset();NativeLiveFinalization.reset();
- NativeRecognition.reset();
- NativeConfiguredPlan.reset();NativeConfiguredSinks={};NativeConfiguredText.clear();
- NativeModelDeclaration.reset();NativeLearnedCapacitanceState={};
- NativeTrainingRequestIntent.Clear();
- NativeTrainingOwned=false;NativeTrainingControl.InvalidateTarget();
- NativeEditFailure.clear();NativeProbeControl.ResetControl();UNet::ABeforeDefault();return true;
+ return TimeLearner::NativeLearnerLifecycle::BeforeDefault(*this, [this]{UNet::ABeforeDefault();});
 }
 bool NNeuronTimeLearnerBranch::ABeforeReset(void)
 {
- InterruptNativePostTunePhase("learner_reset");
- if(!NativeLifecycleDepth)NativeTrainingRequestIntent.Clear();
- if(NativeTrainingOwned)
- {
-  if(!NativeLifecycleDepth)NativeTrainingControl.ResetControl();
-  else if(TimeLearner::NativeTrainingIsActive(NativeTrainingControl))NativeTrainingControl.FailConfiguration("learner_implicit_reset");
- }
- if(!NativeLifecycleDepth)NativeProbeControl.ResetControl();
- else NativeProbeControl.Cancel("learner_implicit_reset");
- if(!NativeTrainingOwned && !NativeRecognition && ControllerVersion.GetData()!=2 &&
-    !ConfiguredModelInitialized.GetData())
- {
-  BindLegacyGraphRoles();
-  TimeLearner::InitializeLegacyReadouts(*this,NativeEditFailure);
- }
- UNet::ABeforeReset();return true;
+ return TimeLearner::NativeLearnerLifecycle::BeforeReset(*this, [this]{UNet::ABeforeReset();});
 }
 bool NNeuronTimeLearnerBranch::AAfterReset(void)
 {
