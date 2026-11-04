@@ -37,7 +37,7 @@ See file license.txt for more information
 #include <cstring>
 
 namespace NMSDK {
-namespace TimeLearner { struct NativeLearnerLifecycle; class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; class NativeLiveFinalization; struct NativeLiveFinalizationSpec; }
+namespace TimeLearner { struct NativeLearnerLifecycle; struct NativeRecognitionControl; class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; class NativeLiveFinalization; struct NativeLiveFinalizationSpec; }
 
 using namespace RDK;
 
@@ -48,6 +48,7 @@ class RDK_LIB_TYPE NNeuronTimeLearner: public UNet
 {
  friend class TimeLearner::NativePostTuneOwnerBoundary;
  friend struct TimeLearner::NativeLearnerLifecycle;
+ friend struct TimeLearner::NativeRecognitionControl;
 public:
  /// Missing property in existing configs means legacy version 1.
  UProperty<int, NNeuronTimeLearner, ptPubParameter> ControllerVersion;

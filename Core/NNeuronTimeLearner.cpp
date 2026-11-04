@@ -43,6 +43,7 @@ See file license.txt for more information
 #include "TimeLearner/LegacyController.h"
 #include "TimeLearner/NativeTrainingBindings.h"
 #include "TimeLearner/NativeLearnerLifecycle.h"
+#include "TimeLearner/NativeRecognitionControl.h"
 #include "TimeLearner/NativeModelOwner.h"
 #include "TimeLearner/NativeCapacitanceOwner.h"
 #include "NPatternResponseAnalyzer.h"
@@ -4257,48 +4258,31 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeLearnedState
 
 std::weak_ptr<const void> NNeuronTimeLearner::ObserveNativeRecognitionContext() const
 {
- if(NativeRecognition)return NativeRecognition->contextLifetime;
- return {};
+ return TimeLearner::NativeRecognitionControl::ObserveNativeRecognitionContext(*this);
 }
 bool NNeuronTimeLearner::HasNativeRecognitionTrialIdentity(const std::string& runId,const std::string& trialId) const
 {
- return NativeRecognition && NativeRecognition->trials.HasIdentity(runId,trialId);
+ return TimeLearner::NativeRecognitionControl::HasNativeRecognitionTrialIdentity(*this,runId,trialId);
 }
 bool NNeuronTimeLearner::IsNativeRecognitionTrialIdle() const
 {
- return NativeRecognition && !NativeRecognition->trials.Busy() && !NativeRecognition->trials.HasResult();
+ return TimeLearner::NativeRecognitionControl::IsNativeRecognitionTrialIdle(*this);
 }
 void NNeuronTimeLearner::QueueNativeRecognitionTrial(TimeLearner::NativeRecognitionTrialRequest request)
 {
- if(NativePostTunePhase && !NativePostTunePhase->Done() && !NativePostTunePhaseDepth)
-  throw std::logic_error("native_owned_post_tune_owns_trials");
-
- if(!NativeRecognition || !NativeEditFailure.empty())throw std::logic_error("recognition_model_not_available");
- TimeLearner::CheckNativeRecognitionHold(*this,*NativeRecognition,true);
- NativeRecognition->trials.Queue(std::move(request));
+ TimeLearner::NativeRecognitionControl::QueueNativeRecognitionTrial(*this,std::move(request));
 }
 std::optional<TimeLearner::NativeRecognitionTrialObservation> NNeuronTimeLearner::TakeNativeRecognitionTrialResult()
 {
- if(NativePostTunePhase && !NativePostTunePhase->Done() && !NativePostTunePhaseDepth)
-  throw std::logic_error("native_owned_post_tune_owns_trials");
-
- if(!NativeRecognition)return {};
- return NativeRecognition->trials.TakeResult();
+ return TimeLearner::NativeRecognitionControl::TakeNativeRecognitionTrialResult(*this);
 }
 void NNeuronTimeLearner::CancelNativeRecognitionTrial(const std::string& reason)
 {
- if(NativePostTunePhase && !NativePostTunePhase->Done() && !NativePostTunePhaseDepth)
-  throw std::logic_error("native_owned_post_tune_owns_trials");
-
- if(NativeRecognition)NativeRecognition->trials.Cancel(reason);
+ TimeLearner::NativeRecognitionControl::CancelNativeRecognitionTrial(*this,reason);
 }
 QJsonObject NNeuronTimeLearner::ExportNativeRecognitionState(const std::string& implementationId)
 {
- if(!NativeRecognition)throw std::logic_error("native_recognition_state_not_installed");
- if(!NativeEditFailure.empty())throw std::logic_error(NativeEditFailure);
- if(NativeRecognition->package["implementation_id"].toString().toStdString()!=implementationId)
-  throw std::invalid_argument("recognition_implementation_mismatch");
- TimeLearner::CheckNativeRecognitionHold(*this,*NativeRecognition,true);return NativeRecognition->package;
+ return TimeLearner::NativeRecognitionControl::ExportNativeRecognitionState(*this,implementationId);
 }
 TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeRecognitionState(const QJsonObject& package,const std::string& implementationId)
 {
