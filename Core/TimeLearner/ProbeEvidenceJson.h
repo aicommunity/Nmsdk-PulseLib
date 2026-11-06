@@ -16,6 +16,10 @@ class NativeTrainingService;
 struct InputParameters;
 struct ResistanceDomainAssessment;
 struct TrainingCapacitanceWitness;
+struct CandidateRecoveryEvidence;
+// Shared serializer used by the native summary and controller evidence tests.
+// It records a decision; it does not certify its observation or physical model.
+QJsonObject EncodeCandidateRecoveryEvidence(const CandidateRecoveryEvidence& evidence);
 QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& assessment);
 // Versioned physical evidence for a history entry; no training verdict.
 // Invalid archived witness data is reported as invalid_argument, preserving

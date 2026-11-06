@@ -15,6 +15,18 @@ QJsonValue Number(double value)
 {if(!std::isfinite(value))throw std::invalid_argument("nonfinite_native_probe_evidence_number");return value;}
 QJsonValue Count(std::size_t value)
 {if(value>9007199254740991ULL)throw std::invalid_argument("inexact_native_probe_evidence_integer");return double(value);}
+QJsonArray Parameters(const std::vector<InputParameters>& values)
+{
+    QJsonArray result;for(const auto& p:values)result.append(QJsonObject{
+        {"length",p.length},{"synapses",p.synapses},{"resistance",Number(p.resistance)}});return result;
+}
+QJsonObject CapacitanceParameters(const TrainingCapacitance& value)
+{
+    ValidateTrainingCapacitance(value);QJsonObject scales;
+    for(const auto& [path,scale]:value.membraneScales)scales[Text(path)]=Number(scale);
+    return {{"origin",Text(value.origin)},{"maximum_relative_change",Number(value.maximumRelativeChange)},
+        {"membrane_scales",scales}};
+}
 QJsonValue Maybe(const std::optional<double>& value)
 {return value?Number(*value):QJsonValue(QJsonValue::Null);}
 QJsonArray Strings(const std::vector<std::string>& values)
@@ -228,21 +240,38 @@ std::string NativeTrainingCapacitanceWitnessId(const TrainingCapacitanceWitness&
 {
     return NmsdkTools::CanonicalModelDataSha256(EncodeNativeTrainingCapacitanceWitness(witness)).toStdString();
 }
+QJsonObject EncodeCandidateRecoveryEvidence(const CandidateRecoveryEvidence& e)
+{
+    if((e.validity!=PeakValidity::Missing && e.validity!=PeakValidity::Ambiguous) ||
+       (e.statusAfter!=TrainingStatus::Searching && e.statusAfter!=TrainingStatus::InvalidObservation &&
+        e.statusAfter!=TrainingStatus::SearchUnresolved))
+        throw std::invalid_argument("invalid_candidate_recovery_enum");
+    const char* disposition=nullptr;
+    switch(e.disposition)
+    {
+    case CandidateRecoveryDisposition::CursorAdvanced:disposition="cursor_advanced";break;
+    case CandidateRecoveryDisposition::InvalidBudgetStop:disposition="invalid_budget_stop";break;
+    case CandidateRecoveryDisposition::RestoredBestStop:disposition="restored_best_stop";break;
+    }
+    if(!disposition)throw std::invalid_argument("unknown_candidate_recovery_disposition");
+    return {{"action_serial",Count(e.actionSerial)},{"input_index",Count(e.inputIndex)},
+        {"candidate_input_index",Count(e.candidateInputIndex)},{"sweep",Count(e.sweep)},
+        {"model_epoch",Count(e.modelEpoch)},{"invalid_before",Count(e.invalidBefore)},
+        {"invalid_after",Count(e.invalidAfter)},{"run_id",Text(e.runId)},{"trial_id",Text(e.trialId)},
+        {"base_model_revision",Text(e.baseModelRevision)},{"effective_model_revision",Text(e.effectiveModelRevision)},
+        {"phase",e.anchor?"anchor":"input"},{"validity",PeakValidityName(e.validity)},
+        {"full_parameters",Parameters(e.fullParameters)},
+        {"capacitance",e.capacitance?QJsonValue(CapacitanceParameters(*e.capacitance)):QJsonValue(QJsonValue::Null)},
+        {"disposition",disposition},{"status_after",TrainingStatusName(e.statusAfter)},
+        {"reason_after",Text(e.reasonAfter)}};
+}
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)
 {
-    const auto parameters=[](const std::vector<InputParameters>& values) {
-        QJsonArray result;for(const auto& p:values)result.append(QJsonObject{
-            {"length",p.length},{"synapses",p.synapses},{"resistance",Number(p.resistance)}});return result;
-    };
+    const auto parameters=Parameters;
     const auto& cfg=service.Configuration();
     const auto& history=service.CapacitanceHistory();
-    const auto encodeCapacitance=[](const TrainingCapacitance& value) {
-        ValidateTrainingCapacitance(value);QJsonObject scales;
-        for(const auto& [path,scale]:value.membraneScales)scales[Text(path)]=Number(scale);
-        return QJsonObject{{"origin",Text(value.origin)},{"maximum_relative_change",Number(value.maximumRelativeChange)},
-            {"membrane_scales",scales}};
-    };
+    const auto encodeCapacitance=CapacitanceParameters;
     const auto trialWitness=[&](const std::string& trial,const std::string& revision,
         const std::optional<TrainingCapacitance>& capacitance=std::optional<TrainingCapacitance>{}) {
         if(!history)throw std::invalid_argument("missing_training_capacitance_history");
@@ -420,24 +449,7 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         QJsonArray events;
         if(const auto search=service.Search())for(const auto& e:search->Recoveries())
         {
-            const char* disposition=nullptr;
-            switch(e.disposition)
-            {
-            case CandidateRecoveryDisposition::CursorAdvanced:disposition="cursor_advanced";break;
-            case CandidateRecoveryDisposition::InvalidBudgetStop:disposition="invalid_budget_stop";break;
-            case CandidateRecoveryDisposition::RestoredBestStop:disposition="restored_best_stop";break;
-            }
-            if(!disposition)throw std::invalid_argument("unknown_candidate_recovery_disposition");
-            QJsonObject event{{"action_serial",Count(e.actionSerial)},{"input_index",Count(e.inputIndex)},
-                {"candidate_input_index",Count(e.candidateInputIndex)},{"sweep",Count(e.sweep)},
-                {"model_epoch",Count(e.modelEpoch)},{"invalid_before",Count(e.invalidBefore)},
-                {"invalid_after",Count(e.invalidAfter)},{"run_id",Text(e.runId)},{"trial_id",Text(e.trialId)},
-                {"base_model_revision",Text(e.baseModelRevision)},{"effective_model_revision",Text(e.effectiveModelRevision)},
-                {"phase",e.anchor?"anchor":"input"},{"validity",PeakValidityName(e.validity)},
-                {"full_parameters",parameters(e.fullParameters)},
-                {"capacitance",e.capacitance?QJsonValue(encodeCapacitance(*e.capacitance)):QJsonValue(QJsonValue::Null)},
-                {"disposition",disposition},{"status_after",TrainingStatusName(e.statusAfter)},
-                {"reason_after",Text(e.reasonAfter)}};
+            auto event=EncodeCandidateRecoveryEvidence(e);
             if(history)event["capacitance_witness_id"]=trialWitness(e.trialId,e.baseModelRevision,e.capacitance);
             events.append(event);
         }
