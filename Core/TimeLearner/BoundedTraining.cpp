@@ -238,6 +238,7 @@ void BoundedTrainingSession::BeginInput()
     candidateMeasurements.clear();cursor.lengthMeasurements.clear();cursor.n0Priority.clear();cursor.issuedN0Candidates.clear();
     cursor.lengthIndex=cursor.normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
     cursor.initialCandidatePending=requireResistanceDomains;cursor.domainReady=false;cursor.domainLength=cursor.domainNormalizer=cursor.domainVariant=0;
+    cursor.domainYieldPending=cursor.domainPassIssuedCandidate=false;
     cursor.domainGeometry.clear();cursor.domainScope.clear();cursor.visitedDomainCandidates.clear();
     cursor.candidateResistanceScope.clear();cursor.resistanceMeasurements.clear();
     // Nearest integers first. Enumeration is bounded by the declared candidate
@@ -402,14 +403,29 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
 BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandidate(std::vector<InputParameters>& parameters)
 {
     const auto input=order.at(position);
+    const bool interleave=config.normalization==Normalization::TipResistance &&
+        config.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceUnassignedBurst;
     if(cursor.initialCandidatePending)
     {
         cursor.initialCandidatePending=false;parameters=background;
         cursor.candidateResistanceScope.clear();
         cursor.visitedDomainCandidates.push_back({revision,parameters});return DynamicCandidate::Candidate;
     }
-    while(cursor.domainLength<cursor.lengths.size())
+    if(interleave && cursor.domainYieldPending)
     {
+        cursor.domainYieldPending=false;AdvanceDomainGeometry();
+    }
+    for(;;)
+    {
+        if(cursor.domainLength==cursor.lengths.size())
+        {
+            if(!interleave || !cursor.domainPassIssuedCandidate)return DynamicCandidate::Exhausted;
+            // Revisit every geometry for its next unissued Rs. Reassessment
+            // stays mandatory: an old interval/scope is never a live bound.
+            // A pass without an issued candidate proves only cursor exhaustion.
+            cursor.domainLength=cursor.domainVariant=0;cursor.domainReady=false;
+            cursor.domainPassIssuedCandidate=false;
+        }
         if(!cursor.domainReady)
         {
             auto geometry=background;geometry[input].length=cursor.lengths[cursor.domainLength];
@@ -451,11 +467,11 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
             });
             if(seen!=cursor.visitedDomainCandidates.end())continue;
             cursor.visitedDomainCandidates.push_back({cursor.domainScope,parameters});
+            if(interleave)cursor.domainYieldPending=cursor.domainPassIssuedCandidate=true;
             cursor.candidateResistanceScope=cursor.domainScope;return DynamicCandidate::Candidate;
         }
         AdvanceDomainGeometry();
     }
-    return DynamicCandidate::Exhausted;
 }
 
 void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const ResistanceDomainAssessment& assessment,

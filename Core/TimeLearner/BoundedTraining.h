@@ -169,6 +169,10 @@ private:
         std::vector<std::vector<InputParameters>> n0Priority,issuedN0Candidates;
         std::size_t lengthIndex=0,normalizerIndex=0;
         bool initialCandidatePending=false,domainReady=false;
+        // Explicit AdvanceUnassignedBurst uses one domain candidate per
+        // geometry turn. RetrySameCandidate retains its original order.
+        // These belong to each suspended C context, not the whole session.
+        bool domainYieldPending=false,domainPassIssuedCandidate=false;
         std::size_t domainLength=0,domainNormalizer=0,domainVariant=0;
         std::vector<InputParameters> domainGeometry;
         std::string domainScope,candidateResistanceScope;
