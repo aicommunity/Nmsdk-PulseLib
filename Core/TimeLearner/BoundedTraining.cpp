@@ -534,13 +534,28 @@ void BoundedTrainingSession::BeginVerification()
 {
     if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted,"maximum_probes_exhausted");return;}
     phase=Phase::Verify;status=TrainingStatus::Verifying;
+    verificationInvalidAccounted=0;
     verification=std::make_unique<FinalVerificationSession>(references,VerificationConfig{
         config.runId+"/final/"+std::to_string(sweep),revision,config.maximumProbes-probes,
-        config.maximumInvalidObservations,epoch,config.tolerances});
+        config.maximumInvalidObservations-std::min(invalid,config.maximumInvalidObservations),epoch,config.tolerances});
 }
 
 void BoundedTrainingSession::FinishVerification()
 {
+    // Charge every rejection immediately, including a retryable failed Arm.
+    // Rejected().size() also includes model invalidation records and is not
+    // an observation counter. Never replenish this budget at a new sweep.
+    const auto observed=verification->InvalidObservations();
+    const auto additional=observed-verificationInvalidAccounted;
+    verificationInvalidAccounted=observed;
+    const auto remaining=config.maximumInvalidObservations-std::min(invalid,config.maximumInvalidObservations);
+    invalid+=std::min(additional,std::numeric_limits<std::size_t>::max()-invalid);
+    if(additional>remaining)
+    {
+        const auto& failures=verification->Rejected();
+        Stop(TrainingStatus::InvalidObservation,failures.empty()?"final_verification_invalid_observation":
+            "final_verification:"+failures.back().reason);return;
+    }
     switch(verification->Status())
     {
     case VerificationStatus::Collecting:return;
@@ -682,7 +697,9 @@ void BoundedTrainingSession::Reject(const std::string& reason)
     rejected.push_back({pending?pending->trialId:std::string{},reason});pending.reset();armed.reset();
     if(config.n0CandidateRepeats>1 && phase!=Phase::Verify)
     {RecordIncompleteCandidateRepeats(reason);anchor.reset();anchorTrial.clear();phase=Phase::Anchor;}
-    if(invalid++>=config.maximumInvalidObservations)Stop(TrainingStatus::InvalidObservation);
+    const bool retry=invalid<config.maximumInvalidObservations;
+    if(invalid<std::numeric_limits<std::size_t>::max())++invalid;
+    if(!retry)Stop(TrainingStatus::InvalidObservation);
 }
 
 void BoundedTrainingSession::DeclineEdit(std::size_t actionSerial,const std::string& reason,const std::string& unchangedModelRevision)
@@ -708,7 +725,8 @@ void BoundedTrainingSession::Arm(std::size_t actionSerial,const PreparedVerifica
     if(phase==Phase::Verify)
     {
         verification->Arm(prepared);
-        if(verification->Status()!=VerificationStatus::Collecting){FinishVerification();return;}
+        FinishVerification();
+        if(status!=TrainingStatus::Verifying)return;
         if(!verification->WaitingForObservation()){pending.reset();return;}
     }
     const auto& protocol=references.Protocol();

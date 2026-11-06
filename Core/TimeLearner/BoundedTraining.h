@@ -26,6 +26,8 @@ struct BoundedTrainingConfig {
     std::string runId,initialModelRevision;
     std::size_t initialModelEpoch=0,maximumProbes=0,maximumEdits=0;
     std::size_t maximumCandidatesPerInput=0,maximumSweeps=1,maximumInvalidObservations=0;
+    // maximumInvalidObservations is a recoverable-invalid budget for the
+    // entire attempt, shared by search and every final verification sweep.
     // Finite declared seed mesh. Native N1 with nonzero depth may prioritize
     // measured-bracket refinements within the same overall candidate budget.
     // Exhaustion never proves infeasibility or global monotonicity.
@@ -174,6 +176,7 @@ private:
     std::vector<TrainingRejection> rejected;
     std::set<std::string> seenTrials;
     std::unique_ptr<FinalVerificationSession> verification;
+    std::size_t verificationInvalidAccounted=0;
     void BeginInput();
     void AdvanceInput();
     void BeginVerification();

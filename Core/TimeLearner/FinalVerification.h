@@ -142,6 +142,9 @@ public:
     const std::optional<TrainingCertificate>& Certificate() const { return certificate; }
     const std::vector<RejectedVerificationProbe>& Rejected() const { return rejected; }
     std::size_t IssuedProbes() const { return issued; }
+    // Counts rejected observations/preparations, not revision invalidation
+    // records. An owning training attempt shares this budget with its search.
+    std::size_t InvalidObservations() const { return invalidCount; }
     std::size_t AcceptedInputs() const;
     std::size_t ModelEpoch() const { return epoch; }
     bool WaitingForObservation() const { return bool(armed); }
