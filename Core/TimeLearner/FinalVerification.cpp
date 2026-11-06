@@ -39,15 +39,16 @@ void ProtocolValid(const VerificationProtocol& p)
         if(p.inputs[i].stimulusId!=p.stimulusIds[i])throw std::invalid_argument("invalid_physical_input_order");
 }
 
-Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIndex,
-                               const PreparedVerificationProbe& prepared,const ProbeObservation& o)
+std::map<std::string,double> CheckedProbeContext(const VerificationProtocol& p,std::size_t inputIndex,
+    const PreparedVerificationProbe& prepared,const ProbeObservation& o,bool requireValid)
 {
     const auto fail=[](const char* reason){throw std::invalid_argument(reason);};
     const auto& input=p.inputs.at(inputIndex);
     if(prepared.inputId!=input.id || prepared.routing!=p.routing ||
        prepared.protocolRevision!=p.revision || prepared.baseModelRevision.empty() ||
        prepared.effectiveModelRevision.empty())fail("prepared_probe_context_mismatch");
-    if(o.schemaVersion!=p.schemaVersion || !o.complete || !o.valid || !o.reasons.empty() || o.endReason.empty())
+    if(o.schemaVersion!=p.schemaVersion || !o.complete ||
+       (requireValid && (!o.valid || !o.reasons.empty())) || o.endReason.empty())
         fail("observation_not_valid_complete");
     // Reuse the production spec validator; do not infer valid data from a flag.
     ProbeRecorder specificationValidator(o.specification);
@@ -79,6 +80,16 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
            !events.emplace(event.id,event.time).second)fail("invalid_actual_stimuli");
         previous=event.time;
     }
+    return events;
+}
+
+Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIndex,
+                               const PreparedVerificationProbe& prepared,const ProbeObservation& o)
+{
+    const auto events=CheckedProbeContext(p,inputIndex,prepared,o,true);
+    const auto fail=[](const char* reason){throw std::invalid_argument(reason);};
+    const auto& input=p.inputs.at(inputIndex);
+    const auto& s=o.specification;
     std::map<std::size_t,const BurstAssignmentObservation*> assignments;
     if(p.schemaVersion<3 && !o.burstAssignments.empty())fail("unexpected_burst_assignment_evidence");
     if(p.schemaVersion==3)
