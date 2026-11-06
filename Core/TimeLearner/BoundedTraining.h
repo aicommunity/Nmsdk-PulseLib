@@ -126,6 +126,9 @@ public:
     std::size_t ModelEpoch() const { return epoch; }
     std::size_t IssuedProbes() const { return probes; }
     std::size_t AppliedEdits() const { return edits; }
+    // Attempt-wide charge, including every final verification sweep. This is
+    // not Rejected().size(): that array also contains non-observation failures.
+    std::size_t InvalidObservations() const { return invalid; }
 private:
     enum class Phase { Candidate, Anchor, Input, Verify };
     CapturedReferences references;

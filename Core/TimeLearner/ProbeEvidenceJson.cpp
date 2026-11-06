@@ -413,6 +413,10 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         result["base_schema_version"]=baseSchema;
         result["schema_version"]=5;
         result["invalid_measurement_recovery"]="advance_unassigned_burst";
+        // Boundary import intentionally does not reconstruct controller search
+        // history. An absent search has an unknown charge, never invented zero.
+        result["invalid_observations"]=service.Search()?Count(service.Search()->InvalidObservations()):
+            QJsonValue(QJsonValue::Null);
     }
     return result;
 }
