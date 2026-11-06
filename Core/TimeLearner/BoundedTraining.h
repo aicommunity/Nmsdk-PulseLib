@@ -66,6 +66,18 @@ struct CandidateEvidence {
     std::optional<TrainingCapacitance> capacitance={};
 };
 struct TrainingRejection { std::string trialId,reason; };
+enum class CandidateRecoveryDisposition { CursorAdvanced, InvalidBudgetStop, RestoredBestStop };
+struct CandidateRecoveryEvidence {
+    std::size_t actionSerial=0,inputIndex=0,candidateInputIndex=0,sweep=0,modelEpoch=0,invalidBefore=0,invalidAfter=0;
+    std::string runId,trialId,baseModelRevision,effectiveModelRevision;
+    bool anchor=false;
+    PeakValidity validity=PeakValidity::Missing;
+    std::vector<InputParameters> fullParameters;
+    std::optional<TrainingCapacitance> capacitance={};
+    CandidateRecoveryDisposition disposition=CandidateRecoveryDisposition::InvalidBudgetStop;
+    TrainingStatus statusAfter=TrainingStatus::InvalidObservation;
+    std::string reasonAfter;
+};
 struct CandidateRepeatEvidence {
     std::size_t inputIndex=0,modelEpoch=0;
     std::string modelRevision;
@@ -118,6 +130,7 @@ public:
     const std::optional<TrainingCertificate>& Certificate() const;
     const std::vector<CandidateEvidence>& Evidence() const { return evidence; }
     const std::vector<TrainingRejection>& Rejected() const { return rejected; }
+    const std::vector<CandidateRecoveryEvidence>& Recoveries() const { return recoveries; }
     const std::vector<CandidateRepeatEvidence>& CandidateRepeats() const { return candidateRepeats; }
     const std::vector<ResistanceDomainAssessment>& Domains() const { return domains; }
     const std::vector<InputParameters>& Parameters() const { return current; }
@@ -182,6 +195,7 @@ private:
     std::vector<CandidateEvidence> candidateMeasurements;
     std::vector<CandidateRepeatEvidence> candidateRepeats;
     std::vector<TrainingRejection> rejected;
+    std::vector<CandidateRecoveryEvidence> recoveries;
     std::set<std::string> seenTrials;
     std::unique_ptr<FinalVerificationSession> verification;
     std::size_t verificationInvalidAccounted=0;

@@ -766,6 +766,17 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
     {
         const bool advance=config.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceUnassignedBurst &&
             CanAdvanceUnassignedBurstCandidate(references.Protocol(),pending->inputIndex,*armed,observation);
+        std::optional<CandidateRecoveryEvidence> recovery;
+        if(advance)
+        {
+            CandidateRecoveryEvidence e;
+            e.actionSerial=pending->serial;e.inputIndex=pending->inputIndex;e.modelEpoch=epoch;
+            e.candidateInputIndex=order.at(position);e.sweep=sweep;
+            e.invalidBefore=invalid;e.runId=pending->runId;e.trialId=pending->trialId;
+            e.baseModelRevision=revision;e.effectiveModelRevision=armed->effectiveModelRevision;
+            e.anchor=phase==Phase::Anchor;e.validity=observation.burstAssignments.front().validity;
+            e.fullParameters=current;e.capacitance=currentCapacitance;recovery=std::move(e);
+        }
         Reject(advance?std::string("unassigned_burst_candidate:")+
             PeakValidityName(observation.burstAssignments.front().validity):error.what());
         if(advance && status==TrainingStatus::Searching)
@@ -775,8 +786,20 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
             // The common Reject already consumed the shared attempt budget.
             anchor.reset();anchorTrial.clear();
             if(restoringBest)
-            {Stop(TrainingStatus::SearchUnresolved,"restored_best_candidate_has_unassigned_burst");return;}
-            phase=Phase::Candidate;AdvanceCapacitanceContext();
+            {
+                Stop(TrainingStatus::SearchUnresolved,"restored_best_candidate_has_unassigned_burst");
+                recovery->disposition=CandidateRecoveryDisposition::RestoredBestStop;
+            }
+            else
+            {
+                phase=Phase::Candidate;AdvanceCapacitanceContext();
+                recovery->disposition=CandidateRecoveryDisposition::CursorAdvanced;
+            }
+        }
+        if(recovery)
+        {
+            recovery->invalidAfter=invalid;recovery->statusAfter=status;recovery->reasonAfter=stopReason;
+            recoveries.push_back(std::move(*recovery));
         }
         return;
     }

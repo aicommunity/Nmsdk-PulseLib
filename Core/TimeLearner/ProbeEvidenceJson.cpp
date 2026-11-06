@@ -417,6 +417,31 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         // history. An absent search has an unknown charge, never invented zero.
         result["invalid_observations"]=service.Search()?Count(service.Search()->InvalidObservations()):
             QJsonValue(QJsonValue::Null);
+        QJsonArray events;
+        if(const auto search=service.Search())for(const auto& e:search->Recoveries())
+        {
+            const char* disposition=nullptr;
+            switch(e.disposition)
+            {
+            case CandidateRecoveryDisposition::CursorAdvanced:disposition="cursor_advanced";break;
+            case CandidateRecoveryDisposition::InvalidBudgetStop:disposition="invalid_budget_stop";break;
+            case CandidateRecoveryDisposition::RestoredBestStop:disposition="restored_best_stop";break;
+            }
+            if(!disposition)throw std::invalid_argument("unknown_candidate_recovery_disposition");
+            QJsonObject event{{"action_serial",Count(e.actionSerial)},{"input_index",Count(e.inputIndex)},
+                {"candidate_input_index",Count(e.candidateInputIndex)},{"sweep",Count(e.sweep)},
+                {"model_epoch",Count(e.modelEpoch)},{"invalid_before",Count(e.invalidBefore)},
+                {"invalid_after",Count(e.invalidAfter)},{"run_id",Text(e.runId)},{"trial_id",Text(e.trialId)},
+                {"base_model_revision",Text(e.baseModelRevision)},{"effective_model_revision",Text(e.effectiveModelRevision)},
+                {"phase",e.anchor?"anchor":"input"},{"validity",PeakValidityName(e.validity)},
+                {"full_parameters",parameters(e.fullParameters)},
+                {"capacitance",e.capacitance?QJsonValue(encodeCapacitance(*e.capacitance)):QJsonValue(QJsonValue::Null)},
+                {"disposition",disposition},{"status_after",TrainingStatusName(e.statusAfter)},
+                {"reason_after",Text(e.reasonAfter)}};
+            if(history)event["capacitance_witness_id"]=trialWitness(e.trialId,e.baseModelRevision,e.capacitance);
+            events.append(event);
+        }
+        result["candidate_recovery_events"]=events;
     }
     return result;
 }
