@@ -25,6 +25,8 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
     const std::string& implementationId);
 // Schema 2 adds the immutable per-channel C0 and full absolute correction map.
 // The physical archive and certificate remain bound to the current graph.
+// Tracked services use schema3 (record-only) or schema4 (C-search policy), retaining required reference/final/stopped
+// physical witnesses and trial links. Search/dynamics checkpoints are excluded.
 QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection& capacitance);

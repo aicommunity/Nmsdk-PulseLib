@@ -32,7 +32,7 @@ struct PreparedVerificationProbe {
     std::size_t modelEpoch=0;
     // Actual Branch solo selector, produced by the native adapter. Schema 3
     // binds it to protocol input order; Classic measures an unmuted full burst.
-    std::optional<std::size_t> selectedInputIndex;
+    std::optional<std::size_t> selectedInputIndex={};
 };
 struct ReferenceEvidence {
     PreparedVerificationProbe prepared;
@@ -142,6 +142,9 @@ public:
     const std::optional<TrainingCertificate>& Certificate() const { return certificate; }
     const std::vector<RejectedVerificationProbe>& Rejected() const { return rejected; }
     std::size_t IssuedProbes() const { return issued; }
+    // Counts rejected observations/preparations, not revision invalidation
+    // records. An owning training attempt shares this budget with its search.
+    std::size_t InvalidObservations() const { return invalidCount; }
     std::size_t AcceptedInputs() const;
     std::size_t ModelEpoch() const { return epoch; }
     bool WaitingForObservation() const { return bool(armed); }

@@ -92,3 +92,8 @@ Sample: `Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearner`.
 - [`NNeuronLearner`](NNeuronLearner.md)
 - [`NDatasetMatrix`](NDatasetMatrix.md)
 - Эталон wiring: `Bin/Configs/Users/user/TimePatternDetectionTest01`
+
+
+Кандидат native configuration/model package schema3 с полной историей C₀ описан
+в [TimeLearnerCapacitanceStateTransfer](../Analysis/TimeLearnerCapacitanceStateTransfer.ru.md).
+Изменения подготовлены; серверная проверка boundary roundtrip ещё не завершена.
