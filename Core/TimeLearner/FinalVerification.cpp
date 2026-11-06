@@ -163,6 +163,61 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
 }
 }
 
+bool CanAdvanceUnassignedBurstCandidate(const VerificationProtocol& p,std::size_t inputIndex,
+    const PreparedVerificationProbe& prepared,const ProbeObservation& o)
+{
+    try
+    {
+        ProtocolValid(p);
+        CheckedProbeContext(p,inputIndex,prepared,o,false);
+        const auto& s=o.specification;
+        if(p.schemaVersion!=3 || o.valid || o.endReason!="window_closed" ||
+           s.windows.size()!=1 || o.peaks.size()!=1 || o.burstAssignments.size()!=1 ||
+           s.expectedStimulusIds!=p.stimulusIds)return false;
+        const auto& input=p.inputs.at(inputIndex);const auto& window=s.windows.front();
+        const auto& assignment=o.burstAssignments.front();const auto& peak=o.peaks.front();
+        if(window.inputId!=input.id || window.stimulusId!=input.stimulusId ||
+           window.channel!=(p.routing==ProbeRouting::ClassicBurst?inputIndex:0u) ||
+           assignment.channel!=window.channel || peak.inputId!=input.id || peak.stimulusId!=input.stimulusId ||
+           (assignment.validity!=PeakValidity::Missing && assignment.validity!=PeakValidity::Ambiguous) ||
+           peak.validity!=assignment.validity || peak.candidateCount!=0 ||
+           peak.amplitude || peak.rawPotential || peak.time || peak.plateauEnd || peak.delayFromStimulus)return false;
+        if((assignment.validity==PeakValidity::Missing && assignment.waves.size()>=p.stimulusIds.size()) ||
+           (assignment.validity==PeakValidity::Ambiguous && assignment.waves.size()<p.stimulusIds.size()) ||
+           assignment.waves.size()>(o.sampleCount-1)/2)return false;
+        const std::set<std::string> expectedReasons{
+            std::string("burst_")+PeakValidityName(assignment.validity)+":"+std::to_string(window.channel),
+            std::string("peak_")+PeakValidityName(peak.validity)+":"+input.id};
+        if(o.reasons.size()!=expectedReasons.size() ||
+           std::set<std::string>(o.reasons.begin(),o.reasons.end())!=expectedReasons)return false;
+        for(std::size_t i=0;i<o.stimuli.size();++i)
+            if(o.stimuli[i].id!=p.stimulusIds[i] || (i && o.stimuli[i].time<=o.stimuli[i-1].time))return false;
+        std::optional<double> previous;
+        for(const auto& wave:assignment.waves)
+        {
+            const double amplitude=wave.rawPotential-s.baseline.at(window.channel);
+            if(!wave.stimulusId.empty() || !Finite(wave.amplitude) || !Finite(wave.rawPotential) ||
+               !Finite(amplitude) || amplitude!=wave.amplitude || amplitude<p.minimumAmplitude ||
+               !Finite(wave.time) || !Finite(wave.plateauEnd) || wave.plateauEnd<wave.time ||
+               After(s.begin,wave.time) || After(wave.plateauEnd,s.end) ||
+               (previous && wave.time<=*previous))return false;
+            previous=wave.plateauEnd;
+        }
+        if((!s.recordSpikes && !o.spikes.empty()) ||
+           (!o.spikes.empty() && (o.spikes.size()-1)/s.baseline.size()>=s.maximumSamples))return false;
+        previous.reset();
+        for(const auto& spike:o.spikes)
+        {
+            if(spike.channel>=s.baseline.size() || !Finite(spike.time) || After(s.begin,spike.time) ||
+               After(spike.time,s.end) || (previous && spike.time<*previous))return false;
+            previous=spike.time;
+        }
+        return true;
+    }
+    catch(const std::invalid_argument&){return false;}
+    catch(const std::out_of_range&){return false;}
+}
+
 CapturedReferences CapturedReferences::Capture(VerificationProtocol p,const std::vector<ReferenceEvidence>& evidence)
 {
     ProtocolValid(p);

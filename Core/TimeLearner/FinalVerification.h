@@ -44,6 +44,11 @@ void ValidateVerificationProtocol(const VerificationProtocol& protocol);
 struct ValidatedProbeMeasurement { double rawPotential,arrival,plateauEnd; };
 ValidatedProbeMeasurement ValidateProbeMeasurement(const VerificationProtocol& protocol,
     std::size_t inputIndex,const PreparedVerificationProbe& prepared,const ProbeObservation& observation);
+// A closed native single-input probe with only an unassigned full burst may
+// reject a search candidate. This never accepts a measurement or certificate.
+// Context, coverage, numerical, clipped-window and other failures return false.
+bool CanAdvanceUnassignedBurstCandidate(const VerificationProtocol& protocol,std::size_t inputIndex,
+    const PreparedVerificationProbe& prepared,const ProbeObservation& observation);
 struct CapturedInputReference {
     std::string id, runId, trialId, effectiveModelRevision;
     double rawPotential=0.;
