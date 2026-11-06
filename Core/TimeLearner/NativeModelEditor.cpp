@@ -1,6 +1,7 @@
 #include "NativeModelEditor.h"
 #include "NativeCapacitanceEdit.h"
 #include "NativeModelBuilder.h"
+#include "NativeTrainingCapacitance.h"
 #include "ConfiguredNativeTraining.h"
 #include "NativeOperationChecks.h"
 #include "ModelArchive.h"
@@ -686,7 +687,8 @@ const char* ResistanceDomainStatusName(ResistanceDomainStatus status)
 
 static ResistanceDomainAssessment AssessNativeInputResistanceDomainImpl(NativeProbeExecutor& executor,const NativeProbeBindings& b,
     const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec,
-    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection* capacitance)
+    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection* capacitance,
+    bool recordTrainingCapacitance=false)
 {
     ResistanceDomainAssessment result;result.inputIndex=inputIndex;result.geometry=requested;
     QJsonObject before;UEPtr<NPulseGeneratorTransit> source;
@@ -706,12 +708,33 @@ static ResistanceDomainAssessment AssessNativeInputResistanceDomainImpl(NativePr
         before=NmsdkTools::IdentifyModel(live,ports);Require(before["valid"].toBool(),"invalid_live_domain_identity");
         result.baseModelRevision=before["sha256"].toString().toStdString();
         auto preview=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ClonePhysicalGraphForEdit(live,ports));Lease lease{preview};
-        Require(bool(preview),"failed_domain_preview");Transform(preview,*source,plan,nullptr);ApplyCapacitanceCorrection(preview,*source,capacitance);CheckRemovedListeners(b.neuron,preview);
+        Require(bool(preview),"failed_domain_preview");Transform(preview,*source,plan,nullptr);
+        NativeCapacitanceCorrection effectiveCapacitance;
+        ApplyCapacitanceCorrection(preview,*source,capacitance,&effectiveCapacitance);CheckRemovedListeners(b.neuron,preview);
         std::vector<int> positions;for(const auto& p:requested)positions.push_back(p.length);
         auto previewBindings=b;previewBindings.neuron=preview;
         Require(ReadNativeInputParameters(previewBindings,positions)==requested,"domain_preview_readback_mismatch");
         const auto identity=NmsdkTools::IdentifyModel(preview,ports);Require(identity["valid"].toBool(),"invalid_domain_preview_identity");
         result.previewModelRevision=identity["sha256"].toString().toStdString();
+        if(recordTrainingCapacitance)
+        {
+            Require(capacitance && effectiveCapacitance.baseline["schema_version"]==QJsonValue(2),
+                "training_domain_requires_bound_capacitance");
+            const auto state=EncodeNativeCapacitanceState(effectiveCapacitance,result.previewModelRevision);
+            ValidateAppliedNativeCapacitanceState(previewBindings,
+                DecodeNativeModelSpec(effectiveCapacitance.baseline["model_spec"].toObject()),state);
+            const auto parameters=DecodeNativeTrainingCapacitance(state);
+            std::vector<std::string> roots;
+            // C0 also binds the Dataset/generator and growth-only images.
+            // They need not occur among current neuron nodes/channel classes.
+            for(const auto& definition:effectiveCapacitance.baseline["storage_images"].toArray())
+                roots.push_back(definition.toObject()["name"].toString().toStdString());
+            const auto images=QJsonDocument(NmsdkTools::CaptureModelImageDefinitions(preview,ports,roots))
+                .toJson(QJsonDocument::Compact).toStdString();
+            result.effectiveCapacitance=parameters;result.capacitance=result.effectiveCapacitance;
+            result.capacitanceStateJson=QJsonDocument(state).toJson(QJsonDocument::Compact).toStdString();
+            result.capacitanceImagesJson=images;
+        }
         result.previewModelJson=QJsonDocument(identity["model"].toObject()).toJson(QJsonDocument::Compact).toStdString();
         result.sourceAmplitude=source->Amplitude.GetData();result.branch=b.branch;
         result.maximumResistanceRatio=spec.maximumResistanceRatio;
@@ -823,8 +846,9 @@ ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor
 {return AssessNativeInputResistanceDomainImpl(executor,b,attachments,requested,spec,inputIndex,scaleInhibitionWithInput,nullptr);}
 ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor& executor,const NativeProbeBindings& b,
     const std::vector<int>& attachments,const std::vector<InputParameters>& requested,const NativeEditSpec& spec,
-    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection& capacitance)
-{return AssessNativeInputResistanceDomainImpl(executor,b,attachments,requested,spec,inputIndex,scaleInhibitionWithInput,&capacitance);}
+    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection& capacitance,
+    bool recordTrainingCapacitance)
+{return AssessNativeInputResistanceDomainImpl(executor,b,attachments,requested,spec,inputIndex,scaleInhibitionWithInput,&capacitance,recordTrainingCapacitance);}
 
 std::vector<InputParameters> ReadNativeInputParameters(const NativeProbeBindings& b,const std::vector<int>& attachments)
 {
@@ -1019,6 +1043,41 @@ NativeCapacitanceCorrection ParseNativeCapacitanceState(const std::string& text,
     const auto actualRevision=state["applied_model_revision"].toString().toStdString();
     Require(EncodeNativeCapacitanceState(result,actualRevision)==state,"capacitance_parameter_state_digest_mismatch");
     revision=actualRevision;return result;
+}
+void ValidateArchivedNativeCapacitanceState(const QJsonObject& state,const QJsonObject& identity,const QJsonArray& storageImages)
+{
+    std::string revision;
+    const auto correction=ParseNativeCapacitanceState(QJsonDocument(state).toJson(QJsonDocument::Compact).toStdString(),revision);
+    const auto& baseline=correction.baseline;
+    Require(identity["valid"]==QJsonValue(true) && identity["diagnostics"].isArray() && identity["diagnostics"].toArray().isEmpty() &&
+        identity["model"].isObject() && identity["sha256"]==QJsonValue(QString::fromStdString(revision)) &&
+        identity["sha256"]==QJsonValue(NmsdkTools::CanonicalModelDataSha256(identity["model"])),
+        "invalid_archived_capacitance_identity");
+    Require(NmsdkTools::ModelImageDefinitionsFingerprint(storageImages)==baseline["storage_images_sha256"].toString(),
+        "archived_capacitance_storage_profile_mismatch");
+    const auto nodes=IdentityNodes(identity["model"].toObject());
+    const auto declaration=DecodeNativeModelSpec(baseline["model_spec"].toObject());
+    Require(nodes.at("$")["class"]==QJsonValue(QString::fromStdString(declaration.neuronClass)),
+        "archived_capacitance_root_class_mismatch");
+    for(const auto& [path,scale]:correction.membraneScales)
+        Require(nodes.count(QString("$.")+QString::fromStdString(path))>0,"archived_capacitance_active_membrane_missing");
+    for(const auto& [path,scale]:correction.dormantMembraneScales)
+        Require(!nodes.count(QString("$.")+QString::fromStdString(path)),"archived_capacitance_dormant_membrane_present");
+    const auto channels=baseline["channels"].toObject(),classes=baseline["channel_classes"].toObject(),physics=baseline["channel_physics"].toObject();
+    std::set<std::string> active;std::size_t count=0;
+    for(const auto& [path,node]:nodes)if(node["parameters"].toObject().contains("Capacity"))
+    {
+        Require(path.startsWith("$."),"invalid_archived_capacitance_channel_path");
+        const auto key=path.mid(2);const auto membrane=key.section('.',0,0).toStdString();
+        const auto found=correction.membraneScales.find(membrane);const auto scale=found==correction.membraneScales.end()?1.:found->second;
+        Require(channels.contains(key) && node["class"]==classes[key] && ChannelPhysics(node)==physics[key].toObject() &&
+            node["frequency_hz"]==QJsonValue(QString::number(declaration.frequencyHz)) &&
+            ParameterNumber(node,"Capacity")==channels[key].toDouble()*scale,
+            "archived_capacitance_channel_mismatch");
+        if(found!=correction.membraneScales.end())active.insert(membrane);
+        ++count;
+    }
+    Require(count>0 && active.size()==correction.membraneScales.size(),"missing_archived_capacitance_channels");
 }
 void ValidateAppliedNativeCapacitanceState(const NativeProbeBindings& b,const NativeModelSpec& declaration,const QJsonObject& state)
 {

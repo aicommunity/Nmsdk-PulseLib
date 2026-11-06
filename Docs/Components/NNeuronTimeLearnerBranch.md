@@ -41,3 +41,8 @@ AllSynapsesNormalized/EndOfLearning. Его наличие не закрывае
 ### Уточнение 2026-09-23 (9a6cee0b)
 
 Search после выбора Tips запускает отдельный free-run; при плохом landscape возвращает snapshot. При включённом mid Search Train оставляет silent-порог, Finalize запрещает второй inference-mid в этом процессе; следующий Test использует новый процесс/reset. Обычный finite inference failure также оставляет silent, но Complete не означает успешную калибровку. Остаются NaN/setup/fallback-metric проблемы и неподдержанный выбор LTZ в free-run. Same-Matrix mid (sample 0 — target) принят как текущая особенность A07. [Текущий контракт](../../../../Bin/Configs/SpikeSamples/StructTrain/AUDIT_2026-09-22.md).
+
+
+Кандидат native configuration/model package schema3 с полной историей C₀ описан
+в [TimeLearnerCapacitanceStateTransfer](../Analysis/TimeLearnerCapacitanceStateTransfer.ru.md).
+Изменения подготовлены; серверная проверка boundary roundtrip ещё не завершена.

@@ -27,6 +27,13 @@ template<class Learner> NativeTrainingAdapter BindNativeTraining(Learner& owner,
     result.assessResistanceDomain=[&owner,&editDepth](const auto& parameters,std::size_t input) {
         NativeLifecycleScope scope(editDepth);return owner.AssessNativeResistanceDomain(parameters,input);
     };
+    result.readCapacitanceWitness=[&owner]{return owner.ReadNativeTrainingCapacitanceWitness();};
+    result.applyWithCapacitance=[&owner,&editDepth](const auto& parameters,const auto& capacitance) {
+        NativeLifecycleScope scope(editDepth);return owner.ApplyNativeTrainingParameters(parameters,capacitance);
+    };
+    result.assessResistanceDomainWithCapacitance=[&owner,&editDepth](const auto& parameters,std::size_t input,const auto& capacitance) {
+        NativeLifecycleScope scope(editDepth);return owner.AssessNativeTrainingResistanceDomain(parameters,input,capacitance);
+    };
     result.queue=[&probe](NativeProbeRequest request){probe.Queue(std::move(request));};
     result.probeState=[&probe]{return probe.Status();};
     result.takeResult=[&probe]{return probe.TakeResult();};
