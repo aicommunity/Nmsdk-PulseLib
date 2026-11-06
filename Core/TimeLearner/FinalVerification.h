@@ -32,7 +32,7 @@ struct PreparedVerificationProbe {
     std::size_t modelEpoch=0;
     // Actual Branch solo selector, produced by the native adapter. Schema 3
     // binds it to protocol input order; Classic measures an unmuted full burst.
-    std::optional<std::size_t> selectedInputIndex;
+    std::optional<std::size_t> selectedInputIndex={};
 };
 struct ReferenceEvidence {
     PreparedVerificationProbe prepared;
@@ -44,6 +44,11 @@ void ValidateVerificationProtocol(const VerificationProtocol& protocol);
 struct ValidatedProbeMeasurement { double rawPotential,arrival,plateauEnd; };
 ValidatedProbeMeasurement ValidateProbeMeasurement(const VerificationProtocol& protocol,
     std::size_t inputIndex,const PreparedVerificationProbe& prepared,const ProbeObservation& observation);
+// A closed native single-input probe with only an unassigned full burst may
+// reject a search candidate. This never accepts a measurement or certificate.
+// Context, coverage, numerical, clipped-window and other failures return false.
+bool CanAdvanceUnassignedBurstCandidate(const VerificationProtocol& protocol,std::size_t inputIndex,
+    const PreparedVerificationProbe& prepared,const ProbeObservation& observation);
 struct CapturedInputReference {
     std::string id, runId, trialId, effectiveModelRevision;
     double rawPotential=0.;
@@ -142,6 +147,9 @@ public:
     const std::optional<TrainingCertificate>& Certificate() const { return certificate; }
     const std::vector<RejectedVerificationProbe>& Rejected() const { return rejected; }
     std::size_t IssuedProbes() const { return issued; }
+    // Counts rejected observations/preparations, not revision invalidation
+    // records. An owning training attempt shares this budget with its search.
+    std::size_t InvalidObservations() const { return invalidCount; }
     std::size_t AcceptedInputs() const;
     std::size_t ModelEpoch() const { return epoch; }
     bool WaitingForObservation() const { return bool(armed); }

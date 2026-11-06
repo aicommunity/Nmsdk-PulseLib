@@ -48,9 +48,9 @@ struct PeakObservation {
     PeakValidity validity=PeakValidity::Incomplete;
     // Only valid when validity==Valid. Times are measured sample timestamps;
     // a plateau reports its first and last sample, never an interpolated peak.
-    std::optional<double> amplitude, rawPotential, time, plateauEnd;
+    std::optional<double> amplitude={}, rawPotential={}, time={}, plateauEnd={};
     // Unknown until the matching actual stimulus exists, even if a peak exists.
-    std::optional<double> delayFromStimulus;
+    std::optional<double> delayFromStimulus={};
     std::size_t candidateCount=0;
 };
 struct StimulusObservation { std::string id; double time; };

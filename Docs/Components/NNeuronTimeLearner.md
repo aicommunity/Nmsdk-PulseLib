@@ -1,5 +1,12 @@
 ## RU
 
+**Актуальное разделение режимов (07.11.2026):** отсутствие `ControllerVersion`
+означает legacy1; явная версия2 использует подключённый configured native service.
+См. [общий контракт версий, lifecycle и полного Train→Test](TimeLearnerControllerModes.ru.md)
+и [актуальную приёмку](../../../../Docs/StructTrain/TimeLearner/ImplementationStatus.ru.md).
+Ниже формулы, фазы и список legacy-свойств описывают совместимый путь версии1.
+Они не заменяют ModelSpec/search и certificate gate версии2.
+
 **Сверка 2026-09-22:** EnablePostTrainTuning=true и AutoScaleIterationGap=true по умолчанию. gap=span+settle+slack; dataset delay=settle+slack; при AutoScale=0 берётся max с заданным значением. Калибровка на Test Matrix не является независимым тестом. [Контракт и ограничения](../../../../Bin/Configs/SpikeSamples/StructTrain/AUDIT_2026-09-22.md).
 
 
@@ -45,9 +52,14 @@ native Init в конце BuildStructure. Ранее правильные свя
 | `CalibrateLTZThresholdFraction` | Доля (default 0.85) |
 | `CalibratedFixedLTZThreshold` | Результат калибровки (state); при `-S` также отражается в `FixedLTZThreshold` в XML |
 
-### Sync / inference (SelectivityLtzCalibrate)
+### Исторический legacy-протокол Sync / inference (SelectivityLtzCalibrate)
 
-После train веса и `FixedLTZThreshold` берутся из **Train/Parameters_00.xml**, не из Train Model (Model может содержать устаревшие L). Test: `merge_train_model.py` + `UseFixedLTZThreshold=1`. Подробнее: [`SelectivityLtzCalibrate/ALGORITHM.md`](../../../../Bin/Configs/SpikeSamples/StructTrain/SelectivityLtzCalibrate/ALGORITHM.md).
+В исторической серии веса и `FixedLTZThreshold` переносились из
+**Train/Parameters_00.xml**, поскольку Train Model мог содержать старые L;
+применялся `merge_train_model.py`. Это описание прежнего эксперимента,
+**не инструкция для нового V2 Train→Test**. Новый путь использует полный native
+export/import с проверкой модели, см. общий контракт выше. Исторический источник:
+[`SelectivityLtzCalibrate/ALGORITHM.md`](../../../../Bin/Configs/SpikeSamples/StructTrain/SelectivityLtzCalibrate/ALGORITHM.md).
 
 ### Критерий длины (coincidence)
 
@@ -92,3 +104,10 @@ Sample: `Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearner`.
 - [`NNeuronLearner`](NNeuronLearner.md)
 - [`NDatasetMatrix`](NDatasetMatrix.md)
 - Эталон wiring: `Bin/Configs/Users/user/TimePatternDetectionTest01`
+
+
+Перенос owned C₀ и его проверенные границы описаны в
+[TimeLearnerCapacitanceStateTransfer](../Analysis/TimeLearnerCapacitanceStateTransfer.ru.md).
+Ранняя заметка о неподтверждённом candidate schema3 относилась к снимку его
+разработки. Актуальный объём runtime приёмки, включая последующие схемы,
+проверяйте по корневой сводке; полная C-trim/physics matrix этим не закрывается.
