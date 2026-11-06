@@ -121,6 +121,7 @@ NativeModelSpec DecodeNativeModelSpec(const QJsonObject& o)
 }
 NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraining& c)
 {
+    ValidateInvalidMeasurementRecovery(c.search.invalidMeasurementRecovery,c.search.maximumInvalidObservations);
     ValidateNativeModelSpec(c.model);const auto size=c.model.inputs.size();
     Require(ValidStimulusProfile(c.stimulusProfile) && c.stimulusProfile.generatorClass==c.model.generatorClass &&
         c.stimulusProfile.frequencyHz==c.model.frequencyHz,"invalid_configured_native_stimulus_profile");
@@ -235,11 +236,33 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
         result["schema_version"]=4;
         result["capacitance_search"]=EncodeCapacitanceSearchPolicy(*c.search.capacitanceSearch);
     }
+    if(c.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceUnassignedBurst)
+    {
+        // An orthogonal envelope retains the exact established repeat/C codec.
+        // Missing envelope means the historical retry policy, never opt-in.
+        result["base_schema_version"]=result["schema_version"];
+        result["schema_version"]=5;
+        result["invalid_measurement_recovery"]="advance_unassigned_burst";
+    }
     return result;
 }
 ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
 {
     const int schema=Int(o["schema_version"]);auto fields=o;
+    if(schema==5)
+    {
+        const int base=Int(o["base_schema_version"]);
+        Require(base>=1 && base<=4 &&
+            Text(o["invalid_measurement_recovery"])=="advance_unassigned_burst",
+            "unsupported_native_candidate_recovery_envelope");
+        // Re-enter only a strictly older flat codec. Unknown fields and all
+        // original validation still run there; nested envelopes are forbidden.
+        fields.remove("base_schema_version");fields.remove("invalid_measurement_recovery");
+        fields["schema_version"]=base;
+        auto c=DecodeConfiguredNativeTraining(fields);
+        c.search.invalidMeasurementRecovery=InvalidMeasurementRecovery::AdvanceUnassignedBurst;
+        MakeConfiguredNativeTrainingPlan(c);return c;
+    }
     if(schema==3 || schema==4)fields.remove("capacitance_history");
     if(schema==4)fields.remove("capacitance_search");
     Keys(fields,{"kind","schema_version","model","stimulus_profile","run_id","protocol_revision","sample_id","duration","maximum_sample_gap","minimum_amplitude",

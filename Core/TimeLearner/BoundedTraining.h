@@ -8,6 +8,7 @@
 namespace NMSDK::TimeLearner {
 enum class TrainingStatus { Searching, Verifying, Exact, SearchUnresolved, BudgetExhausted,
     InvalidModel, InvalidObservation, ExternalStop };
+enum class InvalidMeasurementRecovery { RetrySameCandidate, AdvanceUnassignedBurst };
 struct InputSearchBounds {
     int minimumLength=1,maximumLength=1,minimumSynapses=1,maximumSynapses=128;
     double minimumResistance=0.,maximumResistance=0.;
@@ -39,7 +40,11 @@ struct BoundedTrainingConfig {
     VerificationTolerances tolerances;
     std::vector<InputSearchBounds> bounds;
     std::optional<CapacitanceSearchPolicy> capacitanceSearch={};
+    // Default preserves compatibility. Advancing is restricted to a complete
+    // unassigned native burst; it never skips reference capture or final inputs.
+    InvalidMeasurementRecovery invalidMeasurementRecovery=InvalidMeasurementRecovery::RetrySameCandidate;
 };
+void ValidateInvalidMeasurementRecovery(InvalidMeasurementRecovery policy,std::size_t invalidAllowance);
 enum class TrainingActionKind { Edit, Probe, ResistanceDomain };
 struct TrainingAction {
     TrainingActionKind kind=TrainingActionKind::Probe;

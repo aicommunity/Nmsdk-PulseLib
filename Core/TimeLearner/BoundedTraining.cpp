@@ -131,10 +131,19 @@ void ValidateCapacitanceSearchPolicy(const BoundedTrainingConfig& config,ProbeRo
     }
 }
 
+void ValidateInvalidMeasurementRecovery(InvalidMeasurementRecovery policy,std::size_t invalidAllowance)
+{
+    if(policy!=InvalidMeasurementRecovery::RetrySameCandidate && policy!=InvalidMeasurementRecovery::AdvanceUnassignedBurst)
+        throw std::invalid_argument("invalid_candidate_recovery_policy");
+    if(policy==InvalidMeasurementRecovery::AdvanceUnassignedBurst && invalidAllowance==0)
+        throw std::invalid_argument("candidate_recovery_requires_invalid_observation_budget");
+}
+
 void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const BoundedTrainingConfig& config,
                                    const std::vector<InputParameters>& initial)
 {
     ValidateVerificationProtocol(protocol);
+    ValidateInvalidMeasurementRecovery(config.invalidMeasurementRecovery,config.maximumInvalidObservations);
     if(config.runId.empty() || config.initialModelRevision.empty() || !config.maximumProbes || !config.maximumEdits ||
         !config.maximumCandidatesPerInput || !config.maximumSweeps || config.resistanceSubdivisionDepth>20 ||
         config.n0CandidateRepeats<1 || config.n0CandidateRepeats>128 ||
@@ -753,7 +762,24 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
     {Reject("unexpected_or_replayed_training_trial");return;}
     ValidatedProbeMeasurement measurement;
     try {measurement=ValidateProbeMeasurement(references.Protocol(),pending->inputIndex,*armed,observation);}
-    catch(const std::invalid_argument& error){Reject(error.what());return;}
+    catch(const std::invalid_argument& error)
+    {
+        const bool advance=config.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceUnassignedBurst &&
+            CanAdvanceUnassignedBurstCandidate(references.Protocol(),pending->inputIndex,*armed,observation);
+        Reject(advance?std::string("unassigned_burst_candidate:")+
+            PeakValidityName(observation.burstAssignments.front().validity):error.what());
+        if(advance && status==TrainingStatus::Searching)
+        {
+            // The failed point is not a measured candidate. Retire any partial
+            // repeats/anchor and continue the existing finite native cursor.
+            // The common Reject already consumed the shared attempt budget.
+            anchor.reset();anchorTrial.clear();
+            if(restoringBest)
+            {Stop(TrainingStatus::SearchUnresolved,"restored_best_candidate_has_unassigned_burst");return;}
+            phase=Phase::Candidate;AdvanceCapacitanceContext();
+        }
+        return;
+    }
     const auto trial=pending->trialId;pending.reset();armed.reset();
     if(phase==Phase::Anchor){anchor=measurement;anchorTrial=trial;phase=Phase::Input;return;}
     if(!anchor)throw std::logic_error("missing_same_revision_anchor");

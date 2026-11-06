@@ -407,6 +407,12 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         configuration["capacitance_search"]=EncodeCapacitanceSearchPolicy(policy);
         result["configuration"]=configuration;
     }
+    if(cfg.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceUnassignedBurst)
+    {
+        result["base_schema_version"]=result["schema_version"];
+        result["schema_version"]=5;
+        result["invalid_measurement_recovery"]="advance_unassigned_burst";
+    }
     return result;
 }
 }
