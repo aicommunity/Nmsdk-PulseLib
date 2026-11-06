@@ -240,7 +240,8 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
     {
         // An orthogonal envelope retains the exact established repeat/C codec.
         // Missing envelope means the historical retry policy, never opt-in.
-        result["base_schema_version"]=result["schema_version"];
+        const auto baseSchema=result.value("schema_version");
+        result["base_schema_version"]=baseSchema;
         result["schema_version"]=5;
         result["invalid_measurement_recovery"]="advance_unassigned_burst";
     }
