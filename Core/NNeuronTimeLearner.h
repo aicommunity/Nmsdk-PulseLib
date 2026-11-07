@@ -816,6 +816,11 @@ public: // Methods
  // adoption is read-only and never infers whether a supplied graph was trained.
  TimeLearner::NativeModelBuildResult ConstructNativeModel(TimeLearner::NativeModelSpec specification);
  TimeLearner::NativeModelBuildResult AdoptNativeModel(TimeLearner::NativeModelSpec specification);
+ // Fresh owner only. Complete prepared children; no controller history,
+ // certificate or transparent dynamic checkpoint is imported.
+ TimeLearner::NativeModelBuildResult InstallNativePreparedModel(TimeLearner::NativeModelSpec specification,
+     RDK::UEPtr<NPulseNeuron> neuron,RDK::UEPtr<NDatasetMatrix> dataset,
+     const std::vector<TimeLearner::InputParameters>& parameters);
  QJsonObject ExportNativeLearnedState(const std::string& implementationId);
  QJsonObject ExportNativeLearnedState(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance);
  QJsonObject OwnedNativeCapacitanceState() const {return NativeLearnedCapacitanceState;}

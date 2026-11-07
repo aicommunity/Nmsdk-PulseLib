@@ -4933,6 +4933,22 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ConstructNativeMod
  }
  return result;
 }
+TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::InstallNativePreparedModel(TimeLearner::NativeModelSpec specification,
+ UEPtr<NPulseNeuron> neuron,UEPtr<NDatasetMatrix> dataset,const std::vector<TimeLearner::InputParameters>& parameters)
+{
+ if(NativeRecognition || NativePostTunePhase || NativeLiveFinalization || NativeConfiguredPlan || !NativeLearnedCapacitanceState.isEmpty())
+ {TimeLearner::NativeModelBuildResult result;result.reason="prepared_model_requires_fresh_owner";return result;}
+ auto result=TimeLearner::InstallNativePreparedChildren(*this,std::move(specification),true,neuron,dataset,parameters,
+   NativeTrainingOwned,NativeModelDeclaration,NativeProbeControl,NativeTrainingControl,NativeEditFailure);
+ Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
+ if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
+ {
+  NativeConfiguredText.clear();NativeConfiguredSinks={};NativeTrainingRequestIntent.Clear();
+  OldDendriteLength=DendriteLength.GetData();LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
+  CapApplyPending=false;TrainingPhase.SetDataDirect(kPhaseSync);Ready=false;
+ }
+ return result;
+}
 TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::AdoptNativeModel(TimeLearner::NativeModelSpec specification)
 {
  if(NativePostTunePhase && !NativePostTunePhase->Done() && !NativePostTunePhaseDepth)
