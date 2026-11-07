@@ -62,6 +62,23 @@ struct RegisteredStorageProfile
  std::vector<std::string> classNames; // dependency order, for native export.
 };
 
+// Derive a profile from complete existing images without substituting the
+// ChannelProfile/SynapseProfile recipe defaults. This creates templates, not
+// an overlay of a live/learned neuron. Individual learned state must still be
+// transferred and verified through the native model path.
+struct FeedbackStorageProfileSpec
+{
+ std::string name;
+ unsigned int frequencyHz = 2000;
+ std::string neuronBaseClass = "NSPNeuronGen";
+ std::optional<double> bodyFeedbackGain;
+ std::optional<double> ltFeedbackGain;
+};
+
+RDK_LIB_TYPE RegisteredStorageProfile RegisterFeedbackStorageProfile(
+ RDK::UEPtr<RDK::UStorage> storage, RDK::UEPtr<RDK::UEnvironment> environment,
+ const FeedbackStorageProfileSpec& specification);
+
 // Native storage setup before constructing/running a learner. Throws a typed
 // ClassImageError on unsupported templates, collisions or inconsistent physics.
 // Templates retain parameters not explicitly overridden by the recipe.

@@ -36,3 +36,23 @@ readers13/13 без skips. Все161 members primary365876B и781 hashes исх�
 080d21dcff3940df3ce72bf4a21d1c0ceb003e26; подробная приёмка в корневом
 Docs/StructTrain/TimeLearner/StorageFeedbackProfilesNormalVerification.json.
 Проверка инженерного порога1e-6 не заменяет paired stock intervention0.0117.
+
+
+## Наследование полной физики существующих образов — кандидат
+
+RegisterFeedbackStorageProfile использует FeedbackStorageProfileSpec:
+name/frequencyHz/neuronBaseClass и optional bodyFeedbackGain/ltFeedbackGain.
+Создаётся цепочка существующий membrane image → новый membrane image с gain →
+новый neuron image. Канальные/синаптические C/R/кинетика и role class names
+не заменяются значениями ChannelProfile/SynapseProfile. UseElementDefaults
+и остальные родительские правила также сохраняются. При отсутствии gain
+соответствующий образ используется без переопределения. При отсутствии LT
+просьба задать её gain отклоняется до публикации образов; LT не добавляется.
+Explicit StructureBuildMode0 требует отдельного native model import.
+
+Это конструктор образов, а не операция над живым обученным нейроном. Полный
+learned state и индивидуальные параметры по-прежнему переносятся штатным
+import с проверкой actual graph. Научный baseline должен подтвердить все
+поля effective graph с явными class renames и waveform, а не только gain.
+Ранее принятые18/13 checks проверяли другой API RegisterStorageProfile;
+новая реализация и дополнительные fixtures ещё не прошли серверную проверку.
