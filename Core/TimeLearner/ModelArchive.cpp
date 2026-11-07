@@ -291,7 +291,8 @@ void ValidateMetadata(const QJsonObject& metadata, const QJsonObject& identity)
     }
 }
 
-void CheckXmlNode(USerStorageXML& xml, const QString& path, const std::map<QString,QJsonObject>& nodes)
+void CheckXmlNode(USerStorageXML& xml, const QString& path, const std::map<QString,QJsonObject>& nodes,
+                  const std::set<QString>& inheritedFeedback = {})
 {
     const auto found = nodes.find(path);
     if(found == nodes.end()) Fail("unexpected_archive_node", path);
@@ -310,7 +311,8 @@ void CheckXmlNode(USerStorageXML& xml, const QString& path, const std::map<QStri
             if(count > 1) Fail("duplicate_archive_parameter", path + ":" + i.key());
             present = present || count == 1; xml.SelectUp();
         }
-        if(!present) Fail("missing_archive_parameter", path + ":" + i.key());
+        if(!present && !(i.key()=="FeedbackGain" && inheritedFeedback.count(path)))
+            Fail("missing_archive_parameter", path + ":" + i.key());
     }
     if(xml.GetNumNodes("Components") != 1 || !xml.SelectNode("Components")) Fail("missing_archive_components", path);
     const auto children = expected["child_order"].toArray();
@@ -320,12 +322,12 @@ void CheckXmlNode(USerStorageXML& xml, const QString& path, const std::map<QStri
         if(!xml.SelectNode(i)) Fail("missing_archive_child", path);
         const auto name = QString::fromStdString(xml.GetNodeName());
         if(name != children[i].toString()) Fail("archive_child_order_mismatch", path);
-        CheckXmlNode(xml, path + "." + name, nodes); xml.SelectUp();
+        CheckXmlNode(xml, path + "." + name, nodes,inheritedFeedback); xml.SelectUp();
     }
     xml.SelectUp();
 }
 
-void CheckSnapshot(const QJsonObject& snapshot)
+void CheckSnapshot(const QJsonObject& snapshot,const std::set<QString>& inheritedFeedback = {})
 {
     const auto text = RequiredString(snapshot, "native_xml");
     if(snapshot["native_xml_sha256"].toString() != XmlDigest(text)) Fail("native_xml_digest_mismatch", "graph");
@@ -345,11 +347,14 @@ void CheckSnapshot(const QJsonObject& snapshot)
     }
     if(!nodes.count("$") || nodes.at("$")["class"] != snapshot["component_class"])
         Fail("invalid_archive_root", "class");
+    for(const auto& path:inheritedFeedback)
+        if(!nodes.count(path) || !nodes.at(path)["parameters"].toObject().contains("FeedbackGain"))
+            Fail("invalid_inherited_feedback_parameter",path);
     USerStorageXML xml;
     if(!xml.Load(text.toStdString(), GraphRoot) || xml.GetNumNodes() != 1 ||
        !xml.SelectNode(RequiredString(snapshot,"component_name").toStdString()))
         Fail("invalid_native_xml", "root");
-    CheckXmlNode(xml, "$", nodes);
+    CheckXmlNode(xml, "$", nodes,inheritedFeedback);
 }
 
 std::map<QString, UIPropertyOutput*> BoundaryOutputs(const QJsonObject& identity,
@@ -374,9 +379,9 @@ std::map<QString, UIPropertyOutput*> BoundaryOutputs(const QJsonObject& identity
 }
 
 UEPtr<UContainer> LoadSnapshot(const QJsonObject& snapshot, UEPtr<UStorage> storage, UEPtr<UEnvironment> environment,
-                              const ModelBoundarySources& boundarySources = {})
+                              const ModelBoundarySources& boundarySources = {},const std::set<QString>& inheritedFeedback = {})
 {
-    CheckSnapshot(snapshot);
+    CheckSnapshot(snapshot,inheritedFeedback);
     const auto outputs = BoundaryOutputs(snapshot["identity"].toObject(),boundarySources);
     auto object = Take(storage, environment, snapshot["component_class"].toString());
     Lease lease{storage, object,!boundarySources.empty()};
@@ -729,7 +734,10 @@ UEPtr<UContainer> ImportFeedbackProfileGraphForEdit(const QJsonObject& snapshot,
     derived["native_xml"]=text;derived["native_xml_sha256"]=XmlDigest(text);derived["identity"]=identity;
     // LoadSnapshot initializes/reset native dynamics and independently compares
     // the entire effective graph, including every saved individual parameter.
-    Lease candidate{storage,LoadSnapshot(derived,storage,environment,boundarySources),!boundarySources.empty()};
+    // Only this private, already image-validated derivation may omit these
+    // exact gain fields. All public source/archive loads retain strict XML
+    // completeness, and the resulting object's full identity is still checked.
+    Lease candidate{storage,LoadSnapshot(derived,storage,environment,boundarySources,inheritedGains),!boundarySources.empty()};
     if(!dynamic_pointer_cast<NMSDK::NPulseNeuron>(candidate.object))Fail("unsupported_edit_graph","NPulseNeuron required");
     return candidate.Release();
 }
