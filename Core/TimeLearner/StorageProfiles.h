@@ -36,6 +36,9 @@ struct MembraneProfile
  SynapseProfile excSynapse;
  SynapseProfile inhSynapse{"NPSynapseBio", 86e7};
  bool useAveragePotential = true;
+ // Absence preserves the selected membrane image, including a non-default gain.
+ // An explicit value belongs to the immutable recipe and all newly grown parts.
+ std::optional<double> feedbackGain;
 };
 
 struct StorageProfileSpec

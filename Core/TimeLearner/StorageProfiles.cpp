@@ -70,6 +70,8 @@ void Image(UEPtr<UStorage> storage, UEPtr<UEnvironment> environment, unsigned in
 
 void Validate(const MembraneProfile& membrane)
 {
+ if(membrane.feedbackGain && (!std::isfinite(*membrane.feedbackGain) || *membrane.feedbackGain < 0.))
+  throw ClassImageError("invalid_profile_value", "feedbackGain");
  for(const auto* channel : {&membrane.excChannel, &membrane.inhChannel})
  {
   Positive(channel->capacity, "capacity"); Positive(channel->resistance, "resistance");
@@ -156,6 +158,12 @@ std::string MembraneImage(UEPtr<UStorage> storage, UEPtr<UEnvironment> environme
    membrane->ExcChannelClassName = excChannel; membrane->InhChannelClassName = inhChannel;
    membrane->ExcSynapseClassName = excSynapse; membrane->InhSynapseClassName = inhSynapse;
    membrane->UseAveragePotential = specification.useAveragePotential;
+   if(specification.feedbackGain)
+   {
+    membrane->FeedbackGain = *specification.feedbackGain;
+    if(membrane->FeedbackGain.GetData() != *specification.feedbackGain)
+     throw ClassImageError("profile_parameter_not_applied", name + ".FeedbackGain");
+   }
   }, result);
  return name;
 }
