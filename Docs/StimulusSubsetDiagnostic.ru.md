@@ -26,6 +26,13 @@ peak windows, assignment, references или TrainingCertificate. Запись sp
 `FinalVerification` отвергает metadata такого опыта даже после подмены его
 номера схемы на старый. Codecs сохраняют purpose и source ordinals строго.
 
+Обязателен `onSample`: без получателя waveform-потока запрос отвергается
+до transient presentation. Владелец sink отвечает за сохранение каждого
+sample; отдельный artifact reader должен проверять его полноту. Metadata
+сами по себе не доказывают наличие waveform. Native fixture wrapper2
+дополнительно сохраняет фактические training/Dataset patterns после пробы,
+а не только boolean восстановления. Эти дополнения ещё не проверены.
+
 Schemas1–5 сохраняют прежний смысл. Console/job parser ещё не предоставляет
 этот режим; утверждать поддержку его через CLI нельзя. Состояние проверок
 и последующие научные опыты ведутся в корневом репозитории:

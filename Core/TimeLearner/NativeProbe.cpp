@@ -249,6 +249,8 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
             "invalid_single_pulse_schema");
         Require((request.specification.schemaVersion==6)==bool(request.specification.stimulusSubset),
             "invalid_stimulus_subset_schema");
+        Require(!request.specification.stimulusSubset || bool(request.onSample),
+            "missing_native_stimulus_subset_sample_sink");
         Require(b.branch==(request.routing==ProbeRouting::BranchSoloBurst),"native_routing_mismatch");
         Require(b.routingComplete,"missing_native_routing_component");
         Require(!b.branch || (request.activeInput>=0 && request.activeInput<b.inputCount &&
