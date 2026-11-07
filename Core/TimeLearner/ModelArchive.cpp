@@ -613,8 +613,10 @@ UEPtr<UContainer> ImportFeedbackProfileGraphForEdit(const QJsonObject& snapshot,
         if(oldName.empty() || newName.empty() || oldName==newName || classRenames.count(newName) ||
            !destinations.insert(newName).second)
             Fail("invalid_feedback_class_substitution",QString::fromStdString(oldName));
-        Lease oldImage{storage,Take(storage,environment,QString::fromStdString(oldName))};
-        Lease newImage{storage,Take(storage,environment,QString::fromStdString(newName))};
+        auto oldObject=Take(storage,environment,QString::fromStdString(oldName));
+        Lease oldImage{storage,oldObject};
+        auto newObject=Take(storage,environment,QString::fromStdString(newName));
+        Lease newImage{storage,newObject};
         if(typeid(*oldImage.object)!=typeid(*newImage.object))
             Fail("feedback_image_native_type_mismatch",QString::fromStdString(newName));
     }
@@ -655,7 +657,8 @@ UEPtr<UContainer> ImportFeedbackProfileGraphForEdit(const QJsonObject& snapshot,
             if(feedbackGain && !replaced)Fail("feedback_gain_requires_derived_image",path);
             if(replaced)
             {
-                Lease image{storage,Take(storage,environment,node["class"].toString())};
+                auto prototype=Take(storage,environment,node["class"].toString());
+                Lease image{storage,prototype};
                 auto membrane=dynamic_pointer_cast<NMSDK::NPulseMembrane>(image.object);
                 double expected=feedbackGain.value_or(previous);
                 if(expected==0.)expected=0.; // ModelIdentity canonical binary64 zero.
