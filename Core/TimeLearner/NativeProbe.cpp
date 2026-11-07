@@ -107,7 +107,13 @@ void NativeProbeExecutor::CheckSource(const NativeProbeBindings& b) const
 void NativeProbeExecutor::CheckPattern(const NativeProbeBindings& b) const
 {
     const bool single=bool(request.specification.characterization);
-    const int pulses=single && presentationSaved?1:b.inputCount;
+    const bool subset=bool(request.specification.stimulusSubset);
+    Require(b.inputCount>0 && request.expectedInputIsi.size()==std::size_t(b.inputCount),"unsupported_native_dataset_shape");
+    const auto presented=subset?PlanStimulusSubset(request.expectedInputIsi,
+        request.specification.stimulusSubset->sourceOrdinals).presentedIsi:
+        single?std::vector<double>{request.expectedInputIsi.front()}:std::vector<double>{};
+    const auto& expected=presentationSaved?presented:request.expectedInputIsi;
+    const int pulses=int(expected.size());
     Require(b.dataset && b.dataset->NumSamples.GetData()==1 && b.dataset->NumFeatures.GetData()==1 &&
         b.dataset->Iteration.GetData()==0 && b.dataset->MaxSpikesPerFeature.GetData()==pulses &&
         b.dataset->MatrixData.GetRows()==pulses && b.dataset->MatrixData.GetCols()==1 &&
@@ -115,13 +121,27 @@ void NativeProbeExecutor::CheckPattern(const NativeProbeBindings& b) const
     QJsonArray actual;
     for(int i=0;i<pulses;++i)
     {
-        Require(Detail::Finite(request.expectedInputIsi[i]) && request.expectedInputIsi[i]>=0. &&
-            b.dataset->MatrixData(i,0)==request.expectedInputIsi[i],"native_pattern_changed");
+        Require(Detail::Finite(expected[i]) && expected[i]>=0. &&
+            b.dataset->MatrixData(i,0)==expected[i],"native_pattern_changed");
         actual.append(b.dataset->MatrixData(i,0));
     }
-    const auto& hash=single && !presentationSaved?
-        request.specification.characterization->sourceTrainingPatternHash:request.specification.patternHash;
+    const auto& hash=!presentationSaved && (single || subset)?
+        (subset?request.specification.stimulusSubset->sourceTrainingPatternHash:
+         request.specification.characterization->sourceTrainingPatternHash):request.specification.patternHash;
     Require(NmsdkTools::CanonicalModelDataSha256(actual).toStdString()==hash,"native_pattern_hash_mismatch");
+    if(subset)
+    {
+        const auto& c=*request.specification.stimulusSubset;
+        Require(ValidStimulusSubset(c) && c.physicalInputCount==std::size_t(b.inputCount) &&
+            request.specification.windows.empty() && request.specification.expectedStimulusIds.size()==presented.size(),
+            "invalid_native_stimulus_subset");
+        QJsonArray values;for(double gap:presented)values.append(gap);
+        Require(NmsdkTools::CanonicalModelDataSha256(values).toStdString()==request.specification.patternHash,
+            "native_subset_presented_hash_mismatch");
+        for(std::size_t i=0;i<c.sourceOrdinals.size();++i)
+            Require(request.specification.expectedStimulusIds[i]=="pulse"+std::to_string(c.sourceOrdinals[i]),
+                "native_subset_source_identity_mismatch");
+    }
     if(single)
     {
         const auto& c=*request.specification.characterization;
@@ -137,7 +157,7 @@ void NativeProbeExecutor::CheckPattern(const NativeProbeBindings& b) const
 
 void NativeProbeExecutor::PreparePresentation(const NativeProbeBindings& b)
 {
-    if(!request.specification.characterization)return;
+    if(!request.specification.characterization && !request.specification.stimulusSubset)return;
     // No connected parameters are silently detached for diagnostic playback.
     for(const auto property:{static_cast<const RDK::UIProperty*>(&b.dataset->NumSamples),
         static_cast<const RDK::UIProperty*>(&b.dataset->NumFeatures),
@@ -151,8 +171,12 @@ void NativeProbeExecutor::PreparePresentation(const NativeProbeBindings& b)
     savedPattern.clear();savedClasses={b.dataset->MatrixClasses(0,0)};
     for(int i=0;i<b.inputCount;++i)savedPattern.push_back(b.dataset->MatrixData(i,0));
     presentationSaved=true; // Arm restoration before the first setter can fail.
-    b.dataset->MaxSpikesPerFeature=1;
-    RDK::MDMatrix<double> pattern;pattern.Assign(1,1,savedPattern.front());
+    const auto values=request.specification.stimulusSubset?
+        PlanStimulusSubset(savedPattern,request.specification.stimulusSubset->sourceOrdinals).presentedIsi:
+        std::vector<double>{savedPattern.front()};
+    b.dataset->MaxSpikesPerFeature=int(values.size());
+    RDK::MDMatrix<double> pattern;pattern.Assign(int(values.size()),1,0.);
+    for(std::size_t i=0;i<values.size();++i)pattern(int(i),0)=values[i];
     b.dataset->MatrixData=pattern;
     b.dataset->Build(); // Legal preparation boundary; never an extra Calculate.
     Require(b.dataset->IsReady() && b.dataset->IsInit() && Generator(b)==capturedGenerator &&
@@ -216,12 +240,15 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         Require(Detail::Finite(time),"invalid_native_time");
         Require(bool(request.readModelRevision) && !request.baseModelRevision.empty(),"missing_native_revision_provider");
         Require((request.specification.schemaVersion==2 || request.specification.schemaVersion==3 ||
-            request.specification.schemaVersion==4 || request.specification.schemaVersion==5) &&
+            request.specification.schemaVersion==4 || request.specification.schemaVersion==5 ||
+            request.specification.schemaVersion==6) &&
             request.specification.begin==0. && request.specification.baseline.empty() &&
             request.specification.modelRevision.empty() && !request.specification.recordSpikes,
             "unsupported_native_probe_specification");
         Require((request.specification.schemaVersion==4 || request.specification.schemaVersion==5)==bool(request.specification.characterization),
             "invalid_single_pulse_schema");
+        Require((request.specification.schemaVersion==6)==bool(request.specification.stimulusSubset),
+            "invalid_stimulus_subset_schema");
         Require(b.branch==(request.routing==ProbeRouting::BranchSoloBurst),"native_routing_mismatch");
         Require(b.routingComplete,"missing_native_routing_component");
         Require(!b.branch || (request.activeInput>=0 && request.activeInput<b.inputCount &&

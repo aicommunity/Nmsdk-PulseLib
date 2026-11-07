@@ -16,6 +16,7 @@ struct StimulusSubsetPlan {
     std::vector<double> presentedIsi;
     std::vector<double> sourceOffsets;
 };
+bool ValidStimulusSubset(const StimulusSubsetCharacterization& value);
 // All requested timings still require actual native event readback. Regrouping
 // binary64 additions can cross a scheduler grid boundary; this is not evidence
 // that an omitted-pulse trial preserved every retained actual emission time.

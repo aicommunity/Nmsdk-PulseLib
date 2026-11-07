@@ -45,6 +45,16 @@ ProbeSpec Spec(const QJsonValue& value)
             Count(c["physical_input_count"]),Count(c["selected_input_index"])};
     }
     Require((s.schemaVersion==4 || s.schemaVersion==5)==bool(s.characterization));
+    if(o.contains("stimulus_subset"))
+    {
+        const auto c=Object(o["stimulus_subset"]);
+        Require(c.size()==4 && c["purpose"]==QJsonValue("stimulus_subset_characterization"));
+        StimulusSubsetCharacterization subset;subset.sourceTrainingPatternHash=Text(c["source_training_pattern_hash"]);
+        subset.physicalInputCount=Count(c["physical_input_count"]);
+        for(const auto& index:Array(c["source_ordinals"]))subset.sourceOrdinals.push_back(Count(index));
+        Require(ValidStimulusSubset(subset));s.stimulusSubset=std::move(subset);
+    }
+    Require((s.schemaVersion==6)==bool(s.stimulusSubset));
     if(!o["stimulus_profile"].isNull())
     {const auto p=Object(o["stimulus_profile"]);s.stimulusProfile=StimulusProfile{Text(p["generator_class"]),Number(p["amplitude"]),Number(p["pulse_length"]),
         Number(p["frequency_hz"]),Number(p["frequency_deviation"]),Boolean(p["use_transit_signal"]),Boolean(p["use_pattern_output"])};}

@@ -18,7 +18,7 @@ bool ValidStimulusProfile(const StimulusProfile& p)
 
 ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specification))
 {
-    if((spec.schemaVersion!=1 && spec.schemaVersion!=2 && spec.schemaVersion!=3 && spec.schemaVersion!=4 && spec.schemaVersion!=5) ||
+    if((spec.schemaVersion<1 || spec.schemaVersion>6) ||
        (spec.schemaVersion==1 && spec.stimulusProfile) ||
        (spec.schemaVersion>=2 && (!spec.stimulusProfile || !ValidStimulusProfile(*spec.stimulusProfile))) ||
        (spec.schemaVersion<3 && spec.waveAssignment!=WaveAssignmentPolicy::WindowOnly) ||
@@ -36,14 +36,23 @@ ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specificati
          spec.peakSelection!=(spec.schemaVersion==4 ? PeakSelectionPolicy::IsolatedWindow :
              PeakSelectionPolicy::SingleImpulseMaximum)) : bool(spec.characterization)) ||
        (spec.schemaVersion==5 && (spec.windows.size()!=1 || spec.recordSpikes)) ||
+       ((spec.schemaVersion==6) ? (!spec.stimulusSubset || !ValidStimulusSubset(*spec.stimulusSubset) ||
+          spec.characterization || !spec.windows.empty() || spec.recordSpikes ||
+          spec.waveAssignment!=WaveAssignmentPolicy::WindowOnly ||
+          spec.peakSelection!=PeakSelectionPolicy::IsolatedWindow ||
+          spec.expectedStimulusIds.size()!=spec.stimulusSubset->sourceOrdinals.size()) : bool(spec.stimulusSubset)) ||
        spec.runId.empty() || spec.trialId.empty() ||
        spec.sampleId.empty() || spec.patternHash.empty() || spec.modelRevision.empty() ||
        !Finite(spec.begin) || !Finite(spec.end) || !Finite(spec.end-spec.begin) || !After(spec.end,spec.begin) ||
        !Finite(spec.maximumSampleGap) || spec.maximumSampleGap<=0. ||
        !Finite(spec.minimumAmplitude) || spec.minimumAmplitude<=0. ||
-       !spec.maximumSamples || spec.baseline.empty() || spec.windows.empty() ||
+       !spec.maximumSamples || spec.baseline.empty() || (spec.schemaVersion!=6 && spec.windows.empty()) ||
        spec.expectedStimulusIds.empty())
         throw std::invalid_argument("invalid_probe_specification");
+    if(spec.stimulusSubset)
+        for(std::size_t i=0;i<spec.expectedStimulusIds.size();++i)
+            if(spec.expectedStimulusIds[i]!="pulse"+std::to_string(spec.stimulusSubset->sourceOrdinals[i]))
+                throw std::invalid_argument("stimulus_subset_source_identity_mismatch");
     if(!Detail::ResolvableTimeInterval(spec.begin,spec.end,spec.maximumSampleGap))
         throw std::invalid_argument("insufficient_probe_timestamp_resolution");
     for(double baseline:spec.baseline)

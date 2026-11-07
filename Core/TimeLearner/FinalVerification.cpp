@@ -48,6 +48,7 @@ std::map<std::string,double> CheckedProbeContext(const VerificationProtocol& p,s
        prepared.protocolRevision!=p.revision || prepared.baseModelRevision.empty() ||
        prepared.effectiveModelRevision.empty())fail("prepared_probe_context_mismatch");
     if(o.specification.characterization)fail("diagnostic_probe_cannot_certify_training");
+    if(o.specification.stimulusSubset)fail("diagnostic_probe_cannot_certify_training");
     if(o.schemaVersion!=p.schemaVersion || !o.complete ||
        (requireValid && (!o.valid || !o.reasons.empty())) || o.endReason.empty())
         fail("observation_not_valid_complete");

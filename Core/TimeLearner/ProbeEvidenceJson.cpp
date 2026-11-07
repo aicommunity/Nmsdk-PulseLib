@@ -60,6 +60,14 @@ QJsonObject Spec(const ProbeSpec& s,const char* timeFrame)
         {"source_training_pattern_hash",Text(s.characterization->sourceTrainingPatternHash)},
         {"physical_input_count",Count(s.characterization->physicalInputCount)},
         {"selected_input_index",Count(s.characterization->selectedInputIndex)}};
+    if(s.stimulusSubset)
+    {
+        QJsonArray ordinals;for(const auto index:s.stimulusSubset->sourceOrdinals)ordinals.append(Count(index));
+        result["stimulus_subset"]=QJsonObject{{"purpose","stimulus_subset_characterization"},
+            {"source_training_pattern_hash",Text(s.stimulusSubset->sourceTrainingPatternHash)},
+            {"physical_input_count",Count(s.stimulusSubset->physicalInputCount)},
+            {"source_ordinals",ordinals}};
+    }
     return result;
 }
 QJsonObject Observation(const ProbeObservation& o)

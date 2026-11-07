@@ -1,4 +1,5 @@
 #pragma once
+#include "StimulusSubset.h"
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -36,6 +37,9 @@ struct ProbeSpec {
     std::size_t maximumSamples=0;
     bool recordSpikes=false; // Disabled means unknown spike response, not zero.
     std::optional<SinglePulseCharacterization> characterization={};
+    // Schema6 records a complete diagnostic waveform with no peak assignment.
+    // It cannot establish training references or a TrainingCertificate.
+    std::optional<StimulusSubsetCharacterization> stimulusSubset={};
     // Explicit model rest-state values. Never inferred to be zero.
     std::vector<double> baseline;
     std::vector<PeakWindow> windows;

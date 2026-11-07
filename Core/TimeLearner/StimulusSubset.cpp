@@ -3,6 +3,15 @@
 #include <stdexcept>
 
 namespace NMSDK::TimeLearner {
+bool ValidStimulusSubset(const StimulusSubsetCharacterization& value)
+{
+    if(value.sourceTrainingPatternHash.empty() || !value.physicalInputCount ||
+       value.sourceOrdinals.empty() || value.sourceOrdinals.size()>value.physicalInputCount)return false;
+    for(std::size_t i=0;i<value.sourceOrdinals.size();++i)
+        if(value.sourceOrdinals[i]>=value.physicalInputCount ||
+           (i && value.sourceOrdinals[i]<=value.sourceOrdinals[i-1]))return false;
+    return true;
+}
 StimulusSubsetPlan PlanStimulusSubset(const std::vector<double>& isi,
                                     const std::vector<std::size_t>& ordinals)
 {
