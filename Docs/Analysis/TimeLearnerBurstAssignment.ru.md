@@ -16,6 +16,12 @@ schema 3 / OrderedWholeBurst; ниже сохранено описание ис�
 Python readers см. [разбор контракта](../../../../Docs/StructTrain/TimeLearner/PeakMeasurementContractReview-2026-11-07.ru.md).
 Код этим уточнением не изменён; runtime receipts сохраняют прежнюю область.
 
+На двух сохранённых high-threshold состояниях выполнен отдельный diagnostic
+sum-of-shifted-single анализ: он близко воспроизводит burst при трёх максимумах
+на четыре импульса. Для Classic/Soma4 глобальный максимум предшествует pulse3,
+поэтому не может заменять его training peak. Это не доказательство линейности
+или сертифицированной декомпозиции; [данные, source equations и ограничения](../../../../Docs/StructTrain/TimeLearner/SuperpositionDiagnostic-2026-11-07.ru.md).
+
 ProbeSpec schema 3 использует OrderedWholeBurst и typed stimulus profile. На
 каждом измеряемом канале число полностью наблюдаемых положительных максимумов
 должно соответствовать всей пачке. Порядок, реальные stimulus timestamps и
