@@ -18,20 +18,24 @@ bool ValidStimulusProfile(const StimulusProfile& p)
 
 ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specification))
 {
-    if((spec.schemaVersion!=1 && spec.schemaVersion!=2 && spec.schemaVersion!=3 && spec.schemaVersion!=4) ||
+    if((spec.schemaVersion!=1 && spec.schemaVersion!=2 && spec.schemaVersion!=3 && spec.schemaVersion!=4 && spec.schemaVersion!=5) ||
        (spec.schemaVersion==1 && spec.stimulusProfile) ||
        (spec.schemaVersion>=2 && (!spec.stimulusProfile || !ValidStimulusProfile(*spec.stimulusProfile))) ||
        (spec.schemaVersion<3 && spec.waveAssignment!=WaveAssignmentPolicy::WindowOnly) ||
        (spec.schemaVersion==3 && spec.waveAssignment!=WaveAssignmentPolicy::OrderedWholeBurst) ||
        (spec.peakSelection!=PeakSelectionPolicy::IsolatedWindow &&
-        spec.peakSelection!=PeakSelectionPolicy::AssignedBurstWave) ||
+        spec.peakSelection!=PeakSelectionPolicy::AssignedBurstWave &&
+        spec.peakSelection!=PeakSelectionPolicy::SingleImpulseMaximum) ||
        (spec.peakSelection==PeakSelectionPolicy::AssignedBurstWave && spec.schemaVersion!=3) ||
-       (spec.schemaVersion==4 ? (!spec.characterization ||
+       (spec.peakSelection==PeakSelectionPolicy::SingleImpulseMaximum && spec.schemaVersion!=5) ||
+       ((spec.schemaVersion==4 || spec.schemaVersion==5) ? (!spec.characterization ||
          spec.characterization->sourceTrainingPatternHash.empty() ||
          !spec.characterization->physicalInputCount ||
          spec.characterization->selectedInputIndex>=spec.characterization->physicalInputCount ||
          spec.expectedStimulusIds.size()!=1 || spec.waveAssignment!=WaveAssignmentPolicy::WindowOnly ||
-         spec.peakSelection!=PeakSelectionPolicy::IsolatedWindow) : bool(spec.characterization)) ||
+         spec.peakSelection!=(spec.schemaVersion==4 ? PeakSelectionPolicy::IsolatedWindow :
+             PeakSelectionPolicy::SingleImpulseMaximum)) : bool(spec.characterization)) ||
+       (spec.schemaVersion==5 && (spec.windows.size()!=1 || spec.recordSpikes)) ||
        spec.runId.empty() || spec.trialId.empty() ||
        spec.sampleId.empty() || spec.patternHash.empty() || spec.modelRevision.empty() ||
        !Finite(spec.begin) || !Finite(spec.end) || !Finite(spec.end-spec.begin) || !After(spec.end,spec.begin) ||
@@ -134,15 +138,23 @@ PeakObservation ProbeRecorder::Measure(const PeakWindow& window,bool complete) c
     while(lastMaximum+1<samples.size() && value(lastMaximum+1)==value(maximum)) ++lastMaximum;
     if(maximum==0 || lastMaximum+1==samples.size())
     { result.validity=PeakValidity::Clipped;return result; }
+    std::size_t largestPeakCount=0;
     for(std::size_t i=1;i+1<samples.size();)
     {
         std::size_t end=i;
         while(end+1<samples.size() && value(end+1)==value(i)) ++end;
         if(end+1<samples.size() && value(i)>=spec.minimumAmplitude &&
-           value(i)>value(i-1) && value(end)>value(end+1)) ++result.candidateCount;
+           value(i)>value(i-1) && value(end)>value(end+1))
+        {
+            ++result.candidateCount;
+            if(value(i)==value(maximum)) ++largestPeakCount;
+        }
         i=end+1;
     }
-    if(result.candidateCount!=1)
+    // A single presented impulse establishes attribution, but does not require
+    // a unimodal physical response. Equal separated maxima still leave timing
+    // ambiguous; a contiguous plateau retains its actual first/last samples.
+    if((spec.peakSelection==PeakSelectionPolicy::SingleImpulseMaximum ? largestPeakCount : result.candidateCount)!=1)
     { result.validity=PeakValidity::Ambiguous;return result; }
     result.validity=PeakValidity::Valid;result.amplitude=value(maximum);
     result.rawPotential=samples[maximum]->potentials[window.channel];

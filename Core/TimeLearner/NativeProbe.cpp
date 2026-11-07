@@ -215,11 +215,12 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         Require(!b.postTuneActive,"concurrent_native_posttune");
         Require(Detail::Finite(time),"invalid_native_time");
         Require(bool(request.readModelRevision) && !request.baseModelRevision.empty(),"missing_native_revision_provider");
-        Require((request.specification.schemaVersion==2 || request.specification.schemaVersion==3 || request.specification.schemaVersion==4) &&
+        Require((request.specification.schemaVersion==2 || request.specification.schemaVersion==3 ||
+            request.specification.schemaVersion==4 || request.specification.schemaVersion==5) &&
             request.specification.begin==0. && request.specification.baseline.empty() &&
             request.specification.modelRevision.empty() && !request.specification.recordSpikes,
             "unsupported_native_probe_specification");
-        Require((request.specification.schemaVersion==4)==bool(request.specification.characterization),
+        Require((request.specification.schemaVersion==4 || request.specification.schemaVersion==5)==bool(request.specification.characterization),
             "invalid_single_pulse_schema");
         Require(b.branch==(request.routing==ProbeRouting::BranchSoloBurst),"native_routing_mismatch");
         Require(b.routingComplete,"missing_native_routing_component");
@@ -253,7 +254,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         Require(request.specification.maximumSampleGap>0. &&
             !Detail::After(request.specification.maximumSampleGap,1./frequency),"unsupported_native_sample_gap");
         Require(ReadRevision(true)==request.baseModelRevision,"native_base_revision_changed");
-        if(request.specification.schemaVersion==3 || request.specification.schemaVersion==4)
+        if(request.specification.schemaVersion==3 || request.specification.characterization)
         {
             const auto& ids=request.specification.expectedStimulusIds;
             Require(ids.size()==(request.specification.characterization?1u:std::size_t(b.inputCount)),"native_physical_input_count_mismatch");

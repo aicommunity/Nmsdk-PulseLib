@@ -20,8 +20,8 @@ struct PeakWindow {
     std::string stimulusId;
 };
 enum class WaveAssignmentPolicy { WindowOnly, OrderedWholeBurst };
-enum class PeakSelectionPolicy { IsolatedWindow, AssignedBurstWave };
-// Schema 4 is diagnostic-only. Physical topology and training target remain
+enum class PeakSelectionPolicy { IsolatedWindow, AssignedBurstWave, SingleImpulseMaximum };
+// Schemas 4/5 are diagnostic-only. Physical topology and training target remain
 // unchanged while exactly the first source impulse is presented.
 struct SinglePulseCharacterization {
     std::string sourceTrainingPatternHash;
@@ -46,8 +46,9 @@ struct ProbeSpec {
     // Schema 3 additionally requires a complete order-preserving response wave
     // sequence on every measured channel. No model delay fills a missing wave.
     WaveAssignmentPolicy waveAssignment=WaveAssignmentPolicy::WindowOnly;
-    // Explicit opt-in: select the measured ordered burst wave rather than
-    // requiring the window to contain exactly one local maximum.
+    // Explicit opt-in: select the measured ordered burst wave. Schema 5 instead
+    // measures the largest peak of its sole actual impulse; smaller extrema do
+    // not make it ambiguous. Neither diagnostic schema can certify burst Train.
     PeakSelectionPolicy peakSelection=PeakSelectionPolicy::IsolatedWindow;
 };
 enum class PeakValidity { Valid, Missing, Ambiguous, Clipped, Incomplete };

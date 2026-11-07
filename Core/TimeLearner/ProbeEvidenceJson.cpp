@@ -36,7 +36,7 @@ QString Routing(ProbeRouting routing)
 QString Assignment(WaveAssignmentPolicy policy)
 {if(policy==WaveAssignmentPolicy::WindowOnly)return "window_only";if(policy==WaveAssignmentPolicy::OrderedWholeBurst)return "ordered_whole_burst";throw std::invalid_argument("unknown_wave_assignment");}
 QString Selection(PeakSelectionPolicy policy)
-{if(policy==PeakSelectionPolicy::IsolatedWindow)return "isolated_window";if(policy==PeakSelectionPolicy::AssignedBurstWave)return "assigned_burst_wave";throw std::invalid_argument("unknown_peak_selection");}
+{if(policy==PeakSelectionPolicy::IsolatedWindow)return "isolated_window";if(policy==PeakSelectionPolicy::AssignedBurstWave)return "assigned_burst_wave";if(policy==PeakSelectionPolicy::SingleImpulseMaximum)return "single_impulse_maximum";throw std::invalid_argument("unknown_peak_selection");}
 QJsonObject Profile(const StimulusProfile& p)
 {return {{"generator_class",Text(p.generatorClass)},{"amplitude",Number(p.amplitude)},{"pulse_length",Number(p.pulseLength)},
  {"frequency_hz",Number(p.frequencyHz)},{"frequency_deviation",Number(p.frequencyDeviation)},
