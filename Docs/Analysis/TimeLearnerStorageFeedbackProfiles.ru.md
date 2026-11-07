@@ -1,6 +1,6 @@
 # FeedbackGain в immutable storage-профилях
 
-Статус: кандидат, адресная серверная приёмка ещё не выполнена.
+Статус: адресная normal-проверка на M40 пройдена; ASan и второй сервер открыты.
 
 MembraneProfile.feedbackGain — optional<double>. Отсутствие значения сохраняет
 FeedbackGain выбранного базового образа, включая значения, отличающиеся от2.
@@ -27,3 +27,12 @@ Body и необязательная LT membrane имеют отдельные �
 и доказать эквивалентность baseline, затем изменить только объявленный фактор.
 Рост, подключение, source/reset policy, target, морфология и индивидуальные
 параметры должны сохраняться. Полная heterogeneous/lifecycle матрица ещё открыта.
+
+
+Проверенный SDK: rootb54330482a2e4f3a67763301e40dc067374d1974,
+Pulsed09613cc8b7b2aebfe27d0f851fd9a2a481ce201. Native18/18 за95.934с,
+readers13/13 без skips. Все161 members primary365876B и781 hashes исходников
+сверены с Git, процессы закрыты и lease released. Primary commit корня
+080d21dcff3940df3ce72bf4a21d1c0ceb003e26; подробная приёмка в корневом
+Docs/StructTrain/TimeLearner/StorageFeedbackProfilesNormalVerification.json.
+Проверка инженерного порога1e-6 не заменяет paired stock intervention0.0117.
