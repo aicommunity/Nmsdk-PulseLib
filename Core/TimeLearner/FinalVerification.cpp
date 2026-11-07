@@ -124,6 +124,7 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
     for(const auto& peak:o.peaks)
         if(!peaks.emplace(peak.inputId,&peak).second)fail("duplicate_observed_input");
     std::optional<Measurement> result;
+    std::map<std::size_t,std::vector<const PeakObservation*>> measuredByChannel;
     for(const auto& window:s.windows)
     {
         auto definition=std::find_if(p.inputs.begin(),p.inputs.end(),[&](const auto& x){return x.id==window.inputId;});
@@ -157,7 +158,20 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
         const double arrival=*peak.time-events.at(p.originStimulusId);
         const double plateau=*peak.plateauEnd-events.at(p.originStimulusId);
         if(!Finite(arrival) || !Finite(plateau))fail("nonfinite_measured_arrival");
+        measuredByChannel[window.channel].push_back(&peak);
         if(window.inputId==input.id)result=Measurement{*peak.rawPotential,arrival,plateau};
+    }
+    // A historical WindowOnly packet can label the same measured vertex with
+    // different stimulus IDs. Preserve its diagnostic representation, but do
+    // not use one vertex (or intersecting portions of one plateau) as two
+    // independent assigned responses. Coincident peaks on different physical
+    // channels are legitimate and must remain available for synchronization.
+    for(auto& [channel,measured]:measuredByChannel)
+    {
+        std::sort(measured.begin(),measured.end(),[](const auto* a,const auto* b){return *a->time<*b->time;});
+        for(std::size_t i=1;i<measured.size();++i)
+            if(*measured[i]->time<=*measured[i-1]->plateauEnd)
+                fail("shared_measured_peak_between_stimuli");
     }
     if(!result)fail("requested_input_not_measured");
     return *result;

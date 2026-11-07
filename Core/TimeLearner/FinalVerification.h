@@ -41,6 +41,8 @@ struct ReferenceEvidence {
 void ValidateVerificationProtocol(const VerificationProtocol& protocol);
 // Shared production validation for search and final verification. Arrival is
 // relative to the actual protocol origin, not a predicted cable delay.
+// Distinct assigned stimuli cannot reuse intersecting peak/plateau samples
+// on one measured channel. Equal times on different channels remain legal.
 struct ValidatedProbeMeasurement { double rawPotential,arrival,plateauEnd; };
 ValidatedProbeMeasurement ValidateProbeMeasurement(const VerificationProtocol& protocol,
     std::size_t inputIndex,const PreparedVerificationProbe& prepared,const ProbeObservation& observation);
