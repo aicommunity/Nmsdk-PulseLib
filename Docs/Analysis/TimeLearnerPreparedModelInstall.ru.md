@@ -26,8 +26,8 @@ modelMayHaveChanged=true; такой свежий контекст следуе�
 Подготовлены actual storage/Environment fixtures Classic/Branch на2000/20000Гц:
 полный derived-image graph и Dataset, source/repeat refusal, сохранность
 identity и индивидуальных Rs, пустые references/search/history/certificate.
-Отклик после установки этим ещё не проверен; следующий gate — Console probes
-полных saved states с отдельным baseline waveform comparison.
+Отклик после установки этими fixtures не проверяется; отдельный Console
+saved-state/baseline waveform gate описан ниже.
 
 
 Проверенный SDK rootc5a32b9a33ce5d5c76d2299ed44ffd4bd3edcba0 /
@@ -45,5 +45,34 @@ Docs/StructTrain/TimeLearner/PreparedModelInstallNormalVerification.json.
 Первая fixture compile failure сохранена отдельно: три temporary UEPtr
 выражения в двух instantiations и две cascading QJsonObject diagnostics;
 исправлено чтение общего указателя, Rdk не менялся. Native tests в a1 не шли.
-Console saved-state probes, candidate waveform, N0/другие режимы, ASan нового
-API и второй сервер ещё не проверены; полный этап не закрыт.
+N0/другие режимы, ASan нового API и второй сервер остаются открытыми;
+полный этап не закрыт. Console scope отдельно подтверждён ниже.
+
+
+## Console saved-state gate и waveform proof
+
+Корневой compiled SDK844b2789ea0c087c1a0f676d9584ce7b8a7a4d36 /
+Pulse1f97e4facc5bf03887bc337450190cc7b24c3ebf прошёл M40 normal26 native
+controls и29 прежних readers. Console job5 установил полный imported physical
+state в fresh owner, не копируя references/history/certificate. Выполнены12
+проб: Classic/Branch × burst/single × original/baseline/FeedbackGain0. Все4
+baseline pairs дали побитовое совпадение input/soma waveforms; только после
+них разрешены gain0 trials. В исходных archived states4 физических входа,
+2000Гц, threshold0.0117 и нет дополнительной LTMembrane. N2 fixtures выше
+проверяют2000/20000Гц; это не расширяет actual stock scope на20000Гц.
+
+Primary корня fea18ada6b6446ac422fb728d119ec06bc257ae5:1555 members/789 source
+hashes сверены. Initial suite11 сохранил1 test-only array/object loader error
+после аудита всех12 executions. Исправленные2 readers прошли отдельно на
+неизменных данных, без native repeat; evidence2127a534ac5272031b14ea612020cd2628572ec7.
+Связанные9 admission controls прошли. Original failed terminal не переписан.
+Восемь прежних runtime не изменились, группы закрыты/leases released.
+
+Корневые maintained receipts: Docs/StructTrain/TimeLearner/
+FeedbackProfileConsoleNormalVerification.json иFeedbackProfileConsoleReaderVerification.json.
+Научный отчёт FeedbackProfileScientificReport-2026-11-07.ru.md содержит6
+индивидуально просмотренных PNG; полный cache остаётся на M40. Gain0 изменяет
+не только число максимумов, но время/амплитуду/LT Output; это не разрешение
+поменять default physics или математическую цель обучения. Получение training
+certificate и классификация этим gate не проверялись. Recognition/PostTune
+state, C0/controller checkpoint и остальные import modes требуют своих gates.
