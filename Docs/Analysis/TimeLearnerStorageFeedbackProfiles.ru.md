@@ -75,3 +75,24 @@ Docs/StructTrain/TimeLearner/InheritedFeedbackProfileNormalVerification.json.
 Это engineering threshold1e-6 и fixture-морфология, не перенос опубликованных
 stock stopped-state0.0117. ASan данного API, второй сервер, XML roundtrip
 новых образов и полный learned-state intervention остаются открытыми.
+
+
+## Полный physical graph import через derived images — кандидат
+
+ImportFeedbackProfileGraphForEdit принимает immutable native snapshot,
+готовое storage/environment, явные class substitutions, optional uniform gain
+и штатные boundary ports. Source XML сначала проходит собственный native
+Load/Init и полную identity-проверку. Затем штатный USerStorageXML заменяет
+class attributes/role selectors; прежние FeedbackGain overlays удаляются
+только там, где задан новый membrane image с проверенным коэффициентом.
+Значение наследуется при TakeObject/Load, без правок живых мембран.
+
+Индивидуальные параметры, структура и связи остаются в полном source XML.
+Новый объект проходит native initialization/reset и строгую проверку всего
+expected graph; разрешены только объявленные классы/gain. Source объект,
+образы, контроллер и сертификат не редактируются. Это не controller checkpoint,
+не обещание Train→Test для всех моделей и не scientific verdict.
+
+Предусмотрены Classic/Branch2000/20000Гц, индивидуальные C/Rs, полный native
+roundtrip, запрет unmapped gain/неверного image gain и противоречивого source
+XML. Новая функция и fixtures пока не прошли серверную проверку.

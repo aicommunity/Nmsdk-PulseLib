@@ -3,6 +3,7 @@
 #include "../../../../Rdk/Core/Engine/UClassImageRegistry.h"
 #include "../../../../Rdk/Core/Engine/UComponentFactory.h"
 #include "../NPulseNeuron.h"
+#include "../NPulseMembrane.h"
 #include "../NDatasetMatrix.h"
 #include <QCryptographicHash>
 #include <QJsonArray>
@@ -592,6 +593,141 @@ UEPtr<UContainer> ImportPhysicalGraphForEdit(const QJsonObject& snapshot,UEPtr<U
     Lease candidate{storage,LoadSnapshot(snapshot,storage,environment,sources),!sources.empty()};
     if(!dynamic_pointer_cast<NMSDK::NPulseNeuron>(candidate.object))
         Fail("invalid_edit_snapshot_context","native neuron required");
+    return candidate.Release();
+}
+
+UEPtr<UContainer> ImportFeedbackProfileGraphForEdit(const QJsonObject& snapshot,UEPtr<UStorage> storage,
+    UEPtr<UEnvironment> environment,const std::map<std::string,std::string>& classRenames,
+    std::optional<double> feedbackGain,const ModelBoundarySources& boundarySources)
+{
+    CheckSnapshot(snapshot);
+    if(!storage || !environment || (feedbackGain && (!std::isfinite(*feedbackGain) || *feedbackGain<0.)))
+        Fail("invalid_feedback_import_context","storage/environment/finite nonnegative gain required");
+    // Validate the original XML against its own complete identity before
+    // removing any serialized gain. A derived image must not hide a corrupt
+    // or contradictory source snapshot.
+    Lease rehearsal{storage,LoadSnapshot(snapshot,storage,environment,boundarySources),!boundarySources.empty()};
+    std::set<std::string> destinations,used;
+    for(const auto& [oldName,newName]:classRenames)
+    {
+        if(oldName.empty() || newName.empty() || oldName==newName || classRenames.count(newName) ||
+           !destinations.insert(newName).second)
+            Fail("invalid_feedback_class_substitution",QString::fromStdString(oldName));
+        Lease oldImage{storage,Take(storage,environment,QString::fromStdString(oldName))};
+        Lease newImage{storage,Take(storage,environment,QString::fromStdString(newName))};
+        if(typeid(*oldImage.object)!=typeid(*newImage.object))
+            Fail("feedback_image_native_type_mismatch",QString::fromStdString(newName));
+    }
+    const auto rename=[&](const QString& name) {
+        const auto found=classRenames.find(name.toStdString());
+        if(found==classRenames.end())return name;
+        used.insert(found->first);return QString::fromStdString(found->second);
+    };
+    const std::set<QString> classParameters{"MembraneClassName","LTMembraneClassName","LTZoneClassName",
+        "ExcGeneratorClassName","InhGeneratorClassName","ExcChannelClassName","InhChannelClassName",
+        "SynapseClassName","ExcSynapseClassName","InhSynapseClassName"};
+    auto identity=snapshot["identity"].toObject();auto model=identity["model"].toObject();
+    auto nodes=model["nodes"].toArray();std::map<QString,QJsonObject> originals;
+    std::set<QString> inheritedGains;
+    for(int i=0;i<nodes.size();++i)
+    {
+        auto node=nodes[i].toObject();const auto path=RequiredString(node,"path");
+        if(!originals.emplace(path,node).second)Fail("invalid_feedback_source_graph",path);
+        const auto originalClass=RequiredString(node,"class");node["class"]=rename(originalClass);
+        auto parameters=node["parameters"].toObject();
+        for(auto prop=parameters.begin();prop!=parameters.end();++prop)
+        {
+            if(!classParameters.count(prop.key()))continue;
+            auto property=prop.value().toObject();auto data=property["data"].toObject();
+            if(property["binding"]!=QJsonValue(false) || data["type"]!=QJsonValue("utf8"))
+                Fail("unsupported_feedback_class_binding",path+":"+prop.key());
+            data["value"]=rename(data["value"].toString());property["data"]=data;prop.value()=property;
+        }
+        if(parameters.contains("FeedbackGain"))
+        {
+            auto property=parameters["FeedbackGain"].toObject();auto data=property["data"].toObject();
+            bool ok=false;const auto text=data["value"].toString();
+            const std::uint64_t bits=text.toULongLong(&ok,16);double previous;std::memcpy(&previous,&bits,sizeof(previous));
+            if(property["binding"]!=QJsonValue(false) || data["type"]!=QJsonValue("binary64") ||
+               !ok || text.size()!=16 || !std::isfinite(previous) || previous<0.)
+                Fail("unsupported_feedback_gain",path);
+            const bool replaced=classRenames.count(originalClass.toStdString());
+            if(feedbackGain && !replaced)Fail("feedback_gain_requires_derived_image",path);
+            if(replaced)
+            {
+                Lease image{storage,Take(storage,environment,node["class"].toString())};
+                auto membrane=dynamic_pointer_cast<NMSDK::NPulseMembrane>(image.object);
+                double expected=feedbackGain.value_or(previous);
+                if(expected==0.)expected=0.; // ModelIdentity canonical binary64 zero.
+                const auto binding=membrane?dynamic_cast<const UIPropertyInput*>(&membrane->FeedbackGain):nullptr;
+                if(!membrane || (binding && (binding->IsConnected() || binding->UsesExternalDataSource())) ||
+                   membrane->FeedbackGain.GetData()!=expected)
+                    Fail("feedback_image_gain_mismatch",path);
+                // No per-instance uniform repair: omit the old serialized
+                // value, so native TakeObject/Load inherits the derived image.
+                inheritedGains.insert(path);
+                std::uint64_t newBits;std::memcpy(&newBits,&expected,sizeof(newBits));
+                data["value"]=QString::number(qulonglong(newBits),16).rightJustified(16,'0');
+                property["data"]=data;parameters["FeedbackGain"]=property;
+            }
+        }
+        node["parameters"]=parameters;nodes[i]=node;
+    }
+    if(feedbackGain && inheritedGains.empty())Fail("feedback_no_membranes","source graph");
+    model["nodes"]=nodes;identity["model"]=model;identity["sha256"]=CanonicalModelDataSha256(model);
+    USerStorageXML xml;
+    if(!xml.Load(snapshot["native_xml"].toString().toStdString(),GraphRoot) ||
+       xml.GetNumNodes(snapshot["component_name"].toString().toStdString())!=1 ||
+       !xml.SelectNode(snapshot["component_name"].toString().toStdString()))
+        Fail("invalid_feedback_native_xml","source root");
+    std::function<void(const QString&)> rewrite=[&](const QString& path) {
+        const auto found=originals.find(path);
+        if(found==originals.end())Fail("invalid_feedback_native_xml",path);
+        const auto& original=found->second;
+        const auto oldClass=RequiredString(original,"class");
+        if(xml.GetNodeAttribute("Class")!=oldClass.toStdString() ||
+           !xml.SetNodeAttribute("Class",rename(oldClass).toStdString()) ||
+           xml.GetNumNodes("Parameters")!=1 || !xml.SelectNode("Parameters"))
+            Fail("invalid_feedback_native_xml",path);
+        const auto parameters=original["parameters"].toObject();
+        for(auto prop=parameters.begin();prop!=parameters.end();++prop)
+        {
+            if(!classParameters.count(prop.key()))continue;
+            const auto name=prop.key().toStdString();
+            const auto previous=prop.value().toObject()["data"].toObject()["value"].toString();
+            if(xml.GetNumNodes(name)!=1 || !xml.SelectNode(name) || xml.GetNodeText()!=previous.toStdString() ||
+               !xml.SetNodeText(rename(previous).toStdString()))Fail("invalid_feedback_native_xml",path+":"+prop.key());
+            xml.SelectUp();
+        }
+        if(inheritedGains.count(path))
+        {
+            if(xml.GetNumNodes("FeedbackGain")!=1 || !xml.SelectNode("FeedbackGain"))
+                Fail("invalid_feedback_native_xml",path+":FeedbackGain");
+            xml.DelNode(); // native cursor returns to Parameters.
+        }
+        xml.SelectUp();
+        if(xml.GetNumNodes("Components")!=1 || !xml.SelectNode("Components"))
+            Fail("invalid_feedback_native_xml",path+":Components");
+        if(xml.GetNumNodes()!=original["child_order"].toArray().size())
+            Fail("invalid_feedback_native_xml",path+":child count");
+        for(int index=0;index<xml.GetNumNodes();++index)
+        {
+            if(!xml.SelectNode(index))Fail("invalid_feedback_native_xml",path);
+            const auto child=QString::fromStdString(xml.GetNodeName());rewrite(path+"."+child);xml.SelectUp();
+        }
+        xml.SelectUp();
+    };
+    rewrite("$");
+    if(used.size()!=classRenames.size())Fail("unused_feedback_class_substitution","declared classes must occur");
+    xml.SelectRoot();std::string bytes;
+    if(!xml.Save(bytes))Fail("feedback_native_serialization_failed","native Save");
+    auto derived=snapshot;const auto text=QString::fromStdString(bytes);
+    derived["component_class"]=rename(snapshot["component_class"].toString());
+    derived["native_xml"]=text;derived["native_xml_sha256"]=XmlDigest(text);derived["identity"]=identity;
+    // LoadSnapshot initializes/reset native dynamics and independently compares
+    // the entire effective graph, including every saved individual parameter.
+    Lease candidate{storage,LoadSnapshot(derived,storage,environment,boundarySources),!boundarySources.empty()};
+    if(!dynamic_pointer_cast<NMSDK::NPulseNeuron>(candidate.object))Fail("unsupported_edit_graph","NPulseNeuron required");
     return candidate.Release();
 }
 
