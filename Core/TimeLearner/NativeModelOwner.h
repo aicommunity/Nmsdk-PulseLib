@@ -136,4 +136,52 @@ template<class Owner> NativeModelBuildResult InitializeNativeOwnedModel(Owner& o
      owned=result.modelMayHaveChanged?true:wasOwned;if(result.modelMayHaveChanged){failure=result.reason;service.FailConfiguration(result.reason);}}
     return result;
 }
+
+// Install complete prepared children on a fresh owner, without constructing a
+// substitute cold graph or importing another controller's history/certificate.
+// The caller retains ownership of uncommitted children. After an escaped
+// post-commit failure the fresh context must be discarded, as for native import.
+template<class Owner> NativeModelBuildResult InstallNativePreparedChildren(Owner& owner,NativeModelSpec s,bool branch,
+    RDK::UEPtr<NPulseNeuron> neuron,RDK::UEPtr<NDatasetMatrix> dataset,const std::vector<InputParameters>& expected,
+    bool& owned,std::optional<NativeModelSpec>& declaration,NativeProbeExecutor& probe,NativeTrainingService& service,
+    std::string& failure)
+{
+    NativeModelBuildResult result;bool committed=false;
+    if(owned || declaration || owner.IsInit() || owner.ConfiguredModelInitialized.GetData() ||
+        probe.Status()!=NativeProbeStatus::Idle || service.State()!=NativeTrainingState::Idle ||
+        service.References() || service.Search() || service.Certificate() || !service.ObservedPackets().empty())
+    {result.reason="prepared_model_requires_fresh_owner";return result;}
+    try
+    {
+        ValidateNativeModelSpec(s);CheckNativeOwnerOverrides(owner);
+        if(s.branch!=branch)throw std::invalid_argument("native_model_learner_topology_mismatch");
+        if(!neuron || !dataset || neuron->GetOwner() || dataset->GetOwner())
+            throw std::invalid_argument("prepared_model_requires_unowned_children");
+        CheckNativeModelMirrorAssignments(owner,s,expected,dataset->MatrixData.GetData());
+        owned=true; // Native import owns Dataset; suppress legacy AAdd repair.
+        result=CommitNativeLearnerChildren(owner,s,expected,neuron,dataset);
+        committed=result.modelMayHaveChanged;
+        if(result.status!=NativeModelBuildStatus::Adopted)
+        {
+            owned=committed;
+            if(committed){failure=result.reason;service.FailConfiguration(result.reason);}
+            return result;
+        }
+        committed=true;
+        result=InitializeNativeOwnedModel(owner,std::move(s),branch,true,owned,declaration,probe,service,failure);
+        result.modelMayHaveChanged=true;
+        if(result.status!=NativeModelBuildStatus::Adopted)
+        {
+            result.status=NativeModelBuildStatus::Failed;owned=true;failure=result.reason;service.FailConfiguration(result.reason);
+        }
+    }
+    catch(const std::exception& error)
+    {
+        result.reason=error.what();result.modelMayHaveChanged=committed;
+        result.status=committed?NativeModelBuildStatus::Failed:NativeModelBuildStatus::Rejected;
+        if(committed){owned=true;failure=result.reason;service.FailConfiguration(result.reason);}
+        else owned=false;
+    }
+    return result;
+}
 }
