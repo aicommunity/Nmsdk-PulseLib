@@ -93,7 +93,14 @@ evidence `2d8c76cf319e49d71fc09af69e93acd3b68fdc87`; сверены 1018 members
 Это Release, не ASan. Console на Elder только собрана: M40 Console12 не
 объявляются повторёнными на втором сервере. Старый single-pulse ASan37
 предшествует новому prepared API; его доказательства не переносятся на этот
-API автоматически. Адресный ASan нового API проверяется отдельно.
+API автоматически. Адресный ASan этого API выполнен отдельно: root
+`b97b6cde2cea8e9299f4502fc27bd8889cebece7` / Pulse8702, M40 native26 и
+readers19 без skips. Evidence корня `a504189cd43a12cc9d6a8c1276f0209d840bb406`:
+222 primary members,494 root/265 Pulse source hashes,73 actual loaded-file
+records, libasan и шесть compiler/link command files проверены. Прежние52
+file bindings четырёх runtime неизменны; группа закрыта, lease released.
+Опции `detect_leaks=0`, leak check не заявляется; Console только собрана.
+Это не ASan нового кандидата SingleImpulseMaximum из отдельной feature.
 Maintained корневые отчёт и receipt: `Docs/StructTrain/TimeLearner/`
 `FeedbackStorageElder-2026-11-07.ru.md`, `FeedbackStorageElderVerification.json`.
 Ни классификация, ни полная physics/modes матрица данным gate не принимаются.
