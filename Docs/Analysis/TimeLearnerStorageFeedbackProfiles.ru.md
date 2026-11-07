@@ -77,7 +77,7 @@ stock stopped-state0.0117. ASan данного API, второй сервер, X
 новых образов и полный learned-state intervention остаются открытыми.
 
 
-## Полный physical graph import через derived images — кандидат
+## Полный physical graph import через derived images — scoped normal проверка
 
 ImportFeedbackProfileGraphForEdit принимает immutable native snapshot,
 готовое storage/environment, явные class substitutions, optional uniform gain
@@ -113,3 +113,23 @@ graph. Source/rehearsal и обычный ModelArchive остаются strict. 
 negative fixtures для неполного source XML с правильной checksum. Это отдельная
 предварительная правка, не причина трёх фактических ошибок первой сборки.
 Исправленная версия ещё ждёт серверной проверки.
+
+
+Исправленный SDK root8978f104a1cef31fe520df4d0a63cf9c56b06c1e /
+Pulse32ea8ae8cc0f79dac6d0992fe87c117e41a8c809 прошёл M40 normal24/24 native
+за129.462с и27/27 readers без skips. Восемь actual full-profile import records
+покрывают Classic/Branch N4,2000/20000Гц, baseline и gain0; source threshold
+задан0.0117, индивидуальные C1.3e-9/Rs93e6. Production graph auditor подтвердил
+полный source→candidate delta и строгий обычный export/import roundtrip.
+Ошибочный image gain, отсутствие derived membrane image, противоречивый и
+неполный source XML отклонены. Обычная completeness-проверка не ослаблена.
+
+Все225 members primary849936B и783 source hashes сверены с Git. Группа закрыта,
+lease released; пять прежних runtime, включая failed-a1, не изменились.
+Primary commit корня c4e37e764891429e186f84d33e6f60186879338a; приёмка в
+Docs/StructTrain/TimeLearner/ProfiledGraphImportNormalVerification.json корня.
+Это перенос физического графа fixture, не научный результат: candidate waveform
+не рассчитывался, controller checkpoint и certificate не переносились.
+Архивные stopped-model probes, новый Console protocol, ASan данного API,
+второй сервер и полная физическая матрица остаются открытыми. Первая compile
+failure сохраняется отдельно и не переписана под PASS.
