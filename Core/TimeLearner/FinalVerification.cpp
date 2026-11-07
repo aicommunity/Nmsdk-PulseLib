@@ -39,15 +39,17 @@ void ProtocolValid(const VerificationProtocol& p)
         if(p.inputs[i].stimulusId!=p.stimulusIds[i])throw std::invalid_argument("invalid_physical_input_order");
 }
 
-Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIndex,
-                               const PreparedVerificationProbe& prepared,const ProbeObservation& o)
+std::map<std::string,double> CheckedProbeContext(const VerificationProtocol& p,std::size_t inputIndex,
+    const PreparedVerificationProbe& prepared,const ProbeObservation& o,bool requireValid)
 {
     const auto fail=[](const char* reason){throw std::invalid_argument(reason);};
     const auto& input=p.inputs.at(inputIndex);
     if(prepared.inputId!=input.id || prepared.routing!=p.routing ||
        prepared.protocolRevision!=p.revision || prepared.baseModelRevision.empty() ||
        prepared.effectiveModelRevision.empty())fail("prepared_probe_context_mismatch");
-    if(o.schemaVersion!=p.schemaVersion || !o.complete || !o.valid || !o.reasons.empty() || o.endReason.empty())
+    if(o.specification.characterization)fail("diagnostic_probe_cannot_certify_training");
+    if(o.schemaVersion!=p.schemaVersion || !o.complete ||
+       (requireValid && (!o.valid || !o.reasons.empty())) || o.endReason.empty())
         fail("observation_not_valid_complete");
     // Reuse the production spec validator; do not infer valid data from a flag.
     ProbeRecorder specificationValidator(o.specification);
@@ -79,6 +81,16 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
            !events.emplace(event.id,event.time).second)fail("invalid_actual_stimuli");
         previous=event.time;
     }
+    return events;
+}
+
+Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIndex,
+                               const PreparedVerificationProbe& prepared,const ProbeObservation& o)
+{
+    const auto events=CheckedProbeContext(p,inputIndex,prepared,o,true);
+    const auto fail=[](const char* reason){throw std::invalid_argument(reason);};
+    const auto& input=p.inputs.at(inputIndex);
+    const auto& s=o.specification;
     std::map<std::size_t,const BurstAssignmentObservation*> assignments;
     if(p.schemaVersion<3 && !o.burstAssignments.empty())fail("unexpected_burst_assignment_evidence");
     if(p.schemaVersion==3)
@@ -112,6 +124,7 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
     for(const auto& peak:o.peaks)
         if(!peaks.emplace(peak.inputId,&peak).second)fail("duplicate_observed_input");
     std::optional<Measurement> result;
+    std::map<std::size_t,std::vector<const PeakObservation*>> measuredByChannel;
     for(const auto& window:s.windows)
     {
         auto definition=std::find_if(p.inputs.begin(),p.inputs.end(),[&](const auto& x){return x.id==window.inputId;});
@@ -145,11 +158,79 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
         const double arrival=*peak.time-events.at(p.originStimulusId);
         const double plateau=*peak.plateauEnd-events.at(p.originStimulusId);
         if(!Finite(arrival) || !Finite(plateau))fail("nonfinite_measured_arrival");
+        measuredByChannel[window.channel].push_back(&peak);
         if(window.inputId==input.id)result=Measurement{*peak.rawPotential,arrival,plateau};
+    }
+    // A historical WindowOnly packet can label the same measured vertex with
+    // different stimulus IDs. Preserve its diagnostic representation, but do
+    // not use one vertex (or intersecting portions of one plateau) as two
+    // independent assigned responses. Coincident peaks on different physical
+    // channels are legitimate and must remain available for synchronization.
+    for(auto& [channel,measured]:measuredByChannel)
+    {
+        std::sort(measured.begin(),measured.end(),[](const auto* a,const auto* b){return *a->time<*b->time;});
+        for(std::size_t i=1;i<measured.size();++i)
+            if(*measured[i]->time<=*measured[i-1]->plateauEnd)
+                fail("shared_measured_peak_between_stimuli");
     }
     if(!result)fail("requested_input_not_measured");
     return *result;
 }
+}
+
+bool CanAdvanceUnassignedBurstCandidate(const VerificationProtocol& p,std::size_t inputIndex,
+    const PreparedVerificationProbe& prepared,const ProbeObservation& o)
+{
+    try
+    {
+        ProtocolValid(p);
+        CheckedProbeContext(p,inputIndex,prepared,o,false);
+        const auto& s=o.specification;
+        if(p.schemaVersion!=3 || o.valid || o.endReason!="window_closed" ||
+           s.windows.size()!=1 || o.peaks.size()!=1 || o.burstAssignments.size()!=1 ||
+           s.expectedStimulusIds!=p.stimulusIds)return false;
+        const auto& input=p.inputs.at(inputIndex);const auto& window=s.windows.front();
+        const auto& assignment=o.burstAssignments.front();const auto& peak=o.peaks.front();
+        if(window.inputId!=input.id || window.stimulusId!=input.stimulusId ||
+           window.channel!=(p.routing==ProbeRouting::ClassicBurst?inputIndex:0u) ||
+           assignment.channel!=window.channel || peak.inputId!=input.id || peak.stimulusId!=input.stimulusId ||
+           (assignment.validity!=PeakValidity::Missing && assignment.validity!=PeakValidity::Ambiguous) ||
+           peak.validity!=assignment.validity || peak.candidateCount!=0 ||
+           peak.amplitude || peak.rawPotential || peak.time || peak.plateauEnd || peak.delayFromStimulus)return false;
+        if((assignment.validity==PeakValidity::Missing && assignment.waves.size()>=p.stimulusIds.size()) ||
+           (assignment.validity==PeakValidity::Ambiguous && assignment.waves.size()<p.stimulusIds.size()) ||
+           assignment.waves.size()>(o.sampleCount-1)/2)return false;
+        const std::set<std::string> expectedReasons{
+            std::string("burst_")+PeakValidityName(assignment.validity)+":"+std::to_string(window.channel),
+            std::string("peak_")+PeakValidityName(peak.validity)+":"+input.id};
+        if(o.reasons.size()!=expectedReasons.size() ||
+           std::set<std::string>(o.reasons.begin(),o.reasons.end())!=expectedReasons)return false;
+        for(std::size_t i=0;i<o.stimuli.size();++i)
+            if(o.stimuli[i].id!=p.stimulusIds[i] || (i && o.stimuli[i].time<=o.stimuli[i-1].time))return false;
+        std::optional<double> previous;
+        for(const auto& wave:assignment.waves)
+        {
+            const double amplitude=wave.rawPotential-s.baseline.at(window.channel);
+            if(!wave.stimulusId.empty() || !Finite(wave.amplitude) || !Finite(wave.rawPotential) ||
+               !Finite(amplitude) || amplitude!=wave.amplitude || amplitude<p.minimumAmplitude ||
+               !Finite(wave.time) || !Finite(wave.plateauEnd) || wave.plateauEnd<wave.time ||
+               After(s.begin,wave.time) || After(wave.plateauEnd,s.end) ||
+               (previous && wave.time<=*previous))return false;
+            previous=wave.plateauEnd;
+        }
+        if((!s.recordSpikes && !o.spikes.empty()) ||
+           (!o.spikes.empty() && (o.spikes.size()-1)/s.baseline.size()>=s.maximumSamples))return false;
+        previous.reset();
+        for(const auto& spike:o.spikes)
+        {
+            if(spike.channel>=s.baseline.size() || !Finite(spike.time) || After(s.begin,spike.time) ||
+               After(spike.time,s.end) || (previous && spike.time<*previous))return false;
+            previous=spike.time;
+        }
+        return true;
+    }
+    catch(const std::invalid_argument&){return false;}
+    catch(const std::out_of_range&){return false;}
 }
 
 CapturedReferences CapturedReferences::Capture(VerificationProtocol p,const std::vector<ReferenceEvidence>& evidence)
@@ -325,7 +406,8 @@ void FinalVerificationSession::Invalidate(const std::string& newBaseRevision)
     for(const auto& input:accepted)
         if(input)rejected.push_back({input->trialId,"model_revision_invalidated"});
     config.currentModelRevision=newBaseRevision;certificate.reset();pending.reset();armed.reset();
-    for(auto& input:accepted)input.reset();position=0;
+    for(auto& input:accepted){input.reset();}
+    position=0;
     if(status==VerificationStatus::ExternalStop)return;
     if(epoch==std::numeric_limits<std::size_t>::max()){ExhaustBudget();return;}
     ++epoch;

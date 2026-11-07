@@ -16,6 +16,9 @@ struct NativeTrainingPlan {
     std::size_t maximumReferenceProbes=0,maximumInvalidReferenceProbes=0;
     double maximumModelSeconds=0.,maximumWallSeconds=0.;
     std::function<void(const NativeProbeResult&)> observationSink;
+    // Explicit evidence capability, separate from a future C-search policy.
+    // Requires an already bound C0 owner; never captures a new baseline.
+    bool recordCapacitanceHistory=false;
 };
 
 // Component-specific adapters alone touch Rdk objects. BeforeTick is called
@@ -38,6 +41,23 @@ struct NativeTrainingAdapter {
     // Pure controller adapters may omit it; model revision reads remain usable
     // while closing invalid/cancelled observations and restoring checkpoints.
     std::function<void()> validateExecution;
+    // Optional all-or-none boundary capabilities. Called only by the explicit
+    // record plan; None is rejected, never upgraded to an invented unit C0.
+    std::function<std::optional<TrainingCapacitanceWitness>()> readCapacitanceWitness;
+    std::function<NativeEditResult(const std::vector<InputParameters>&,
+        const std::optional<TrainingCapacitance>&)> applyWithCapacitance;
+    std::function<ResistanceDomainAssessment(const std::vector<InputParameters>&,std::size_t,
+        const std::optional<TrainingCapacitance>&)> assessResistanceDomainWithCapacitance;
+};
+
+struct NativeTrainingCapacitanceHistory {
+    // Evidence IDs, not physical revisions: dormant histories can differ on
+    // an identical physical graph. Every trial retains its exact boundary state.
+    std::string captureWitnessId,currentWitnessId;
+    bool currentVerified=false;
+    std::map<std::string,TrainingCapacitanceWitness> witnesses;
+    std::map<std::string,std::string> trialWitnessIds;
+    std::vector<std::string> domainBaseWitnessIds;
 };
 
 class NativeTrainingService {
@@ -83,6 +103,11 @@ public:
     std::size_t IssuedReferenceProbes() const { return referenceProbes; }
     std::size_t ModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
     const BoundedTrainingConfig& Configuration() const { return plan.search; }
+    const std::optional<NativeTrainingCapacitanceHistory>& CapacitanceHistory() const {return capacitanceHistory;}
+    // Install only the portable completed/stopped boundary evidence after
+    // normal proof replay and physical import. Never restores a search object.
+    void RestoreCapacitanceBoundary(NativeTrainingCapacitanceHistory history,
+        const std::string& actualModelRevision,const QJsonObject& actualState);
 private:
     NativeTrainingState state=NativeTrainingState::Idle;
     TrainingStatus outcome=TrainingStatus::Searching;
@@ -95,6 +120,7 @@ private:
     std::optional<std::pair<std::string,std::size_t>> incompleteCaptureConstraint;
     std::unique_ptr<BoundedTrainingSession> search;
     std::optional<TrainingAction> activeAction;
+    std::optional<NativeTrainingCapacitanceHistory> capacitanceHistory;
     bool waiting=false;
     std::size_t referenceProbes=0,invalidReferences=0,attempt=0,retainedEpoch=0;
     double startModel=0.,startWall=0.,lastModel=0.,lastWall=0.;
@@ -105,6 +131,12 @@ private:
     void Finish(TrainingStatus result,const std::string& diagnostic);
     void SyncOutcome();
     void RecordCancelled(const NativeTrainingAdapter& adapter);
+    std::string RememberCapacitance(const NativeTrainingAdapter& adapter,const std::string& revision,
+        const std::optional<TrainingCapacitance>& requested);
+    void BindTrialCapacitance(const NativeTrainingAdapter& adapter,const NativeProbeRequest& request);
+    void ValidateTrialCapacitance(const NativeTrainingAdapter& adapter,const NativeProbeResult& result);
 };
 const char* NativeTrainingStateName(NativeTrainingState state);
+void ValidateNativeTrainingCapacitanceBoundary(const NativeTrainingCapacitanceHistory& history,
+    const NativeTrainingService& service,const std::string& actualModelRevision,const QJsonObject& actualState);
 }

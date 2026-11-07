@@ -85,7 +85,67 @@ ConfiguredNativeTraining Configuration(const NativeModelSpec& declaration,const 
     c.search=plan.search;c.search.initialModelRevision.clear();c.search.initialModelEpoch=0;
     c.maximumReferenceProbes=plan.maximumReferenceProbes;c.maximumInvalidReferenceProbes=plan.maximumInvalidReferenceProbes;
     c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;
+    c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
+    if(c.recordCapacitanceHistory)
+    {
+        const auto& history=service.CapacitanceHistory();Require(bool(history),"missing_learned_capacitance_history");
+        c.capacitanceMaximumRelativeChange=history->witnesses.at(history->captureWitnessId).parameters.maximumRelativeChange;
+    }
     Plan(c,plan.protocol);return c;
+}
+NativeTrainingCapacitanceHistory BoundaryHistory(const NativeTrainingService& service)
+{
+    Require(bool(service.CapacitanceHistory()),"missing_learned_capacitance_history");
+    const auto& source=*service.CapacitanceHistory();NativeTrainingCapacitanceHistory result;
+    result.captureWitnessId=source.captureWitnessId;result.currentWitnessId=source.currentWitnessId;
+    result.currentVerified=source.currentVerified;
+    std::set<std::string> required{result.captureWitnessId,result.currentWitnessId};
+    const auto packet=[&](const NativeProbeResult& p) {
+        Require(bool(p.requestedSpecification),"learned_capacitance_packet_missing_identity");
+        const auto& trial=p.requestedSpecification->trialId;const auto found=source.trialWitnessIds.find(trial);
+        Require(found!=source.trialWitnessIds.end(),"learned_capacitance_packet_unwitnessed");
+        result.trialWitnessIds.emplace(*found);required.insert(found->second);
+    };
+    for(const auto& p:service.ReferencePackets())packet(p);
+    for(const auto& p:service.FinalPackets())packet(p);
+    if(!service.Certificate())for(const auto& p:service.ObservedPackets())packet(p);
+    for(const auto& id:required)
+    {
+        const auto found=source.witnesses.find(id);Require(found!=source.witnesses.end(),"learned_capacitance_witness_missing");
+        result.witnesses.emplace(*found);
+    }
+    return result;
+}
+QJsonObject EncodeBoundaryHistory(const NativeTrainingCapacitanceHistory& history)
+{
+    Require(!history.witnesses.empty() && history.witnesses.size()<=4096 && history.trialWitnessIds.size()<=100000,
+        "invalid_learned_capacitance_history_size");
+    QJsonObject witnesses,trials;
+    for(const auto& [id,witness]:history.witnesses)witnesses[Text(id)]=EncodeNativeTrainingCapacitanceWitness(witness);
+    for(const auto& [trial,id]:history.trialWitnessIds)trials[Text(trial)]=Text(id);
+    return {{"schema_version",1},{"capture_witness_id",Text(history.captureWitnessId)},
+        {"current_witness_id",Text(history.currentWitnessId)},{"current_verified",history.currentVerified},
+        {"witnesses",witnesses},{"trial_witness_ids",trials}};
+}
+NativeTrainingCapacitanceHistory DecodeBoundaryHistory(const QJsonObject& object)
+{
+    const std::set<QString> expected{"schema_version","capture_witness_id","current_witness_id","current_verified","witnesses","trial_witness_ids"};
+    const auto keys=object.keys();Require(std::set<QString>(keys.begin(),keys.end())==expected && object["schema_version"]==QJsonValue(1) &&
+        object["capture_witness_id"].isString() && object["current_witness_id"].isString() && object["current_verified"]==QJsonValue(true),
+        "unsupported_learned_capacitance_history");
+    NativeTrainingCapacitanceHistory result;result.captureWitnessId=object["capture_witness_id"].toString().toStdString();
+    result.currentWitnessId=object["current_witness_id"].toString().toStdString();result.currentVerified=true;
+    const auto witnesses=Object(object["witnesses"]),trials=Object(object["trial_witness_ids"]);
+    Require(!witnesses.isEmpty() && witnesses.size()<=4096 && trials.size()<=100000,"invalid_learned_capacitance_history_size");
+    for(auto it=witnesses.begin();it!=witnesses.end();++it)
+    {
+        auto witness=DecodeNativeTrainingCapacitanceWitness(Object(it.value()));
+        Require(NativeTrainingCapacitanceWitnessId(witness)==it.key().toStdString(),"learned_capacitance_witness_id_mismatch");
+        result.witnesses.emplace(it.key().toStdString(),std::move(witness));
+    }
+    for(auto it=trials.begin();it!=trials.end();++it)
+    {Require(it.value().isString(),"invalid_learned_capacitance_trial_id");result.trialWitnessIds.emplace(it.key().toStdString(),it.value().toString().toStdString());}
+    return result;
 }
 std::pair<QString,double> Threshold(const QJsonObject& identity)
 {
@@ -121,6 +181,9 @@ static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeMod
     int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance)
 {
     const bool stopped=!service.Certificate();
+    const bool tracked=service.Plan().recordCapacitanceHistory;
+    Require(tracked==bool(service.CapacitanceHistory()) && (!tracked || capacitance),"learned_capacitance_history_requires_owned_state");
+    Require(!service.Configuration().capacitanceSearch || tracked,"learned_capacitance_search_requires_history");
     Require(service.State()!=NativeTrainingState::CapturingReferences && service.State()!=NativeTrainingState::Searching &&
         (stopped?(service.State()==NativeTrainingState::Finished && service.SessionAttempt()>0):bool(service.References())),
         "learned_state_requires_completed_or_stopped_boundary");
@@ -173,6 +236,12 @@ static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeMod
         training["reference_complete"]=bool(service.References());training["capture_revision"]=Text(service.CaptureRevision());
         training["capture_epoch"]=Integer(service.CaptureEpoch());training["reason"]=Text(service.Reason());metadata["training"]=training;
     }
+    if(c.search.capacitanceSearch)
+    {
+        auto training=metadata["training"].toObject();
+        training["capacitance_search"]=EncodeCapacitanceSearchPolicy(*c.search.capacitanceSearch);
+        metadata["training"]=training;
+    }
     QJsonObject capacitanceState;
     if(capacitance)
     {
@@ -199,6 +268,12 @@ static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeMod
         package["observed_packets"]=Packets(service.ObservedPackets());
     }
     if(capacitance){package["schema_version"]=2;package["capacitance_state"]=capacitanceState;}
+    if(tracked)
+    {
+        auto history=BoundaryHistory(service);
+        ValidateNativeTrainingCapacitanceBoundary(history,service,revision,capacitanceState);
+        package["schema_version"]=c.search.capacitanceSearch?4:3;package["capacitance_history"]=EncodeBoundaryHistory(history);
+    }
     package["sha256"]=NmsdkTools::CanonicalModelDataSha256(package);return package;
 }
 QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
@@ -215,14 +290,18 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
 {
     auto body=package;body.remove("sha256");
     const bool stopped=package["kind"]==QJsonValue("timelearner_stopped_state");
-    const bool withCapacitance=package["schema_version"]==QJsonValue(2);
-    Require((stopped?(package.size()==26+int(withCapacitance) && package["state_kind"]==QJsonValue("diagnostic")):
-        (package.size()==21+int(withCapacitance) && package["kind"]==QJsonValue("timelearner_completed_state") && package["state_kind"]==QJsonValue("learned_solo"))) &&
+    const bool searchingCapacitance=package["schema_version"]==QJsonValue(4);
+    const bool tracked=searchingCapacitance || package["schema_version"]==QJsonValue(3);
+    const bool withCapacitance=tracked || package["schema_version"]==QJsonValue(2);
+    Require((stopped?(package.size()==26+int(withCapacitance)+int(tracked) && package["state_kind"]==QJsonValue("diagnostic")):
+        (package.size()==21+int(withCapacitance)+int(tracked) && package["kind"]==QJsonValue("timelearner_completed_state") && package["state_kind"]==QJsonValue("learned_solo"))) &&
         (withCapacitance || package["schema_version"]==QJsonValue(1)) && package["dynamic_checkpoint"]==QJsonValue(false),"unsupported_learned_state_schema");
     Require(package["sha256"].isString() && package["sha256"].toString()==NmsdkTools::CanonicalModelDataSha256(body),"learned_state_digest_mismatch");
     Require(!implementationId.empty() && package["implementation_id"]==QJsonValue(Text(implementationId)),"learned_state_implementation_mismatch");
     auto result=std::make_unique<PreparedNativeLearnedState>();result->storage=storage;
     result->configuration=DecodeConfiguredNativeTraining(Object(package["configuration"]));const auto& c=result->configuration;
+    Require(c.recordCapacitanceHistory==tracked,"learned_configuration_capacitance_history_mismatch");
+    Require(bool(c.search.capacitanceSearch)==searchingCapacitance,"learned_configuration_capacitance_search_mismatch");
     const auto version=Count(package["controller_version"]),mode=Count(package["calculate_mode"]),structure=Count(package["structure_build_mode"]);
     Require((version==1 || version==2) && mode<=1 && structure<=1,"invalid_learned_state_component_options");
     result->controllerVersion=int(version);result->calculateMode=int(mode);result->structureBuildMode=int(structure);
@@ -257,7 +336,21 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
             package["training_outcome"]==QJsonValue(result->service.Certificate()->Exact()?"exact":"search_unresolved"),"learned_state_certificate_claim_mismatch");
     }
     const auto archive=Object(package["neuron"]);Require(Object(Object(archive["graph"])["identity"])["sha256"]==package["model_revision"],"learned_state_archive_revision_mismatch");
+    if(tracked)
+    {
+        const auto state=Object(package["capacitance_state"]);
+        Require(state["maximum_relative_change"]==QJsonValue(c.capacitanceMaximumRelativeChange),"learned_configuration_capacitance_policy_mismatch");
+        auto history=DecodeBoundaryHistory(Object(package["capacitance_history"]));
+        result->service.RestoreCapacitanceBoundary(std::move(history),result->modelRevision,state);
+        const auto& current=result->service.CapacitanceHistory()->witnesses.at(result->service.CapacitanceHistory()->currentWitnessId);
+        Require(QJsonDocument::fromJson(QByteArray::fromStdString(current.modelIdentityJson)).object()==Object(Object(archive["graph"])["identity"]),
+            "learned_capacitance_history_archive_mismatch");
+    }
     const auto metadata=Object(archive["metadata"]),training=Object(metadata["training"]);
+    if(searchingCapacitance)
+        Require(training["capacitance_search"]==QJsonValue(EncodeCapacitanceSearchPolicy(*c.search.capacitanceSearch)),
+            "learned_state_archive_capacitance_search_mismatch");
+    else Require(!training.contains("capacitance_search"),"unversioned_learned_capacitance_search_policy");
     QJsonArray target;for(double value:c.model.initialIsi)target.append(value);
     const auto raw=RawReferences(protocol,result->service.ReferencePackets());
     Require(metadata["state_kind"]==package["state_kind"] && training["status"]==package["training_outcome"] &&

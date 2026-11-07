@@ -70,6 +70,8 @@ void Image(UEPtr<UStorage> storage, UEPtr<UEnvironment> environment, unsigned in
 
 void Validate(const MembraneProfile& membrane)
 {
+ if(membrane.feedbackGain && (!std::isfinite(*membrane.feedbackGain) || *membrane.feedbackGain < 0.))
+  throw ClassImageError("invalid_profile_value", "feedbackGain");
  for(const auto* channel : {&membrane.excChannel, &membrane.inhChannel})
  {
   Positive(channel->capacity, "capacity"); Positive(channel->resistance, "resistance");
@@ -156,6 +158,12 @@ std::string MembraneImage(UEPtr<UStorage> storage, UEPtr<UEnvironment> environme
    membrane->ExcChannelClassName = excChannel; membrane->InhChannelClassName = inhChannel;
    membrane->ExcSynapseClassName = excSynapse; membrane->InhSynapseClassName = inhSynapse;
    membrane->UseAveragePotential = specification.useAveragePotential;
+   if(specification.feedbackGain)
+   {
+    membrane->FeedbackGain = *specification.feedbackGain;
+    if(membrane->FeedbackGain.GetData() != *specification.feedbackGain)
+     throw ClassImageError("profile_parameter_not_applied", name + ".FeedbackGain");
+   }
   }, result);
  return name;
 }
@@ -222,6 +230,55 @@ RegisteredStorageProfile RegisterStorageProfile(UEPtr<UStorage> storage, UEPtr<U
  neuron->Build();
  neuron->SetGlobalTimeStep(specification.frequencyHz);
  neuron->Init();
+ CheckFrequency(neuron, specification.frequencyHz);
+ result.neuronClass = specification.name + "_Neuron";
+ RegisterClassImage(storage, result.neuronClass, neuron);
+ result.classNames.push_back(result.neuronClass);
+ return result;
+}
+
+RegisteredStorageProfile RegisterFeedbackStorageProfile(UEPtr<UStorage> storage, UEPtr<UEnvironment> environment,
+                                                         const FeedbackStorageProfileSpec& specification)
+{
+ if(!storage || !environment || specification.name.empty() || specification.frequencyHz == 0)
+  throw ClassImageError("invalid_feedback_profile_specification", specification.name);
+ for(const auto& value : {specification.bodyFeedbackGain, specification.ltFeedbackGain})
+  if(value && (!std::isfinite(*value) || *value < 0.))
+   throw ClassImageError("invalid_profile_value", "feedbackGain");
+ auto neuron = Take<NPulseNeuron>(storage, environment, specification.neuronBaseClass, specification.frequencyHz);
+ Lease neuronLease{storage, neuron};
+ if(neuron->StructureBuildMode.GetData() != 1 && neuron->StructureBuildMode.GetData() != 2)
+  throw ClassImageError("explicit_graph_requires_model_import", specification.neuronBaseClass);
+ const auto body = neuron->MembraneClassName.GetData(), lt = neuron->LTMembraneClassName.GetData();
+ if(specification.ltFeedbackGain && lt.empty())
+  throw ClassImageError("feedback_profile_has_no_lt_membrane", specification.name);
+ // Check both role capabilities before publishing the first derived image.
+ for(const auto& name : {body, lt}) if(!name.empty())
+ {
+  auto membrane = Take<NPulseMembrane>(storage, environment, name, specification.frequencyHz);
+  Lease lease{storage, membrane};
+ }
+ if(body.empty()) throw ClassImageError("missing_profile_template", "body membrane");
+ RegisteredStorageProfile result;
+ const auto derive = [&](const std::string& base, const std::optional<double>& gain, const std::string& role) {
+  if(!gain) return base;
+  const auto name = specification.name + "_" + role + "_Membrane";
+  Image<NPulseMembrane>(storage, environment, specification.frequencyHz, name, base,
+   [&](UEPtr<NPulseMembrane> membrane) {
+    membrane->FeedbackGain = *gain;
+    if(membrane->FeedbackGain.GetData() != *gain)
+     throw ClassImageError("profile_parameter_not_applied", name + ".FeedbackGain");
+   }, result);
+  return name;
+ };
+ result.bodyMembraneClass = derive(body, specification.bodyFeedbackGain, "Body");
+ result.ltMembraneClass = derive(lt, specification.ltFeedbackGain, "LT");
+ if(result.bodyMembraneClass != body) neuron->MembraneClassName = result.bodyMembraneClass;
+ if(result.ltMembraneClass != lt) neuron->LTMembraneClassName = result.ltMembraneClass;
+ // Keep all original element-default ownership and channel/synapse image names.
+ // Native role replacement applies the new membrane image on this private
+ // construction object. No live graph or registered base image is edited.
+ neuron->Build(); neuron->SetGlobalTimeStep(specification.frequencyHz); neuron->Init();
  CheckFrequency(neuron, specification.frequencyHz);
  result.neuronClass = specification.name + "_Neuron";
  RegisterClassImage(storage, result.neuronClass, neuron);

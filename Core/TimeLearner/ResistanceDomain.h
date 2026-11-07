@@ -1,5 +1,6 @@
 #pragma once
 #include "TrainingParameters.h"
+#include "TrainingCapacitance.h"
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -30,6 +31,11 @@ struct ResistanceDomainAssessment {
     std::vector<ResistanceDomainControl> controls;
     double sourceAmplitude=0.,maximumResistanceRatio=0.,configuredMinimumResistance=0.;
     bool branch=false;
+    std::optional<TrainingCapacitance> capacitance={};
+    // Explicit typed-domain capability only. The request may omit newly
+    // witnessed unit paths; effectiveCapacitance describes the actual preview.
+    std::optional<TrainingCapacitance> effectiveCapacitance={};
+    std::string capacitanceStateJson,capacitanceImagesJson;
 };
 const char* ResistanceDomainStatusName(ResistanceDomainStatus status);
 }

@@ -20,7 +20,14 @@ struct PeakWindow {
     std::string stimulusId;
 };
 enum class WaveAssignmentPolicy { WindowOnly, OrderedWholeBurst };
-enum class PeakSelectionPolicy { IsolatedWindow, AssignedBurstWave };
+enum class PeakSelectionPolicy { IsolatedWindow, AssignedBurstWave, SingleImpulseMaximum };
+// Schemas 4/5 are diagnostic-only. Physical topology and training target remain
+// unchanged while exactly the first source impulse is presented.
+struct SinglePulseCharacterization {
+    std::string sourceTrainingPatternHash;
+    std::size_t physicalInputCount=0,selectedInputIndex=0;
+    bool operator==(const SinglePulseCharacterization&) const=default;
+};
 struct ProbeSpec {
     unsigned schemaVersion=1;
     std::string runId, trialId, sampleId, patternHash, modelRevision;
@@ -28,6 +35,7 @@ struct ProbeSpec {
     double minimumAmplitude=1e-6;
     std::size_t maximumSamples=0;
     bool recordSpikes=false; // Disabled means unknown spike response, not zero.
+    std::optional<SinglePulseCharacterization> characterization={};
     // Explicit model rest-state values. Never inferred to be zero.
     std::vector<double> baseline;
     std::vector<PeakWindow> windows;
@@ -38,8 +46,9 @@ struct ProbeSpec {
     // Schema 3 additionally requires a complete order-preserving response wave
     // sequence on every measured channel. No model delay fills a missing wave.
     WaveAssignmentPolicy waveAssignment=WaveAssignmentPolicy::WindowOnly;
-    // Explicit opt-in: select the measured ordered burst wave rather than
-    // requiring the window to contain exactly one local maximum.
+    // Explicit opt-in: select the measured ordered burst wave. Schema 5 instead
+    // measures the largest peak of its sole actual impulse; smaller extrema do
+    // not make it ambiguous. Neither diagnostic schema can certify burst Train.
     PeakSelectionPolicy peakSelection=PeakSelectionPolicy::IsolatedWindow;
 };
 enum class PeakValidity { Valid, Missing, Ambiguous, Clipped, Incomplete };
@@ -48,9 +57,9 @@ struct PeakObservation {
     PeakValidity validity=PeakValidity::Incomplete;
     // Only valid when validity==Valid. Times are measured sample timestamps;
     // a plateau reports its first and last sample, never an interpolated peak.
-    std::optional<double> amplitude, rawPotential, time, plateauEnd;
+    std::optional<double> amplitude={}, rawPotential={}, time={}, plateauEnd={};
     // Unknown until the matching actual stimulus exists, even if a peak exists.
-    std::optional<double> delayFromStimulus;
+    std::optional<double> delayFromStimulus={};
     std::size_t candidateCount=0;
 };
 struct StimulusObservation { std::string id; double time; };
