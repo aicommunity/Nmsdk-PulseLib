@@ -96,3 +96,20 @@ expected graph; разрешены только объявленные клас�
 Предусмотрены Classic/Branch2000/20000Гц, индивидуальные C/Rs, полный native
 roundtrip, запрет unmapped gain/неверного image gain и противоречивого source
 XML. Новая функция и fixtures пока не прошли серверную проверку.
+
+
+Первая сборка root8302e8f76/Pulse1d2a703 завершилась тремя compile errors:
+временный UEPtr<UNet> нельзя преобразовать в UEPtr<UContainer> через
+неконстантную ссылку существующего Rdk. Native tests не запускались. В77adb66
+использованы именованные указатели; Rdk/UEPtr не менялся. Failed primary
+корня afb5c7d144ad92c701e294447180e802fe52741a сохранён;25 members и783
+source hashes сверены, группа закрыта/lease released.
+
+До runtime статически выявлено, что общий CheckSnapshot требует каждого
+параметра в XML. Его обычный контракт не ослаблен. Только внутренний import
+проверенных derived images допускает отсутствие FeedbackGain по конкретным
+уже проверенным membrane paths; после native Load сравнивается весь expected
+graph. Source/rehearsal и обычный ModelArchive остаются strict. Добавлены
+negative fixtures для неполного source XML с правильной checksum. Это отдельная
+предварительная правка, не причина трёх фактических ошибок первой сборки.
+Исправленная версия ещё ждёт серверной проверки.
