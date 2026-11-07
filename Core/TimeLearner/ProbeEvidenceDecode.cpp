@@ -37,6 +37,14 @@ ProbeSpec Spec(const QJsonValue& value)
     for(const auto& v:Array(o["windows"]))
     {const auto w=Object(v);s.windows.push_back({Text(w["input_id"]),Count(w["channel"]),Number(w["begin"]),Number(w["end"]),Text(w["stimulus_id"])});}
     s.expectedStimulusIds=Strings(o["expected_stimulus_ids"]);
+    if(o.contains("characterization"))
+    {
+        const auto c=Object(o["characterization"]);
+        Require(c.size()==4 && c["purpose"]==QJsonValue("single_pulse_characterization"));
+        s.characterization=SinglePulseCharacterization{Text(c["source_training_pattern_hash"]),
+            Count(c["physical_input_count"]),Count(c["selected_input_index"])};
+    }
+    Require((s.schemaVersion==4)==bool(s.characterization));
     if(!o["stimulus_profile"].isNull())
     {const auto p=Object(o["stimulus_profile"]);s.stimulusProfile=StimulusProfile{Text(p["generator_class"]),Number(p["amplitude"]),Number(p["pulse_length"]),
         Number(p["frequency_hz"]),Number(p["frequency_deviation"]),Boolean(p["use_transit_signal"]),Boolean(p["use_pattern_output"])};}

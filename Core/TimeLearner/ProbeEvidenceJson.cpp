@@ -47,7 +47,7 @@ QJsonObject Spec(const ProbeSpec& s,const char* timeFrame)
     for(double value:s.baseline)baseline.append(Number(value));
     for(const auto& w:s.windows)windows.append(QJsonObject{{"input_id",Text(w.inputId)},{"stimulus_id",Text(w.stimulusId)},
         {"channel",Count(w.channel)},{"begin",Number(w.begin)},{"end",Number(w.end)}});
-    return {{"time_frame",timeFrame},{"schema_version",int(s.schemaVersion)},{"run_id",Text(s.runId)},{"trial_id",Text(s.trialId)},
+    QJsonObject result{{"time_frame",timeFrame},{"schema_version",int(s.schemaVersion)},{"run_id",Text(s.runId)},{"trial_id",Text(s.trialId)},
         {"sample_id",Text(s.sampleId)},{"pattern_hash",Text(s.patternHash)},{"effective_model_revision",Text(s.modelRevision)},
         {"begin",Number(s.begin)},{"end",Number(s.end)},{"maximum_sample_gap",Number(s.maximumSampleGap)},
         {"minimum_amplitude",Number(s.minimumAmplitude)},{"maximum_samples",Count(s.maximumSamples)},
@@ -55,6 +55,12 @@ QJsonObject Spec(const ProbeSpec& s,const char* timeFrame)
         {"expected_stimulus_ids",Strings(s.expectedStimulusIds)},
         {"stimulus_profile",s.stimulusProfile?QJsonValue(Profile(*s.stimulusProfile)):QJsonValue(QJsonValue::Null)},
         {"wave_assignment",Assignment(s.waveAssignment)},{"peak_selection",Selection(s.peakSelection)}};
+    if(s.characterization)result["characterization"]=QJsonObject{
+        {"purpose","single_pulse_characterization"},
+        {"source_training_pattern_hash",Text(s.characterization->sourceTrainingPatternHash)},
+        {"physical_input_count",Count(s.characterization->physicalInputCount)},
+        {"selected_input_index",Count(s.characterization->selectedInputIndex)}};
+    return result;
 }
 QJsonObject Observation(const ProbeObservation& o)
 {

@@ -21,6 +21,13 @@ struct PeakWindow {
 };
 enum class WaveAssignmentPolicy { WindowOnly, OrderedWholeBurst };
 enum class PeakSelectionPolicy { IsolatedWindow, AssignedBurstWave };
+// Schema 4 is diagnostic-only. Physical topology and training target remain
+// unchanged while exactly the first source impulse is presented.
+struct SinglePulseCharacterization {
+    std::string sourceTrainingPatternHash;
+    std::size_t physicalInputCount=0,selectedInputIndex=0;
+    bool operator==(const SinglePulseCharacterization&) const=default;
+};
 struct ProbeSpec {
     unsigned schemaVersion=1;
     std::string runId, trialId, sampleId, patternHash, modelRevision;
@@ -28,6 +35,7 @@ struct ProbeSpec {
     double minimumAmplitude=1e-6;
     std::size_t maximumSamples=0;
     bool recordSpikes=false; // Disabled means unknown spike response, not zero.
+    std::optional<SinglePulseCharacterization> characterization={};
     // Explicit model rest-state values. Never inferred to be zero.
     std::vector<double> baseline;
     std::vector<PeakWindow> windows;

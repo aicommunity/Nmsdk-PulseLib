@@ -18,7 +18,7 @@ bool ValidStimulusProfile(const StimulusProfile& p)
 
 ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specification))
 {
-    if((spec.schemaVersion!=1 && spec.schemaVersion!=2 && spec.schemaVersion!=3) ||
+    if((spec.schemaVersion!=1 && spec.schemaVersion!=2 && spec.schemaVersion!=3 && spec.schemaVersion!=4) ||
        (spec.schemaVersion==1 && spec.stimulusProfile) ||
        (spec.schemaVersion>=2 && (!spec.stimulusProfile || !ValidStimulusProfile(*spec.stimulusProfile))) ||
        (spec.schemaVersion<3 && spec.waveAssignment!=WaveAssignmentPolicy::WindowOnly) ||
@@ -26,6 +26,12 @@ ProbeRecorder::ProbeRecorder(ProbeSpec specification):spec(std::move(specificati
        (spec.peakSelection!=PeakSelectionPolicy::IsolatedWindow &&
         spec.peakSelection!=PeakSelectionPolicy::AssignedBurstWave) ||
        (spec.peakSelection==PeakSelectionPolicy::AssignedBurstWave && spec.schemaVersion!=3) ||
+       (spec.schemaVersion==4 ? (!spec.characterization ||
+         spec.characterization->sourceTrainingPatternHash.empty() ||
+         !spec.characterization->physicalInputCount ||
+         spec.characterization->selectedInputIndex>=spec.characterization->physicalInputCount ||
+         spec.expectedStimulusIds.size()!=1 || spec.waveAssignment!=WaveAssignmentPolicy::WindowOnly ||
+         spec.peakSelection!=PeakSelectionPolicy::IsolatedWindow) : bool(spec.characterization)) ||
        spec.runId.empty() || spec.trialId.empty() ||
        spec.sampleId.empty() || spec.patternHash.empty() || spec.modelRevision.empty() ||
        !Finite(spec.begin) || !Finite(spec.end) || !Finite(spec.end-spec.begin) || !After(spec.end,spec.begin) ||
