@@ -76,3 +76,24 @@ FeedbackProfileConsoleNormalVerification.json иFeedbackProfileConsoleReaderVeri
 поменять default physics или математическую цель обучения. Получение training
 certificate и классификация этим gate не проверялись. Recognition/PostTune
 state, C0/controller checkpoint и остальные import modes требуют своих gates.
+
+## Второй сервер: Elder, normal SDK
+
+Root `ac9ccc607dece61c0ade1900133654e05f10e62a` / PulseLib
+`8702d264bc7b4f4c464e200f4a1092e55c6b44ff` собраны на Elder в отдельный
+runtime `runtime-feedback-storage-elder-normal-a1`. Native набор 163/163 без
+skips включает те же 26 storage/single-pulse/import/prepared-owner controls
+и заранее объявленные 137 search/verification/transport regressions.
+Прошли также 19 fixture readers. Первичные данные опубликованы в корневом
+evidence `2d8c76cf319e49d71fc09af69e93acd3b68fdc87`; сверены 1018 members,
+493 root и 265 PulseLib source hashes, все JUnit IDs, actual loaded files и
+шесть generated compiler/link command files. Прежние 59 runtime bindings
+не изменились; whole worker group закрыта, lease освобождена после closure.
+
+Это Release, не ASan. Console на Elder только собрана: M40 Console12 не
+объявляются повторёнными на втором сервере. Старый single-pulse ASan37
+предшествует новому prepared API; его доказательства не переносятся на этот
+API автоматически. Адресный ASan нового API проверяется отдельно.
+Maintained корневые отчёт и receipt: `Docs/StructTrain/TimeLearner/`
+`FeedbackStorageElder-2026-11-07.ru.md`, `FeedbackStorageElderVerification.json`.
+Ни классификация, ни полная physics/modes матрица данным gate не принимаются.
