@@ -1,4 +1,5 @@
 #include "BoundedTraining.h"
+#include "BoundedTrainingValidation.h"
 #include "NumericChecks.h"
 #include "MeasuredResistanceSearch.h"
 #include "MeasuredLengthSearch.h"
@@ -139,19 +140,20 @@ void ValidateInvalidMeasurementRecovery(InvalidMeasurementRecovery policy,std::s
         throw std::invalid_argument("candidate_recovery_requires_invalid_observation_budget");
 }
 
-void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const BoundedTrainingConfig& config,
-                                   const std::vector<InputParameters>& initial)
+namespace BoundedTrainingDetail {
+void ValidateInputShape(std::size_t inputs,const BoundedTrainingConfig& config,
+                        const std::vector<InputParameters>& initial)
 {
-    ValidateVerificationProtocol(protocol);
-    if(protocol.schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
-    ValidateInvalidMeasurementRecovery(config.invalidMeasurementRecovery,config.maximumInvalidObservations);
     if(config.runId.empty() || config.initialModelRevision.empty() || !config.maximumProbes || !config.maximumEdits ||
         !config.maximumCandidatesPerInput || !config.maximumSweeps || config.resistanceSubdivisionDepth>20 ||
         config.n0CandidateRepeats<1 || config.n0CandidateRepeats>128 ||
         (config.normalization==Normalization::TipResistance && config.n0CandidateRepeats!=1) ||
         (config.normalization!=Normalization::SynapseCount && config.normalization!=Normalization::TipResistance) ||
-        (protocol.schemaVersion!=3 && protocol.schemaVersion!=4) || config.bounds.size()!=protocol.inputs.size() || initial.size()!=protocol.inputs.size() || initial.empty())
+        config.bounds.size()!=inputs || initial.size()!=inputs || initial.empty())
         throw std::invalid_argument("invalid_bounded_training_configuration");
+}
+void ValidateInputRanges(const BoundedTrainingConfig& config)
+{
     if(!Finite(config.tolerances.amplitudeAbsolute) || config.tolerances.amplitudeAbsolute<0. ||
         !Finite(config.tolerances.amplitudeRelative) || config.tolerances.amplitudeRelative<0. ||
         !Finite(config.tolerances.sync) || config.tolerances.sync<0.)
@@ -161,6 +163,19 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
             b.maximumSynapses>128 || b.maximumSynapses<b.minimumSynapses ||
             !Finite(b.minimumResistance) || !Finite(b.maximumResistance) || b.minimumResistance<=0. || b.maximumResistance<b.minimumResistance)
             throw std::invalid_argument("invalid_per_input_search_bounds");
+}
+}
+
+void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const BoundedTrainingConfig& config,
+                                   const std::vector<InputParameters>& initial)
+{
+    ValidateVerificationProtocol(protocol);
+    if(protocol.schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
+    ValidateInvalidMeasurementRecovery(config.invalidMeasurementRecovery,config.maximumInvalidObservations);
+    BoundedTrainingDetail::ValidateInputShape(protocol.inputs.size(),config,initial);
+    if(protocol.schemaVersion!=3 && protocol.schemaVersion!=4)
+        throw std::invalid_argument("invalid_bounded_training_configuration");
+    BoundedTrainingDetail::ValidateInputRanges(config);
     if(protocol.schemaVersion==4 && config.invalidMeasurementRecovery!=InvalidMeasurementRecovery::RetrySameCandidate)
         throw std::invalid_argument("composite_recovery_policy_not_implemented");
     ValidateCapacitanceSearchPolicy(config,protocol.routing);
