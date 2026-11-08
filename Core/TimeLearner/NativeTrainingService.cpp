@@ -379,11 +379,14 @@ void NativeTrainingService::ResetControl()
     search.reset();activeAction.reset();if(!references){referenceEvidence.clear();referencePackets.clear();}
     if(capacitanceHistory)capacitanceHistory->domainBaseWitnessIds.clear();
     referenceProbes=invalidReferences=0;compositeRequest.reset();compositeReferenceMeasurements.clear();
+    compositeRawNotifications.clear();
+    compositeCancellationDiagnostics.clear();
 }
 void NativeTrainingService::InvalidateTarget()
 {ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();
  composite.reset();compositeImportedProof.reset();compositeSourceBinding={};compositeInitialConfiguration={};compositeOwnerFamily.clear();compositeFinalRun.clear();compositeRecords.clear();compositeReferenceGroups.clear();compositeFinalGroups.clear();
  compositeGroupWitnesses.clear();compositeGroupTrialWitnessIds.clear();compositeCapacitance.reset();
+ compositeRawNotifications.clear();compositeRawTrialIds.clear();
  compositeNativeProbes=compositeGroups=compositeSampledFrames=compositePrimaryBytes=0;}
 void NativeTrainingService::RestoreBoundary(NativeTrainingPlan value,std::vector<NativeProbeResult> refs,
     std::vector<NativeProbeResult> finals,const std::string& revision,std::size_t epoch,std::size_t sessions)

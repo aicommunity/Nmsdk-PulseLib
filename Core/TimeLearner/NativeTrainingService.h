@@ -3,6 +3,7 @@
 #include "NativeCompositeTrainingAttempt.h"
 #include <functional>
 #include <utility>
+#include <set>
 
 namespace NMSDK::TimeLearner {
 enum class NativeTrainingState { Idle, CapturingReferences, Searching, Finished };
@@ -156,6 +157,16 @@ private:
     std::string compositeOwnerFamily,compositeFinalRun;
     std::size_t compositeNativeProbes=0,compositeGroups=0,compositeSampledFrames=0,compositePrimaryBytes=0;
     std::size_t compositeGeneration=0,compositeDispatchDepth=0;
+    struct CompositeRawNotification {
+        NativeProbeResult packet;
+        std::function<void(const NativeProbeResult&)> sink;
+        std::shared_ptr<NativeCompositeTrainingAttempt> actor;
+        std::size_t attempt=0;
+        std::string runId;
+    };
+    std::vector<CompositeRawNotification> compositeRawNotifications;
+    std::set<std::pair<std::string,std::string>> compositeRawTrialIds;
+    std::string compositeCancellationDiagnostics;
     bool compositeHarvested=true;
     std::map<std::string,TrainingCapacitanceWitness> compositeGroupWitnesses;
     std::map<std::string,std::string> compositeGroupTrialWitnessIds;
@@ -180,7 +191,12 @@ private:
     void QueueComposite(const NativeTrainingAdapter&,const VerificationRequest&,CompositeMeasurementPurpose,double,double);
     void ArchiveComposite(const std::shared_ptr<NativeCompositeTrainingAttempt>&);
     void ClosedComposite(const NativeTrainingAdapter&,const std::shared_ptr<NativeCompositeTrainingAttempt>&);
-    void RawCompositeResult(const NativeTrainingAdapter&,const NativeProbeResult&);
+    void RawCompositeResult(const NativeTrainingAdapter&,const NativeProbeResult&,bool diagnosticCancellation=false);
+    void CollectCompositeRaw(const NativeTrainingAdapter&,const std::shared_ptr<NativeCompositeTrainingAttempt>&,bool diagnosticCancellation);
+    void DeliverCompositeRaw(const NativeTrainingAdapter&,const std::shared_ptr<NativeCompositeTrainingAttempt>&,
+        std::optional<RDK::UModuleLifecycleObservation> lifecycleDelivery={});
+    void CaptureCompositeInterrupt(const NativeTrainingAdapter&,const std::string&);
+    bool CheckCompositeGroupBudget(const NativeTrainingAdapter&,const std::shared_ptr<NativeCompositeTrainingAttempt>&);
     void CompositeBeginSearch(const NativeTrainingAdapter&);
     void CompositeRefreshCapacitance(const NativeTrainingAdapter&,const std::optional<TrainingCapacitance>& requested,bool requireMatch);
 };

@@ -7544,9 +7544,12 @@ bool NNeuronTimeLearner::ACalculate(void)
  {
   if(NativeTrainingOwned)
   {
+   const auto lifetime=ObserveLifecycle();
    NativeProbeControl.AfterChildren(NativeProbeModelBindings(),Environment->GetTime().GetDoubleTime());
+   if(!lifetime.IsCurrent())return true;
    NativeTrainingControl.AfterTick(TimeLearner::BindNativeTraining(*this,NativeProbeControl,NativeTrainingEditDepth),
        Environment->GetTime().GetDoubleTime(),TimeLearner::NativeTrainingWallTime());
+   if(!lifetime.IsCurrent())return true;
    if(NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Finished)
    {
     if(NativeLiveFinalization)

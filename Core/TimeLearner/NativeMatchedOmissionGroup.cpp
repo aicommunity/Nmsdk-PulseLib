@@ -115,12 +115,16 @@ void NativeMatchedOmissionGroup::CheckRestoredPresentation() const
     for(std::size_t i=0;i<isi.size();++i)
         Require(d.MatrixData(int(i),0)==isi[i],"omission_group_full_pattern_not_restored");
 }
+void NativeMatchedOmissionGroup::RetainPacket(const NativeMatchedOmissionAdapter& a,NativeProbeResult packet) {
+    result.packets.push_back(std::move(packet));
+    if(a.onRetainedPacket)a.onRetainedPacket(result.packets.back());
+}
 void NativeMatchedOmissionGroup::Fail(const NativeMatchedOmissionAdapter& a,NativeMatchedOmissionState status,
                                      const std::string& reason)
 {
     state=status;result.reason=reason;waiting=false;result.assignment.reset();
     try {if(a.cancel)a.cancel(reason);if(a.takeResult)if(auto packet=a.takeResult()) {
-        result.packets.push_back(std::move(*packet));if(a.onNativeResult)a.onNativeResult(result.packets.back());
+        RetainPacket(a,std::move(*packet));if(a.onNativeResult)a.onNativeResult(result.packets.back());
     }}
     catch(...) {result.reason+=";omission_group_cancellation_or_restore_failed";}
 }
@@ -186,7 +190,7 @@ void NativeMatchedOmissionGroup::AfterTick(const NativeMatchedOmissionAdapter& a
         if(!CheckClock(a,modelTime,wallTime) || !waiting)return;
         const auto status=a.probeState();if(status==NativeProbeStatus::Queued || status==NativeProbeStatus::Running)return;
         auto packet=a.takeResult();Require(bool(packet),"omission_group_missing_native_result");waiting=false;
-        result.packets.push_back(*packet);capture->CloseNative(*packet);CheckRestoredPresentation();
+        RetainPacket(a,*packet);capture->CloseNative(*packet);CheckRestoredPresentation();
         Require(a.readModelRevision()==plan.fullBurst.baseModelRevision,"omission_group_model_changed");
         MatchedOmissionTrace trace;trace.groupId=plan.groupId;trace.sourcePatternHash=result.specification.patternHash;
         trace.resetBinding=ResetBinding;trace.modelInstanceBinding=result.specification.modelInstanceBinding;

@@ -21,6 +21,8 @@ struct NativeMatchedOmissionAdapter {
     // Boundary sink after the actual packet and trace have been retained.
     // Failure rejects the group; the packet is not lost or re-consumed.
     std::function<void(const NativeProbeResult&)> onNativeResult;
+    // Internal capture only, before validation. Must not call application sinks.
+    std::function<void(const NativeProbeResult&)> onRetainedPacket;
 };
 enum class NativeMatchedOmissionState { Idle, Running, Completed, Rejected, Cancelled, BudgetExhausted };
 struct NativeMatchedOmissionResult {
@@ -50,6 +52,8 @@ public:
     const NativeMatchedOmissionResult& Result() const {return result;}
     std::size_t IssuedNativeProbes() const {return issued;}
 private:
+    friend class NativeCompositeTrainingAttempt;
+    void RetainPacket(const NativeMatchedOmissionAdapter&,NativeProbeResult);
     struct Watched {
         RDK::UEPtr<RDK::UContainer> node;
         std::string path;

@@ -52,16 +52,46 @@ template<class Owner> void NativeCompositeTrainingAttempt::Bind(Owner& owner) {
     capacitanceWitness=[&owner](){return owner.ReadNativeTrainingCapacitanceWitness();};
     adapter.queue=[this,&owner](auto request){
         Require(ownerLife.IsCurrent(),"composite_train_owner_lifecycle_changed");
-        if(beforeNativeQueue)beforeNativeQueue(request);owner.NativeProbeControl.Queue(std::move(request));
+        if(beforeNativeQueue)beforeNativeQueue(request);
+        Require(!cancelled && ownerLife.IsCurrent(),"composite_train_queue_interrupted");
+        ownedRawRun=request.specification.runId;ownedRawTrial=request.specification.trialId;
+        // Only the executor's copy retains the actor. Its reusable group
+        // prototype must not form actor -> group -> callback -> actor cycles.
+        if(auto keep=weak_from_this().lock()) {
+            const auto prepared=request.onPrepared;
+            const auto sample=request.onSample;
+            request.onPrepared=[keep,prepared](const auto& p,const auto& s){if(prepared)prepared(p,s);};
+            request.onSample=[keep,sample](const auto& frame){if(sample)sample(frame);};
+        }
+        owner.NativeProbeControl.Queue(std::move(request));
+        ownedRawControlGeneration=owner.NativeProbeControl.ControlGeneration();
     };
     adapter.probeState=[&owner](){return owner.NativeProbeControl.Status();};
-    adapter.takeResult=[&owner](){return owner.NativeProbeControl.TakeResult();};
-    adapter.cancel=[this,&owner](const auto& reason){if(ownerLife.IsCurrent())owner.NativeProbeControl.Cancel(reason);};
-    adapter.onNativeResult=[this](const NativeProbeResult& packet){
-        if(packet.requestedSpecification)for(auto& trial:rawTrials)
-            if(trial.actual.trialId==packet.requestedSpecification->trialId){trial.packet=packet;break;}
-        if(afterNativeResult)afterNativeResult(packet);
+    adapter.takeResult=[this,&owner]()->std::optional<NativeProbeResult>{
+        if(!ownerLife.IsCurrent() || owner.NativeProbeControl.ControlGeneration()!=ownedRawControlGeneration)return {};
+        const auto& result=owner.NativeProbeControl.Result();
+        if(!result || !result->requestedSpecification || result->requestedSpecification->runId!=ownedRawRun ||
+            result->requestedSpecification->trialId!=ownedRawTrial)return {};
+        return owner.NativeProbeControl.TakeResult();
     };
+    adapter.cancel=[this,&owner](const auto& reason){if(ownerLife.IsCurrent() &&
+        owner.NativeProbeControl.MatchesActiveTrial(ownedRawRun,ownedRawTrial,ownedRawControlGeneration))owner.NativeProbeControl.Cancel(reason);};
+    cancelOwnedRaw=[this,&owner](const std::string& reason,bool lifecycleAuthority)->std::optional<NativeProbeResult>{
+        // Rdk advances lifecycle before its owner hook. That hook may close
+        // its exact still-existing request, but cannot revive a live lease or
+        // touch a later request, even if run/trial strings were reused.
+        if(!ownerLife.IsAlive() || (!lifecycleAuthority && !ownerLife.IsCurrent()))return {};
+        auto& probe=owner.NativeProbeControl;
+        if(probe.ControlGeneration()!=ownedRawControlGeneration)return {};
+        if(probe.MatchesActiveTrial(ownedRawRun,ownedRawTrial,ownedRawControlGeneration))probe.Cancel(reason);
+        if(probe.ControlGeneration()!=ownedRawControlGeneration)return {};
+        const auto& result=probe.Result();
+        if(!result || !result->requestedSpecification || result->requestedSpecification->runId!=ownedRawRun ||
+            result->requestedSpecification->trialId!=ownedRawTrial)return {};
+        return probe.TakeResult();
+    };
+    adapter.onRetainedPacket=[this](const NativeProbeResult& packet){RetainRawPacket(packet);};
+    adapter.onNativeResult=[this](const NativeProbeResult& packet){if(afterNativeResult)afterNativeResult(packet);};
     adapter.requested=[this,&owner](){return !cancelled && ownerLife.IsCurrent() && owner.IsNeedToTrain.GetData();};
     adapter.readModelRevision=[this](){
         Require(ownerLife.IsCurrent(),"composite_train_owner_lifecycle_changed");
@@ -96,7 +126,9 @@ void NativeCompositeTrainingAttempt::AdoptOwned(const CompositePortableTrainingP
     RestartOwned(l,m,w,proof.ModelRevision());
 }
 NativeCompositeTrainingAttempt::~NativeCompositeTrainingAttempt(){
-    try {if(Running())group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},"composite_train_attempt_destroyed");}catch(...){}
+    // A destructor never invokes application/controller notification callbacks.
+    afterNativeResult={};beforeNativeQueue={};
+    try {SuspendOwned("composite_train_attempt_destroyed");}catch(...){}
     lease.reset();
 }
 void NativeCompositeTrainingAttempt::Initialize(VerificationProtocol p,CompositeAttemptLimits l,double m,double w) {
@@ -231,6 +263,7 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
     Require(totalSamples<=limits.maximumTotalSamples && charge<=limits.maximumTotalSamples-totalSamples,"composite_attempt_sample_budget_exhausted");
     closed=false;budgetExhausted=false;activeSamples=0;groupStartModel=modelTime;groupStartWall=wallTime;groupWallLimit=wallLimit;groupModelLimit=modelLimit;
     groupEndModel=modelTime;groupEndWall=wallTime;this->logical=logical;this->purpose=purpose;rawTrials.clear();
+    rawDeliveryCursor=0;interruptedRawPackets.clear();ownedRawRun.clear();ownedRawTrial.clear();
     beforeNativeQueue=std::move(onQueue);afterNativeResult=std::move(onResult);
     auto id=std::make_shared<CompositeTrainingDetail::Identity>();id->protocol=protocol;id->lease=lease;
     QJsonObject candidate;id->ownerScope=ownerScope;id->sourceOrigin=sourceOrigin;id->candidateWitnessId=CheckBoundary(&candidate,&id->capacitance);
@@ -288,14 +321,16 @@ void NativeCompositeTrainingAttempt::BeforeTick(double m,double w) {
     try {CheckClock(m,w);group->BeforeTick(adapter,m,w);}
     catch(const CompositeTrainingBudgetExhausted& e){budgetExhausted=true;rejection=e.what();group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},e.what());}
     catch(const std::exception& e){group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},e.what());}
-    if(!Running())CloseGroup();
+    if(cancelled)SuspendOwned(rejection.empty()?"native_composite_control_replaced":rejection);
+    else if(!Running())CloseGroup();
 }
 void NativeCompositeTrainingAttempt::AfterTick(double m,double w) {
     if(!Running())return;
     try {CheckClock(m,w);group->AfterTick(adapter,m,w);}
     catch(const CompositeTrainingBudgetExhausted& e){budgetExhausted=true;rejection=e.what();group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},e.what());}
     catch(const std::exception& e){group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},e.what());}
-    if(!Running())CloseGroup();
+    if(cancelled)SuspendOwned(rejection.empty()?"native_composite_control_replaced":rejection);
+    else if(!Running())CloseGroup();
 }
 void NativeCompositeTrainingAttempt::CloseGroup() {
     if(closed || !group)return;closed=true;completedNativeProbes+=group->IssuedNativeProbes();
@@ -336,8 +371,39 @@ void NativeCompositeTrainingAttempt::CloseGroup() {
     groupEndModel=lastModel;groupEndWall=NativeTrainingWallTime();
 }
 void NativeCompositeTrainingAttempt::RevokeLive(){cancelled=true;lease.reset();}
-void NativeCompositeTrainingAttempt::SuspendOwned(const NativeMatchedOmissionAdapter& authority,const std::string& reason) {
-    if(Running())group->Cancel(authority,reason);CloseGroup();RevokeLive();
+void NativeCompositeTrainingAttempt::RetainRawPacket(const NativeProbeResult& packet) {
+    if(packet.requestedSpecification)for(auto& trial:rawTrials)
+        if(trial.actual.trialId==packet.requestedSpecification->trialId &&
+            trial.actual.runId==packet.requestedSpecification->runId){trial.packet=packet;break;}
+}
+std::vector<NativeProbeResult> NativeCompositeTrainingAttempt::TakeRetainedRawPackets() {
+    std::vector<NativeProbeResult> packets;if(!group)return packets;
+    const auto& journal=group->Result().packets;
+    Require(rawDeliveryCursor<=journal.size(),"composite_raw_delivery_cursor_changed");
+    while(rawDeliveryCursor<journal.size()) {
+        RetainRawPacket(journal[rawDeliveryCursor]);packets.push_back(journal[rawDeliveryCursor]);++rawDeliveryCursor;
+    }
+    return packets;
+}
+void NativeCompositeTrainingAttempt::InterruptOwnedRaw(const std::string& reason,bool lifecycleAuthority) {
+    RevokeLive();
+    // May run from a preparation/sample callback. Capture the actual executor
+    // result now, before Reset clears it, without re-entering a group frame.
+    if(cancelOwnedRaw)if(auto packet=cancelOwnedRaw(reason,lifecycleAuthority)) {
+        RetainRawPacket(*packet);interruptedRawPackets.push_back(std::move(*packet));
+    }
+}
+void NativeCompositeTrainingAttempt::SuspendOwned(const std::string& reason) {
+    InterruptOwnedRaw(reason);
+    NativeMatchedOmissionAdapter authority;authority.onRetainedPacket=adapter.onRetainedPacket;
+    // Already captured packets are plain historical data, not an owner getter.
+    authority.takeResult=[this]()->std::optional<NativeProbeResult>{
+        if(interruptedRawPackets.empty())return {};
+        auto packet=std::move(interruptedRawPackets.front());interruptedRawPackets.erase(interruptedRawPackets.begin());return packet;
+    };
+    if(Running())group->Cancel(authority,reason);
+    if(group)while(auto packet=authority.takeResult())group->RetainPacket(authority,std::move(*packet));
+    CloseGroup();RevokeLive();
     if(rejection.empty())rejection=reason;
 }
 void NativeCompositeTrainingAttempt::RestartOwned(CompositeAttemptLimits value,double m,double w,const std::string& revision) {
@@ -362,6 +428,7 @@ void NativeCompositeTrainingAttempt::RestartOwned(CompositeAttemptLimits value,d
     issuedGroups=completedNativeProbes=totalSamples=activeSamples=0;logicalTrials.clear();
     group.reset();prepared.reset();measurement.reset();selection.reset();activeIdentity.reset();rawTrials.clear();
     closed=false;budgetExhausted=false;rejection.clear();beforeNativeQueue={};afterNativeResult={};
+    rawDeliveryCursor=0;interruptedRawPackets.clear();ownedRawRun.clear();ownedRawTrial.clear();
 }
 NativeCompositeMeasurementRecord NativeCompositeTrainingAttempt::Record() const {
     Require(bool(group) && bool(activeIdentity),"composite_measurement_not_started");

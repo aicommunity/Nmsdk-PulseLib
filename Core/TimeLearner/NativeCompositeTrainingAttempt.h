@@ -5,6 +5,7 @@
 #include "TrainingCapacitance.h"
 #include "NativeCompositeTrainingRecord.h"
 #include <set>
+#include <memory>
 
 namespace NMSDK { class NNeuronTimeLearner;class NNeuronTimeLearnerBranch; }
 namespace NMSDK::TimeLearner {
@@ -13,7 +14,7 @@ class CompositePortableTrainingProof;
 // The owner-specific factory binds actual roots, executor, images and optional
 // existing C0. No Calculate/Build/Reset, model edits or invented C0 occur here.
 // Service composition supplies the existing scheduler's before/after hooks.
-class NativeCompositeTrainingAttempt {
+class NativeCompositeTrainingAttempt : public std::enable_shared_from_this<NativeCompositeTrainingAttempt> {
 public:
     NativeCompositeTrainingAttempt(NNeuronTimeLearner& owner,VerificationProtocol protocol,
         CompositeAttemptLimits limits,double modelTime,double wallTime);
@@ -57,7 +58,10 @@ private:
     void RestartOwned(CompositeAttemptLimits,double modelTime,double wallTime,const std::string& currentRevision);
     void RefreshOwnedAfterEdit(const std::string& currentRevision);
     void RevokeLive();
-    void SuspendOwned(const NativeMatchedOmissionAdapter&,const std::string& reason);
+    void InterruptOwnedRaw(const std::string& reason,bool lifecycleAuthority=false);
+    void SuspendOwned(const std::string& reason);
+    void RetainRawPacket(const NativeProbeResult&);
+    std::vector<NativeProbeResult> TakeRetainedRawPackets();
     template<class Owner> void Bind(Owner& owner);
     void Initialize(VerificationProtocol,CompositeAttemptLimits,double,double);
     void AdoptOwned(const CompositePortableTrainingProof&,CompositeAttemptLimits,double,double);
@@ -84,6 +88,11 @@ private:
     VerificationRequest logical;
     CompositeMeasurementPurpose purpose=CompositeMeasurementPurpose::Reference;
     std::vector<NativeCompositeRawTrial> rawTrials;
+    std::vector<NativeProbeResult> interruptedRawPackets;
+    std::size_t rawDeliveryCursor=0;
+    std::string ownedRawRun,ownedRawTrial;
+    std::size_t ownedRawControlGeneration=0;
+    std::function<std::optional<NativeProbeResult>(const std::string&,bool)> cancelOwnedRaw;
     std::function<void(const NativeProbeRequest&)> beforeNativeQueue;
     std::function<void(const NativeProbeResult&)> afterNativeResult;
     std::set<std::string> logicalTrials;
