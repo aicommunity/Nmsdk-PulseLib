@@ -18,6 +18,9 @@ struct NativeMatchedOmissionAdapter {
     std::function<void(const std::string&)> cancel;
     std::function<std::string()> readModelRevision;
     std::function<bool()> requested;
+    // Boundary sink after the actual packet and trace have been retained.
+    // Failure rejects the group; the packet is not lost or re-consumed.
+    std::function<void(const NativeProbeResult&)> onNativeResult;
 };
 enum class NativeMatchedOmissionState { Idle, Running, Completed, Rejected, Cancelled, BudgetExhausted };
 struct NativeMatchedOmissionResult {

@@ -1,6 +1,7 @@
 #include "NativeCompositeTrainingAttempt.h"
 #include "../NNeuronTimeLearner.h"
 #include "../NNeuronTimeLearnerBranch.h"
+#include "../NPulseNeuron.h"
 #include "ConfiguredNativeTraining.h"
 #include "MatchedOmissionEvidenceJson.h"
 #include "ModelArchive.h"
@@ -50,22 +51,36 @@ template<class Owner> void NativeCompositeTrainingAttempt::Bind(Owner& owner) {
     Require(owner.NativeTrainingControl.State()!=NativeTrainingState::CapturingReferences &&
         owner.NativeTrainingControl.State()!=NativeTrainingState::Searching,"composite_train_owner_service_already_active");
     ownerLife=owner.ObserveLifecycle();
+    observeOwner=[&owner](){return owner.ObserveLifecycle();};
+    requireOwnerControl=[this,&owner](){
+        const auto state=owner.NativeTrainingControl.State();
+        if(state==NativeTrainingState::CapturingReferences || state==NativeTrainingState::Searching)
+            Require(owner.NativeTrainingControl.composite.get()==this,"another_native_training_service_owns_executor");
+    };
     initialEpoch=owner.NativeTrainingControl.ModelEpoch();
     bindings=[&owner](){return owner.NativeProbeModelBindings();};
     declaration=[&owner](){return owner.NativeModelDeclaration?EncodeNativeModelSpec(*owner.NativeModelDeclaration):QJsonObject{};};
     actualModelTime=[&owner](){Require(bool(owner.Environment),"composite_train_missing_native_environment");
         return owner.Environment->GetTime().GetDoubleTime();};
     capacitanceWitness=[&owner](){return owner.ReadNativeTrainingCapacitanceWitness();};
-    adapter.queue=[&owner](auto request){owner.NativeProbeControl.Queue(std::move(request));};
+    adapter.queue=[this,&owner](auto request){
+        Require(ownerLife.IsCurrent(),"composite_train_owner_lifecycle_changed");
+        if(beforeNativeQueue)beforeNativeQueue(request);owner.NativeProbeControl.Queue(std::move(request));
+    };
     adapter.probeState=[&owner](){return owner.NativeProbeControl.Status();};
     adapter.takeResult=[&owner](){return owner.NativeProbeControl.TakeResult();};
-    adapter.cancel=[&owner](const auto& reason){owner.NativeProbeControl.Cancel(reason);};
+    adapter.cancel=[this,&owner](const auto& reason){if(ownerLife.IsCurrent())owner.NativeProbeControl.Cancel(reason);};
+    adapter.onNativeResult=[this](const NativeProbeResult& packet){
+        if(packet.requestedSpecification)for(auto& trial:rawTrials)
+            if(trial.actual.trialId==packet.requestedSpecification->trialId){trial.packet=packet;break;}
+        if(afterNativeResult)afterNativeResult(packet);
+    };
     adapter.requested=[this,&owner](){return !cancelled && ownerLife.IsCurrent() && owner.IsNeedToTrain.GetData();};
     adapter.readModelRevision=[this](){
         Require(ownerLife.IsCurrent(),"composite_train_owner_lifecycle_changed");
         const auto b=bindings();const auto source=b.dataset->template GetComponentL<NPulseGeneratorTransit>("Generator1",true);
         Require(bool(source),"composite_train_missing_source");
-        return revisionObserver.Read(b.neuron,{{&source->Output,"burst"}}).toStdString();
+        return revisionObserver.Read(b.neuron.Get(),{{&source->Output,"burst"}}).toStdString();
     };
 }
 NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearner& o,VerificationProtocol p,
@@ -100,14 +115,21 @@ void NativeCompositeTrainingAttempt::Initialize(VerificationProtocol p,Composite
         "composite_train_initial_source_dimensions");
     QJsonArray appliedIsi;for(int i=0;i<b.inputCount;++i)appliedIsi.append(b.dataset->MatrixData(i,0));
     Require(Hash(appliedIsi)==protocol->patternHash,"composite_train_initial_source_pattern_mismatch");
-    const auto identity=NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}});
+    const auto identity=NmsdkTools::IdentifyModel(b.neuron.Get(),{{&source->Output,"burst"}});
     Require(identity["valid"].toBool(),"composite_train_invalid_initial_identity");initialRevision=identity["sha256"].toString().toStdString();
     for(const char* key:{"neuron_class","dataset_class","generator_class"})
         if(initialDeclaration[key].isString())imageRoots.push_back(initialDeclaration[key].toString().toStdString());
-    const auto images=NmsdkTools::CaptureModelImageDefinitions(b.neuron,{{&source->Output,"burst"}},imageRoots);
+    const auto c=capacitanceWitness();
+    if(c)for(const auto& definition:QJsonDocument::fromJson(QByteArray::fromStdString(c->nativeStateJson)).object()["baseline"].toObject()["storage_images"].toArray())
+        imageRoots.push_back(definition.toObject()["name"].toString().toStdString());
+    const auto datasetSnapshot=NmsdkTools::ExportDatasetSnapshot(b.dataset.Get());
+    for(const auto& cls:datasetSnapshot["required_class_names"].toArray())imageRoots.push_back(cls.toString().toStdString());
+    const auto images=NmsdkTools::CaptureModelImageDefinitions(b.neuron.Get(),{{&source->Output,"burst"}},imageRoots);
     storageFingerprint=NmsdkTools::ModelImageDefinitionsFingerprint(images).toStdString();
-    const auto c=capacitanceWitness();if(c){initialCapacitanceOrigin=c->parameters.origin;initialCapacitanceMaximumRelativeChange=c->parameters.maximumRelativeChange;}
-    sourceBinding=QJsonObject{{"kind","composite_train_initial_source_v1"},{"initial_model",identity},{"initial_epoch",double(initialEpoch)},
+    if(c){initialCapacitanceOrigin=c->parameters.origin;initialCapacitanceMaximumRelativeChange=c->parameters.maximumRelativeChange;}
+    sourceBinding=QJsonObject{{"kind","composite_train_initial_source_v1"},{"schema_version",2},{"initial_model",identity},
+        {"initial_native_snapshot",NmsdkTools::ExportPhysicalGraphForEdit(b.neuron.Get(),{{&source->Output,"burst"}})},
+        {"initial_dataset",datasetSnapshot},{"initial_epoch",double(initialEpoch)},
         {"model_spec",initialDeclaration},{"storage_images_sha256",Text(storageFingerprint)},
         {"storage_images",images},{"applied_source_isi",appliedIsi},
         {"pattern_hash",Text(protocol->patternHash)},{"optional_C0_origin",Text(initialCapacitanceOrigin)},
@@ -119,6 +141,7 @@ void NativeCompositeTrainingAttempt::Initialize(VerificationProtocol p,Composite
     // Process-local ownership identity; unlike semantic proof content this is
     // intentionally not a portable model identity or a physics attestation.
     ownerScope=Hash(QJsonArray{Text(sourceOrigin),QString::number(qulonglong(generation))});
+    liveAttemptBinding=Hash(QJsonArray{Text(ownerScope),QString::number(qulonglong(generation))});
     lease=std::make_shared<CompositeTrainingDetail::LiveLease>();
     lease->requireCurrent=[this](){
         Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
@@ -128,25 +151,28 @@ void NativeCompositeTrainingAttempt::Initialize(VerificationProtocol p,Composite
 }
 void NativeCompositeTrainingAttempt::CheckClock(double m,double w) {
     Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
+    requireOwnerControl();
     if(!adapter.requested())throw CompositeTrainingStopped();
     Require(m==actualModelTime(),"composite_train_clock_not_actual_native_time");
     Require(std::isfinite(m) && std::isfinite(w) && m>=lastModel && w>=lastWall,"composite_attempt_nonmonotonic_clock");
     lastModel=m;lastWall=w;
-    Require(m-startModel<limits.maximumModelSeconds && w-startWall<limits.maximumWallSeconds,"composite_attempt_time_budget_exhausted");
+    if(m-startModel>=limits.maximumModelSeconds || w-startWall>=limits.maximumWallSeconds)
+        throw CompositeTrainingBudgetExhausted("composite_attempt_time_budget_exhausted");
 }
 std::string NativeCompositeTrainingAttempt::CheckBoundary(QJsonObject* retained,std::optional<TrainingCapacitance>* parameters) {
     Require(ownerLife.IsCurrent(),"composite_train_owner_lifecycle_changed");
+    requireOwnerControl();
     if(!adapter.requested())throw CompositeTrainingStopped();
     Require(declaration()==initialDeclaration,"composite_train_source_owner_changed");
     const auto b=bindings();const auto source=b.dataset->template GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     Require(bool(source),"composite_train_missing_source");
-    const auto images=NmsdkTools::CaptureModelImageDefinitions(b.neuron,{{&source->Output,"burst"}},imageRoots);
+    const auto images=NmsdkTools::CaptureModelImageDefinitions(b.neuron.Get(),{{&source->Output,"burst"}},imageRoots);
     Require(NmsdkTools::ModelImageDefinitionsFingerprint(images).toStdString()==storageFingerprint,"composite_train_storage_physics_changed");
     const auto current=capacitanceWitness();
     if(current)Require(current->parameters.origin==initialCapacitanceOrigin &&
         current->parameters.maximumRelativeChange==initialCapacitanceMaximumRelativeChange,"composite_train_C0_origin_or_policy_changed");
     else Require(initialCapacitanceOrigin.empty(),"composite_train_C0_state_lost");
-    const auto identity=NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}});
+    const auto identity=NmsdkTools::IdentifyModel(b.neuron.Get(),{{&source->Output,"burst"}});
     Require(identity["valid"].toBool() && identity["sha256"].toString().toStdString()==adapter.readModelRevision(),
         "composite_train_candidate_full_identity_mismatch");
     const QJsonObject binding{{"kind","composite_train_candidate_binding_v1"},{"source_origin",Text(sourceOrigin)},
@@ -158,9 +184,12 @@ std::string NativeCompositeTrainingAttempt::CheckBoundary(QJsonObject* retained,
 }
 void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest& logical,CompositeMeasurementPurpose purpose,
     NativeProbeRequest prototype,double modelLimit,double wallLimit,double modelTime,double wallTime,
-    std::function<void(const PreparedCompositeMeasurement&)> sink) {
+    std::function<void(const PreparedCompositeMeasurement&)> sink,
+    std::function<void(const NativeProbeRequest&)> onQueue,std::function<void(const NativeProbeResult&)> onResult) {
     Require(!Running(),"composite_train_group_already_running");
     if(group && !closed)CloseGroup();
+    // A failed preflight is not the previous group's data under a new label.
+    group.reset();activeIdentity.reset();rawTrials.clear();
     measurement.reset();selection.reset();prepared.reset();rejection.clear();
     CheckClock(modelTime,wallTime);
     Require(issuedGroups<limits.maximumGroups && IssuedNativeProbes()<=limits.maximumNativeProbes &&
@@ -186,7 +215,9 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
         Require(declared.endOffset<=prototype.specification.end,"composite_train_declared_window_exceeds_duration");
     const auto charge=contract.contextPolicy.maximumTotalSamples;
     Require(totalSamples<=limits.maximumTotalSamples && charge<=limits.maximumTotalSamples-totalSamples,"composite_attempt_sample_budget_exhausted");
-    closed=false;activeSamples=0;groupStartWall=wallTime;groupWallLimit=wallLimit;
+    closed=false;budgetExhausted=false;activeSamples=0;groupStartModel=modelTime;groupStartWall=wallTime;groupWallLimit=wallLimit;
+    groupEndModel=modelTime;groupEndWall=wallTime;this->logical=logical;this->purpose=purpose;rawTrials.clear();
+    beforeNativeQueue=std::move(onQueue);afterNativeResult=std::move(onResult);
     auto id=std::make_shared<CompositeTrainingDetail::Identity>();id->protocol=protocol;id->lease=lease;
     QJsonObject candidate;id->ownerScope=ownerScope;id->sourceOrigin=sourceOrigin;id->candidateWitnessId=CheckBoundary(&candidate,&id->capacitance);
     id->candidateBindingJson=QJsonDocument(candidate).toJson(QJsonDocument::Compact).toStdString();id->generation=generation;
@@ -211,11 +242,12 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
     prototype.readFullModelRevision=[this](){
         Require(ownerLife.IsCurrent(),"composite_train_owner_lifecycle_changed");const auto b=bindings();
         const auto source=b.dataset->template GetComponentL<NPulseGeneratorTransit>("Generator1",true);
-        Require(bool(source),"composite_train_missing_source");const auto full=NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}});
+        Require(bool(source),"composite_train_missing_source");const auto full=NmsdkTools::IdentifyModel(b.neuron.Get(),{{&source->Output,"burst"}});
         Require(full["valid"].toBool(),"composite_train_invalid_full_identity");return full["sha256"].toString().toStdString();
     };
     const auto caller=prototype.onPrepared;
     prototype.onPrepared=[this,id,sink,caller](const auto& p,const auto& s){
+        rawTrials.push_back({p,s,{},{}});
         if(!prepared){
             Require(p.baseModelRevision==id->baseRevision && p.modelEpoch==id->modelEpoch &&
                 p.inputId==protocol->inputs[id->inputIndex].id && p.protocolRevision==protocol->revision &&
@@ -227,7 +259,8 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
     const auto sampleSink=prototype.onSample;
     prototype.onSample=[this,sampleSink](const NativeProbeSample& sample){
         Require(activeSamples<limits.maximumTotalSamples-totalSamples,"composite_attempt_sample_budget_exhausted");
-        ++activeSamples;if(sampleSink)sampleSink(sample);
+        Require(!rawTrials.empty(),"composite_native_sample_without_preparation");
+        ++activeSamples;rawTrials.back().samples.push_back(sample);if(sampleSink)sampleSink(sample);
     };
     NativeMatchedOmissionPlan plan;plan.fullBurst=std::move(prototype);plan.groupId=id->groupId;
     plan.policy=contract.contextPolicy;plan.channel=id->channel;plan.maximumModelSeconds=modelLimit;plan.maximumWallSeconds=wallLimit;
@@ -239,12 +272,14 @@ std::size_t NativeCompositeTrainingAttempt::IssuedNativeProbes() const {return c
 void NativeCompositeTrainingAttempt::BeforeTick(double m,double w) {
     if(!Running())return;
     try {CheckClock(m,w);group->BeforeTick(adapter,m,w);}
+    catch(const CompositeTrainingBudgetExhausted& e){budgetExhausted=true;rejection=e.what();group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},e.what());}
     catch(const std::exception& e){group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},e.what());}
     if(!Running())CloseGroup();
 }
 void NativeCompositeTrainingAttempt::AfterTick(double m,double w) {
     if(!Running())return;
     try {CheckClock(m,w);group->AfterTick(adapter,m,w);}
+    catch(const CompositeTrainingBudgetExhausted& e){budgetExhausted=true;rejection=e.what();group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},e.what());}
     catch(const std::exception& e){group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},e.what());}
     if(!Running())CloseGroup();
 }
@@ -282,7 +317,7 @@ void NativeCompositeTrainingAttempt::CloseGroup() {
         }
         const auto proof=Hash(QJsonObject{{"kind","live-composite-training-measurement-v1"},{"method_binding",ProtocolBinding(*protocol)},
             {"source_origin",Text(sourceOrigin)},{"candidate_witness",Text(activeIdentity->candidateWitnessId)},
-            {"live_attempt_binding",Text(ownerScope)},
+            {"live_attempt_binding",Text(liveAttemptBinding)},
             {"attempt_limits",QJsonArray{double(limits.maximumGroups),double(limits.maximumNativeProbes),
                 double(limits.maximumTotalSamples),limits.maximumModelSeconds,limits.maximumWallSeconds}},
             {"group_limits",QJsonArray{result.maximumModelSeconds,result.maximumWallSeconds}},
@@ -292,10 +327,61 @@ void NativeCompositeTrainingAttempt::CloseGroup() {
         // live steady-clock check, not an elapsed-time claim decoded from old
         // group declarations. Supplied hook clocks must use this same clock.
         const double now=NativeTrainingWallTime();CheckClock(lastModel,now);
-        Require(now-groupStartWall<groupWallLimit,"composite_train_group_wall_budget_exhausted");
+        if(now-groupStartWall>=groupWallLimit)throw CompositeTrainingBudgetExhausted("composite_train_group_wall_budget_exhausted");
         measurement=ValidatedCompositeMeasurement(*prepared,peak.rawPotential,peak.time-originTime,peak.plateauEnd-originTime,proof);
     }
-    catch(const std::exception& e){measurement.reset();rejection=e.what();if(!result.reason.empty())rejection+=";"+result.reason;}
+    catch(const CompositeTrainingBudgetExhausted& e){budgetExhausted=true;measurement.reset();rejection=e.what();}
+    catch(const std::exception& e){measurement.reset();if(rejection.empty())rejection=e.what();if(!result.reason.empty())rejection+=";"+result.reason;}
+    groupEndModel=lastModel;groupEndWall=NativeTrainingWallTime();
+}
+void NativeCompositeTrainingAttempt::RevokeLive(){cancelled=true;lease.reset();}
+void NativeCompositeTrainingAttempt::SuspendOwned(const NativeMatchedOmissionAdapter& authority,const std::string& reason) {
+    if(Running())group->Cancel(authority,reason);CloseGroup();RevokeLive();
+    if(rejection.empty())rejection=reason;
+}
+void NativeCompositeTrainingAttempt::RestartOwned(CompositeAttemptLimits value,double m,double w,const std::string& revision) {
+    // Only the owning service can carry this immutable source family across a
+    // legal Reset. Default/pool/retarget clear that service-owned family.
+    Require(ownerLife.IsAlive() && !Running(),"composite_warm_restart_owner_not_available");
+    ownerLife=observeOwner();Require(ownerLife.IsCurrent(),"composite_warm_restart_owner_not_current");
+    Require(value.maximumGroups && value.maximumNativeProbes && value.maximumTotalSamples &&
+        std::isfinite(value.maximumModelSeconds) && value.maximumModelSeconds>0. &&
+        std::isfinite(value.maximumWallSeconds) && value.maximumWallSeconds>0.,"invalid_composite_attempt_limits");
+    Require(value.maximumGroups<=9007199254740991ULL && value.maximumNativeProbes<=9007199254740991ULL &&
+        value.maximumTotalSamples<=9007199254740991ULL && std::isfinite(m) && std::isfinite(w),"inexact_composite_attempt_limits");
+    limits=value;startModel=lastModel=m;startWall=lastWall=w;cancelled=false;
+    Require(m==actualModelTime() && adapter.requested() && adapter.readModelRevision()==revision,
+        "composite_warm_restart_current_binding_changed");
+    // Keep sourceOrigin, sourceBinding, initial revision/epoch, images and C0.
+    CheckBoundary();generation=NextAttemptGeneration();
+    liveAttemptBinding=Hash(QJsonArray{Text(ownerScope),QString::number(qulonglong(generation))});
+    lease=std::make_shared<CompositeTrainingDetail::LiveLease>();
+    lease->requireCurrent=[this](){Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
+        if(!adapter.requested())throw CompositeTrainingStopped();};
+    issuedGroups=completedNativeProbes=totalSamples=activeSamples=0;logicalTrials.clear();
+    group.reset();prepared.reset();measurement.reset();selection.reset();activeIdentity.reset();rawTrials.clear();
+    closed=false;budgetExhausted=false;rejection.clear();beforeNativeQueue={};afterNativeResult={};
+}
+NativeCompositeMeasurementRecord NativeCompositeTrainingAttempt::Record() const {
+    Require(bool(group) && bool(activeIdentity),"composite_measurement_not_started");
+    NativeCompositeMeasurementRecord r;r.logical=logical;r.purpose=purpose;r.sourceOrigin=sourceOrigin;r.groupId=activeIdentity->groupId;
+    r.ownerFamilyBinding=ownerScope;r.liveAttemptBinding=liveAttemptBinding;r.candidateBindingJson=activeIdentity->candidateBindingJson;
+    r.semanticProofId=measurement?measurement->SemanticProofId():std::string{};r.reason=rejection;
+    r.groupState=group->State();r.group=group->Result();r.rawTrials=rawTrials;r.selection=selection;r.attemptLimits=limits;
+    r.issuedNativeProbes=group->IssuedNativeProbes();r.sampledFrames=activeSamples;
+    r.startModel=groupStartModel;r.startWall=groupStartWall;r.endModel=groupEndModel;r.endWall=groupEndWall;return r;
+}
+void NativeCompositeTrainingAttempt::RefreshOwnedAfterEdit(const std::string& revision) {
+    Require(ownerLife.IsAlive() && !Running(),"composite_owned_edit_not_at_group_boundary");
+    RevokeLive();ownerLife=observeOwner();cancelled=false;
+    Require(ownerLife.IsCurrent() && adapter.requested() && adapter.readModelRevision()==revision,
+        "composite_owned_edit_current_binding_changed");
+    CheckBoundary();generation=NextAttemptGeneration();
+    liveAttemptBinding=Hash(QJsonArray{Text(ownerScope),QString::number(qulonglong(generation))});
+    lease=std::make_shared<CompositeTrainingDetail::LiveLease>();
+    lease->requireCurrent=[this](){Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
+        if(!adapter.requested())throw CompositeTrainingStopped();};
+    // Attempt clocks/counters and immutable source family are NOT restarted.
 }
 void NativeCompositeTrainingAttempt::Cancel(const std::string& reason) {
     if(Running())group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},reason);

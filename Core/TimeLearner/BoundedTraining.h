@@ -145,6 +145,7 @@ public:
     // Attempt-wide charge, including every final verification sweep. This is
     // not Rejected().size(): that array also contains non-observation failures.
     std::size_t InvalidObservations() const { return invalid; }
+    std::size_t AcceptedCompositeObservations() const {return acceptedComposite;}
 private:
     enum class Phase { Candidate, Anchor, Input, Verify };
     CapturedReferences references;
@@ -156,7 +157,7 @@ private:
     std::optional<TrainingCapacitance> currentCapacitance,backgroundCapacitance;
     std::vector<std::size_t> order;
     std::size_t position=0,sweep=0,candidates=0;
-    std::size_t serial=0,epoch=0,probes=0,edits=0,invalid=0;
+    std::size_t serial=0,epoch=0,probes=0,edits=0,invalid=0,acceptedComposite=0;
     std::string revision,anchorTrial;
     std::string compositeAnchorWitness;
     std::optional<ValidatedProbeMeasurement> anchor;

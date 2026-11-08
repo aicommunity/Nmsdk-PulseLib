@@ -2963,6 +2963,7 @@ bool NNeuronTimeLearner::SetInputPattern(const MDMatrix<double> &value)
  {
   if(!Dataset || !TimeLearner::ValidNativeTarget(value,std::size_t(NumInputDendrite.GetData())))return false;
   if(TimeLearner::NativeTrainingPatternEqual(value,InputPattern.GetData()))return true;
+  TimeLearner::NativeLearnerLifecycle::InterruptComposite(*this,"training_target_changed");
   NativeTrainingRequestIntent.Clear();NativeProbeControl.Cancel("training_target_changed");NativeTrainingControl.InvalidateTarget();
   NativeTrainingControl.FailConfiguration("training_target_changed_requires_new_plan");
   try{TimeLearner::AssignNativeTarget(*Dataset,value);return true;}
@@ -3381,6 +3382,8 @@ void NNeuronTimeLearner::BindLegacyGraphRoles()
 /// Hook before Build
 bool NNeuronTimeLearner::ABeforeBuild(void)
 {
+ if(!NativeTrainingEditDepth && NativeTrainingControl.Plan().protocol.schemaVersion==4)
+ {TimeLearner::NativeLearnerLifecycle::InterruptComposite(*this,"learner_build");NativeTrainingControl.ResetControl();}
  if(ControllerVersion.GetData()==2 || ConfiguredModelInitialized.GetData())return true;
  if(NativeTrainingOwned)return true;
  BindLegacyGraphRoles();
@@ -4081,6 +4084,7 @@ bool NNeuronTimeLearner::Build(void)
 }
 void NNeuronTimeLearner::UnInit(void)
 {
+ if(IsInit())TimeLearner::NativeLearnerLifecycle::InterruptComposite(*this,"learner_uninit");
  if(IsInit())InterruptNativePostTunePhase("learner_uninit");
  if(IsInit())
  {
@@ -4091,6 +4095,7 @@ void NNeuronTimeLearner::UnInit(void)
 }
 void NNeuronTimeLearner::Init(void)
 {
+ if(!IsInit() && !NativeTrainingEditDepth)TimeLearner::NativeLearnerLifecycle::InterruptComposite(*this,"learner_init");
  if(!IsInit())InterruptNativePostTunePhase("learner_init");
  TimeLearner::NativeLifecycleScope scope(NativeLifecycleDepth);
  if(!IsInit() && NativeTrainingOwned && TimeLearner::NativeTrainingIsActive(NativeTrainingControl))NativeTrainingControl.FailConfiguration("learner_init");

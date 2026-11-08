@@ -1,10 +1,12 @@
 #pragma once
 #include "NativeModelEditor.h"
+#include "NativeCompositeTrainingAttempt.h"
 #include <functional>
 #include <utility>
 
 namespace NMSDK::TimeLearner {
 enum class NativeTrainingState { Idle, CapturingReferences, Searching, Finished };
+double NativeTrainingWallTime();
 
 struct NativeTrainingPlan {
     // A declared native burst protocol, including explicit relative windows.
@@ -19,6 +21,9 @@ struct NativeTrainingPlan {
     // Explicit evidence capability, separate from a future C-search policy.
     // Requires an already bound C0 owner; never captures a new baseline.
     bool recordCapacitanceHistory=false;
+    std::optional<NativeCompositeTrainingPolicy> composite={};
+    std::function<void(const NativeCompositeMeasurementRecord&)> compositeSink;
+    std::function<void(const NativeCompositeMeasurementRecord&)> beforeCompositeConsume;
 };
 
 // Component-specific adapters alone touch Rdk objects. BeforeTick is called
@@ -48,6 +53,7 @@ struct NativeTrainingAdapter {
         const std::optional<TrainingCapacitance>&)> applyWithCapacitance;
     std::function<ResistanceDomainAssessment(const std::vector<InputParameters>&,std::size_t,
         const std::optional<TrainingCapacitance>&)> assessResistanceDomainWithCapacitance;
+    std::function<std::shared_ptr<NativeCompositeTrainingAttempt>(VerificationProtocol,CompositeAttemptLimits,double,double)> createComposite;
 };
 
 struct NativeTrainingCapacitanceHistory {
@@ -104,11 +110,25 @@ public:
     std::size_t ModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
     const BoundedTrainingConfig& Configuration() const { return plan.search; }
     const std::optional<NativeTrainingCapacitanceHistory>& CapacitanceHistory() const {return capacitanceHistory;}
+    const std::vector<NativeCompositeMeasurementRecord>& CompositeMeasurements() const {return compositeRecords;}
+    const std::vector<std::string>& CompositeReferenceGroupIds() const {return compositeReferenceGroups;}
+    std::vector<std::string> CompositeFinalGroupIds() const {
+        std::vector<std::string> result;for(const auto& id:compositeFinalGroups)if(!id.empty())result.push_back(id);return result;
+    }
+    const QJsonObject& CompositeSourceBinding() const {return compositeSourceBinding;}
+    std::size_t CompositeNativeProbes() const {return composite?composite->IssuedNativeProbes():compositeNativeProbes;}
+    std::size_t CompositeGroups() const {return composite?composite->IssuedGroups():compositeGroups;}
+    std::size_t CompositeSampledFrames() const {return composite?composite->RetainedSamples():compositeSampledFrames;}
+    std::size_t CompositePrimaryBytes() const {return compositePrimaryBytes;}
+    // Called from the actual owner's lifecycle BEFORE clearing its executor.
+    // This adapter is supplied by that owner hook, never decoded from a package.
+    void InterruptComposite(const NativeTrainingAdapter&,const std::string& reason);
     // Install only the portable completed/stopped boundary evidence after
     // normal proof replay and physical import. Never restores a search object.
     void RestoreCapacitanceBoundary(NativeTrainingCapacitanceHistory history,
         const std::string& actualModelRevision,const QJsonObject& actualState);
 private:
+    friend class NativeCompositeTrainingAttempt;
     NativeTrainingState state=NativeTrainingState::Idle;
     TrainingStatus outcome=TrainingStatus::Searching;
     std::string reason,referenceBinding;
@@ -121,6 +141,18 @@ private:
     std::unique_ptr<BoundedTrainingSession> search;
     std::optional<TrainingAction> activeAction;
     std::optional<NativeTrainingCapacitanceHistory> capacitanceHistory;
+    std::shared_ptr<NativeCompositeTrainingAttempt> composite;
+    QJsonObject compositeSourceBinding;
+    std::vector<NativeCompositeMeasurementRecord> compositeRecords;
+    std::vector<ValidatedCompositeMeasurement> compositeReferenceMeasurements;
+    std::vector<std::string> compositeReferenceGroups,compositeFinalGroups;
+    std::optional<VerificationRequest> compositeRequest;
+    std::optional<TrainingCapacitance> compositeCapacitance;
+    std::size_t compositeNativeProbes=0,compositeGroups=0,compositeSampledFrames=0,compositePrimaryBytes=0;
+    std::size_t compositeGeneration=0,compositeDispatchDepth=0;
+    bool compositeHarvested=true;
+    std::map<std::string,TrainingCapacitanceWitness> compositeGroupWitnesses;
+    std::map<std::string,std::string> compositeGroupTrialWitnessIds;
     bool waiting=false;
     std::size_t referenceProbes=0,invalidReferences=0,attempt=0,retainedEpoch=0;
     double startModel=0.,startWall=0.,lastModel=0.,lastWall=0.;
@@ -135,6 +167,16 @@ private:
         const std::optional<TrainingCapacitance>& requested);
     void BindTrialCapacitance(const NativeTrainingAdapter& adapter,const NativeProbeRequest& request);
     void ValidateTrialCapacitance(const NativeTrainingAdapter& adapter,const NativeProbeResult& result);
+    void StartComposite(NativeTrainingPlan,const NativeTrainingAdapter&,double,double);
+    void BeforeComposite(const NativeTrainingAdapter&,double,double);
+    void AfterComposite(const NativeTrainingAdapter&,double,double);
+    void StopComposite(const NativeTrainingAdapter&,TrainingStatus,const std::string&);
+    void QueueComposite(const NativeTrainingAdapter&,const VerificationRequest&,CompositeMeasurementPurpose,double,double);
+    void ArchiveComposite(const std::shared_ptr<NativeCompositeTrainingAttempt>&);
+    void ClosedComposite(const NativeTrainingAdapter&,const std::shared_ptr<NativeCompositeTrainingAttempt>&);
+    void RawCompositeResult(const NativeTrainingAdapter&,const NativeProbeResult&);
+    void CompositeBeginSearch(const NativeTrainingAdapter&);
+    void CompositeRefreshCapacitance(const NativeTrainingAdapter&,const std::optional<TrainingCapacitance>& requested,bool requireMatch);
 };
 const char* NativeTrainingStateName(NativeTrainingState state);
 void ValidateNativeTrainingCapacitanceBoundary(const NativeTrainingCapacitanceHistory& history,

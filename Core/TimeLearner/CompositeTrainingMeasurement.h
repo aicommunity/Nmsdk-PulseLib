@@ -13,6 +13,7 @@ class NativeCompositeTrainingAttempt;
 class CapturedReferences;
 class BoundedTrainingSession;
 class FinalVerificationSession;
+class NativeTrainingService;
 struct CompositeInputWindow {
     double beginOffset=0.,endOffset=0.;
     bool operator==(const CompositeInputWindow&) const=default;
@@ -32,6 +33,10 @@ enum class CompositeMeasurementPurpose { Reference,Search,Final };
 class CompositeTrainingStopped : public std::runtime_error {
 public:
     CompositeTrainingStopped():std::runtime_error("composite_training_request_not_active"){}
+};
+class CompositeTrainingBudgetExhausted : public std::runtime_error {
+public:
+    explicit CompositeTrainingBudgetExhausted(const char* reason):std::runtime_error(reason){}
 };
 namespace CompositeTrainingDetail {
 // Factory-owned, process-local admission authority. A public boolean, decoded
@@ -65,6 +70,7 @@ private:
     friend class BoundedTrainingSession;
     friend class FinalVerificationSession;
     friend class ValidatedCompositeMeasurement;
+    friend class NativeTrainingService;
 };
 class ValidatedCompositeMeasurement {
 public:
@@ -84,6 +90,7 @@ private:
     friend class CapturedReferences;
     friend class BoundedTrainingSession;
     friend class FinalVerificationSession;
+    friend class NativeTrainingService;
 };
 void ValidateCompositeMeasurementContract(const VerificationProtocol& protocol);
 }

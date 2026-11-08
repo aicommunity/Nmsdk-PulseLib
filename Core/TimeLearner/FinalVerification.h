@@ -166,6 +166,7 @@ public:
     // records. An owning training attempt shares this budget with its search.
     std::size_t InvalidObservations() const { return invalidCount; }
     std::size_t AcceptedInputs() const;
+    std::size_t AcceptedCompositeObservations() const {return acceptedComposite;}
     std::size_t ModelEpoch() const { return epoch; }
     bool WaitingForObservation() const { return bool(armed) || bool(compositeArmed); }
 private:
@@ -182,7 +183,7 @@ private:
     std::vector<RejectedVerificationProbe> rejected;
     std::set<std::string> seenTrials;
     std::set<std::string> seenCompositeGroups,seenCompositeProofs;
-    std::size_t position=0,issued=0,serial=0,epoch=0,invalidCount=0;
+    std::size_t position=0,issued=0,serial=0,epoch=0,invalidCount=0,acceptedComposite=0;
     bool budgetStopped=false;
     void Reject(const std::string& reason);
     // Admission remains method-specific; scalar acceptance/finish are private.

@@ -836,6 +836,7 @@ void BoundedTrainingSession::ArmComposite(std::size_t actionSerial,const Prepare
         if(!TrainingCapacitanceReadbackMatches(currentCapacitance,prepared.identity->capacitance))
             throw std::invalid_argument("composite_training_capacitance_readback_mismatch");
     }
+    catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
     catch(const CompositeTrainingStopped&){ExternalStop();return;}
     catch(const std::exception& error){RejectComposite(error.what());return;}
     if(phase==Phase::Verify) {
@@ -850,6 +851,7 @@ void BoundedTrainingSession::ArmComposite(std::size_t actionSerial,const Prepare
         if(!seenCompositeGroups.insert(prepared.GroupId()).second)throw std::invalid_argument("replayed_composite_training_group");
         compositeArmed=prepared;
     }
+    catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
     catch(const CompositeTrainingStopped&){ExternalStop();return;}
     catch(const std::exception& error){Reject(error.what());}
 }
@@ -864,10 +866,14 @@ void BoundedTrainingSession::ConsumeComposite(const ValidatedCompositeMeasuremen
         if(!TrainingCapacitanceReadbackMatches(currentCapacitance,measured.prepared.identity->capacitance))
             throw std::invalid_argument("composite_training_capacitance_readback_mismatch");
     }
+    catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
     catch(const CompositeTrainingStopped&){ExternalStop();return;}
     catch(const std::exception& error){RejectComposite(error.what());return;}
     if(phase==Phase::Verify) {
-        verification->ConsumeComposite(measured,actualRevision);pending.reset();compositeArmed.reset();FinishVerification();return;
+        const auto before=verification->AcceptedCompositeObservations();
+        verification->ConsumeComposite(measured,actualRevision);
+        acceptedComposite+=verification->AcceptedCompositeObservations()-before;
+        pending.reset();compositeArmed.reset();FinishVerification();return;
     }
     try {
         measured.prepared.Require(references.Protocol(),pending->runId,pending->trialId,pending->inputIndex,revision,epoch,
@@ -879,9 +885,12 @@ void BoundedTrainingSession::ConsumeComposite(const ValidatedCompositeMeasuremen
         else if(compositeAnchorWitness!=measured.prepared.identity->candidateWitnessId)
             throw std::invalid_argument("mixed_composite_anchor_candidate_witness");
     }
+    catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
     catch(const CompositeTrainingStopped&){ExternalStop();return;}
     catch(const std::exception& error){Reject(error.what());return;}
+    const auto before=evidence.size();const bool wasAnchor=phase==Phase::Anchor;
     AcceptValidatedScalar({measured.rawPotential,measured.arrival,measured.plateauEnd});
+    if((wasAnchor && anchor && anchorTrial==measured.prepared.LogicalTrialId()) || evidence.size()>before)++acceptedComposite;
 }
 void BoundedTrainingSession::RejectComposite(const std::string& reason)
 {

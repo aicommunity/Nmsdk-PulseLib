@@ -420,6 +420,7 @@ void FinalVerificationSession::ArmComposite(const PreparedCompositeMeasurement& 
         if(!seenCompositeGroups.insert(prepared.GroupId()).second)throw std::invalid_argument("replayed_composite_verification_group");
         compositeArmed=prepared;
     }
+    catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
     catch(const CompositeTrainingStopped&){ExternalStop();return;}
     catch(const std::exception& error){Reject(error.what());}
 }
@@ -444,8 +445,9 @@ void FinalVerificationSession::ConsumeComposite(const ValidatedCompositeMeasurem
             throw std::invalid_argument("mixed_composite_final_candidate_witness");
         AcceptValidatedScalar(index,measured.rawPotential,measured.arrival,measured.plateauEnd);
         accepted[index]->compositeProofId=measured.semanticProofId;
-        accepted[index]->candidateWitnessId=measured.prepared.identity->candidateWitnessId;
+        accepted[index]->candidateWitnessId=measured.prepared.identity->candidateWitnessId;++acceptedComposite;
     }
+    catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
     catch(const CompositeTrainingStopped&){ExternalStop();return;}
     catch(const std::exception& error){Reject(error.what());return;}
     CompleteValidatedInput();

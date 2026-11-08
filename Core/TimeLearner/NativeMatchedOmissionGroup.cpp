@@ -119,7 +119,9 @@ void NativeMatchedOmissionGroup::Fail(const NativeMatchedOmissionAdapter& a,Nati
                                      const std::string& reason)
 {
     state=status;result.reason=reason;waiting=false;result.assignment.reset();
-    try {if(a.cancel)a.cancel(reason);if(a.takeResult)if(auto packet=a.takeResult())result.packets.push_back(std::move(*packet));}
+    try {if(a.cancel)a.cancel(reason);if(a.takeResult)if(auto packet=a.takeResult()) {
+        result.packets.push_back(std::move(*packet));if(a.onNativeResult)a.onNativeResult(result.packets.back());
+    }}
     catch(...) {result.reason+=";omission_group_cancellation_or_restore_failed";}
 }
 bool NativeMatchedOmissionGroup::CheckClock(const NativeMatchedOmissionAdapter& a,double modelTime,double wallTime)
@@ -205,6 +207,7 @@ void NativeMatchedOmissionGroup::AfterTick(const NativeMatchedOmissionAdapter& a
             state=NativeMatchedOmissionState::Completed;result.reason="omission_group_closed";
         }
         capture.reset();
+        if(a.onNativeResult)a.onNativeResult(result.packets.back());
     }
     catch(const std::exception& error){Fail(a,NativeMatchedOmissionState::Rejected,error.what());}
     catch(...){Fail(a,NativeMatchedOmissionState::Rejected,"omission_group_observation_exception");}

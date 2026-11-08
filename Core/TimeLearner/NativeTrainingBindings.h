@@ -38,6 +38,9 @@ template<class Learner> NativeTrainingAdapter BindNativeTraining(Learner& owner,
     result.probeState=[&probe]{return probe.Status();};
     result.takeResult=[&probe]{return probe.TakeResult();};
     result.cancel=[&probe](const std::string& reason){probe.Cancel(reason);};
+    result.createComposite=[&owner](VerificationProtocol protocol,CompositeAttemptLimits limits,double model,double wall) {
+        return std::make_shared<NativeCompositeTrainingAttempt>(owner,std::move(protocol),limits,model,wall);
+    };
     return result;
 }
 inline bool NativeTrainingIsActive(const NativeTrainingService& service)

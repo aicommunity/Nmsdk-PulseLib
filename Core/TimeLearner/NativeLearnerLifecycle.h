@@ -14,6 +14,11 @@ namespace NMSDK::TimeLearner {
 // Integration failure codes are topology-specific; keep their predicate at
 // the call site. Base hooks likewise remain qualified in each concrete class.
 struct NativeLearnerLifecycle {
+    template<class Owner> static void InterruptComposite(Owner& owner,const std::string& reason) {
+        if(owner.NativeTrainingControl.Plan().protocol.schemaVersion==4)
+            owner.NativeTrainingControl.InterruptComposite(
+                BindNativeTraining(owner,owner.NativeProbeControl,owner.NativeTrainingEditDepth),reason);
+    }
     template<class Owner, class IntegrationFailure>
     static bool BeforeCalculate(Owner& owner, IntegrationFailure integrationFailure)
 {
@@ -101,6 +106,7 @@ struct NativeLearnerLifecycle {
     template<class Owner, class BaseHook>
     static bool BeforeDefault(Owner& owner, BaseHook baseHook)
 {
+ InterruptComposite(owner,"learner_default");
  owner.InterruptNativePostTunePhase("learner_default");owner.NativePostTunePhase.reset();owner.NativeLiveFinalization.reset();
  owner.NativeRecognition.reset();
  owner.NativeConfiguredPlan.reset();owner.NativeConfiguredSinks={};owner.NativeConfiguredText.clear();
@@ -113,6 +119,7 @@ struct NativeLearnerLifecycle {
     template<class Owner, class BaseHook>
     static bool BeforeReset(Owner& owner, BaseHook baseHook)
 {
+ InterruptComposite(owner,"learner_reset");
  owner.InterruptNativePostTunePhase("learner_reset");
  if(!owner.NativeLifecycleDepth)owner.NativeTrainingRequestIntent.Clear();
  if(owner.NativeTrainingOwned)
