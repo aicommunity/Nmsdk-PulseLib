@@ -252,14 +252,20 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
     MakeConfiguredNativeTrainingPlan(c);
     if(c.candidateWindowPolicy) {
         auto base=c;base.composite.reset();base.candidateWindowPolicy.reset();auto result=EncodeConfiguredNativeTraining(base);
-        Require(result["schema_version"].toInt()>=1 && result["schema_version"].toInt()<=4,"candidate_window_base_schema_unsupported");
-        result["base_schema_version"]=result["schema_version"];result["schema_version"]=7;
+        // Own the value before inserting another key into this same object.
+        // QJsonValueRef stores an index that insertion may shift.
+        const QJsonValue baseSchema=result.value("schema_version");
+        Require(baseSchema.toInt()>=1 && baseSchema.toInt()<=4,"candidate_window_base_schema_unsupported");
+        result["base_schema_version"]=baseSchema;result["schema_version"]=7;
         result["composite_measurement"]=EncodeCandidateWindowNativePolicy(*c.composite,*c.candidateWindowPolicy);return result;
     }
     if(c.composite) {
         auto base=c;base.composite.reset();auto result=EncodeConfiguredNativeTraining(base);
-        Require(result["schema_version"].toInt()>=1 && result["schema_version"].toInt()<=4,"composite_base_schema_unsupported");
-        result["base_schema_version"]=result["schema_version"];result["schema_version"]=6;
+        // A mutable operator[] yields an index-based QJsonValueRef. Inserting
+        // base_schema_version can shift that index before proxy assignment.
+        const QJsonValue baseSchema=result.value("schema_version");
+        Require(baseSchema.toInt()>=1 && baseSchema.toInt()<=4,"composite_base_schema_unsupported");
+        result["base_schema_version"]=baseSchema;result["schema_version"]=6;
         result["composite_measurement"]=EncodeNativeCompositeTrainingPolicy(*c.composite);return result;
     }
     QJsonArray windows,bounds;
