@@ -128,20 +128,32 @@ QJsonObject EncodeTrainingCertificate(const TrainingCertificate& certificate)
             {"amplitude_residual",Number(r.amplitudeResidual)},{"amplitude_tolerance",Number(r.amplitudeTolerance)},
             {"timing_low",Number(r.timingResidualLow)},{"timing_high",Number(r.timingResidualHigh)},
             {"within_timing",r.withinTiming},{"within_amplitude",r.withinAmplitude}});
-        if(certificate.SchemaVersion()==2) {
+        if(certificate.SchemaVersion()==2 || certificate.SchemaVersion()==3) {
             const auto references=certificate.CompositeReferenceProofIds();const auto& finals=certificate.CompositeProofIds();
             if(references.size()!=certificate.Protocol().inputs.size() || finals.size()!=references.size() ||
                 certificate.CompositeSourceOrigin().empty() || certificate.CompositeOwnerFamilyBinding().empty() ||
                 std::any_of(references.begin(),references.end(),[](const auto& id){return id.empty();}) ||
                 std::any_of(finals.begin(),finals.end(),[](const auto& id){return id.empty();}))
                 throw std::invalid_argument("incomplete_composite_certificate_proofs");
-            const auto& t=certificate.Tolerances();QJsonObject result{{"schema_version",2},{"method_id",DeclaredWindowBasinResult::MethodId()},
+            const auto& t=certificate.Tolerances();QJsonObject result{{"schema_version",int(certificate.SchemaVersion())},{"method_id",DeclaredWindowBasinResult::MethodId()},
                 {"exact",certificate.Exact()},{"model_revision",Text(certificate.ModelRevision())},{"model_epoch",Count(certificate.ModelEpoch())},
                 {"protocol_revision",Text(certificate.ProtocolRevision())},{"source_origin",Text(certificate.CompositeSourceOrigin())},
                 {"owner_family_binding",Text(certificate.CompositeOwnerFamilyBinding())},{"reference_model_revision",Text(certificate.ReferenceModelRevision())},
                 {"reference_model_epoch",Count(certificate.ReferenceModelEpoch())},{"reference_semantic_proof_ids",Strings(references)},
                 {"final_semantic_proof_ids",Strings(finals)},{"tolerances",QJsonObject{{"amplitude_absolute",Number(t.amplitudeAbsolute)},
                     {"amplitude_relative",Number(t.amplitudeRelative)},{"sync",Number(t.sync)}}},{"residuals",residuals}};
+            if(certificate.SchemaVersion()==3) {
+                const auto& recipes=certificate.FinalWindowRecipeIds();const auto& instances=certificate.FinalMeasurementInstanceIds();
+                if(certificate.Protocol().schemaVersion!=5 || recipes.size()!=references.size() || instances.size()!=references.size() ||
+                    certificate.CandidateWindowAttemptId().empty() || certificate.CandidateWindowFinalRunId().empty() ||
+                    certificate.CandidateWindowProtocolBinding()!=NmsdkTools::CanonicalModelDataSha256(EncodeVerificationProtocol(certificate.Protocol())).toStdString() ||
+                    std::any_of(recipes.begin(),recipes.end(),[](const auto& id){return id.empty();}) ||
+                    std::any_of(instances.begin(),instances.end(),[](const auto& id){return id.empty();}))
+                    throw std::invalid_argument("incomplete_candidate_window_certificate_proofs");
+                result["protocol_binding"]=Text(certificate.CandidateWindowProtocolBinding());result["current_attempt_id"]=Text(certificate.CandidateWindowAttemptId());
+                result["final_run_id"]=Text(certificate.CandidateWindowFinalRunId());result["final_window_recipe_ids"]=Strings(recipes);
+                result["final_measurement_instance_ids"]=Strings(instances);
+            }
             result["semantic_certificate_id"]=NmsdkTools::CanonicalModelDataSha256(result);return result;
         }
         return QJsonObject{{"schema_version",int(certificate.SchemaVersion())},
@@ -307,6 +319,7 @@ QJsonObject EncodeCandidateRecoveryEvidence(const CandidateRecoveryEvidence& e)
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)
 {
+    if(service.Plan().protocol.schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_summary7");
     if(service.Plan().protocol.schemaVersion==4)return EncodeNativeCompositeTrainingState(service,actualModelRevision,actualParameters);
     const auto parameters=Parameters;
     const auto& cfg=service.Configuration();

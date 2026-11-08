@@ -16,6 +16,7 @@ class BoundedTrainingSession;
 class FinalVerificationSession;
 class NativeTrainingService;
 class PreparedCandidateWindowProposal;
+class CandidateWindowReferenceSet;
 // Opt-in protocol 4. Windows are declared before the first trial of a group;
 // the selector never moves them or treats a timing prediction as an observation.
 struct CompositeMeasurementContract {
@@ -53,6 +54,9 @@ struct Identity {
     std::shared_ptr<const PreparedCandidateWindowProposal> candidateWindowProposal;
     std::function<void(bool closedMeasurement)> requireLiveModel;
     std::function<void()> requireNativeInstances;
+    // Factory-owned process-local admission. Pure controllers cannot install
+    // it, and portable data never serializes or restores this live authority.
+    std::function<void(const CandidateWindowReferenceSet&,bool closedMeasurement)> requireCandidateWindowAdmission;
 };
 }
 class PreparedCompositeMeasurement {
@@ -67,6 +71,12 @@ private:
     void Require(const VerificationProtocol&,const std::string& run,const std::string& trial,
         std::size_t input,const std::string& revision,std::size_t epoch,CompositeMeasurementPurpose purpose,
         const std::string& ownerScope={},const std::string& sourceOrigin={},bool closedMeasurement=false) const;
+    void RequireCandidateWindow(const VerificationProtocol&,const CandidateWindowReferenceSet&,
+        const std::string& run,const std::string& trial,std::size_t input,const std::string& revision,
+        std::size_t epoch,CompositeMeasurementPurpose purpose,bool closedMeasurement=false) const;
+    void RequireIdentity(const VerificationProtocol&,const std::string& run,const std::string& trial,
+        std::size_t input,const std::string& revision,std::size_t epoch,CompositeMeasurementPurpose,
+        const std::string& ownerScope,const std::string& sourceOrigin,bool closedMeasurement) const;
     friend class NativeCompositeTrainingAttempt;
     friend class CapturedReferences;
     friend class BoundedTrainingSession;

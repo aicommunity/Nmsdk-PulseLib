@@ -1,6 +1,7 @@
 #include "CompositeTrainingMeasurement.h"
 #include "FinalVerification.h"
 #include "CandidateWindowContractValidation.h"
+#include "CandidateWindowTrainingBoundary.h"
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -43,6 +44,21 @@ void PreparedCompositeMeasurement::Require(const VerificationProtocol& p,const s
         CompositeRequire(purpose==CompositeMeasurementPurpose::Reference && !identity->candidateWindowProposal,
             "candidate_window_training_requires_proposal_admission");
     } else ValidateCompositeMeasurementContract(p);
+    RequireIdentity(p,run,trial,input,revision,epoch,purpose,ownerScope,sourceOrigin,closedMeasurement);
+}
+void PreparedCompositeMeasurement::RequireCandidateWindow(const VerificationProtocol& p,const CandidateWindowReferenceSet& refs,
+    const std::string& run,const std::string& trial,std::size_t input,const std::string& revision,
+    std::size_t epoch,CompositeMeasurementPurpose purpose,bool closedMeasurement) const {
+    ValidateCandidateWindowMeasurementContract(p);
+    CompositeRequire((purpose==CompositeMeasurementPurpose::Search || purpose==CompositeMeasurementPurpose::Final) &&
+        refs.Protocol()==p && refs.InputCount()==p.inputs.size() && identity->candidateWindowProposal &&
+        bool(identity->requireCandidateWindowAdmission),"candidate_window_closed_proposal_admission_required");
+    RequireIdentity(p,run,trial,input,revision,epoch,purpose,refs.OwnerFamilyBinding(),refs.SourceOrigin(),closedMeasurement);
+    identity->requireCandidateWindowAdmission(refs,closedMeasurement);
+}
+void PreparedCompositeMeasurement::RequireIdentity(const VerificationProtocol& p,const std::string& run,const std::string& trial,
+    std::size_t input,const std::string& revision,std::size_t epoch,CompositeMeasurementPurpose purpose,
+    const std::string& ownerScope,const std::string& sourceOrigin,bool closedMeasurement) const {
     const auto live=identity->lease.lock();
     CompositeRequire(bool(live) && bool(live->requireCurrent),"expired_composite_training_attempt");
     live->requireCurrent();

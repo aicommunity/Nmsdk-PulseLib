@@ -28,7 +28,7 @@ CandidateWindowReferenceSet CandidateWindowPortableReferenceFactory::Replay(cons
     const auto initial=source["initial_model"].toObject();const auto initialEpoch=source["initial_epoch"].toDouble();
     std::optional<TrainingCapacitance> c0;if(!source["optional_C0_witness"].isNull())
         c0=DecodeNativeTrainingCapacitanceWitness(source["optional_C0_witness"].toObject()).parameters;
-    std::vector<CandidateWindowReferenceSeed> seeds;std::vector<QJsonObject> bindings;std::set<std::string> seen;
+    std::vector<CandidateWindowReferenceSeed> seeds;std::vector<QJsonObject> bindings;std::vector<double> targets;std::set<std::string> seen;
     for(std::size_t i=0;i<p.inputs.size();++i) {
         const auto& id=archive.ReferenceGroups()[i];const auto found=std::find_if(archive.Records().begin(),archive.Records().end(),[&](const auto& r){return r.groupId==id;});
         Require(found!=archive.Records().end() && seen.insert(id).second,"candidate_window_portable_reference_group");const auto& r=*found;
@@ -44,6 +44,7 @@ CandidateWindowReferenceSet CandidateWindowPortableReferenceFactory::Replay(cons
         Require(values.isArray() && std::size_t(values.toArray().size())==p.inputs.size(),"candidate_window_portable_P0_dimensions");
         CandidateWindowArithmeticSeed seed;seed.inputIndex=i;const auto& peak=*r.selection->geometry->measuredMaximum;
         seed.firstFrame=peak.firstSample;seed.lastFrame=peak.lastSample;
+        targets.push_back(peak.rawPotential);
         seed.referenceFrameCount=r.group.witness.fullBefore.observation.channels.at(r.candidateWindowSpecification->channel).samples.size();
         for(const auto& value:values.toArray()) {
             Require(value.isObject(),"candidate_window_portable_P0_parameter");const auto item=value.toObject();const auto resistance=item["resistance"];
@@ -56,7 +57,8 @@ CandidateWindowReferenceSet CandidateWindowPortableReferenceFactory::Replay(cons
         seeds.push_back(CandidateWindowReferenceSeed(std::move(seed),r.semanticProofId,archive.OwnerFamilyBinding()));bindings.push_back(std::move(binding));
     }
     CandidateWindowReferenceSet result(std::move(seeds),archive.SourceOrigin(),archive.OwnerFamilyBinding(),archive.ReferenceGroups(),
-        Hash(EncodeVerificationProtocol(p)),QJsonDocument(source).toJson(QJsonDocument::Compact).toStdString());
+        Hash(EncodeVerificationProtocol(p)),QJsonDocument(source).toJson(QJsonDocument::Compact).toStdString(),
+        std::make_shared<const VerificationProtocol>(p),initial["sha256"].toString().toStdString(),std::size_t(initialEpoch),std::move(targets));
     // Re-derive every controlled value and bank/link membership from the FULL
     // original semantic graph. Public physical_readback numbers are not proof.
     for(std::size_t i=0;i<bindings.size();++i) {

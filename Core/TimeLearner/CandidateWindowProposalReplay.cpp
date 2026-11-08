@@ -127,10 +127,15 @@ CandidateWindowProposalRecord DecodeCandidateWindowProposalData(const QByteArray
 void CandidateWindowProposalReplayFactory::CheckReferences(const CandidateWindowReferenceSet& refs,const VerificationProtocol& p) {
     ValidateVerificationProtocol(p);ValidateCandidateWindowMeasurementContract(p);const auto n=p.inputs.size();
     Require(refs.seeds.size()==n && refs.referenceGroupIds.size()==n && !refs.sourceOrigin.empty() && !refs.ownerFamilyBinding.empty() &&
+        refs.protocolDefinition && *refs.protocolDefinition==p && refs.targetRawPotentials.size()==n &&
         refs.protocolBinding==Hash(EncodeVerificationProtocol(p)),"candidate_window_incomplete_or_wrong_reference_family");
     const auto source=ParseStrictNativeJsonObject(refs.sourceBindingJson,MaximumBindingBytes);
     Require(Hash(source)==refs.sourceOrigin,"candidate_window_source_origin_changed");
     CompositeEvidenceDetail::ValidateInitialSource(p,source,refs.sourceOrigin);
+    Require(refs.initialModelRevision==source["initial_model"].toObject()["sha256"].toString().toStdString() &&
+        double(refs.initialModelEpoch)==source["initial_epoch"].toDouble() &&
+        std::all_of(refs.targetRawPotentials.begin(),refs.targetRawPotentials.end(),[](double v){return std::isfinite(v);}),
+        "candidate_window_original_target_binding_changed");
     const auto featureBudget=p.candidateWindowMeasurement->candidateWindowPolicy.maximumFeatureTerms;
     Require(!refs.seeds.front().arithmetic.initialCapacitance ||
         refs.seeds.front().arithmetic.initialCapacitance->membraneScales.size()<=featureBudget-std::uint64_t(n)*3,

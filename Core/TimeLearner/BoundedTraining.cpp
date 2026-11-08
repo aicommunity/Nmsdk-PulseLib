@@ -1,5 +1,6 @@
 #include "BoundedTraining.h"
 #include "BoundedTrainingValidation.h"
+#include "CandidateWindowCoreValidation.h"
 #include "NumericChecks.h"
 #include "MeasuredResistanceSearch.h"
 #include "MeasuredLengthSearch.h"
@@ -181,6 +182,17 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
     ValidateCapacitanceSearchPolicy(config,protocol.routing);
     if(!ParametersLegal(protocol,config,initial))throw std::invalid_argument("initial_parameters_outside_search_domain");
 }
+void ValidateCandidateWindowTrainingConfiguration(const VerificationProtocol& protocol,const BoundedTrainingConfig& config,
+    const std::vector<InputParameters>& initial) {
+    ValidateVerificationProtocol(protocol);ValidateCandidateWindowMeasurementContract(protocol);
+    ValidateInvalidMeasurementRecovery(config.invalidMeasurementRecovery,config.maximumInvalidObservations);
+    BoundedTrainingDetail::ValidateInputShape(protocol.inputs.size(),config,initial);
+    BoundedTrainingDetail::ValidateInputRanges(config);
+    if(config.invalidMeasurementRecovery!=InvalidMeasurementRecovery::RetrySameCandidate)
+        throw std::invalid_argument("composite_recovery_policy_not_implemented");
+    ValidateCapacitanceSearchPolicy(config,protocol.routing);
+    if(!ParametersLegal(protocol,config,initial))throw std::invalid_argument("initial_parameters_outside_search_domain");
+}
 
 void ValidateBoundedTrainingCapacitance(const BoundedTrainingConfig& config,
     const std::optional<TrainingCapacitance>& owned)
@@ -202,11 +214,29 @@ BoundedTrainingSession::BoundedTrainingSession(CapturedReferences refs,BoundedTr
     ValidateBoundedTrainingCapacitance(config,currentCapacitance);
     requireResistanceDomains=physicalDomains && config.normalization==Normalization::TipResistance;
     ValidateBoundedTrainingInputs(references.Protocol(),config,current);
+    InitializeDecisionState();
+}
+BoundedTrainingSession::BoundedTrainingSession(CapturedReferences refs,CandidateWindowReferenceSet closed,BoundedTrainingConfig cfg,
+    std::vector<InputParameters> initial,bool physicalDomains,std::optional<TrainingCapacitance> initialCapacitance)
+    :references(std::move(refs)),candidateWindowReferences(std::move(closed)),config(std::move(cfg)),current(std::move(initial)),
+     currentCapacitance(std::move(initialCapacitance)),epoch(config.initialModelEpoch),revision(config.initialModelRevision) {
+    CandidateWindowCoreDetail::RequireCapturedReferences(references,*candidateWindowReferences);
+    ValidateBoundedTrainingCapacitance(config,currentCapacitance);
+    requireResistanceDomains=physicalDomains && config.normalization==Normalization::TipResistance;
+    ValidateCandidateWindowTrainingConfiguration(references.Protocol(),config,current);InitializeDecisionState();
+}
+void BoundedTrainingSession::InitializeDecisionState()
+{
     if(current.size()!=references.Inputs().size())
         throw std::invalid_argument("invalid_bounded_training_configuration");
     // Use the exact same protocol/tolerance checks as the final gate.
-    FinalVerificationSession validate(references,{config.runId,revision,config.maximumProbes,
-        config.maximumInvalidObservations,epoch,config.tolerances});
+    if(candidateWindowReferences) {
+        FinalVerificationSession validate(references,*candidateWindowReferences,{config.runId,revision,config.maximumProbes,
+            config.maximumInvalidObservations,epoch,config.tolerances});
+    } else {
+        FinalVerificationSession validate(references,{config.runId,revision,config.maximumProbes,
+            config.maximumInvalidObservations,epoch,config.tolerances});
+    }
     for(std::size_t i=0;i<config.bounds.size();++i)
     {
         if(!Finite(AmplitudeTolerance(config,references.Inputs()[i])))
@@ -578,9 +608,11 @@ void BoundedTrainingSession::BeginVerification()
     if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted,"maximum_probes_exhausted");return;}
     phase=Phase::Verify;status=TrainingStatus::Verifying;
     verificationInvalidAccounted=0;
-    verification=std::make_unique<FinalVerificationSession>(references,VerificationConfig{
+    const VerificationConfig finalConfig{
         config.runId+"/final/"+std::to_string(sweep),revision,config.maximumProbes-probes,
-        config.maximumInvalidObservations-std::min(invalid,config.maximumInvalidObservations),epoch,config.tolerances});
+        config.maximumInvalidObservations-std::min(invalid,config.maximumInvalidObservations),epoch,config.tolerances};
+    if(candidateWindowReferences)verification=std::make_unique<FinalVerificationSession>(references,*candidateWindowReferences,finalConfig);
+    else verification=std::make_unique<FinalVerificationSession>(references,finalConfig);
 }
 
 void BoundedTrainingSession::FinishVerification()
@@ -846,6 +878,16 @@ void BoundedTrainingSession::ArmComposite(std::size_t actionSerial,const Prepare
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
     if(references.Protocol().schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
+    ArmTyped(actionSerial,prepared,nullptr);
+}
+void BoundedTrainingSession::ArmCandidateWindow(std::size_t serial,const PreparedCompositeMeasurement& prepared) {
+    if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
+    if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences)
+        throw std::invalid_argument("candidate_window_closed_reference_admission_required");
+    ArmTyped(serial,prepared,&*candidateWindowReferences);
+}
+void BoundedTrainingSession::ArmTyped(std::size_t actionSerial,const PreparedCompositeMeasurement& prepared,const CandidateWindowReferenceSet* closed)
+{
     if(!pending || pending->kind!=TrainingActionKind::Probe || pending->serial!=actionSerial || armed || compositeArmed)
         throw std::logic_error("unrequested_training_probe");
     ++probes;
@@ -855,14 +897,16 @@ void BoundedTrainingSession::ArmComposite(std::size_t actionSerial,const Prepare
     }
     catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
     catch(const CompositeTrainingStopped&){ExternalStop();return;}
-    catch(const std::exception& error){RejectComposite(error.what());return;}
+    catch(const std::exception& error){if(closed)RejectCandidateWindow(error.what());else RejectComposite(error.what());return;}
     if(phase==Phase::Verify) {
-        verification->ArmComposite(prepared);FinishVerification();
+        if(closed)verification->ArmCandidateWindow(prepared);else verification->ArmComposite(prepared);FinishVerification();
         if(status!=TrainingStatus::Verifying)return;
         if(!verification->WaitingForObservation()){pending.reset();return;}
     }
     try {
-        prepared.Require(references.Protocol(),pending->runId,pending->trialId,pending->inputIndex,revision,epoch,
+        if(closed)prepared.RequireCandidateWindow(references.Protocol(),*closed,pending->runId,pending->trialId,pending->inputIndex,revision,epoch,
+            phase==Phase::Verify?CompositeMeasurementPurpose::Final:CompositeMeasurementPurpose::Search);
+        else prepared.Require(references.Protocol(),pending->runId,pending->trialId,pending->inputIndex,revision,epoch,
             phase==Phase::Verify?CompositeMeasurementPurpose::Final:CompositeMeasurementPurpose::Search,
             references.CompositeOwnerScope(),references.CompositeSourceOrigin());
         if(!seenCompositeGroups.insert(prepared.GroupId()).second)throw std::invalid_argument("replayed_composite_training_group");
@@ -876,6 +920,16 @@ void BoundedTrainingSession::ConsumeComposite(const ValidatedCompositeMeasuremen
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
     if(references.Protocol().schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
+    ConsumeTyped(measured,actualRevision,nullptr);
+}
+void BoundedTrainingSession::ConsumeCandidateWindow(const ValidatedCompositeMeasurement& measured,const std::string& actualRevision) {
+    if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
+    if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences)
+        throw std::invalid_argument("candidate_window_closed_reference_admission_required");
+    ConsumeTyped(measured,actualRevision,&*candidateWindowReferences);
+}
+void BoundedTrainingSession::ConsumeTyped(const ValidatedCompositeMeasurement& measured,const std::string& actualRevision,const CandidateWindowReferenceSet* closed)
+{
     if(actualRevision!=revision || actualRevision.empty()) {
         rejected.push_back({pending?pending->trialId:std::string{},"unexpected_training_model_revision"});Stop(TrainingStatus::InvalidModel);return;
     }
@@ -886,15 +940,17 @@ void BoundedTrainingSession::ConsumeComposite(const ValidatedCompositeMeasuremen
     }
     catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
     catch(const CompositeTrainingStopped&){ExternalStop();return;}
-    catch(const std::exception& error){RejectComposite(error.what());return;}
+    catch(const std::exception& error){if(closed)RejectCandidateWindow(error.what());else RejectComposite(error.what());return;}
     if(phase==Phase::Verify) {
         const auto before=verification->AcceptedCompositeObservations();
-        verification->ConsumeComposite(measured,actualRevision);
+        if(closed)verification->ConsumeCandidateWindow(measured,actualRevision);else verification->ConsumeComposite(measured,actualRevision);
         acceptedComposite+=verification->AcceptedCompositeObservations()-before;
         pending.reset();compositeArmed.reset();FinishVerification();return;
     }
     try {
-        measured.prepared.Require(references.Protocol(),pending->runId,pending->trialId,pending->inputIndex,revision,epoch,
+        if(closed)measured.prepared.RequireCandidateWindow(references.Protocol(),*closed,pending->runId,pending->trialId,pending->inputIndex,revision,epoch,
+            CompositeMeasurementPurpose::Search,true);
+        else measured.prepared.Require(references.Protocol(),pending->runId,pending->trialId,pending->inputIndex,revision,epoch,
             CompositeMeasurementPurpose::Search,references.CompositeOwnerScope(),references.CompositeSourceOrigin(),true);
         measured.RequirePrepared(*compositeArmed);
         if(!seenTrials.insert(pending->trialId).second || !seenCompositeProofs.insert(measured.semanticProofId).second)
@@ -913,9 +969,18 @@ void BoundedTrainingSession::ConsumeComposite(const ValidatedCompositeMeasuremen
 void BoundedTrainingSession::RejectComposite(const std::string& reason)
 {
     if(references.Protocol().schemaVersion!=4 || reason.empty())throw std::invalid_argument("invalid_composite_rejection");
+    RejectTyped(reason,nullptr);
+}
+void BoundedTrainingSession::RejectCandidateWindow(const std::string& reason) {
+    if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences || reason.empty())throw std::invalid_argument("invalid_candidate_window_rejection");
+    RejectTyped(reason,&*candidateWindowReferences);
+}
+void BoundedTrainingSession::RejectTyped(const std::string& reason,const CandidateWindowReferenceSet* closed)
+{
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
     if(phase==Phase::Verify) {
-        verification->RejectComposite(reason);pending.reset();compositeArmed.reset();FinishVerification();return;
+        if(closed)verification->RejectCandidateWindow(reason);else verification->RejectComposite(reason);
+        pending.reset();compositeArmed.reset();FinishVerification();return;
     }
     Reject(reason);
 }

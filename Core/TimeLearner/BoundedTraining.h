@@ -94,6 +94,10 @@ struct CandidateRepeatEvidence {
 // bounds/physical-bank legality and tolerances as the actual decision session.
 void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const BoundedTrainingConfig& configuration,
                                    const std::vector<InputParameters>& initial);
+// Explicit protocol5 numeric preflight only, before reference capture. Success
+// grants no reference/measurement authority; the typed constructor requires it.
+void ValidateCandidateWindowTrainingConfiguration(const VerificationProtocol&,const BoundedTrainingConfig&,
+    const std::vector<InputParameters>& initial);
 
 void ValidateCapacitanceSearchPolicy(const CapacitanceSearchPolicy& policy);
 void ValidateCapacitanceSearchPolicy(const BoundedTrainingConfig& configuration,ProbeRouting routing);
@@ -114,6 +118,9 @@ public:
     BoundedTrainingSession(CapturedReferences references,BoundedTrainingConfig config,
                            std::vector<InputParameters> initial,bool requireResistanceDomains=false,
                            std::optional<TrainingCapacitance> initialCapacitance={});
+    BoundedTrainingSession(CapturedReferences,CandidateWindowReferenceSet,BoundedTrainingConfig,
+        std::vector<InputParameters> initial,bool requireResistanceDomains=false,
+        std::optional<TrainingCapacitance> initialCapacitance={});
     std::optional<TrainingAction> NextAction();
     void Applied(std::size_t actionSerial,const std::vector<InputParameters>& effective,
                  const std::string& actualModelRevision,std::optional<TrainingCapacitance> effectiveCapacitance={});
@@ -125,6 +132,9 @@ public:
     void ArmComposite(std::size_t actionSerial,const PreparedCompositeMeasurement& prepared);
     void ConsumeComposite(const ValidatedCompositeMeasurement& measurement,const std::string& actualModelRevision);
     void RejectComposite(const std::string& reason);
+    void ArmCandidateWindow(std::size_t actionSerial,const PreparedCompositeMeasurement&);
+    void ConsumeCandidateWindow(const ValidatedCompositeMeasurement&,const std::string& actualModelRevision);
+    void RejectCandidateWindow(const std::string& reason);
     void ExternalStop();
     // Adapter-owned wall/model-time deadline; cannot manufacture convergence.
     void ExhaustBudget();
@@ -149,6 +159,7 @@ public:
 private:
     enum class Phase { Candidate, Anchor, Input, Verify };
     CapturedReferences references;
+    std::optional<CandidateWindowReferenceSet> candidateWindowReferences;
     BoundedTrainingConfig config;
     TrainingStatus status=TrainingStatus::Searching;
     std::string stopReason;
@@ -211,6 +222,10 @@ private:
     std::unique_ptr<FinalVerificationSession> verification;
     std::size_t verificationInvalidAccounted=0;
     void BeginInput();
+    void InitializeDecisionState();
+    void ArmTyped(std::size_t,const PreparedCompositeMeasurement&,const CandidateWindowReferenceSet*);
+    void ConsumeTyped(const ValidatedCompositeMeasurement&,const std::string&,const CandidateWindowReferenceSet*);
+    void RejectTyped(const std::string&,const CandidateWindowReferenceSet*);
     void AdvanceInput();
     void BeginVerification();
     void FinishVerification();

@@ -402,6 +402,31 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
         else Require(Running() && !closed && activeIdentity.get()==identity.get() &&
             adapter.readModelRevision()==identity->effectiveRevision,"composite_preparation_not_current_live_group");
     };
+    if(windowMode && purpose!=CompositeMeasurementPurpose::Reference)
+        id->requireCandidateWindowAdmission=[this,weak=std::weak_ptr<const CompositeTrainingDetail::Identity>(id),
+            groupModelStart=modelTime,groupWallStart=wallTime,modelBudget=modelLimit,wallBudget=wallLimit](
+            const CandidateWindowReferenceSet& expected,bool) {
+        Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
+        const auto identity=weak.lock();Require(identity && windowReferences && windowDeclaration &&
+            identity->candidateWindowProposal && identity->candidateWindowProposal->identity.lock()==identity &&
+            expected.Protocol()==*protocol && expected.SourceOrigin()==sourceOrigin && expected.OwnerFamilyBinding()==ownerScope &&
+            expected.ReferenceGroupIds()==windowReferences->ReferenceGroupIds() && expected.ReferenceProofIds()==windowReferences->ReferenceProofIds() &&
+            expected.InitialModelRevision()==initialRevision && expected.InitialModelEpoch()==initialEpoch &&
+            expected.TargetRawPotentials()==windowReferences->TargetRawPotentials(),"candidate_window_live_reference_or_proposal_changed");
+        Require(bool(identity->requireNativeInstances),"candidate_window_live_instance_guard_missing");identity->requireNativeInstances();
+        const auto checkDeadline=[&](){const auto model=actualModelTime(),wall=NativeTrainingWallTime();CheckClock(model,wall);
+            if(model-groupModelStart>=modelBudget || wall-groupWallStart>=wallBudget)
+                throw CompositeTrainingBudgetExhausted("candidate_window_group_admission_budget_exhausted");};
+        checkDeadline();
+        const auto& frozen=identity->candidateWindowProposal->Record();
+        const auto checked=CandidateWindowProposalReplayFactory::CheckCandidateBinding(expected,*protocol,
+            ParseStrictNativeJsonObject(identity->candidateBindingJson,128u*1024u*1024u));
+        const VerificationRequest request{identity->runId,identity->trialId,protocol->inputs.at(identity->inputIndex).id,
+            protocol->sampleId,protocol->patternHash,protocol->revision,identity->baseRevision,protocol->routing,identity->modelEpoch,identity->inputIndex};
+        (void)CandidateWindowProposalReplayFactory::Replay(expected,*protocol,checked,request,windowDeclaration->attemptId,
+            identity->groupId,frozen.candidate.declaredMaximumSamples,identity->purpose,frozen);
+        checkDeadline();
+    };
     prototype.routing=logical.routing;prototype.activeInput=int(logical.inputIndex);prototype.inputId=logical.inputId;
     prototype.protocolRevision=logical.protocolRevision;prototype.baseModelRevision=logical.baseModelRevision;prototype.modelEpoch=logical.epoch;
     prototype.specification.runId=logical.runId;prototype.specification.sampleId=logical.sampleId;
@@ -643,15 +668,18 @@ void NativeCompositeTrainingAttempt::CompleteCandidateWindowReferences(const Cap
     const auto fresh=CapturedReferences::CaptureComposite(*protocol,liveReferences);
     Require(fresh.Inputs()==captured.Inputs(),"candidate_window_reference_consumption_changed");
     CandidateWindowReferenceSet ready(std::move(seeds),sourceOrigin,ownerScope,stagedWindowGroups,Hash(EncodeVerificationProtocol(*protocol)),
-        QJsonDocument(sourceBinding).toJson(QJsonDocument::Compact).toStdString());
+        QJsonDocument(sourceBinding).toJson(QJsonDocument::Compact).toStdString(),protocol,initialRevision,initialEpoch,[&](){
+            std::vector<double> targets;for(const auto& input:fresh.Inputs())targets.push_back(input.rawPotential);return targets;}());
     QJsonObject candidate;CheckBoundary(&candidate);
     (void)CandidateWindowProposalReplayFactory::CheckCandidateBinding(ready,*protocol,candidate);
     CheckClock(actualModelTime(),NativeTrainingWallTime());
+    // The closed-data copy may allocate. Complete it before the nonthrowing
+    // all-record flag commit, so failed allocation cannot promote a prefix.
+    windowReferences=std::move(ready);
     for(auto& record:windowRecords)if(record.purpose==CompositeMeasurementPurpose::Reference &&
         std::find(stagedWindowGroups.begin(),stagedWindowGroups.end(),record.groupId)!=stagedWindowGroups.end()) {
         record.consumed=true;record.trainingRequestedAtConsume=true;
     }
-    windowReferences=std::move(ready);
 }
 void NativeCompositeTrainingAttempt::RefreshOwnedAfterEdit(const std::string& revision) {
     Require(ownerLife.IsAlive() && !Running(),"composite_owned_edit_not_at_group_boundary");

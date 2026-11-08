@@ -65,16 +65,31 @@ public:
     std::size_t InputCount() const {return seeds.size();}
     const std::string& SourceOrigin() const {return sourceOrigin;}
     const std::string& OwnerFamilyBinding() const {return ownerFamilyBinding;}
+    const VerificationProtocol& Protocol() const {return *protocolDefinition;}
+    const std::string& ProtocolBinding() const {return protocolBinding;}
+    const std::string& InitialModelRevision() const {return initialModelRevision;}
+    std::size_t InitialModelEpoch() const {return initialModelEpoch;}
+    const std::vector<std::string>& ReferenceGroupIds() const {return referenceGroupIds;}
+    std::vector<std::string> ReferenceProofIds() const {
+        std::vector<std::string> result;for(const auto& seed:seeds)result.push_back(seed.ReferenceProofId());return result;
+    }
+    const std::vector<double>& TargetRawPotentials() const {return targetRawPotentials;}
 private:
     CandidateWindowReferenceSet(std::vector<CandidateWindowReferenceSeed> values,
         std::string source,std::string family,std::vector<std::string> groups,
-        std::string protocol,std::string immutableSource):seeds(std::move(values)),
+        std::string protocol,std::string immutableSource,std::shared_ptr<const VerificationProtocol> definition,
+        std::string initialRevision,std::size_t initialEpoch,std::vector<double> targets):seeds(std::move(values)),
         sourceOrigin(std::move(source)),ownerFamilyBinding(std::move(family)),referenceGroupIds(std::move(groups)),
-        protocolBinding(std::move(protocol)),sourceBindingJson(std::move(immutableSource)){}
+        protocolBinding(std::move(protocol)),sourceBindingJson(std::move(immutableSource)),protocolDefinition(std::move(definition)),
+        initialModelRevision(std::move(initialRevision)),initialModelEpoch(initialEpoch),targetRawPotentials(std::move(targets)){}
     std::vector<CandidateWindowReferenceSeed> seeds;
     std::string sourceOrigin,ownerFamilyBinding;
     std::vector<std::string> referenceGroupIds;
     std::string protocolBinding,sourceBindingJson;
+    std::shared_ptr<const VerificationProtocol> protocolDefinition;
+    std::string initialModelRevision;
+    std::size_t initialModelEpoch=0;
+    std::vector<double> targetRawPotentials;
     friend class CapturedReferences;
     friend class CompositePortableTrainingProof;
     friend class NativeCompositeStateFactory;

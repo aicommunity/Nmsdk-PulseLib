@@ -1,6 +1,7 @@
 #include "FinalVerification.h"
 #include "NumericChecks.h"
 #include "CandidateWindowContractValidation.h"
+#include "CandidateWindowCoreValidation.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -323,8 +324,11 @@ bool TrainingCertificate::Matches(const std::string& currentModel,const Captured
         currentReferences.Protocol()==protocol && currentReferences.Inputs()==referenceInputs &&
         currentReferences.InitialModelRevision()==referenceModelRevision &&
         currentReferences.InitialModelEpoch()==referenceModelEpoch &&
-        (protocol.schemaVersion!=4 || (currentReferences.CompositeOwnerScope()==compositeOwnerFamilyBinding &&
-            currentReferences.CompositeSourceOrigin()==compositeSourceOrigin));
+          ((protocol.schemaVersion!=4 && protocol.schemaVersion!=5) || (currentReferences.CompositeOwnerScope()==compositeOwnerFamilyBinding &&
+              currentReferences.CompositeSourceOrigin()==compositeSourceOrigin)) &&
+          (protocol.schemaVersion!=5 || (!candidateWindowProtocolBinding.empty() && !candidateWindowAttemptId.empty() &&
+              !candidateWindowFinalRunId.empty() && compositeProofIds.size()==referenceInputs.size() &&
+              finalWindowRecipeIds.size()==referenceInputs.size() && finalMeasurementInstanceIds.size()==referenceInputs.size()));
 }
 
 FinalVerificationSession::FinalVerificationSession(CapturedReferences refs,VerificationConfig cfg)
@@ -346,6 +350,10 @@ FinalVerificationSession::FinalVerificationSession(CapturedReferences refs,Verif
         if(!Detail::Finite(tolerance))throw std::invalid_argument("nonfinite_amplitude_tolerance");
         order.push_back(references.Protocol().routing==ProbeRouting::ClassicBurst?i:n-1-i);
     }
+}
+FinalVerificationSession::FinalVerificationSession(CapturedReferences refs,CandidateWindowReferenceSet closed,VerificationConfig cfg)
+    :FinalVerificationSession(std::move(refs),std::move(cfg)) {
+    CandidateWindowCoreDetail::RequireCapturedReferences(references,closed);candidateWindowReferences=std::move(closed);
 }
 
 std::optional<VerificationRequest> FinalVerificationSession::NextRequest()
@@ -420,10 +428,22 @@ void FinalVerificationSession::ArmComposite(const PreparedCompositeMeasurement& 
 {
     if(status!=VerificationStatus::Collecting)return;
     if(references.Protocol().schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
+    ArmTyped(prepared,nullptr);
+}
+void FinalVerificationSession::ArmCandidateWindow(const PreparedCompositeMeasurement& prepared) {
+    if(status!=VerificationStatus::Collecting)return;
+    if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences)
+        throw std::invalid_argument("candidate_window_closed_reference_admission_required");
+    ArmTyped(prepared,&*candidateWindowReferences);
+}
+void FinalVerificationSession::ArmTyped(const PreparedCompositeMeasurement& prepared,const CandidateWindowReferenceSet* closed)
+{
     if(!pending || armed || compositeArmed)throw std::logic_error("verification_probe_not_requested_or_already_armed");
     if(issued>=config.maximumProbes){ExhaustBudget();return;}++issued;
     try {
-        prepared.Require(references.Protocol(),pending->runId,pending->trialId,pending->inputIndex,
+        if(closed)prepared.RequireCandidateWindow(references.Protocol(),*closed,pending->runId,pending->trialId,pending->inputIndex,
+            config.currentModelRevision,epoch,CompositeMeasurementPurpose::Final);
+        else prepared.Require(references.Protocol(),pending->runId,pending->trialId,pending->inputIndex,
             config.currentModelRevision,epoch,CompositeMeasurementPurpose::Final,
             references.CompositeOwnerScope(),references.CompositeSourceOrigin());
         if(!seenCompositeGroups.insert(prepared.GroupId()).second)throw std::invalid_argument("replayed_composite_verification_group");
@@ -437,6 +457,16 @@ void FinalVerificationSession::ConsumeComposite(const ValidatedCompositeMeasurem
 {
     if(status!=VerificationStatus::Collecting)return;
     if(references.Protocol().schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
+    ConsumeTyped(measured,revision,nullptr);
+}
+void FinalVerificationSession::ConsumeCandidateWindow(const ValidatedCompositeMeasurement& measured,const std::string& revision) {
+    if(status!=VerificationStatus::Collecting)return;
+    if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences)
+        throw std::invalid_argument("candidate_window_closed_reference_admission_required");
+    ConsumeTyped(measured,revision,&*candidateWindowReferences);
+}
+void FinalVerificationSession::ConsumeTyped(const ValidatedCompositeMeasurement& measured,const std::string& revision,const CandidateWindowReferenceSet* closed)
+{
     if(revision.empty()) {
         const auto trial=pending?pending->trialId:std::string{};
         Invalidate(config.currentModelRevision);rejected.push_back({trial,"missing_current_model_revision"});
@@ -446,16 +476,39 @@ void FinalVerificationSession::ConsumeComposite(const ValidatedCompositeMeasurem
     if(!pending || !compositeArmed){Reject("unrequested_composite_verification_observation");return;}
     try {
         const auto index=order.at(position);
-        measured.prepared.Require(references.Protocol(),pending->runId,pending->trialId,index,revision,epoch,
+        if(closed)measured.prepared.RequireCandidateWindow(references.Protocol(),*closed,pending->runId,pending->trialId,index,revision,epoch,
+            CompositeMeasurementPurpose::Final,true);
+        else measured.prepared.Require(references.Protocol(),pending->runId,pending->trialId,index,revision,epoch,
             CompositeMeasurementPurpose::Final,references.CompositeOwnerScope(),references.CompositeSourceOrigin(),true);
         measured.RequirePrepared(*compositeArmed);
         if(!seenTrials.insert(pending->trialId).second || !seenCompositeProofs.insert(measured.semanticProofId).second)
             throw std::invalid_argument("unexpected_or_replayed_composite_verification_proof");
         for(const auto& previous:accepted)if(previous && previous->candidateWitnessId!=measured.prepared.identity->candidateWitnessId)
             throw std::invalid_argument("mixed_composite_final_candidate_witness");
+        if(closed) {
+            const auto& proposal=measured.prepared.identity->candidateWindowProposal->Record();
+            for(const auto& previous:accepted)if(previous && (previous->candidateWindowAttemptId!=proposal.attemptId ||
+                previous->candidateWindowFinalRunId!=proposal.runId))throw std::invalid_argument("mixed_candidate_window_final_sweep");
+            // Before completing an all-input certificate, previously accepted
+            // values must still belong to the same live graph/source/lease.
+            // Their own measurement deadlines were enforced at consumption;
+            // later groups do not retroactively extend those measurements.
+            if(position+1==order.size())for(std::size_t i=0;i<accepted.size();++i)if(accepted[i]) {
+                if(!accepted[i]->candidateWindowPrepared)throw std::invalid_argument("missing_candidate_window_final_live_proof");
+                accepted[i]->candidateWindowPrepared->RequireIdentity(references.Protocol(),config.runId,accepted[i]->trialId,i,
+                    config.currentModelRevision,epoch,CompositeMeasurementPurpose::Final,closed->OwnerFamilyBinding(),closed->SourceOrigin(),true);
+            }
+        }
         AcceptValidatedScalar(index,measured.rawPotential,measured.arrival,measured.plateauEnd,measured.prepared.identity->effectiveRevision);
         accepted[index]->compositeProofId=measured.semanticProofId;
-        accepted[index]->candidateWitnessId=measured.prepared.identity->candidateWitnessId;++acceptedComposite;
+        accepted[index]->candidateWitnessId=measured.prepared.identity->candidateWitnessId;
+        if(closed) {
+            const auto& proposal=measured.prepared.identity->candidateWindowProposal->Record();
+            accepted[index]->candidateWindowRecipeId=proposal.windowRecipeId;accepted[index]->candidateWindowInstanceId=proposal.measurementInstanceId;
+            accepted[index]->candidateWindowAttemptId=proposal.attemptId;accepted[index]->candidateWindowFinalRunId=proposal.runId;
+            accepted[index]->candidateWindowPrepared=measured.prepared;
+        }
+        ++acceptedComposite;
     }
     catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
     catch(const CompositeTrainingStopped&){ExternalStop();return;}
@@ -465,6 +518,10 @@ void FinalVerificationSession::ConsumeComposite(const ValidatedCompositeMeasurem
 void FinalVerificationSession::RejectComposite(const std::string& reason)
 {
     if(references.Protocol().schemaVersion!=4 || reason.empty())throw std::invalid_argument("invalid_composite_rejection");
+    if(status==VerificationStatus::Collecting)Reject(reason);
+}
+void FinalVerificationSession::RejectCandidateWindow(const std::string& reason) {
+    if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences || reason.empty())throw std::invalid_argument("invalid_candidate_window_rejection");
     if(status==VerificationStatus::Collecting)Reject(reason);
 }
 
@@ -483,11 +540,18 @@ void FinalVerificationSession::Finish()
     TrainingCertificate result;result.exact=true;result.modelRevision=config.currentModelRevision;
     result.protocol=references.Protocol();result.tolerances=config.tolerances;
     result.referenceInputs=references.Inputs();result.referenceModelRevision=references.InitialModelRevision();
-    if(result.protocol.schemaVersion==4){result.compositeSourceOrigin=references.CompositeSourceOrigin();result.compositeOwnerFamilyBinding=references.CompositeOwnerScope();}
+    if(result.protocol.schemaVersion==4 || result.protocol.schemaVersion==5){result.compositeSourceOrigin=references.CompositeSourceOrigin();result.compositeOwnerFamilyBinding=references.CompositeOwnerScope();}
     result.modelEpoch=epoch;result.referenceModelEpoch=references.InitialModelEpoch();
     if(accepted.empty() || std::any_of(accepted.begin(),accepted.end(),[](const auto& input){return !input;}))
     {status=VerificationStatus::InvalidObservation;return;}
     const auto& anchor=*accepted.back();
+    if(result.protocol.schemaVersion==5) {
+        if(!candidateWindowReferences || anchor.candidateWindowAttemptId.empty() || anchor.candidateWindowFinalRunId!=config.runId)
+        {status=VerificationStatus::InvalidObservation;return;}
+        CandidateWindowCoreDetail::RequireCapturedReferences(references,*candidateWindowReferences);
+        result.candidateWindowProtocolBinding=candidateWindowReferences->ProtocolBinding();
+        result.candidateWindowAttemptId=anchor.candidateWindowAttemptId;result.candidateWindowFinalRunId=anchor.candidateWindowFinalRunId;
+    }
     for(std::size_t i=0;i<accepted.size();++i)
     {
         const auto& measured=*accepted[i];const auto& target=references.Inputs()[i];
@@ -507,7 +571,13 @@ void FinalVerificationSession::Finish()
         residual.withinTiming=std::max(std::fabs(residual.timingResidualLow),std::fabs(residual.timingResidualHigh))<=config.tolerances.sync;
         result.exact=result.exact && residual.withinAmplitude && residual.withinTiming;
         result.residuals.push_back(std::move(residual));
-        if(result.protocol.schemaVersion==4)result.compositeProofIds.push_back(measured.compositeProofId);
+        if(result.protocol.schemaVersion==4 || result.protocol.schemaVersion==5)result.compositeProofIds.push_back(measured.compositeProofId);
+        if(result.protocol.schemaVersion==5) {
+            if(measured.compositeProofId.empty() || measured.candidateWindowRecipeId.empty() || measured.candidateWindowInstanceId.empty() ||
+                measured.candidateWindowAttemptId!=result.candidateWindowAttemptId || measured.candidateWindowFinalRunId!=result.candidateWindowFinalRunId)
+            {status=VerificationStatus::InvalidObservation;return;}
+            result.finalWindowRecipeIds.push_back(measured.candidateWindowRecipeId);result.finalMeasurementInstanceIds.push_back(measured.candidateWindowInstanceId);
+        }
     }
     status=result.exact?VerificationStatus::Exact:VerificationStatus::OutsideTolerance;
     certificate=std::move(result);

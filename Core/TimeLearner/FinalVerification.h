@@ -2,6 +2,7 @@
 #include "ProbeObservation.h"
 #include "CompositeTrainingMeasurement.h"
 #include "CandidateWindowMeasurementContract.h"
+#include "CandidateWindowTrainingBoundary.h"
 #include <optional>
 #include <set>
 
@@ -117,7 +118,7 @@ public:
     TrainingCertificate(TrainingCertificate&&)=default;
     TrainingCertificate& operator=(const TrainingCertificate&)=default;
     TrainingCertificate& operator=(TrainingCertificate&&)=default;
-    unsigned SchemaVersion() const { return protocol.schemaVersion==4?2:1; }
+    unsigned SchemaVersion() const { return protocol.schemaVersion==5?3:protocol.schemaVersion==4?2:1; }
     bool Exact() const { return exact; }
     const std::string& ModelRevision() const { return modelRevision; }
     const std::string& ProtocolRevision() const { return protocol.revision; }
@@ -130,6 +131,11 @@ public:
     std::vector<std::string> CompositeReferenceProofIds() const {std::vector<std::string> ids;for(const auto& r:referenceInputs)ids.push_back(r.semanticProofId);return ids;}
     const std::string& CompositeSourceOrigin() const {return compositeSourceOrigin;}
     const std::string& CompositeOwnerFamilyBinding() const {return compositeOwnerFamilyBinding;}
+    const std::string& CandidateWindowProtocolBinding() const {return candidateWindowProtocolBinding;}
+    const std::string& CandidateWindowAttemptId() const {return candidateWindowAttemptId;}
+    const std::string& CandidateWindowFinalRunId() const {return candidateWindowFinalRunId;}
+    const std::vector<std::string>& FinalWindowRecipeIds() const {return finalWindowRecipeIds;}
+    const std::vector<std::string>& FinalMeasurementInstanceIds() const {return finalMeasurementInstanceIds;}
     bool Matches(const std::string& currentModel,const CapturedReferences& currentReferences,
                  const VerificationTolerances& currentTolerances,ModelStateKind kind,std::size_t currentEpoch) const;
     std::size_t ModelEpoch() const { return modelEpoch; }
@@ -145,6 +151,8 @@ private:
     std::vector<CapturedInputReference> referenceInputs;
     std::vector<InputVerificationResidual> residuals;
     std::vector<std::string> compositeProofIds;
+    std::string candidateWindowProtocolBinding,candidateWindowAttemptId,candidateWindowFinalRunId;
+    std::vector<std::string> finalWindowRecipeIds,finalMeasurementInstanceIds;
 };
 struct RejectedVerificationProbe { std::string trialId, reason; };
 
@@ -154,6 +162,7 @@ struct RejectedVerificationProbe { std::string trialId, reason; };
 class FinalVerificationSession {
 public:
     FinalVerificationSession(CapturedReferences references,VerificationConfig configuration);
+    FinalVerificationSession(CapturedReferences references,CandidateWindowReferenceSet,VerificationConfig configuration);
     FinalVerificationSession(const FinalVerificationSession&)=delete;
     FinalVerificationSession& operator=(const FinalVerificationSession&)=delete;
     std::optional<VerificationRequest> NextRequest();
@@ -162,6 +171,9 @@ public:
     void ArmComposite(const PreparedCompositeMeasurement& prepared);
     void ConsumeComposite(const ValidatedCompositeMeasurement& measurement,const std::string& currentBaseRevision);
     void RejectComposite(const std::string& reason);
+    void ArmCandidateWindow(const PreparedCompositeMeasurement&);
+    void ConsumeCandidateWindow(const ValidatedCompositeMeasurement&,const std::string& currentBaseRevision);
+    void RejectCandidateWindow(const std::string& reason);
     void Invalidate(const std::string& newBaseRevision);
     void ExternalStop();
     void ExhaustBudget();
@@ -178,8 +190,11 @@ public:
     bool WaitingForObservation() const { return bool(armed) || bool(compositeArmed); }
 private:
     friend class CompositePortableTrainingProof;
-    struct Accepted { std::string trialId,effectiveRevision;double raw,arrival,plateauEnd;std::string compositeProofId,candidateWitnessId; };
+    struct Accepted { std::string trialId,effectiveRevision;double raw,arrival,plateauEnd;std::string compositeProofId,candidateWitnessId;
+        std::string candidateWindowRecipeId,candidateWindowInstanceId,candidateWindowAttemptId,candidateWindowFinalRunId;
+        std::optional<PreparedCompositeMeasurement> candidateWindowPrepared; };
     CapturedReferences references;
+    std::optional<CandidateWindowReferenceSet> candidateWindowReferences;
     VerificationConfig config;
     VerificationStatus status=VerificationStatus::Collecting;
     std::vector<std::size_t> order;
@@ -197,6 +212,8 @@ private:
     // Admission remains method-specific; scalar acceptance/finish are private.
     void AcceptValidatedScalar(std::size_t index,double raw,double arrival,double plateauEnd,const std::string& effectiveRevision);
     void CompleteValidatedInput();
+    void ArmTyped(const PreparedCompositeMeasurement&,const CandidateWindowReferenceSet*);
+    void ConsumeTyped(const ValidatedCompositeMeasurement&,const std::string&,const CandidateWindowReferenceSet*);
     void Finish();
 };
 const char* VerificationStatusName(VerificationStatus status);
