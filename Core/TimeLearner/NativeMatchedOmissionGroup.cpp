@@ -67,7 +67,7 @@ void NativeMatchedOmissionGroup::Start(NativeMatchedOmissionPlan value,const Nat
         std::vector<RDK::NameT> names;node->GetComponentsList(names);
         for(const auto& name:names)self(self,node->GetComponent(name,true));
     };
-    visit(visit,b.neuron);visit(visit,b.dataset);
+    visit(visit,b.neuron.Get());visit(visit,b.dataset.Get());
     std::ostringstream identity;identity<<plan.groupId;
     for(const auto& node:watched)identity<<'|'<<node.path<<':'<<node.node.Get();
     QJsonArray instance{QString::fromStdString(identity.str())};
@@ -97,7 +97,7 @@ void NativeMatchedOmissionGroup::CheckInstances() const
         std::vector<RDK::NameT> names;node->GetComponentsList(names);
         for(const auto& name:names)self(self,node->GetComponent(name,true));
     };
-    visit(visit,b.neuron);visit(visit,b.dataset);
+    visit(visit,b.neuron.Get());visit(visit,b.dataset.Get());
     Require(current.size()==watched.size(),"omission_group_graph_changed");
     RequireNativeCalculationSchedule(*b.owner);
 }
