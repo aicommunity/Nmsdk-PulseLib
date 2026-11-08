@@ -51,7 +51,7 @@ void NativeProbeExecutor::Queue(NativeProbeRequest value)
         throw std::logic_error("native_probe_busy_or_unconsumed_result");
     const auto key=std::make_pair(value.specification.runId,value.specification.trialId);
     if(!seenTrials.insert(key).second)throw std::logic_error("reused_native_trial_id");
-    request=std::move(value);state=NativeProbeStatus::Queued;prepared.reset();
+    ++controlGeneration;request=std::move(value);state=NativeProbeStatus::Queued;prepared.reset();
     lastEmission.reset();emitted=0;watched.clear();generatorParameters.clear();capturedGenerator=nullptr;
     ownerLife={};neuronLife={};datasetLife={};generatorLife={};stimulusProfile.reset();
 }
@@ -213,6 +213,7 @@ void NativeProbeExecutor::RestorePresentation()
 
 void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double time)
 {
+    const auto enteredGeneration=controlGeneration;
     if(state==NativeProbeStatus::Running)
     {
         try
@@ -368,23 +369,26 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
             request.baseModelRevision,spec.modelRevision,request.modelEpoch};
         if(spec.schemaVersion>=3 && b.branch)prepared->selectedInputIndex=std::size_t(request.activeInput);
         const auto* preparedRecorder=recorder.get();
-        if(request.onPrepared)request.onPrepared(*prepared,spec);
+        const auto preparedSink=request.onPrepared;
+        const auto preparedContext=*prepared;
+        if(preparedSink)preparedSink(preparedContext,spec);
         // An explicit callback cancellation/reset owns its result, as in the
         // sample callback path below. Do not overwrite it with another failure
         // or continue preparing a replacement request queued by the callback.
-        if(state!=NativeProbeStatus::Queued || recorder.get()!=preparedRecorder ||
+        if(controlGeneration!=enteredGeneration || state!=NativeProbeStatus::Queued || recorder.get()!=preparedRecorder ||
            request.specification.runId!=spec.runId || request.specification.trialId!=spec.trialId)return;
         CheckLiveGraph(b);CheckPattern(b);CheckSource(b);
         Require(ReadRevision(true)==spec.modelRevision,"native_prepared_callback_changed_model");
         state=NativeProbeStatus::Running;
     }
-    catch(const std::exception& error){Failure(time,error.what());}
-    catch(...){Failure(time,"native_preparation_exception");}
+    catch(const std::exception& error){if(controlGeneration==enteredGeneration && state==NativeProbeStatus::Queued)Failure(time,error.what());}
+    catch(...){if(controlGeneration==enteredGeneration && state==NativeProbeStatus::Queued)Failure(time,"native_preparation_exception");}
 }
 
 void NativeProbeExecutor::AfterChildren(const NativeProbeBindings& b,double time)
 {
     if(state!=NativeProbeStatus::Running)return;
+    const auto enteredGeneration=controlGeneration;
     lastTime=time;
     try
     {
@@ -415,18 +419,19 @@ void NativeProbeExecutor::AfterChildren(const NativeProbeBindings& b,double time
             values.push_back(soma->SumPotential(0,0));
         }
         recorder->Observe(time,values,revision);
-        if(request.onSample)
-        {sample.potentials=std::move(values);request.onSample(sample);}
+        const auto sampleSink=request.onSample;
+        if(sampleSink)
+        {sample.potentials=std::move(values);sampleSink(sample);}
         // An explicit callback cancellation/reset already owns the outcome.
-        if(state!=NativeProbeStatus::Running)return;
+        if(controlGeneration!=enteredGeneration || state!=NativeProbeStatus::Running)return;
         // A callback can change an inherited policy on the final sample too.
         // Diagnose it before closing a successful observation, retaining the
         // recorder and unrestricted revision reader for partial diagnostics.
         CheckLiveGraph(b);
         if(!Detail::After(end,time))Finish(time,"window_closed",NativeProbeStatus::Completed);
     }
-    catch(const std::exception& error){Failure(time,error.what());}
-    catch(...){Failure(time,"native_observation_exception");}
+    catch(const std::exception& error){if(controlGeneration==enteredGeneration && state==NativeProbeStatus::Running)Failure(time,error.what());}
+    catch(...){if(controlGeneration==enteredGeneration && state==NativeProbeStatus::Running)Failure(time,"native_observation_exception");}
 }
 
 void NativeProbeExecutor::StopSource()
@@ -500,6 +505,7 @@ void NativeProbeExecutor::Cancel(const std::string& reason)
 }
 void NativeProbeExecutor::ResetControl()
 {
+    ++controlGeneration;
     Cancel("learner_reset");Restore();physical.reset();recorder.reset();result.reset();prepared.reset();
     request=NativeProbeRequest{};seenTrials.clear();state=NativeProbeStatus::Idle;
 }

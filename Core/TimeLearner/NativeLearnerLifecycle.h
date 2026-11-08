@@ -76,10 +76,13 @@ struct NativeLearnerLifecycle {
  if(!owner.NativeEditFailure.empty()){owner.ForceSkipComponentCalculation();return true;}
  if(owner.NativeTrainingOwned)
  {
+  const auto lifetime=owner.ObserveLifecycle();
   const auto adapter=TimeLearner::BindNativeTraining(owner,owner.NativeProbeControl,owner.NativeTrainingEditDepth);
   owner.NativeTrainingControl.BeforeTick(adapter,owner.Environment->GetTime().GetDoubleTime(),TimeLearner::NativeTrainingWallTime());
+  if(!lifetime.IsCurrent()){owner.ForceSkipComponentCalculation();return true;}
   if(owner.NativeProbeControl.OwnsControl())
    owner.NativeProbeControl.BeforeChildren(owner.NativeProbeModelBindings(),owner.Environment->GetTime().GetDoubleTime());
+  if(!lifetime.IsCurrent()){owner.ForceSkipComponentCalculation();return true;}
   if(!owner.NativeEditFailure.empty() || owner.NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Rejected ||
       owner.NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Cancelled ||
       (owner.NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Finished &&

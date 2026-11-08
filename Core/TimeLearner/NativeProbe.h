@@ -92,6 +92,10 @@ public:
     void Cancel(const std::string& reason);
     void ResetControl();
     const std::optional<NativeProbeResult>& Result() const { return result; }
+    bool MatchesActiveTrial(const std::string& run,const std::string& trial) const {
+        return (state==NativeProbeStatus::Queued || state==NativeProbeStatus::Running) &&
+            request.specification.runId==run && request.specification.trialId==trial;
+    }
     std::optional<NativeProbeResult> TakeResult();
 private:
     struct SavedInput {
@@ -107,6 +111,7 @@ private:
         bool stable;
     };
     NativeProbeStatus state=NativeProbeStatus::Idle;
+    std::size_t controlGeneration=0;
     NativeProbeRequest request;
     std::optional<NativeProbeBindings> physical;
     std::vector<SavedInput> savedInputs;
