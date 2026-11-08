@@ -66,7 +66,7 @@ template<class Owner> void NativeCompositeTrainingAttempt::Bind(Owner& owner) {
         Require(ownerLife.IsCurrent(),"composite_train_owner_lifecycle_changed");
         const auto b=bindings();const auto source=b.dataset->template GetComponentL<NPulseGeneratorTransit>("Generator1",true);
         Require(bool(source),"composite_train_missing_source");
-        return revisionObserver.Read(b.neuron,{{&source->Output,"burst"}}).toStdString();
+        return revisionObserver.Read(b.neuron.Get(),{{&source->Output,"burst"}}).toStdString();
     };
 }
 NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearner& o,VerificationProtocol p,
@@ -101,11 +101,11 @@ void NativeCompositeTrainingAttempt::Initialize(VerificationProtocol p,Composite
         "composite_train_initial_source_dimensions");
     QJsonArray appliedIsi;for(int i=0;i<b.inputCount;++i)appliedIsi.append(b.dataset->MatrixData(i,0));
     Require(Hash(appliedIsi)==protocol->patternHash,"composite_train_initial_source_pattern_mismatch");
-    const auto identity=NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}});
+    const auto identity=NmsdkTools::IdentifyModel(b.neuron.Get(),{{&source->Output,"burst"}});
     Require(identity["valid"].toBool(),"composite_train_invalid_initial_identity");initialRevision=identity["sha256"].toString().toStdString();
     for(const char* key:{"neuron_class","dataset_class","generator_class"})
         if(initialDeclaration[key].isString())imageRoots.push_back(initialDeclaration[key].toString().toStdString());
-    const auto images=NmsdkTools::CaptureModelImageDefinitions(b.neuron,{{&source->Output,"burst"}},imageRoots);
+    const auto images=NmsdkTools::CaptureModelImageDefinitions(b.neuron.Get(),{{&source->Output,"burst"}},imageRoots);
     storageFingerprint=NmsdkTools::ModelImageDefinitionsFingerprint(images).toStdString();
     const auto c=capacitanceWitness();if(c){initialCapacitanceOrigin=c->parameters.origin;initialCapacitanceMaximumRelativeChange=c->parameters.maximumRelativeChange;}
     sourceBinding=QJsonObject{{"kind","composite_train_initial_source_v1"},{"initial_model",identity},{"initial_epoch",double(initialEpoch)},
@@ -141,13 +141,13 @@ std::string NativeCompositeTrainingAttempt::CheckBoundary(QJsonObject* retained,
     Require(declaration()==initialDeclaration,"composite_train_source_owner_changed");
     const auto b=bindings();const auto source=b.dataset->template GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     Require(bool(source),"composite_train_missing_source");
-    const auto images=NmsdkTools::CaptureModelImageDefinitions(b.neuron,{{&source->Output,"burst"}},imageRoots);
+    const auto images=NmsdkTools::CaptureModelImageDefinitions(b.neuron.Get(),{{&source->Output,"burst"}},imageRoots);
     Require(NmsdkTools::ModelImageDefinitionsFingerprint(images).toStdString()==storageFingerprint,"composite_train_storage_physics_changed");
     const auto current=capacitanceWitness();
     if(current)Require(current->parameters.origin==initialCapacitanceOrigin &&
         current->parameters.maximumRelativeChange==initialCapacitanceMaximumRelativeChange,"composite_train_C0_origin_or_policy_changed");
     else Require(initialCapacitanceOrigin.empty(),"composite_train_C0_state_lost");
-    const auto identity=NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}});
+    const auto identity=NmsdkTools::IdentifyModel(b.neuron.Get(),{{&source->Output,"burst"}});
     Require(identity["valid"].toBool() && identity["sha256"].toString().toStdString()==adapter.readModelRevision(),
         "composite_train_candidate_full_identity_mismatch");
     const QJsonObject binding{{"kind","composite_train_candidate_binding_v1"},{"source_origin",Text(sourceOrigin)},
@@ -212,7 +212,7 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
     prototype.readFullModelRevision=[this](){
         Require(ownerLife.IsCurrent(),"composite_train_owner_lifecycle_changed");const auto b=bindings();
         const auto source=b.dataset->template GetComponentL<NPulseGeneratorTransit>("Generator1",true);
-        Require(bool(source),"composite_train_missing_source");const auto full=NmsdkTools::IdentifyModel(b.neuron,{{&source->Output,"burst"}});
+        Require(bool(source),"composite_train_missing_source");const auto full=NmsdkTools::IdentifyModel(b.neuron.Get(),{{&source->Output,"burst"}});
         Require(full["valid"].toBool(),"composite_train_invalid_full_identity");return full["sha256"].toString().toStdString();
     };
     const auto caller=prototype.onPrepared;
