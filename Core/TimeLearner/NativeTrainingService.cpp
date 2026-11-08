@@ -37,6 +37,7 @@ void PreservedBaseline(const TrainingCapacitanceWitness& previous,const Training
 void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingAdapter& a,double modelTime,double wallTime)
 {
     if(value.protocol.schemaVersion==4){StartComposite(std::move(value),a,modelTime,wallTime);return;}
+    if(value.protocol.schemaVersion==5){StartCandidateWindowComposite(std::move(value),a,modelTime,wallTime);return;}
     Require(!value.composite,"unexpected_native_composite_policy");
     Require(state==NativeTrainingState::Idle,"native_training_requires_reset_before_restart");
     Require(!value.search.capacitanceSearch || value.recordCapacitanceHistory,
@@ -204,6 +205,7 @@ void NativeTrainingService::BeginSearch(const NativeTrainingAdapter& a)
 void NativeTrainingService::BeforeTick(const NativeTrainingAdapter& a,double modelTime,double wallTime)
 {
     if(plan.protocol.schemaVersion==4){BeforeComposite(a,modelTime,wallTime);return;}
+    if(plan.protocol.schemaVersion==5){BeforeComposite(a,modelTime,wallTime);return;}
     if(!Active(state))return;
     try
     {
@@ -276,6 +278,7 @@ void NativeTrainingService::BeforeTick(const NativeTrainingAdapter& a,double mod
 void NativeTrainingService::AfterTick(const NativeTrainingAdapter& a,double modelTime,double wallTime)
 {
     if(plan.protocol.schemaVersion==4){AfterComposite(a,modelTime,wallTime);return;}
+    if(plan.protocol.schemaVersion==5){AfterComposite(a,modelTime,wallTime);return;}
     if(!Active(state))return;
     try
     {
@@ -335,6 +338,7 @@ void NativeTrainingService::CheckBudget(const NativeTrainingAdapter& a,double mo
     if(modelTime-startModel>=plan.maximumModelSeconds || wallTime-startWall>=plan.maximumWallSeconds)
     {
         if(plan.protocol.schemaVersion==4){StopComposite(a,TrainingStatus::BudgetExhausted,"native_training_time_budget_exhausted");return;}
+        if(plan.protocol.schemaVersion==5){StopComposite(a,TrainingStatus::BudgetExhausted,"native_training_time_budget_exhausted");return;}
         a.cancel("native_training_time_budget_exhausted");
         if(search)search->ExhaustBudget();
         Finish(TrainingStatus::BudgetExhausted,"native_training_time_budget_exhausted");
@@ -358,6 +362,7 @@ void NativeTrainingService::SyncOutcome()
 void NativeTrainingService::ExternalStop(const NativeTrainingAdapter& a)
 {
     if(plan.protocol.schemaVersion==4){if(Active(state))StopComposite(a,TrainingStatus::ExternalStop,"external_stop");return;}
+    if(plan.protocol.schemaVersion==5){if(Active(state))StopComposite(a,TrainingStatus::ExternalStop,"external_stop");return;}
     if(!Active(state))return;a.cancel("external_stop");if(search)search->ExternalStop();
     Finish(TrainingStatus::ExternalStop,"external_stop");
     RecordCancelled(a);
@@ -384,7 +389,7 @@ void NativeTrainingService::ResetControl()
 }
 void NativeTrainingService::InvalidateTarget()
 {ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();
- composite.reset();compositeImportedProof.reset();compositeSourceBinding={};compositeInitialConfiguration={};compositeOwnerFamily.clear();compositeFinalRun.clear();compositeRecords.clear();compositeReferenceGroups.clear();compositeFinalGroups.clear();
+ composite.reset();compositeImportedProof.reset();compositeCandidateReferences.reset();compositeSourceBinding={};compositeInitialConfiguration={};compositeOwnerFamily.clear();compositeFinalRun.clear();compositeRecords.clear();compositeReferenceGroups.clear();compositeFinalGroups.clear();
  compositeGroupWitnesses.clear();compositeGroupTrialWitnessIds.clear();compositeCapacitance.reset();
  compositeRawNotifications.clear();compositeRawTrialIds.clear();
  compositeNativeProbes=compositeGroups=compositeSampledFrames=compositePrimaryBytes=0;}

@@ -38,6 +38,10 @@ private:
 };
 NativeCompositeArchiveDocument EncodeNativeCompositeTrainingArchive(const NativeTrainingService&,
     const QString& primaryPrefix="composite-measurements");
+// Explicit service5 accepted journal; remains separate from actor-only STEP2
+// export and from a future completed learned6/certificate3 portable package.
+NativeCompositeArchiveDocument EncodeNativeCandidateWindowServiceArchive(const NativeTrainingService&,
+    const QString& primaryPrefix="composite-measurements");
 // Explicit archive2 export of protocol5 factory history at a group boundary.
 // It does not enable the service, search/final admission or certificates.
 NativeCompositeArchiveDocument EncodeNativeCandidateWindowTrainingArchive(const NativeCompositeTrainingAttempt&,

@@ -3384,6 +3384,8 @@ bool NNeuronTimeLearner::ABeforeBuild(void)
 {
  if(!NativeTrainingEditDepth && NativeTrainingControl.Plan().protocol.schemaVersion==4)
  {TimeLearner::NativeLearnerLifecycle::InterruptComposite(*this,"learner_build");NativeTrainingControl.ResetControl();}
+ else if(!NativeTrainingEditDepth && NativeTrainingControl.Plan().protocol.schemaVersion==5)
+ {TimeLearner::NativeLearnerLifecycle::InterruptComposite(*this,"learner_build");NativeTrainingControl.ResetControl();}
  if(ControllerVersion.GetData()==2 || ConfiguredModelInitialized.GetData())return true;
  if(NativeTrainingOwned)return true;
  BindLegacyGraphRoles();

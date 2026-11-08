@@ -2,10 +2,13 @@
 #include "ConfiguredNativeTraining.h"
 #include "ProbeEvidenceJson.h"
 #include "CompositePrimaryBudget.h"
+#include "CandidateWindowCoreValidation.h"
+#include "NativeCompositeTrainingEvidence.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <set>
+#include <type_traits>
 
 namespace NMSDK::TimeLearner {
 namespace {
@@ -39,6 +42,32 @@ void Validate(const NativeTrainingPlan& p) {
             w.channel==(p.protocol.routing==ProbeRouting::ClassicBurst?i:0u) && w.begin==m.beginOffset && w.end==m.endOffset &&
             w.end<=p.probe.specification.end,"native_composite_window_mapping_mismatch");
     }
+}
+void ValidateCandidateWindowPlan(const NativeTrainingPlan& p) {
+    ValidateVerificationProtocol(p.protocol);ValidateCandidateWindowMeasurementContract(p.protocol);
+    Require(p.composite && p.composite->schemaVersion==2,"native_candidate_window_policy2_required");
+    const auto& c=*p.composite;const auto& method=*p.protocol.candidateWindowMeasurement;const auto n=p.protocol.inputs.size();
+    Require(c.methodId==method.methodId && c.contextPolicy==method.contextPolicy && c.geometryPolicy==method.geometryPolicy &&
+        p.inputWindows.size()==n && p.maximumReferenceProbes>=n && p.probe.specification.schemaVersion==3 &&
+        !p.probe.specification.recordSpikes && p.probe.specification.begin==0. &&
+        p.probe.specification.maximumSamples<=c.contextPolicy.maximumSamples &&
+        p.probe.specification.patternHash==p.protocol.patternHash && p.probe.specification.sampleId==p.protocol.sampleId &&
+        p.probe.specification.stimulusProfile==p.protocol.stimulusProfile && p.probe.specification.expectedStimulusIds==p.protocol.stimulusIds &&
+        p.probe.routing==p.protocol.routing && p.probe.protocolRevision==p.protocol.revision &&
+        p.probe.specification.minimumAmplitude==p.protocol.minimumAmplitude &&
+        p.probe.specification.waveAssignment==p.protocol.waveAssignment && p.probe.specification.peakSelection==p.protocol.peakSelection,
+        "native_candidate_window_plan_protocol_mismatch");
+    for(auto v:{c.maximumGroups,c.maximumNativeProbes,c.maximumTotalSamples,c.maximumTotalPrimaryBytes})
+        Require(v>0 && v<=9007199254740991ULL,"invalid_native_composite_attempt_limit");
+    Require(c.maximumNativeProbes>=n+2 && c.maximumTotalSamples>=c.contextPolicy.maximumTotalSamples &&
+        std::isfinite(p.maximumModelSeconds) && p.maximumModelSeconds>0. && std::isfinite(p.maximumWallSeconds) && p.maximumWallSeconds>0. &&
+        std::isfinite(c.maximumGroupModelSeconds) && c.maximumGroupModelSeconds>0. && c.maximumGroupModelSeconds<=p.maximumModelSeconds &&
+        std::isfinite(c.maximumGroupWallSeconds) && c.maximumGroupWallSeconds>0. && c.maximumGroupWallSeconds<=p.maximumWallSeconds,
+        "invalid_native_composite_time_or_probe_limits");
+    for(std::size_t i=0;i<n;++i) {const auto& w=p.inputWindows[i];const auto& r=method.referenceInputWindows[i];
+        Require(w.inputId==p.protocol.inputs[i].id && w.stimulusId==p.protocol.inputs[i].stimulusId &&
+            w.channel==(p.protocol.routing==ProbeRouting::ClassicBurst?i:0u) && w.begin==r.beginOffset && w.end==r.endOffset &&
+            w.end<=p.probe.specification.end,"native_candidate_window_reference_mapping_mismatch");}
 }
 std::size_t PrimaryReservation(const NativeTrainingPlan& p) {
     const auto n=p.protocol.inputs.size(),channels=p.protocol.routing==ProbeRouting::ClassicBurst?n:1;
@@ -119,12 +148,108 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     state=NativeTrainingState::CapturingReferences;incompleteCaptureConstraint.reset();
     if(references)CompositeBeginSearch(a);
 }
+void NativeTrainingService::StartCandidateWindowComposite(NativeTrainingPlan value,const NativeTrainingAdapter& a,double m,double w) {
+    Require(state==NativeTrainingState::Idle,"native_training_requires_reset_before_restart");ValidateCandidateWindowPlan(value);
+    Require(a.createCandidateWindowComposite && a.readParameters && a.readModelRevision && a.apply && a.cancel && a.trainingRequested,
+        "incomplete_native_candidate_window_owner_adapter");
+    Require(a.trainingRequested(),"native_composite_training_request_not_active");
+    Require(std::isfinite(m) && std::isfinite(w),"invalid_native_training_plan");if(a.validateExecution)a.validateExecution();
+    const auto revision=a.readModelRevision();const auto parameters=a.readParameters();Require(!revision.empty(),"missing_native_training_model_revision");
+    if(!compositeSourceBinding.isEmpty())Require(plan.protocol==value.protocol && revision==referenceBinding &&
+        compositeSourceBinding["model_spec"].toObject()["normalization"]==QJsonValue(value.search.normalization==Normalization::SynapseCount?"N0":"N1"),
+        "native_candidate_window_retained_family_changed");
+    if(incompleteCaptureConstraint)Require(revision==incompleteCaptureConstraint->first && retainedEpoch==incompleteCaptureConstraint->second,
+        "incomplete_reference_capture_requires_original_model_or_explicit_cold_restart");
+    value.search.initialModelRevision=revision;if(references || incompleteCaptureConstraint)value.search.initialModelEpoch=retainedEpoch;
+    ValidateCandidateWindowTrainingConfiguration(value.protocol,value.search,parameters);
+    const auto witness=a.readCapacitanceWitness?a.readCapacitanceWitness():std::optional<TrainingCapacitanceWitness>{};
+    auto capacitance=witness?std::optional<TrainingCapacitance>(witness->parameters):std::nullopt;
+    ValidateBoundedTrainingCapacitance(value.search,capacitance);
+    Require(!witness || witness->modelRevision==revision,"native_composite_capacitance_revision_mismatch");
+    Require(!value.recordCapacitanceHistory || capacitance,"native_composite_capacitance_history_requires_owned_C0");
+    Require(!capacitance || (a.readCapacitanceWitness && a.applyWithCapacitance && a.assessResistanceDomainWithCapacitance),
+        "native_composite_owned_capacitance_requires_boundary_adapter");
+    Require(value.search.normalization!=Normalization::TipResistance || a.assessResistanceDomain,"native_n1_requires_effective_domain_provider");
+    Require(attempt<9007199254740991ULL && compositeGeneration<std::numeric_limits<std::size_t>::max(),"native_candidate_window_session_overflow");
+    const auto nextAttempt=attempt+1;auto runtime=value;runtime.search.runId+="/session/"+std::to_string(nextAttempt);
+    NativeCandidateWindowAttemptDeclaration declaration{runtime.search.runId,value.composite->maximumTotalPrimaryBytes};
+    auto records=compositeRecords;std::size_t bytes=0;for(const auto& r:records) {
+        const auto size=CompositeRecordPrimaryBytes(r);Require(size<=declaration.maximumTotalPrimaryBytes && bytes<=declaration.maximumTotalPrimaryBytes-size,
+            "native_composite_retained_reference_byte_budget");bytes+=size;
+    }
+    std::shared_ptr<NativeCompositeTrainingAttempt> actor;auto source=compositeSourceBinding;auto initial=compositeInitialConfiguration;
+    auto family=compositeOwnerFamily;
+    if(!source.isEmpty()) {
+        Require(bool(a.createImportedCandidateWindowComposite),"native_candidate_window_imported_owner_adapter_missing");
+        const auto archive=DecodeNativeCompositeTrainingArchive(EncodeNativeCandidateWindowServiceArchive(*this).document);
+        actor=a.createImportedCandidateWindowComposite(archive,Limits(value),declaration,m,w);
+        Require(actor && actor->SourceBinding()==source && actor->OwnerFamilyBinding()==family,"native_candidate_window_imported_family_changed");
+    } else {
+        Require(!references && records.empty() && !compositeCandidateReferences,"native_candidate_window_cold_requires_empty_family");
+        actor=a.createCandidateWindowComposite(value.protocol,Limits(value),declaration,m,w);Require(bool(actor),"missing_native_composite_authority");
+        source=actor->SourceBinding();family=actor->OwnerFamilyBinding();
+        initial=EncodeConfiguredNativeTraining(CaptureCandidateWindowInitialConfiguration(DecodeNativeModelSpec(source["model_spec"].toObject()),
+            value,parameters,capacitance?capacitance->maximumRelativeChange:0.));
+    }
+    auto closed=actor->windowReferences;std::unique_ptr<BoundedTrainingSession> preparedSearch;
+    if(references) {
+        Require(bool(closed),"native_candidate_window_retained_complete_reference_set_missing");
+        CandidateWindowCoreDetail::RequireCapturedReferences(*references,*closed);
+        preparedSearch=std::make_unique<BoundedTrainingSession>(*references,*closed,runtime.search,parameters,
+            runtime.search.normalization==Normalization::TipResistance,capacitance);
+    } else Require(!closed,"native_candidate_window_unexpected_complete_reference_set");
+    // All allocations/cold7/archive replay precede this fresh actual guard and
+    // publication. A rejected restart leaves the previous family/ledger intact.
+    auto binding=revision;actor->CheckBoundary();actor->CheckClock(m,NativeTrainingWallTime());
+    static_assert(std::is_nothrow_move_assignable_v<NativeTrainingPlan>);
+    static_assert(std::is_nothrow_move_assignable_v<std::optional<TrainingCapacitance>>);
+    plan=std::move(runtime);composite.swap(actor);compositeSourceBinding.swap(source);compositeInitialConfiguration.swap(initial);
+    compositeOwnerFamily.swap(family);compositeRecords.swap(records);compositePrimaryBytes=bytes;compositeCapacitance=std::move(capacitance);
+    compositeCandidateReferences.swap(closed);search.swap(preparedSearch);attempt=nextAttempt;++compositeGeneration;
+    startModel=lastModel=m;startWall=lastWall=w;retainedEpoch=plan.search.initialModelEpoch;
+    compositeNativeProbes=compositeGroups=compositeSampledFrames=0;referenceProbes=invalidReferences=0;
+    compositeReferenceMeasurements.clear();observedPackets.clear();finalPackets.clear();compositeFinalGroups.clear();compositeFinalRun.clear();
+    compositeRequest.reset();compositeRawNotifications.clear();compositeRawTrialIds.clear();compositeCancellationDiagnostics.clear();
+    if(!references){referencePackets.clear();referenceEvidence.clear();compositeReferenceGroups.clear();}
+    certificate.reset();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
+    incompleteCaptureConstraint.reset();state=references?NativeTrainingState::Searching:NativeTrainingState::CapturingReferences;
+    referenceBinding.swap(binding);
+}
 void NativeTrainingService::CompositeBeginSearch(const NativeTrainingAdapter& a) {
     Require(references && a.readModelRevision()==referenceBinding,"reference_capture_model_changed");
     plan.search.initialModelRevision=referenceBinding;
-    search=std::make_unique<BoundedTrainingSession>(*references,plan.search,a.readParameters(),
+    if(plan.protocol.schemaVersion==5) {
+        Require(bool(compositeCandidateReferences),"native_candidate_window_complete_reference_set_missing");
+        search=std::make_unique<BoundedTrainingSession>(*references,*compositeCandidateReferences,plan.search,a.readParameters(),
+            plan.search.normalization==Normalization::TipResistance,compositeCapacitance);
+    } else search=std::make_unique<BoundedTrainingSession>(*references,plan.search,a.readParameters(),
         plan.search.normalization==Normalization::TipResistance,compositeCapacitance);
     state=NativeTrainingState::Searching;SyncOutcome();
+}
+void NativeTrainingService::StageCandidateWindowReference(const std::shared_ptr<NativeCompositeTrainingAttempt>& actor,
+    const ValidatedCompositeMeasurement& measured) {
+    Require(plan.protocol.schemaVersion==5 && actor==composite && state==NativeTrainingState::CapturingReferences && !references,
+        "native_candidate_window_reference_staging_state");
+    auto staged=compositeReferenceMeasurements;staged.push_back(measured);auto packets=referencePackets;
+    const auto& native=actor->Group()->packets;packets.insert(packets.end(),native.begin(),native.end());
+    if(staged.size()<plan.protocol.inputs.size()) {
+        // A measured prefix is diagnostic/staged, never a selected RefSet.
+        compositeReferenceMeasurements.swap(staged);referencePackets.swap(packets);return;
+    }
+    std::optional<CapturedReferences> captured(CapturedReferences::CaptureComposite(plan.protocol,staged));
+    std::vector<std::string> groups;groups.reserve(captured->Inputs().size());
+    for(const auto& input:captured->Inputs())groups.push_back(input.measurementGroupId);
+    auto closed=actor->PrepareCandidateWindowReferences(*captured);
+    static_assert(std::is_nothrow_swappable_v<std::optional<CapturedReferences>>);
+    // No allocation, callback, getter or model change between the final fresh
+    // Prepare and publication of BOTH complete sets and all selected flags.
+    actor->CommitCandidateWindowReferences(closed);
+    references.swap(captured);compositeCandidateReferences.swap(closed);compositeReferenceGroups.swap(groups);
+    compositeReferenceMeasurements.swap(staged);referencePackets.swap(packets);
+    for(auto& record:compositeRecords)if(record.purpose==CompositeMeasurementPurpose::Reference &&
+        std::find(compositeReferenceGroups.begin(),compositeReferenceGroups.end(),record.groupId)!=compositeReferenceGroups.end()) {
+        record.consumed=true;record.trainingRequestedAtConsume=true;
+    }
 }
 void NativeTrainingService::QueueComposite(const NativeTrainingAdapter& a,const VerificationRequest& request,
     CompositeMeasurementPurpose purpose,double m,double w) {
@@ -144,7 +269,10 @@ void NativeTrainingService::QueueComposite(const NativeTrainingAdapter& a,const 
     const auto serial=activeAction?activeAction->serial:0;
     auto prepared=[this,generation,serial](const PreparedCompositeMeasurement& p){
         if(generation!=compositeGeneration || !ActiveComposite(state))throw CompositeTrainingStopped();
-        if(search)search->ArmComposite(serial,p);
+        if(search) {
+            if(plan.protocol.schemaVersion==5)search->ArmCandidateWindow(serial,p);
+            else search->ArmComposite(serial,p);
+        }
     };
     auto before=[this,a,generation](const NativeProbeRequest& raw){
         Require(generation==compositeGeneration && ActiveComposite(state),"native_composite_attempt_replaced");
@@ -246,7 +374,19 @@ bool NativeTrainingService::CheckCompositeGroupBudget(const NativeTrainingAdapte
 }
 void NativeTrainingService::ArchiveComposite(const std::shared_ptr<NativeCompositeTrainingAttempt>& actor) {
     if(!actor || !actor->Group() || actor->SourceBinding()!=compositeSourceBinding)return;
-    auto record=actor->Record();record.attemptId=plan.search.runId;record.policy=*plan.composite;record.capacitanceWitnesses=compositeGroupWitnesses;
+    auto record=actor->Record();
+    if(plan.protocol.schemaVersion==5) {
+        const auto& policy=*plan.composite;
+        Require(record.attemptId==plan.search.runId && record.policy.schemaVersion==2 &&
+            record.policy.methodId==policy.methodId && record.policy.contextPolicy==policy.contextPolicy && record.policy.geometryPolicy==policy.geometryPolicy &&
+            record.policy.maximumTotalPrimaryBytes==policy.maximumTotalPrimaryBytes &&
+            record.attemptLimits.maximumGroups==policy.maximumGroups && record.attemptLimits.maximumNativeProbes==policy.maximumNativeProbes &&
+            record.attemptLimits.maximumTotalSamples==policy.maximumTotalSamples && record.attemptLimits.maximumModelSeconds==plan.maximumModelSeconds &&
+            record.attemptLimits.maximumWallSeconds==plan.maximumWallSeconds && record.policy.maximumGroupModelSeconds==record.maximumGroupModelSeconds &&
+            record.policy.maximumGroupWallSeconds==record.maximumGroupWallSeconds && record.maximumGroupModelSeconds<=policy.maximumGroupModelSeconds &&
+            record.maximumGroupWallSeconds<=policy.maximumGroupWallSeconds,"native_candidate_window_record_declaration_changed");
+    } else {record.attemptId=plan.search.runId;record.policy=*plan.composite;}
+    record.capacitanceWitnesses=compositeGroupWitnesses;
     if(!compositeCancellationDiagnostics.empty())record.reason+=compositeCancellationDiagnostics;
     for(std::size_t i=0;i<record.issuedNativeProbes;++i) {
         const auto id=record.groupId+"/native/"+std::to_string(i);const auto found=compositeGroupTrialWitnessIds.find(id);
@@ -282,8 +422,9 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
     CheckBudget(a,lastModel,NativeTrainingWallTime());
     if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor)return;
     if(!CheckCompositeGroupBudget(a,actor))return;
-    record.trainingRequestedAtConsume=a.trainingRequested();
-    if(!*record.trainingRequestedAtConsume){StopComposite(a,TrainingStatus::ExternalStop,"external_stop");return;}
+    const bool requested=a.trainingRequested();
+    if(plan.protocol.schemaVersion!=5 || record.purpose!=CompositeMeasurementPurpose::Reference)record.trainingRequestedAtConsume=requested;
+    if(!requested){StopComposite(a,TrainingStatus::ExternalStop,"external_stop");return;}
     if(actor->Group()->maximumModelSeconds>0. && (record.endModel-record.startModel>=actor->Group()->maximumModelSeconds ||
         NativeTrainingWallTime()-record.startWall>=actor->Group()->maximumWallSeconds)) {
         StopComposite(a,TrainingStatus::BudgetExhausted,"native_composite_group_time_budget_exhausted");return;
@@ -294,7 +435,11 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
         if(state==NativeTrainingState::CapturingReferences) {
             if(++invalidReferences>plan.maximumInvalidReferenceProbes)Finish(TrainingStatus::InvalidObservation,actor->RejectionReason());
         }
-        else {search->RejectComposite(actor->RejectionReason().empty()?"native_composite_measurement_rejected":actor->RejectionReason());syncAfterDelivery=true;}
+        else {
+            const auto rejection=actor->RejectionReason().empty()?"native_composite_measurement_rejected":actor->RejectionReason();
+            if(plan.protocol.schemaVersion==5)search->RejectCandidateWindow(rejection);else search->RejectComposite(rejection);
+            syncAfterDelivery=true;
+        }
     }
     else if(state==NativeTrainingState::CapturingReferences) {
         const auto& measured=*actor->Measurement();const auto& logical=*compositeRequest;
@@ -302,19 +447,23 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
             logical.baseModelRevision,logical.epoch,CompositeMeasurementPurpose::Reference,
             measured.prepared.identity->ownerScope,actor->SourceOrigin(),true);
         measured.RequirePrepared(measured.prepared);
-        compositeReferenceMeasurements.push_back(measured);compositeReferenceGroups.push_back(record.groupId);
-        try {
-            if(compositeReferenceMeasurements.size()==plan.protocol.inputs.size())
-                references=CapturedReferences::CaptureComposite(plan.protocol,compositeReferenceMeasurements);
+        if(plan.protocol.schemaVersion==5)StageCandidateWindowReference(actor,measured);
+        else {
+            compositeReferenceMeasurements.push_back(measured);compositeReferenceGroups.push_back(record.groupId);
+            try {
+                if(compositeReferenceMeasurements.size()==plan.protocol.inputs.size())
+                    references=CapturedReferences::CaptureComposite(plan.protocol,compositeReferenceMeasurements);
+            }
+            catch(...) {compositeReferenceMeasurements.pop_back();compositeReferenceGroups.pop_back();throw;}
+            record.consumed=true;
+            const auto& packets=record.group.packets;referencePackets.insert(referencePackets.end(),packets.begin(),packets.end());
         }
-        catch(...) {compositeReferenceMeasurements.pop_back();compositeReferenceGroups.pop_back();throw;}
-        record.consumed=true;
-        const auto& packets=record.group.packets;referencePackets.insert(referencePackets.end(),packets.begin(),packets.end());
         if(references){referenceBinding=plan.search.initialModelRevision;CompositeBeginSearch(a);}
     }
     else {
         const auto wasAccepted=search->AcceptedCompositeObservations();const bool final=activeAction && activeAction->finalVerification;
-        search->ConsumeComposite(*actor->Measurement(),a.readModelRevision());
+        if(plan.protocol.schemaVersion==5)search->ConsumeCandidateWindow(*actor->Measurement(),a.readModelRevision());
+        else search->ConsumeComposite(*actor->Measurement(),a.readModelRevision());
         record.consumed=search->AcceptedCompositeObservations()>wasAccepted;
         if(final && record.consumed) {
             if(compositeFinalGroups.empty())compositeFinalGroups.resize(plan.protocol.inputs.size());

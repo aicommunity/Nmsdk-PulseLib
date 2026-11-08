@@ -18,6 +18,9 @@ struct NativeLearnerLifecycle {
         if(owner.NativeTrainingControl.Plan().protocol.schemaVersion==4)
             owner.NativeTrainingControl.InterruptComposite(
                 BindNativeTraining(owner,owner.NativeProbeControl,owner.NativeTrainingEditDepth),reason);
+        else if(owner.NativeTrainingControl.Plan().protocol.schemaVersion==5)
+            owner.NativeTrainingControl.InterruptComposite(
+                BindNativeTraining(owner,owner.NativeProbeControl,owner.NativeTrainingEditDepth),reason);
     }
     template<class Owner, class IntegrationFailure>
     static bool BeforeCalculate(Owner& owner, IntegrationFailure integrationFailure)

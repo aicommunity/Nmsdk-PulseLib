@@ -155,7 +155,9 @@ void NativeCompositeTrainingAttempt::AdoptCandidateWindowArchive(const DecodedNa
         d.maximumTotalPrimaryBytes<=9007199254740991ULL,"candidate_window_restart_explicit_new_attempt_or_primary_budget");
     Require(std::none_of(archive.Records().begin(),archive.Records().end(),[&](const auto& r){return r.attemptId==d.attemptId;}),
         "candidate_window_restart_attempt_namespace_reused");
-    auto references=CandidateWindowPortableReferenceFactory::Replay(archive);
+    std::optional<CandidateWindowReferenceSet> references;
+    if(archive.ReferenceGroups().size()==archive.Protocol().inputs.size())references=CandidateWindowPortableReferenceFactory::Replay(archive);
+    else Require(archive.ReferenceGroups().empty(),"candidate_window_restart_partial_selected_family");
     protocol=std::make_shared<const VerificationProtocol>(archive.Protocol());sourceBinding=archive.SourceBinding();
     sourceOrigin=archive.SourceOrigin();ownerScope=archive.OwnerFamilyBinding();windowDeclaration=std::move(d);
     initialDeclaration=sourceBinding["model_spec"].toObject();initialRevision=sourceBinding["initial_model"].toObject()["sha256"].toString().toStdString();
@@ -173,12 +175,24 @@ void NativeCompositeTrainingAttempt::AdoptCandidateWindowArchive(const DecodedNa
     }
     // No InitializeShared/IdentifyModel target capture occurs here. Every P0,
     // seed and raw target is retained from independently replayed ORIGINAL refs.
-    initialWindowParameters=references.seeds.front().arithmetic.initialParameters;
-    initialWindowCapacitance=references.seeds.front().arithmetic.initialCapacitance;
-    windowReferences=std::make_shared<const CandidateWindowReferenceSet>(std::move(references));
+    if(references) {
+        initialWindowParameters=references->seeds.front().arithmetic.initialParameters;
+        initialWindowCapacitance=references->seeds.front().arithmetic.initialCapacitance;
+        windowReferences=std::make_shared<const CandidateWindowReferenceSet>(*references);
+    } else {
+        // No complete target exists. Retain the declared ORIGINAL family and
+        // diagnostics, then measure every input afresh on that original graph.
+        // Expired staged tokens are never mixed into the next attempt.
+        Require(adapter.readModelRevision()==initialRevision,"candidate_window_partial_restart_requires_original_model");
+        for(const auto& r:windowRecords)Require(r.purpose==CompositeMeasurementPurpose::Reference && !r.consumed &&
+            r.logical.baseModelRevision==initialRevision && r.logical.epoch==initialEpoch,"candidate_window_partial_restart_original_reference_scope");
+        initialWindowParameters=readWindowParameters();const auto c=capacitanceWitness();
+        initialWindowCapacitance=c?std::optional<TrainingCapacitance>(c->parameters):std::nullopt;
+        stagedWindowSeeds.resize(protocol->inputs.size());stagedWindowMeasurements.resize(protocol->inputs.size());stagedWindowGroups.resize(protocol->inputs.size());
+    }
     const auto revision=adapter.readModelRevision();RestartOwned(l,m,w,revision);
     QJsonObject actual;CheckBoundary(&actual);
-    (void)CandidateWindowProposalReplayFactory::CheckCandidateBinding(*windowReferences,*protocol,actual);
+    if(windowReferences)(void)CandidateWindowProposalReplayFactory::CheckCandidateBinding(*windowReferences,*protocol,actual);
     CheckClock(actualModelTime(),NativeTrainingWallTime());
 }
 NativeCompositeTrainingAttempt::~NativeCompositeTrainingAttempt(){

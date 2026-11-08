@@ -472,6 +472,44 @@ NativeCompositeArchiveDocument EncodeNativeCompositeTrainingArchive(const Native
     output.document["artifact_document_sha256"]=Hash(output.document);return output;
 }
 
+NativeCompositeArchiveDocument EncodeNativeCandidateWindowServiceArchive(const NativeTrainingService& service,const QString& prefix) {
+    SafePath(prefix);const auto& p=service.Plan().protocol;ValidateCandidateWindowMeasurementContract(p);const auto& source=service.CompositeSourceBinding();
+    Require(!source.isEmpty(),"composite_archive_missing_initial_source");const auto origin=Hash(source).toStdString();CheckSource(p,source,origin);
+    const auto& records=service.CompositeMeasurements();const auto& references=service.CompositeReferenceGroupIds();const auto finals=service.CompositeFinalGroupIds();
+    CheckAcceptedSets(p,source,records,references,finals,service.Configuration().runId);const auto family=records.empty()?std::string{}:records.front().ownerFamilyBinding;
+    Require(!family.empty() || records.empty(),"composite_archive_missing_family");NativeCompositeArchiveDocument output;QJsonArray encoded;QJsonObject blobs;
+    std::set<std::string> groups,trials,proofs;std::set<QString> folded;
+    for(std::size_t index=0;index<records.size();++index) {
+        const auto& r=records[index];Require(r.sourceOrigin==origin && r.ownerFamilyBinding==family && groups.insert(r.groupId).second &&
+            trials.insert(r.logical.trialId).second && (r.semanticProofId.empty() || proofs.insert(r.semanticProofId).second),"composite_archive_replayed_group");
+        MatchedOmissionPrimary primary;std::vector<QString> paths;
+        for(std::size_t i=0;i<r.rawTrials.size();++i) {
+            const auto name=i==0?QString("full-before.csv"):i+1==p.inputs.size()+2?QString("full-after.csv"):QString("omit-%1.csv").arg(qulonglong(i-1));
+            const auto path=prefix+QString("/group-%1/").arg(qulonglong(index+1),6,10,QLatin1Char('0'))+name;SafePath(path);
+            Require(folded.insert(path.toCaseFolded()).second,"composite_archive_colliding_path");const auto bytes=EncodeCompositeRawPrimary(r.rawTrials[i]);
+            paths.push_back(path);primary.emplace(path,bytes);output.primary.emplace(path,bytes);
+            const auto sha=BytesHash(bytes);const QJsonObject blob{{"bytes",Count(std::size_t(bytes.size()))},{"base64",QString::fromLatin1(bytes.toBase64())}};
+            Require(!blobs.contains(sha) || blobs[sha]==QJsonValue(blob),"composite_archive_blob_collision");blobs[sha]=blob;
+        }
+        encoded.append(EncodeRecord(p,source,r,paths,primary));
+    }
+    CheckCandidateWindowPrimaryHistory(records,references,service.Configuration().runId,service.Plan().composite->maximumTotalPrimaryBytes);
+    const auto counters=Counters(records,service.Configuration().runId);
+    Require(Object(counters["attempt"])["logical_groups"]==Count(service.CompositeGroups()) &&
+        Object(counters["attempt"])["native_probes"]==Count(service.CompositeNativeProbes()) &&
+        Object(counters["attempt"])["sampled_frames"]==Count(service.CompositeSampledFrames()) &&
+        Object(counters["archive"])["primary_bytes"]==Count(service.CompositePrimaryBytes()) &&
+        service.CompositePrimaryBytes()<=service.Plan().composite->maximumTotalPrimaryBytes,"composite_archive_service_counter_mismatch");
+    // A just-started, zero-group family still has its owned immutable identity.
+    const auto ownedFamily=service.CompositeOwnerFamilyBinding();Require(!ownedFamily.empty() && (records.empty() || family==ownedFamily),"composite_archive_owner_family");
+    output.document={{"kind","timelearner_composite_measurement_archive"},{"schema_version",2},{"method_id",DeclaredWindowBasinResult::MethodId()},
+        {"protocol",EncodeVerificationProtocol(p)},{"source_origin",Text(origin)},{"owner_family_binding",Text(ownedFamily)},{"source_binding",source},
+        {"maximum_total_primary_bytes",Count(service.Plan().composite->maximumTotalPrimaryBytes)},{"current_attempt_id",Text(service.Configuration().runId)},
+        {"records",encoded},{"reference_group_ids",Strings(references)},{"final_group_ids",Strings(finals)},{"counters",counters},{"primary_blobs",blobs}};
+    output.document["artifact_document_sha256"]=Hash(output.document);
+    (void)DecodeNativeCompositeTrainingArchive(output.document,[&](const QString& path){return output.primary.at(path);});return output;
+}
+
 NativeCompositeArchiveDocument EncodeNativeCandidateWindowTrainingArchive(const NativeCompositeTrainingAttempt& attempt,const QString& prefix) {
     SafePath(prefix);const auto& p=*attempt.protocol;ValidateCandidateWindowMeasurementContract(p);
     Require(attempt.windowDeclaration && !attempt.Running() && (!attempt.group || attempt.closed),"candidate_window_archive_requires_group_boundary");

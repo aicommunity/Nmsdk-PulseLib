@@ -56,6 +56,10 @@ struct NativeTrainingAdapter {
         const std::optional<TrainingCapacitance>&)> assessResistanceDomainWithCapacitance;
     std::function<std::shared_ptr<NativeCompositeTrainingAttempt>(VerificationProtocol,CompositeAttemptLimits,double,double)> createComposite;
     std::function<std::shared_ptr<NativeCompositeTrainingAttempt>(const CompositePortableTrainingProof&,CompositeAttemptLimits,double,double)> createImportedComposite;
+    std::function<std::shared_ptr<NativeCompositeTrainingAttempt>(VerificationProtocol,CompositeAttemptLimits,
+        NativeCandidateWindowAttemptDeclaration,double,double)> createCandidateWindowComposite;
+    std::function<std::shared_ptr<NativeCompositeTrainingAttempt>(const DecodedNativeCompositeArchive&,CompositeAttemptLimits,
+        NativeCandidateWindowAttemptDeclaration,double,double)> createImportedCandidateWindowComposite;
 };
 
 struct NativeTrainingCapacitanceHistory {
@@ -148,6 +152,7 @@ private:
     std::optional<NativeTrainingCapacitanceHistory> capacitanceHistory;
     std::shared_ptr<NativeCompositeTrainingAttempt> composite;
     std::shared_ptr<const CompositePortableTrainingProof> compositeImportedProof;
+    std::shared_ptr<const CandidateWindowReferenceSet> compositeCandidateReferences;
     QJsonObject compositeSourceBinding,compositeInitialConfiguration;
     std::vector<NativeCompositeMeasurementRecord> compositeRecords;
     std::vector<ValidatedCompositeMeasurement> compositeReferenceMeasurements;
@@ -185,6 +190,9 @@ private:
     void BindTrialCapacitance(const NativeTrainingAdapter& adapter,const NativeProbeRequest& request);
     void ValidateTrialCapacitance(const NativeTrainingAdapter& adapter,const NativeProbeResult& result);
     void StartComposite(NativeTrainingPlan,const NativeTrainingAdapter&,double,double);
+    void StartCandidateWindowComposite(NativeTrainingPlan,const NativeTrainingAdapter&,double,double);
+    void StageCandidateWindowReference(const std::shared_ptr<NativeCompositeTrainingAttempt>&,
+        const ValidatedCompositeMeasurement&);
     void BeforeComposite(const NativeTrainingAdapter&,double,double);
     void AfterComposite(const NativeTrainingAdapter&,double,double);
     void StopComposite(const NativeTrainingAdapter&,TrainingStatus,const std::string&);
