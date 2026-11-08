@@ -90,8 +90,9 @@ NativeDeclaredWindowBasinResult SelectNativeDeclaredWindowBasinMaximum(const Can
         } else {
             const auto& samples=full.channels[s.channel].samples;
             NativeRequire(spec.candidateFrame->lastFrame<samples.size(),"window_frames_not_captured");
-            // These indices were declared before queue. ONLY actual retained
-            // timestamps project them; no estimated dt, rounding or padding.
+            // The caller/private proposal must prove prequeue declaration;
+            // this diagnostic selector cannot attest it. Projection uses ONLY
+            // retained timestamps, no estimated dt, rounding or padding.
             begin=samples[std::size_t(spec.candidateFrame->firstFrame)].time;
             end=samples[std::size_t(spec.candidateFrame->lastFrame)].time;
         }

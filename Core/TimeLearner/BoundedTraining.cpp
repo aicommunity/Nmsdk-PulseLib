@@ -143,6 +143,7 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
                                    const std::vector<InputParameters>& initial)
 {
     ValidateVerificationProtocol(protocol);
+    if(protocol.schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
     ValidateInvalidMeasurementRecovery(config.invalidMeasurementRecovery,config.maximumInvalidObservations);
     if(config.runId.empty() || config.initialModelRevision.empty() || !config.maximumProbes || !config.maximumEdits ||
         !config.maximumCandidatesPerInput || !config.maximumSweeps || config.resistanceSubdivisionDepth>20 ||
@@ -746,7 +747,7 @@ void BoundedTrainingSession::DeclineEdit(std::size_t actionSerial,const std::str
 void BoundedTrainingSession::Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared)
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
-    if(references.Protocol().schemaVersion==4)throw std::invalid_argument("composite_measurement_requires_typed_admission");
+    if(references.Protocol().schemaVersion==4 || references.Protocol().schemaVersion==5)throw std::invalid_argument("composite_measurement_requires_typed_admission");
     if(!pending || pending->kind!=TrainingActionKind::Probe || pending->serial!=actionSerial || armed)
         throw std::logic_error("unrequested_training_probe");
     ++probes;
@@ -769,7 +770,7 @@ void BoundedTrainingSession::Arm(std::size_t actionSerial,const PreparedVerifica
 void BoundedTrainingSession::Consume(const ProbeObservation& observation,const std::string& actualModelRevision)
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
-    if(references.Protocol().schemaVersion==4)throw std::invalid_argument("composite_measurement_requires_typed_admission");
+    if(references.Protocol().schemaVersion==4 || references.Protocol().schemaVersion==5)throw std::invalid_argument("composite_measurement_requires_typed_admission");
     if(actualModelRevision!=revision || actualModelRevision.empty())
     {rejected.push_back({pending?pending->trialId:std::string{},"unexpected_training_model_revision"});Stop(TrainingStatus::InvalidModel);return;}
     if(!pending || !armed){Reject("unrequested_training_observation");return;}
@@ -829,6 +830,7 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
 void BoundedTrainingSession::ArmComposite(std::size_t actionSerial,const PreparedCompositeMeasurement& prepared)
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
+    if(references.Protocol().schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
     if(!pending || pending->kind!=TrainingActionKind::Probe || pending->serial!=actionSerial || armed || compositeArmed)
         throw std::logic_error("unrequested_training_probe");
     ++probes;
@@ -858,6 +860,7 @@ void BoundedTrainingSession::ArmComposite(std::size_t actionSerial,const Prepare
 void BoundedTrainingSession::ConsumeComposite(const ValidatedCompositeMeasurement& measured,const std::string& actualRevision)
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
+    if(references.Protocol().schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
     if(actualRevision!=revision || actualRevision.empty()) {
         rejected.push_back({pending?pending->trialId:std::string{},"unexpected_training_model_revision"});Stop(TrainingStatus::InvalidModel);return;
     }

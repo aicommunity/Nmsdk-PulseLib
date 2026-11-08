@@ -417,6 +417,7 @@ void FinalVerificationSession::Consume(const ProbeObservation& observation,const
 void FinalVerificationSession::ArmComposite(const PreparedCompositeMeasurement& prepared)
 {
     if(status!=VerificationStatus::Collecting)return;
+    if(references.Protocol().schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
     if(!pending || armed || compositeArmed)throw std::logic_error("verification_probe_not_requested_or_already_armed");
     if(issued>=config.maximumProbes){ExhaustBudget();return;}++issued;
     try {
@@ -433,6 +434,7 @@ void FinalVerificationSession::ArmComposite(const PreparedCompositeMeasurement& 
 void FinalVerificationSession::ConsumeComposite(const ValidatedCompositeMeasurement& measured,const std::string& revision)
 {
     if(status!=VerificationStatus::Collecting)return;
+    if(references.Protocol().schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
     if(revision.empty()) {
         const auto trial=pending?pending->trialId:std::string{};
         Invalidate(config.currentModelRevision);rejected.push_back({trial,"missing_current_model_revision"});

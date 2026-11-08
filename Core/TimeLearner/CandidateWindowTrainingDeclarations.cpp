@@ -44,12 +44,15 @@ QJsonObject EncodeCandidateWindowPolicy(const CandidateWindowPolicy& p) {
     PolicyTags(p);Require(!p.inputs.empty() && p.maximumFeatureTerms>0 && p.maximumFeatureTerms<=CandidateWindowMaximumExactCount &&
         p.inputs.size()<=p.maximumFeatureTerms/3,"candidate_window_invalid_feature_budget");
     QJsonArray inputs;
-    for(const auto& i:p.inputs)inputs.append(QJsonObject{
+    for(const auto& i:p.inputs) {
+        Require(i.hardFirstFrame<i.hardLastFrame && i.maximumWindowFrames>=2,"candidate_window_invalid_declared_envelope");
+        inputs.append(QJsonObject{
         {"delay_frames_per_segment",Count(i.delayFramesPerSegment)},
         {"base_left_guard_frames",Count(i.baseLeftGuardFrames)},{"base_right_guard_frames",Count(i.baseRightGuardFrames)},
         {"length_guard_frames",Count(i.lengthGuardFrames)},{"synapse_count_guard_frames",Count(i.synapseCountGuardFrames)},
         {"resistance_change_guard_frames",Count(i.resistanceChangeGuardFrames)},{"capacitance_change_guard_frames",Count(i.capacitanceChangeGuardFrames)},
         {"hard_first_frame",Count(i.hardFirstFrame)},{"hard_last_frame",Count(i.hardLastFrame)},{"maximum_window_frames",Count(i.maximumWindowFrames)}});
+    }
     return {{"schema_version",Count(p.schemaVersion)},{"policy_id",Text(p.policyId)},{"seed_rule",Text(p.seedRule)},
         {"coordinate_mode",Text(p.coordinateMode)},{"proposals_per_logical_request",Count(p.proposalsPerLogicalRequest)},
         {"maximum_feature_terms",Count(p.maximumFeatureTerms)},{"inputs",inputs}};
