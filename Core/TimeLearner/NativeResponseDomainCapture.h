@@ -119,6 +119,25 @@ public:
                                            context.effectiveModelRevision,"window_closed");
         Require(reproduced.complete && reproduced.valid==o.valid && reproduced.reasons==o.reasons,
                 "domain_capture_native_diagnostics_not_reproduced");
+        Require(reproduced.peaks.size()==o.peaks.size() && reproduced.burstAssignments.size()==o.burstAssignments.size(),
+                "domain_capture_native_measurement_dimensions_changed");
+        for(std::size_t i=0;i<o.peaks.size();++i) {
+            const auto& a=reproduced.peaks[i];const auto& b=o.peaks[i];
+            Require(a.inputId==b.inputId && a.stimulusId==b.stimulusId && a.validity==b.validity &&
+                    a.amplitude==b.amplitude && a.rawPotential==b.rawPotential && a.time==b.time &&
+                    a.plateauEnd==b.plateauEnd && a.delayFromStimulus==b.delayFromStimulus &&
+                    a.candidateCount==b.candidateCount,"domain_capture_native_peak_not_reproduced");
+        }
+        for(std::size_t i=0;i<o.burstAssignments.size();++i) {
+            const auto& a=reproduced.burstAssignments[i];const auto& b=o.burstAssignments[i];
+            Require(a.channel==b.channel && a.validity==b.validity && a.waves.size()==b.waves.size(),
+                    "domain_capture_native_assignment_not_reproduced");
+            for(std::size_t j=0;j<a.waves.size();++j) {
+                const auto& x=a.waves[j];const auto& y=b.waves[j];
+                Require(x.stimulusId==y.stimulusId && x.amplitude==y.amplitude && x.rawPotential==y.rawPotential &&
+                        x.time==y.time && x.plateauEnd==y.plateauEnd,"domain_capture_native_wave_not_reproduced");
+            }
+        }
         // Legacy peak/whole-burst assignment validity is deliberately separate.
         // The diagnostic analyzer independently checks waveform coverage and
         // stimuli; it can never produce a training certificate.
