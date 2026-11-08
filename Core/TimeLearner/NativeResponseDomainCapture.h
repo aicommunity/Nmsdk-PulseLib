@@ -141,13 +141,17 @@ public:
         // Legacy peak/whole-burst assignment validity is deliberately separate.
         // The diagnostic analyzer independently checks waveform coverage and
         // stimuli; it can never produce a training certificate.
-        observation.complete=true;
+        observation.complete=true;closure=native;
         return AnalyzeDeclaredResponseDomains(domains,observation);
     }
     const ResponseDomainObservation& Observation() const {return observation;}
     const PreparedVerificationProbe& Context() const {return context;}
     const std::vector<std::string>& PhysicalChannelPaths() const {return paths;}
     const std::vector<double>& StimulusSamples() const {return stimulusSamples;}
+    const NativeProbeResult& ClosedNativeEvidence() const {
+        Require(closed && observation.complete && closure.has_value(),"domain_capture_has_no_verified_closure");
+        return *closure;
+    }
 private:
     static void Require(bool condition,const char* reason) {if(!condition)throw std::invalid_argument(reason);}
     bool armed=false,closed=false,failed=false;
@@ -157,5 +161,6 @@ private:
     std::vector<std::string> paths;
     std::vector<double> stimulusSamples;
     ResponseDomainObservation observation;
+    std::optional<NativeProbeResult> closure;
 };
 }
