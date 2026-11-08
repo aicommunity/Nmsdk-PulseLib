@@ -1,0 +1,15 @@
+# STEP3-B1: private prepare/commit complete references
+
+Статус: source implementation перед service5, без runtime acceptance. База — Pulse `376bee62adadb3306afec72634665aab0a612b01`. Ни dispatch Service/CLI, ни cold/package schemas, ни defaults, ни численные критерии этим подэтапом не меняются.
+
+`NativeCompositeTrainingAttempt::CompleteCandidateWindowReferences` теперь вызывает private `PrepareCandidateWindowReferences`, затем private noexcept `CommitCandidateWindowReferences`. Prepare сохраняет прежний порядок проверки owner/Need/clock, protocol5/source/family/original revision/epoch, staged seeds и повторного live replay всех N observations. Все vector/JSON/binding/hash/readback и выделения памяти для immutable closed set завершаются до последней проверки фактических clocks.
+
+Actor хранит `shared_ptr<const CandidateWindowReferenceSet>` вместо optional с глубоким копированием при публикации. Публичный read-only getter по-прежнему возвращает тот же закрытый тип; public mint/valid flag/prepare/commit нет. Adopt из strict portable archive2 создаёт shared immutable copy до restart boundary, сохраняя первоначальные reference targets/P0/C0. Сами shared pointers/callbacks/адреса не входят в wire/proof.
+
+Commit вызывается в том же uninterrupted owning frame только с результатом Prepare. Он не вызывает callbacks/Rdk/readback/selector/JSON и не выделяет память: переносит shared pointer и выставляет consumed/Need-at-consume всем selected original reference records. Lookup выполняется по group IDs закрытого набора. Вся остальная diagnostic history остаётся без promotion.
+
+Это private примитив для следующего service commit. Service должен заранее подготовить свои fallible copies/records/CapturedReferences, затем получить prepared closed set и выполнить только noexcept publication actor+service без внешнего callback между ними. Здесь ещё нет service5 dispatch и cross-owner transaction; source primitive не объявляется завершённой service integration. Если понадобится другая последовательность, отдельный review должен проверить отсутствие fallible операции после первой публикации.
+
+10 новых production `NativeCandidateWindowReferenceRelease.*` controls на реальном Classic/Branch owner/storage/scheduler проверяют staged prefix и complete allN flags, wrong family и duplicate evidence без promotion, actual structural edit/Reset/Default перед release, а также успешный correct-family release после отказа. Сохраняются actual groups/CSV/source/models и actor archive2, без fictitious peaks или package6. Сравнение before/after rejected archive проверяет отсутствие promotion; это не восстановление expected traces.
+
+Forced allocator-failure injection и service transaction ещё не исполнены/не покрываются этими native controls; отсутствие allocations в commit следует из source contract и последующей компиляции. Все numerical/compile/runtime gates выполняются отдельно на серверах. Mechanical97/d688 A-B, callback248, STEP2 archive/factory102 и core24/408 этим изменением не объявляются пройденными.

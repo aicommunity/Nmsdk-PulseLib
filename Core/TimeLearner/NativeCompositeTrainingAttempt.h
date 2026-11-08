@@ -68,7 +68,7 @@ public:
     // Only complete CapturedReferences can release staged input seeds. Public
     // DATA, a partial prefix, or another owner/family cannot perform this step.
     void CompleteCandidateWindowReferences(const CapturedReferences&);
-    const CandidateWindowReferenceSet* CandidateWindowReferences() const {return windowReferences?&*windowReferences:nullptr;}
+    const CandidateWindowReferenceSet* CandidateWindowReferences() const {return windowReferences.get();}
     const std::vector<NativeCompositeMeasurementRecord>& CandidateWindowRecords() const {return windowRecords;}
 private:
     friend class NativeTrainingService;
@@ -87,6 +87,11 @@ private:
     void AdoptOwned(const CompositePortableTrainingProof&,CompositeAttemptLimits,double,double);
     void AdoptCandidateWindowArchive(const DecodedNativeCompositeArchive&,CompositeAttemptLimits,
         NativeCandidateWindowAttemptDeclaration,double,double);
+    // Private allN transaction boundary for this actor and its owning service.
+    // Preparation may allocate/read/throw; commit performs no callbacks or
+    // readback and is invoked only in the same uninterrupted owning frame.
+    std::shared_ptr<const CandidateWindowReferenceSet> PrepareCandidateWindowReferences(const CapturedReferences&);
+    void CommitCandidateWindowReferences(std::shared_ptr<const CandidateWindowReferenceSet>) noexcept;
     void CheckClock(double,double);
     std::string CheckBoundary(QJsonObject* retained=nullptr,std::optional<TrainingCapacitance>* parameters=nullptr);
     void CloseGroup();
@@ -109,7 +114,7 @@ private:
     std::optional<ValidatedCompositeMeasurement> measurement;
     std::optional<NativeDeclaredWindowBasinResult> selection;
     std::optional<NativeCandidateWindowAttemptDeclaration> windowDeclaration;
-    std::optional<CandidateWindowReferenceSet> windowReferences;
+    std::shared_ptr<const CandidateWindowReferenceSet> windowReferences;
     std::vector<std::optional<CandidateWindowReferenceSeed>> stagedWindowSeeds;
     std::vector<std::optional<ValidatedCompositeMeasurement>> stagedWindowMeasurements;
     std::vector<std::string> stagedWindowGroups;

@@ -174,7 +174,8 @@ void NativeCompositeTrainingAttempt::AdoptCandidateWindowArchive(const DecodedNa
     // No InitializeShared/IdentifyModel target capture occurs here. Every P0,
     // seed and raw target is retained from independently replayed ORIGINAL refs.
     initialWindowParameters=references.seeds.front().arithmetic.initialParameters;
-    initialWindowCapacitance=references.seeds.front().arithmetic.initialCapacitance;windowReferences=std::move(references);
+    initialWindowCapacitance=references.seeds.front().arithmetic.initialCapacitance;
+    windowReferences=std::make_shared<const CandidateWindowReferenceSet>(std::move(references));
     const auto revision=adapter.readModelRevision();RestartOwned(l,m,w,revision);
     QJsonObject actual;CheckBoundary(&actual);
     (void)CandidateWindowProposalReplayFactory::CheckCandidateBinding(*windowReferences,*protocol,actual);
@@ -646,6 +647,9 @@ NativeCompositeMeasurementRecord NativeCompositeTrainingAttempt::Record() const 
     return r;
 }
 void NativeCompositeTrainingAttempt::CompleteCandidateWindowReferences(const CapturedReferences& captured) {
+    CommitCandidateWindowReferences(PrepareCandidateWindowReferences(captured));
+}
+std::shared_ptr<const CandidateWindowReferenceSet> NativeCompositeTrainingAttempt::PrepareCandidateWindowReferences(const CapturedReferences& captured) {
     Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
     CheckClock(actualModelTime(),NativeTrainingWallTime());
     Require(protocol->schemaVersion==5 && windowDeclaration && !Running() && !windowReferences &&
@@ -667,17 +671,22 @@ void NativeCompositeTrainingAttempt::CompleteCandidateWindowReferences(const Cap
     // restoring the same semantic values before releasing the complete set.
     const auto fresh=CapturedReferences::CaptureComposite(*protocol,liveReferences);
     Require(fresh.Inputs()==captured.Inputs(),"candidate_window_reference_consumption_changed");
-    CandidateWindowReferenceSet ready(std::move(seeds),sourceOrigin,ownerScope,stagedWindowGroups,Hash(EncodeVerificationProtocol(*protocol)),
+    auto ready=std::shared_ptr<const CandidateWindowReferenceSet>(new CandidateWindowReferenceSet(
+        std::move(seeds),sourceOrigin,ownerScope,stagedWindowGroups,Hash(EncodeVerificationProtocol(*protocol)),
         QJsonDocument(sourceBinding).toJson(QJsonDocument::Compact).toStdString(),protocol,initialRevision,initialEpoch,[&](){
-            std::vector<double> targets;for(const auto& input:fresh.Inputs())targets.push_back(input.rawPotential);return targets;}());
+            std::vector<double> targets;for(const auto& input:fresh.Inputs())targets.push_back(input.rawPotential);return targets;}()));
     QJsonObject candidate;CheckBoundary(&candidate);
-    (void)CandidateWindowProposalReplayFactory::CheckCandidateBinding(ready,*protocol,candidate);
+    (void)CandidateWindowProposalReplayFactory::CheckCandidateBinding(*ready,*protocol,candidate);
     CheckClock(actualModelTime(),NativeTrainingWallTime());
-    // The closed-data copy may allocate. Complete it before the nonthrowing
-    // all-record flag commit, so failed allocation cannot promote a prefix.
+    return ready;
+}
+void NativeCompositeTrainingAttempt::CommitCandidateWindowReferences(std::shared_ptr<const CandidateWindowReferenceSet> ready) noexcept {
+    // The caller has prepared the complete set in this uninterrupted frame.
+    // Shared immutable ownership lets the service preallocate its copies and
+    // publish the SAME allN value without another fallible deep copy.
     windowReferences=std::move(ready);
     for(auto& record:windowRecords)if(record.purpose==CompositeMeasurementPurpose::Reference &&
-        std::find(stagedWindowGroups.begin(),stagedWindowGroups.end(),record.groupId)!=stagedWindowGroups.end()) {
+        std::find(windowReferences->ReferenceGroupIds().begin(),windowReferences->ReferenceGroupIds().end(),record.groupId)!=windowReferences->ReferenceGroupIds().end()) {
         record.consumed=true;record.trainingRequestedAtConsume=true;
     }
 }
