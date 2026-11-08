@@ -412,7 +412,7 @@ ConfiguredNativeTraining CaptureCompositeInitialConfiguration(const NativeModelS
 }
 ConfiguredNativeTraining CaptureCandidateWindowInitialConfiguration(const NativeModelSpec& declaration,const NativeTrainingPlan& plan,
     const std::vector<InputParameters>& actual,double capacitanceMaximumRelativeChange) {
-    ValidateCandidateWindowMeasurementContract(plan.protocol);
+    ValidateVerificationProtocol(plan.protocol);ValidateCandidateWindowMeasurementContract(plan.protocol);
     Require(plan.composite && plan.composite->schemaVersion==2 && actual.size()==declaration.inputs.size(),"invalid_candidate_window_initial_declaration");
     const auto& method=*plan.protocol.candidateWindowMeasurement;
     Require(plan.composite->methodId==method.methodId && plan.composite->contextPolicy==method.contextPolicy &&
