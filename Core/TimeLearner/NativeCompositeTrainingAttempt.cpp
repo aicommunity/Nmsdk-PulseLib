@@ -1,6 +1,7 @@
 #include "NativeCompositeTrainingAttempt.h"
 #include "../NNeuronTimeLearner.h"
 #include "../NNeuronTimeLearnerBranch.h"
+#include "../NPulseNeuron.h"
 #include "ConfiguredNativeTraining.h"
 #include "MatchedOmissionEvidenceJson.h"
 #include "ModelArchive.h"
