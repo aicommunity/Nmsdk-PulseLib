@@ -203,10 +203,10 @@ ReplayedCandidateWindowBinding CandidateWindowProposalReplayFactory::CheckCandid
     for(std::size_t i=0;i<n;++i) {
         const auto& value=parameters[i];Require(value.length<=modelSpec.editPolicy.maximumCableLength && value.synapses<=128 &&
             (!branch || !i || parameters[i-1].length>=value.length),"candidate_window_actual_native_parameter_scope");
-        const auto bank=Object(banks[int(i)]);Keys(bank,"input_ordinal input_id stimulus_id channel_path bank_path attachment_segment excitation_synapse_paths");
+        const auto bank=Object(banks[int(i)]);Keys(bank,"input_ordinal input_id stimulus_id receiver_path bank_path attachment_segment excitation_synapse_paths");
         const std::string membrane="$.Dendrite"+std::to_string(branch?1:i+1)+"_"+std::to_string(value.length),channel=membrane+".ExcChannel";
         Require(Index(bank["input_ordinal"])==i && Text(bank["input_id"])==p.inputs[i].id && Text(bank["stimulus_id"])==p.inputs[i].stimulusId &&
-            Text(bank["bank_path"])==membrane && Text(bank["channel_path"])==channel && Count(bank["attachment_segment"])==std::uint64_t(value.length) &&
+            Text(bank["bank_path"])==membrane && Text(bank["receiver_path"])==channel && Count(bank["attachment_segment"])==std::uint64_t(value.length) &&
             nodes.count(channel) && parameter(membrane,"NumExcitatorySynapses","signed_integer")["value"]==QJsonValue(QString::number(value.synapses)),
             "candidate_window_actual_bank_membership");
         const auto members=Array(bank["excitation_synapse_paths"]);Require(members.size()==value.synapses,"candidate_window_actual_bank_membership");

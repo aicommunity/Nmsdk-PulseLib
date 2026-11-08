@@ -28,7 +28,7 @@ struct CandidateWindowBasinSpecification {
 // Neither path strings nor these public facts attest graph membership.
 struct CandidateWindowInputBankReadback {
     std::size_t inputOrdinal=0;
-    std::string inputId,stimulusId,channelPath,bankPath;
+    std::string inputId,stimulusId,receiverPath,bankPath;
     std::size_t attachmentSegment=0;
     std::vector<std::string> excitationSynapsePaths;
     bool operator==(const CandidateWindowInputBankReadback&) const=default;
