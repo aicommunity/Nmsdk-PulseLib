@@ -102,6 +102,7 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     retainedEpoch=plan.search.initialModelEpoch;referenceProbes=invalidReferences=0;
     observedPackets.clear();finalPackets.clear();compositeFinalGroups.clear();compositeRequest.reset();
     compositeRawNotifications.clear();compositeRawTrialIds.clear();
+    compositeCancellationDiagnostics.clear();
     if(!references){referencePackets.clear();referenceEvidence.clear();}
     certificate.reset();search.reset();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
     ++attempt;++compositeGeneration;plan.search.runId+="/session/"+std::to_string(attempt);
@@ -154,14 +155,19 @@ void NativeTrainingService::RawCompositeResult(const NativeTrainingAdapter& a,co
     if(!compositeRawTrialIds.emplace(spec.runId,spec.trialId).second)return;
     observedPackets.push_back(packet);
     compositeRawNotifications.push_back({packet,plan.observationSink,composite,attempt,plan.search.runId});
-    if(compositeCapacitance && packet.requestedSpecification) {
+    try {if(compositeCapacitance && packet.requestedSpecification) {
         const auto found=compositeGroupTrialWitnessIds.find(packet.requestedSpecification->trialId);
         Require(found!=compositeGroupTrialWitnessIds.end(),"native_composite_unwitnessed_raw_trial");
         const auto expected=found->second;
-        if(diagnosticCancellation && !composite->ownerLife.IsCurrent())return;
+        if(diagnosticCancellation && !composite->ownerLife.IsCurrent()) {
+            compositeCancellationDiagnostics+=";native_composite_cancel_C0_readback_unavailable_after_lifecycle";return;
+        }
         const auto next=a.readCapacitanceWitness();Require(next && NativeTrainingCapacitanceWitnessId(*next)==expected,
             "native_composite_C0_changed_during_raw_trial");
-    }
+    }}
+    catch(const std::exception& e){if(!diagnosticCancellation)throw;
+        compositeCancellationDiagnostics+=";native_composite_cancel_C0_unverified:"+std::string(e.what());}
+    catch(...){if(!diagnosticCancellation)throw;compositeCancellationDiagnostics+=";native_composite_cancel_C0_unverified";}
 }
 void NativeTrainingService::CollectCompositeRaw(const NativeTrainingAdapter& a,
     const std::shared_ptr<NativeCompositeTrainingAttempt>& actor,bool diagnosticCancellation) {
@@ -169,14 +175,15 @@ void NativeTrainingService::CollectCompositeRaw(const NativeTrainingAdapter& a,
     for(const auto& packet:actor->TakeRetainedRawPackets())RawCompositeResult(a,packet,diagnosticCancellation);
 }
 void NativeTrainingService::DeliverCompositeRaw(const NativeTrainingAdapter& a,
-    const std::shared_ptr<NativeCompositeTrainingAttempt>& actor) {
-    if(compositeDispatchDepth || actor!=composite || !actor->ownerLife.IsCurrent())return;
+    const std::shared_ptr<NativeCompositeTrainingAttempt>& actor,std::optional<RDK::UModuleLifecycleObservation> lifecycleDelivery) {
+    const auto deliveryLife=lifecycleDelivery?*lifecycleDelivery:actor->ownerLife;
+    if(compositeDispatchDepth || actor!=composite || !deliveryLife.IsCurrent())return;
     const auto generation=compositeGeneration,session=attempt;const auto run=plan.search.runId;
     // Remove before callback: reentrant interrupts cannot replay this packet.
     auto notifications=std::move(compositeRawNotifications);compositeRawNotifications.clear();
     for(auto& notification:notifications) {
         if(composite!=actor || compositeGeneration!=generation || attempt!=session || plan.search.runId!=run ||
-            !actor->ownerLife.IsCurrent())return;
+            !deliveryLife.IsCurrent())return;
         if(notification.actor!=actor || notification.attempt!=session || notification.runId!=run)continue;
         if(!notification.sink)continue;
         std::string failure;
@@ -184,20 +191,33 @@ void NativeTrainingService::DeliverCompositeRaw(const NativeTrainingAdapter& a,
         catch(const std::exception& e){failure="native_composite_raw_sink_failed:"+std::string(e.what());}
         catch(...){failure="native_composite_raw_sink_failed";}
         if(composite!=actor || compositeGeneration!=generation || attempt!=session || plan.search.runId!=run ||
-            !actor->ownerLife.IsCurrent())return;
+            !deliveryLife.IsCurrent())return;
         if(!failure.empty()) {
-            if(ActiveComposite(state))StopComposite(a,TrainingStatus::InvalidObservation,failure);
+            if(ActiveComposite(state) && !lifecycleDelivery)StopComposite(a,TrainingStatus::InvalidObservation,failure);
             else reason+=";"+failure;
             return;
         }
         // Callbacks can consume real wall time without advancing model ticks.
-        if(ActiveComposite(state))CheckBudget(a,lastModel,NativeTrainingWallTime());
+        if(ActiveComposite(state) && !lifecycleDelivery) {
+            CheckBudget(a,lastModel,NativeTrainingWallTime());
+            if(ActiveComposite(state))CheckCompositeGroupBudget(a,actor);
+        }
         if(compositeGeneration!=generation || !ActiveComposite(state))return;
     }
+}
+bool NativeTrainingService::CheckCompositeGroupBudget(const NativeTrainingAdapter& a,
+    const std::shared_ptr<NativeCompositeTrainingAttempt>& actor) {
+    if(!ActiveComposite(state) || actor!=composite)return false;
+    if(actor->Group() && (lastModel-actor->groupStartModel>=actor->groupModelLimit ||
+        NativeTrainingWallTime()-actor->groupStartWall>=actor->groupWallLimit)) {
+        StopComposite(a,TrainingStatus::BudgetExhausted,"native_composite_group_time_budget_exhausted");return false;
+    }
+    return true;
 }
 void NativeTrainingService::ArchiveComposite(const std::shared_ptr<NativeCompositeTrainingAttempt>& actor) {
     if(!actor || !actor->Group() || actor->SourceBinding()!=compositeSourceBinding)return;
     auto record=actor->Record();record.attemptId=plan.search.runId;record.policy=*plan.composite;record.capacitanceWitnesses=compositeGroupWitnesses;
+    if(!compositeCancellationDiagnostics.empty())record.reason+=compositeCancellationDiagnostics;
     for(std::size_t i=0;i<record.issuedNativeProbes;++i) {
         const auto id=record.groupId+"/native/"+std::to_string(i);const auto found=compositeGroupTrialWitnessIds.find(id);
         if(found!=compositeGroupTrialWitnessIds.end())record.nativeTrialWitnessIds.emplace(*found);
@@ -214,23 +234,33 @@ void NativeTrainingService::ArchiveComposite(const std::shared_ptr<NativeComposi
 void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const std::shared_ptr<NativeCompositeTrainingAttempt>& actor) {
     if(!waiting || actor->Running())return;ArchiveComposite(actor);waiting=false;
     Require(bool(compositeRequest),"missing_native_composite_logical_request");
-    auto& record=compositeRecords.back();const auto generation=compositeGeneration;
-    if(plan.beforeCompositeConsume)plan.beforeCompositeConsume(record);
+    auto& record=compositeRecords.back();const auto generation=compositeGeneration,session=attempt;
+    const auto beforeConsume=plan.beforeCompositeConsume;
+    if(beforeConsume) {
+        const auto snapshot=record;std::string failure;
+        try{beforeConsume(snapshot);}
+        catch(const std::exception& e){failure="native_composite_before_consume_sink_failed:"+std::string(e.what());}
+        catch(...){failure="native_composite_before_consume_sink_failed";}
+        if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session)return;
+        if(!failure.empty()){StopComposite(a,TrainingStatus::InvalidObservation,failure);return;}
+    }
     if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor)return;
     CheckBudget(a,lastModel,NativeTrainingWallTime());
     if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor)return;
+    if(!CheckCompositeGroupBudget(a,actor))return;
     record.trainingRequestedAtConsume=a.trainingRequested();
     if(!*record.trainingRequestedAtConsume){StopComposite(a,TrainingStatus::ExternalStop,"external_stop");return;}
     if(actor->Group()->maximumModelSeconds>0. && (record.endModel-record.startModel>=actor->Group()->maximumModelSeconds ||
         NativeTrainingWallTime()-record.startWall>=actor->Group()->maximumWallSeconds)) {
         StopComposite(a,TrainingStatus::BudgetExhausted,"native_composite_group_time_budget_exhausted");return;
     }
+    bool syncAfterDelivery=false;
     if(!actor->Measurement()) {
         if(actor->TimeBudgetExhausted() || record.groupState==NativeMatchedOmissionState::BudgetExhausted){StopComposite(a,TrainingStatus::BudgetExhausted,actor->RejectionReason());return;}
         if(state==NativeTrainingState::CapturingReferences) {
             if(++invalidReferences>plan.maximumInvalidReferenceProbes)Finish(TrainingStatus::InvalidObservation,actor->RejectionReason());
         }
-        else {search->RejectComposite(actor->RejectionReason().empty()?"native_composite_measurement_rejected":actor->RejectionReason());SyncOutcome();}
+        else {search->RejectComposite(actor->RejectionReason().empty()?"native_composite_measurement_rejected":actor->RejectionReason());syncAfterDelivery=true;}
     }
     else if(state==NativeTrainingState::CapturingReferences) {
         const auto& measured=*actor->Measurement();const auto& logical=*compositeRequest;
@@ -257,9 +287,25 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
             compositeFinalGroups.at(compositeRequest->inputIndex)=record.groupId;
             finalPackets.insert(finalPackets.end(),record.group.packets.begin(),record.group.packets.end());
         }
-        activeAction.reset();SyncOutcome();
+        activeAction.reset();syncAfterDelivery=true;
     }
-    compositeRequest.reset();if(plan.compositeSink)plan.compositeSink(record);
+    compositeRequest.reset();const auto completedSink=plan.compositeSink;
+    if(completedSink) {
+        const auto snapshot=record;std::string failure;
+        try{completedSink(snapshot);}
+        catch(const std::exception& e){failure="native_composite_record_sink_failed:"+std::string(e.what());}
+        catch(...){failure="native_composite_record_sink_failed";}
+        if(generation!=compositeGeneration || composite!=actor || attempt!=session || !actor->ownerLife.IsCurrent())return;
+        if(!failure.empty()) {
+            if(ActiveComposite(state))StopComposite(a,TrainingStatus::InvalidObservation,failure);
+            else {certificate.reset();outcome=TrainingStatus::InvalidObservation;reason=failure;}
+            return;
+        }
+    }
+    if(generation!=compositeGeneration || composite!=actor || attempt!=session || !ActiveComposite(state))return;
+    CheckBudget(a,lastModel,NativeTrainingWallTime());
+    if(!ActiveComposite(state) || !CheckCompositeGroupBudget(a,actor))return;
+    if(syncAfterDelivery)SyncOutcome();
 }
 void NativeTrainingService::BeforeComposite(const NativeTrainingAdapter& a,double m,double w) {
     if(!ActiveComposite(state))return;
@@ -347,23 +393,26 @@ void NativeTrainingService::StopComposite(const NativeTrainingAdapter& a,Trainin
     CaptureCompositeInterrupt(a,diagnostic);
     if(composite!=actor || attempt!=session || compositeGeneration!=generation+1)return;
     if(search){if(terminal==TrainingStatus::BudgetExhausted)search->ExhaustBudget();else search->ExternalStop();}
-    Finish(terminal,diagnostic);
+    Finish(terminal,diagnostic+compositeCancellationDiagnostics);
     DeliverCompositeRaw(a,actor);
 }
 void NativeTrainingService::CaptureCompositeInterrupt(const NativeTrainingAdapter& a,const std::string& diagnostic) {
     if(!composite)return;const auto actor=composite;
     ++compositeGeneration;
-    actor->InterruptOwnedRaw(diagnostic);
+    actor->InterruptOwnedRaw(diagnostic,true);
     if(compositeDispatchDepth)return;
     actor->SuspendOwned(diagnostic);CollectCompositeRaw(a,actor,true);ArchiveComposite(actor);
     waiting=false;compositeRequest.reset();
 }
 void NativeTrainingService::InterruptComposite(const NativeTrainingAdapter& a,const std::string& diagnostic) {
     if(!composite)return;const auto actor=composite;
+    // Fresh authority for this actual owner hook, not a refreshed training
+    // lease. It expires if a callback starts another Reset/Default operation.
+    const auto deliveryLife=actor->ownerLife.IsAlive()?actor->observeOwner():RDK::UModuleLifecycleObservation{};
     CaptureCompositeInterrupt(a,diagnostic);
     // Lifecycle hooks intentionally finish their own Reset/Default afterward.
     // Delivery is the final service operation; callbacks cannot be followed by
     // stale control/archive writes in this interruption frame.
-    DeliverCompositeRaw(a,actor);
+    DeliverCompositeRaw(a,actor,deliveryLife);
 }
 }

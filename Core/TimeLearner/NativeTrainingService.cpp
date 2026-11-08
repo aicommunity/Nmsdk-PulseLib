@@ -380,6 +380,7 @@ void NativeTrainingService::ResetControl()
     if(capacitanceHistory)capacitanceHistory->domainBaseWitnessIds.clear();
     referenceProbes=invalidReferences=0;compositeRequest.reset();compositeReferenceMeasurements.clear();
     compositeRawNotifications.clear();
+    compositeCancellationDiagnostics.clear();
 }
 void NativeTrainingService::InvalidateTarget()
 {ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();

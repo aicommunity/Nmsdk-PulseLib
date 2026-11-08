@@ -163,6 +163,7 @@ private:
     };
     std::vector<CompositeRawNotification> compositeRawNotifications;
     std::set<std::pair<std::string,std::string>> compositeRawTrialIds;
+    std::string compositeCancellationDiagnostics;
     bool compositeHarvested=true;
     std::map<std::string,TrainingCapacitanceWitness> compositeGroupWitnesses;
     std::map<std::string,std::string> compositeGroupTrialWitnessIds;
@@ -189,8 +190,10 @@ private:
     void ClosedComposite(const NativeTrainingAdapter&,const std::shared_ptr<NativeCompositeTrainingAttempt>&);
     void RawCompositeResult(const NativeTrainingAdapter&,const NativeProbeResult&,bool diagnosticCancellation=false);
     void CollectCompositeRaw(const NativeTrainingAdapter&,const std::shared_ptr<NativeCompositeTrainingAttempt>&,bool diagnosticCancellation);
-    void DeliverCompositeRaw(const NativeTrainingAdapter&,const std::shared_ptr<NativeCompositeTrainingAttempt>&);
+    void DeliverCompositeRaw(const NativeTrainingAdapter&,const std::shared_ptr<NativeCompositeTrainingAttempt>&,
+        std::optional<RDK::UModuleLifecycleObservation> lifecycleDelivery={});
     void CaptureCompositeInterrupt(const NativeTrainingAdapter&,const std::string&);
+    bool CheckCompositeGroupBudget(const NativeTrainingAdapter&,const std::shared_ptr<NativeCompositeTrainingAttempt>&);
     void CompositeBeginSearch(const NativeTrainingAdapter&);
     void CompositeRefreshCapacitance(const NativeTrainingAdapter&,const std::optional<TrainingCapacitance>& requested,bool requireMatch);
 };

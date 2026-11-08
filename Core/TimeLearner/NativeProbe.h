@@ -92,9 +92,10 @@ public:
     void Cancel(const std::string& reason);
     void ResetControl();
     const std::optional<NativeProbeResult>& Result() const { return result; }
-    bool MatchesActiveTrial(const std::string& run,const std::string& trial) const {
+    std::size_t ControlGeneration() const {return controlGeneration;}
+    bool MatchesActiveTrial(const std::string& run,const std::string& trial,std::size_t generation) const {
         return (state==NativeProbeStatus::Queued || state==NativeProbeStatus::Running) &&
-            request.specification.runId==run && request.specification.trialId==trial;
+            controlGeneration==generation && request.specification.runId==run && request.specification.trialId==trial;
     }
     std::optional<NativeProbeResult> TakeResult();
 private:

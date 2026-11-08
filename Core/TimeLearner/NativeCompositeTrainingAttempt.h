@@ -51,7 +51,7 @@ private:
     void RestartOwned(CompositeAttemptLimits,double modelTime,double wallTime,const std::string& currentRevision);
     void RefreshOwnedAfterEdit(const std::string& currentRevision);
     void RevokeLive();
-    void InterruptOwnedRaw(const std::string& reason);
+    void InterruptOwnedRaw(const std::string& reason,bool lifecycleAuthority=false);
     void SuspendOwned(const std::string& reason);
     void RetainRawPacket(const NativeProbeResult&);
     std::vector<NativeProbeResult> TakeRetainedRawPackets();
@@ -83,6 +83,8 @@ private:
     std::vector<NativeProbeResult> interruptedRawPackets;
     std::size_t rawDeliveryCursor=0;
     std::string ownedRawRun,ownedRawTrial;
+    std::size_t ownedRawControlGeneration=0;
+    std::function<std::optional<NativeProbeResult>(const std::string&,bool)> cancelOwnedRaw;
     std::function<void(const NativeProbeRequest&)> beforeNativeQueue;
     std::function<void(const NativeProbeResult&)> afterNativeResult;
     std::set<std::string> logicalTrials;
