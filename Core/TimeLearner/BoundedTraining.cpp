@@ -819,6 +819,11 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
         }
         return;
     }
+    AcceptValidatedScalar(measurement);
+}
+
+void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasurement& measurement)
+{
     const auto trial=pending->trialId;pending.reset();armed.reset();
     if(phase==Phase::Anchor){anchor=measurement;anchorTrial=trial;phase=Phase::Input;return;}
     if(!anchor)throw std::logic_error("missing_same_revision_anchor");

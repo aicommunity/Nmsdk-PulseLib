@@ -214,6 +214,8 @@ private:
     DynamicCandidate NextDomainCandidate(std::vector<InputParameters>& parameters);
     void AdvanceDomainGeometry();
     void PrioritizeMeasuredLength(const CandidateEvidence& measurement);
+    // Shared private acceptance path after legacy or typed admission.
+    void AcceptValidatedScalar(const ValidatedProbeMeasurement& measurement);
     void Reject(const std::string& reason);
     void RecordIncompleteCandidateRepeats(const std::string& reason);
     void Stop(TrainingStatus terminal,const std::string& reason={});

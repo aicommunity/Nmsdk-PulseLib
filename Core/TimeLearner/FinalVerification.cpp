@@ -360,9 +360,18 @@ void FinalVerificationSession::Consume(const ProbeObservation& observation,const
     {
         const auto index=order.at(position);
         const auto measured=CheckedMeasurement(references.Protocol(),index,*armed,observation);
-        accepted[index]=Accepted{pending->trialId,armed->effectiveModelRevision,measured.raw,measured.arrival,measured.plateauEnd};
+        AcceptValidatedScalar(index,measured.raw,measured.arrival,measured.plateauEnd);
     }
     catch(const std::invalid_argument& error){Reject(error.what());return;}
+    CompleteValidatedInput();
+}
+
+void FinalVerificationSession::AcceptValidatedScalar(std::size_t index,double raw,double arrival,double plateauEnd)
+{
+    accepted[index]=Accepted{pending->trialId,armed->effectiveModelRevision,raw,arrival,plateauEnd};
+}
+void FinalVerificationSession::CompleteValidatedInput()
+{
     pending.reset();armed.reset();++position;
     if(position==order.size())Finish();
 }

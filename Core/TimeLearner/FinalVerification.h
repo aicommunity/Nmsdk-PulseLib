@@ -170,6 +170,9 @@ private:
     std::size_t position=0,issued=0,serial=0,epoch=0,invalidCount=0;
     bool budgetStopped=false;
     void Reject(const std::string& reason);
+    // Admission remains method-specific; scalar acceptance/finish are private.
+    void AcceptValidatedScalar(std::size_t index,double raw,double arrival,double plateauEnd);
+    void CompleteValidatedInput();
     void Finish();
 };
 const char* VerificationStatusName(VerificationStatus status);
