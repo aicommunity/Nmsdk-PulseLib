@@ -233,6 +233,9 @@ NativeResponseDomainCapture ReplayTrace(const MatchedOmissionTrace& trace,const 
 }
 }
 
+QJsonObject EncodeMatchedOmissionSpecification(const MatchedOmissionSpecification& specification)
+{return Specification(specification);}
+
 QByteArray EncodeMatchedOmissionPrimaryTrace(const MatchedOmissionTrace& trace,const NativeProbeResult& native)
 {const auto capture=ReplayTrace(trace,native);return EncodeNativeResponseDomainTrace(capture);}
 

@@ -62,6 +62,7 @@ std::string CandidateWindowTrainingSemanticProofId(const VerificationProtocol& p
         {"candidate_witness",NmsdkTools::CanonicalModelDataSha256(ParseStrictNativeJsonObject(r.candidateBindingJson,128u*1024u*1024u))},
         {"attempt_id",Text(r.attemptId)},{"logical_request",logical},{"group_id",Text(r.groupId)},{"purpose",purpose},
         {"method_specification",EncodeCandidateWindowBasinSpecification(spec)},{"window_proposal",proposal},
+        {"native_specification",EncodeMatchedOmissionSpecification(r.group.specification)},
         {"attempt_limits",QJsonArray{Count(a.maximumGroups),Count(a.maximumNativeProbes),Count(a.maximumTotalSamples),a.maximumModelSeconds,a.maximumWallSeconds}},
         {"group_limits",QJsonArray{r.maximumGroupModelSeconds,r.maximumGroupWallSeconds}},
         {"maximum_total_primary_bytes",Count(r.policy.maximumTotalPrimaryBytes)},

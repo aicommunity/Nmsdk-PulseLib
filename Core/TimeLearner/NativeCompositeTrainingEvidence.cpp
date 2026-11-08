@@ -345,6 +345,8 @@ QJsonObject EncodeRecord(const VerificationProtocol& p,const QJsonObject& source
     const auto native=CompleteGroup(r,paths,primary);const auto candidate=ParseStrictNativeJsonObject(r.candidateBindingJson);
     if(p.schemaVersion==5)Require(r.groupState!=NativeMatchedOmissionState::Completed || native.isObject(),
         "candidate_window_archive_completed_state_without_native_closure");
+    if(p.schemaVersion==5 && native.isObject())Require(r.group.specification.resetBinding=="native-neuron-dataset-reset-before-children-v1" &&
+        (!r.windowProposal || r.group.specification.resetBinding==r.windowProposal->candidate.grid.resetBinding),"candidate_window_archive_native_reset_binding");
     if(native.isObject() && r.selection)Require(EncodeNativeCompositeSelection(*r.selection)==EncodeNativeCompositeSelection(
         FreshSelection(p,r)),"composite_archive_stale_diagnostic_selection");
     if(!native.isObject() && r.selection)Require(!r.selection->geometry && r.selection->status==NativeDeclaredWindowBasinStatus::Rejected,

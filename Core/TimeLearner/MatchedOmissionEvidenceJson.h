@@ -7,6 +7,9 @@
 
 namespace NMSDK::TimeLearner {
 using MatchedOmissionPrimary=std::map<QString,QByteArray>;
+// Exact specification DATA serialization shared by content bindings. It does
+// not validate a witness or attest reset/model-instance execution.
+QJsonObject EncodeMatchedOmissionSpecification(const MatchedOmissionSpecification&);
 // Strict native replay precedes serialization. Canonical CSV is the existing
 // native-probe-csv-v1: time,stimulus,soma0,..., classic locale, binary64 17g, LF.
 QByteArray EncodeMatchedOmissionPrimaryTrace(const MatchedOmissionTrace& trace,
