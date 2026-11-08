@@ -3810,6 +3810,8 @@ bool NNeuronTimeLearnerBranch::SetCalibrateLTZThresholdMax(const double &value)
 /// Resistance for extra excitatory synapses (structural mode, k>=2)
 bool NNeuronTimeLearnerBranch::SetSynapseResistanceStep(const double &value)
 {
+ if(NativeTrainingOwned || NativeModelDeclaration || NativeRecognition)
+  return value==SynapseResistanceStep.GetData();
  if(IsParametricNormalization())
   return true;
  if(NumSynapse.empty() || !Neuron)
