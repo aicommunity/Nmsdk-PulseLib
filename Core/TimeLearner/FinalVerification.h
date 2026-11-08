@@ -190,7 +190,7 @@ private:
     bool budgetStopped=false;
     void Reject(const std::string& reason);
     // Admission remains method-specific; scalar acceptance/finish are private.
-    void AcceptValidatedScalar(std::size_t index,double raw,double arrival,double plateauEnd);
+    void AcceptValidatedScalar(std::size_t index,double raw,double arrival,double plateauEnd,const std::string& effectiveRevision);
     void CompleteValidatedInput();
     void Finish();
 };

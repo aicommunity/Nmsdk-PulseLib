@@ -404,7 +404,7 @@ void FinalVerificationSession::Consume(const ProbeObservation& observation,const
     {
         const auto index=order.at(position);
         const auto measured=CheckedMeasurement(references.Protocol(),index,*armed,observation);
-        AcceptValidatedScalar(index,measured.raw,measured.arrival,measured.plateauEnd);
+        AcceptValidatedScalar(index,measured.raw,measured.arrival,measured.plateauEnd,armed->effectiveModelRevision);
     }
     catch(const std::invalid_argument& error){Reject(error.what());return;}
     CompleteValidatedInput();
@@ -445,7 +445,7 @@ void FinalVerificationSession::ConsumeComposite(const ValidatedCompositeMeasurem
             throw std::invalid_argument("unexpected_or_replayed_composite_verification_proof");
         for(const auto& previous:accepted)if(previous && previous->candidateWitnessId!=measured.prepared.identity->candidateWitnessId)
             throw std::invalid_argument("mixed_composite_final_candidate_witness");
-        AcceptValidatedScalar(index,measured.rawPotential,measured.arrival,measured.plateauEnd);
+        AcceptValidatedScalar(index,measured.rawPotential,measured.arrival,measured.plateauEnd,measured.prepared.identity->effectiveRevision);
         accepted[index]->compositeProofId=measured.semanticProofId;
         accepted[index]->candidateWitnessId=measured.prepared.identity->candidateWitnessId;++acceptedComposite;
     }
@@ -460,9 +460,9 @@ void FinalVerificationSession::RejectComposite(const std::string& reason)
     if(status==VerificationStatus::Collecting)Reject(reason);
 }
 
-void FinalVerificationSession::AcceptValidatedScalar(std::size_t index,double raw,double arrival,double plateauEnd)
+void FinalVerificationSession::AcceptValidatedScalar(std::size_t index,double raw,double arrival,double plateauEnd,const std::string& effectiveRevision)
 {
-    accepted[index]=Accepted{pending->trialId,compositeArmed?compositeArmed->identity->effectiveRevision:armed->effectiveModelRevision,raw,arrival,plateauEnd};
+    accepted[index]=Accepted{pending->trialId,effectiveRevision,raw,arrival,plateauEnd};
 }
 void FinalVerificationSession::CompleteValidatedInput()
 {
