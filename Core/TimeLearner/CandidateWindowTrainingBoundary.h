@@ -1,0 +1,148 @@
+#pragma once
+#include "CandidateWindowPolicy.h"
+#include "CompositeTrainingMeasurement.h"
+#include <memory>
+
+namespace NMSDK::TimeLearner {
+class CapturedReferences;
+class CompositePortableTrainingProof;
+class NativeCompositeStateFactory;
+class NativeCompositeTrainingAttempt;
+class CandidateWindowProposalReplayFactory;
+
+// Reserved opt-in branches. This header adds no dispatch, decoder or factory:
+// protocol4/contract1 and every released codec keep their existing meaning.
+inline constexpr unsigned CandidateWindowVerificationProtocolSchema=5;
+inline constexpr unsigned CandidateWindowMeasurementContractSchema=2;
+inline constexpr unsigned CandidateWindowBasinSpecificationSchema=2;
+inline constexpr unsigned CandidateWindowCandidateBindingSchema=2;
+inline constexpr unsigned CandidateWindowMeasurementRecordSchema=2;
+inline constexpr unsigned CandidateWindowMeasurementArchiveSchema=2;
+
+struct CandidateWindowMeasurementContract {
+    unsigned schemaVersion=CandidateWindowMeasurementContractSchema;
+    std::string methodId=DeclaredWindowBasinResult::MethodId();
+    MatchedOmissionPolicy contextPolicy;
+    DeclaredWindowBasinPolicy geometryPolicy;
+    // Immutable time offsets used ONLY for the initial reference groups.
+    std::vector<CompositeInputWindow> referenceInputWindows;
+    CandidateWindowPolicy candidateWindowPolicy;
+    bool operator==(const CandidateWindowMeasurementContract&) const=default;
+};
+
+enum class CandidateWindowCoordinateMode { ReferenceTime,CandidateFrame };
+// Declaration DATA, not evidence of captured frames or native admission.
+// Exactly one optional coordinate is allowed, as selected by coordinateMode.
+struct CandidateWindowBasinSpecification {
+    unsigned schemaVersion=CandidateWindowBasinSpecificationSchema;
+    std::string methodId=DeclaredWindowBasinResult::MethodId();
+    std::string groupId,inputId;
+    std::size_t assignedInput=0,channel=0;
+    CandidateWindowCoordinateMode coordinateMode=CandidateWindowCoordinateMode::ReferenceTime;
+    std::optional<CompositeInputWindow> referenceTime;
+    std::optional<CandidateFrameWindow> candidateFrame;
+};
+
+// Actual readback DATA retained beside the full semantic graph identity.
+// Neither path strings nor these public facts attest graph membership.
+struct CandidateWindowInputBankReadback {
+    std::size_t inputOrdinal=0;
+    std::string inputId,stimulusId,channelPath,bankPath;
+    std::size_t attachmentSegment=0;
+    std::vector<std::string> excitationSynapsePaths;
+    bool operator==(const CandidateWindowInputBankReadback&) const=default;
+};
+struct CandidateWindowPhysicalReadback {
+    std::vector<InputParameters> parameters;
+    std::vector<CandidateWindowInputBankReadback> inputBanks;
+    std::optional<TrainingCapacitance> capacitance;
+};
+
+// Complete serialization inputs, still untrusted until native/portable replay.
+// No waveform, residual, current amplitude or suggested maximum is accepted.
+struct CandidateWindowProposalRecord {
+    unsigned schemaVersion=1;
+    std::string policyId="reference-anchored-candidate-window-v1";
+    std::string sourceOrigin,ownerFamilyBinding,referenceProofId;
+    std::string protocolBinding,policyBinding,candidateBinding;
+    std::string referenceGroupId,attemptId,runId,trialId,groupId,inputId;
+    std::size_t inputIndex=0,channel=0,modelEpoch=0;
+    CompositeMeasurementPurpose purpose=CompositeMeasurementPurpose::Search;
+    std::string candidateModelRevision,windowRecipeId,measurementInstanceId;
+    CandidateWindowArithmeticSeed reference;
+    CandidateWindowCandidateFacts candidate;
+    CandidateWindowComputation computation;
+};
+
+// A private staged reference may exist before the last input is captured, but
+// search/final can receive only this COMPLETE all-input set. Copying a set does
+// not recreate live authority or bypass expected family/proof checks.
+class CandidateWindowReferenceSet {
+public:
+    CandidateWindowReferenceSet(const CandidateWindowReferenceSet&)=default;
+    CandidateWindowReferenceSet& operator=(const CandidateWindowReferenceSet&)=default;
+    std::size_t InputCount() const {return seeds.size();}
+    const std::string& SourceOrigin() const {return sourceOrigin;}
+    const std::string& OwnerFamilyBinding() const {return ownerFamilyBinding;}
+private:
+    CandidateWindowReferenceSet(std::vector<CandidateWindowReferenceSeed> values,
+        std::string source,std::string family):seeds(std::move(values)),
+        sourceOrigin(std::move(source)),ownerFamilyBinding(std::move(family)){}
+    std::vector<CandidateWindowReferenceSeed> seeds;
+    std::string sourceOrigin,ownerFamilyBinding;
+    friend class CapturedReferences;
+    friend class CompositePortableTrainingProof;
+    friend class NativeCompositeStateFactory;
+    friend class NativeCompositeTrainingAttempt;
+};
+
+// Only an actual-owner readback factory may create this wrapper. Arithmetic
+// DATA and decoded JSON cannot construct it; every use must recheck its live
+// owner, graph identity, source, bank map and C0 at the legal boundary.
+class NativeCandidateWindowSnapshot {
+public:
+    NativeCandidateWindowSnapshot(const NativeCandidateWindowSnapshot&)=default;
+    NativeCandidateWindowSnapshot& operator=(const NativeCandidateWindowSnapshot&)=default;
+private:
+    NativeCandidateWindowSnapshot(CandidateWindowCandidateFacts value,CandidateWindowPhysicalReadback physical,
+        std::string binding,std::shared_ptr<const CompositeTrainingDetail::Identity> owner)
+        :facts(std::move(value)),readback(std::move(physical)),candidateBindingJson(std::move(binding)),identity(std::move(owner)){}
+    CandidateWindowCandidateFacts facts;
+    CandidateWindowPhysicalReadback readback;
+    std::string candidateBindingJson;
+    std::shared_ptr<const CompositeTrainingDetail::Identity> identity;
+    friend class NativeCompositeTrainingAttempt;
+};
+
+// This process-local value must be frozen BEFORE the first N+2 queue. The
+// constructor is inaccessible to callers, including successful pure policy
+// computations. Native measurement admission must ALSO require independent
+// portable proposal replay; this type alone does not accept a scalar.
+class PreparedCandidateWindowProposal {
+public:
+    PreparedCandidateWindowProposal(const PreparedCandidateWindowProposal&)=default;
+    PreparedCandidateWindowProposal& operator=(const PreparedCandidateWindowProposal&)=default;
+    const CandidateWindowProposalRecord& Record() const {return record;}
+private:
+    PreparedCandidateWindowProposal(CandidateWindowProposalRecord value,
+        std::shared_ptr<const CompositeTrainingDetail::Identity> owner)
+        :record(std::move(value)),identity(std::move(owner)){}
+    CandidateWindowProposalRecord record;
+    std::shared_ptr<const CompositeTrainingDetail::Identity> identity;
+    friend class NativeCompositeTrainingAttempt;
+};
+
+// Replay of proposal arithmetic/context is separate from a live owner lease,
+// native execution and geometry/Train admission. No decoder/replay factory is
+// supplied by this types-only commit, so public DATA cannot mint this wrapper.
+class ReplayedCandidateWindowProposal {
+public:
+    ReplayedCandidateWindowProposal(const ReplayedCandidateWindowProposal&)=default;
+    ReplayedCandidateWindowProposal& operator=(const ReplayedCandidateWindowProposal&)=default;
+    const CandidateWindowProposalRecord& Record() const {return record;}
+private:
+    explicit ReplayedCandidateWindowProposal(CandidateWindowProposalRecord value):record(std::move(value)){}
+    CandidateWindowProposalRecord record;
+    friend class CandidateWindowProposalReplayFactory;
+};
+}
