@@ -1,5 +1,6 @@
 #include "NativeCompositeTrainingEvidence.h"
 #include "CompositeTrainingDeclarations.h"
+#include "CompositeSourceValidation.h"
 #include "ConfiguredNativeTraining.h"
 #include "ProbeEvidenceJson.h"
 #include "ModelArchive.h"
@@ -180,6 +181,13 @@ struct Totals {std::size_t groups=0,native=0,samples=0,bytes=0;void AddRecord(co
 QJsonObject Counters(const std::vector<NativeCompositeMeasurementRecord>& records,const std::string& current) {Totals attempt,archive;for(const auto& r:records){archive.AddRecord(r);if(r.attemptId==current)attempt.AddRecord(r);}
     return {{"attempt",QJsonObject{{"logical_groups",Count(attempt.groups)},{"native_probes",Count(attempt.native)},{"sampled_frames",Count(attempt.samples)}}},
         {"archive",QJsonObject{{"groups",Count(archive.groups)},{"native_probes",Count(archive.native)},{"sampled_frames",Count(archive.samples)},{"primary_bytes",Count(archive.bytes)}}}};
+}
+}
+namespace CompositeEvidenceDetail {
+void ValidateInitialSource(const VerificationProtocol& p,const QJsonObject& source,const std::string& origin) {
+    ValidateVerificationProtocol(p);
+    Require(p.schemaVersion==4 || p.schemaVersion==5,"composite_initial_source_explicit_protocol_required");
+    CheckSource(p,source,origin);
 }
 }
 QJsonObject EncodeNativeCompositeSelection(const NativeDeclaredWindowBasinResult& s) {

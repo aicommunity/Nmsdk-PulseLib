@@ -3,6 +3,7 @@
 #include "ModelIdentity.h"
 #include "ModelArchive.h"
 #include "ProbeEvidenceJson.h"
+#include "CompositeSourceValidation.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QStringList>
@@ -137,6 +138,7 @@ void CandidateWindowProposalReplayFactory::CheckReferences(const CandidateWindow
         refs.protocolBinding==Hash(EncodeVerificationProtocol(p)),"candidate_window_incomplete_or_wrong_reference_family");
     const auto source=ParseStrictNativeJsonObject(refs.sourceBindingJson,MaximumBindingBytes);
     Require(Hash(source)==refs.sourceOrigin,"candidate_window_source_origin_changed");
+    CompositeEvidenceDetail::ValidateInitialSource(p,source,refs.sourceOrigin);
     const auto featureBudget=p.candidateWindowMeasurement->candidateWindowPolicy.maximumFeatureTerms;
     Require(!refs.seeds.front().arithmetic.initialCapacitance ||
         refs.seeds.front().arithmetic.initialCapacitance->membraneScales.size()<=featureBudget-std::uint64_t(n)*3,
