@@ -600,6 +600,7 @@ void NativeTrainingService::CaptureCompositeInterrupt(const NativeTrainingAdapte
     waiting=false;compositeRequest.reset();
 }
 void NativeTrainingService::InterruptComposite(const NativeTrainingAdapter& a,const std::string& diagnostic) {
+    InvalidateOwnerControlLifetime();
     if(!composite)return;const auto actor=composite;
     // Fresh authority for this actual owner hook, not a refreshed training
     // lease. It expires if a callback starts another Reset/Default operation.
