@@ -1,4 +1,5 @@
 #include "ProbeObservation.h"
+#include "MeasuredResponse.h"
 #include "NumericChecks.h"
 #include <algorithm>
 #include <cmath>
@@ -133,41 +134,26 @@ PeakObservation ProbeRecorder::Measure(const PeakWindow& window,bool complete) c
 {
     PeakObservation result;result.inputId=window.inputId;result.stimulusId=window.stimulusId;
     if(!complete) return result;
-    std::vector<const Frame*> samples;
+    std::vector<ResponseSample> samples;
     for(const auto& frame:frames)
-        if(!After(window.begin,frame.time) && !After(frame.time,window.end)) samples.push_back(&frame);
-    if(samples.size()<3) return result;
-    const auto value=[&](std::size_t i){return samples[i]->potentials[window.channel]-spec.baseline[window.channel];};
-    std::size_t maximum=0;
-    for(std::size_t i=1;i<samples.size();++i) if(value(i)>value(maximum)) maximum=i;
-    if(!Finite(value(maximum))) return result;
-    if(value(maximum)<spec.minimumAmplitude)
+        if(!After(window.begin,frame.time) && !After(frame.time,window.end))
+            samples.push_back({frame.time,frame.potentials[window.channel]});
+    const auto features=ExtractMeasuredResponse(samples,spec.baseline[window.channel],spec.minimumAmplitude);
+    if(features.validity!=ResponseFeatureValidity::Valid)return result;
+    const auto& maximum=*features.globalMaximum;
+    if(maximum.amplitude<spec.minimumAmplitude)
     { result.validity=PeakValidity::Missing;return result; }
-    std::size_t lastMaximum=maximum;
-    while(lastMaximum+1<samples.size() && value(lastMaximum+1)==value(maximum)) ++lastMaximum;
-    if(maximum==0 || lastMaximum+1==samples.size())
+    if(features.globalMaximumClipped)
     { result.validity=PeakValidity::Clipped;return result; }
-    std::size_t largestPeakCount=0;
-    for(std::size_t i=1;i+1<samples.size();)
-    {
-        std::size_t end=i;
-        while(end+1<samples.size() && value(end+1)==value(i)) ++end;
-        if(end+1<samples.size() && value(i)>=spec.minimumAmplitude &&
-           value(i)>value(i-1) && value(end)>value(end+1))
-        {
-            ++result.candidateCount;
-            if(value(i)==value(maximum)) ++largestPeakCount;
-        }
-        i=end+1;
-    }
+    result.candidateCount=features.positiveMaxima.size();
     // A single presented impulse establishes attribution, but does not require
     // a unimodal physical response. Equal separated maxima still leave timing
     // ambiguous; a contiguous plateau retains its actual first/last samples.
-    if((spec.peakSelection==PeakSelectionPolicy::SingleImpulseMaximum ? largestPeakCount : result.candidateCount)!=1)
+    if((spec.peakSelection==PeakSelectionPolicy::SingleImpulseMaximum ? features.largestInteriorMaximumCount : result.candidateCount)!=1)
     { result.validity=PeakValidity::Ambiguous;return result; }
-    result.validity=PeakValidity::Valid;result.amplitude=value(maximum);
-    result.rawPotential=samples[maximum]->potentials[window.channel];
-    result.time=samples[maximum]->time;result.plateauEnd=samples[lastMaximum]->time;
+    result.validity=PeakValidity::Valid;result.amplitude=maximum.amplitude;
+    result.rawPotential=maximum.rawPotential;
+    result.time=maximum.time;result.plateauEnd=maximum.plateauEnd;
     return result;
 }
 
@@ -195,22 +181,15 @@ BurstAssignmentObservation ProbeRecorder::AssignBurst(std::size_t channel,bool c
 {
     BurstAssignmentObservation result;result.channel=channel;
     if(!complete)return result;
-    std::vector<const Frame*> samples;
+    std::vector<ResponseSample> samples;
     for(const auto& frame:frames)
-        if(!After(spec.begin,frame.time) && !After(frame.time,spec.end))samples.push_back(&frame);
-    if(samples.size()<3)return result;
-    const auto value=[&](std::size_t i){return samples[i]->potentials[channel]-spec.baseline[channel];};
-    for(std::size_t i=1;i+1<samples.size();)
-    {
-        std::size_t last=i;
-        while(last+1<samples.size() && value(last+1)==value(i))++last;
-        if(last+1<samples.size() && value(i)>=spec.minimumAmplitude &&
-            value(i)>value(i-1) && value(last)>value(last+1))
-            result.waves.push_back({"",value(i),samples[i]->potentials[channel],samples[i]->time,samples[last]->time});
-        i=last+1;
-    }
-    if((value(0)>=spec.minimumAmplitude && value(0)>=value(1)) ||
-       (value(samples.size()-1)>=spec.minimumAmplitude && value(samples.size()-1)>=value(samples.size()-2)))
+        if(!After(spec.begin,frame.time) && !After(frame.time,spec.end))
+            samples.push_back({frame.time,frame.potentials[channel]});
+    const auto features=ExtractMeasuredResponse(samples,spec.baseline[channel],spec.minimumAmplitude);
+    if(features.validity!=ResponseFeatureValidity::Valid)return result;
+    for(const auto& wave:features.positiveMaxima)
+        result.waves.push_back({"",wave.amplitude,wave.rawPotential,wave.time,wave.plateauEnd});
+    if(features.boundaryResponseClipped)
     {result.validity=PeakValidity::Clipped;return result;}
     if(result.waves.size()!=spec.expectedStimulusIds.size())
     {result.validity=result.waves.size()<spec.expectedStimulusIds.size()?PeakValidity::Missing:PeakValidity::Ambiguous;return result;}
