@@ -85,6 +85,7 @@ private:
     friend class NativeCompositeTrainingAttempt;
     friend class CompositePortableTrainingProof;
     friend class NativeCompositeStateFactory;
+    friend class CandidateWindowProposalReplayFactory;
     friend CandidateWindowComputation ProposeCandidateWindow(const CandidateWindowPolicy&,
         const CandidateWindowReferenceSeed&,const CandidateWindowCandidateFacts&);
 };

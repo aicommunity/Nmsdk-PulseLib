@@ -67,14 +67,37 @@ public:
     const std::string& OwnerFamilyBinding() const {return ownerFamilyBinding;}
 private:
     CandidateWindowReferenceSet(std::vector<CandidateWindowReferenceSeed> values,
-        std::string source,std::string family):seeds(std::move(values)),
-        sourceOrigin(std::move(source)),ownerFamilyBinding(std::move(family)){}
+        std::string source,std::string family,std::vector<std::string> groups,
+        std::string protocol,std::string immutableSource):seeds(std::move(values)),
+        sourceOrigin(std::move(source)),ownerFamilyBinding(std::move(family)),referenceGroupIds(std::move(groups)),
+        protocolBinding(std::move(protocol)),sourceBindingJson(std::move(immutableSource)){}
     std::vector<CandidateWindowReferenceSeed> seeds;
     std::string sourceOrigin,ownerFamilyBinding;
+    std::vector<std::string> referenceGroupIds;
+    std::string protocolBinding,sourceBindingJson;
     friend class CapturedReferences;
     friend class CompositePortableTrainingProof;
     friend class NativeCompositeStateFactory;
     friend class NativeCompositeTrainingAttempt;
+    friend class CandidateWindowProposalReplayFactory;
+};
+
+// Validated archived candidate DATA; never a live lease or proof of native
+// execution. Membership/control-knob values are replayed against the complete
+// semantic identity, not trusted from public paths or copied readback numbers.
+class ReplayedCandidateWindowBinding {
+public:
+    ReplayedCandidateWindowBinding(const ReplayedCandidateWindowBinding&)=default;
+    ReplayedCandidateWindowBinding& operator=(const ReplayedCandidateWindowBinding&)=default;
+    const CandidateWindowCandidateFacts& Facts() const {return facts;}
+    const std::string& ModelRevision() const {return modelRevision;}
+    const std::string& CanonicalBindingJson() const {return bindingJson;}
+private:
+    ReplayedCandidateWindowBinding(CandidateWindowCandidateFacts value,std::string revision,std::string json)
+        :facts(std::move(value)),modelRevision(std::move(revision)),bindingJson(std::move(json)){}
+    CandidateWindowCandidateFacts facts;
+    std::string modelRevision,bindingJson;
+    friend class CandidateWindowProposalReplayFactory;
 };
 
 // Only an actual-owner readback factory may create this wrapper. Arithmetic
