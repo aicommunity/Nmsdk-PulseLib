@@ -1,0 +1,15 @@
+{
+  "kind": "matched_omission_context_mechanical_extraction",
+  "schema_version": 1,
+  "source_commit": "fce3cdf01db0c883b7f3b03045094f2580f9e981",
+  "normalization": "UTF-8 LF",
+  "helper_function_block_sha256": "167e46df09b8170afbb0b9504f44b238170b90de1ec36e9048db16ab6b1a9060",
+  "context_checks_block_sha256": "465905c350b7015620ff2ee9303fc93735690d3b333cd6fc6710eaea83c4b548",
+  "selection_support_choose_block_sha256": "095a9ee1af6749542b02d6110c78700a93bb32f3f166d1f3092dec3d3cd47e31",
+  "full_maxima_block_sha256": "fc6ce3760e029143e2f34d236925e51247f70a30043b4944bdea6616704d3022",
+  "helper_functions_exact": true,
+  "context_checks_exact": true,
+  "selection_support_choose_exact": true,
+  "full_maxima_exact": true,
+  "runtime_verified": false
+}
