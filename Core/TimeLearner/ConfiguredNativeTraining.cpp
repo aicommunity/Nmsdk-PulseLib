@@ -434,7 +434,20 @@ ConfiguredNativeTraining CaptureCandidateWindowInitialConfiguration(const Native
     c.maximumReferenceProbes=plan.maximumReferenceProbes;c.maximumInvalidReferenceProbes=plan.maximumInvalidReferenceProbes;
     c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
     c.capacitanceMaximumRelativeChange=c.recordCapacitanceHistory?capacitanceMaximumRelativeChange:0.;
-    c.composite=plan.composite;c.candidateWindowPolicy=method.candidateWindowPolicy;MakeConfiguredNativeTrainingPlan(c);return c;
+    c.composite=plan.composite;c.candidateWindowPolicy=method.candidateWindowPolicy;
+    const auto reconstructed=MakeConfiguredNativeTrainingPlan(c);
+    // Cold7 declares canonical input/stimulus IDs, origin and source pattern.
+    // A valid low-level protocol can use other values, but this configuration
+    // format must reject them instead of silently normalizing their meaning.
+    Require(reconstructed.protocol==plan.protocol && reconstructed.inputWindows.size()==plan.inputWindows.size(),
+        "candidate_window_initial_protocol_not_representable");
+    for(std::size_t i=0;i<plan.inputWindows.size();++i) {
+        const auto& expected=plan.inputWindows[i];const auto& actualWindow=reconstructed.inputWindows[i];
+        Require(actualWindow.inputId==expected.inputId && actualWindow.channel==expected.channel &&
+            actualWindow.begin==expected.begin && actualWindow.end==expected.end && actualWindow.stimulusId==expected.stimulusId,
+            "candidate_window_initial_protocol_not_representable");
+    }
+    return c;
 }
 
 }
