@@ -57,8 +57,9 @@ post-consume notification и свежей проверки обоих wall budge
 certificate. Новые real-clock controls обоих типов ждут 16 секунд в sink
 последнего raw packet и последнего final composite record при объявленном
 group wall budget 15 секунд и большем attempt budget 60 секунд; ожидается
-BudgetExhausted без references/certificate. Это отдельные реальные серверные
-проверки, не подстановка времени.
+BudgetExhausted без certificate. В reference-raw случае references ещё не
+созданы; в last-final-composite случае ранее измеренные references сохраняются.
+Это отдельные реальные серверные проверки, не подстановка времени.
 
 Добавлены 36 Classic/Branch controls: throw/reset/default/retarget/recursive stop
 на cancellation, warm без повторения старой доставки, throw/reset нормального

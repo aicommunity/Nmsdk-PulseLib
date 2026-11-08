@@ -155,6 +155,7 @@ void NativeTrainingService::RawCompositeResult(const NativeTrainingAdapter& a,co
     if(!compositeRawTrialIds.emplace(spec.runId,spec.trialId).second)return;
     observedPackets.push_back(packet);
     compositeRawNotifications.push_back({packet,plan.observationSink,composite,attempt,plan.search.runId});
+    const auto generation=compositeGeneration;const auto actor=composite;
     try {if(compositeCapacitance && packet.requestedSpecification) {
         const auto found=compositeGroupTrialWitnessIds.find(packet.requestedSpecification->trialId);
         Require(found!=compositeGroupTrialWitnessIds.end(),"native_composite_unwitnessed_raw_trial");
@@ -166,8 +167,10 @@ void NativeTrainingService::RawCompositeResult(const NativeTrainingAdapter& a,co
             "native_composite_C0_changed_during_raw_trial");
     }}
     catch(const std::exception& e){if(!diagnosticCancellation)throw;
-        compositeCancellationDiagnostics+=";native_composite_cancel_C0_unverified:"+std::string(e.what());}
-    catch(...){if(!diagnosticCancellation)throw;compositeCancellationDiagnostics+=";native_composite_cancel_C0_unverified";}
+        if(generation==compositeGeneration && actor==composite)
+            compositeCancellationDiagnostics+=";native_composite_cancel_C0_unverified:"+std::string(e.what());}
+    catch(...){if(!diagnosticCancellation)throw;
+        if(generation==compositeGeneration && actor==composite)compositeCancellationDiagnostics+=";native_composite_cancel_C0_unverified";}
 }
 void NativeTrainingService::CollectCompositeRaw(const NativeTrainingAdapter& a,
     const std::shared_ptr<NativeCompositeTrainingAttempt>& actor,bool diagnosticCancellation) {
