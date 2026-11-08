@@ -96,7 +96,12 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     // Construction happens while the actual owner's service is still Idle.
     // Warm restart keeps the original source family; it never recaptures it.
     if(composite)composite->RestartOwned(Limits(value),m,w,revision);
-    else {
+    else if(compositeImportedProof) {
+        Require(bool(a.createImportedComposite),"native_composite_imported_owner_adapter_missing");
+        composite=a.createImportedComposite(*compositeImportedProof,Limits(value),m,w);
+        Require(bool(composite) && composite->SourceBinding()==compositeSourceBinding &&
+            composite->OwnerFamilyBinding()==compositeOwnerFamily,"native_composite_imported_source_family_changed");
+    } else {
         Require(!references,"native_composite_imported_family_requires_owned_adoption");
         composite=a.createComposite(value.protocol,Limits(value),m,w);Require(bool(composite),"missing_native_composite_authority");
         compositeSourceBinding=composite->SourceBinding();compositeOwnerFamily=composite->OwnerFamilyBinding();

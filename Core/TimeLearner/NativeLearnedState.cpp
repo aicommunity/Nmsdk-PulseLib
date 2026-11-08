@@ -1,4 +1,5 @@
 #include "NativeLearnedState.h"
+#include "NativeCompositeLearnedState.h"
 #include "NativeTrainingProof.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -180,6 +181,8 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
 static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
     int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance)
 {
+    if(service.Plan().protocol.schemaVersion==4)return NativeCompositeStateFactory::Export(owner,declaration,service,actual,
+        version,calculateMode,structureMode,implementationId,capacitance);
     const bool stopped=!service.Certificate();
     const bool tracked=service.Plan().recordCapacitanceHistory;
     Require(tracked==bool(service.CapacitanceHistory()) && (!tracked || capacitance),"learned_capacitance_history_requires_owned_state");
@@ -288,6 +291,7 @@ QJsonObject ParseNativeLearnedState(const std::string& text)
 std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
     RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId)
 {
+    if(package["schema_version"]==QJsonValue(5))return NativeCompositeStateFactory::Prepare(package,storage,environment,implementationId);
     auto body=package;body.remove("sha256");
     const bool stopped=package["kind"]==QJsonValue("timelearner_stopped_state");
     const bool searchingCapacitance=package["schema_version"]==QJsonValue(4);

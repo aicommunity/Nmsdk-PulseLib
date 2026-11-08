@@ -54,6 +54,7 @@ struct NativeTrainingAdapter {
     std::function<ResistanceDomainAssessment(const std::vector<InputParameters>&,std::size_t,
         const std::optional<TrainingCapacitance>&)> assessResistanceDomainWithCapacitance;
     std::function<std::shared_ptr<NativeCompositeTrainingAttempt>(VerificationProtocol,CompositeAttemptLimits,double,double)> createComposite;
+    std::function<std::shared_ptr<NativeCompositeTrainingAttempt>(const CompositePortableTrainingProof&,CompositeAttemptLimits,double,double)> createImportedComposite;
 };
 
 struct NativeTrainingCapacitanceHistory {
@@ -131,6 +132,7 @@ public:
         const std::string& actualModelRevision,const QJsonObject& actualState);
 private:
     friend class NativeCompositeTrainingAttempt;
+    friend class NativeCompositeStateFactory;
     NativeTrainingState state=NativeTrainingState::Idle;
     TrainingStatus outcome=TrainingStatus::Searching;
     std::string reason,referenceBinding;
@@ -144,6 +146,7 @@ private:
     std::optional<TrainingAction> activeAction;
     std::optional<NativeTrainingCapacitanceHistory> capacitanceHistory;
     std::shared_ptr<NativeCompositeTrainingAttempt> composite;
+    std::shared_ptr<const CompositePortableTrainingProof> compositeImportedProof;
     QJsonObject compositeSourceBinding,compositeInitialConfiguration;
     std::vector<NativeCompositeMeasurementRecord> compositeRecords;
     std::vector<ValidatedCompositeMeasurement> compositeReferenceMeasurements;

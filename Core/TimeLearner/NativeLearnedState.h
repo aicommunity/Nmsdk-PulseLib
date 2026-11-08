@@ -10,6 +10,7 @@ struct PreparedNativeLearnedState {
     RDK::UEPtr<NPulseNeuron> neuron;
     RDK::UEPtr<NDatasetMatrix> dataset;
     ConfiguredNativeTraining configuration;
+    std::optional<NativeModelSpec> sourceDeclaration;
     std::vector<InputParameters> parameters;
     NativeTrainingService service;
     std::string configurationText,modelRevision;

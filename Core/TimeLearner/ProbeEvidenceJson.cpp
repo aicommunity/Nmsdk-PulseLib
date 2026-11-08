@@ -1,4 +1,5 @@
 #include "ProbeEvidenceJson.h"
+#include "NativeCompositeLearnedState.h"
 #include "CompositeTrainingDeclarations.h"
 #include "NativeTrainingService.h"
 #include "NativeTrainingCapacitance.h"
@@ -304,6 +305,7 @@ QJsonObject EncodeCandidateRecoveryEvidence(const CandidateRecoveryEvidence& e)
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)
 {
+    if(service.Plan().protocol.schemaVersion==4)return EncodeNativeCompositeTrainingState(service,actualModelRevision,actualParameters);
     const auto parameters=Parameters;
     const auto& cfg=service.Configuration();
     const auto& history=service.CapacitanceHistory();

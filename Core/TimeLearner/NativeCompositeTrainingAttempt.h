@@ -8,6 +8,7 @@
 
 namespace NMSDK { class NNeuronTimeLearner;class NNeuronTimeLearnerBranch; }
 namespace NMSDK::TimeLearner {
+class CompositePortableTrainingProof;
 // Live native authority for protocol 4, separate from diagnostic data/codec.
 // The owner-specific factory binds actual roots, executor, images and optional
 // existing C0. No Calculate/Build/Reset, model edits or invented C0 occur here.
@@ -17,6 +18,12 @@ public:
     NativeCompositeTrainingAttempt(NNeuronTimeLearner& owner,VerificationProtocol protocol,
         CompositeAttemptLimits limits,double modelTime,double wallTime);
     NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& owner,VerificationProtocol protocol,
+        CompositeAttemptLimits limits,double modelTime,double wallTime);
+    // A fresh actual owner lease from closed portable data, never a restored
+    // callback/address or recapture of the current trained graph as a target.
+    NativeCompositeTrainingAttempt(NNeuronTimeLearner& owner,const CompositePortableTrainingProof&,
+        CompositeAttemptLimits limits,double modelTime,double wallTime);
+    NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& owner,const CompositePortableTrainingProof&,
         CompositeAttemptLimits limits,double modelTime,double wallTime);
     ~NativeCompositeTrainingAttempt();
     NativeCompositeTrainingAttempt(const NativeCompositeTrainingAttempt&)=delete;
@@ -53,6 +60,7 @@ private:
     void SuspendOwned(const NativeMatchedOmissionAdapter&,const std::string& reason);
     template<class Owner> void Bind(Owner& owner);
     void Initialize(VerificationProtocol,CompositeAttemptLimits,double,double);
+    void AdoptOwned(const CompositePortableTrainingProof&,CompositeAttemptLimits,double,double);
     void CheckClock(double,double);
     std::string CheckBoundary(QJsonObject* retained=nullptr,std::optional<TrainingCapacitance>* parameters=nullptr);
     void CloseGroup();

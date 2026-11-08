@@ -41,6 +41,9 @@ template<class Learner> NativeTrainingAdapter BindNativeTraining(Learner& owner,
     result.createComposite=[&owner](VerificationProtocol protocol,CompositeAttemptLimits limits,double model,double wall) {
         return std::make_shared<NativeCompositeTrainingAttempt>(owner,std::move(protocol),limits,model,wall);
     };
+    result.createImportedComposite=[&owner](const CompositePortableTrainingProof& proof,CompositeAttemptLimits limits,double model,double wall) {
+        return std::make_shared<NativeCompositeTrainingAttempt>(owner,proof,limits,model,wall);
+    };
     return result;
 }
 inline bool NativeTrainingIsActive(const NativeTrainingService& service)

@@ -1,4 +1,5 @@
 #include "NativeCompositeTrainingAttempt.h"
+#include "CompositePortableTrainingProof.h"
 #include "CompositeTrainingDeclarations.h"
 #include "NativeCompositeTrainingEvidence.h"
 #include "../NNeuronTimeLearner.h"
@@ -73,6 +74,27 @@ NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearne
     CompositeAttemptLimits l,double m,double w){Bind(o);Initialize(std::move(p),l,m,w);}
 NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& o,VerificationProtocol p,
     CompositeAttemptLimits l,double m,double w){Bind(o);Initialize(std::move(p),l,m,w);}
+NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearner& o,const CompositePortableTrainingProof& proof,
+    CompositeAttemptLimits l,double m,double w){Bind(o);AdoptOwned(proof,l,m,w);}
+NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& o,const CompositePortableTrainingProof& proof,
+    CompositeAttemptLimits l,double m,double w){Bind(o);AdoptOwned(proof,l,m,w);}
+void NativeCompositeTrainingAttempt::AdoptOwned(const CompositePortableTrainingProof& proof,CompositeAttemptLimits l,double m,double w) {
+    const auto& archive=proof.Archive();protocol=std::make_shared<const VerificationProtocol>(archive.Protocol());
+    ValidateVerificationProtocol(*protocol);ValidateCompositeMeasurementContract(*protocol);
+    sourceBinding=archive.SourceBinding();sourceOrigin=archive.SourceOrigin();ownerScope=archive.OwnerFamilyBinding();
+    initialDeclaration=sourceBinding["model_spec"].toObject();initialRevision=sourceBinding["initial_model"].toObject()["sha256"].toString().toStdString();
+    Require(proof.ModelEpoch()==initialEpoch,"composite_imported_epoch_changed");
+    initialEpoch=std::size_t(sourceBinding["initial_epoch"].toDouble());storageFingerprint=sourceBinding["storage_images_sha256"].toString().toStdString();
+    initialCapacitanceOrigin=sourceBinding["optional_C0_origin"].toString().toStdString();
+    if(!sourceBinding["optional_C0_witness"].isNull())initialCapacitanceMaximumRelativeChange=
+        DecodeNativeTrainingCapacitanceWitness(sourceBinding["optional_C0_witness"].toObject()).parameters.maximumRelativeChange;
+    for(const auto& image:sourceBinding["storage_images"].toArray())imageRoots.push_back(image.toObject()["name"].toString().toStdString());
+    const auto b=bindings();Require(b.owner && b.neuron && b.dataset && b.inputCount==int(protocol->inputs.size()) &&
+        b.branch==(protocol->routing==ProbeRouting::BranchSoloBurst),"composite_imported_owner_protocol_mismatch");
+    Require(adapter.probeState()!=NativeProbeStatus::Queued && adapter.probeState()!=NativeProbeStatus::Running,
+        "composite_imported_owner_probe_active");
+    RestartOwned(l,m,w,proof.ModelRevision());
+}
 NativeCompositeTrainingAttempt::~NativeCompositeTrainingAttempt(){
     try {if(Running())group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},"composite_train_attempt_destroyed");}catch(...){}
     lease.reset();
