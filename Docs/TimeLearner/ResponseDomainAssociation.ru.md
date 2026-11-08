@@ -45,4 +45,14 @@ offset не заменяется прогнозом. Это временные �
 применения EstDelayPerSeg как доказательства. Utility не меняет компоненты,
 storage, структуру, параметры или scheduler и не рассчитывает модель.
 
-Статус: API и unit fixtures подготовлены; серверная приёмка ещё не выполнена.
+Проверка API: 26/26 без пропусков на Elder в штатном CMake target и 26/26
+на M40 в отдельной ASan-сборке тех же production CPP и fixtures. Compiled
+PulseLib: `a21adcb1cf0d0b9fb9f29cfdb3722414b1fcae3e`, root:
+`bd6722a49c59e337065c53d63411cb0095443adc`. Корневые receipts:
+`Docs/StructTrain/TimeLearner/ResponseDomainNormalVerification.json` и
+`ResponseDomainAsanVerification.json`. Evidence commits соответственно
+`aa9051831d1014185969686a7d64852fb083b51e` и
+`68440c23ba1832e25d012aa3c3383fbec8658d84`.
+ASan-проверка utility не является полной сборкой SDK или native bridge.
+Неудачные подготовительные попытки сохранены в evidence. Интеграция
+со штатной пробой и отдельная приёмка происхождения отклика ещё необходимы.
