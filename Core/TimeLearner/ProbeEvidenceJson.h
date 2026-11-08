@@ -9,6 +9,10 @@ namespace NMSDK::TimeLearner {
 QJsonObject EncodeNativeProbeEvidence(const NativeProbeResult& result);
 QJsonObject EncodeNativeProbeSpecification(const ProbeSpec& specification,bool relativeToTrialStart=false);
 NativeProbeResult DecodeNativeProbeEvidence(const QJsonObject& object);
+// Typed data codec only; no execution/admission authority is created.
+QJsonObject EncodeNativeProbePreparation(const PreparedVerificationProbe&);
+PreparedVerificationProbe DecodeNativeProbePreparation(const QJsonObject&);
+ProbeSpec DecodeNativeProbeSpecification(const QJsonObject&,bool relativeToTrialStart=false);
 QJsonObject EncodeTrainingCertificate(const TrainingCertificate& certificate);
 QJsonObject EncodeVerificationProtocol(const VerificationProtocol& protocol);
 VerificationProtocol DecodeVerificationProtocol(const QJsonObject& object);

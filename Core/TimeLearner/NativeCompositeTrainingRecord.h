@@ -39,6 +39,7 @@ struct NativeCompositeMeasurementRecord {
     NativeCompositeTrainingPolicy policy;
     std::size_t issuedNativeProbes=0,sampledFrames=0;
     double startModel=0.,startWall=0.,endModel=0.,endWall=0.;
+    double maximumGroupModelSeconds=0.,maximumGroupWallSeconds=0.;
     bool consumed=false;
     std::optional<bool> trainingRequestedAtConsume;
 };

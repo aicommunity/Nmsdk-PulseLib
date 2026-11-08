@@ -115,6 +115,12 @@ NativeProbeResult DecodeNativeProbeEvidence(const QJsonObject& o)
     if(EncodeNativeProbeEvidence(r)!=o)throw std::invalid_argument("noncanonical_native_probe_evidence");
     return r;
 }
+PreparedVerificationProbe DecodeNativeProbePreparation(const QJsonObject& o) {
+    const auto p=Prepared(o);Require(EncodeNativeProbePreparation(p)==o);return p;
+}
+ProbeSpec DecodeNativeProbeSpecification(const QJsonObject& o,bool relativeToTrialStart) {
+    const auto s=Spec(o);Require(EncodeNativeProbeSpecification(s,relativeToTrialStart)==o);return s;
+}
 VerificationProtocol DecodeVerificationProtocol(const QJsonObject& o)
 {
     const auto version=Version(o["schema_version"]);const bool composite=version==4;

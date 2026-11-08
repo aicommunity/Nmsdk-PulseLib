@@ -1,4 +1,5 @@
 #include "CompositeTrainingDeclarations.h"
+#include "ConfiguredNativeTraining.h"
 #include <QJsonArray>
 #include <QStringList>
 #include <cmath>
@@ -89,4 +90,48 @@ QJsonObject CompositeTrainingProtocolBinding(const VerificationProtocol& p) {
             m.repeatabilityAbsolute,m.repeatabilityRelative,m.influenceAbsolute,m.influenceRelative}},
         {"geometry_policy",QJsonArray{int(g.schemaVersion),double(g.maximumInputs),double(g.maximumSamples),double(g.maximumTotalSamples),g.repeatabilityAbsolute}}};
 }
+QJsonObject EncodeCompositeRuntimePlan(const NativeTrainingPlan& p) {
+    ValidateCompositeMeasurementContract(p.protocol);Require(bool(p.composite));const auto& c=p.search;
+    Require(c.normalization==Normalization::SynapseCount || c.normalization==Normalization::TipResistance);
+    Require(c.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate);
+    QJsonArray bounds;for(const auto& b:c.bounds)bounds.append(QJsonObject{{"minimum_length",b.minimumLength},{"maximum_length",b.maximumLength},
+        {"minimum_synapses",b.minimumSynapses},{"maximum_synapses",b.maximumSynapses},{"minimum_resistance",Number(b.minimumResistance)},{"maximum_resistance",Number(b.maximumResistance)}});
+    QJsonObject search{{"normalization",c.normalization==Normalization::SynapseCount?"N0":"N1"},
+        {"maximum_probes",Count(c.maximumProbes)},{"maximum_edits",Count(c.maximumEdits)},
+        {"maximum_candidates_per_input",Count(c.maximumCandidatesPerInput)},{"maximum_sweeps",Count(c.maximumSweeps)},
+        {"maximum_invalid_observations",Count(c.maximumInvalidObservations)},{"resistance_subdivision_depth",Count(c.resistanceSubdivisionDepth)},
+        {"n0_candidate_repeats",Count(c.n0CandidateRepeats)},{"bounds",bounds},
+        {"tolerances",QJsonObject{{"amplitude_absolute",Number(c.tolerances.amplitudeAbsolute)},
+            {"amplitude_relative",Number(c.tolerances.amplitudeRelative)},{"sync",Number(c.tolerances.sync)}}},
+        {"capacitance_search",c.capacitanceSearch?QJsonValue(EncodeCapacitanceSearchPolicy(*c.capacitanceSearch)):QJsonValue(QJsonValue::Null)},
+        {"invalid_measurement_recovery","retry_same_candidate"}};
+    return {{"schema_version",1},{"run_id",Text(c.runId)},{"initial_model_revision",Text(c.initialModelRevision)},
+        {"initial_model_epoch",Count(c.initialModelEpoch)},{"search",search},
+        {"maximum_reference_probes",Count(p.maximumReferenceProbes)},{"maximum_invalid_reference_probes",Count(p.maximumInvalidReferenceProbes)},
+        {"maximum_model_seconds",Number(p.maximumModelSeconds)},{"maximum_wall_seconds",Number(p.maximumWallSeconds)},
+        {"record_capacitance_history",p.recordCapacitanceHistory},{"composite_measurement",EncodeNativeCompositeTrainingPolicy(*p.composite)}};
+}
+NativeTrainingPlan DecodeCompositeRuntimePlan(const QJsonObject& o,const VerificationProtocol& protocol) {
+    Keys(o,"schema_version run_id initial_model_revision initial_model_epoch search maximum_reference_probes maximum_invalid_reference_probes maximum_model_seconds maximum_wall_seconds record_capacitance_history composite_measurement");
+    Require(Version(o["schema_version"])==1 && o["record_capacitance_history"].isBool());
+    NativeTrainingPlan p;p.protocol=protocol;p.composite=DecodeNativeCompositeTrainingPolicy(Object(o["composite_measurement"]));
+    auto& c=p.search;c.runId=Text(o["run_id"]);c.initialModelRevision=Text(o["initial_model_revision"]);c.initialModelEpoch=Count(o["initial_model_epoch"]);
+    const auto search=Object(o["search"]);Keys(search,"normalization maximum_probes maximum_edits maximum_candidates_per_input maximum_sweeps maximum_invalid_observations resistance_subdivision_depth n0_candidate_repeats bounds tolerances capacitance_search invalid_measurement_recovery");
+    const auto norm=Text(search["normalization"]);Require(norm=="N0" || norm=="N1");c.normalization=norm=="N0"?Normalization::SynapseCount:Normalization::TipResistance;
+    c.maximumProbes=Count(search["maximum_probes"]);c.maximumEdits=Count(search["maximum_edits"]);c.maximumCandidatesPerInput=Count(search["maximum_candidates_per_input"]);
+    c.maximumSweeps=Count(search["maximum_sweeps"]);c.maximumInvalidObservations=Count(search["maximum_invalid_observations"]);
+    const auto depth=Count(search["resistance_subdivision_depth"]);Require(depth<=20);c.resistanceSubdivisionDepth=unsigned(depth);c.n0CandidateRepeats=Count(search["n0_candidate_repeats"]);
+    for(const auto& v:Array(search["bounds"])) {const auto b=Object(v);Keys(b,"minimum_length maximum_length minimum_synapses maximum_synapses minimum_resistance maximum_resistance");
+        const auto integer=[](const QJsonValue& value){const auto n=Count(value);Require(n<=std::numeric_limits<int>::max());return int(n);};
+        c.bounds.push_back({integer(b["minimum_length"]),integer(b["maximum_length"]),integer(b["minimum_synapses"]),integer(b["maximum_synapses"]),Number(b["minimum_resistance"]),Number(b["maximum_resistance"])});
+    }
+    const auto tolerances=Object(search["tolerances"]);Keys(tolerances,"amplitude_absolute amplitude_relative sync");
+    c.tolerances={Number(tolerances["amplitude_absolute"]),Number(tolerances["amplitude_relative"]),Number(tolerances["sync"])};
+    if(!search["capacitance_search"].isNull())c.capacitanceSearch=DecodeCapacitanceSearchPolicy(Object(search["capacitance_search"]));
+    Require(Text(search["invalid_measurement_recovery"])=="retry_same_candidate");
+    p.maximumReferenceProbes=Count(o["maximum_reference_probes"]);p.maximumInvalidReferenceProbes=Count(o["maximum_invalid_reference_probes"]);
+    p.maximumModelSeconds=Number(o["maximum_model_seconds"]);p.maximumWallSeconds=Number(o["maximum_wall_seconds"]);p.recordCapacitanceHistory=o["record_capacitance_history"].toBool();
+    Require(EncodeCompositeRuntimePlan(p)==o);return p;
+}
+
 }

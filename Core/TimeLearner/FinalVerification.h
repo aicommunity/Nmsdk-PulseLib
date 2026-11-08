@@ -123,6 +123,9 @@ public:
     const std::vector<InputVerificationResidual>& Residuals() const { return residuals; }
     const VerificationTolerances& Tolerances() const { return tolerances; }
     const std::vector<std::string>& CompositeProofIds() const {return compositeProofIds;}
+    std::vector<std::string> CompositeReferenceProofIds() const {std::vector<std::string> ids;for(const auto& r:referenceInputs)ids.push_back(r.semanticProofId);return ids;}
+    const std::string& CompositeSourceOrigin() const {return compositeSourceOrigin;}
+    const std::string& CompositeOwnerFamilyBinding() const {return compositeOwnerFamilyBinding;}
     bool Matches(const std::string& currentModel,const CapturedReferences& currentReferences,
                  const VerificationTolerances& currentTolerances,ModelStateKind kind,std::size_t currentEpoch) const;
     std::size_t ModelEpoch() const { return modelEpoch; }
@@ -132,7 +135,7 @@ private:
     bool exact=false;
     std::size_t modelEpoch=0;
     std::size_t referenceModelEpoch=0;
-    std::string modelRevision, referenceModelRevision;
+    std::string modelRevision, referenceModelRevision,compositeSourceOrigin,compositeOwnerFamilyBinding;
     VerificationProtocol protocol;
     VerificationTolerances tolerances;
     std::vector<CapturedInputReference> referenceInputs;

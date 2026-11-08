@@ -7,6 +7,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <cmath>
+#include <algorithm>
 #include <stdexcept>
 
 namespace NMSDK::TimeLearner {
@@ -115,9 +116,9 @@ QJsonObject EncodeNativeProbeEvidence(const NativeProbeResult& result)
         {"prepared",result.prepared?QJsonValue(Prepared(*result.prepared)):QJsonValue(QJsonValue::Null)},
         {"observation",result.observation?QJsonValue(Observation(*result.observation)):QJsonValue(QJsonValue::Null)}};
 }
+QJsonObject EncodeNativeProbePreparation(const PreparedVerificationProbe& p){return Prepared(p);}
 QJsonObject EncodeTrainingCertificate(const TrainingCertificate& certificate)
 {
-    if(certificate.SchemaVersion()!=1)throw std::invalid_argument("composite_training_certificate_codec_not_implemented");
         QJsonArray residuals;
         for(const auto& r:certificate.Residuals())residuals.append(QJsonObject{{"input_id",Text(r.inputId)},
             {"trial_id",Text(r.trialId)},{"effective_model_revision",Text(r.effectiveModelRevision)},
@@ -125,6 +126,22 @@ QJsonObject EncodeTrainingCertificate(const TrainingCertificate& certificate)
             {"amplitude_residual",Number(r.amplitudeResidual)},{"amplitude_tolerance",Number(r.amplitudeTolerance)},
             {"timing_low",Number(r.timingResidualLow)},{"timing_high",Number(r.timingResidualHigh)},
             {"within_timing",r.withinTiming},{"within_amplitude",r.withinAmplitude}});
+        if(certificate.SchemaVersion()==2) {
+            const auto references=certificate.CompositeReferenceProofIds();const auto& finals=certificate.CompositeProofIds();
+            if(references.size()!=certificate.Protocol().inputs.size() || finals.size()!=references.size() ||
+                certificate.CompositeSourceOrigin().empty() || certificate.CompositeOwnerFamilyBinding().empty() ||
+                std::any_of(references.begin(),references.end(),[](const auto& id){return id.empty();}) ||
+                std::any_of(finals.begin(),finals.end(),[](const auto& id){return id.empty();}))
+                throw std::invalid_argument("incomplete_composite_certificate_proofs");
+            const auto& t=certificate.Tolerances();QJsonObject result{{"schema_version",2},{"method_id",DeclaredWindowBasinResult::MethodId()},
+                {"exact",certificate.Exact()},{"model_revision",Text(certificate.ModelRevision())},{"model_epoch",Count(certificate.ModelEpoch())},
+                {"protocol_revision",Text(certificate.ProtocolRevision())},{"source_origin",Text(certificate.CompositeSourceOrigin())},
+                {"owner_family_binding",Text(certificate.CompositeOwnerFamilyBinding())},{"reference_model_revision",Text(certificate.ReferenceModelRevision())},
+                {"reference_model_epoch",Count(certificate.ReferenceModelEpoch())},{"reference_semantic_proof_ids",Strings(references)},
+                {"final_semantic_proof_ids",Strings(finals)},{"tolerances",QJsonObject{{"amplitude_absolute",Number(t.amplitudeAbsolute)},
+                    {"amplitude_relative",Number(t.amplitudeRelative)},{"sync",Number(t.sync)}}},{"residuals",residuals}};
+            result["semantic_certificate_id"]=NmsdkTools::CanonicalModelDataSha256(result);return result;
+        }
         return QJsonObject{{"schema_version",int(certificate.SchemaVersion())},
             {"peak_selection",Selection(certificate.Protocol().peakSelection)},
             {"exact",certificate.Exact()},{"model_revision",Text(certificate.ModelRevision())},

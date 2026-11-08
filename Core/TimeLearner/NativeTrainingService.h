@@ -116,6 +116,8 @@ public:
         std::vector<std::string> result;for(const auto& id:compositeFinalGroups)if(!id.empty())result.push_back(id);return result;
     }
     const QJsonObject& CompositeSourceBinding() const {return compositeSourceBinding;}
+    const QJsonObject& CompositeInitialConfiguration() const {return compositeInitialConfiguration;}
+    const std::string& CompositeOwnerFamilyBinding() const {return compositeOwnerFamily;}
     std::size_t CompositeNativeProbes() const {return composite?composite->IssuedNativeProbes():compositeNativeProbes;}
     std::size_t CompositeGroups() const {return composite?composite->IssuedGroups():compositeGroups;}
     std::size_t CompositeSampledFrames() const {return composite?composite->RetainedSamples():compositeSampledFrames;}
@@ -142,12 +144,13 @@ private:
     std::optional<TrainingAction> activeAction;
     std::optional<NativeTrainingCapacitanceHistory> capacitanceHistory;
     std::shared_ptr<NativeCompositeTrainingAttempt> composite;
-    QJsonObject compositeSourceBinding;
+    QJsonObject compositeSourceBinding,compositeInitialConfiguration;
     std::vector<NativeCompositeMeasurementRecord> compositeRecords;
     std::vector<ValidatedCompositeMeasurement> compositeReferenceMeasurements;
     std::vector<std::string> compositeReferenceGroups,compositeFinalGroups;
     std::optional<VerificationRequest> compositeRequest;
     std::optional<TrainingCapacitance> compositeCapacitance;
+    std::string compositeOwnerFamily;
     std::size_t compositeNativeProbes=0,compositeGroups=0,compositeSampledFrames=0,compositePrimaryBytes=0;
     std::size_t compositeGeneration=0,compositeDispatchDepth=0;
     bool compositeHarvested=true;

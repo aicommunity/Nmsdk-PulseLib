@@ -1,4 +1,5 @@
 #include "NativeTrainingService.h"
+#include "ConfiguredNativeTraining.h"
 #include "ProbeEvidenceJson.h"
 #include <algorithm>
 #include <cmath>
@@ -85,8 +86,13 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     else {
         Require(!references,"native_composite_imported_family_requires_owned_adoption");
         composite=a.createComposite(value.protocol,Limits(value),m,w);Require(bool(composite),"missing_native_composite_authority");
-        compositeSourceBinding=composite->SourceBinding();
+        compositeSourceBinding=composite->SourceBinding();compositeOwnerFamily=composite->OwnerFamilyBinding();
+        compositeInitialConfiguration=EncodeConfiguredNativeTraining(CaptureCompositeInitialConfiguration(
+            DecodeNativeModelSpec(compositeSourceBinding["model_spec"].toObject()),value,a.readParameters(),
+            compositeCapacitance?compositeCapacitance->maximumRelativeChange:0.));
     }
+    Require(compositeSourceBinding["model_spec"].toObject()["normalization"]==
+        QJsonValue(value.search.normalization==Normalization::SynapseCount?"N0":"N1"),"composite_normalization_requires_new_model_family");
     std::set<std::string> retained(compositeReferenceGroups.begin(),compositeReferenceGroups.end());
     if(references)std::erase_if(compositeRecords,[&](const auto& r){return !retained.count(r.groupId);});
     else {compositeRecords.clear();compositeReferenceGroups.clear();compositeReferenceMeasurements.clear();}

@@ -41,4 +41,6 @@ ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& objec
 ConfiguredNativeTraining ParseConfiguredNativeTraining(const std::string& text);
 QJsonObject ParseStrictNativeJsonObject(const std::string& text,std::size_t maximumBytes=16*1024*1024);
 NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraining& configuration);
+ConfiguredNativeTraining CaptureCompositeInitialConfiguration(const NativeModelSpec&,const NativeTrainingPlan&,
+    const std::vector<InputParameters>& actualInitialParameters,double capacitanceMaximumRelativeChange);
 }

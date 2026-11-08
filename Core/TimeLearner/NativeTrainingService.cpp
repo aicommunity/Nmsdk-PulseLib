@@ -382,7 +382,7 @@ void NativeTrainingService::ResetControl()
 }
 void NativeTrainingService::InvalidateTarget()
 {ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();
- composite.reset();compositeSourceBinding={};compositeRecords.clear();compositeReferenceGroups.clear();compositeFinalGroups.clear();
+ composite.reset();compositeSourceBinding={};compositeInitialConfiguration={};compositeOwnerFamily.clear();compositeRecords.clear();compositeReferenceGroups.clear();compositeFinalGroups.clear();
  compositeGroupWitnesses.clear();compositeGroupTrialWitnessIds.clear();compositeCapacitance.reset();
  compositeNativeProbes=compositeGroups=compositeSampledFrames=compositePrimaryBytes=0;}
 void NativeTrainingService::RestoreBoundary(NativeTrainingPlan value,std::vector<NativeProbeResult> refs,

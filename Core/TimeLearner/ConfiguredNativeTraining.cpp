@@ -357,4 +357,19 @@ QJsonObject ParseStrictNativeJsonObject(const std::string& text,std::size_t maxi
 }
 ConfiguredNativeTraining ParseConfiguredNativeTraining(const std::string& text)
 {return DecodeConfiguredNativeTraining(ParseStrictNativeJsonObject(text));}
+ConfiguredNativeTraining CaptureCompositeInitialConfiguration(const NativeModelSpec& declaration,const NativeTrainingPlan& plan,
+    const std::vector<InputParameters>& actual,double capacitanceMaximumRelativeChange) {
+    Require(bool(plan.composite) && plan.protocol.schemaVersion==4 && actual.size()==declaration.inputs.size(),"invalid_composite_initial_declaration");
+    ConfiguredNativeTraining c;c.model=declaration;for(std::size_t i=0;i<actual.size();++i)
+        c.model.inputs[i]={actual[i].length,actual[i].synapses,actual[i].resistance};
+    c.stimulusProfile=*plan.protocol.stimulusProfile;c.runId=plan.search.runId;c.protocolRevision=plan.protocol.revision;c.sampleId=plan.protocol.sampleId;
+    c.duration=plan.probe.specification.end;c.maximumSampleGap=plan.protocol.maximumSampleGap;c.minimumAmplitude=plan.protocol.minimumAmplitude;
+    c.maximumSamples=plan.probe.specification.maximumSamples;c.recordSpikes=plan.probe.specification.recordSpikes;c.peakSelection=plan.protocol.peakSelection;
+    for(const auto& w:plan.inputWindows)c.windows.emplace_back(w.begin,w.end);c.search=plan.search;c.search.initialModelRevision.clear();c.search.initialModelEpoch=0;
+    c.maximumReferenceProbes=plan.maximumReferenceProbes;c.maximumInvalidReferenceProbes=plan.maximumInvalidReferenceProbes;
+    c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
+    c.capacitanceMaximumRelativeChange=c.recordCapacitanceHistory?capacitanceMaximumRelativeChange:0.;c.composite=plan.composite;
+    MakeConfiguredNativeTrainingPlan(c);return c;
+}
+
 }

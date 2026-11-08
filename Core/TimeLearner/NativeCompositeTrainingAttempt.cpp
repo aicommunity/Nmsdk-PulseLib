@@ -1,5 +1,6 @@
 #include "NativeCompositeTrainingAttempt.h"
 #include "CompositeTrainingDeclarations.h"
+#include "NativeCompositeTrainingEvidence.h"
 #include "../NNeuronTimeLearner.h"
 #include "../NNeuronTimeLearnerBranch.h"
 #include "../NPulseNeuron.h"
@@ -151,6 +152,12 @@ std::string NativeCompositeTrainingAttempt::CheckBoundary(QJsonObject* retained,
     Require(declaration()==initialDeclaration,"composite_train_source_owner_changed");
     const auto b=bindings();const auto source=b.dataset->template GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     Require(bool(source),"composite_train_missing_source");
+    // The neuron-only semantic identity declares a boundary port, not the
+    // external dataset/generator's numeric parameters. Recheck the restored
+    // actual source independently before mint/consume or owned warm restart.
+    const auto datasetIdentity=NmsdkTools::IdentifyModel(b.dataset.Get());
+    Require(datasetIdentity["valid"].toBool() && datasetIdentity["model"]==sourceBinding["initial_dataset"].toObject()["identity"].toObject()["model"],
+        "composite_train_actual_source_boundary_changed");
     const auto images=NmsdkTools::CaptureModelImageDefinitions(b.neuron.Get(),{{&source->Output,"burst"}},imageRoots);
     Require(NmsdkTools::ModelImageDefinitionsFingerprint(images).toStdString()==storageFingerprint,"composite_train_storage_physics_changed");
     const auto current=capacitanceWitness();
@@ -200,7 +207,7 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
         Require(declared.endOffset<=prototype.specification.end,"composite_train_declared_window_exceeds_duration");
     const auto charge=contract.contextPolicy.maximumTotalSamples;
     Require(totalSamples<=limits.maximumTotalSamples && charge<=limits.maximumTotalSamples-totalSamples,"composite_attempt_sample_budget_exhausted");
-    closed=false;budgetExhausted=false;activeSamples=0;groupStartModel=modelTime;groupStartWall=wallTime;groupWallLimit=wallLimit;
+    closed=false;budgetExhausted=false;activeSamples=0;groupStartModel=modelTime;groupStartWall=wallTime;groupWallLimit=wallLimit;groupModelLimit=modelLimit;
     groupEndModel=modelTime;groupEndWall=wallTime;this->logical=logical;this->purpose=purpose;rawTrials.clear();
     beforeNativeQueue=std::move(onQueue);afterNativeResult=std::move(onResult);
     auto id=std::make_shared<CompositeTrainingDetail::Identity>();id->protocol=protocol;id->lease=lease;
@@ -292,22 +299,9 @@ void NativeCompositeTrainingAttempt::CloseGroup() {
         const auto& peak=*selected.geometry->measuredMaximum;const auto& full=result.witness.fullBefore.observation;
         const auto origin=std::find(protocol->stimulusIds.begin(),protocol->stimulusIds.end(),protocol->originStimulusId)-protocol->stimulusIds.begin();
         const double originTime=full.events.at(origin).time;
-        QJsonArray primary;
-        std::vector<const MatchedOmissionTrace*> traces{&result.witness.fullBefore};
-        for(const auto& c:result.witness.omitEachInput)traces.push_back(&c);traces.push_back(&result.witness.fullAfter);
-        for(std::size_t i=0;i<traces.size();++i){
-            const auto bytes=EncodeMatchedOmissionPrimaryTrace(*traces[i],result.packets[i]);
-            primary.append(QJsonObject{{"native",EncodeNativeProbeEvidence(result.packets[i])},
-                {"csv_sha256",QString::fromLatin1(QCryptographicHash::hash(bytes,QCryptographicHash::Sha256).toHex())}});
-        }
-        const auto proof=Hash(QJsonObject{{"kind","live-composite-training-measurement-v1"},{"method_binding",CompositeTrainingProtocolBinding(*protocol)},
-            {"source_origin",Text(sourceOrigin)},{"candidate_witness",Text(activeIdentity->candidateWitnessId)},
-            {"live_attempt_binding",Text(liveAttemptBinding)},
-            {"attempt_limits",QJsonArray{double(limits.maximumGroups),double(limits.maximumNativeProbes),
-                double(limits.maximumTotalSamples),limits.maximumModelSeconds,limits.maximumWallSeconds}},
-            {"group_limits",QJsonArray{result.maximumModelSeconds,result.maximumWallSeconds}},
-            {"logical_trial",Text(activeIdentity->trialId)},{"group_id",Text(activeIdentity->groupId)},
-            {"purpose",int(activeIdentity->purpose)},{"primary",primary},{"raw",peak.rawPotential},{"time",peak.time},{"plateau_end",peak.plateauEnd}});
+        const auto proof=CompositeTrainingSemanticProofId(*protocol,CompositeSemanticProofContent{sourceOrigin,
+            activeIdentity->candidateWitnessId,liveAttemptBinding,limits,result.maximumModelSeconds,result.maximumWallSeconds,
+            activeIdentity->trialId,activeIdentity->groupId,activeIdentity->purpose,result,peak});
         // Native wall budget includes replay/selection/hash work. This is a
         // live steady-clock check, not an elapsed-time claim decoded from old
         // group declarations. Supplied hook clocks must use this same clock.
@@ -354,7 +348,8 @@ NativeCompositeMeasurementRecord NativeCompositeTrainingAttempt::Record() const 
     r.semanticProofId=measurement?measurement->SemanticProofId():std::string{};r.reason=rejection;
     r.groupState=group->State();r.group=group->Result();r.rawTrials=rawTrials;r.selection=selection;r.attemptLimits=limits;
     r.issuedNativeProbes=group->IssuedNativeProbes();r.sampledFrames=activeSamples;
-    r.startModel=groupStartModel;r.startWall=groupStartWall;r.endModel=groupEndModel;r.endWall=groupEndWall;return r;
+    r.startModel=groupStartModel;r.startWall=groupStartWall;r.endModel=groupEndModel;r.endWall=groupEndWall;
+    r.maximumGroupModelSeconds=groupModelLimit;r.maximumGroupWallSeconds=groupWallLimit;return r;
 }
 void NativeCompositeTrainingAttempt::RefreshOwnedAfterEdit(const std::string& revision) {
     Require(ownerLife.IsAlive() && !Running(),"composite_owned_edit_not_at_group_boundary");

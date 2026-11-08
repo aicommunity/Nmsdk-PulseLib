@@ -316,7 +316,9 @@ bool TrainingCertificate::Matches(const std::string& currentModel,const Captured
         currentEpoch==modelEpoch && currentTolerances==tolerances &&
         currentReferences.Protocol()==protocol && currentReferences.Inputs()==referenceInputs &&
         currentReferences.InitialModelRevision()==referenceModelRevision &&
-        currentReferences.InitialModelEpoch()==referenceModelEpoch;
+        currentReferences.InitialModelEpoch()==referenceModelEpoch &&
+        (protocol.schemaVersion!=4 || (currentReferences.CompositeOwnerScope()==compositeOwnerFamilyBinding &&
+            currentReferences.CompositeSourceOrigin()==compositeSourceOrigin));
 }
 
 FinalVerificationSession::FinalVerificationSession(CapturedReferences refs,VerificationConfig cfg)
@@ -473,6 +475,7 @@ void FinalVerificationSession::Finish()
     TrainingCertificate result;result.exact=true;result.modelRevision=config.currentModelRevision;
     result.protocol=references.Protocol();result.tolerances=config.tolerances;
     result.referenceInputs=references.Inputs();result.referenceModelRevision=references.InitialModelRevision();
+    if(result.protocol.schemaVersion==4){result.compositeSourceOrigin=references.CompositeSourceOrigin();result.compositeOwnerFamilyBinding=references.CompositeOwnerScope();}
     result.modelEpoch=epoch;result.referenceModelEpoch=references.InitialModelEpoch();
     if(accepted.empty() || std::any_of(accepted.begin(),accepted.end(),[](const auto& input){return !input;}))
     {status=VerificationStatus::InvalidObservation;return;}

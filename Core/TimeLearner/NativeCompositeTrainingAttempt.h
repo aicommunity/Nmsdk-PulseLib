@@ -36,6 +36,7 @@ public:
     const std::string& RejectionReason() const {return rejection;}
     const NativeMatchedOmissionResult* Group() const {return group?&group->Result():nullptr;}
     const std::string& SourceOrigin() const {return sourceOrigin;}
+    const std::string& OwnerFamilyBinding() const {return ownerScope;}
     const QJsonObject& SourceBinding() const {return sourceBinding;}
     std::size_t IssuedGroups() const {return issuedGroups;}
     std::size_t IssuedNativeProbes() const;
@@ -84,7 +85,7 @@ private:
     double initialCapacitanceMaximumRelativeChange=0.;
     std::size_t generation=0,initialEpoch=0,issuedGroups=0,completedNativeProbes=0,totalSamples=0,activeSamples=0;
     double startModel=0.,startWall=0.,lastModel=0.,lastWall=0.;
-    double groupStartModel=0.,groupStartWall=0.,groupWallLimit=0.,groupEndModel=0.,groupEndWall=0.;
+    double groupStartModel=0.,groupStartWall=0.,groupWallLimit=0.,groupModelLimit=0.,groupEndModel=0.,groupEndWall=0.;
     bool closed=false,cancelled=false,budgetExhausted=false;
 };
 }

@@ -3,6 +3,7 @@
 #include <QJsonObject>
 
 namespace NMSDK::TimeLearner {
+struct NativeTrainingPlan;
 QJsonObject EncodeCompositeContextPolicy(const MatchedOmissionPolicy&);
 MatchedOmissionPolicy DecodeCompositeContextPolicy(const QJsonObject&);
 QJsonObject EncodeCompositeGeometryPolicy(const DeclaredWindowBasinPolicy&);
@@ -14,4 +15,6 @@ NativeCompositeTrainingPolicy DecodeNativeCompositeTrainingPolicy(const QJsonObj
 // The same semantic method binding is used by live production and portable
 // proof replay. Artifact paths are absent; anti-replay execution IDs remain.
 QJsonObject CompositeTrainingProtocolBinding(const VerificationProtocol&);
+QJsonObject EncodeCompositeRuntimePlan(const NativeTrainingPlan&);
+NativeTrainingPlan DecodeCompositeRuntimePlan(const QJsonObject&,const VerificationProtocol&);
 }
