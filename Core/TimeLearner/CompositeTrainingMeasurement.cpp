@@ -1,5 +1,6 @@
 #include "CompositeTrainingMeasurement.h"
 #include "FinalVerification.h"
+#include "CandidateWindowContractValidation.h"
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -37,7 +38,11 @@ const std::string& PreparedCompositeMeasurement::LogicalTrialId() const {return 
 void PreparedCompositeMeasurement::Require(const VerificationProtocol& p,const std::string& run,const std::string& trial,
     std::size_t input,const std::string& revision,std::size_t epoch,CompositeMeasurementPurpose purpose,
     const std::string& ownerScope,const std::string& sourceOrigin,bool closedMeasurement) const {
-    ValidateCompositeMeasurementContract(p);
+    if(p.schemaVersion==5) {
+        ValidateCandidateWindowMeasurementContract(p);
+        CompositeRequire(purpose==CompositeMeasurementPurpose::Reference && !identity->candidateWindowProposal,
+            "candidate_window_training_requires_proposal_admission");
+    } else ValidateCompositeMeasurementContract(p);
     const auto live=identity->lease.lock();
     CompositeRequire(bool(live) && bool(live->requireCurrent),"expired_composite_training_attempt");
     live->requireCurrent();

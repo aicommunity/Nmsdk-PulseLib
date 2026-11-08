@@ -197,6 +197,7 @@ QJsonObject EncodeNativeCompositeSelection(const NativeDeclaredWindowBasinResult
         {"geometry",s.geometry?QJsonValue(Geometry(*s.geometry)):QJsonValue(QJsonValue::Null)}};
 }
 std::string CompositeTrainingSemanticProofId(const VerificationProtocol& p,const NativeCompositeMeasurementRecord& r) {
+    Require(!r.candidateWindowSpecification && !r.windowProposal,"candidate_window_record_requires_archive2");
     Require(r.selection && r.selection->status==NativeDeclaredWindowBasinStatus::Completed && r.selection->geometry &&
         r.selection->geometry->validity==DeclaredWindowBasinValidity::Valid && r.selection->geometry->measuredMaximum,"composite_archive_measurement_not_valid");
     const auto candidate=Hash(ParseStrictNativeJsonObject(r.candidateBindingJson)).toStdString();
@@ -220,6 +221,7 @@ std::string CompositeTrainingSemanticProofId(const VerificationProtocol& p,const
 
 namespace {
 void CheckRecord(const VerificationProtocol& p,const QJsonObject& source,const NativeCompositeMeasurementRecord& r) {
+    Require(!r.candidateWindowSpecification && !r.windowProposal,"candidate_window_record_requires_archive2");
     CheckLogical(p,r);const auto candidate=ParseStrictNativeJsonObject(r.candidateBindingJson);Keys(candidate,"kind source_origin model_identity storage_images_sha256 optional_C0_witness");
     Require(candidate["kind"]==QJsonValue("composite_train_candidate_binding_v1") && candidate["source_origin"]==Text(r.sourceOrigin) &&
         candidate["storage_images_sha256"]==source["storage_images_sha256"] && !r.ownerFamilyBinding.empty() && !r.liveAttemptBinding.empty(),"composite_archive_candidate_binding");

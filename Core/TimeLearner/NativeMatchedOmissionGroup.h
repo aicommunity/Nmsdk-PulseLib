@@ -72,6 +72,9 @@ private:
     bool waiting=false;
     double startModel=0.,startWall=0.,lastModel=0.,lastWall=0.;
     void CheckInstances() const;
+    static void CheckInstances(const NativeProbeBindings&,const RDK::UModuleLifecycleObservation&,
+                               const std::vector<Watched>&);
+    std::function<void()> RetainInstanceGuard() const;
     void CheckRestoredPresentation() const;
     bool CheckClock(const NativeMatchedOmissionAdapter& adapter,double modelTime,double wallTime);
     void Fail(const NativeMatchedOmissionAdapter& adapter,NativeMatchedOmissionState status,const std::string& reason);

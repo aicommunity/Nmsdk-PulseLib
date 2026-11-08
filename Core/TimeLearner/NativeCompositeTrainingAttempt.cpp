@@ -10,6 +10,12 @@
 #include "ModelArchive.h"
 #include "ProbeEvidenceJson.h"
 #include "NativeTrainingBindings.h"
+#include "CandidateWindowProposalReplay.h"
+#include "NativeCandidateWindowBindings.h"
+#include "CompositeSourceValidation.h"
+#include "CandidateWindowMeasurementEvidence.h"
+#include "CandidateWindowLogicalContext.h"
+#include "CompositePrimaryBudget.h"
 #include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -50,6 +56,7 @@ template<class Owner> void NativeCompositeTrainingAttempt::Bind(Owner& owner) {
     actualModelTime=[&owner](){Require(bool(owner.Environment),"composite_train_missing_native_environment");
         return owner.Environment->GetTime().GetDoubleTime();};
     capacitanceWitness=[&owner](){return owner.ReadNativeTrainingCapacitanceWitness();};
+    readWindowParameters=[&owner](){return owner.ReadNativeParameters();};
     adapter.queue=[this,&owner](auto request){
         Require(ownerLife.IsCurrent(),"composite_train_owner_lifecycle_changed");
         if(beforeNativeQueue)beforeNativeQueue(request);
@@ -104,6 +111,14 @@ NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearne
     CompositeAttemptLimits l,double m,double w){Bind(o);Initialize(std::move(p),l,m,w);}
 NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& o,VerificationProtocol p,
     CompositeAttemptLimits l,double m,double w){Bind(o);Initialize(std::move(p),l,m,w);}
+NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearner& o,VerificationProtocol p,
+    CompositeAttemptLimits l,NativeCandidateWindowAttemptDeclaration d,double m,double w) {
+    Bind(o);InitializeCandidateWindow(std::move(p),l,std::move(d),m,w);
+}
+NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& o,VerificationProtocol p,
+    CompositeAttemptLimits l,NativeCandidateWindowAttemptDeclaration d,double m,double w) {
+    Bind(o);InitializeCandidateWindow(std::move(p),l,std::move(d),m,w);
+}
 NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearner& o,const CompositePortableTrainingProof& proof,
     CompositeAttemptLimits l,double m,double w){Bind(o);AdoptOwned(proof,l,m,w);}
 NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& o,const CompositePortableTrainingProof& proof,
@@ -132,7 +147,22 @@ NativeCompositeTrainingAttempt::~NativeCompositeTrainingAttempt(){
     lease.reset();
 }
 void NativeCompositeTrainingAttempt::Initialize(VerificationProtocol p,CompositeAttemptLimits l,double m,double w) {
-    ValidateVerificationProtocol(p);ValidateCompositeMeasurementContract(p);limits=l;
+    ValidateVerificationProtocol(p);ValidateCompositeMeasurementContract(p);InitializeShared(std::move(p),l,m,w);
+}
+void NativeCompositeTrainingAttempt::InitializeCandidateWindow(VerificationProtocol p,CompositeAttemptLimits l,
+    NativeCandidateWindowAttemptDeclaration d,double m,double w) {
+    ValidateVerificationProtocol(p);ValidateCandidateWindowMeasurementContract(p);
+    Require(!d.attemptId.empty() && d.maximumTotalPrimaryBytes>0 && d.maximumTotalPrimaryBytes<=9007199254740991ULL,
+        "candidate_window_explicit_attempt_or_primary_budget");
+    windowDeclaration=std::move(d);InitializeShared(std::move(p),l,m,w);
+    CompositeEvidenceDetail::ValidateInitialSource(*protocol,sourceBinding,sourceOrigin);
+    initialWindowParameters=readWindowParameters();const auto c=capacitanceWitness();
+    initialWindowCapacitance=c?std::optional<TrainingCapacitance>(c->parameters):std::nullopt;
+    stagedWindowSeeds.resize(protocol->inputs.size());stagedWindowMeasurements.resize(protocol->inputs.size());
+    stagedWindowGroups.resize(protocol->inputs.size());
+}
+void NativeCompositeTrainingAttempt::InitializeShared(VerificationProtocol p,CompositeAttemptLimits l,double m,double w) {
+    limits=l;
     Require(adapter.requested(),"composite_train_requires_actual_training_request");
     Require(l.maximumGroups && l.maximumNativeProbes && l.maximumTotalSamples && std::isfinite(m) && std::isfinite(w) &&
         std::isfinite(l.maximumModelSeconds) && l.maximumModelSeconds>0. && std::isfinite(l.maximumWallSeconds) &&
@@ -221,9 +251,17 @@ std::string NativeCompositeTrainingAttempt::CheckBoundary(QJsonObject* retained,
     const auto identity=NmsdkTools::IdentifyModel(b.neuron.Get(),{{&source->Output,"burst"}});
     Require(identity["valid"].toBool() && identity["sha256"].toString().toStdString()==adapter.readModelRevision(),
         "composite_train_candidate_full_identity_mismatch");
-    const QJsonObject binding{{"kind","composite_train_candidate_binding_v1"},{"source_origin",Text(sourceOrigin)},
+    QJsonObject binding{{"kind","composite_train_candidate_binding_v1"},{"source_origin",Text(sourceOrigin)},
         {"model_identity",identity},{"storage_images_sha256",Text(storageFingerprint)},
         {"optional_C0_witness",current?QJsonValue(EncodeNativeTrainingCapacitanceWitness(*current)):QJsonValue(QJsonValue::Null)}};
+    if(protocol->schemaVersion==5) {
+        const auto values=readWindowParameters();std::vector<int> attachments;for(const auto& value:values)attachments.push_back(value.length);
+        const auto physical=ReadNativeCandidateWindowPhysical(b,attachments,*protocol,DecodeNativeModelSpec(initialDeclaration),
+            current?std::optional<TrainingCapacitance>(current->parameters):std::nullopt);
+        Require(physical.parameters==values,"candidate_window_actual_parameter_readback_changed");
+        binding["kind"]="composite_train_candidate_binding_v2";binding["schema_version"]=2;
+        binding["physical_readback"]=EncodeCandidateWindowPhysicalReadback(physical);
+    }
     if(retained)*retained=binding;
     if(parameters)*parameters=current?std::optional<TrainingCapacitance>(current->parameters):std::nullopt;
     return Hash(binding);
@@ -237,6 +275,7 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
     // A failed preflight is not the previous group's data under a new label.
     group.reset();activeIdentity.reset();rawTrials.clear();
     measurement.reset();selection.reset();prepared.reset();rejection.clear();
+    activeWindowSnapshot.reset();activeWindowPhysical.reset();activeWindowProposal.reset();activeWindowSpecification.reset();
     CheckClock(modelTime,wallTime);
     Require(issuedGroups<limits.maximumGroups && IssuedNativeProbes()<=limits.maximumNativeProbes &&
         protocol->inputs.size()+2<=limits.maximumNativeProbes-IssuedNativeProbes(),"composite_attempt_native_or_group_budget_exhausted");
@@ -250,17 +289,31 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
         "composite_train_invalid_purpose_or_epoch");
     Require(purpose!=CompositeMeasurementPurpose::Reference || (logical.baseModelRevision==initialRevision && logical.epoch==initialEpoch),
         "composite_train_reference_requires_original_capture_model");
-    const auto& contract=*protocol->compositeMeasurement;const auto window=contract.inputWindows.at(logical.inputIndex);
+    const bool windowMode=protocol->schemaVersion==5;
+    Require(protocol->schemaVersion==4 || windowMode,"composite_train_explicit_protocol_required");
+    const auto& contextPolicy=windowMode?protocol->candidateWindowMeasurement->contextPolicy:protocol->compositeMeasurement->contextPolicy;
+    const auto& inputWindows=windowMode?protocol->candidateWindowMeasurement->referenceInputWindows:protocol->compositeMeasurement->inputWindows;
+    const auto window=inputWindows.at(logical.inputIndex);
+    if(windowMode)Require(windowDeclaration && (purpose==CompositeMeasurementPurpose::Reference || windowReferences),
+        "candidate_window_complete_reference_set_required");
+    if(windowMode && purpose==CompositeMeasurementPurpose::Reference)Require(!windowReferences && !stagedWindowSeeds.at(logical.inputIndex),
+        "candidate_window_reference_already_captured");
     Require(std::isfinite(modelLimit) && modelLimit>0. && modelLimit<=limits.maximumModelSeconds-(modelTime-startModel) &&
         std::isfinite(wallLimit) && wallLimit>0. && wallLimit<=limits.maximumWallSeconds-(wallTime-startWall),"composite_train_group_time_budget");
-    Require(prototype.specification.schemaVersion==3 && prototype.specification.end>=window.endOffset &&
+    Require(prototype.specification.schemaVersion==3 &&
+        ((windowMode && purpose!=CompositeMeasurementPurpose::Reference) || prototype.specification.end>=window.endOffset) &&
         prototype.specification.stimulusProfile==protocol->stimulusProfile && prototype.specification.minimumAmplitude==protocol->minimumAmplitude &&
         prototype.specification.maximumSampleGap==protocol->maximumSampleGap && prototype.specification.patternHash==protocol->patternHash &&
         prototype.specification.expectedStimulusIds==protocol->stimulusIds,"composite_train_prototype_protocol_mismatch");
-    for(const auto& declared:contract.inputWindows)
+    if(!windowMode || purpose==CompositeMeasurementPurpose::Reference)for(const auto& declared:inputWindows)
         Require(declared.endOffset<=prototype.specification.end,"composite_train_declared_window_exceeds_duration");
-    const auto charge=contract.contextPolicy.maximumTotalSamples;
+    const auto charge=contextPolicy.maximumTotalSamples;
     Require(totalSamples<=limits.maximumTotalSamples && charge<=limits.maximumTotalSamples-totalSamples,"composite_attempt_sample_budget_exhausted");
+    if(windowMode) {
+        const auto reservation=CompositePrimaryByteReservation(protocol->inputs.size(),protocol->routing==ProbeRouting::ClassicBurst?protocol->inputs.size():1,charge);
+        if(windowPrimaryBytes>windowDeclaration->maximumTotalPrimaryBytes || reservation>windowDeclaration->maximumTotalPrimaryBytes-windowPrimaryBytes)
+            throw CompositeTrainingBudgetExhausted("candidate_window_primary_byte_budget_exhausted");
+    }
     closed=false;budgetExhausted=false;activeSamples=0;groupStartModel=modelTime;groupStartWall=wallTime;groupWallLimit=wallLimit;groupModelLimit=modelLimit;
     groupEndModel=modelTime;groupEndWall=wallTime;this->logical=logical;this->purpose=purpose;rawTrials.clear();
     rawDeliveryCursor=0;interruptedRawPackets.clear();ownedRawRun.clear();ownedRawTrial.clear();
@@ -271,10 +324,36 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
     id->runId=logical.runId;id->trialId=logical.trialId;id->groupId=logical.trialId+"/composite/"+std::to_string(++issuedGroups);
     id->baseRevision=logical.baseModelRevision;id->modelEpoch=logical.epoch;id->inputIndex=logical.inputIndex;
     id->channel=protocol->routing==ProbeRouting::ClassicBurst?logical.inputIndex:0;id->purpose=purpose;activeIdentity=id;
+    if(windowMode) {
+        ValidateCandidateWindowLogicalContext(*protocol,logical,windowDeclaration->attemptId,id->groupId,purpose);
+        const auto parameters=readWindowParameters();std::vector<int> attachments;for(const auto& p:parameters)attachments.push_back(p.length);
+        activeWindowPhysical=ReadNativeCandidateWindowPhysical(bindings(),attachments,*protocol,DecodeNativeModelSpec(initialDeclaration),id->capacitance);
+        Require(EncodeCandidateWindowPhysicalReadback(*activeWindowPhysical)==candidate["physical_readback"],"candidate_window_snapshot_changed_before_queue");
+        CandidateWindowBasinSpecification spec;spec.groupId=id->groupId;spec.inputId=logical.inputId;
+        spec.assignedInput=logical.inputIndex;spec.channel=id->channel;
+        if(purpose==CompositeMeasurementPurpose::Reference)spec.referenceTime=window;
+        else {
+            const auto checked=CandidateWindowProposalReplayFactory::CheckCandidateBinding(*windowReferences,*protocol,candidate);
+            auto data=CandidateWindowProposalReplayFactory::Compute(*windowReferences,*protocol,checked,logical,windowDeclaration->attemptId,
+                id->groupId,prototype.specification.maximumSamples,purpose);
+            data=DecodeCandidateWindowProposalData(QJsonDocument(EncodeCandidateWindowProposalData(data)).toJson(QJsonDocument::Compact));
+            const auto replay=CandidateWindowProposalReplayFactory::Replay(*windowReferences,*protocol,checked,logical,windowDeclaration->attemptId,
+                id->groupId,prototype.specification.maximumSamples,purpose,data);
+            activeWindowProposal=PreparedCandidateWindowProposal(replay.Record(),id);
+            id->candidateWindowProposal=std::make_shared<const PreparedCandidateWindowProposal>(*activeWindowProposal);
+            activeWindowSnapshot=NativeCandidateWindowSnapshot(replay.Record().candidate,*activeWindowPhysical,id->candidateBindingJson,id);
+            spec.coordinateMode=CandidateWindowCoordinateMode::CandidateFrame;spec.candidateFrame=replay.Record().computation.window;
+        }
+        activeWindowSpecification=std::move(spec);
+    }
     id->requireLiveModel=[this,weak=std::weak_ptr<const CompositeTrainingDetail::Identity>(id)](bool measurementClosed){
         const auto identity=weak.lock();Require(bool(identity),"expired_composite_measurement_identity");
         if(measurementClosed) {
             CheckClock(actualModelTime(),NativeTrainingWallTime());
+            if(protocol->schemaVersion==5) {
+                Require(bool(identity->requireNativeInstances),"candidate_window_live_instance_guard_missing");
+                identity->requireNativeInstances();
+            }
             Require(adapter.readModelRevision()==identity->baseRevision && CheckBoundary()==identity->candidateWitnessId,
                 "composite_live_model_or_candidate_witness_changed");
             CheckClock(actualModelTime(),NativeTrainingWallTime());
@@ -295,6 +374,10 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
     const auto caller=prototype.onPrepared;
     prototype.onPrepared=[this,id,sink,caller](const auto& p,const auto& s){
         rawTrials.push_back({p,s,{},{}});
+        if(protocol->schemaVersion==5) {
+            Require(bool(activeWindowPhysical),"candidate_window_actual_snapshot_missing");
+            ValidateNativeCandidateWindowPreparedSelector(bindings(),*activeWindowPhysical,*protocol,DecodeNativeModelSpec(initialDeclaration),id->inputIndex,p);
+        }
         if(!prepared){
             Require(p.baseModelRevision==id->baseRevision && p.modelEpoch==id->modelEpoch &&
                 p.inputId==protocol->inputs[id->inputIndex].id && p.protocolRevision==protocol->revision &&
@@ -310,9 +393,10 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
         ++activeSamples;rawTrials.back().samples.push_back(sample);if(sampleSink)sampleSink(sample);
     };
     NativeMatchedOmissionPlan plan;plan.fullBurst=std::move(prototype);plan.groupId=id->groupId;
-    plan.policy=contract.contextPolicy;plan.channel=id->channel;plan.maximumModelSeconds=modelLimit;plan.maximumWallSeconds=wallLimit;
+    plan.policy=contextPolicy;plan.channel=id->channel;plan.maximumModelSeconds=modelLimit;plan.maximumWallSeconds=wallLimit;
     const auto b=bindings();for(const auto& soma:b.somas)plan.physicalChannelPaths.push_back(soma->GetLongName(b.owner));
     group=std::make_unique<NativeMatchedOmissionGroup>();group->Start(std::move(plan),b,modelTime,wallTime);
+    if(windowMode)id->requireNativeInstances=group->RetainInstanceGuard();
 }
 bool NativeCompositeTrainingAttempt::Running() const {return group && group->State()==NativeMatchedOmissionState::Running;}
 std::size_t NativeCompositeTrainingAttempt::IssuedNativeProbes() const {return completedNativeProbes+(group && !closed?group->IssuedNativeProbes():0);}
@@ -340,14 +424,37 @@ void NativeCompositeTrainingAttempt::CloseGroup() {
         // when its closed trace never reached the group's witness inventory.
         Require(activeSamples<=limits.maximumTotalSamples-totalSamples,"composite_attempt_sample_budget_exhausted");
         totalSamples+=activeSamples;
+        if(protocol->schemaVersion==5) {
+            const auto bytes=CompositeRecordPrimaryBytes(Record());
+            if(windowPrimaryBytes>windowDeclaration->maximumTotalPrimaryBytes || bytes>windowDeclaration->maximumTotalPrimaryBytes-windowPrimaryBytes)
+                throw CompositeTrainingBudgetExhausted("candidate_window_primary_byte_budget_exhausted");
+            windowPrimaryBytes+=bytes;
+        }
         Require(group->State()==NativeMatchedOmissionState::Completed && prepared,"composite_train_group_not_completed");
         Require(CheckBoundary()==activeIdentity->candidateWitnessId && adapter.readModelRevision()==activeIdentity->baseRevision,
             "composite_train_candidate_boundary_changed");
-        NativeDeclaredWindowBasinSpecification spec;spec.groupId=activeIdentity->groupId;
-        spec.inputId=protocol->inputs[activeIdentity->inputIndex].id;spec.assignedInput=activeIdentity->inputIndex;spec.channel=activeIdentity->channel;
-        const auto& window=protocol->compositeMeasurement->inputWindows[activeIdentity->inputIndex];
-        spec.windowBeginOffset=window.beginOffset;spec.windowEndOffset=window.endOffset;
-        selection=SelectNativeDeclaredWindowBasinMaximum(spec,protocol->compositeMeasurement->geometryPolicy,result);
+        if(protocol->schemaVersion==5) {
+            Require(activeWindowSpecification && activeWindowPhysical,"candidate_window_prepared_specification_missing");
+            if(purpose!=CompositeMeasurementPurpose::Reference) {
+                Require(windowReferences && activeWindowProposal && activeWindowSnapshot &&
+                    activeWindowProposal->identity.lock()==activeIdentity && activeWindowSnapshot->identity==activeIdentity,
+                    "candidate_window_prepared_identity_changed");
+                const auto checked=CandidateWindowProposalReplayFactory::CheckCandidateBinding(*windowReferences,*protocol,
+                    ParseStrictNativeJsonObject(activeIdentity->candidateBindingJson,128u*1024u*1024u));
+                Require(!result.packets.empty() && result.packets.front().requestedSpecification,"candidate_window_actual_requested_specification_missing");
+                const auto replay=CandidateWindowProposalReplayFactory::Replay(*windowReferences,*protocol,checked,logical,
+                    windowDeclaration->attemptId,activeIdentity->groupId,result.packets.front().requestedSpecification->maximumSamples,purpose,
+                    activeWindowProposal->Record());
+                Require(replay.Record().computation.window==activeWindowSpecification->candidateFrame,"candidate_window_frozen_interval_changed");
+            }
+            selection=SelectNativeDeclaredWindowBasinMaximum(*activeWindowSpecification,protocol->candidateWindowMeasurement->geometryPolicy,result);
+        } else {
+            NativeDeclaredWindowBasinSpecification spec;spec.groupId=activeIdentity->groupId;
+            spec.inputId=protocol->inputs[activeIdentity->inputIndex].id;spec.assignedInput=activeIdentity->inputIndex;spec.channel=activeIdentity->channel;
+            const auto& window=protocol->compositeMeasurement->inputWindows[activeIdentity->inputIndex];
+            spec.windowBeginOffset=window.beginOffset;spec.windowEndOffset=window.endOffset;
+            selection=SelectNativeDeclaredWindowBasinMaximum(spec,protocol->compositeMeasurement->geometryPolicy,result);
+        }
         const auto& selected=*selection;
         if(selected.status!=NativeDeclaredWindowBasinStatus::Completed || !selected.geometry)
             throw std::invalid_argument(selected.reasons.empty()?"composite_train_native_assignment_rejected":selected.reasons.front());
@@ -356,19 +463,32 @@ void NativeCompositeTrainingAttempt::CloseGroup() {
         const auto& peak=*selected.geometry->measuredMaximum;const auto& full=result.witness.fullBefore.observation;
         const auto origin=std::find(protocol->stimulusIds.begin(),protocol->stimulusIds.end(),protocol->originStimulusId)-protocol->stimulusIds.begin();
         const double originTime=full.events.at(origin).time;
-        const auto proof=CompositeTrainingSemanticProofId(*protocol,CompositeSemanticProofContent{sourceOrigin,
-            activeIdentity->candidateWitnessId,liveAttemptBinding,limits,result.maximumModelSeconds,result.maximumWallSeconds,
-            activeIdentity->trialId,activeIdentity->groupId,activeIdentity->purpose,result,peak});
+        const auto proof=protocol->schemaVersion==5?CandidateWindowTrainingSemanticProofId(*protocol,Record()):
+            CompositeTrainingSemanticProofId(*protocol,CompositeSemanticProofContent{sourceOrigin,
+                activeIdentity->candidateWitnessId,liveAttemptBinding,limits,result.maximumModelSeconds,result.maximumWallSeconds,
+                activeIdentity->trialId,activeIdentity->groupId,activeIdentity->purpose,result,peak});
         // Native wall budget includes replay/selection/hash work. This is a
         // live steady-clock check, not an elapsed-time claim decoded from old
         // group declarations. Supplied hook clocks must use this same clock.
         const double now=NativeTrainingWallTime();CheckClock(lastModel,now);
         if(now-groupStartWall>=groupWallLimit)throw CompositeTrainingBudgetExhausted("composite_train_group_wall_budget_exhausted");
         measurement=ValidatedCompositeMeasurement(*prepared,peak.rawPotential,peak.time-originTime,peak.plateauEnd-originTime,proof);
+        if(protocol->schemaVersion==5 && purpose==CompositeMeasurementPurpose::Reference) {
+            CandidateWindowArithmeticSeed seed;seed.inputIndex=activeIdentity->inputIndex;
+            seed.firstFrame=peak.firstSample;seed.lastFrame=peak.lastSample;seed.referenceFrameCount=full.channels.at(activeIdentity->channel).samples.size();
+            seed.initialParameters=initialWindowParameters;seed.initialCapacitance=initialWindowCapacitance;
+            seed.grid.frequencyHz=std::uint64_t(protocol->stimulusProfile->frequencyHz);seed.grid.sourceOrigin=sourceOrigin;
+            seed.grid.sourcePatternBinding=protocol->patternHash;seed.grid.sourceProfileBinding=Hash(sourceBinding["actual_source_profile"]);
+            seed.grid.resetBinding=result.specification.resetBinding;
+            stagedWindowSeeds.at(activeIdentity->inputIndex)=CandidateWindowReferenceSeed(std::move(seed),proof,ownerScope);
+            stagedWindowMeasurements.at(activeIdentity->inputIndex)=*measurement;
+            stagedWindowGroups.at(activeIdentity->inputIndex)=activeIdentity->groupId;
+        }
     }
     catch(const CompositeTrainingBudgetExhausted& e){budgetExhausted=true;measurement.reset();rejection=e.what();}
     catch(const std::exception& e){measurement.reset();if(rejection.empty())rejection=e.what();if(!result.reason.empty())rejection+=";"+result.reason;}
     groupEndModel=lastModel;groupEndWall=NativeTrainingWallTime();
+    if(protocol->schemaVersion==5)windowRecords.push_back(Record());
 }
 void NativeCompositeTrainingAttempt::RevokeLive(){cancelled=true;lease.reset();}
 void NativeCompositeTrainingAttempt::RetainRawPacket(const NativeProbeResult& packet) {
@@ -438,7 +558,50 @@ NativeCompositeMeasurementRecord NativeCompositeTrainingAttempt::Record() const 
     r.groupState=group->State();r.group=group->Result();r.rawTrials=rawTrials;r.selection=selection;r.attemptLimits=limits;
     r.issuedNativeProbes=group->IssuedNativeProbes();r.sampledFrames=activeSamples;
     r.startModel=groupStartModel;r.startWall=groupStartWall;r.endModel=groupEndModel;r.endWall=groupEndWall;
-    r.maximumGroupModelSeconds=groupModelLimit;r.maximumGroupWallSeconds=groupWallLimit;return r;
+    r.maximumGroupModelSeconds=groupModelLimit;r.maximumGroupWallSeconds=groupWallLimit;
+    if(protocol->schemaVersion==5) {
+        r.attemptId=windowDeclaration->attemptId;r.candidateWindowSpecification=activeWindowSpecification;
+        if(activeWindowProposal)r.windowProposal=activeWindowProposal->Record();
+        r.policy.schemaVersion=2;r.policy.contextPolicy=protocol->candidateWindowMeasurement->contextPolicy;
+        r.policy.geometryPolicy=protocol->candidateWindowMeasurement->geometryPolicy;
+        r.policy.maximumGroups=limits.maximumGroups;r.policy.maximumNativeProbes=limits.maximumNativeProbes;r.policy.maximumTotalSamples=limits.maximumTotalSamples;
+        r.policy.maximumTotalPrimaryBytes=windowDeclaration->maximumTotalPrimaryBytes;
+        r.policy.maximumGroupModelSeconds=groupModelLimit;r.policy.maximumGroupWallSeconds=groupWallLimit;
+    }
+    return r;
+}
+void NativeCompositeTrainingAttempt::CompleteCandidateWindowReferences(const CapturedReferences& captured) {
+    Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
+    CheckClock(actualModelTime(),NativeTrainingWallTime());
+    Require(protocol->schemaVersion==5 && windowDeclaration && !Running() && !windowReferences &&
+        captured.Protocol()==*protocol && captured.Inputs().size()==protocol->inputs.size() &&
+        captured.CompositeOwnerScope()==ownerScope && captured.CompositeSourceOrigin()==sourceOrigin &&
+        captured.InitialModelRevision()==initialRevision && captured.InitialModelEpoch()==initialEpoch &&
+        adapter.readModelRevision()==initialRevision,"candidate_window_complete_reference_family_mismatch");
+    std::vector<CandidateWindowReferenceSeed> seeds;seeds.reserve(protocol->inputs.size());
+    std::vector<ValidatedCompositeMeasurement> liveReferences;liveReferences.reserve(protocol->inputs.size());
+    for(std::size_t i=0;i<protocol->inputs.size();++i) {
+        Require(stagedWindowSeeds[i] && stagedWindowMeasurements[i] && captured.Inputs()[i].id==protocol->inputs[i].id &&
+            captured.Inputs()[i].measurementGroupId==stagedWindowGroups[i] &&
+            captured.Inputs()[i].semanticProofId==stagedWindowSeeds[i]->ReferenceProofId(),"candidate_window_incomplete_reference_seed_set");
+        seeds.push_back(*stagedWindowSeeds[i]);
+        liveReferences.push_back(*stagedWindowMeasurements[i]);
+    }
+    // CapturedReferences itself is immutable data. Recheck each staged live
+    // token here as well: an intervening graph replacement cannot be hidden by
+    // restoring the same semantic values before releasing the complete set.
+    const auto fresh=CapturedReferences::CaptureComposite(*protocol,liveReferences);
+    Require(fresh.Inputs()==captured.Inputs(),"candidate_window_reference_consumption_changed");
+    CandidateWindowReferenceSet ready(std::move(seeds),sourceOrigin,ownerScope,stagedWindowGroups,Hash(EncodeVerificationProtocol(*protocol)),
+        QJsonDocument(sourceBinding).toJson(QJsonDocument::Compact).toStdString());
+    QJsonObject candidate;CheckBoundary(&candidate);
+    (void)CandidateWindowProposalReplayFactory::CheckCandidateBinding(ready,*protocol,candidate);
+    CheckClock(actualModelTime(),NativeTrainingWallTime());
+    for(auto& record:windowRecords)if(record.purpose==CompositeMeasurementPurpose::Reference &&
+        std::find(stagedWindowGroups.begin(),stagedWindowGroups.end(),record.groupId)!=stagedWindowGroups.end()) {
+        record.consumed=true;record.trainingRequestedAtConsume=true;
+    }
+    windowReferences=std::move(ready);
 }
 void NativeCompositeTrainingAttempt::RefreshOwnedAfterEdit(const std::string& revision) {
     Require(ownerLife.IsAlive() && !Running(),"composite_owned_edit_not_at_group_boundary");

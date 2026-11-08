@@ -132,13 +132,13 @@ private:
         std::shared_ptr<const CompositeTrainingDetail::Identity> owner)
         :record(std::move(value)),identity(std::move(owner)){}
     CandidateWindowProposalRecord record;
-    std::shared_ptr<const CompositeTrainingDetail::Identity> identity;
+    std::weak_ptr<const CompositeTrainingDetail::Identity> identity;
     friend class NativeCompositeTrainingAttempt;
 };
 
 // Replay of proposal arithmetic/context is separate from a live owner lease,
-// native execution and geometry/Train admission. No decoder/replay factory is
-// supplied by this types-only commit, so public DATA cannot mint this wrapper.
+// native execution and geometry/Train admission. Only the common full-context
+// replay factory, never the public DATA decoder, can mint this wrapper.
 class ReplayedCandidateWindowProposal {
 public:
     ReplayedCandidateWindowProposal(const ReplayedCandidateWindowProposal&)=default;

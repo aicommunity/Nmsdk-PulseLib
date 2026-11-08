@@ -276,7 +276,9 @@ CapturedReferences CapturedReferences::Capture(VerificationProtocol p,const std:
 CapturedReferences CapturedReferences::CaptureComposite(VerificationProtocol p,
     const std::vector<ValidatedCompositeMeasurement>& evidence)
 {
-    ProtocolValid(p);ValidateCompositeMeasurementContract(p);
+    ProtocolValid(p);
+    if(p.schemaVersion==5)ValidateCandidateWindowMeasurementContract(p);
+    else ValidateCompositeMeasurementContract(p);
     if(evidence.size()!=p.inputs.size())throw std::invalid_argument("incomplete_composite_reference_set");
     CapturedReferences result;result.protocol=std::move(p);
     std::set<std::string> groups,proofs,trials;

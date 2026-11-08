@@ -15,6 +15,7 @@ class CapturedReferences;
 class BoundedTrainingSession;
 class FinalVerificationSession;
 class NativeTrainingService;
+class PreparedCandidateWindowProposal;
 // Opt-in protocol 4. Windows are declared before the first trial of a group;
 // the selector never moves them or treats a timing prediction as an observation.
 struct CompositeMeasurementContract {
@@ -47,7 +48,11 @@ struct Identity {
     std::size_t generation=0,inputIndex=0,channel=0,modelEpoch=0;
     CompositeMeasurementPurpose purpose=CompositeMeasurementPurpose::Reference;
     std::optional<TrainingCapacitance> capacitance;
+    // Protocol5 only; initial references and every protocol4 measurement keep
+    // this empty. The owner freezes it before the first native group queue.
+    std::shared_ptr<const PreparedCandidateWindowProposal> candidateWindowProposal;
     std::function<void(bool closedMeasurement)> requireLiveModel;
+    std::function<void()> requireNativeInstances;
 };
 }
 class PreparedCompositeMeasurement {

@@ -1,6 +1,7 @@
 #include "NativeTrainingService.h"
 #include "ConfiguredNativeTraining.h"
 #include "ProbeEvidenceJson.h"
+#include "CompositePrimaryBudget.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -44,13 +45,7 @@ std::size_t PrimaryReservation(const NativeTrainingPlan& p) {
     // Classic-locale binary64 with precision17 fits in 32 bytes per number.
     // Reserve the declared upper bound BEFORE executing a group. Partial and
     // failed groups therefore cannot evade the retained-primary byte budget.
-    const auto max=std::numeric_limits<std::size_t>::max();
-    Require(channels<=(max-67)/33,"composite_primary_reservation_overflow");
-    const auto row=33*(channels+2)+1;Require(channels<=(max-16)/32,"composite_primary_reservation_overflow");
-    const auto header=16+32*channels;
-    Require(n<=max-2 && n+2<=max/header,"composite_primary_reservation_overflow");const auto headers=(n+2)*header;
-    Require(p.composite->contextPolicy.maximumTotalSamples<=(max-headers)/row,"composite_primary_reservation_overflow");
-    return headers+p.composite->contextPolicy.maximumTotalSamples*row;
+    return CompositePrimaryByteReservation(n,channels,p.composite->contextPolicy.maximumTotalSamples);
 }
 }
 

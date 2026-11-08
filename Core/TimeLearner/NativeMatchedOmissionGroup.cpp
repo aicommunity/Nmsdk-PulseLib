@@ -91,8 +91,13 @@ void NativeMatchedOmissionGroup::Start(NativeMatchedOmissionPlan value,const Nat
 void NativeMatchedOmissionGroup::CheckInstances() const
 {
     Require(bindings && ownerLifetime.IsCurrent(),"omission_group_owner_lifecycle_changed");
-    const auto& b=*bindings;
-    for(const auto& node:watched)
+    CheckInstances(*bindings,ownerLifetime,watched);
+}
+void NativeMatchedOmissionGroup::CheckInstances(const NativeProbeBindings& b,
+    const RDK::UModuleLifecycleObservation& lifetime,const std::vector<Watched>& nodes)
+{
+    Require(lifetime.IsCurrent(),"omission_group_owner_lifecycle_changed");
+    for(const auto& node:nodes)
         Require(node.lifetime.IsAlive() && node.node &&
                 b.owner->GetComponentL(node.path,true).Get()==node.node.Get(),"omission_group_graph_replaced");
     std::set<RDK::UContainer*> current;
@@ -102,8 +107,16 @@ void NativeMatchedOmissionGroup::CheckInstances() const
         for(const auto& name:names)self(self,node->GetComponent(name,true));
     };
     visit(visit,b.neuron.Get());visit(visit,b.dataset.Get());
-    Require(current.size()==watched.size(),"omission_group_graph_changed");
+    Require(current.size()==nodes.size(),"omission_group_graph_changed");
     RequireNativeCalculationSchedule(*b.owner);
+}
+std::function<void()> NativeMatchedOmissionGroup::RetainInstanceGuard() const
+{
+    CheckInstances();
+    // This is process-local live authority only. IsAlive deliberately permits
+    // the physical neuron/dataset Reset used by each native probe; the owner
+    // observation and actual graph membership still reject reconstruction.
+    return [b=*bindings,lifetime=ownerLifetime,nodes=watched](){CheckInstances(b,lifetime,nodes);};
 }
 void NativeMatchedOmissionGroup::CheckRestoredPresentation() const
 {

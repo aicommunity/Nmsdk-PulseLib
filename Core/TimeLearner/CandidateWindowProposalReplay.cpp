@@ -4,6 +4,7 @@
 #include "ModelArchive.h"
 #include "ProbeEvidenceJson.h"
 #include "CompositeSourceValidation.h"
+#include "CandidateWindowLogicalContext.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QStringList>
@@ -83,16 +84,7 @@ void NonemptyBindings(const CandidateWindowProposalRecord& r){for(const auto* s:
     for(const auto* s:{&r.sourceOrigin,&r.ownerFamilyBinding,&r.referenceProofId,&r.protocolBinding,&r.policyBinding,&r.candidateBinding,
         &r.candidateModelRevision,&r.windowRecipeId,&r.measurementInstanceId})Require(s->size()==64 && std::all_of(s->begin(),s->end(),[](char c) {
             return (c>='0' && c<='9') || (c>='a' && c<='f');}),"candidate_window_hash_id_format");}
-void LogicalNamespace(const VerificationRequest& r,const std::string& attempt,const std::string& group,CompositeMeasurementPurpose purpose) {
-    const auto decimal=[](const std::string& s){bool ok=false;const auto value=QString::fromStdString(s).toULongLong(&ok);
-        return !s.empty() && (s=="0" || s.front()!='0') && std::all_of(s.begin(),s.end(),[](char c){return c>='0' && c<='9';}) &&
-            ok && value<=CandidateWindowMaximumExactCount;};
-    if(purpose==CompositeMeasurementPurpose::Search)Require(r.runId==attempt,"candidate_window_attempt_namespace");
-    else {const auto prefix=attempt+"/final/";Require(r.runId.starts_with(prefix) && decimal(r.runId.substr(prefix.size())),"candidate_window_attempt_namespace");}
-    const auto trialPrefix=r.runId+(purpose==CompositeMeasurementPurpose::Search?"/search/":"/verify/"+std::to_string(r.epoch)+"/");
-    Require(r.trialId.starts_with(trialPrefix) && decimal(r.trialId.substr(trialPrefix.size())),"candidate_window_trial_namespace");
-    const auto groupPrefix=r.trialId+"/composite/";Require(group.starts_with(groupPrefix) && decimal(group.substr(groupPrefix.size())),"candidate_window_group_namespace");
-}
+
 }
 QJsonObject CandidateWindowRecipeContent(const CandidateWindowProposalRecord& r){return {{"kind","candidate_window_recipe_v1"},
     {"policy_binding",Text(r.policyBinding)},{"reference_proof_id",Text(r.referenceProofId)},{"source_origin",Text(r.sourceOrigin)},
@@ -241,19 +233,23 @@ ReplayedCandidateWindowBinding CandidateWindowProposalReplayFactory::CheckCandid
             ParseStrictNativeJsonObject(witness.modelIdentityJson,MaximumBindingBytes)==identity,"candidate_window_actual_C0_binding");
     } else Require(b["optional_C0_witness"].isNull(),"candidate_window_unbound_C0_witness");
     CandidateWindowCandidateFacts facts;facts.grid=refs.seeds.front().arithmetic.grid;
-    facts.declaredMaximumSamples=p.candidateWindowMeasurement->contextPolicy.maximumSamples;facts.parameters=parameters;facts.capacitance=capacitance;
+    // Physical binding alone does not declare a logical trial's sample budget.
+    // Compute supplies the actual requested maximum, bounded by the protocol.
+    facts.declaredMaximumSamples=0;facts.parameters=parameters;facts.capacitance=capacitance;
     return ReplayedCandidateWindowBinding(std::move(facts),Text(identity["sha256"]),QJsonDocument(b).toJson(QJsonDocument::Compact).toStdString());
 }
 CandidateWindowProposalRecord CandidateWindowProposalReplayFactory::Compute(const CandidateWindowReferenceSet& refs,const VerificationProtocol& p,
     const ReplayedCandidateWindowBinding& binding,const VerificationRequest& expected,const std::string& attempt,const std::string& group,
-    CompositeMeasurementPurpose purpose) {
+    std::uint64_t declaredMaximumSamples,CompositeMeasurementPurpose purpose) {
     CheckReferences(refs,p);
     Require(purpose==CompositeMeasurementPurpose::Search || purpose==CompositeMeasurementPurpose::Final,"candidate_window_proposal_purpose");
     const auto i=expected.inputIndex;Require(i<p.inputs.size() && expected.inputId==p.inputs[i].id && expected.sampleId==p.sampleId &&
         expected.patternHash==p.patternHash && expected.protocolRevision==p.revision && expected.routing==p.routing &&
         expected.baseModelRevision==binding.modelRevision && expected.epoch<=CandidateWindowMaximumExactCount && !expected.runId.empty() &&
         !expected.trialId.empty() && !attempt.empty() && !group.empty(),"candidate_window_proposal_logical_context");
-    LogicalNamespace(expected,attempt,group,purpose);
+    ValidateCandidateWindowLogicalContext(p,expected,attempt,group,purpose);
+    Require(declaredMaximumSamples>=3 && declaredMaximumSamples<=p.candidateWindowMeasurement->contextPolicy.maximumSamples,
+        "candidate_window_declared_sample_budget");
     // The archived candidate facts are rederived from the COMPLETE identity.
     const auto verified=CheckCandidateBinding(refs,p,ParseStrictNativeJsonObject(binding.bindingJson,MaximumBindingBytes));
     const auto& seed=refs.seeds[i];CandidateWindowProposalRecord actual;
@@ -264,6 +260,7 @@ CandidateWindowProposalRecord CandidateWindowProposalReplayFactory::Compute(cons
     actual.attemptId=attempt;actual.runId=expected.runId;actual.trialId=expected.trialId;actual.groupId=group;actual.inputId=expected.inputId;
     actual.inputIndex=i;actual.channel=p.routing==ProbeRouting::ClassicBurst?i:0;actual.modelEpoch=expected.epoch;actual.purpose=purpose;
     actual.candidateModelRevision=verified.modelRevision;actual.reference=seed.arithmetic;actual.candidate=verified.facts;
+    actual.candidate.declaredMaximumSamples=declaredMaximumSamples;
     actual.computation=CalculateCandidateWindowArithmetic(p.candidateWindowMeasurement->candidateWindowPolicy,actual.reference,actual.candidate);
     Require(actual.computation.status==CandidateWindowComputationStatus::Computed,"candidate_window_proposal_arithmetic_rejected");
     actual.windowRecipeId=Hash(CandidateWindowRecipeContent(actual));actual.measurementInstanceId=Hash(CandidateWindowInstanceContent(actual));
@@ -271,8 +268,8 @@ CandidateWindowProposalRecord CandidateWindowProposalReplayFactory::Compute(cons
 }
 ReplayedCandidateWindowProposal CandidateWindowProposalReplayFactory::Replay(const CandidateWindowReferenceSet& refs,const VerificationProtocol& p,
     const ReplayedCandidateWindowBinding& binding,const VerificationRequest& expected,const std::string& attempt,const std::string& group,
-    CompositeMeasurementPurpose purpose,const CandidateWindowProposalRecord& claim) {
-    auto actual=Compute(refs,p,binding,expected,attempt,group,purpose);
+    std::uint64_t declaredMaximumSamples,CompositeMeasurementPurpose purpose,const CandidateWindowProposalRecord& claim) {
+    auto actual=Compute(refs,p,binding,expected,attempt,group,declaredMaximumSamples,purpose);
     Require(EncodeCandidateWindowProposalData(actual)==EncodeCandidateWindowProposalData(claim),"candidate_window_proposal_replay_mismatch");
     return ReplayedCandidateWindowProposal(std::move(actual));
 }

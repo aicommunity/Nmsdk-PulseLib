@@ -10,7 +10,9 @@
 namespace NMSDK { class NNeuronTimeLearner;class NNeuronTimeLearnerBranch; }
 namespace NMSDK::TimeLearner {
 class CompositePortableTrainingProof;
-// Live native authority for protocol 4, separate from diagnostic data/codec.
+// Live native authority for protocol 4 and the explicit protocol5 constructor,
+// separate from diagnostic data/codec. Protocol5 supplies scoped measurement
+// and complete-reference factories; old search/final admission stays blocked.
 // The owner-specific factory binds actual roots, executor, images and optional
 // existing C0. No Calculate/Build/Reset, model edits or invented C0 occur here.
 // Service composition supplies the existing scheduler's before/after hooks.
@@ -20,6 +22,10 @@ public:
         CompositeAttemptLimits limits,double modelTime,double wallTime);
     NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& owner,VerificationProtocol protocol,
         CompositeAttemptLimits limits,double modelTime,double wallTime);
+    NativeCompositeTrainingAttempt(NNeuronTimeLearner& owner,VerificationProtocol protocol,
+        CompositeAttemptLimits limits,NativeCandidateWindowAttemptDeclaration,double modelTime,double wallTime);
+    NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& owner,VerificationProtocol protocol,
+        CompositeAttemptLimits limits,NativeCandidateWindowAttemptDeclaration,double modelTime,double wallTime);
     // A fresh actual owner lease from closed portable data, never a restored
     // callback/address or recapture of the current trained graph as a target.
     NativeCompositeTrainingAttempt(NNeuronTimeLearner& owner,const CompositePortableTrainingProof&,
@@ -53,6 +59,11 @@ public:
     const std::string& InitialModelRevision() const {return initialRevision;}
     std::size_t InitialModelEpoch() const {return initialEpoch;}
     NativeCompositeMeasurementRecord Record() const;
+    // Only complete CapturedReferences can release staged input seeds. Public
+    // DATA, a partial prefix, or another owner/family cannot perform this step.
+    void CompleteCandidateWindowReferences(const CapturedReferences&);
+    const CandidateWindowReferenceSet* CandidateWindowReferences() const {return windowReferences?&*windowReferences:nullptr;}
+    const std::vector<NativeCompositeMeasurementRecord>& CandidateWindowRecords() const {return windowRecords;}
 private:
     friend class NativeTrainingService;
     void RestartOwned(CompositeAttemptLimits,double modelTime,double wallTime,const std::string& currentRevision);
@@ -64,6 +75,8 @@ private:
     std::vector<NativeProbeResult> TakeRetainedRawPackets();
     template<class Owner> void Bind(Owner& owner);
     void Initialize(VerificationProtocol,CompositeAttemptLimits,double,double);
+    void InitializeShared(VerificationProtocol,CompositeAttemptLimits,double,double);
+    void InitializeCandidateWindow(VerificationProtocol,CompositeAttemptLimits,NativeCandidateWindowAttemptDeclaration,double,double);
     void AdoptOwned(const CompositePortableTrainingProof&,CompositeAttemptLimits,double,double);
     void CheckClock(double,double);
     std::string CheckBoundary(QJsonObject* retained=nullptr,std::optional<TrainingCapacitance>* parameters=nullptr);
@@ -74,6 +87,7 @@ private:
     std::function<RDK::UModuleLifecycleObservation()> observeOwner;
     std::function<void()> requireOwnerControl;
     std::function<std::optional<TrainingCapacitanceWitness>()> capacitanceWitness;
+    std::function<std::vector<InputParameters>()> readWindowParameters;
     NativeMatchedOmissionAdapter adapter;
     NmsdkTools::ModelRevisionObserver revisionObserver;
     std::shared_ptr<const VerificationProtocol> protocol;
@@ -85,6 +99,19 @@ private:
     std::optional<PreparedCompositeMeasurement> prepared;
     std::optional<ValidatedCompositeMeasurement> measurement;
     std::optional<NativeDeclaredWindowBasinResult> selection;
+    std::optional<NativeCandidateWindowAttemptDeclaration> windowDeclaration;
+    std::optional<CandidateWindowReferenceSet> windowReferences;
+    std::vector<std::optional<CandidateWindowReferenceSeed>> stagedWindowSeeds;
+    std::vector<std::optional<ValidatedCompositeMeasurement>> stagedWindowMeasurements;
+    std::vector<std::string> stagedWindowGroups;
+    std::vector<NativeCompositeMeasurementRecord> windowRecords;
+    std::vector<InputParameters> initialWindowParameters;
+    std::optional<TrainingCapacitance> initialWindowCapacitance;
+    std::optional<NativeCandidateWindowSnapshot> activeWindowSnapshot;
+    std::optional<CandidateWindowPhysicalReadback> activeWindowPhysical;
+    std::optional<PreparedCandidateWindowProposal> activeWindowProposal;
+    std::optional<CandidateWindowBasinSpecification> activeWindowSpecification;
+    std::size_t windowPrimaryBytes=0;
     VerificationRequest logical;
     CompositeMeasurementPurpose purpose=CompositeMeasurementPurpose::Reference;
     std::vector<NativeCompositeRawTrial> rawTrials;
