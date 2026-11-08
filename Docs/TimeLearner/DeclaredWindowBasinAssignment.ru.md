@@ -62,10 +62,15 @@ Train integration, codec/schema для этого метода и сертифи
 именно production DeclaredWindowBasinAssignment.cpp и MeasuredResponse.cpp,
 без native/storage SDK dependency. Тот же test source включён в полный storage
 target; чистый gate не заменяет будущий native context bridge. Предобъявленный
-filter `DeclaredWindowBasinAssignment.*` содержит35 literal TEST cases, включая
+Исходный filter `DeclaredWindowBasinAssignment.*` содержал35 literal TEST cases, включая
 residual tail, higher known/shared-other/Unknown, under-floor/control split,
 plateau/valley/window/record boundaries, repeat topology/winner, invalid data и
 budgets. Migration-endpoint case специально допускает измеримый operational
 outcome и проверяет diagnostic-only eligibility: физическая lineage не
-выдумывается из этих endpoint records. Серверные normal/ASan receipts пока
-не получены.
+выдумывается из этих endpoint records. Серверный normal/ASan запуск исходного
+root236/Pulsefce выявил34/35: отрицательный plateau fixture оставлял следующий
+sample выше плато и фактически задавал монотонный shoulder. Отдельный root
+fixture-only commit `3c2ae1fd696462dad4677a795a05db80f5bac93d` сохраняет expected
+Ambiguous, делает оба соседа плато ниже и добавляет исходный shoulder как positive
+case. Текущий inventory —36. Исходные negative35 receipts не переписываются;
+новый36 gate и native bridge acceptance учитываются отдельно.
