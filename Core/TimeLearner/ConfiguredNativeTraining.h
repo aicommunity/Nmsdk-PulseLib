@@ -28,6 +28,9 @@ struct ConfiguredNativeTraining {
     bool recordCapacitanceHistory=false;
     double capacitanceMaximumRelativeChange=0.;
     std::optional<NativeCompositeTrainingPolicy> composite;
+    // Cold7 only. Presence requires explicit common policy2; the resulting
+    // protocol5 owns the authoritative full measurement declaration.
+    std::optional<CandidateWindowPolicy> candidateWindowPolicy;
 };
 QJsonObject EncodeNativeModelSpec(const NativeModelSpec& model);
 NativeModelSpec DecodeNativeModelSpec(const QJsonObject& object);
@@ -42,5 +45,7 @@ ConfiguredNativeTraining ParseConfiguredNativeTraining(const std::string& text);
 QJsonObject ParseStrictNativeJsonObject(const std::string& text,std::size_t maximumBytes=16*1024*1024);
 NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraining& configuration);
 ConfiguredNativeTraining CaptureCompositeInitialConfiguration(const NativeModelSpec&,const NativeTrainingPlan&,
+    const std::vector<InputParameters>& actualInitialParameters,double capacitanceMaximumRelativeChange);
+ConfiguredNativeTraining CaptureCandidateWindowInitialConfiguration(const NativeModelSpec&,const NativeTrainingPlan&,
     const std::vector<InputParameters>& actualInitialParameters,double capacitanceMaximumRelativeChange);
 }

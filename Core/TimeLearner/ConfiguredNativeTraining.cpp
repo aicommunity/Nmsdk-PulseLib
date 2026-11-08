@@ -1,5 +1,6 @@
 #include "ConfiguredNativeTraining.h"
 #include "CompositeTrainingDeclarations.h"
+#include "CandidateWindowTrainingDeclarations.h"
 #include "ModelIdentity.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -20,6 +21,20 @@ void Keys(const QJsonObject& o,const std::set<QString>& names)
 {
     Require(o.size()==int(names.size()),"native_configuration_field_set_mismatch");
     for(const auto& name:names)Require(o.contains(name),"missing_native_configuration_field");
+}
+QJsonObject EncodeCandidateWindowNativePolicy(const NativeCompositeTrainingPolicy& common,const CandidateWindowPolicy& window)
+{
+    Require(common.schemaVersion==2 && common.methodId==DeclaredWindowBasinResult::MethodId(),"candidate_window_native_policy2_required");
+    ValidateCandidateWindowPolicyDeclaration(window,window.inputs.size(),common.contextPolicy.maximumSamples);
+    auto result=EncodeNativeCompositeTrainingPolicy(common);result["candidate_window_policy"]=EncodeCandidateWindowPolicy(window);return result;
+}
+std::pair<NativeCompositeTrainingPolicy,CandidateWindowPolicy> DecodeCandidateWindowNativePolicy(const QJsonObject& object)
+{
+    Keys(object,{"schema_version","method_id","context_policy","geometry_policy","attempt_limits",
+        "maximum_group_model_seconds","maximum_group_wall_seconds","maximum_total_primary_bytes","candidate_window_policy"});
+    auto fields=object;fields.remove("candidate_window_policy");const auto common=DecodeNativeCompositeTrainingPolicy(fields);
+    const auto window=DecodeCandidateWindowPolicy(object["candidate_window_policy"].toObject());
+    Require(EncodeCandidateWindowNativePolicy(common,window)==object,"candidate_window_native_policy_roundtrip");return {common,window};
 }
 double Number(const QJsonValue& v)
 {Require(v.isDouble() && std::isfinite(v.toDouble()),"invalid_native_configuration_number");return v.toDouble();}
@@ -122,6 +137,7 @@ NativeModelSpec DecodeNativeModelSpec(const QJsonObject& o)
 }
 NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraining& c)
 {
+    Require(!c.candidateWindowPolicy || c.composite,"candidate_window_cold7_requires_native_policy2");
     ValidateInvalidMeasurementRecovery(c.search.invalidMeasurementRecovery,c.search.maximumInvalidObservations);
     ValidateNativeModelSpec(c.model);const auto size=c.model.inputs.size();
     Require(ValidStimulusProfile(c.stimulusProfile) && c.stimulusProfile.generatorClass==c.model.generatorClass &&
@@ -184,11 +200,22 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
             c.stimulusProfile.pulseLength>=1./c.stimulusProfile.frequencyHz && c.stimulusProfile.frequencyDeviation==0. &&
             !c.stimulusProfile.useTransitSignal && !c.stimulusProfile.usePatternOutput,
             "unsupported_composite_native_source_or_selection");
-        p.schemaVersion=4;p.waveAssignment=WaveAssignmentPolicy::WindowOnly;s.waveAssignment=p.waveAssignment;
-        CompositeMeasurementContract contract;contract.schemaVersion=policy.schemaVersion;contract.methodId=policy.methodId;
-        contract.contextPolicy=policy.contextPolicy;contract.geometryPolicy=policy.geometryPolicy;
-        for(const auto& w:c.windows)contract.inputWindows.push_back({w.first,w.second});
-        p.compositeMeasurement=contract;ValidateCompositeMeasurementContract(p);
+        if(c.candidateWindowPolicy) {
+            Require(policy.schemaVersion==2,"candidate_window_cold7_requires_native_policy2");
+            Require(size>=2,"candidate_window_multi_input_method_requires_at_least_two_inputs");
+            p.schemaVersion=5;p.waveAssignment=WaveAssignmentPolicy::WindowOnly;s.waveAssignment=p.waveAssignment;
+            CandidateWindowMeasurementContract contract;contract.methodId=policy.methodId;
+            contract.contextPolicy=policy.contextPolicy;contract.geometryPolicy=policy.geometryPolicy;
+            contract.candidateWindowPolicy=*c.candidateWindowPolicy;
+            for(const auto& w:c.windows)contract.referenceInputWindows.push_back({w.first,w.second});
+            p.candidateWindowMeasurement=contract;ValidateCandidateWindowMeasurementContract(p);
+        } else {
+            p.schemaVersion=4;p.waveAssignment=WaveAssignmentPolicy::WindowOnly;s.waveAssignment=p.waveAssignment;
+            CompositeMeasurementContract contract;contract.schemaVersion=policy.schemaVersion;contract.methodId=policy.methodId;
+            contract.contextPolicy=policy.contextPolicy;contract.geometryPolicy=policy.geometryPolicy;
+            for(const auto& w:c.windows)contract.inputWindows.push_back({w.first,w.second});
+            p.compositeMeasurement=contract;ValidateCompositeMeasurementContract(p);
+        }
         for(auto value:{policy.maximumGroups,policy.maximumNativeProbes,policy.maximumTotalSamples,policy.maximumTotalPrimaryBytes})
             Require(value>0 && value<=9007199254740991ULL,"invalid_composite_attempt_limit");
         Require(policy.maximumNativeProbes>=size+2 && policy.maximumTotalSamples>=policy.contextPolicy.maximumTotalSamples &&
@@ -223,6 +250,12 @@ CapacitanceSearchPolicy DecodeCapacitanceSearchPolicy(const QJsonObject& object)
 QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 {
     MakeConfiguredNativeTrainingPlan(c);
+    if(c.candidateWindowPolicy) {
+        auto base=c;base.composite.reset();base.candidateWindowPolicy.reset();auto result=EncodeConfiguredNativeTraining(base);
+        Require(result["schema_version"].toInt()>=1 && result["schema_version"].toInt()<=4,"candidate_window_base_schema_unsupported");
+        result["base_schema_version"]=result["schema_version"];result["schema_version"]=7;
+        result["composite_measurement"]=EncodeCandidateWindowNativePolicy(*c.composite,*c.candidateWindowPolicy);return result;
+    }
     if(c.composite) {
         auto base=c;base.composite.reset();auto result=EncodeConfiguredNativeTraining(base);
         Require(result["schema_version"].toInt()>=1 && result["schema_version"].toInt()<=4,"composite_base_schema_unsupported");
@@ -281,6 +314,12 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
 {
     const int schema=Int(o["schema_version"]);auto fields=o;
+    if(schema==7) {
+        const int base=Int(o["base_schema_version"]);Require(base>=1 && base<=4,"candidate_window_base_schema_unsupported");
+        fields.remove("base_schema_version");fields.remove("composite_measurement");fields["schema_version"]=base;
+        auto c=DecodeConfiguredNativeTraining(fields);const auto policy=DecodeCandidateWindowNativePolicy(Object(o["composite_measurement"]));
+        c.composite=policy.first;c.candidateWindowPolicy=policy.second;MakeConfiguredNativeTrainingPlan(c);return c;
+    }
     if(schema==6) {
         const int base=Int(o["base_schema_version"]);Require(base>=1 && base<=4,"composite_base_schema_unsupported");
         fields.remove("base_schema_version");fields.remove("composite_measurement");fields["schema_version"]=base;
@@ -370,6 +409,32 @@ ConfiguredNativeTraining CaptureCompositeInitialConfiguration(const NativeModelS
     c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
     c.capacitanceMaximumRelativeChange=c.recordCapacitanceHistory?capacitanceMaximumRelativeChange:0.;c.composite=plan.composite;
     MakeConfiguredNativeTrainingPlan(c);return c;
+}
+ConfiguredNativeTraining CaptureCandidateWindowInitialConfiguration(const NativeModelSpec& declaration,const NativeTrainingPlan& plan,
+    const std::vector<InputParameters>& actual,double capacitanceMaximumRelativeChange) {
+    ValidateCandidateWindowMeasurementContract(plan.protocol);
+    Require(plan.composite && plan.composite->schemaVersion==2 && actual.size()==declaration.inputs.size(),"invalid_candidate_window_initial_declaration");
+    const auto& method=*plan.protocol.candidateWindowMeasurement;
+    Require(plan.composite->methodId==method.methodId && plan.composite->contextPolicy==method.contextPolicy &&
+        plan.composite->geometryPolicy==method.geometryPolicy,"candidate_window_initial_policy_mismatch");
+    Require(plan.inputWindows.size()==plan.protocol.inputs.size(),"candidate_window_initial_window_mapping");
+    for(std::size_t i=0;i<plan.protocol.inputs.size();++i) {
+        const auto& window=plan.inputWindows[i];const auto& reference=method.referenceInputWindows[i];
+        Require(window.inputId==plan.protocol.inputs[i].id && window.stimulusId==plan.protocol.inputs[i].stimulusId &&
+            window.channel==(plan.protocol.routing==ProbeRouting::ClassicBurst?i:0u) &&
+            window.begin==reference.beginOffset && window.end==reference.endOffset,"candidate_window_initial_window_mapping");
+    }
+    ConfiguredNativeTraining c;c.model=declaration;for(std::size_t i=0;i<actual.size();++i)
+        c.model.inputs[i]={actual[i].length,actual[i].synapses,actual[i].resistance};
+    c.stimulusProfile=*plan.protocol.stimulusProfile;c.runId=plan.search.runId;c.protocolRevision=plan.protocol.revision;c.sampleId=plan.protocol.sampleId;
+    c.duration=plan.probe.specification.end;c.maximumSampleGap=plan.protocol.maximumSampleGap;c.minimumAmplitude=plan.protocol.minimumAmplitude;
+    c.maximumSamples=plan.probe.specification.maximumSamples;c.recordSpikes=plan.probe.specification.recordSpikes;c.peakSelection=plan.protocol.peakSelection;
+    for(const auto& w:method.referenceInputWindows)c.windows.emplace_back(w.beginOffset,w.endOffset);
+    c.search=plan.search;c.search.initialModelRevision.clear();c.search.initialModelEpoch=0;
+    c.maximumReferenceProbes=plan.maximumReferenceProbes;c.maximumInvalidReferenceProbes=plan.maximumInvalidReferenceProbes;
+    c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
+    c.capacitanceMaximumRelativeChange=c.recordCapacitanceHistory?capacitanceMaximumRelativeChange:0.;
+    c.composite=plan.composite;c.candidateWindowPolicy=method.candidateWindowPolicy;MakeConfiguredNativeTrainingPlan(c);return c;
 }
 
 }
