@@ -330,20 +330,28 @@ QJsonObject EncodeRecord(const VerificationProtocol& p,const QJsonObject& source
 }
 void CheckAcceptedSets(const VerificationProtocol& p,const QJsonObject& source,const std::vector<NativeCompositeMeasurementRecord>& records,
     const std::vector<std::string>& refs,const std::vector<std::string>& finals,const std::string& currentAttempt) {
-    Require(refs.size()<=p.inputs.size() && finals.size()<=p.inputs.size(),"composite_archive_accepted_set_dimension");
+    Require(refs.size()<=p.inputs.size() && finals.size()<=p.inputs.size() && (finals.empty() || refs.size()==p.inputs.size()),"composite_archive_accepted_set_dimension");
     std::set<std::string> used;const auto find=[&](const std::string& id)->const NativeCompositeMeasurementRecord& {
         const auto found=std::find_if(records.begin(),records.end(),[&](const auto& r){return r.groupId==id;});
         Require(found!=records.end() && used.insert(id).second && found->consumed && found->trainingRequestedAtConsume==true &&
             !found->semanticProofId.empty(),"composite_archive_accepted_group");return *found;
     };
-    std::string referenceCandidate,finalCandidate,finalRevision;std::size_t finalEpoch=0,previous=0;
+    std::string latestActualRun;std::optional<qulonglong> latestSweep;
+    const auto finalPrefix=currentAttempt+"/final/";
+    for(const auto& record:records)if(record.purpose==CompositeMeasurementPurpose::Final && record.attemptId==currentAttempt) {
+        Require(record.logical.runId.starts_with(finalPrefix) && Decimal(record.logical.runId.substr(finalPrefix.size())),"composite_archive_final_run_namespace");
+        bool ok=false;const auto sweep=QString::fromStdString(record.logical.runId.substr(finalPrefix.size())).toULongLong(&ok);
+        Require(ok && sweep<=9007199254740991ULL,"composite_archive_final_sweep_number");
+        if(!latestSweep || sweep>*latestSweep){latestSweep=sweep;latestActualRun=record.logical.runId;}
+    }
+    std::string referenceCandidate,finalCandidate,finalRevision,finalRun;std::size_t finalEpoch=0,previous=0;
     for(std::size_t i=0;i<refs.size();++i){const auto& r=find(refs[i]);Require(r.purpose==CompositeMeasurementPurpose::Reference && r.logical.inputIndex==i &&
         r.logical.baseModelRevision==Text(Object(source["initial_model"])["sha256"]) && r.logical.epoch==Count(source["initial_epoch"]),"composite_archive_reference_origin");
         const auto candidate=Hash(ParseStrictNativeJsonObject(r.candidateBindingJson)).toStdString();if(!i)referenceCandidate=candidate;
         Require(candidate==referenceCandidate,"composite_archive_mixed_reference_candidate");}
     for(std::size_t i=0;i<finals.size();++i){const auto& r=find(finals[i]);const auto candidate=Hash(ParseStrictNativeJsonObject(r.candidateBindingJson)).toStdString();
-        if(!i){finalCandidate=candidate;finalRevision=r.logical.baseModelRevision;finalEpoch=r.logical.epoch;}
-        Require(r.purpose==CompositeMeasurementPurpose::Final && r.attemptId==currentAttempt && (!i || r.logical.inputIndex>previous) &&
+        if(!i){finalCandidate=candidate;finalRevision=r.logical.baseModelRevision;finalEpoch=r.logical.epoch;finalRun=r.logical.runId;}
+        Require(r.purpose==CompositeMeasurementPurpose::Final && r.attemptId==currentAttempt && r.logical.runId==finalRun && r.logical.runId==latestActualRun && (!i || r.logical.inputIndex>previous) &&
             candidate==finalCandidate && r.logical.baseModelRevision==finalRevision && r.logical.epoch==finalEpoch,"composite_archive_mixed_final_candidate");previous=r.logical.inputIndex;
     }
 }

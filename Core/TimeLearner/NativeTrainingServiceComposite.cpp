@@ -80,6 +80,19 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     Require(!compositeCapacitance || (a.readCapacitanceWitness && a.applyWithCapacitance && a.assessResistanceDomainWithCapacitance),
         "native_composite_owned_capacitance_requires_boundary_adapter");
     Require(value.search.normalization!=Normalization::TipResistance || a.assessResistanceDomain,"native_n1_requires_effective_domain_provider");
+    // Validate retained data before changing a live generation or history.
+    // A rejected warm declaration is not a partially committed new attempt.
+    auto retainedRecords=compositeRecords;
+    const std::set<std::string> retained(compositeReferenceGroups.begin(),compositeReferenceGroups.end());
+    if(references)std::erase_if(retainedRecords,[&](const auto& r){return !retained.count(r.groupId);});
+    else retainedRecords.clear();
+    std::size_t retainedBytes=0;for(const auto& r:retainedRecords) {
+        const auto bytes=CompositeRecordPrimaryBytes(r);
+        Require(bytes<=value.composite->maximumTotalPrimaryBytes && retainedBytes<=value.composite->maximumTotalPrimaryBytes-bytes,
+            "native_composite_retained_reference_byte_budget");retainedBytes+=bytes;
+    }
+    if(!compositeSourceBinding.isEmpty())Require(compositeSourceBinding["model_spec"].toObject()["normalization"]==
+        QJsonValue(value.search.normalization==Normalization::SynapseCount?"N0":"N1"),"composite_normalization_requires_new_model_family");
     // Construction happens while the actual owner's service is still Idle.
     // Warm restart keeps the original source family; it never recaptures it.
     if(composite)composite->RestartOwned(Limits(value),m,w,revision);
@@ -87,20 +100,17 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
         Require(!references,"native_composite_imported_family_requires_owned_adoption");
         composite=a.createComposite(value.protocol,Limits(value),m,w);Require(bool(composite),"missing_native_composite_authority");
         compositeSourceBinding=composite->SourceBinding();compositeOwnerFamily=composite->OwnerFamilyBinding();
+        Require(compositeSourceBinding["model_spec"].toObject()["normalization"]==
+            QJsonValue(value.search.normalization==Normalization::SynapseCount?"N0":"N1"),"composite_normalization_requires_new_model_family");
         compositeInitialConfiguration=EncodeConfiguredNativeTraining(CaptureCompositeInitialConfiguration(
             DecodeNativeModelSpec(compositeSourceBinding["model_spec"].toObject()),value,a.readParameters(),
             compositeCapacitance?compositeCapacitance->maximumRelativeChange:0.));
     }
-    Require(compositeSourceBinding["model_spec"].toObject()["normalization"]==
-        QJsonValue(value.search.normalization==Normalization::SynapseCount?"N0":"N1"),"composite_normalization_requires_new_model_family");
-    std::set<std::string> retained(compositeReferenceGroups.begin(),compositeReferenceGroups.end());
-    if(references)std::erase_if(compositeRecords,[&](const auto& r){return !retained.count(r.groupId);});
-    else {compositeRecords.clear();compositeReferenceGroups.clear();compositeReferenceMeasurements.clear();}
-    compositePrimaryBytes=0;for(const auto& r:compositeRecords)compositePrimaryBytes+=CompositeRecordPrimaryBytes(r);
-    Require(compositePrimaryBytes<=value.composite->maximumTotalPrimaryBytes,"native_composite_retained_reference_byte_budget");
+    compositeRecords=std::move(retainedRecords);compositePrimaryBytes=retainedBytes;
+    if(!references){compositeReferenceGroups.clear();compositeReferenceMeasurements.clear();}
     plan=std::move(value);startModel=lastModel=m;startWall=lastWall=w;
     retainedEpoch=plan.search.initialModelEpoch;referenceProbes=invalidReferences=0;
-    observedPackets.clear();finalPackets.clear();compositeFinalGroups.clear();compositeRequest.reset();
+    observedPackets.clear();finalPackets.clear();compositeFinalGroups.clear();compositeFinalRun.clear();compositeRequest.reset();
     if(!references){referencePackets.clear();referenceEvidence.clear();}
     certificate.reset();search.reset();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
     ++attempt;++compositeGeneration;plan.search.runId+="/session/"+std::to_string(attempt);
@@ -117,6 +127,10 @@ void NativeTrainingService::CompositeBeginSearch(const NativeTrainingAdapter& a)
 void NativeTrainingService::QueueComposite(const NativeTrainingAdapter& a,const VerificationRequest& request,
     CompositeMeasurementPurpose purpose,double m,double w) {
     const auto& p=*plan.composite;const auto n=plan.protocol.inputs.size();
+    if(purpose==CompositeMeasurementPurpose::Final && compositeFinalRun!=request.runId) {
+        // A new sweep is fresh even when no physical edit was necessary.
+        compositeFinalRun=request.runId;compositeFinalGroups.clear();finalPackets.clear();
+    }
     if(composite->IssuedGroups()>=p.maximumGroups || composite->IssuedNativeProbes()>p.maximumNativeProbes ||
         n+2>p.maximumNativeProbes-composite->IssuedNativeProbes() || composite->RetainedSamples()>p.maximumTotalSamples ||
         p.contextPolicy.maximumTotalSamples>p.maximumTotalSamples-composite->RetainedSamples())throw CompositeBudget("native_composite_attempt_budget_exhausted");
@@ -253,7 +267,7 @@ void NativeTrainingService::BeforeComposite(const NativeTrainingAdapter& a,doubl
             CompositeRefreshCapacitance(a,search->Capacitance(),true);
             const auto changed=compositeCapacitance?a.applyWithCapacitance(action.parameters,action.capacitance):a.apply(action.parameters);
             if(changed.status==NativeEditStatus::Applied) {
-                CompositeRefreshCapacitance(a,action.capacitance,true);finalPackets.clear();compositeFinalGroups.clear();
+                CompositeRefreshCapacitance(a,action.capacitance,true);finalPackets.clear();compositeFinalGroups.clear();compositeFinalRun.clear();
                 const auto actual=a.readModelRevision();composite->RefreshOwnedAfterEdit(actual);
                 search->Applied(action.serial,changed.effective,actual,compositeCapacitance);
                 if(search->Status()!=TrainingStatus::InvalidModel)referenceBinding=actual;

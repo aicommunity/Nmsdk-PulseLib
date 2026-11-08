@@ -150,7 +150,7 @@ private:
     std::vector<std::string> compositeReferenceGroups,compositeFinalGroups;
     std::optional<VerificationRequest> compositeRequest;
     std::optional<TrainingCapacitance> compositeCapacitance;
-    std::string compositeOwnerFamily;
+    std::string compositeOwnerFamily,compositeFinalRun;
     std::size_t compositeNativeProbes=0,compositeGroups=0,compositeSampledFrames=0,compositePrimaryBytes=0;
     std::size_t compositeGeneration=0,compositeDispatchDepth=0;
     bool compositeHarvested=true;

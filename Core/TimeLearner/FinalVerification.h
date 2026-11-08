@@ -76,6 +76,7 @@ public:
     const std::string& CompositeOwnerScope() const {return compositeOwnerScope;}
     const std::string& CompositeSourceOrigin() const {return compositeSourceOrigin;}
 private:
+    friend class CompositePortableTrainingProof;
     CapturedReferences()=default;
     VerificationProtocol protocol;
     std::vector<CapturedInputReference> inputs;
@@ -173,6 +174,7 @@ public:
     std::size_t ModelEpoch() const { return epoch; }
     bool WaitingForObservation() const { return bool(armed) || bool(compositeArmed); }
 private:
+    friend class CompositePortableTrainingProof;
     struct Accepted { std::string trialId,effectiveRevision;double raw,arrival,plateauEnd;std::string compositeProofId,candidateWitnessId; };
     CapturedReferences references;
     VerificationConfig config;
