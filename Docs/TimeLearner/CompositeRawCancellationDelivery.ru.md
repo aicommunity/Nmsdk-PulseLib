@@ -53,6 +53,14 @@ post-consume notification и свежей проверки обоих wall budge
 не отменяется в историческом record, если последующий callback завершился ошибкой;
 итог остаётся InvalidObservation без certificate.
 
+Вызов копии callable не должен сбрасывать mutable-by-value счётчик при каждом
+packet/group. После вызова его изменённое состояние копируется обратно только
+при совпадении actor/attempt/generation и notification lifecycle token, включая
+случай throw до terminalization. Для raw sink обновляются также оставшиеся
+локальные и member-queued копии той же попытки. После Reset/Default/retarget/
+нового Begin writeback запрещён; изменяется только состояние callable, не модель
+или старый control state. Отменённая доставка не повторяется.
+
 После callback используется свежий NativeTrainingWallTime перед consume и
 certificate. Новые real-clock controls обоих типов ждут 16 секунд в sink
 последнего raw packet и последнего final composite record при объявленном
@@ -61,11 +69,14 @@ BudgetExhausted без certificate. В reference-raw случае references е�
 созданы; в last-final-composite случае ранее измеренные references сохраняются.
 Это отдельные реальные серверные проверки, не подстановка времени.
 
-Добавлены 36 Classic/Branch controls: throw/reset/default/retarget/recursive stop
+Добавлены 42 Classic/Branch controls: throw/reset/default/retarget/recursive stop
 на cancellation, warm без повторения старой доставки, throw/reset нормального
 sink, actual physics corruption с доставкой невалидного packet, slow sink,
 устаревший actor против новой пробы/ABA IDs и destructor без application callback,
 изменённая C0 при отмене, stable record после Default из before/post-consume
 callbacks, их throw и slow last-composite notification.
+Дополнительно три вида mutable-by-value sink обоих типов обязаны остановить
+реальную native последовательность на втором packet/group; простое внешнее
+увеличение счётчика не заменяет эту проверку внутреннего состояния callable.
 Старые 206 controls должны быть сохранены и повторно проверены вместе с новыми.
 Математика выбора окна/максимума, tolerances и научные критерии не изменены.

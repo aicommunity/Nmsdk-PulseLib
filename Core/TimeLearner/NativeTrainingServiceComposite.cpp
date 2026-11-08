@@ -195,6 +195,19 @@ void NativeTrainingService::DeliverCompositeRaw(const NativeTrainingAdapter& a,
         catch(...){failure="native_composite_raw_sink_failed";}
         if(composite!=actor || compositeGeneration!=generation || attempt!=session || plan.search.runId!=run ||
             !deliveryLife.IsCurrent())return;
+        try {
+            // Preserve mutable-by-value observer state while retaining a local
+            // callable across invocation. Never copy it into a replacement plan.
+            plan.observationSink=notification.sink;
+            const auto update=[&](auto& queued){for(auto& next:queued)
+                if(&next!=&notification && next.actor==actor && next.attempt==session && next.runId==run)
+                    next.sink=notification.sink;};
+            update(notifications);update(compositeRawNotifications);
+        }
+        catch(const std::exception& e){failure+=";native_composite_raw_sink_state_copy_failed:"+std::string(e.what());}
+        catch(...){failure+=";native_composite_raw_sink_state_copy_failed";}
+        if(composite!=actor || compositeGeneration!=generation || attempt!=session || plan.search.runId!=run ||
+            !deliveryLife.IsCurrent())return;
         if(!failure.empty()) {
             if(ActiveComposite(state) && !lifecycleDelivery)StopComposite(a,TrainingStatus::InvalidObservation,failure);
             else reason+=";"+failure;
@@ -244,7 +257,11 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
         try{beforeConsume(snapshot);}
         catch(const std::exception& e){failure="native_composite_before_consume_sink_failed:"+std::string(e.what());}
         catch(...){failure="native_composite_before_consume_sink_failed";}
-        if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session)return;
+        if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || !actor->ownerLife.IsCurrent())return;
+        try{plan.beforeCompositeConsume=beforeConsume;}
+        catch(const std::exception& e){failure+=";native_composite_before_consume_state_copy_failed:"+std::string(e.what());}
+        catch(...){failure+=";native_composite_before_consume_state_copy_failed";}
+        if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || !actor->ownerLife.IsCurrent())return;
         if(!failure.empty()){StopComposite(a,TrainingStatus::InvalidObservation,failure);return;}
     }
     if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor)return;
@@ -298,6 +315,10 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
         try{completedSink(snapshot);}
         catch(const std::exception& e){failure="native_composite_record_sink_failed:"+std::string(e.what());}
         catch(...){failure="native_composite_record_sink_failed";}
+        if(generation!=compositeGeneration || composite!=actor || attempt!=session || !actor->ownerLife.IsCurrent())return;
+        try{plan.compositeSink=completedSink;}
+        catch(const std::exception& e){failure+=";native_composite_record_sink_state_copy_failed:"+std::string(e.what());}
+        catch(...){failure+=";native_composite_record_sink_state_copy_failed";}
         if(generation!=compositeGeneration || composite!=actor || attempt!=session || !actor->ownerLife.IsCurrent())return;
         if(!failure.empty()) {
             if(ActiveComposite(state))StopComposite(a,TrainingStatus::InvalidObservation,failure);
