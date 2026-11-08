@@ -200,6 +200,32 @@ QJsonObject Counters(const std::vector<NativeCompositeMeasurementRecord>& record
     return {{"attempt",QJsonObject{{"logical_groups",Count(attempt.groups)},{"native_probes",Count(attempt.native)},{"sampled_frames",Count(attempt.samples)}}},
         {"archive",QJsonObject{{"groups",Count(archive.groups)},{"native_probes",Count(archive.native)},{"sampled_frames",Count(archive.samples)},{"primary_bytes",Count(archive.bytes)}}}};
 }
+void CheckCandidateWindowPrimaryHistory(const std::vector<NativeCompositeMeasurementRecord>& records,
+    const std::vector<std::string>& references,const std::string& current,std::size_t currentCap) {
+    // The array is the producer's retained append-ledger order. Prefix bytes
+    // are a lower bound if a producer pruned history; imported clocks are not
+    // treated as a global cross-process execution-order attestation.
+    Totals prefix;std::map<std::string,Totals> attempts;std::map<std::string,std::size_t> caps;
+    std::map<std::string,qulonglong> lastOrdinal;std::set<std::string> blocks,seenGroups;
+    std::string block;
+    for(const auto& r:records) {
+        if(r.attemptId!=block) {Require(blocks.insert(r.attemptId).second,"candidate_window_archive_reopened_attempt_block");block=r.attemptId;}
+        const auto slash=r.groupId.rfind('/');Require(slash!=std::string::npos,"candidate_window_archive_group_order");bool ok=false;
+        const auto ordinal=QString::fromStdString(r.groupId.substr(slash+1)).toULongLong(&ok);
+        Require(ok && ordinal>0 && ordinal<=9007199254740991ULL && (!lastOrdinal.count(r.attemptId) || ordinal>lastOrdinal.at(r.attemptId)),
+            "candidate_window_archive_group_order");lastOrdinal[r.attemptId]=ordinal;
+        if(r.purpose!=CompositeMeasurementPurpose::Reference)Require(!references.empty() &&
+            std::all_of(references.begin(),references.end(),[&](const auto& id){return seenGroups.count(id);}),
+            "candidate_window_archive_candidate_precedes_references");
+        seenGroups.insert(r.groupId);prefix.AddRecord(r);attempts[r.attemptId].AddRecord(r);
+        const auto prior=caps.find(r.attemptId);Require(prior==caps.end() || prior->second==r.policy.maximumTotalPrimaryBytes,
+            "candidate_window_archive_attempt_primary_cap");caps[r.attemptId]=r.policy.maximumTotalPrimaryBytes;
+        Require(attempts.at(r.attemptId).bytes<=r.policy.maximumTotalPrimaryBytes,"candidate_window_archive_attempt_primary_budget");
+        Require(prefix.bytes<=r.policy.maximumTotalPrimaryBytes,"candidate_window_archive_retained_prefix_primary_budget");
+    }
+    Require(!blocks.count(current) || block==current,"candidate_window_archive_current_attempt_order");
+    Require(prefix.bytes<=currentCap,"candidate_window_archive_current_retained_primary_budget");
+}
 }
 namespace CompositeEvidenceDetail {
 void ValidateInitialSource(const VerificationProtocol& p,const QJsonObject& source,const std::string& origin) {
@@ -459,6 +485,7 @@ NativeCompositeArchiveDocument EncodeNativeCandidateWindowTrainingArchive(const 
     // This STEP2 archive never promotes a Final measurement to old Train4
     // consumption/certificate. Final selection is a future explicit boundary.
     const std::vector<std::string> finals;CheckAcceptedSets(p,source,records,references,finals,current);
+    CheckCandidateWindowPrimaryHistory(records,references,current,attempt.windowDeclaration->maximumTotalPrimaryBytes);
     NativeCompositeArchiveDocument output;QJsonArray encoded;QJsonObject blobs;std::set<QString> folded;
     for(std::size_t index=0;index<records.size();++index) {
         const auto& r=records[index];std::vector<QString> paths;MatchedOmissionPrimary primary;
@@ -595,6 +622,7 @@ DecodedNativeCompositeArchive DecodeNativeCompositeTrainingArchive(const QJsonOb
     }
     Require(blobUsed.size()==decodedBlobs.size(),"composite_archive_extra_primary_blob");CheckAcceptedSets(p,decoded.sourceBinding,decoded.records,
         decoded.referenceGroups,decoded.finalGroups,decoded.currentAttemptId);
+    if(windowMode)CheckCandidateWindowPrimaryHistory(decoded.records,decoded.referenceGroups,decoded.currentAttemptId,cap);
     const auto counters=Counters(decoded.records,decoded.currentAttemptId);Require(Object(counters["archive"])["primary_bytes"].toDouble()<=double(cap),"composite_archive_total_primary_budget");
     Require(object["counters"]==QJsonValue(counters),"composite_archive_counter_replay_mismatch");
     decoded.document=object;
