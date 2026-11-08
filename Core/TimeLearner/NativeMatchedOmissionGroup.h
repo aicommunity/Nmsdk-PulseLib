@@ -22,6 +22,11 @@ struct NativeMatchedOmissionAdapter {
 enum class NativeMatchedOmissionState { Idle, Running, Completed, Rejected, Cancelled, BudgetExhausted };
 struct NativeMatchedOmissionResult {
     MatchedOmissionSpecification specification;
+    MatchedOmissionPolicy policy;
+    std::vector<double> sourceIsi,appliedSourceIsi;
+    std::vector<std::vector<double>> appliedPresentedIsi;
+    // Declarations only: elapsed/enforcement attestation is not retained here.
+    double maximumModelSeconds=0.,maximumWallSeconds=0.;
     MatchedOmissionWitness witness;
     std::vector<NativeProbeResult> packets;
     std::optional<MatchedOmissionResult> assignment;

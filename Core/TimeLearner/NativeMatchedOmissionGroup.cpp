@@ -81,6 +81,10 @@ void NativeMatchedOmissionGroup::Start(NativeMatchedOmissionPlan value,const Nat
     Require(b.dataset->MatrixClasses.GetRows()==1 && b.dataset->MatrixClasses.GetCols()==1,
             "omission_group_class_shape");
     initialClass=b.dataset->MatrixClasses(0,0);CheckRestoredPresentation();
+    result.policy=plan.policy;result.sourceIsi=request.expectedInputIsi;
+    for(int i=0;i<b.dataset->MatrixData.GetRows();++i)
+        result.appliedSourceIsi.push_back(b.dataset->MatrixData(i,0));
+    result.maximumModelSeconds=plan.maximumModelSeconds;result.maximumWallSeconds=plan.maximumWallSeconds;
     Require(request.readModelRevision()==request.baseModelRevision,"omission_group_initial_model_changed");
     startModel=lastModel=modelTime;startWall=lastWall=wallTime;result.reason.clear();state=NativeMatchedOmissionState::Running;
 }
@@ -154,7 +158,17 @@ void NativeMatchedOmissionGroup::BeforeTick(const NativeMatchedOmissionAdapter& 
         capture=std::make_unique<NativeResponseDomainCapture>();
         const auto prepared=request.onPrepared;const auto sample=request.onSample;
         request.onPrepared=[this,prepared](const auto& p,const auto& actual) {
-            CheckInstances();capture->Arm(p,actual,plan.physicalChannelPaths);if(prepared)prepared(p,actual);
+            CheckInstances();capture->Arm(p,actual,plan.physicalChannelPaths);
+            const auto& dataset=*bindings->dataset;
+            Require(dataset.MaxSpikesPerFeature.GetData()==int(activeMask.size()) &&
+                    dataset.MatrixData.GetRows()==int(activeMask.size()) && dataset.MatrixData.GetCols()==1 &&
+                    result.appliedPresentedIsi.size()+1==issued,"omission_group_applied_isi_inventory");
+            std::vector<double> applied;
+            for(int i=0;i<dataset.MatrixData.GetRows();++i)applied.push_back(dataset.MatrixData(i,0));
+            Require(applied==PlanStimulusSubset(plan.fullBurst.expectedInputIsi,activeMask).presentedIsi,
+                    "omission_group_applied_presented_isi_changed");
+            result.appliedPresentedIsi.push_back(std::move(applied));
+            if(prepared)prepared(p,actual);
         };
         request.onSample=[this,sample](const auto& frame) {capture->Append(frame);if(sample)sample(frame);};
         a.queue(std::move(request));++issued;waiting=true;
