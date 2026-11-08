@@ -1,10 +1,10 @@
 # Candidate-window STEP2: typed boundary и wire contract
 
-Статус этого commit: только production types и точный проект нового wire contract для source review. Никакого нового decoder, factory, selector, native execution, Train admission или подключения к service/CLI/defaults здесь нет. `CandidateWindowTrainingBoundary.h` не включается в действующий pipeline. Успех pure40 Rootdf06/Pulsee7 подтверждает арифметику, а не право создать reference seed или обучающее измерение.
+Первый review pin `5e4faf0` содержал только types/schema. Текущий source-подэтап добавляет strict protocol5/contract2/spec2 declaration codecs и diagnostic native spec2 projection; factory/portable proposal replay/Train admission/service/CLI/defaults ещё отсутствуют. Численные проверки этой реализации не выполнены. Успех pure40 Rootdf06/Pulsee7 подтверждает арифметику, а не право создать reference seed или обучающее измерение.
 
 ## Версии и совместимость
 
-Новая ветвь объявляется только как VerificationProtocol5 / CompositeMeasurementContract2. Protocol4/contract1 продолжает означать прежние фиксированные seconds windows; не менять его поля и смысл, не использовать `schema>=4`. Предлагаемые следующие точные envelopes: cold7, candidate binding2, measurement record2/archive2, learned6, summary7, certificate3, Console execution4. Они пока не декодируются и не активируются. Raw ProbeRecorder1–6, native packet2 и matched portable1 остаются прежними.
+Новая declaration ветвь реализована только как VerificationProtocol5 / CompositeMeasurementContract2 и basin specification2. Protocol4/contract1 продолжает означать прежние фиксированные seconds windows; его поля и смысл не меняются, `schema>=4` не используется. Следующие точные envelopes: cold7, candidate binding2, measurement record2/archive2, learned6, summary7, certificate3, Console execution4 — пока не декодируются и не активируются. Raw ProbeRecorder1–6, native packet2 и matched portable1 остаются прежними. Protocol5 declaration roundtrip не разрешает старую raw/schema3 или composite4 Train admission: текущие typed factories/consumers5 fail closed.
 
 Новый protocol5 сохраняет остальные существующие поля protocol4 и использует `composite_measurement` с ТОЧНЫМИ ключами:
 
@@ -84,7 +84,7 @@ Window для ОДНОЙ группы фиксируется до queue. При 
 
 ## Последовательность реализации и адресные проверки
 
-Следующий code commit, только после review этих типов/schema: общий live/portable proposal validator; actual reference staging/complete release; actual physical parameter+bank readback; strict recipe replay; spec2 projection через общую N+2 validation. Service/CLI/default dispatch не добавлять. Пока old protocol5 decoder/admission отсутствует, запрос5 отклоняется, а не падает в protocol4.
+Следующий обязательный code подэтап: общий live/portable proposal validator; actual reference staging/complete release; actual physical parameter+bank readback; strict recipe replay, затем owned native bridge. Spec2 projection уже использует общий context validator и вынесенный неизменный native envelope validator; он остаётся diagnostic selector без authority. Service/CLI/default dispatch не добавляется. Пока protocol5 native factory/admission отсутствует, запрос5 к старому actor отклоняется, а не падает в protocol4.
 
 Необходимые настоящие controls: Classic/Branch N2 growth peak вне initial window и внутри deterministic proposal; unchanged/warm references; CtrimOff без C0; actual C0 edit; wrong seed/proof/family/currentattempt/revision/epoch; stage prefix не usable; source/storage edit доprepare/closure/consume; Need=false/lifecycle invalidation между closure и consume; tampered recipe/interval/readback/hash/primary; insufficient actual frames; shared/merged/boundary honest refusal. N4/N6 Branch positive routing использует distinct attachments `[N,N−1,...,1]`, сохраняет реальные banks/IsConnected/source ordinal; прежний shared-bank counterexample остаётся отдельным negative/plumbing контролем. Не обещать Exact при неизвестной физической сходимости и не увеличивать `.02`/амплитудные tolerances ради теста.
 

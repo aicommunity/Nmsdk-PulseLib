@@ -2,6 +2,7 @@
 #include "DeclaredWindowBasinAssignment.h"
 #include "MatchedOmissionPolicy.h"
 #include "TrainingCapacitance.h"
+#include "CompositeInputWindow.h"
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -14,10 +15,6 @@ class CapturedReferences;
 class BoundedTrainingSession;
 class FinalVerificationSession;
 class NativeTrainingService;
-struct CompositeInputWindow {
-    double beginOffset=0.,endOffset=0.;
-    bool operator==(const CompositeInputWindow&) const=default;
-};
 // Opt-in protocol 4. Windows are declared before the first trial of a group;
 // the selector never moves them or treats a timing prediction as an observation.
 struct CompositeMeasurementContract {

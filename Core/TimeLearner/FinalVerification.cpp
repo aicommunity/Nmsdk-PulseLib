@@ -1,5 +1,6 @@
 #include "FinalVerification.h"
 #include "NumericChecks.h"
+#include "CandidateWindowContractValidation.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -15,14 +16,17 @@ struct Measurement { double raw,arrival,plateauEnd; };
 
 void ProtocolValid(const VerificationProtocol& p)
 {
-    const bool composite=p.schemaVersion==4;
+    const bool composite=p.schemaVersion==4 || p.schemaVersion==5;
     if(composite) {
-        ValidateCompositeMeasurementContract(p);
+        if(p.schemaVersion==4) {
+            if(p.candidateWindowMeasurement)throw std::invalid_argument("unexpected_candidate_window_contract");
+            ValidateCompositeMeasurementContract(p);
+        } else ValidateCandidateWindowMeasurementContract(p);
         // Legacy flags retain their defaults and are not the new method ID.
         if(p.waveAssignment!=WaveAssignmentPolicy::WindowOnly || p.peakSelection!=PeakSelectionPolicy::IsolatedWindow)
             throw std::invalid_argument("composite_protocol_uses_explicit_method_contract");
     }
-    else if(p.compositeMeasurement)throw std::invalid_argument("unexpected_composite_measurement_contract");
+    else if(p.compositeMeasurement || p.candidateWindowMeasurement)throw std::invalid_argument("unexpected_composite_measurement_contract");
     if((p.schemaVersion!=1 && p.schemaVersion!=2 && p.schemaVersion!=3 && !composite) ||
        (p.schemaVersion==1 && p.stimulusProfile) ||
        (p.schemaVersion>=2 && (!p.stimulusProfile || !ValidStimulusProfile(*p.stimulusProfile))) ||
@@ -51,7 +55,7 @@ std::map<std::string,double> CheckedProbeContext(const VerificationProtocol& p,s
     const PreparedVerificationProbe& prepared,const ProbeObservation& o,bool requireValid)
 {
     const auto fail=[](const char* reason){throw std::invalid_argument(reason);};
-    if(p.schemaVersion==4)fail("composite_measurement_requires_typed_admission");
+    if(p.schemaVersion==4 || p.schemaVersion==5)fail("composite_measurement_requires_typed_admission");
     const auto& input=p.inputs.at(inputIndex);
     if(prepared.inputId!=input.id || prepared.routing!=p.routing ||
        prepared.protocolRevision!=p.revision || prepared.baseModelRevision.empty() ||
@@ -246,7 +250,7 @@ bool CanAdvanceUnassignedBurstCandidate(const VerificationProtocol& p,std::size_
 CapturedReferences CapturedReferences::Capture(VerificationProtocol p,const std::vector<ReferenceEvidence>& evidence)
 {
     ProtocolValid(p);
-    if(p.schemaVersion==4)throw std::invalid_argument("composite_reference_requires_typed_admission");
+    if(p.schemaVersion==4 || p.schemaVersion==5)throw std::invalid_argument("composite_reference_requires_typed_admission");
     if(evidence.size()!=p.inputs.size())throw std::invalid_argument("incomplete_reference_set");
     CapturedReferences result;result.protocol=std::move(p);
     std::set<std::pair<std::string,std::string>> branchTrials;
@@ -368,7 +372,7 @@ void FinalVerificationSession::Reject(const std::string& reason)
 void FinalVerificationSession::Arm(const PreparedVerificationProbe& prepared)
 {
     if(status!=VerificationStatus::Collecting)return;
-    if(references.Protocol().schemaVersion==4)throw std::invalid_argument("composite_measurement_requires_typed_admission");
+    if(references.Protocol().schemaVersion==4 || references.Protocol().schemaVersion==5)throw std::invalid_argument("composite_measurement_requires_typed_admission");
     if(!pending || armed)throw std::logic_error("verification_probe_not_requested_or_already_armed");
     if(issued>=config.maximumProbes){ExhaustBudget();return;}
     ++issued;
@@ -385,7 +389,7 @@ void FinalVerificationSession::Arm(const PreparedVerificationProbe& prepared)
 void FinalVerificationSession::Consume(const ProbeObservation& observation,const std::string& currentBaseRevision)
 {
     if(status!=VerificationStatus::Collecting)return;
-    if(references.Protocol().schemaVersion==4)throw std::invalid_argument("composite_measurement_requires_typed_admission");
+    if(references.Protocol().schemaVersion==4 || references.Protocol().schemaVersion==5)throw std::invalid_argument("composite_measurement_requires_typed_admission");
     if(currentBaseRevision.empty())
     {
         const auto trial=pending?pending->trialId:std::string{};

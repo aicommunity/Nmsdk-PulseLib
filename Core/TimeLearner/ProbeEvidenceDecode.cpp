@@ -1,5 +1,6 @@
 #include "ProbeEvidenceJson.h"
 #include "CompositeTrainingDeclarations.h"
+#include "CandidateWindowTrainingDeclarations.h"
 #include <QJsonArray>
 #include <cmath>
 #include <limits>
@@ -123,7 +124,7 @@ ProbeSpec DecodeNativeProbeSpecification(const QJsonObject& o,bool relativeToTri
 }
 VerificationProtocol DecodeVerificationProtocol(const QJsonObject& o)
 {
-    const auto version=Version(o["schema_version"]);const bool composite=version==4;
+    const auto version=Version(o["schema_version"]);const bool composite=version==4 || version==5;
     // Reuse the same strict primitive/profile/enum decoder; this temporary
     // specification is data only and is never scheduled or accepted as a probe.
     QJsonObject spec{{"schema_version",composite?QJsonValue(2):o["schema_version"]},{"run_id",""},{"trial_id",""},
@@ -138,7 +139,8 @@ VerificationProtocol DecodeVerificationProtocol(const QJsonObject& o)
     p.stimulusProfile=s.stimulusProfile;p.waveAssignment=s.waveAssignment;p.peakSelection=s.peakSelection;
     for(const auto& v:Array(o["inputs"]))
     {const auto i=Object(v);Require(i.size()==2);p.inputs.push_back({Text(i["id"]),Text(i["stimulus_id"])});}
-    if(composite)p.compositeMeasurement=DecodeCompositeMeasurementContract(Object(o["composite_measurement"]));
+    if(version==4)p.compositeMeasurement=DecodeCompositeMeasurementContract(Object(o["composite_measurement"]));
+    if(version==5)p.candidateWindowMeasurement=DecodeCandidateWindowMeasurementContract(Object(o["composite_measurement"]));
     ValidateVerificationProtocol(p);Require(EncodeVerificationProtocol(p)==o);return p;
 }
 }

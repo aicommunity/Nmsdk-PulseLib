@@ -1,5 +1,6 @@
 #pragma once
 #include "CandidateWindowPolicy.h"
+#include "CandidateWindowMeasurementContract.h"
 #include "CompositeTrainingMeasurement.h"
 #include <memory>
 
@@ -9,26 +10,6 @@ class CompositePortableTrainingProof;
 class NativeCompositeStateFactory;
 class NativeCompositeTrainingAttempt;
 class CandidateWindowProposalReplayFactory;
-
-// Reserved opt-in branches. This header adds no dispatch, decoder or factory:
-// protocol4/contract1 and every released codec keep their existing meaning.
-inline constexpr unsigned CandidateWindowVerificationProtocolSchema=5;
-inline constexpr unsigned CandidateWindowMeasurementContractSchema=2;
-inline constexpr unsigned CandidateWindowBasinSpecificationSchema=2;
-inline constexpr unsigned CandidateWindowCandidateBindingSchema=2;
-inline constexpr unsigned CandidateWindowMeasurementRecordSchema=2;
-inline constexpr unsigned CandidateWindowMeasurementArchiveSchema=2;
-
-struct CandidateWindowMeasurementContract {
-    unsigned schemaVersion=CandidateWindowMeasurementContractSchema;
-    std::string methodId=DeclaredWindowBasinResult::MethodId();
-    MatchedOmissionPolicy contextPolicy;
-    DeclaredWindowBasinPolicy geometryPolicy;
-    // Immutable time offsets used ONLY for the initial reference groups.
-    std::vector<CompositeInputWindow> referenceInputWindows;
-    CandidateWindowPolicy candidateWindowPolicy;
-    bool operator==(const CandidateWindowMeasurementContract&) const=default;
-};
 
 enum class CandidateWindowCoordinateMode { ReferenceTime,CandidateFrame };
 // Declaration DATA, not evidence of captured frames or native admission.

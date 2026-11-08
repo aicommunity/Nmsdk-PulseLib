@@ -1,6 +1,7 @@
 #include "ProbeEvidenceJson.h"
 #include "NativeCompositeLearnedState.h"
 #include "CompositeTrainingDeclarations.h"
+#include "CandidateWindowTrainingDeclarations.h"
 #include "NativeTrainingService.h"
 #include "NativeTrainingCapacitance.h"
 #include "ConfiguredNativeTraining.h"
@@ -161,6 +162,7 @@ QJsonObject EncodeVerificationProtocol(const VerificationProtocol& p)
         {"minimum_amplitude",Number(p.minimumAmplitude)},{"stimulus_profile",p.stimulusProfile?QJsonValue(Profile(*p.stimulusProfile)):QJsonValue(QJsonValue::Null)},
         {"wave_assignment",Assignment(p.waveAssignment)},{"peak_selection",Selection(p.peakSelection)}};
     if(p.schemaVersion==4)result["composite_measurement"]=EncodeCompositeMeasurementContract(*p.compositeMeasurement);
+    if(p.schemaVersion==5)result["composite_measurement"]=EncodeCandidateWindowMeasurementContract(*p.candidateWindowMeasurement);
     return result;
 }
 QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& d)

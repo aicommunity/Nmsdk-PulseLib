@@ -3,6 +3,7 @@
 #include "NativeMatchedOmissionGroup.h"
 
 namespace NMSDK::TimeLearner {
+struct CandidateWindowBasinSpecification;
 struct NativeDeclaredWindowBasinSpecification {
     unsigned schemaVersion=1;
     std::string methodId=DeclaredWindowBasinResult::MethodId();
@@ -26,5 +27,11 @@ struct NativeDeclaredWindowBasinResult {
 // no model mutation, scheduler calls, native execution attestation or Train API.
 NativeDeclaredWindowBasinResult SelectNativeDeclaredWindowBasinMaximum(
     const NativeDeclaredWindowBasinSpecification& specification,
+    const DeclaredWindowBasinPolicy& geometryPolicy,const NativeMatchedOmissionResult& group);
+// Opt-in spec2 declaration. Frame endpoints are projected only from ACTUAL
+// retained fullBefore samples after the shared closed native/context checks.
+// Diagnostic result only; neither overload mints live/portable Train authority.
+NativeDeclaredWindowBasinResult SelectNativeDeclaredWindowBasinMaximum(
+    const CandidateWindowBasinSpecification& specification,
     const DeclaredWindowBasinPolicy& geometryPolicy,const NativeMatchedOmissionResult& group);
 }

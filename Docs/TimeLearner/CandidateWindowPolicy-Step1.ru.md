@@ -1,5 +1,7 @@
 # CandidateWindowPolicy: STEP1 pure arithmetic
 
+Этот документ фиксирует STEP1 Pulse `e7a38933051706f8f2fa76fe322c3fe7401ee52a`. Отдельный pure normal40+ASan40 gate сохранён в Root evidence `72da089b46d64aaa9bd8a4abdc6acfddf0c8bebb`; scope — только арифметика и закрытые типы, без native authority. Последующая source-подготовка protocol5/spec2 описана в `CandidateWindowTraining-Step2Contract.ru.md` и не наследует из pure40 runtime admission.
+
 Статус: source preparation only. Локально не выполнялись C++ compilation, syntax-only build или numerical/unit tests. Новый модуль ещё не включён в native bridge/service/config/Train/defaults; runtime acceptance отсутствует.
 
 ## Контракт

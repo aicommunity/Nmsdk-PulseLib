@@ -1,6 +1,7 @@
 #pragma once
 #include "ProbeObservation.h"
 #include "CompositeTrainingMeasurement.h"
+#include "CandidateWindowMeasurementContract.h"
 #include <optional>
 #include <set>
 
@@ -23,6 +24,8 @@ struct VerificationProtocol {
     WaveAssignmentPolicy waveAssignment=WaveAssignmentPolicy::WindowOnly;
     PeakSelectionPolicy peakSelection=PeakSelectionPolicy::IsolatedWindow;
     std::optional<CompositeMeasurementContract> compositeMeasurement={};
+    // Protocol5 only. Protocol4 keeps its existing fixed-window contract.
+    std::optional<CandidateWindowMeasurementContract> candidateWindowMeasurement={};
     bool operator==(const VerificationProtocol&) const=default;
 };
 // Adapter-produced declaration after native routing/reset at a legal boundary.
