@@ -20,7 +20,7 @@ double Count(std::size_t n){Require(n<=CandidateWindowMaximumExactCount,"candida
 std::string CandidateWindowTrainingSemanticProofId(const VerificationProtocol& p,const NativeCompositeMeasurementRecord& r) {
     ValidateVerificationProtocol(p);ValidateCandidateWindowMeasurementContract(p);
     ValidateCandidateWindowLogicalContext(p,r.logical,r.attemptId,r.groupId,r.purpose);
-    Require(r.candidateWindowSpecification && r.selection && r.selection->status==NativeDeclaredWindowBasinStatus::Completed &&
+    Require(r.groupState==NativeMatchedOmissionState::Completed && r.candidateWindowSpecification && r.selection && r.selection->status==NativeDeclaredWindowBasinStatus::Completed &&
         r.selection->geometry && r.selection->geometry->validity==DeclaredWindowBasinValidity::Valid && r.selection->geometry->measuredMaximum &&
         !r.sourceOrigin.empty() && !r.ownerFamilyBinding.empty() && !r.attemptId.empty(),"candidate_window_proof_incomplete");
     const auto& spec=*r.candidateWindowSpecification;
@@ -64,6 +64,7 @@ std::string CandidateWindowTrainingSemanticProofId(const VerificationProtocol& p
         {"method_specification",EncodeCandidateWindowBasinSpecification(spec)},{"window_proposal",proposal},
         {"attempt_limits",QJsonArray{Count(a.maximumGroups),Count(a.maximumNativeProbes),Count(a.maximumTotalSamples),a.maximumModelSeconds,a.maximumWallSeconds}},
         {"group_limits",QJsonArray{r.maximumGroupModelSeconds,r.maximumGroupWallSeconds}},
+        {"maximum_total_primary_bytes",Count(r.policy.maximumTotalPrimaryBytes)},
         {"primary",primary},{"maximum",QJsonObject{{"first_sample",Count(peak.firstSample)},{"last_sample",Count(peak.lastSample)},
             {"amplitude",peak.amplitude},{"raw_potential",peak.rawPotential},{"time",peak.time},{"plateau_end",peak.plateauEnd}}}};
     return NmsdkTools::CanonicalModelDataSha256(content).toStdString();

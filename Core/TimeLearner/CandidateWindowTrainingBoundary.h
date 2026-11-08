@@ -80,6 +80,7 @@ private:
     friend class NativeCompositeStateFactory;
     friend class NativeCompositeTrainingAttempt;
     friend class CandidateWindowProposalReplayFactory;
+    friend class CandidateWindowPortableReferenceFactory;
 };
 
 // Validated archived candidate DATA; never a live lease or proof of native

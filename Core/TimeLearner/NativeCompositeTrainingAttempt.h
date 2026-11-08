@@ -10,6 +10,8 @@
 namespace NMSDK { class NNeuronTimeLearner;class NNeuronTimeLearnerBranch; }
 namespace NMSDK::TimeLearner {
 class CompositePortableTrainingProof;
+class DecodedNativeCompositeArchive;
+struct NativeCompositeArchiveDocument;
 // Live native authority for protocol 4 and the explicit protocol5 constructor,
 // separate from diagnostic data/codec. Protocol5 supplies scoped measurement
 // and complete-reference factories; old search/final admission stays blocked.
@@ -25,6 +27,10 @@ public:
     NativeCompositeTrainingAttempt(NNeuronTimeLearner& owner,VerificationProtocol protocol,
         CompositeAttemptLimits limits,NativeCandidateWindowAttemptDeclaration,double modelTime,double wallTime);
     NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& owner,VerificationProtocol protocol,
+        CompositeAttemptLimits limits,NativeCandidateWindowAttemptDeclaration,double modelTime,double wallTime);
+    NativeCompositeTrainingAttempt(NNeuronTimeLearner& owner,const DecodedNativeCompositeArchive&,
+        CompositeAttemptLimits limits,NativeCandidateWindowAttemptDeclaration,double modelTime,double wallTime);
+    NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& owner,const DecodedNativeCompositeArchive&,
         CompositeAttemptLimits limits,NativeCandidateWindowAttemptDeclaration,double modelTime,double wallTime);
     // A fresh actual owner lease from closed portable data, never a restored
     // callback/address or recapture of the current trained graph as a target.
@@ -66,6 +72,7 @@ public:
     const std::vector<NativeCompositeMeasurementRecord>& CandidateWindowRecords() const {return windowRecords;}
 private:
     friend class NativeTrainingService;
+    friend NativeCompositeArchiveDocument EncodeNativeCandidateWindowTrainingArchive(const NativeCompositeTrainingAttempt&,const QString&);
     void RestartOwned(CompositeAttemptLimits,double modelTime,double wallTime,const std::string& currentRevision);
     void RefreshOwnedAfterEdit(const std::string& currentRevision);
     void RevokeLive();
@@ -78,6 +85,8 @@ private:
     void InitializeShared(VerificationProtocol,CompositeAttemptLimits,double,double);
     void InitializeCandidateWindow(VerificationProtocol,CompositeAttemptLimits,NativeCandidateWindowAttemptDeclaration,double,double);
     void AdoptOwned(const CompositePortableTrainingProof&,CompositeAttemptLimits,double,double);
+    void AdoptCandidateWindowArchive(const DecodedNativeCompositeArchive&,CompositeAttemptLimits,
+        NativeCandidateWindowAttemptDeclaration,double,double);
     void CheckClock(double,double);
     std::string CheckBoundary(QJsonObject* retained=nullptr,std::optional<TrainingCapacitance>* parameters=nullptr);
     void CloseGroup();

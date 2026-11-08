@@ -15,6 +15,7 @@
 #include "CompositeSourceValidation.h"
 #include "CandidateWindowMeasurementEvidence.h"
 #include "CandidateWindowLogicalContext.h"
+#include "CandidateWindowPortableReferences.h"
 #include "CompositePrimaryBudget.h"
 #include <QCryptographicHash>
 #include <QJsonArray>
@@ -115,6 +116,14 @@ NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearne
     CompositeAttemptLimits l,NativeCandidateWindowAttemptDeclaration d,double m,double w) {
     Bind(o);InitializeCandidateWindow(std::move(p),l,std::move(d),m,w);
 }
+NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearner& o,const DecodedNativeCompositeArchive& a,
+    CompositeAttemptLimits l,NativeCandidateWindowAttemptDeclaration d,double m,double w) {
+    Bind(o);AdoptCandidateWindowArchive(a,l,std::move(d),m,w);
+}
+NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& o,const DecodedNativeCompositeArchive& a,
+    CompositeAttemptLimits l,NativeCandidateWindowAttemptDeclaration d,double m,double w) {
+    Bind(o);AdoptCandidateWindowArchive(a,l,std::move(d),m,w);
+}
 NativeCompositeTrainingAttempt::NativeCompositeTrainingAttempt(NNeuronTimeLearnerBranch& o,VerificationProtocol p,
     CompositeAttemptLimits l,NativeCandidateWindowAttemptDeclaration d,double m,double w) {
     Bind(o);InitializeCandidateWindow(std::move(p),l,std::move(d),m,w);
@@ -139,6 +148,37 @@ void NativeCompositeTrainingAttempt::AdoptOwned(const CompositePortableTrainingP
     Require(adapter.probeState()!=NativeProbeStatus::Queued && adapter.probeState()!=NativeProbeStatus::Running,
         "composite_imported_owner_probe_active");
     RestartOwned(l,m,w,proof.ModelRevision());
+}
+void NativeCompositeTrainingAttempt::AdoptCandidateWindowArchive(const DecodedNativeCompositeArchive& archive,CompositeAttemptLimits l,
+    NativeCandidateWindowAttemptDeclaration d,double m,double w) {
+    Require(!d.attemptId.empty() && d.attemptId!=archive.CurrentAttemptId() && d.maximumTotalPrimaryBytes>0 &&
+        d.maximumTotalPrimaryBytes<=9007199254740991ULL,"candidate_window_restart_explicit_new_attempt_or_primary_budget");
+    Require(std::none_of(archive.Records().begin(),archive.Records().end(),[&](const auto& r){return r.attemptId==d.attemptId;}),
+        "candidate_window_restart_attempt_namespace_reused");
+    auto references=CandidateWindowPortableReferenceFactory::Replay(archive);
+    protocol=std::make_shared<const VerificationProtocol>(archive.Protocol());sourceBinding=archive.SourceBinding();
+    sourceOrigin=archive.SourceOrigin();ownerScope=archive.OwnerFamilyBinding();windowDeclaration=std::move(d);
+    initialDeclaration=sourceBinding["model_spec"].toObject();initialRevision=sourceBinding["initial_model"].toObject()["sha256"].toString().toStdString();
+    initialEpoch=std::size_t(sourceBinding["initial_epoch"].toDouble());storageFingerprint=sourceBinding["storage_images_sha256"].toString().toStdString();
+    initialCapacitanceOrigin=sourceBinding["optional_C0_origin"].toString().toStdString();
+    if(!sourceBinding["optional_C0_witness"].isNull())initialCapacitanceMaximumRelativeChange=
+        DecodeNativeTrainingCapacitanceWitness(sourceBinding["optional_C0_witness"].toObject()).parameters.maximumRelativeChange;
+    for(const auto& image:sourceBinding["storage_images"].toArray())imageRoots.push_back(image.toObject()["name"].toString().toStdString());
+    const auto b=bindings();Require(b.owner && b.neuron && b.dataset && b.inputCount==int(protocol->inputs.size()) &&
+        b.branch==(protocol->routing==ProbeRouting::BranchSoloBurst),"candidate_window_restart_owner_protocol");
+    Require(adapter.probeState()!=NativeProbeStatus::Queued && adapter.probeState()!=NativeProbeStatus::Running,"candidate_window_restart_probe_active");
+    windowRecords=archive.Records();for(const auto& r:windowRecords) {
+        const auto bytes=CompositeRecordPrimaryBytes(r);Require(bytes<=windowDeclaration->maximumTotalPrimaryBytes-windowPrimaryBytes,
+            "candidate_window_restart_retained_primary_budget");windowPrimaryBytes+=bytes;
+    }
+    // No InitializeShared/IdentifyModel target capture occurs here. Every P0,
+    // seed and raw target is retained from independently replayed ORIGINAL refs.
+    initialWindowParameters=references.seeds.front().arithmetic.initialParameters;
+    initialWindowCapacitance=references.seeds.front().arithmetic.initialCapacitance;windowReferences=std::move(references);
+    const auto revision=adapter.readModelRevision();RestartOwned(l,m,w,revision);
+    QJsonObject actual;CheckBoundary(&actual);
+    (void)CandidateWindowProposalReplayFactory::CheckCandidateBinding(*windowReferences,*protocol,actual);
+    CheckClock(actualModelTime(),NativeTrainingWallTime());
 }
 NativeCompositeTrainingAttempt::~NativeCompositeTrainingAttempt(){
     // A destructor never invokes application/controller notification callbacks.
@@ -321,7 +361,8 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
     auto id=std::make_shared<CompositeTrainingDetail::Identity>();id->protocol=protocol;id->lease=lease;
     QJsonObject candidate;id->ownerScope=ownerScope;id->sourceOrigin=sourceOrigin;id->candidateWitnessId=CheckBoundary(&candidate,&id->capacitance);
     id->candidateBindingJson=QJsonDocument(candidate).toJson(QJsonDocument::Compact).toStdString();id->generation=generation;
-    id->runId=logical.runId;id->trialId=logical.trialId;id->groupId=logical.trialId+"/composite/"+std::to_string(++issuedGroups);
+    id->runId=logical.runId;id->trialId=logical.trialId;id->groupId=logical.trialId+"/composite/"+
+        std::to_string(windowMode?issuedGroups+1:++issuedGroups);
     id->baseRevision=logical.baseModelRevision;id->modelEpoch=logical.epoch;id->inputIndex=logical.inputIndex;
     id->channel=protocol->routing==ProbeRouting::ClassicBurst?logical.inputIndex:0;id->purpose=purpose;activeIdentity=id;
     if(windowMode) {
@@ -395,8 +436,10 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
     NativeMatchedOmissionPlan plan;plan.fullBurst=std::move(prototype);plan.groupId=id->groupId;
     plan.policy=contextPolicy;plan.channel=id->channel;plan.maximumModelSeconds=modelLimit;plan.maximumWallSeconds=wallLimit;
     const auto b=bindings();for(const auto& soma:b.somas)plan.physicalChannelPaths.push_back(soma->GetLongName(b.owner));
-    group=std::make_unique<NativeMatchedOmissionGroup>();group->Start(std::move(plan),b,modelTime,wallTime);
-    if(windowMode)id->requireNativeInstances=group->RetainInstanceGuard();
+    if(windowMode) {
+        auto next=std::make_unique<NativeMatchedOmissionGroup>();next->Start(std::move(plan),b,modelTime,wallTime);
+        id->requireNativeInstances=next->RetainInstanceGuard();group=std::move(next);++issuedGroups;
+    } else {group=std::make_unique<NativeMatchedOmissionGroup>();group->Start(std::move(plan),b,modelTime,wallTime);}
 }
 bool NativeCompositeTrainingAttempt::Running() const {return group && group->State()==NativeMatchedOmissionState::Running;}
 std::size_t NativeCompositeTrainingAttempt::IssuedNativeProbes() const {return completedNativeProbes+(group && !closed?group->IssuedNativeProbes():0);}
@@ -567,6 +610,13 @@ NativeCompositeMeasurementRecord NativeCompositeTrainingAttempt::Record() const 
         r.policy.maximumGroups=limits.maximumGroups;r.policy.maximumNativeProbes=limits.maximumNativeProbes;r.policy.maximumTotalSamples=limits.maximumTotalSamples;
         r.policy.maximumTotalPrimaryBytes=windowDeclaration->maximumTotalPrimaryBytes;
         r.policy.maximumGroupModelSeconds=groupModelLimit;r.policy.maximumGroupWallSeconds=groupWallLimit;
+        const auto candidate=ParseStrictNativeJsonObject(activeIdentity->candidateBindingJson,128u*1024u*1024u);
+        if(!candidate["optional_C0_witness"].isNull()) {
+            const auto witness=DecodeNativeTrainingCapacitanceWitness(candidate["optional_C0_witness"].toObject());
+            const auto witnessId=NativeTrainingCapacitanceWitnessId(witness);r.capacitanceWitnesses.emplace(witnessId,witness);
+            for(std::size_t i=0;i<r.issuedNativeProbes;++i)r.nativeTrialWitnessIds.emplace(r.groupId+"/native/"+std::to_string(i),witnessId);
+            if(!r.issuedNativeProbes)r.capacitanceWitnesses.clear();
+        }
     }
     return r;
 }

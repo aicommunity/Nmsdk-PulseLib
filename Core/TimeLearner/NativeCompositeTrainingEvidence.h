@@ -8,6 +8,7 @@ struct NativeCompositeArchiveDocument {
     MatchedOmissionPrimary primary;
 };
 class CompositePortableTrainingProof;
+class NativeCompositeTrainingAttempt;
 // Closed portable data, not a live lease or a claim that execution happened.
 // Complete groups replay native closure and the current selector from exact
 // CSV bytes. Partials prove no native closure and remain nonpromotable.
@@ -37,6 +38,10 @@ private:
 };
 NativeCompositeArchiveDocument EncodeNativeCompositeTrainingArchive(const NativeTrainingService&,
     const QString& primaryPrefix="composite-measurements");
+// Explicit archive2 export of protocol5 factory history at a group boundary.
+// It does not enable the service, search/final admission or certificates.
+NativeCompositeArchiveDocument EncodeNativeCandidateWindowTrainingArchive(const NativeCompositeTrainingAttempt&,
+    const QString& primaryPrefix="candidate-window-measurements");
 DecodedNativeCompositeArchive DecodeNativeCompositeTrainingArchive(const QJsonObject&,
     const std::function<QByteArray(const QString&)>& externalPrimaryResolver={});
 DecodedNativeCompositeArchive DecodeNativeCompositeTrainingArchive(const QByteArray&,

@@ -1,6 +1,11 @@
 #include "NativeCompositeTrainingEvidence.h"
 #include "CompositeTrainingDeclarations.h"
 #include "CompositeSourceValidation.h"
+#include "CandidateWindowLogicalContext.h"
+#include "CandidateWindowProposalReplay.h"
+#include "CandidateWindowPortableReferences.h"
+#include "CandidateWindowMeasurementEvidence.h"
+#include "NativeCompositeTrainingAttempt.h"
 #include "ConfiguredNativeTraining.h"
 #include "ProbeEvidenceJson.h"
 #include "ModelArchive.h"
@@ -64,6 +69,19 @@ NativeDeclaredWindowBasinSpecification Specification(const VerificationProtocol&
 QJsonObject Specification(const NativeDeclaredWindowBasinSpecification& s){return {{"schema_version",int(s.schemaVersion)},{"method_id",Text(s.methodId)},
     {"group_id",Text(s.groupId)},{"input_id",Text(s.inputId)},{"assigned_input",Count(s.assignedInput)},{"channel",Count(s.channel)},
     {"window_begin_offset",Number(s.windowBeginOffset)},{"window_end_offset",Number(s.windowEndOffset)}};}
+const MatchedOmissionPolicy& ContextPolicy(const VerificationProtocol& p) {
+    if(p.schemaVersion==5){ValidateCandidateWindowMeasurementContract(p);return p.candidateWindowMeasurement->contextPolicy;}
+    ValidateCompositeMeasurementContract(p);return p.compositeMeasurement->contextPolicy;
+}
+const DeclaredWindowBasinPolicy& GeometryPolicy(const VerificationProtocol& p) {
+    if(p.schemaVersion==5){ValidateCandidateWindowMeasurementContract(p);return p.candidateWindowMeasurement->geometryPolicy;}
+    ValidateCompositeMeasurementContract(p);return p.compositeMeasurement->geometryPolicy;
+}
+NativeDeclaredWindowBasinResult FreshSelection(const VerificationProtocol& p,const NativeCompositeMeasurementRecord& r) {
+    if(p.schemaVersion==5){Require(bool(r.candidateWindowSpecification),"candidate_window_archive_specification_missing");
+        return SelectNativeDeclaredWindowBasinMaximum(*r.candidateWindowSpecification,GeometryPolicy(p),r.group);}
+    return SelectNativeDeclaredWindowBasinMaximum(Specification(p,r),p.compositeMeasurement->geometryPolicy,r.group);
+}
 QJsonObject Request(const VerificationRequest& r){return {{"run_id",Text(r.runId)},{"trial_id",Text(r.trialId)},{"input_id",Text(r.inputId)},
     {"sample_id",Text(r.sampleId)},{"pattern_hash",Text(r.patternHash)},{"protocol_revision",Text(r.protocolRevision)},
     {"base_model_revision",Text(r.baseModelRevision)},{"routing",r.routing==ProbeRouting::ClassicBurst?"classic_burst":"branch_solo_burst"},
@@ -221,17 +239,36 @@ std::string CompositeTrainingSemanticProofId(const VerificationProtocol& p,const
 
 namespace {
 void CheckRecord(const VerificationProtocol& p,const QJsonObject& source,const NativeCompositeMeasurementRecord& r) {
-    Require(!r.candidateWindowSpecification && !r.windowProposal,"candidate_window_record_requires_archive2");
-    CheckLogical(p,r);const auto candidate=ParseStrictNativeJsonObject(r.candidateBindingJson);Keys(candidate,"kind source_origin model_identity storage_images_sha256 optional_C0_witness");
-    Require(candidate["kind"]==QJsonValue("composite_train_candidate_binding_v1") && candidate["source_origin"]==Text(r.sourceOrigin) &&
+    const bool windowMode=p.schemaVersion==5;
+    if(windowMode) {
+        ValidateCandidateWindowLogicalContext(p,r.logical,r.attemptId,r.groupId,r.purpose);
+        Require(r.policy.schemaVersion==2 && r.candidateWindowSpecification,"candidate_window_archive_record_contract");
+        const auto& s=*r.candidateWindowSpecification;
+        Require(s.groupId==r.groupId && s.inputId==r.logical.inputId && s.assignedInput==r.logical.inputIndex &&
+            s.channel==(p.routing==ProbeRouting::ClassicBurst?r.logical.inputIndex:0u),"candidate_window_archive_specification_binding");
+        if(r.purpose==CompositeMeasurementPurpose::Reference)
+            Require(!r.windowProposal && s.coordinateMode==CandidateWindowCoordinateMode::ReferenceTime &&
+                s.referenceTime==p.candidateWindowMeasurement->referenceInputWindows.at(r.logical.inputIndex),"candidate_window_archive_reference_specification");
+        else Require(r.windowProposal && s.coordinateMode==CandidateWindowCoordinateMode::CandidateFrame && s.candidateFrame &&
+            r.windowProposal->computation.window==s.candidateFrame,"candidate_window_archive_proposal_specification");
+    } else {Require(!r.candidateWindowSpecification && !r.windowProposal,"candidate_window_record_requires_archive2");CheckLogical(p,r);}
+    const auto candidate=ParseStrictNativeJsonObject(r.candidateBindingJson);
+    Keys(candidate,windowMode?"kind schema_version source_origin model_identity storage_images_sha256 optional_C0_witness physical_readback":
+        "kind source_origin model_identity storage_images_sha256 optional_C0_witness");
+    Require((windowMode?(candidate["kind"]==QJsonValue("composite_train_candidate_binding_v2") && Count(candidate["schema_version"])==2):
+        candidate["kind"]==QJsonValue("composite_train_candidate_binding_v1")) && candidate["source_origin"]==Text(r.sourceOrigin) &&
         candidate["storage_images_sha256"]==source["storage_images_sha256"] && !r.ownerFamilyBinding.empty() && !r.liveAttemptBinding.empty(),"composite_archive_candidate_binding");
     CheckIdentity(Object(candidate["model_identity"]));Require(Object(candidate["model_identity"])["sha256"]==Text(r.logical.baseModelRevision),"composite_archive_candidate_revision");
     const auto& a=r.attemptLimits;Require(a.maximumGroups && a.maximumNativeProbes>=p.inputs.size()+2 && a.maximumTotalSamples &&
         Number(a.maximumModelSeconds)>0. && Number(a.maximumWallSeconds)>0. && Number(r.maximumGroupModelSeconds)>0. &&
         r.maximumGroupModelSeconds<=a.maximumModelSeconds && Number(r.maximumGroupWallSeconds)>0. && r.maximumGroupWallSeconds<=a.maximumWallSeconds &&
         r.policy.maximumTotalPrimaryBytes && r.issuedNativeProbes<=p.inputs.size()+2 && r.issuedNativeProbes<=a.maximumNativeProbes &&
-        r.sampledFrames<=a.maximumTotalSamples && r.policy.contextPolicy==p.compositeMeasurement->contextPolicy && r.policy.geometryPolicy==p.compositeMeasurement->geometryPolicy,
+        r.sampledFrames<=a.maximumTotalSamples && r.policy.contextPolicy==ContextPolicy(p) && r.policy.geometryPolicy==GeometryPolicy(p),
         "composite_archive_record_budget");
+    if(windowMode)Require(r.policy.methodId==DeclaredWindowBasinResult::MethodId() && r.policy.maximumGroups==a.maximumGroups &&
+        r.policy.maximumNativeProbes==a.maximumNativeProbes && r.policy.maximumTotalSamples==a.maximumTotalSamples &&
+        r.policy.maximumGroupModelSeconds==r.maximumGroupModelSeconds && r.policy.maximumGroupWallSeconds==r.maximumGroupWallSeconds,
+        "candidate_window_archive_policy_duplicates");
     Require(Number(r.startModel)<=Number(r.endModel) && Number(r.startWall)<=Number(r.endWall),"composite_archive_clock_order");
     std::size_t retained=0;std::set<std::string> rawIds,packetIds;for(const auto& raw:r.rawTrials) {
         const auto& spec=raw.actual;const auto index=rawIds.size();Require(index<r.issuedNativeProbes &&
@@ -240,7 +277,7 @@ void CheckRecord(const VerificationProtocol& p,const QJsonObject& source,const N
             raw.prepared.inputId==r.logical.inputId && raw.prepared.protocolRevision==p.revision && raw.prepared.routing==p.routing &&
             spec.runId==r.logical.runId && spec.sampleId==p.sampleId && spec.schemaVersion==6 && spec.stimulusSubset &&
             spec.stimulusSubset->sourceTrainingPatternHash==p.patternHash && spec.stimulusSubset->physicalInputCount==p.inputs.size() &&
-            spec.maximumSamples<=p.compositeMeasurement->contextPolicy.maximumSamples && spec.stimulusProfile==p.stimulusProfile &&
+            spec.maximumSamples<=ContextPolicy(p).maximumSamples && spec.stimulusProfile==p.stimulusProfile &&
             spec.maximumSampleGap==p.maximumSampleGap && spec.minimumAmplitude==p.minimumAmplitude && !spec.recordSpikes &&
             spec.waveAssignment==WaveAssignmentPolicy::WindowOnly && spec.peakSelection==PeakSelectionPolicy::IsolatedWindow &&
             (p.routing==ProbeRouting::ClassicBurst?!raw.prepared.selectedInputIndex:raw.prepared.selectedInputIndex==r.logical.inputIndex),
@@ -253,7 +290,7 @@ void CheckRecord(const VerificationProtocol& p,const QJsonObject& source,const N
         Require(spec.patternHash==Hash(presented).toStdString() && spec.expectedStimulusIds==expectedIds,"composite_archive_raw_source_plan");
         retained=Add(retained,raw.samples.size());(void)EncodeCompositeRawPrimary(raw);
     }
-    Require(retained==r.sampledFrames && retained<=p.compositeMeasurement->contextPolicy.maximumTotalSamples &&
+    Require(retained==r.sampledFrames && retained<=ContextPolicy(p).maximumTotalSamples &&
         CompositeRecordPrimaryBytes(r)<=r.policy.maximumTotalPrimaryBytes,"composite_archive_retained_sample_charge");
     for(const auto& packet:r.group.packets) {
         Require(packet.requestedSpecification && packetIds.insert(packet.requestedSpecification->trialId).second,"composite_archive_packet_identity");
@@ -306,14 +343,16 @@ QJsonObject EncodeRecord(const VerificationProtocol& p,const QJsonObject& source
     }
     for(const auto& packet:r.group.packets)packets.append(EncodeNativeProbeEvidence(packet));
     const auto native=CompleteGroup(r,paths,primary);const auto candidate=ParseStrictNativeJsonObject(r.candidateBindingJson);
+    if(p.schemaVersion==5)Require(r.groupState!=NativeMatchedOmissionState::Completed || native.isObject(),
+        "candidate_window_archive_completed_state_without_native_closure");
     if(native.isObject() && r.selection)Require(EncodeNativeCompositeSelection(*r.selection)==EncodeNativeCompositeSelection(
-        SelectNativeDeclaredWindowBasinMaximum(Specification(p,r),p.compositeMeasurement->geometryPolicy,r.group)),"composite_archive_stale_diagnostic_selection");
+        FreshSelection(p,r)),"composite_archive_stale_diagnostic_selection");
     if(!native.isObject() && r.selection)Require(!r.selection->geometry && r.selection->status==NativeDeclaredWindowBasinStatus::Rejected,
         "composite_archive_partial_geometry_claim");
     QJsonValue measured(QJsonValue::Null);if(!r.semanticProofId.empty()) {
         Require(native.isObject() && r.selection && EncodeNativeCompositeSelection(*r.selection)==EncodeNativeCompositeSelection(
-            SelectNativeDeclaredWindowBasinMaximum(Specification(p,r),p.compositeMeasurement->geometryPolicy,r.group)) &&
-            CompositeTrainingSemanticProofId(p,r)==r.semanticProofId,"composite_archive_stale_measurement");
+            FreshSelection(p,r)) &&
+            (p.schemaVersion==5?CandidateWindowTrainingSemanticProofId(p,r):CompositeTrainingSemanticProofId(p,r))==r.semanticProofId,"composite_archive_stale_measurement");
         const auto& peak=*r.selection->geometry->measuredMaximum;const auto ordinal=std::find(p.stimulusIds.begin(),p.stimulusIds.end(),p.originStimulusId)-p.stimulusIds.begin();
         const double origin=r.group.witness.fullBefore.observation.events.at(ordinal).time;
         measured=QJsonObject{{"raw_potential",Number(peak.rawPotential)},{"arrival",Number(peak.time-origin)},
@@ -322,10 +361,11 @@ QJsonObject EncodeRecord(const VerificationProtocol& p,const QJsonObject& source
     Require(!r.consumed || measured.isObject(),"composite_archive_unmeasured_consumption");
     QJsonObject witnesses,trialWitnesses;for(const auto& [id,w]:r.capacitanceWitnesses)witnesses[Text(id)]=EncodeNativeTrainingCapacitanceWitness(w);
     for(const auto& [trial,id]:r.nativeTrialWitnessIds)trialWitnesses[Text(trial)]=Text(id);
-    return {{"kind","timelearner_composite_measurement"},{"schema_version",1},{"logical_request",Request(r.logical)},
+    QJsonObject encoded{{"kind","timelearner_composite_measurement"},{"schema_version",p.schemaVersion==5?2:1},{"logical_request",Request(r.logical)},
         {"purpose",Purpose(r.purpose)},{"group_id",Text(r.groupId)},{"attempt_id",Text(r.attemptId)},{"source_origin",Text(r.sourceOrigin)},
         {"owner_family_binding",Text(r.ownerFamilyBinding)},{"live_attempt_binding",Text(r.liveAttemptBinding)},
-        {"method_specification",Specification(Specification(p,r))},{"geometry_policy",EncodeCompositeGeometryPolicy(p.compositeMeasurement->geometryPolicy)},
+        {"method_specification",p.schemaVersion==5?EncodeCandidateWindowBasinSpecification(*r.candidateWindowSpecification):Specification(Specification(p,r))},
+        {"geometry_policy",EncodeCompositeGeometryPolicy(GeometryPolicy(p))},
         {"candidate_binding",candidate},{"candidate_witness_id",Hash(candidate)},{"group_state",StateName(r.groupState)},
         {"complete_group",native.isObject()},{"native_group",native},{"raw_trials",rawTrials},{"native_packets",packets},
         {"selection",r.selection?QJsonValue(EncodeNativeCompositeSelection(*r.selection)):QJsonValue(QJsonValue::Null)},
@@ -337,6 +377,8 @@ QJsonObject EncodeRecord(const VerificationProtocol& p,const QJsonObject& source
             {"end_model_time",Number(r.endModel)},{"end_wall_time",Number(r.endWall)},
             {"wall_enforcement",r.semanticProofId.empty()?"not_completed":"live_checked_before_mint"}}},
         {"capacitance_witnesses",witnesses},{"native_trial_witness_ids",trialWitnesses}};
+    if(p.schemaVersion==5)encoded["window_proposal"]=r.windowProposal?QJsonValue(EncodeCandidateWindowProposalData(*r.windowProposal)):QJsonValue(QJsonValue::Null);
+    return encoded;
 }
 void CheckAcceptedSets(const VerificationProtocol& p,const QJsonObject& source,const std::vector<NativeCompositeMeasurementRecord>& records,
     const std::vector<std::string>& refs,const std::vector<std::string>& finals,const std::string& currentAttempt) {
@@ -402,13 +444,57 @@ NativeCompositeArchiveDocument EncodeNativeCompositeTrainingArchive(const Native
     output.document["artifact_document_sha256"]=Hash(output.document);return output;
 }
 
+NativeCompositeArchiveDocument EncodeNativeCandidateWindowTrainingArchive(const NativeCompositeTrainingAttempt& attempt,const QString& prefix) {
+    SafePath(prefix);const auto& p=*attempt.protocol;ValidateCandidateWindowMeasurementContract(p);
+    Require(attempt.windowDeclaration && !attempt.Running() && (!attempt.group || attempt.closed),"candidate_window_archive_requires_group_boundary");
+    const auto& source=attempt.sourceBinding;const auto origin=attempt.sourceOrigin;CheckSource(p,source,origin);
+    const auto& records=attempt.windowRecords;const auto current=attempt.windowDeclaration->attemptId;
+    std::vector<std::string> references;
+    if(attempt.windowReferences)for(std::size_t input=0;input<p.inputs.size();++input) {
+        const auto found=std::find_if(records.begin(),records.end(),[&](const auto& r){return r.purpose==CompositeMeasurementPurpose::Reference && r.logical.inputIndex==input && r.consumed;});
+        Require(found!=records.end(),"candidate_window_archive_complete_reference_record_missing");references.push_back(found->groupId);
+    }
+    // This STEP2 archive never promotes a Final measurement to old Train4
+    // consumption/certificate. Final selection is a future explicit boundary.
+    const std::vector<std::string> finals;CheckAcceptedSets(p,source,records,references,finals,current);
+    NativeCompositeArchiveDocument output;QJsonArray encoded;QJsonObject blobs;std::set<QString> folded;
+    for(std::size_t index=0;index<records.size();++index) {
+        const auto& r=records[index];std::vector<QString> paths;MatchedOmissionPrimary primary;
+        for(std::size_t i=0;i<r.rawTrials.size();++i) {
+            const auto name=i==0?QString("full-before.csv"):i==p.inputs.size()+1?QString("full-after.csv"):QString("omit-%1.csv").arg(qulonglong(i-1));
+            const auto path=prefix+QString("/group-%1/").arg(qulonglong(index+1),6,10,QLatin1Char('0'))+name;SafePath(path);
+            Require(folded.insert(path.toCaseFolded()).second,"composite_archive_colliding_path");const auto bytes=EncodeCompositeRawPrimary(r.rawTrials[i]);
+            paths.push_back(path);primary.emplace(path,bytes);output.primary.emplace(path,bytes);const auto sha=BytesHash(bytes);
+            const QJsonObject blob{{"bytes",Count(std::size_t(bytes.size()))},{"base64",QString::fromLatin1(bytes.toBase64())}};
+            Require(!blobs.contains(sha) || blobs[sha]==QJsonValue(blob),"composite_archive_blob_collision");blobs[sha]=blob;
+        }
+        encoded.append(EncodeRecord(p,source,r,paths,primary));
+    }
+    const auto counters=Counters(records,current);const auto cap=attempt.windowDeclaration->maximumTotalPrimaryBytes;
+    Require(Object(counters["attempt"])["logical_groups"]==Count(attempt.IssuedGroups()) &&
+        Object(counters["attempt"])["native_probes"]==Count(attempt.IssuedNativeProbes()) &&
+        Object(counters["attempt"])["sampled_frames"]==Count(attempt.RetainedSamples()) &&
+        Object(counters["archive"])["primary_bytes"]==Count(attempt.windowPrimaryBytes) && attempt.windowPrimaryBytes<=cap,
+        "candidate_window_archive_factory_counter_mismatch");
+    output.document={{"kind","timelearner_composite_measurement_archive"},{"schema_version",2},{"method_id",DeclaredWindowBasinResult::MethodId()},
+        {"protocol",EncodeVerificationProtocol(p)},{"source_origin",Text(origin)},{"owner_family_binding",Text(attempt.ownerScope)},{"source_binding",source},
+        {"maximum_total_primary_bytes",Count(cap)},{"current_attempt_id",Text(current)},{"records",encoded},
+        {"reference_group_ids",Strings(references)},{"final_group_ids",Strings(finals)},{"counters",counters},{"primary_blobs",blobs}};
+    output.document["artifact_document_sha256"]=Hash(output.document);
+    // The writer never exports data that its independent strict decoder cannot
+    // replay, including all proposal math and original reference primary.
+    (void)DecodeNativeCompositeTrainingArchive(output.document,[&](const QString& path){return output.primary.at(path);});return output;
+}
+
 DecodedNativeCompositeArchive DecodeNativeCompositeTrainingArchive(const QJsonObject& object,
     const std::function<QByteArray(const QString&)>& resolver) {
     Keys(object,"kind schema_version method_id protocol source_origin owner_family_binding source_binding maximum_total_primary_bytes current_attempt_id records reference_group_ids final_group_ids counters primary_blobs artifact_document_sha256");
+    const auto schema=Count(object["schema_version"]);Require(schema==1 || schema==2,"composite_archive_explicit_schema");const bool windowMode=schema==2;
     auto unsignedObject=object;unsignedObject.remove("artifact_document_sha256");Require(object["kind"]==QJsonValue("timelearner_composite_measurement_archive") &&
-        Count(object["schema_version"])==1 && object["method_id"]==QJsonValue(DeclaredWindowBasinResult::MethodId()) &&
+        object["method_id"]==QJsonValue(DeclaredWindowBasinResult::MethodId()) &&
         object["artifact_document_sha256"]==QJsonValue(Hash(unsignedObject)),"composite_archive_document_identity");
-    DecodedNativeCompositeArchive decoded;decoded.protocol=DecodeVerificationProtocol(Object(object["protocol"]));ValidateCompositeMeasurementContract(decoded.protocol);
+    DecodedNativeCompositeArchive decoded;decoded.protocol=DecodeVerificationProtocol(Object(object["protocol"]));
+    if(windowMode)ValidateCandidateWindowMeasurementContract(decoded.protocol);else ValidateCompositeMeasurementContract(decoded.protocol);
     decoded.sourceBinding=Object(object["source_binding"]);decoded.sourceOrigin=Text(object["source_origin"]);
     decoded.ownerFamilyBinding=Text(object["owner_family_binding"]);decoded.currentAttemptId=Text(object["current_attempt_id"]);
     Require(!decoded.ownerFamilyBinding.empty() && !decoded.currentAttemptId.empty(),"composite_archive_missing_owner_attempt");
@@ -422,9 +508,11 @@ DecodedNativeCompositeArchive DecodeNativeCompositeTrainingArchive(const QJsonOb
     }
     QJsonArray rebuiltRecords;std::set<QString> pathsUsed,folded,blobUsed;std::set<std::string> groups,trials,proofs;
     std::map<std::string,QJsonObject> attemptCaps;std::map<std::string,Totals> attempts;
+    std::map<std::string,std::size_t> attemptPrimaryCaps;
     for(const auto& value:Array(object["records"])) {
-        const auto o=Object(value);Keys(o,"kind schema_version logical_request purpose group_id attempt_id source_origin owner_family_binding live_attempt_binding method_specification geometry_policy candidate_binding candidate_witness_id group_state complete_group native_group raw_trials native_packets selection measurement consumed training_requested_at_consume rejection_reason budgets counters clock_observation capacitance_witnesses native_trial_witness_ids");
-        Require(o["kind"]==QJsonValue("timelearner_composite_measurement") && Count(o["schema_version"])==1,"composite_archive_record_schema");NativeCompositeMeasurementRecord r;
+        const auto o=Object(value);auto commonFields=o;if(windowMode){Require(o.contains("window_proposal"),"candidate_window_archive_proposal_missing");commonFields.remove("window_proposal");}
+        Keys(commonFields,"kind schema_version logical_request purpose group_id attempt_id source_origin owner_family_binding live_attempt_binding method_specification geometry_policy candidate_binding candidate_witness_id group_state complete_group native_group raw_trials native_packets selection measurement consumed training_requested_at_consume rejection_reason budgets counters clock_observation capacitance_witnesses native_trial_witness_ids");
+        Require(o["kind"]==QJsonValue("timelearner_composite_measurement") && Count(o["schema_version"])==schema,"composite_archive_record_schema");NativeCompositeMeasurementRecord r;
         r.logical=Request(o["logical_request"]);r.purpose=Purpose(o["purpose"]);r.groupId=Text(o["group_id"]);r.attemptId=Text(o["attempt_id"]);
         r.sourceOrigin=Text(o["source_origin"]);r.ownerFamilyBinding=Text(o["owner_family_binding"]);r.liveAttemptBinding=Text(o["live_attempt_binding"]);
         Require(r.sourceOrigin==decoded.sourceOrigin && r.ownerFamilyBinding==decoded.ownerFamilyBinding && groups.insert(r.groupId).second && trials.insert(r.logical.trialId).second,
@@ -432,7 +520,11 @@ DecodedNativeCompositeArchive DecodeNativeCompositeTrainingArchive(const QJsonOb
         const auto candidate=Object(o["candidate_binding"]);r.candidateBindingJson=QJsonDocument(candidate).toJson(QJsonDocument::Compact).toStdString();
         Require(o["candidate_witness_id"]==QJsonValue(Hash(candidate)),"composite_archive_candidate_sha");r.groupState=State(o["group_state"]);
         r.consumed=Boolean(o["consumed"]);if(!o["training_requested_at_consume"].isNull())r.trainingRequestedAtConsume=Boolean(o["training_requested_at_consume"]);
-        r.reason=Text(o["rejection_reason"]);r.policy.contextPolicy=p.compositeMeasurement->contextPolicy;r.policy.geometryPolicy=p.compositeMeasurement->geometryPolicy;
+        r.reason=Text(o["rejection_reason"]);r.policy.schemaVersion=unsigned(schema);r.policy.contextPolicy=ContextPolicy(p);r.policy.geometryPolicy=GeometryPolicy(p);
+        if(windowMode) {
+            r.candidateWindowSpecification=DecodeCandidateWindowBasinSpecification(Object(o["method_specification"]));
+            if(!o["window_proposal"].isNull())r.windowProposal=DecodeCandidateWindowProposalData(Object(o["window_proposal"]));
+        }
         const auto budget=Object(o["budgets"]);Keys(budget,"attempt_limits maximum_group_model_seconds maximum_group_wall_seconds maximum_total_primary_bytes");
         const auto limits=Object(budget["attempt_limits"]);Keys(limits,"maximum_groups maximum_native_probes maximum_total_samples maximum_model_seconds maximum_wall_seconds");
         r.attemptLimits={Count(limits["maximum_groups"]),Count(limits["maximum_native_probes"]),Count(limits["maximum_total_samples"]),Number(limits["maximum_model_seconds"]),Number(limits["maximum_wall_seconds"])};
@@ -440,6 +532,12 @@ DecodedNativeCompositeArchive DecodeNativeCompositeTrainingArchive(const QJsonOb
         r.policy.maximumTotalPrimaryBytes=Count(budget["maximum_total_primary_bytes"]);r.policy.maximumGroups=r.attemptLimits.maximumGroups;
         r.policy.maximumNativeProbes=r.attemptLimits.maximumNativeProbes;r.policy.maximumTotalSamples=r.attemptLimits.maximumTotalSamples;
         r.policy.maximumGroupModelSeconds=r.maximumGroupModelSeconds;r.policy.maximumGroupWallSeconds=r.maximumGroupWallSeconds;
+        if(windowMode) {
+            const auto previous=attemptPrimaryCaps.find(r.attemptId);
+            Require((previous==attemptPrimaryCaps.end() || previous->second==r.policy.maximumTotalPrimaryBytes) &&
+                (r.attemptId!=decoded.currentAttemptId || r.policy.maximumTotalPrimaryBytes==cap),"candidate_window_archive_attempt_primary_cap");
+            attemptPrimaryCaps[r.attemptId]=r.policy.maximumTotalPrimaryBytes;
+        }
         const auto priorCaps=attemptCaps.find(r.attemptId);Require(priorCaps==attemptCaps.end() || priorCaps->second==limits,"composite_archive_mixed_attempt_caps");attemptCaps[r.attemptId]=limits;
         const auto counters=Object(o["counters"]);Keys(counters,"native_probes sampled_frames retained_frames primary_bytes");
         r.issuedNativeProbes=Count(counters["native_probes"]);r.sampledFrames=Count(counters["sampled_frames"]);
@@ -467,13 +565,13 @@ DecodedNativeCompositeArchive DecodeNativeCompositeTrainingArchive(const QJsonOb
                 r.group.specification.protocolRevision==p.revision && r.group.specification.sampleId==p.sampleId &&
                 r.group.specification.stimulusIds==p.stimulusIds && r.group.specification.stimulusProfile==p.stimulusProfile &&
                 r.group.specification.minimumAmplitude==p.minimumAmplitude &&
-                r.group.sourceIsi.size()==Array(decoded.sourceBinding["applied_source_isi"]).size() && r.group.policy==p.compositeMeasurement->contextPolicy,"composite_archive_native_group_binding");
+                r.group.sourceIsi.size()==Array(decoded.sourceBinding["applied_source_isi"]).size() && r.group.policy==ContextPolicy(p),"composite_archive_native_group_binding");
             const auto isi=Array(decoded.sourceBinding["applied_source_isi"]);for(int i=0;i<isi.size();++i)
                 Require(r.group.sourceIsi[std::size_t(i)]==Number(isi[i]),"composite_archive_group_source_isi");
             Require(r.group.packets.size()==packets.size(),"composite_archive_packet_inventory");for(std::size_t i=0;i<packets.size();++i)
                 Require(EncodeNativeProbeEvidence(r.group.packets[i])==EncodeNativeProbeEvidence(packets[i]),"composite_archive_packet_inventory");
             for(std::size_t i=0;i<r.rawTrials.size();++i)Require(EncodeCompositeRawPrimary(r.rawTrials[i])==primary.at(paths[i]),"composite_archive_raw_primary_binding");
-            if(!o["selection"].isNull())r.selection=SelectNativeDeclaredWindowBasinMaximum(Specification(p,r),p.compositeMeasurement->geometryPolicy,r.group);
+            if(!o["selection"].isNull())r.selection=FreshSelection(p,r);
         } else {
             Require(o["native_group"].isNull() && o["measurement"].isNull() && !r.consumed,"composite_archive_partial_promotion");r.group.packets=std::move(packets);
             if(!o["selection"].isNull()) {const auto selection=Object(o["selection"]);Keys(selection,"status status_enum reasons actual_assigned_onset geometry");
@@ -497,7 +595,29 @@ DecodedNativeCompositeArchive DecodeNativeCompositeTrainingArchive(const QJsonOb
         decoded.referenceGroups,decoded.finalGroups,decoded.currentAttemptId);
     const auto counters=Counters(decoded.records,decoded.currentAttemptId);Require(Object(counters["archive"])["primary_bytes"].toDouble()<=double(cap),"composite_archive_total_primary_budget");
     Require(object["counters"]==QJsonValue(counters),"composite_archive_counter_replay_mismatch");
-    decoded.document=object;return decoded;
+    decoded.document=object;
+    if(windowMode) {
+        std::optional<CandidateWindowReferenceSet> references;
+        if(decoded.referenceGroups.size()==p.inputs.size())references=CandidateWindowPortableReferenceFactory::Replay(decoded);
+        for(const auto& r:decoded.records) {
+            const auto candidate=ParseStrictNativeJsonObject(r.candidateBindingJson,128u*1024u*1024u);
+            if(references) {
+                const auto checked=CandidateWindowProposalReplayFactory::CheckCandidateBinding(*references,p,candidate);
+                if(r.purpose!=CompositeMeasurementPurpose::Reference) {
+                    Require(r.windowProposal && r.candidateWindowSpecification,"candidate_window_archive_candidate_without_proposal");
+                    // A pre-preparation cancellation can retain its frozen
+                    // declaration, but attests no actual native maximumSamples.
+                    const auto maximum=r.rawTrials.empty()?r.windowProposal->candidate.declaredMaximumSamples:r.rawTrials.front().actual.maximumSamples;
+                    for(const auto& raw:r.rawTrials)Require(raw.actual.maximumSamples==maximum,"candidate_window_archive_actual_sample_budget_changed");
+                    const auto replay=CandidateWindowProposalReplayFactory::Replay(*references,p,checked,r.logical,r.attemptId,r.groupId,
+                        maximum,r.purpose,*r.windowProposal);
+                    Require(replay.Record().computation.window==r.candidateWindowSpecification->candidateFrame,"candidate_window_archive_window_replay");
+                }
+            } else Require(r.purpose==CompositeMeasurementPurpose::Reference && !r.windowProposal && !r.consumed,
+                "candidate_window_archive_candidate_without_complete_references");
+        }
+    }
+    return decoded;
 }
 DecodedNativeCompositeArchive DecodeNativeCompositeTrainingArchive(const QByteArray& bytes,
     const std::function<QByteArray(const QString&)>& resolver) {

@@ -23,6 +23,9 @@ std::size_t Serial(const std::string& trial){const auto slash=trial.rfind('/');R
 CompositePortableTrainingProof CompositePortableTrainingProof::Replay(DecodedNativeCompositeArchive value,
     const VerificationTolerances& tolerances,const std::string& revision,std::size_t epoch) {
     CompositePortableTrainingProof result(std::move(value));const auto& a=result.archive;const auto& p=a.Protocol();
+    // Archive2/protocol5 has a separate reference/proposal replay boundary.
+    // Never mint the old fixed-window certificate through private scalar math.
+    ValidateCompositeMeasurementContract(p);
     Require(!revision.empty() && epoch<=9007199254740991ULL,"portable_composite_current_boundary");result.modelRevision=revision;result.modelEpoch=epoch;
     for(double tolerance:{tolerances.amplitudeAbsolute,tolerances.amplitudeRelative,tolerances.sync})
         Require(std::isfinite(tolerance) && tolerance>=0.,"portable_composite_tolerance");
