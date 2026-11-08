@@ -1,4 +1,5 @@
 #include "ProbeEvidenceJson.h"
+#include "CompositeTrainingDeclarations.h"
 #include "NativeTrainingService.h"
 #include "NativeTrainingCapacitance.h"
 #include "ConfiguredNativeTraining.h"
@@ -134,14 +135,15 @@ QJsonObject EncodeTrainingCertificate(const TrainingCertificate& certificate)
 QJsonObject EncodeVerificationProtocol(const VerificationProtocol& p)
 {
     ValidateVerificationProtocol(p);
-    if(p.schemaVersion==4)throw std::invalid_argument("composite_verification_protocol_codec_not_implemented");
     QJsonArray inputs;
     for(const auto& input:p.inputs)inputs.append(QJsonObject{{"id",Text(input.id)},{"stimulus_id",Text(input.stimulusId)}});
-    return {{"schema_version",int(p.schemaVersion)},{"routing",Routing(p.routing)},{"revision",Text(p.revision)},
+    QJsonObject result{{"schema_version",int(p.schemaVersion)},{"routing",Routing(p.routing)},{"revision",Text(p.revision)},
         {"sample_id",Text(p.sampleId)},{"pattern_hash",Text(p.patternHash)},{"origin_stimulus_id",Text(p.originStimulusId)},
         {"inputs",inputs},{"stimulus_ids",Strings(p.stimulusIds)},{"maximum_sample_gap",Number(p.maximumSampleGap)},
         {"minimum_amplitude",Number(p.minimumAmplitude)},{"stimulus_profile",p.stimulusProfile?QJsonValue(Profile(*p.stimulusProfile)):QJsonValue(QJsonValue::Null)},
         {"wave_assignment",Assignment(p.waveAssignment)},{"peak_selection",Selection(p.peakSelection)}};
+    if(p.schemaVersion==4)result["composite_measurement"]=EncodeCompositeMeasurementContract(*p.compositeMeasurement);
+    return result;
 }
 QJsonObject EncodeResistanceDomainAssessment(const ResistanceDomainAssessment& d)
 {

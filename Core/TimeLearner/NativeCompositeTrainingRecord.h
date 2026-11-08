@@ -27,7 +27,7 @@ struct NativeCompositeTrainingPolicy {
 struct NativeCompositeMeasurementRecord {
     VerificationRequest logical;
     CompositeMeasurementPurpose purpose=CompositeMeasurementPurpose::Reference;
-    std::string groupId,sourceOrigin,ownerFamilyBinding,liveAttemptBinding;
+    std::string groupId,sourceOrigin,ownerFamilyBinding,liveAttemptBinding,attemptId;
     std::string candidateBindingJson,semanticProofId,reason;
     NativeMatchedOmissionState groupState=NativeMatchedOmissionState::Rejected;
     NativeMatchedOmissionResult group;

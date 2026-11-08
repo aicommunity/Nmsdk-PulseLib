@@ -1,4 +1,5 @@
 #include "ProbeEvidenceJson.h"
+#include "CompositeTrainingDeclarations.h"
 #include <QJsonArray>
 #include <cmath>
 #include <limits>
@@ -116,21 +117,22 @@ NativeProbeResult DecodeNativeProbeEvidence(const QJsonObject& o)
 }
 VerificationProtocol DecodeVerificationProtocol(const QJsonObject& o)
 {
-    if(o["schema_version"]==QJsonValue(4))throw std::invalid_argument("composite_verification_protocol_codec_not_implemented");
+    const auto version=Version(o["schema_version"]);const bool composite=version==4;
     // Reuse the same strict primitive/profile/enum decoder; this temporary
     // specification is data only and is never scheduled or accepted as a probe.
-    QJsonObject spec{{"schema_version",o["schema_version"]},{"run_id",""},{"trial_id",""},
+    QJsonObject spec{{"schema_version",composite?QJsonValue(2):o["schema_version"]},{"run_id",""},{"trial_id",""},
         {"sample_id",o["sample_id"]},{"pattern_hash",o["pattern_hash"]},{"effective_model_revision",""},
         {"begin",0.},{"end",0.},{"maximum_sample_gap",o["maximum_sample_gap"]},{"minimum_amplitude",o["minimum_amplitude"]},
         {"maximum_samples",0},{"record_spikes",false},{"baseline",QJsonArray{}},{"windows",QJsonArray{}},
         {"expected_stimulus_ids",o["stimulus_ids"]},{"stimulus_profile",o["stimulus_profile"]},
         {"wave_assignment",o["wave_assignment"]},{"peak_selection",o["peak_selection"]}};
-    const auto s=Spec(spec);VerificationProtocol p;p.schemaVersion=s.schemaVersion;p.routing=Routing(o["routing"]);
+    const auto s=Spec(spec);VerificationProtocol p;p.schemaVersion=version;p.routing=Routing(o["routing"]);
     p.revision=Text(o["revision"]);p.sampleId=s.sampleId;p.patternHash=s.patternHash;p.originStimulusId=Text(o["origin_stimulus_id"]);
     p.stimulusIds=s.expectedStimulusIds;p.maximumSampleGap=s.maximumSampleGap;p.minimumAmplitude=s.minimumAmplitude;
     p.stimulusProfile=s.stimulusProfile;p.waveAssignment=s.waveAssignment;p.peakSelection=s.peakSelection;
     for(const auto& v:Array(o["inputs"]))
     {const auto i=Object(v);Require(i.size()==2);p.inputs.push_back({Text(i["id"]),Text(i["stimulus_id"])});}
+    if(composite)p.compositeMeasurement=DecodeCompositeMeasurementContract(Object(o["composite_measurement"]));
     ValidateVerificationProtocol(p);Require(EncodeVerificationProtocol(p)==o);return p;
 }
 }

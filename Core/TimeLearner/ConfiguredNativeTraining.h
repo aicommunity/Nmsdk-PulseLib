@@ -8,6 +8,8 @@ struct ConfiguredNativeEvidenceSinks {
     std::function<void(const PreparedVerificationProbe&,const ProbeSpec&)> onPrepared;
     std::function<void(const NativeProbeSample&)> onSample;
     std::function<void(const NativeProbeResult&)> onObservation;
+    std::function<void(const NativeCompositeMeasurementRecord&)> onComposite;
+    std::function<void(const NativeCompositeMeasurementRecord&)> beforeCompositeConsume;
 };
 // Portable cold-run declaration. Runtime callbacks, model hashes, references
 // and certificates are deliberately not configuration or implicit checkpoints.
@@ -25,6 +27,7 @@ struct ConfiguredNativeTraining {
     double maximumModelSeconds=0.,maximumWallSeconds=0.;
     bool recordCapacitanceHistory=false;
     double capacitanceMaximumRelativeChange=0.;
+    std::optional<NativeCompositeTrainingPolicy> composite;
 };
 QJsonObject EncodeNativeModelSpec(const NativeModelSpec& model);
 NativeModelSpec DecodeNativeModelSpec(const QJsonObject& object);

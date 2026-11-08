@@ -1,4 +1,5 @@
 #include "ConfiguredNativeTraining.h"
+#include "CompositeTrainingDeclarations.h"
 #include "ModelIdentity.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -174,6 +175,29 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
             "configured_capacitance_search_requires_compatible_recorded_C0");
         ValidateCapacitanceSearchPolicy(c.search,p.routing);
     }
+    if(c.composite) {
+        const auto& policy=*c.composite;
+        Require(c.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate,
+            "composite_recovery_policy_not_implemented");
+        Require(!c.recordSpikes && c.peakSelection==PeakSelectionPolicy::IsolatedWindow &&
+            c.stimulusProfile.generatorClass=="NPulseGeneratorTransit" && c.stimulusProfile.amplitude>0. &&
+            c.stimulusProfile.pulseLength>=1./c.stimulusProfile.frequencyHz && c.stimulusProfile.frequencyDeviation==0. &&
+            !c.stimulusProfile.useTransitSignal && !c.stimulusProfile.usePatternOutput,
+            "unsupported_composite_native_source_or_selection");
+        p.schemaVersion=4;p.waveAssignment=WaveAssignmentPolicy::WindowOnly;s.waveAssignment=p.waveAssignment;
+        CompositeMeasurementContract contract;contract.schemaVersion=policy.schemaVersion;contract.methodId=policy.methodId;
+        contract.contextPolicy=policy.contextPolicy;contract.geometryPolicy=policy.geometryPolicy;
+        for(const auto& w:c.windows)contract.inputWindows.push_back({w.first,w.second});
+        p.compositeMeasurement=contract;ValidateCompositeMeasurementContract(p);
+        for(auto value:{policy.maximumGroups,policy.maximumNativeProbes,policy.maximumTotalSamples,policy.maximumTotalPrimaryBytes})
+            Require(value>0 && value<=9007199254740991ULL,"invalid_composite_attempt_limit");
+        Require(policy.maximumNativeProbes>=size+2 && policy.maximumTotalSamples>=policy.contextPolicy.maximumTotalSamples &&
+            c.maximumSamples<=policy.contextPolicy.maximumSamples && std::isfinite(policy.maximumGroupModelSeconds) &&
+            policy.maximumGroupModelSeconds>0. && policy.maximumGroupModelSeconds<=c.maximumModelSeconds &&
+            std::isfinite(policy.maximumGroupWallSeconds) && policy.maximumGroupWallSeconds>0. &&
+            policy.maximumGroupWallSeconds<=c.maximumWallSeconds,"invalid_composite_group_or_attempt_budget");
+        plan.composite=policy;
+    }
     ValidateVerificationProtocol(p);plan.search=c.search;plan.search.runId=c.runId;
     plan.maximumReferenceProbes=c.maximumReferenceProbes;plan.maximumInvalidReferenceProbes=c.maximumInvalidReferenceProbes;
     plan.maximumModelSeconds=c.maximumModelSeconds;plan.maximumWallSeconds=c.maximumWallSeconds;
@@ -198,7 +222,14 @@ CapacitanceSearchPolicy DecodeCapacitanceSearchPolicy(const QJsonObject& object)
 }
 QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 {
-    MakeConfiguredNativeTrainingPlan(c);QJsonArray windows,bounds;
+    MakeConfiguredNativeTrainingPlan(c);
+    if(c.composite) {
+        auto base=c;base.composite.reset();auto result=EncodeConfiguredNativeTraining(base);
+        Require(result["schema_version"].toInt()>=1 && result["schema_version"].toInt()<=4,"composite_base_schema_unsupported");
+        result["base_schema_version"]=result["schema_version"];result["schema_version"]=6;
+        result["composite_measurement"]=EncodeNativeCompositeTrainingPolicy(*c.composite);return result;
+    }
+    QJsonArray windows,bounds;
     for(auto [begin,end]:c.windows)windows.append(QJsonObject{{"begin",Numeric(begin)},{"end",Numeric(end)}});
     for(const auto& b:c.search.bounds)bounds.append(QJsonObject{{"minimum_length",b.minimumLength},{"maximum_length",b.maximumLength},
         {"minimum_synapses",b.minimumSynapses},{"maximum_synapses",b.maximumSynapses},{"minimum_resistance",Numeric(b.minimumResistance)},
@@ -250,6 +281,12 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
 {
     const int schema=Int(o["schema_version"]);auto fields=o;
+    if(schema==6) {
+        const int base=Int(o["base_schema_version"]);Require(base>=1 && base<=4,"composite_base_schema_unsupported");
+        fields.remove("base_schema_version");fields.remove("composite_measurement");fields["schema_version"]=base;
+        auto c=DecodeConfiguredNativeTraining(fields);c.composite=DecodeNativeCompositeTrainingPolicy(Object(o["composite_measurement"]));
+        MakeConfiguredNativeTrainingPlan(c);return c;
+    }
     if(schema==5)
     {
         const int base=Int(o["base_schema_version"]);

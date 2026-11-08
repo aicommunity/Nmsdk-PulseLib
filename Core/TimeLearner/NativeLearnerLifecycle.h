@@ -65,7 +65,9 @@ struct NativeLearnerLifecycle {
    auto plan=TimeLearner::MakeConfiguredNativeTrainingPlan(*owner.NativeConfiguredPlan);
    if(plan.recordCapacitanceHistory)owner.BindNativeTrainingCapacitance(owner.NativeConfiguredPlan->capacitanceMaximumRelativeChange);
    plan.probe.onPrepared=owner.NativeConfiguredSinks.onPrepared;plan.probe.onSample=owner.NativeConfiguredSinks.onSample;
-   plan.observationSink=owner.NativeConfiguredSinks.onObservation;owner.BeginNativeTraining(std::move(plan));
+   plan.observationSink=owner.NativeConfiguredSinks.onObservation;
+   plan.compositeSink=owner.NativeConfiguredSinks.onComposite;plan.beforeCompositeConsume=owner.NativeConfiguredSinks.beforeCompositeConsume;
+   owner.BeginNativeTraining(std::move(plan));
   }
   catch(const std::exception& error)
   {owner.NativeTrainingOwned=true;owner.NativeEditFailure=error.what();owner.NativeTrainingControl.FailConfiguration(error.what());}

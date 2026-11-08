@@ -1,4 +1,5 @@
 #include "NativeCompositeTrainingAttempt.h"
+#include "CompositeTrainingDeclarations.h"
 #include "../NNeuronTimeLearner.h"
 #include "../NNeuronTimeLearnerBranch.h"
 #include "../NPulseNeuron.h"
@@ -20,22 +21,6 @@ namespace {
 void Require(bool value,const char* reason){if(!value)throw std::invalid_argument(reason);}
 QString Text(const std::string& value){return QString::fromStdString(value);}
 std::string Hash(const QJsonValue& value){return NmsdkTools::CanonicalModelDataSha256(value).toStdString();}
-QJsonArray Strings(const std::vector<std::string>& values){QJsonArray result;for(const auto& v:values)result.append(Text(v));return result;}
-QJsonObject ProtocolBinding(const VerificationProtocol& p) {
-    const auto& c=*p.compositeMeasurement;const auto& m=c.contextPolicy;const auto& g=c.geometryPolicy;
-    QJsonArray windows,inputs;for(const auto& w:c.inputWindows)windows.append(QJsonArray{w.beginOffset,w.endOffset});
-    for(const auto& i:p.inputs)inputs.append(QJsonArray{Text(i.id),Text(i.stimulusId)});
-    const auto& s=*p.stimulusProfile;
-    return {{"schema_version",4},{"method",Text(c.methodId)},{"contract_schema",int(c.schemaVersion)},
-        {"routing",int(p.routing)},{"revision",Text(p.revision)},{"sample",Text(p.sampleId)},{"pattern",Text(p.patternHash)},
-        {"origin",Text(p.originStimulusId)},{"inputs",inputs},{"stimuli",Strings(p.stimulusIds)},
-        {"sample_gap",p.maximumSampleGap},{"minimum_amplitude",p.minimumAmplitude},{"windows",windows},
-        {"source",QJsonArray{Text(s.generatorClass),s.amplitude,s.pulseLength,s.frequencyHz,s.frequencyDeviation,s.useTransitSignal,s.usePatternOutput}},
-        {"context_policy",QJsonArray{int(m.schemaVersion),double(m.comparisonRadiusTicks),double(m.maximumSamples),
-            double(m.maximumTotalSamples),double(m.maximumNativeProbes),m.timeComparisonTolerance,m.baselineAbsolute,
-            m.repeatabilityAbsolute,m.repeatabilityRelative,m.influenceAbsolute,m.influenceRelative}},
-        {"geometry_policy",QJsonArray{int(g.schemaVersion),double(g.maximumInputs),double(g.maximumSamples),double(g.maximumTotalSamples),g.repeatabilityAbsolute}}};
-}
 std::atomic<std::size_t> AttemptGeneration{0};
 std::size_t NextAttemptGeneration() {
     auto current=AttemptGeneration.load();
@@ -315,7 +300,7 @@ void NativeCompositeTrainingAttempt::CloseGroup() {
             primary.append(QJsonObject{{"native",EncodeNativeProbeEvidence(result.packets[i])},
                 {"csv_sha256",QString::fromLatin1(QCryptographicHash::hash(bytes,QCryptographicHash::Sha256).toHex())}});
         }
-        const auto proof=Hash(QJsonObject{{"kind","live-composite-training-measurement-v1"},{"method_binding",ProtocolBinding(*protocol)},
+        const auto proof=Hash(QJsonObject{{"kind","live-composite-training-measurement-v1"},{"method_binding",CompositeTrainingProtocolBinding(*protocol)},
             {"source_origin",Text(sourceOrigin)},{"candidate_witness",Text(activeIdentity->candidateWitnessId)},
             {"live_attempt_binding",Text(liveAttemptBinding)},
             {"attempt_limits",QJsonArray{double(limits.maximumGroups),double(limits.maximumNativeProbes),

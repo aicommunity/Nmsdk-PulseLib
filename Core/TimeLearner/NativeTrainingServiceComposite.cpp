@@ -153,7 +153,7 @@ void NativeTrainingService::RawCompositeResult(const NativeTrainingAdapter& a,co
 }
 void NativeTrainingService::ArchiveComposite(const std::shared_ptr<NativeCompositeTrainingAttempt>& actor) {
     if(!actor || !actor->Group() || actor->SourceBinding()!=compositeSourceBinding)return;
-    auto record=actor->Record();record.policy=*plan.composite;record.capacitanceWitnesses=compositeGroupWitnesses;
+    auto record=actor->Record();record.attemptId=plan.search.runId;record.policy=*plan.composite;record.capacitanceWitnesses=compositeGroupWitnesses;
     for(std::size_t i=0;i<record.issuedNativeProbes;++i) {
         const auto id=record.groupId+"/native/"+std::to_string(i);const auto found=compositeGroupTrialWitnessIds.find(id);
         if(found!=compositeGroupTrialWitnessIds.end())record.nativeTrialWitnessIds.emplace(*found);
@@ -176,7 +176,7 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
     record.trainingRequestedAtConsume=a.trainingRequested();
     if(!*record.trainingRequestedAtConsume){StopComposite(a,TrainingStatus::ExternalStop,"external_stop");return;}
     if(actor->Group()->maximumModelSeconds>0. && (record.endModel-record.startModel>=actor->Group()->maximumModelSeconds ||
-        record.endWall-record.startWall>=actor->Group()->maximumWallSeconds)) {
+        NativeTrainingWallTime()-record.startWall>=actor->Group()->maximumWallSeconds)) {
         StopComposite(a,TrainingStatus::BudgetExhausted,"native_composite_group_time_budget_exhausted");return;
     }
     if(!actor->Measurement()) {
