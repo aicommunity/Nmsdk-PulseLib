@@ -367,7 +367,13 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         prepared=PreparedVerificationProbe{request.routing,request.inputId,request.protocolRevision,
             request.baseModelRevision,spec.modelRevision,request.modelEpoch};
         if(spec.schemaVersion>=3 && b.branch)prepared->selectedInputIndex=std::size_t(request.activeInput);
+        const auto* preparedRecorder=recorder.get();
         if(request.onPrepared)request.onPrepared(*prepared,spec);
+        // An explicit callback cancellation/reset owns its result, as in the
+        // sample callback path below. Do not overwrite it with another failure
+        // or continue preparing a replacement request queued by the callback.
+        if(state!=NativeProbeStatus::Queued || recorder.get()!=preparedRecorder ||
+           request.specification.runId!=spec.runId || request.specification.trialId!=spec.trialId)return;
         CheckLiveGraph(b);CheckPattern(b);CheckSource(b);
         Require(ReadRevision(true)==spec.modelRevision,"native_prepared_callback_changed_model");
         state=NativeProbeStatus::Running;
