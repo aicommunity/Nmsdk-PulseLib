@@ -37,7 +37,7 @@ See file license.txt for more information
 #include <cstring>
 
 namespace NMSDK {
-namespace TimeLearner { struct NativeLearnerLifecycle; struct NativeRecognitionControl; class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; class NativeLiveFinalization; struct NativeLiveFinalizationSpec; }
+namespace TimeLearner { class NativeCompositeTrainingAttempt; struct NativeLearnerLifecycle; struct NativeRecognitionControl; class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; class NativeLiveFinalization; struct NativeLiveFinalizationSpec; }
 
 using namespace RDK;
 
@@ -46,6 +46,7 @@ using namespace RDK;
 /// soma has no excitatory inputs). Reverse sequential sync + joint amp normalize.
 class RDK_LIB_TYPE NNeuronTimeLearnerBranch: public UNet
 {
+ friend class TimeLearner::NativeCompositeTrainingAttempt;
  friend class TimeLearner::NativePostTuneOwnerBoundary;
  friend struct TimeLearner::NativeLearnerLifecycle;
  friend struct TimeLearner::NativeRecognitionControl;

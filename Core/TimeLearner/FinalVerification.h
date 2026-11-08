@@ -1,5 +1,6 @@
 #pragma once
 #include "ProbeObservation.h"
+#include "CompositeTrainingMeasurement.h"
 #include <optional>
 #include <set>
 
@@ -21,6 +22,7 @@ struct VerificationProtocol {
     std::optional<StimulusProfile> stimulusProfile;
     WaveAssignmentPolicy waveAssignment=WaveAssignmentPolicy::WindowOnly;
     PeakSelectionPolicy peakSelection=PeakSelectionPolicy::IsolatedWindow;
+    std::optional<CompositeMeasurementContract> compositeMeasurement={};
     bool operator==(const VerificationProtocol&) const=default;
 };
 // Adapter-produced declaration after native routing/reset at a legal boundary.
@@ -54,6 +56,7 @@ bool CanAdvanceUnassignedBurstCandidate(const VerificationProtocol& protocol,std
 struct CapturedInputReference {
     std::string id, runId, trialId, effectiveModelRevision;
     double rawPotential=0.;
+    std::string measurementGroupId,semanticProofId;
     bool operator==(const CapturedInputReference&) const=default;
 };
 class CapturedReferences {
@@ -64,16 +67,21 @@ public:
     CapturedReferences& operator=(CapturedReferences&&)=default;
     static CapturedReferences Capture(VerificationProtocol protocol,
                                       const std::vector<ReferenceEvidence>& evidence);
+    static CapturedReferences CaptureComposite(VerificationProtocol protocol,
+        const std::vector<ValidatedCompositeMeasurement>& evidence);
     const VerificationProtocol& Protocol() const { return protocol; }
     const std::vector<CapturedInputReference>& Inputs() const { return inputs; }
     const std::string& InitialModelRevision() const { return initialModelRevision; }
     std::size_t InitialModelEpoch() const { return initialModelEpoch; }
+    const std::string& CompositeOwnerScope() const {return compositeOwnerScope;}
+    const std::string& CompositeSourceOrigin() const {return compositeSourceOrigin;}
 private:
     CapturedReferences()=default;
     VerificationProtocol protocol;
     std::vector<CapturedInputReference> inputs;
     std::string initialModelRevision;
     std::size_t initialModelEpoch=0;
+    std::string compositeOwnerScope,compositeSourceOrigin;
 };
 
 struct VerificationTolerances {
@@ -105,7 +113,7 @@ public:
     TrainingCertificate(TrainingCertificate&&)=default;
     TrainingCertificate& operator=(const TrainingCertificate&)=default;
     TrainingCertificate& operator=(TrainingCertificate&&)=default;
-    unsigned SchemaVersion() const { return 1; }
+    unsigned SchemaVersion() const { return protocol.schemaVersion==4?2:1; }
     bool Exact() const { return exact; }
     const std::string& ModelRevision() const { return modelRevision; }
     const std::string& ProtocolRevision() const { return protocol.revision; }
@@ -114,6 +122,7 @@ public:
     std::size_t ReferenceModelEpoch() const { return referenceModelEpoch; }
     const std::vector<InputVerificationResidual>& Residuals() const { return residuals; }
     const VerificationTolerances& Tolerances() const { return tolerances; }
+    const std::vector<std::string>& CompositeProofIds() const {return compositeProofIds;}
     bool Matches(const std::string& currentModel,const CapturedReferences& currentReferences,
                  const VerificationTolerances& currentTolerances,ModelStateKind kind,std::size_t currentEpoch) const;
     std::size_t ModelEpoch() const { return modelEpoch; }
@@ -128,6 +137,7 @@ private:
     VerificationTolerances tolerances;
     std::vector<CapturedInputReference> referenceInputs;
     std::vector<InputVerificationResidual> residuals;
+    std::vector<std::string> compositeProofIds;
 };
 struct RejectedVerificationProbe { std::string trialId, reason; };
 
@@ -142,6 +152,9 @@ public:
     std::optional<VerificationRequest> NextRequest();
     void Arm(const PreparedVerificationProbe& prepared);
     void Consume(const ProbeObservation& observation,const std::string& currentBaseRevision);
+    void ArmComposite(const PreparedCompositeMeasurement& prepared);
+    void ConsumeComposite(const ValidatedCompositeMeasurement& measurement,const std::string& currentBaseRevision);
+    void RejectComposite(const std::string& reason);
     void Invalidate(const std::string& newBaseRevision);
     void ExternalStop();
     void ExhaustBudget();
@@ -154,9 +167,9 @@ public:
     std::size_t InvalidObservations() const { return invalidCount; }
     std::size_t AcceptedInputs() const;
     std::size_t ModelEpoch() const { return epoch; }
-    bool WaitingForObservation() const { return bool(armed); }
+    bool WaitingForObservation() const { return bool(armed) || bool(compositeArmed); }
 private:
-    struct Accepted { std::string trialId,effectiveRevision;double raw,arrival,plateauEnd; };
+    struct Accepted { std::string trialId,effectiveRevision;double raw,arrival,plateauEnd;std::string compositeProofId,candidateWitnessId; };
     CapturedReferences references;
     VerificationConfig config;
     VerificationStatus status=VerificationStatus::Collecting;
@@ -164,9 +177,11 @@ private:
     std::vector<std::optional<Accepted>> accepted;
     std::optional<VerificationRequest> pending;
     std::optional<PreparedVerificationProbe> armed;
+    std::optional<PreparedCompositeMeasurement> compositeArmed;
     std::optional<TrainingCertificate> certificate;
     std::vector<RejectedVerificationProbe> rejected;
     std::set<std::string> seenTrials;
+    std::set<std::string> seenCompositeGroups,seenCompositeProofs;
     std::size_t position=0,issued=0,serial=0,epoch=0,invalidCount=0;
     bool budgetStopped=false;
     void Reject(const std::string& reason);

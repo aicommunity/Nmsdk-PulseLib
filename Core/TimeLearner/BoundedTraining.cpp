@@ -149,7 +149,7 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
         config.n0CandidateRepeats<1 || config.n0CandidateRepeats>128 ||
         (config.normalization==Normalization::TipResistance && config.n0CandidateRepeats!=1) ||
         (config.normalization!=Normalization::SynapseCount && config.normalization!=Normalization::TipResistance) ||
-        protocol.schemaVersion!=3 || config.bounds.size()!=protocol.inputs.size() || initial.size()!=protocol.inputs.size() || initial.empty())
+        (protocol.schemaVersion!=3 && protocol.schemaVersion!=4) || config.bounds.size()!=protocol.inputs.size() || initial.size()!=protocol.inputs.size() || initial.empty())
         throw std::invalid_argument("invalid_bounded_training_configuration");
     if(!Finite(config.tolerances.amplitudeAbsolute) || config.tolerances.amplitudeAbsolute<0. ||
         !Finite(config.tolerances.amplitudeRelative) || config.tolerances.amplitudeRelative<0. ||
@@ -160,6 +160,8 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
             b.maximumSynapses>128 || b.maximumSynapses<b.minimumSynapses ||
             !Finite(b.minimumResistance) || !Finite(b.maximumResistance) || b.minimumResistance<=0. || b.maximumResistance<b.minimumResistance)
             throw std::invalid_argument("invalid_per_input_search_bounds");
+    if(protocol.schemaVersion==4 && config.invalidMeasurementRecovery!=InvalidMeasurementRecovery::RetrySameCandidate)
+        throw std::invalid_argument("composite_recovery_policy_not_implemented");
     ValidateCapacitanceSearchPolicy(config,protocol.routing);
     if(!ParametersLegal(protocol,config,initial))throw std::invalid_argument("initial_parameters_outside_search_domain");
 }
@@ -606,7 +608,7 @@ void BoundedTrainingSession::FinishVerification()
 std::optional<TrainingAction> BoundedTrainingSession::NextAction()
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return {};
-    if(armed)return {};
+    if(armed || compositeArmed)return {};
     if(pending)return pending;
     if(phase==Phase::Candidate)
     {
@@ -719,7 +721,7 @@ void BoundedTrainingSession::Applied(std::size_t actionSerial,const std::vector<
 
 void BoundedTrainingSession::Reject(const std::string& reason)
 {
-    rejected.push_back({pending?pending->trialId:std::string{},reason});pending.reset();armed.reset();
+    rejected.push_back({pending?pending->trialId:std::string{},reason});pending.reset();armed.reset();compositeArmed.reset();
     if(config.n0CandidateRepeats>1 && phase!=Phase::Verify)
     {RecordIncompleteCandidateRepeats(reason);anchor.reset();anchorTrial.clear();phase=Phase::Anchor;}
     const bool retry=invalid<config.maximumInvalidObservations;
@@ -735,7 +737,7 @@ void BoundedTrainingSession::DeclineEdit(std::size_t actionSerial,const std::str
     rejected.push_back({{},"edit_rejected:"+reason});
     if(unchangedModelRevision!=revision || unchangedModelRevision.empty() || restoringBest)
     {Stop(TrainingStatus::InvalidModel);return;}
-    pending.reset();armed.reset();anchor.reset();anchorTrial.clear();phase=Phase::Candidate;
+    pending.reset();armed.reset();compositeArmed.reset();anchor.reset();anchorTrial.clear();phase=Phase::Candidate;
     AdvanceCapacitanceContext();
     if(requireResistanceDomains)cursor.domainReady=false;
     for(auto& context:capacitanceContexts)context.suspended.domainReady=false;
@@ -744,6 +746,7 @@ void BoundedTrainingSession::DeclineEdit(std::size_t actionSerial,const std::str
 void BoundedTrainingSession::Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared)
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
+    if(references.Protocol().schemaVersion==4)throw std::invalid_argument("composite_measurement_requires_typed_admission");
     if(!pending || pending->kind!=TrainingActionKind::Probe || pending->serial!=actionSerial || armed)
         throw std::logic_error("unrequested_training_probe");
     ++probes;
@@ -766,12 +769,13 @@ void BoundedTrainingSession::Arm(std::size_t actionSerial,const PreparedVerifica
 void BoundedTrainingSession::Consume(const ProbeObservation& observation,const std::string& actualModelRevision)
 {
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
+    if(references.Protocol().schemaVersion==4)throw std::invalid_argument("composite_measurement_requires_typed_admission");
     if(actualModelRevision!=revision || actualModelRevision.empty())
     {rejected.push_back({pending?pending->trialId:std::string{},"unexpected_training_model_revision"});Stop(TrainingStatus::InvalidModel);return;}
     if(!pending || !armed){Reject("unrequested_training_observation");return;}
     if(phase==Phase::Verify)
     {
-        verification->Consume(observation,actualModelRevision);pending.reset();armed.reset();FinishVerification();return;
+        verification->Consume(observation,actualModelRevision);pending.reset();armed.reset();compositeArmed.reset();FinishVerification();return;
     }
     if(observation.specification.runId!=pending->runId || observation.specification.trialId!=pending->trialId ||
         !seenTrials.insert(observation.specification.trialId).second)
@@ -822,9 +826,76 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
     AcceptValidatedScalar(measurement);
 }
 
+void BoundedTrainingSession::ArmComposite(std::size_t actionSerial,const PreparedCompositeMeasurement& prepared)
+{
+    if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
+    if(!pending || pending->kind!=TrainingActionKind::Probe || pending->serial!=actionSerial || armed || compositeArmed)
+        throw std::logic_error("unrequested_training_probe");
+    ++probes;
+    try {
+        if(!TrainingCapacitanceReadbackMatches(currentCapacitance,prepared.identity->capacitance))
+            throw std::invalid_argument("composite_training_capacitance_readback_mismatch");
+    }
+    catch(const CompositeTrainingStopped&){ExternalStop();return;}
+    catch(const std::exception& error){RejectComposite(error.what());return;}
+    if(phase==Phase::Verify) {
+        verification->ArmComposite(prepared);FinishVerification();
+        if(status!=TrainingStatus::Verifying)return;
+        if(!verification->WaitingForObservation()){pending.reset();return;}
+    }
+    try {
+        prepared.Require(references.Protocol(),pending->runId,pending->trialId,pending->inputIndex,revision,epoch,
+            phase==Phase::Verify?CompositeMeasurementPurpose::Final:CompositeMeasurementPurpose::Search,
+            references.CompositeOwnerScope(),references.CompositeSourceOrigin());
+        if(!seenCompositeGroups.insert(prepared.GroupId()).second)throw std::invalid_argument("replayed_composite_training_group");
+        compositeArmed=prepared;
+    }
+    catch(const CompositeTrainingStopped&){ExternalStop();return;}
+    catch(const std::exception& error){Reject(error.what());}
+}
+void BoundedTrainingSession::ConsumeComposite(const ValidatedCompositeMeasurement& measured,const std::string& actualRevision)
+{
+    if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
+    if(actualRevision!=revision || actualRevision.empty()) {
+        rejected.push_back({pending?pending->trialId:std::string{},"unexpected_training_model_revision"});Stop(TrainingStatus::InvalidModel);return;
+    }
+    if(!pending || !compositeArmed){Reject("unrequested_composite_training_observation");return;}
+    try {
+        if(!TrainingCapacitanceReadbackMatches(currentCapacitance,measured.prepared.identity->capacitance))
+            throw std::invalid_argument("composite_training_capacitance_readback_mismatch");
+    }
+    catch(const CompositeTrainingStopped&){ExternalStop();return;}
+    catch(const std::exception& error){RejectComposite(error.what());return;}
+    if(phase==Phase::Verify) {
+        verification->ConsumeComposite(measured,actualRevision);pending.reset();compositeArmed.reset();FinishVerification();return;
+    }
+    try {
+        measured.prepared.Require(references.Protocol(),pending->runId,pending->trialId,pending->inputIndex,revision,epoch,
+            CompositeMeasurementPurpose::Search,references.CompositeOwnerScope(),references.CompositeSourceOrigin(),true);
+        measured.RequirePrepared(*compositeArmed);
+        if(!seenTrials.insert(pending->trialId).second || !seenCompositeProofs.insert(measured.semanticProofId).second)
+            throw std::invalid_argument("unexpected_or_replayed_composite_training_proof");
+        if(phase==Phase::Anchor)compositeAnchorWitness=measured.prepared.identity->candidateWitnessId;
+        else if(compositeAnchorWitness!=measured.prepared.identity->candidateWitnessId)
+            throw std::invalid_argument("mixed_composite_anchor_candidate_witness");
+    }
+    catch(const CompositeTrainingStopped&){ExternalStop();return;}
+    catch(const std::exception& error){Reject(error.what());return;}
+    AcceptValidatedScalar({measured.rawPotential,measured.arrival,measured.plateauEnd});
+}
+void BoundedTrainingSession::RejectComposite(const std::string& reason)
+{
+    if(references.Protocol().schemaVersion!=4 || reason.empty())throw std::invalid_argument("invalid_composite_rejection");
+    if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return;
+    if(phase==Phase::Verify) {
+        verification->RejectComposite(reason);pending.reset();compositeArmed.reset();FinishVerification();return;
+    }
+    Reject(reason);
+}
+
 void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasurement& measurement)
 {
-    const auto trial=pending->trialId;pending.reset();armed.reset();
+    const auto trial=pending->trialId;pending.reset();armed.reset();compositeArmed.reset();
     if(phase==Phase::Anchor){anchor=measurement;anchorTrial=trial;phase=Phase::Input;return;}
     if(!anchor)throw std::logic_error("missing_same_revision_anchor");
     const auto index=order.at(position);const auto& reference=references.Inputs()[index];
@@ -934,7 +1005,7 @@ void BoundedTrainingSession::Stop(TrainingStatus terminal,const std::string& dia
     stopReason=diagnostic.empty()?TrainingStatusName(terminal):diagnostic;
     if(diagnostic.empty() && (terminal==TrainingStatus::InvalidModel || terminal==TrainingStatus::InvalidObservation) && !rejected.empty())
         stopReason=rejected.back().reason;
-    RecordIncompleteCandidateRepeats(stopReason);status=terminal;pending.reset();armed.reset();anchor.reset();
+    RecordIncompleteCandidateRepeats(stopReason);status=terminal;pending.reset();armed.reset();compositeArmed.reset();anchor.reset();
 }
 
 void BoundedTrainingSession::ExternalStop()

@@ -31,6 +31,7 @@ struct DeclaredWindowBasinPolicy {
     std::size_t maximumInputs=0,maximumSamples=0,maximumTotalSamples=0;
     // Separate repeatability policy, never a training amplitude/time tolerance.
     double repeatabilityAbsolute=0.;
+    bool operator==(const DeclaredWindowBasinPolicy&) const=default;
 };
 enum class BasinControlPresence { Preserved,AbsentWithinFixedBasin,Unknown };
 enum class BasinCandidateStatus { UniqueNecessary,SharedNecessary,NoNecessaryInput,Unknown,Clipped };

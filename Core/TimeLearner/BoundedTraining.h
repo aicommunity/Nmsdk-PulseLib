@@ -122,6 +122,9 @@ public:
                         const std::string& unchangedModelRevision);
     void Arm(std::size_t actionSerial,const PreparedVerificationProbe& prepared);
     void Consume(const ProbeObservation& observation,const std::string& actualModelRevision);
+    void ArmComposite(std::size_t actionSerial,const PreparedCompositeMeasurement& prepared);
+    void ConsumeComposite(const ValidatedCompositeMeasurement& measurement,const std::string& actualModelRevision);
+    void RejectComposite(const std::string& reason);
     void ExternalStop();
     // Adapter-owned wall/model-time deadline; cannot manufacture convergence.
     void ExhaustBudget();
@@ -155,9 +158,11 @@ private:
     std::size_t position=0,sweep=0,candidates=0;
     std::size_t serial=0,epoch=0,probes=0,edits=0,invalid=0;
     std::string revision,anchorTrial;
+    std::string compositeAnchorWitness;
     std::optional<ValidatedProbeMeasurement> anchor;
     std::optional<TrainingAction> pending;
     std::optional<PreparedVerificationProbe> armed;
+    std::optional<PreparedCompositeMeasurement> compositeArmed;
     std::optional<CandidateEvidence> best;
     bool restoringBest=false;
     // Enumeration state belongs to a single physical search context. Keeping
@@ -201,6 +206,7 @@ private:
     std::vector<TrainingRejection> rejected;
     std::vector<CandidateRecoveryEvidence> recoveries;
     std::set<std::string> seenTrials;
+    std::set<std::string> seenCompositeGroups,seenCompositeProofs;
     std::unique_ptr<FinalVerificationSession> verification;
     std::size_t verificationInvalidAccounted=0;
     void BeginInput();

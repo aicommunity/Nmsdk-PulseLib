@@ -116,6 +116,7 @@ QJsonObject EncodeNativeProbeEvidence(const NativeProbeResult& result)
 }
 QJsonObject EncodeTrainingCertificate(const TrainingCertificate& certificate)
 {
+    if(certificate.SchemaVersion()!=1)throw std::invalid_argument("composite_training_certificate_codec_not_implemented");
         QJsonArray residuals;
         for(const auto& r:certificate.Residuals())residuals.append(QJsonObject{{"input_id",Text(r.inputId)},
             {"trial_id",Text(r.trialId)},{"effective_model_revision",Text(r.effectiveModelRevision)},
@@ -132,7 +133,9 @@ QJsonObject EncodeTrainingCertificate(const TrainingCertificate& certificate)
 }
 QJsonObject EncodeVerificationProtocol(const VerificationProtocol& p)
 {
-    ValidateVerificationProtocol(p);QJsonArray inputs;
+    ValidateVerificationProtocol(p);
+    if(p.schemaVersion==4)throw std::invalid_argument("composite_verification_protocol_codec_not_implemented");
+    QJsonArray inputs;
     for(const auto& input:p.inputs)inputs.append(QJsonObject{{"id",Text(input.id)},{"stimulus_id",Text(input.stimulusId)}});
     return {{"schema_version",int(p.schemaVersion)},{"routing",Routing(p.routing)},{"revision",Text(p.revision)},
         {"sample_id",Text(p.sampleId)},{"pattern_hash",Text(p.patternHash)},{"origin_stimulus_id",Text(p.originStimulusId)},

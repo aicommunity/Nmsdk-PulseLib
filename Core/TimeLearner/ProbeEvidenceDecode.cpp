@@ -116,6 +116,7 @@ NativeProbeResult DecodeNativeProbeEvidence(const QJsonObject& o)
 }
 VerificationProtocol DecodeVerificationProtocol(const QJsonObject& o)
 {
+    if(o["schema_version"]==QJsonValue(4))throw std::invalid_argument("composite_verification_protocol_codec_not_implemented");
     // Reuse the same strict primitive/profile/enum decoder; this temporary
     // specification is data only and is never scheduled or accepted as a probe.
     QJsonObject spec{{"schema_version",o["schema_version"]},{"run_id",""},{"trial_id",""},
