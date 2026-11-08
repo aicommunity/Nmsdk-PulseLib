@@ -69,7 +69,10 @@ public:
         for(std::size_t i=0;i<paths.size();++i)observation.channels[i].samples.push_back({sample.time,sample.potentials[i]});
         stimulusSamples.push_back(sample.stimulus);++samples;failed=false;
     }
-    ResponseDomainResult Close(const NativeProbeResult& native,const ResponseDomainSpec& domains) {
+    // Verify the complete native packet against the captured callbacks without
+    // assigning response domains. Composite measurement protocols reuse this
+    // boundary proof; closing a trace alone never certifies a training peak.
+    void CloseNative(const NativeProbeResult& native) {
         Require(armed && !closed && !failed,"domain_capture_not_running");closed=true;
         Require(native.status==NativeProbeStatus::Completed && native.reasons.empty() &&
                 !native.requiresFreshVerification && native.prepared && native.observation &&
@@ -142,6 +145,9 @@ public:
         // The diagnostic analyzer independently checks waveform coverage and
         // stimuli; it can never produce a training certificate.
         observation.complete=true;closure=native;
+    }
+    ResponseDomainResult Close(const NativeProbeResult& native,const ResponseDomainSpec& domains) {
+        CloseNative(native);
         return AnalyzeDeclaredResponseDomains(domains,observation);
     }
     const ResponseDomainObservation& Observation() const {return observation;}
