@@ -798,6 +798,16 @@ public: // Methods
   if(!NativeEditFailure.empty())throw std::logic_error("native_model_requires_repair_after_failed_edit");
   NativeProbeControl.Queue(std::move(request));
  }
+ // Cancel a probe without resetting the learner, its references or its target.
+ // The executor restores transient routing/presentation at its native boundary.
+ void CancelNativeProbe(const std::string& reason) {
+  if(reason.empty())throw std::invalid_argument("missing_native_probe_cancellation_reason");
+  if(NativeRecognition)throw std::logic_error("recognition_requires_frozen_evaluation_runner");
+  if(NativeTrainingOwned && (NativeTrainingControl.State()==TimeLearner::NativeTrainingState::CapturingReferences ||
+      NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Searching))
+   throw std::logic_error("native_training_owns_probe_runner");
+  NativeProbeControl.Cancel(reason);
+ }
  bool NativeProbeOwnsControl() const { return NativeProbeControl.OwnsControl(); }
  bool IsNativeProbeAtEditBoundary() const {
   return NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Idle || NativeProbeControl.AtEditBoundary();
