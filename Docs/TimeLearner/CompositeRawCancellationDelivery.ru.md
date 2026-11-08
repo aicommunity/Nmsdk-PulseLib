@@ -56,7 +56,7 @@ post-consume notification и свежей проверки обоих wall budge
 После callback используется свежий NativeTrainingWallTime перед consume и
 certificate. Новые real-clock controls обоих типов ждут 16 секунд в sink
 последнего raw packet и последнего final composite record при объявленном
-group wall budget 15 секунд и большем attempt budget 60 секунд; ожидается
+group wall budget 15 секунд и большем attempt budget 1800 секунд; ожидается
 BudgetExhausted без certificate. В reference-raw случае references ещё не
 созданы; в last-final-composite случае ранее измеренные references сохраняются.
 Это отдельные реальные серверные проверки, не подстановка времени.

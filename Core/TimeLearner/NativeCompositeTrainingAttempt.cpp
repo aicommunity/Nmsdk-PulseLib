@@ -83,6 +83,7 @@ template<class Owner> void NativeCompositeTrainingAttempt::Bind(Owner& owner) {
         auto& probe=owner.NativeProbeControl;
         if(probe.ControlGeneration()!=ownedRawControlGeneration)return {};
         if(probe.MatchesActiveTrial(ownedRawRun,ownedRawTrial,ownedRawControlGeneration))probe.Cancel(reason);
+        if(probe.ControlGeneration()!=ownedRawControlGeneration)return {};
         const auto& result=probe.Result();
         if(!result || !result->requestedSpecification || result->requestedSpecification->runId!=ownedRawRun ||
             result->requestedSpecification->trialId!=ownedRawTrial)return {};
