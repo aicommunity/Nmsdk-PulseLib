@@ -240,6 +240,11 @@ void NativeTrainingService::StageCandidateWindowReference(const std::shared_ptr<
     std::vector<std::string> groups;groups.reserve(captured->Inputs().size());
     for(const auto& input:captured->Inputs())groups.push_back(input.measurementGroupId);
     auto closed=actor->PrepareCandidateWindowReferences(*captured);
+    // The allN replay/allocation work is still part of the closing group's
+    // admission. An attempt-wide clock alone must not waive its shorter cap.
+    if(actor->lastModel-actor->groupStartModel>=actor->groupModelLimit ||
+        NativeTrainingWallTime()-actor->groupStartWall>=actor->groupWallLimit)
+        throw CompositeTrainingBudgetExhausted("native_candidate_window_reference_release_group_budget_exhausted");
     static_assert(std::is_nothrow_swappable_v<std::optional<CapturedReferences>>);
     // No allocation, callback, getter or model change between the final fresh
     // Prepare and publication of BOTH complete sets and all selected flags.
