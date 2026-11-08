@@ -126,7 +126,8 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
     referenceProbes=invalidReferences=0;if(!references){referenceEvidence.clear();referencePackets.clear();}
     finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();
     certificate.reset();search.reset();activeAction.reset();
-    waiting=false;reason.clear();outcome=TrainingStatus::Searching;++attempt;
+    waiting=false;reason.clear();outcome=TrainingStatus::Searching;
+    InvalidateOwnerControlLifetime();++attempt;
     plan.search.runId+="/session/"+std::to_string(attempt);
     state=NativeTrainingState::CapturingReferences;
     if(references)BeginSearch(a);
@@ -377,6 +378,7 @@ void NativeTrainingService::FailConfiguration(const std::string& diagnostic)
 {Finish(TrainingStatus::InvalidModel,diagnostic);}
 void NativeTrainingService::ResetControl()
 {
+    InvalidateOwnerControlLifetime();
     if(composite){composite->RevokeLive();++compositeGeneration;}
     if(!references && attempt>0 && !plan.search.initialModelRevision.empty() && !incompleteCaptureConstraint)
         incompleteCaptureConstraint.emplace(plan.search.initialModelRevision,plan.search.initialModelEpoch);

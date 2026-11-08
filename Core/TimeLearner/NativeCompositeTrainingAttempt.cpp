@@ -46,10 +46,22 @@ template<class Owner> void NativeCompositeTrainingAttempt::Bind(Owner& owner) {
         owner.NativeTrainingControl.State()!=NativeTrainingState::Searching,"composite_train_owner_service_already_active");
     ownerLife=owner.ObserveLifecycle();
     observeOwner=[&owner](){return owner.ObserveLifecycle();};
-    requireOwnerControl=[this,&owner](){
-        const auto state=owner.NativeTrainingControl.State();
-        if(state==NativeTrainingState::CapturingReferences || state==NativeTrainingState::Searching)
-            Require(owner.NativeTrainingControl.composite.get()==this,"another_native_training_service_owns_executor");
+    auto& control=owner.NativeTrainingControl;
+    if(!control.ownerControlLifetime)
+        control.ownerControlLifetime=std::make_shared<const NativeTrainingService::OwnerControlLifetime>();
+    requireOwnerControl=[this,&owner,observed=std::weak_ptr<const NativeTrainingService::OwnerControlLifetime>(control.ownerControlLifetime)](){
+        Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
+        if(!owner.IsNeedToTrain.GetData())throw CompositeTrainingStopped();
+        const auto& current=owner.NativeTrainingControl;
+        // An owned actor is constructed before service publication. A private
+        // restart/refresh has already replaced its cancelled/lifecycle lease;
+        // neither this exception nor Finished refreshes a manual observation.
+        if(current.composite.get()==this)return;
+        const auto state=current.State();
+        Require(state!=NativeTrainingState::CapturingReferences && state!=NativeTrainingState::Searching,
+            "another_native_training_service_owns_executor");
+        const auto live=observed.lock();
+        Require(bool(live) && live==current.ownerControlLifetime,"native_training_owner_control_replaced");
     };
     initialEpoch=owner.NativeTrainingControl.ModelEpoch();
     bindings=[&owner](){return owner.NativeProbeModelBindings();};
@@ -62,6 +74,7 @@ template<class Owner> void NativeCompositeTrainingAttempt::Bind(Owner& owner) {
         Require(ownerLife.IsCurrent(),"composite_train_owner_lifecycle_changed");
         if(beforeNativeQueue)beforeNativeQueue(request);
         Require(!cancelled && ownerLife.IsCurrent(),"composite_train_queue_interrupted");
+        requireOwnerControl();
         ownedRawRun=request.specification.runId;ownedRawTrial=request.specification.trialId;
         // Only the executor's copy retains the actor. Its reusable group
         // prototype must not form actor -> group -> callback -> actor cycles.
@@ -270,6 +283,7 @@ void NativeCompositeTrainingAttempt::InitializeShared(VerificationProtocol p,Com
     lease=std::make_shared<CompositeTrainingDetail::LiveLease>();
     lease->requireCurrent=[this](){
         Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
+        requireOwnerControl();
         if(!adapter.requested())throw CompositeTrainingStopped();
     };
     CheckBoundary();
@@ -627,6 +641,7 @@ void NativeCompositeTrainingAttempt::RestartOwned(CompositeAttemptLimits value,d
     liveAttemptBinding=Hash(QJsonArray{Text(ownerScope),QString::number(qulonglong(generation))});
     lease=std::make_shared<CompositeTrainingDetail::LiveLease>();
     lease->requireCurrent=[this](){Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
+        requireOwnerControl();
         if(!adapter.requested())throw CompositeTrainingStopped();};
     issuedGroups=completedNativeProbes=totalSamples=activeSamples=0;logicalTrials.clear();
     group.reset();prepared.reset();measurement.reset();selection.reset();activeIdentity.reset();rawTrials.clear();
@@ -713,6 +728,7 @@ void NativeCompositeTrainingAttempt::RefreshOwnedAfterEdit(const std::string& re
     liveAttemptBinding=Hash(QJsonArray{Text(ownerScope),QString::number(qulonglong(generation))});
     lease=std::make_shared<CompositeTrainingDetail::LiveLease>();
     lease->requireCurrent=[this](){Require(!cancelled && ownerLife.IsCurrent(),"expired_composite_training_attempt");
+        requireOwnerControl();
         if(!adapter.requested())throw CompositeTrainingStopped();};
     // Attempt clocks/counters and immutable source family are NOT restarted.
 }

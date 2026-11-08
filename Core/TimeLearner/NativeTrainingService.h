@@ -2,6 +2,7 @@
 #include "NativeModelEditor.h"
 #include "NativeCompositeTrainingAttempt.h"
 #include <functional>
+#include <memory>
 #include <utility>
 #include <set>
 
@@ -138,6 +139,12 @@ public:
 private:
     friend class NativeCompositeTrainingAttempt;
     friend class NativeCompositeStateFactory;
+    // Process-local owner-control identity only. Portable accounting counters
+    // and model/family proofs cannot recreate it. Bind allocates lazily;
+    // control takeover/reset invalidates without allocation or callbacks.
+    struct OwnerControlLifetime {};
+    std::shared_ptr<const OwnerControlLifetime> ownerControlLifetime;
+    void InvalidateOwnerControlLifetime() noexcept {ownerControlLifetime.reset();}
     NativeTrainingState state=NativeTrainingState::Idle;
     TrainingStatus outcome=TrainingStatus::Searching;
     std::string reason,referenceBinding;

@@ -144,6 +144,7 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     compositeCancellationDiagnostics.clear();
     if(!references){referencePackets.clear();referenceEvidence.clear();}
     certificate.reset();search.reset();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
+    InvalidateOwnerControlLifetime();
     ++attempt;++compositeGeneration;plan.search.runId+="/session/"+std::to_string(attempt);
     state=NativeTrainingState::CapturingReferences;incompleteCaptureConstraint.reset();
     if(references)CompositeBeginSearch(a);
@@ -203,6 +204,7 @@ void NativeTrainingService::StartCandidateWindowComposite(NativeTrainingPlan val
     auto binding=revision;actor->CheckBoundary();actor->CheckClock(m,NativeTrainingWallTime());
     static_assert(std::is_nothrow_move_assignable_v<NativeTrainingPlan>);
     static_assert(std::is_nothrow_move_assignable_v<std::optional<TrainingCapacitance>>);
+    InvalidateOwnerControlLifetime();
     plan=std::move(runtime);composite.swap(actor);compositeSourceBinding.swap(source);compositeInitialConfiguration.swap(initial);
     compositeOwnerFamily.swap(family);compositeRecords.swap(records);compositePrimaryBytes=bytes;compositeCapacitance=std::move(capacitance);
     compositeCandidateReferences.swap(closed);search.swap(preparedSearch);attempt=nextAttempt;++compositeGeneration;
@@ -589,6 +591,7 @@ void NativeTrainingService::StopComposite(const NativeTrainingAdapter& a,Trainin
     DeliverCompositeRaw(a,actor);
 }
 void NativeTrainingService::CaptureCompositeInterrupt(const NativeTrainingAdapter& a,const std::string& diagnostic) {
+    InvalidateOwnerControlLifetime();
     if(!composite)return;const auto actor=composite;
     ++compositeGeneration;
     actor->InterruptOwnedRaw(diagnostic,true);
