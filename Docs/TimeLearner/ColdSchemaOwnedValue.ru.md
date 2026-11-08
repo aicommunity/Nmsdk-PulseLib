@@ -1,0 +1,11 @@
+# Cold6: owning numeric base schema до изменения QJsonObject
+
+Статус: source-only fix, baseline Pulse88. Никаких local builds/numerical tests/server/cache changes; runtime A3 negative не переписывается. Ошибка `invalid_native_configuration_number` возникла на strict cold6 roundtrip в real Classic declaration, не во время численного обучения.
+
+В encoder6 `result["base_schema_version"]=result["schema_version"]` удерживал Qt5 QJsonValueRef на правой стороне. Создание отсутствующего левого key меняет тот же positional object, прежде чем proxy преобразуется в owning value. В результате base schema может стать другим полем, хотя исходная schema была numeric. Decode6 вызывает Int→Number; строгое отклонение неправильного типа корректно. Это producer defect, не повод приводить bool/string к числу или ослаблять decoder.
+
+Исправление материализует **QJsonValue result.value("schema_version") ДО insertion**. Type/range validation, schemas1–6, recovery5 value-safe branch, physics/storage/lifecycle/math/tolerances остаются прежними. Wire meaning не меняется: base_schema_version обязан оставаться исходным числом1–4. Повреждённые опубликованные JSON не исправляются на месте и не получают ретроспективный PASS.
+
+Qt primary implementation: [QJsonObject Qt5.15](https://raw.githubusercontent.com/qt/qtbase/5.15/src/corelib/serialization/qjsonobject.cpp) и [QJsonValueRef Qt5.15](https://raw.githubusercontent.com/qt/qtbase/5.15/src/corelib/serialization/qjsonvalue.cpp). `atImpl` создаёт отсутствующий key; ref содержит индекс и читает valueAt при assignment. Это объясняет source hazard; точный плохой runtime value устанавливается по сохранённым A3 primary, не угадывается здесь.
+
+Archive group/source/native waveform codec сам не декодирует initial cold6. Поэтому прошедший archive replay не доказывает корректность `initial-configuration.json`: writer мог сохранить bad field как есть. Actual6 raw/group/model DATA сохраняет собственный scope проверок, но strict cold configuration/autostart/package pipeline не может наследовать зелёный verdict из group-only assertions. Следующие отдельные fixes должны перенести owning-value правило на future cold7 и Root execution3 envelope; этот baseline commit их не подтягивает.
