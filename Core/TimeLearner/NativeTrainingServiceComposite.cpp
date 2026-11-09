@@ -85,7 +85,9 @@ void NativeTrainingService::CompositeRefreshCapacitance(const NativeTrainingAdap
     ValidateTrainingCapacitance(actual);
     Require(!match || TrainingCapacitanceReadbackMatches(requested,actual),"native_composite_capacitance_readback_mismatch");
     if(witness)Require(witness->modelRevision==a.readModelRevision(),"native_composite_capacitance_revision_mismatch");
-    compositeCapacitance=actual;
+    std::unique_ptr<std::optional<TrainingCapacitance>> prepared;
+    if(actual)prepared=std::make_unique<std::optional<TrainingCapacitance>>(actual);
+    compositeCapacitance.swap(prepared);
 }
 void NativeTrainingService::StartComposite(NativeTrainingPlan value,const NativeTrainingAdapter& a,double m,double w) {
     Require(state==NativeTrainingState::Idle,"native_training_requires_reset_before_restart");Validate(value);
@@ -99,9 +101,9 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
         "incomplete_reference_capture_requires_original_model_or_explicit_cold_restart");
     value.search.initialModelRevision=revision;if(references || incompleteCaptureConstraint)value.search.initialModelEpoch=retainedEpoch;
     ValidateBoundedTrainingInputs(value.protocol,value.search,a.readParameters());
-    CompositeRefreshCapacitance(a,{},false);ValidateBoundedTrainingCapacitance(value.search,compositeCapacitance);
-    Require(!value.recordCapacitanceHistory || compositeCapacitance,"native_composite_capacitance_history_requires_owned_C0");
-    Require(!compositeCapacitance || (a.readCapacitanceWitness && a.applyWithCapacitance && a.assessResistanceDomainWithCapacitance),
+    CompositeRefreshCapacitance(a,{},false);ValidateBoundedTrainingCapacitance(value.search,CompositeCapacitance());
+    Require(!value.recordCapacitanceHistory || CompositeCapacitance(),"native_composite_capacitance_history_requires_owned_C0");
+    Require(!CompositeCapacitance() || (a.readCapacitanceWitness && a.applyWithCapacitance && a.assessResistanceDomainWithCapacitance),
         "native_composite_owned_capacitance_requires_boundary_adapter");
     Require(value.search.normalization!=Normalization::TipResistance || a.assessResistanceDomain,"native_n1_requires_effective_domain_provider");
     // Validate retained data before changing a live generation or history.
@@ -133,7 +135,7 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
             QJsonValue(value.search.normalization==Normalization::SynapseCount?"N0":"N1"),"composite_normalization_requires_new_model_family");
         compositeInitialConfiguration=EncodeConfiguredNativeTraining(CaptureCompositeInitialConfiguration(
             DecodeNativeModelSpec(compositeSourceBinding["model_spec"].toObject()),value,a.readParameters(),
-            compositeCapacitance?compositeCapacitance->maximumRelativeChange:0.));
+            CompositeCapacitance()?CompositeCapacitance()->maximumRelativeChange:0.));
     }
     compositeRecords=std::move(retainedRecords);compositePrimaryBytes=retainedBytes;
     if(!references){compositeReferenceGroups.clear();compositeReferenceMeasurements.clear();}
@@ -201,12 +203,14 @@ void NativeTrainingService::StartCandidateWindowComposite(NativeTrainingPlan val
     } else Require(!closed,"native_candidate_window_unexpected_complete_reference_set");
     // All allocations/cold7/archive replay precede this fresh actual guard and
     // publication. A rejected restart leaves the previous family/ledger intact.
+    std::unique_ptr<std::optional<TrainingCapacitance>> preparedCapacitance;
+    if(capacitance)preparedCapacitance=std::make_unique<std::optional<TrainingCapacitance>>(std::move(capacitance));
     auto binding=revision;actor->CheckBoundary();actor->CheckClock(m,NativeTrainingWallTime());
     static_assert(std::is_nothrow_move_assignable_v<NativeTrainingPlan>);
-    static_assert(std::is_nothrow_move_assignable_v<std::optional<TrainingCapacitance>>);
+    static_assert(std::is_nothrow_swappable_v<decltype(compositeCapacitance)>);
     InvalidateOwnerControlLifetime();
     plan=std::move(runtime);composite.swap(actor);compositeSourceBinding.swap(source);compositeInitialConfiguration.swap(initial);
-    compositeOwnerFamily.swap(family);compositeRecords.swap(records);compositePrimaryBytes=bytes;compositeCapacitance=std::move(capacitance);
+    compositeOwnerFamily.swap(family);compositeRecords.swap(records);compositePrimaryBytes=bytes;compositeCapacitance.swap(preparedCapacitance);
     compositeCandidateReferences.swap(closed);search.swap(preparedSearch);attempt=nextAttempt;++compositeGeneration;
     startModel=lastModel=m;startWall=lastWall=w;retainedEpoch=plan.search.initialModelEpoch;
     compositeNativeProbes=compositeGroups=compositeSampledFrames=0;referenceProbes=invalidReferences=0;
@@ -223,9 +227,9 @@ void NativeTrainingService::CompositeBeginSearch(const NativeTrainingAdapter& a)
     if(plan.protocol.schemaVersion==5) {
         Require(bool(compositeCandidateReferences),"native_candidate_window_complete_reference_set_missing");
         search=std::make_unique<BoundedTrainingSession>(*references,*compositeCandidateReferences,plan.search,a.readParameters(),
-            plan.search.normalization==Normalization::TipResistance,compositeCapacitance);
+            plan.search.normalization==Normalization::TipResistance,CompositeCapacitance());
     } else search=std::make_unique<BoundedTrainingSession>(*references,plan.search,a.readParameters(),
-        plan.search.normalization==Normalization::TipResistance,compositeCapacitance);
+        plan.search.normalization==Normalization::TipResistance,CompositeCapacitance());
     state=NativeTrainingState::Searching;SyncOutcome();
 }
 void NativeTrainingService::StageCandidateWindowReference(const std::shared_ptr<NativeCompositeTrainingAttempt>& actor,
@@ -270,7 +274,7 @@ void NativeTrainingService::QueueComposite(const NativeTrainingAdapter& a,const 
         p.contextPolicy.maximumTotalSamples>p.maximumTotalSamples-composite->RetainedSamples())throw CompositeBudget("native_composite_attempt_budget_exhausted");
     if(compositePrimaryBytes>p.maximumTotalPrimaryBytes || PrimaryReservation(plan)>p.maximumTotalPrimaryBytes-compositePrimaryBytes)
         throw CompositeBudget("native_composite_primary_byte_budget_exhausted");
-    CompositeRefreshCapacitance(a,search?search->Capacitance():compositeCapacitance,true);
+    CompositeRefreshCapacitance(a,search?search->Capacitance():CompositeCapacitance(),true);
     compositeRequest=request;compositeHarvested=false;compositeGroupWitnesses.clear();compositeGroupTrialWitnessIds.clear();
     const auto generation=compositeGeneration;auto prototype=plan.probe;
     const auto serial=activeAction?activeAction->serial:0;
@@ -283,8 +287,8 @@ void NativeTrainingService::QueueComposite(const NativeTrainingAdapter& a,const 
     };
     auto before=[this,a,generation](const NativeProbeRequest& raw){
         Require(generation==compositeGeneration && ActiveComposite(state),"native_composite_attempt_replaced");
-        CompositeRefreshCapacitance(a,search?search->Capacitance():compositeCapacitance,true);
-        if(!compositeCapacitance)return;const auto witness=a.readCapacitanceWitness();
+        CompositeRefreshCapacitance(a,search?search->Capacitance():CompositeCapacitance(),true);
+        if(!CompositeCapacitance())return;const auto witness=a.readCapacitanceWitness();
         Require(witness && witness->modelRevision==raw.baseModelRevision,"native_composite_raw_C0_context_mismatch");
         const auto id=NativeTrainingCapacitanceWitnessId(*witness);compositeGroupWitnesses.emplace(id,*witness);
         Require(compositeGroupTrialWitnessIds.emplace(raw.specification.trialId,id).second,"native_composite_raw_C0_trial_replayed");
@@ -305,7 +309,7 @@ void NativeTrainingService::RawCompositeResult(const NativeTrainingAdapter& a,co
     observedPackets.push_back(packet);
     compositeRawNotifications.push_back({packet,plan.observationSink,composite,attempt,plan.search.runId});
     const auto generation=compositeGeneration;const auto actor=composite;
-    try {if(compositeCapacitance && packet.requestedSpecification) {
+    try {if(CompositeCapacitance() && packet.requestedSpecification) {
         const auto found=compositeGroupTrialWitnessIds.find(packet.requestedSpecification->trialId);
         Require(found!=compositeGroupTrialWitnessIds.end(),"native_composite_unwitnessed_raw_trial");
         const auto expected=found->second;
@@ -532,18 +536,18 @@ void NativeTrainingService::BeforeComposite(const NativeTrainingAdapter& a,doubl
         const auto action=*activeAction;Require(a.readModelRevision()==action.baseModelRevision,"native_training_model_changed_before_action");
         if(action.kind==TrainingActionKind::ResistanceDomain) {
             CompositeRefreshCapacitance(a,search->Capacitance(),true);
-            const auto domain=compositeCapacitance?a.assessResistanceDomainWithCapacitance(action.parameters,action.inputIndex,action.capacitance):
+            const auto domain=CompositeCapacitance()?a.assessResistanceDomainWithCapacitance(action.parameters,action.inputIndex,action.capacitance):
                 a.assessResistanceDomain(action.parameters,action.inputIndex);
             CompositeRefreshCapacitance(a,search->Capacitance(),true);search->AssessedDomain(action.serial,domain,a.readModelRevision());
             activeAction.reset();SyncOutcome();return;
         }
         if(action.kind==TrainingActionKind::Edit) {
             CompositeRefreshCapacitance(a,search->Capacitance(),true);
-            const auto changed=compositeCapacitance?a.applyWithCapacitance(action.parameters,action.capacitance):a.apply(action.parameters);
+            const auto changed=CompositeCapacitance()?a.applyWithCapacitance(action.parameters,action.capacitance):a.apply(action.parameters);
             if(changed.status==NativeEditStatus::Applied) {
                 CompositeRefreshCapacitance(a,action.capacitance,true);finalPackets.clear();compositeFinalGroups.clear();compositeFinalRun.clear();
                 const auto actual=a.readModelRevision();composite->RefreshOwnedAfterEdit(actual);
-                search->Applied(action.serial,changed.effective,actual,compositeCapacitance);
+                search->Applied(action.serial,changed.effective,actual,CompositeCapacitance());
                 if(search->Status()!=TrainingStatus::InvalidModel)referenceBinding=actual;
             }
             else if(changed.status==NativeEditStatus::Rejected && !changed.modelMayHaveChanged)

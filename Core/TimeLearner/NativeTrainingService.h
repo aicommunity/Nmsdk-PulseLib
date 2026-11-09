@@ -166,7 +166,14 @@ private:
     std::vector<ValidatedCompositeMeasurement> compositeReferenceMeasurements;
     std::vector<std::string> compositeReferenceGroups,compositeFinalGroups;
     std::optional<VerificationRequest> compositeRequest;
-    std::optional<TrainingCapacitance> compositeCapacitance;
+    // std::map move construction may allocate (notably MSVC's sentinel).
+    // Prepare the optional value before publication and transfer its holder
+    // without constructing/moving a map after owner authority is invalidated.
+    std::unique_ptr<std::optional<TrainingCapacitance>> compositeCapacitance;
+    const std::optional<TrainingCapacitance>& CompositeCapacitance() const {
+        static const std::optional<TrainingCapacitance> absent;
+        return compositeCapacitance?*compositeCapacitance:absent;
+    }
     std::string compositeOwnerFamily,compositeFinalRun;
     std::size_t compositeNativeProbes=0,compositeGroups=0,compositeSampledFrames=0,compositePrimaryBytes=0;
     std::size_t compositeGeneration=0,compositeDispatchDepth=0;
