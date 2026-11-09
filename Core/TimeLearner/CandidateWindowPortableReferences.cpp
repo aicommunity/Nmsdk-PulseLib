@@ -4,6 +4,7 @@
 #include "CandidateWindowMeasurementEvidence.h"
 #include "CompositeSourceValidation.h"
 #include "ConfiguredNativeTraining.h"
+#include "ProbeEvidenceJson.h"
 #include "ModelIdentity.h"
 #include <QJsonArray>
 #include <QJsonDocument>
