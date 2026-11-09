@@ -81,6 +81,7 @@ public:
     const std::string& CompositeSourceOrigin() const {return compositeSourceOrigin;}
 private:
     friend class CompositePortableTrainingProof;
+    friend class CandidateWindowPortableTrainingProof;
     CapturedReferences()=default;
     VerificationProtocol protocol;
     std::vector<CapturedInputReference> inputs;
@@ -190,6 +191,7 @@ public:
     bool WaitingForObservation() const { return bool(armed) || bool(compositeArmed); }
 private:
     friend class CompositePortableTrainingProof;
+    friend class CandidateWindowPortableTrainingProof;
     struct Accepted { std::string trialId,effectiveRevision;double raw,arrival,plateauEnd;std::string compositeProofId,candidateWitnessId;
         std::string candidateWindowRecipeId,candidateWindowInstanceId,candidateWindowAttemptId,candidateWindowFinalRunId;
         std::optional<PreparedCompositeMeasurement> candidateWindowPrepared; };
