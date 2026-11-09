@@ -319,7 +319,7 @@ QJsonObject EncodeCandidateRecoveryEvidence(const CandidateRecoveryEvidence& e)
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)
 {
-    if(service.Plan().protocol.schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_summary7");
+    if(service.Plan().protocol.schemaVersion==5)return EncodeNativeCandidateWindowTrainingState(service,actualModelRevision,actualParameters);
     if(service.Plan().protocol.schemaVersion==4)return EncodeNativeCompositeTrainingState(service,actualModelRevision,actualParameters);
     const auto parameters=Parameters;
     const auto& cfg=service.Configuration();

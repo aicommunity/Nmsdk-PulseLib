@@ -8,6 +8,8 @@ namespace NMSDK::TimeLearner {
 // precede installation; live owner authority is created only by a later Start.
 QJsonObject EncodeNativeCompositeTrainingState(const NativeTrainingService&,const std::string& actualModelRevision,
     const std::vector<InputParameters>& actualParameters);
+QJsonObject EncodeNativeCandidateWindowTrainingState(const NativeTrainingService&,const std::string& actualModelRevision,
+    const std::vector<InputParameters>& actualParameters);
 class NativeCompositeStateFactory {
 public:
     static QJsonObject Export(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,

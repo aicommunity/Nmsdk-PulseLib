@@ -151,9 +151,11 @@ QJsonObject NativeCompositeStateFactory::Export(RDK::UNet& owner,const NativeMod
         {"neuron",physical},{"capacitance_state",c0}};
     package["sha256"]=NmsdkTools::CanonicalModelDataSha256(package);return package;
 }
-QJsonObject EncodeNativeCompositeTrainingState(const NativeTrainingService& service,const std::string& revision,
+namespace {
+template<unsigned Protocol,unsigned Summary> QJsonObject CompositeSummary(const NativeTrainingService& service,const std::string& revision,
     const std::vector<InputParameters>& parameters) {
-    const auto& plan=service.Plan();Require(plan.protocol.schemaVersion==4 && plan.composite,"composite_summary_protocol");
+    static_assert((Protocol==4 && Summary==6) || (Protocol==5 && Summary==7));
+    const auto& plan=service.Plan();Require(plan.protocol.schemaVersion==Protocol && plan.composite,"composite_summary_protocol");
     const auto& records=service.CompositeMeasurements();const auto find=[&](const std::string& id,bool trial=false)->const NativeCompositeMeasurementRecord& {
         const auto found=std::find_if(records.begin(),records.end(),[&](const auto& r){return (trial?r.logical.trialId:r.groupId)==id;});
         Require(found!=records.end() && found->consumed && !found->semanticProofId.empty(),"composite_summary_group_missing");return *found;
@@ -190,11 +192,12 @@ QJsonObject EncodeNativeCompositeTrainingState(const NativeTrainingService& serv
     const auto& t=plan.search.tolerances;const auto& source=service.CompositeSourceBinding();
     const auto certificate=service.Certificate();const bool matches=certificate && service.References() &&
         certificate->Matches(revision,*service.References(),t,ModelStateKind::LearnedSolo,service.ModelEpoch());
-    return {{"kind","native_training_state_summary"},{"schema_version",6},{"state",NativeTrainingStateName(service.State())},
+    const auto runtime=[&](){if constexpr(Protocol==4)return EncodeCompositeRuntimePlan(plan);else return EncodeCandidateWindowRuntimePlan(plan);}();
+    return {{"kind","native_training_state_summary"},{"schema_version",int(Summary)},{"state",NativeTrainingStateName(service.State())},
         {"outcome",TrainingStatusName(service.Outcome())},{"reason",Text(service.Reason())},{"model_state_kind",certificate?"learned_solo":"diagnostic"},
         {"actual_model_revision",Text(revision)},{"model_epoch",Count(service.ModelEpoch())},{"actual_parameters",Parameters(parameters)},
         {"tolerances",QJsonObject{{"amplitude_absolute",t.amplitudeAbsolute},{"amplitude_relative",t.amplitudeRelative},{"sync",t.sync}}},
-        {"runtime_plan",EncodeCompositeRuntimePlan(plan)},{"measurement_method",DeclaredWindowBasinResult::MethodId()},
+        {"runtime_plan",runtime},{"measurement_method",DeclaredWindowBasinResult::MethodId()},
         {"source_origin",NmsdkTools::CanonicalModelDataSha256(source)},{"owner_family_binding",Text(service.CompositeOwnerFamilyBinding())},
         {"reference_complete",bool(service.References())},{"capture_revision",Object(source["initial_model"])["sha256"]},{"capture_epoch",source["initial_epoch"]},
         {"reference_group_ids",referenceIds},{"final_group_ids",finalIds},{"reference_semantic_proof_ids",referenceProofs},{"final_semantic_proof_ids",finalProofs},
@@ -204,6 +207,15 @@ QJsonObject EncodeNativeCompositeTrainingState(const NativeTrainingService& serv
         {"accepted_parameters",search?QJsonValue(Parameters(search->Parameters())):QJsonValue(QJsonValue::Null)},
         {"applied_edits",search?Count(search->AppliedEdits()):QJsonValue(QJsonValue::Null)},
         {"search_probes",search?Count(search->IssuedProbes()):QJsonValue(QJsonValue::Null)}};
+}
+}
+QJsonObject EncodeNativeCompositeTrainingState(const NativeTrainingService& service,const std::string& revision,
+    const std::vector<InputParameters>& parameters) {return CompositeSummary<4,6>(service,revision,parameters);}
+QJsonObject EncodeNativeCandidateWindowTrainingState(const NativeTrainingService& service,const std::string& revision,
+    const std::vector<InputParameters>& parameters) {
+    ValidateCandidateWindowMeasurementContract(service.Plan().protocol);
+    Require(service.State()==NativeTrainingState::Finished && !service.CompositeSourceBinding().isEmpty(),"candidate_window_summary_requires_owned_finished_boundary");
+    return CompositeSummary<5,7>(service,revision,parameters);
 }
 void NativeCompositeStateFactory::Restore(NativeTrainingService& service,CompositePortableTrainingProof proof,NativeTrainingPlan plan,
     QJsonObject configuration,std::size_t sessions,TrainingStatus outcome,const std::string& reason,bool completed) {
