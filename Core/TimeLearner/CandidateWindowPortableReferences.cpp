@@ -41,7 +41,7 @@ CandidateWindowReferenceSet CandidateWindowPortableReferenceFactory::Replay(cons
             r.semanticProofId==CandidateWindowTrainingSemanticProofId(p,r),"candidate_window_portable_reference_binding");
         auto binding=ParseStrictNativeJsonObject(r.candidateBindingJson,128u*1024u*1024u);
         Require(binding["model_identity"]==QJsonValue(initial),"candidate_window_portable_reference_not_original_model");
-        const auto values=binding["physical_readback"].toObject()["parameters"];
+        const auto values=binding["physical_readback"].toObject().value("parameters");
         Require(values.isArray() && std::size_t(values.toArray().size())==p.inputs.size(),"candidate_window_portable_P0_dimensions");
         CandidateWindowArithmeticSeed seed;seed.inputIndex=i;const auto& peak=*r.selection->geometry->measuredMaximum;
         seed.firstFrame=peak.firstSample;seed.lastFrame=peak.lastSample;
