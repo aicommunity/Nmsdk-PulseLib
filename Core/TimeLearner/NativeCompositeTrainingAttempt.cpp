@@ -384,7 +384,7 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
         ValidateCandidateWindowLogicalContext(*protocol,logical,windowDeclaration->attemptId,id->groupId,purpose);
         const auto parameters=readWindowParameters();std::vector<int> attachments;for(const auto& p:parameters)attachments.push_back(p.length);
         activeWindowPhysical=ReadNativeCandidateWindowPhysical(bindings(),attachments,*protocol,DecodeNativeModelSpec(initialDeclaration),id->capacitance);
-        Require(EncodeCandidateWindowPhysicalReadback(*activeWindowPhysical)==candidate["physical_readback"],"candidate_window_snapshot_changed_before_queue");
+        Require(QJsonValue(EncodeCandidateWindowPhysicalReadback(*activeWindowPhysical))==candidate.value("physical_readback"),"candidate_window_snapshot_changed_before_queue");
         CandidateWindowBasinSpecification spec;spec.groupId=id->groupId;spec.inputId=logical.inputId;
         spec.assignedInput=logical.inputIndex;spec.channel=id->channel;
         if(purpose==CompositeMeasurementPurpose::Reference)spec.referenceTime=window;
