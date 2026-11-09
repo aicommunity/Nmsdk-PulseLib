@@ -57,6 +57,19 @@ struct NativeLearnerLifecycle {
   catch(const std::exception& error){owner.NativeEditFailure=error.what();owner.NativeRecognition->trials.Cancel(error.what());owner.ForceSkipComponentCalculation();}
   return true;
  }
+ if(owner.ControllerVersion.GetData()==2 && owner.NativeEditFailure.empty())
+ {
+  try
+  {
+   const bool boundary=!owner.NativeProbeControl.OwnsControl() || owner.NativeProbeControl.AtEditBoundary();
+   if(owner.NativeTrainingControl.ObserveTrainingRequestAtBoundary(owner.IsNeedToTrain.GetData(),boundary))
+   {
+    owner.NativeTrainingRequestIntent.Clear();owner.NativeProbeControl.ResetControl();
+   }
+  }
+  catch(const std::exception& error)
+  {owner.NativeTrainingOwned=true;owner.NativeEditFailure=error.what();owner.NativeTrainingControl.FailConfiguration(error.what());}
+ }
  if(owner.ControllerVersion.GetData()==2 && owner.NativeEditFailure.empty() && owner.IsNeedToTrain.GetData() &&
     owner.NativeTrainingControl.State()==TimeLearner::NativeTrainingState::Idle &&
     (!owner.NativeProbeControl.OwnsControl() || owner.NativeProbeControl.AtEditBoundary()))
