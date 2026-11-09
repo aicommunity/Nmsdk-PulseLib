@@ -465,6 +465,8 @@ UEPtr<UContainer> LoadSnapshot(const QJsonObject& snapshot, UEPtr<UStorage> stor
 // identical, including individual learned values and heterogeneous children.
 QJsonObject RestSnapshot(UEPtr<UContainer> model,const ModelBoundarySources& boundarySources = {})
 {
+    if(!model || !model->GetStorage() || !model->GetEnvironment())
+        Fail("invalid_archive_context", "model/storage/environment");
     auto graph=Snapshot(model,boundarySources);CheckSnapshot(graph);
     Lease rest{model->GetStorage(),LoadSnapshot(graph,model->GetStorage(),model->GetEnvironment(),boundarySources),
         !boundarySources.empty()};
