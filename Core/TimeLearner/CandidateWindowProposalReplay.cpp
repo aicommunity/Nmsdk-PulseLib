@@ -190,7 +190,7 @@ ReplayedCandidateWindowBinding CandidateWindowProposalReplayFactory::CheckCandid
         const auto data=Object(value["data"]);Require(data["type"]==QJsonValue(type));return data;
     };
     const auto binary64=[&](const std::string& path) {
-        const auto value=parameter(path,"Resistance","binary64")["value"];Require(value.isString());const auto text=value.toString();
+        const auto value=parameter(path,"Resistance","binary64").value("value");Require(value.isString());const auto text=value.toString();
         bool ok=false;const auto bits=text.toULongLong(&ok,16);Require(ok && text.size()==16 &&
             text==QString::number(bits,16).rightJustified(16,QLatin1Char('0')),"candidate_window_noncanonical_control_resistance");
         double result;static_assert(sizeof(result)==sizeof(bits));std::memcpy(&result,&bits,sizeof(result));
