@@ -139,6 +139,7 @@ public:
 private:
     friend class NativeCompositeTrainingAttempt;
     friend class NativeCompositeStateFactory;
+    friend class NativeCandidateWindowStateFactory;
     // Process-local owner-control identity only. Portable accounting counters
     // and model/family proofs cannot recreate it. Bind allocates lazily;
     // control takeover/reset invalidates without allocation or callbacks.

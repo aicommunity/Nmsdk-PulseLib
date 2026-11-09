@@ -181,7 +181,8 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
 static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
     int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance)
 {
-    if(service.Plan().protocol.schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_package6");
+    if(service.Plan().protocol.schemaVersion==5)return NativeCandidateWindowStateFactory::Export(owner,declaration,service,actual,
+        version,calculateMode,structureMode,implementationId,capacitance);
     if(service.Plan().protocol.schemaVersion==4)return NativeCompositeStateFactory::Export(owner,declaration,service,actual,
         version,calculateMode,structureMode,implementationId,capacitance);
     const bool stopped=!service.Certificate();
@@ -292,6 +293,7 @@ QJsonObject ParseNativeLearnedState(const std::string& text)
 std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
     RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId)
 {
+    if(package["schema_version"]==QJsonValue(6))return NativeCandidateWindowStateFactory::Prepare(package,storage,environment,implementationId);
     if(package["schema_version"]==QJsonValue(5))return NativeCompositeStateFactory::Prepare(package,storage,environment,implementationId);
     auto body=package;body.remove("sha256");
     const bool stopped=package["kind"]==QJsonValue("timelearner_stopped_state");
