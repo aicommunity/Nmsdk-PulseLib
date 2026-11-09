@@ -378,6 +378,7 @@ void NativeTrainingService::FailConfiguration(const std::string& diagnostic)
 {Finish(TrainingStatus::InvalidModel,diagnostic);}
 void NativeTrainingService::ResetControl()
 {
+    observedTrainingRequestLow=false;
     InvalidateOwnerControlLifetime();
     if(composite){composite->RevokeLive();++compositeGeneration;}
     if(!references && attempt>0 && !plan.search.initialModelRevision.empty() && !incompleteCaptureConstraint)
@@ -388,6 +389,17 @@ void NativeTrainingService::ResetControl()
     referenceProbes=invalidReferences=0;compositeRequest.reset();compositeReferenceMeasurements.clear();
     compositeRawNotifications.clear();
     compositeCancellationDiagnostics.clear();
+}
+bool NativeTrainingService::ObserveTrainingRequestAtBoundary(bool requested,bool boundaryAvailable)
+{
+    if(!requested){observedTrainingRequestLow=true;return false;}
+    if(!observedTrainingRequestLow)return false;
+    // The initial Idle autostart already owns this request. A rise observed
+    // during cancellation remains armed until its closed boundary is reached.
+    if(state==NativeTrainingState::Idle){observedTrainingRequestLow=false;return false;}
+    if(state!=NativeTrainingState::Finished || !boundaryAvailable || compositeDispatchDepth ||
+       !compositeRawNotifications.empty())return false;
+    ResetControl();return true;
 }
 void NativeTrainingService::InvalidateTarget()
 {ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();

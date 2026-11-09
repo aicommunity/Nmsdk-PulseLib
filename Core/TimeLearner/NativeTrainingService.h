@@ -83,6 +83,11 @@ public:
     // Reset controller dynamics, retaining the learned goal and the last
     // verified model binding. Retarget/cold-start is a separate explicit call.
     void ResetControl();
+    // Called by the native owner at its ordinary before-children boundary.
+    // A connected/direct flag bypasses the property setter. Only an actually
+    // observed low level arms a restart; constant true is never a new request.
+    // Return true only after resetting a CLOSED session for the pending rise.
+    bool ObserveTrainingRequestAtBoundary(bool requested,bool boundaryAvailable);
     void InvalidateTarget();
     NativeTrainingState State() const { return state; }
     TrainingStatus Outcome() const { return outcome; }
@@ -147,6 +152,7 @@ private:
     std::shared_ptr<const OwnerControlLifetime> ownerControlLifetime;
     void InvalidateOwnerControlLifetime() noexcept {ownerControlLifetime.reset();}
     NativeTrainingState state=NativeTrainingState::Idle;
+    bool observedTrainingRequestLow=false;
     TrainingStatus outcome=TrainingStatus::Searching;
     std::string reason,referenceBinding;
     NativeTrainingPlan plan;
