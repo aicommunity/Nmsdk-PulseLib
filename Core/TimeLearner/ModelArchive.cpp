@@ -835,7 +835,8 @@ try
     {
         const auto definition = entry.toObject(); const auto name = definition["name"].toString();
         const auto snapshot = definition["snapshot"].toObject();
-        if(definition["kind"].toString() == "native_required" || storage->CheckClass(name.toStdString()))
+        const bool existing = definition["kind"].toString() == "native_required" || storage->CheckClass(name.toStdString());
+        if(existing)
         {
             auto source = Source(storage, name);
             if(source.kind != definition["kind"].toString() || source.base != definition["base_class"].toString())
@@ -843,9 +844,14 @@ try
             auto actual = ImageSnapshot(storage, environment, name, source);
             if(actual["identity"] != snapshot["identity"]) Fail("image_definition_collision", name);
         }
-        else
+        // A matching registered image does not validate the supplied XML.
+        // Reconstruct every definition through the native loader and compare
+        // its effective model with the declared identity before accepting it.
+        // Otherwise identical archives have different validity depending on
+        // which images happened to be registered before import.
+        Lease candidate{storage, LoadSnapshot(snapshot, storage, environment)};
+        if(!existing)
         {
-            Lease candidate{storage, LoadSnapshot(snapshot, storage, environment)};
             RegisterClassImage(storage, name.toStdString(), candidate.object);
         }
     }
