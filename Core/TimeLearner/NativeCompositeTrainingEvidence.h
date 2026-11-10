@@ -15,6 +15,11 @@ class NativeCompositeTrainingAttempt;
 class DecodedNativeCompositeArchive {
 public:
     DecodedNativeCompositeArchive(const DecodedNativeCompositeArchive&)=default;
+    DecodedNativeCompositeArchive& operator=(const DecodedNativeCompositeArchive&)=default;
+    // The explicit copy constructor otherwise suppresses implicit moves and
+    // turns proof/factory ownership transfers into deep copies of raw traces.
+    DecodedNativeCompositeArchive(DecodedNativeCompositeArchive&&)=default;
+    DecodedNativeCompositeArchive& operator=(DecodedNativeCompositeArchive&&)=default;
     const std::vector<NativeCompositeMeasurementRecord>& Records() const {return records;}
     const VerificationProtocol& Protocol() const {return protocol;}
     const QJsonObject& SourceBinding() const {return sourceBinding;}
