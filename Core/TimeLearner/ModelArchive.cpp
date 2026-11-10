@@ -501,7 +501,13 @@ QJsonObject ImageSnapshot(UEPtr<UStorage> storage, UEPtr<UEnvironment> environme
     // A pooled native-required instance can already be initialized. Init alone
     // does not guarantee a fresh reset state for this private image snapshot.
     object->SetEnvironment(environment); InitializeAndResetNative(object);
-    return Snapshot(object);
+    // Copy/pooled objects can retain a different disconnected-input extent
+    // (for example a zero 1x1 feedback input versus an empty native-loaded
+    // input). Images are model definitions, not dynamic checkpoints. Use the
+    // same native Load/Init/Reset representation as the imported image and
+    // verify the entire effective physical identity, rather than patching
+    // individual input/state properties or changing the shared prototype.
+    return RestSnapshot(object);
 }
 QJsonArray ImageDefinitions(UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,
     const QJsonObject& identity,const std::vector<std::string>& additionalImageRoots)
