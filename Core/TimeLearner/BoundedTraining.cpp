@@ -451,11 +451,9 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
 BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandidate(std::vector<InputParameters>& parameters)
 {
     const auto input=order.at(position);
-    // A valid observation's search order must not depend on how an invalid
-    // burst would be recovered. Give each legal geometry one unissued Rs per
-    // pass: a dense Rs mesh at a mistimed length must not starve other lengths.
-    // Every revisit still requires a fresh native domain assessment below.
-    const bool interleave=config.normalization==Normalization::TipResistance;
+    // Before-fix scheduling retained in this explicit A/B baseline snapshot.
+    const bool interleave=config.normalization==Normalization::TipResistance &&
+        config.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceUnassignedBurst;
     if(cursor.initialCandidatePending)
     {
         cursor.initialCandidatePending=false;parameters=background;
