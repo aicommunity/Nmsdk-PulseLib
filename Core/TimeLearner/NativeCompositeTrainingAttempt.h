@@ -51,7 +51,11 @@ public:
     void AfterTick(double modelTime,double wallTime);
     void Cancel(const std::string& reason);
     bool Running() const;
+    // Opt-in capability production only; does not change any search policy.
+    // Must be declared before capture. Existing callers do no extra replay.
+    void EnableRejectedSearchAdmission();
     const std::optional<ValidatedCompositeMeasurement>& Measurement() const {return measurement;}
+    const std::optional<RejectedCompositeMeasurement>& RejectedMeasurement() const {return rejectedMeasurement;}
     const std::optional<NativeDeclaredWindowBasinResult>& Selection() const {return selection;}
     const std::string& RejectionReason() const {return rejection;}
     const NativeMatchedOmissionResult* Group() const {return group?&group->Result():nullptr;}
@@ -112,6 +116,7 @@ private:
     std::shared_ptr<CompositeTrainingDetail::Identity> activeIdentity;
     std::optional<PreparedCompositeMeasurement> prepared;
     std::optional<ValidatedCompositeMeasurement> measurement;
+    std::optional<RejectedCompositeMeasurement> rejectedMeasurement;
     std::optional<NativeDeclaredWindowBasinResult> selection;
     std::optional<NativeCandidateWindowAttemptDeclaration> windowDeclaration;
     std::shared_ptr<const CandidateWindowReferenceSet> windowReferences;
@@ -144,6 +149,6 @@ private:
     std::size_t generation=0,initialEpoch=0,issuedGroups=0,completedNativeProbes=0,totalSamples=0,activeSamples=0;
     double startModel=0.,startWall=0.,lastModel=0.,lastWall=0.;
     double groupStartModel=0.,groupStartWall=0.,groupWallLimit=0.,groupModelLimit=0.,groupEndModel=0.,groupEndWall=0.;
-    bool closed=false,cancelled=false,budgetExhausted=false;
+    bool closed=false,cancelled=false,budgetExhausted=false,rejectedSearchAdmission=false;
 };
 }

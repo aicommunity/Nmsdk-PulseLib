@@ -343,7 +343,7 @@ void NativeCompositeTrainingAttempt::StartMeasurement(const VerificationRequest&
     if(group && !closed)CloseGroup();
     // A failed preflight is not the previous group's data under a new label.
     group.reset();activeIdentity.reset();rawTrials.clear();
-    measurement.reset();selection.reset();prepared.reset();rejection.clear();
+    measurement.reset();rejectedMeasurement.reset();selection.reset();prepared.reset();rejection.clear();
     activeWindowSnapshot.reset();activeWindowPhysical.reset();activeWindowProposal.reset();activeWindowSpecification.reset();
     CheckClock(modelTime,wallTime);
     Require(issuedGroups<limits.maximumGroups && IssuedNativeProbes()<=limits.maximumNativeProbes &&
@@ -513,9 +513,16 @@ void NativeCompositeTrainingAttempt::AfterTick(double m,double w) {
     if(cancelled)SuspendOwned(rejection.empty()?"native_composite_control_replaced":rejection);
     else if(!Running())CloseGroup();
 }
+void NativeCompositeTrainingAttempt::EnableRejectedSearchAdmission() {
+    Require(protocol->schemaVersion==5 && !issuedGroups && !group && !cancelled,
+        "rejected_search_admission_requires_fresh_candidate_window_attempt");
+    requireOwnerControl();
+    rejectedSearchAdmission=true;
+}
 void NativeCompositeTrainingAttempt::CloseGroup() {
     if(closed || !group)return;closed=true;completedNativeProbes+=group->IssuedNativeProbes();
     const auto& result=group->Result();
+    bool eligibleRejectedAssignment=false;
     try {
         // Includes samples from a cancelled/current partial raw probe, even
         // when its closed trace never reached the group's witness inventory.
@@ -555,8 +562,12 @@ void NativeCompositeTrainingAttempt::CloseGroup() {
         const auto& selected=*selection;
         if(selected.status!=NativeDeclaredWindowBasinStatus::Completed || !selected.geometry)
             throw std::invalid_argument(selected.reasons.empty()?"composite_train_native_assignment_rejected":selected.reasons.front());
-        if(selected.geometry->validity!=DeclaredWindowBasinValidity::Valid || !selected.geometry->measuredMaximum)
+        if(selected.geometry->validity!=DeclaredWindowBasinValidity::Valid || !selected.geometry->measuredMaximum) {
+            eligibleRejectedAssignment=rejectedSearchAdmission && protocol->schemaVersion==5 && purpose==CompositeMeasurementPurpose::Search &&
+                (selected.geometry->validity==DeclaredWindowBasinValidity::Missing ||
+                 selected.geometry->validity==DeclaredWindowBasinValidity::Ambiguous) && !selected.geometry->measuredMaximum;
             throw std::invalid_argument(std::string("composite_train_assignment_")+DeclaredWindowBasinValidityName(selected.geometry->validity));
+        }
         const auto& peak=*selected.geometry->measuredMaximum;const auto& full=result.witness.fullBefore.observation;
         const auto origin=std::find(protocol->stimulusIds.begin(),protocol->stimulusIds.end(),protocol->originStimulusId)-protocol->stimulusIds.begin();
         const double originTime=full.events.at(origin).time;
@@ -584,10 +595,42 @@ void NativeCompositeTrainingAttempt::CloseGroup() {
     }
     catch(const CompositeTrainingBudgetExhausted& e){budgetExhausted=true;measurement.reset();rejection=e.what();}
     catch(const std::exception& e){measurement.reset();if(rejection.empty())rejection=e.what();if(!result.reason.empty())rejection+=";"+result.reason;}
+    if(eligibleRejectedAssignment && !budgetExhausted && !cancelled) {
+        try {
+            Require(prepared && windowReferences && activeIdentity && selection && selection->geometry,
+                "candidate_window_rejection_context_missing");
+            const auto validity=selection->geometry->validity;
+            const auto checkDeadline=[&]() {
+                const double model=actualModelTime(),wall=NativeTrainingWallTime();CheckClock(model,wall);
+                if(model-groupStartModel>=groupModelLimit || wall-groupStartWall>=groupWallLimit)
+                    throw CompositeTrainingBudgetExhausted("candidate_window_rejection_group_budget_exhausted");
+            };
+            checkDeadline();
+            const auto content=CandidateWindowRejectedGroupContentId(*protocol,Record());
+            auto current=[this,weak=std::weak_ptr<const CompositeTrainingDetail::Identity>(activeIdentity),validity]() {
+                const auto identity=weak.lock();
+                Require(identity && identity==activeIdentity && closed && !Running() && !cancelled &&
+                    !budgetExhausted && !measurement && rejectedMeasurement &&
+                    rejectedMeasurement->prepared.identity==identity && selection && selection->geometry &&
+                    selection->status==NativeDeclaredWindowBasinStatus::Completed &&
+                    selection->geometry->validity==validity && group && group->State()==NativeMatchedOmissionState::Completed,
+                    "composite_rejection_group_not_current");
+            };
+            rejectedMeasurement=RejectedCompositeMeasurement(*prepared,windowReferences,validity,content,std::move(current));
+            rejectedMeasurement->RequireCurrent();
+            checkDeadline();
+        }
+        catch(const CompositeTrainingBudgetExhausted& e) {
+            budgetExhausted=true;rejectedMeasurement.reset();rejection=e.what();
+        }
+        catch(const std::exception& e) {
+            rejectedMeasurement.reset();rejection=std::string("candidate_window_rejection_admission_failed:")+e.what();
+        }
+    }
     groupEndModel=lastModel;groupEndWall=NativeTrainingWallTime();
     if(protocol->schemaVersion==5)windowRecords.push_back(Record());
 }
-void NativeCompositeTrainingAttempt::RevokeLive(){cancelled=true;lease.reset();}
+void NativeCompositeTrainingAttempt::RevokeLive(){cancelled=true;lease.reset();rejectedMeasurement.reset();}
 void NativeCompositeTrainingAttempt::RetainRawPacket(const NativeProbeResult& packet) {
     if(packet.requestedSpecification)for(auto& trial:rawTrials)
         if(trial.actual.trialId==packet.requestedSpecification->trialId &&
@@ -644,7 +687,7 @@ void NativeCompositeTrainingAttempt::RestartOwned(CompositeAttemptLimits value,d
         requireOwnerControl();
         if(!adapter.requested())throw CompositeTrainingStopped();};
     issuedGroups=completedNativeProbes=totalSamples=activeSamples=0;logicalTrials.clear();
-    group.reset();prepared.reset();measurement.reset();selection.reset();activeIdentity.reset();rawTrials.clear();
+    group.reset();prepared.reset();measurement.reset();rejectedMeasurement.reset();selection.reset();activeIdentity.reset();rawTrials.clear();
     closed=false;budgetExhausted=false;rejection.clear();beforeNativeQueue={};afterNativeResult={};
     rawDeliveryCursor=0;interruptedRawPackets.clear();ownedRawRun.clear();ownedRawTrial.clear();
 }
@@ -734,7 +777,7 @@ void NativeCompositeTrainingAttempt::RefreshOwnedAfterEdit(const std::string& re
 }
 void NativeCompositeTrainingAttempt::Cancel(const std::string& reason) {
     if(Running())group->Cancel(ownerLife.IsCurrent()?adapter:NativeMatchedOmissionAdapter{},reason);
-    CloseGroup();cancelled=true;lease.reset();measurement.reset();
+    CloseGroup();cancelled=true;lease.reset();measurement.reset();rejectedMeasurement.reset();
     if(rejection.empty())rejection=reason;
 }
 }

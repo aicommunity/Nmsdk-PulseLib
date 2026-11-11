@@ -82,6 +82,7 @@ private:
     friend class BoundedTrainingSession;
     friend class FinalVerificationSession;
     friend class ValidatedCompositeMeasurement;
+    friend class RejectedCompositeMeasurement;
     friend class NativeTrainingService;
 };
 class ValidatedCompositeMeasurement {
@@ -102,6 +103,33 @@ private:
     friend class CapturedReferences;
     friend class BoundedTrainingSession;
     friend class FinalVerificationSession;
+    friend class NativeTrainingService;
+};
+// A complete native search group whose assigned maximum is Missing/Ambiguous.
+// This is not a scalar observation and cannot create a reference/certificate.
+// DATA content hashes alone cannot construct or restore this live capability.
+class RejectedCompositeMeasurement {
+public:
+    RejectedCompositeMeasurement(const RejectedCompositeMeasurement&)=default;
+    RejectedCompositeMeasurement& operator=(const RejectedCompositeMeasurement&)=default;
+    const PreparedCompositeMeasurement& Prepared() const {return prepared;}
+    DeclaredWindowBasinValidity Validity() const {return validity;}
+    const std::string& ContentId() const {return contentId;}
+    void RequireCurrent() const;
+private:
+    RejectedCompositeMeasurement(PreparedCompositeMeasurement prepared,
+        std::shared_ptr<const CandidateWindowReferenceSet> references,
+        DeclaredWindowBasinValidity validity,std::string contentId,std::function<void()> requireGroupCurrent)
+        :prepared(std::move(prepared)),references(std::move(references)),validity(validity),
+         contentId(std::move(contentId)),requireGroupCurrent(std::move(requireGroupCurrent)){}
+    PreparedCompositeMeasurement prepared;
+    std::shared_ptr<const CandidateWindowReferenceSet> references;
+    DeclaredWindowBasinValidity validity;
+    std::string contentId;
+    std::function<void()> requireGroupCurrent;
+    void RequirePrepared(const PreparedCompositeMeasurement&) const;
+    friend class NativeCompositeTrainingAttempt;
+    friend class BoundedTrainingSession;
     friend class NativeTrainingService;
 };
 void ValidateCompositeMeasurementContract(const VerificationProtocol& protocol);

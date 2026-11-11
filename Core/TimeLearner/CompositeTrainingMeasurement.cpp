@@ -77,4 +77,20 @@ void ValidatedCompositeMeasurement::RequirePrepared(const PreparedCompositeMeasu
     CompositeRequire(!semanticProofId.empty() && std::isfinite(rawPotential) && std::isfinite(arrival) &&
         std::isfinite(plateauEnd) && plateauEnd>=arrival,"invalid_composite_training_scalar");
 }
+void RejectedCompositeMeasurement::RequireCurrent() const {
+    CompositeRequire(references && !contentId.empty() && bool(requireGroupCurrent) &&
+        (validity==DeclaredWindowBasinValidity::Missing || validity==DeclaredWindowBasinValidity::Ambiguous),
+        "invalid_composite_rejection_capability");
+    const auto& id=*prepared.identity;
+    CompositeRequire(bool(id.protocol) && id.protocol->schemaVersion==5 &&
+        id.purpose==CompositeMeasurementPurpose::Search,"composite_rejection_requires_search_group");
+    // The lease is checked before invoking any callback that observes its owner.
+    prepared.RequireCandidateWindow(*id.protocol,*references,id.runId,id.trialId,id.inputIndex,
+        id.baseRevision,id.modelEpoch,CompositeMeasurementPurpose::Search,true);
+    requireGroupCurrent();
+}
+void RejectedCompositeMeasurement::RequirePrepared(const PreparedCompositeMeasurement& expected) const {
+    CompositeRequire(prepared.identity==expected.identity,"composite_rejection_preparation_mismatch");
+    RequireCurrent();
+}
 }
