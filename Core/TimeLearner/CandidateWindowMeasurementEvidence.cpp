@@ -84,9 +84,11 @@ std::string GroupContentId(const VerificationProtocol& p,const NativeCompositeMe
 }
 }
 std::string CandidateWindowTrainingSemanticProofId(const VerificationProtocol& p,const NativeCompositeMeasurementRecord& r) {
-    return GroupContentId(p,r,false);
+    try {return GroupContentId(p,r,false);}
+    catch(const MatchedOmissionDetail::Failure& failure) {throw std::invalid_argument(failure.reason);}
 }
 std::string CandidateWindowRejectedGroupContentId(const VerificationProtocol& p,const NativeCompositeMeasurementRecord& r) {
-    return GroupContentId(p,r,true);
+    try {return GroupContentId(p,r,true);}
+    catch(const MatchedOmissionDetail::Failure& failure) {throw std::invalid_argument(failure.reason);}
 }
 }
