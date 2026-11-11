@@ -1,4 +1,5 @@
 #include "NativeTrainingService.h"
+#include "CandidateWindowTrainingDeclarations.h"
 #include "ConfiguredNativeTraining.h"
 #include "ProbeEvidenceJson.h"
 #include "CompositePrimaryBudget.h"
