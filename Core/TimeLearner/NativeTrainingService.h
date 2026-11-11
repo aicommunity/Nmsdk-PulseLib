@@ -95,6 +95,14 @@ public:
     bool ObserveTrainingRequestAtBoundary(bool requested,bool boundaryAvailable);
     void InvalidateTarget();
     NativeTrainingState State() const { return state; }
+    // Imported composite DATA has no live attempt or search traversal. Native
+    // Build may initialize its adopted graph while retaining this boundary;
+    // explicit learner Reset still resets transient controller state.
+    bool HasDetachedCompositeBoundary() const {
+        return (plan.protocol.schemaVersion==4 || plan.protocol.schemaVersion==5) &&
+            state==NativeTrainingState::Finished && !composite && !search && attempt>0 &&
+            !compositeInitialConfiguration.isEmpty();
+    }
     TrainingStatus Outcome() const { return outcome; }
     const std::string& Reason() const { return reason; }
     const std::optional<CapturedReferences>& References() const { return references; }

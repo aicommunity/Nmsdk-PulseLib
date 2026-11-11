@@ -4137,9 +4137,13 @@ void NNeuronTimeLearnerBranch::BindLegacyGraphRoles()
 bool NNeuronTimeLearnerBranch::ABeforeBuild(void)
 {
  if(!NativeTrainingEditDepth && NativeTrainingControl.Plan().protocol.schemaVersion==4)
- {TimeLearner::NativeLearnerLifecycle::InterruptComposite(*this,"learner_build");NativeTrainingControl.ResetControl();}
+ {const bool detached=NativeTrainingControl.HasDetachedCompositeBoundary();
+  TimeLearner::NativeLearnerLifecycle::InterruptComposite(*this,"learner_build");
+  if(!detached)NativeTrainingControl.ResetControl();}
  else if(!NativeTrainingEditDepth && NativeTrainingControl.Plan().protocol.schemaVersion==5)
- {TimeLearner::NativeLearnerLifecycle::InterruptComposite(*this,"learner_build");NativeTrainingControl.ResetControl();}
+ {const bool detached=NativeTrainingControl.HasDetachedCompositeBoundary();
+  TimeLearner::NativeLearnerLifecycle::InterruptComposite(*this,"learner_build");
+  if(!detached)NativeTrainingControl.ResetControl();}
  if(ControllerVersion.GetData()==2 || ConfiguredModelInitialized.GetData())return true;
  if(NativeTrainingOwned)return true;
  BindLegacyGraphRoles();
