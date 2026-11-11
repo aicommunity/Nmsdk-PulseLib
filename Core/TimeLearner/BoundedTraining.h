@@ -33,6 +33,9 @@ struct BoundedTrainingConfig {
     // measured-bracket refinements within the same overall candidate budget.
     // Exhaustion never proves infeasibility or global monotonicity.
     unsigned resistanceSubdivisionDepth=4;
+    // Native N1 visits legal geometries in passes, one unissued Rs per
+    // geometry. This scheduling is independent of invalidMeasurementRecovery;
+    // all finite probe/candidate budgets and domain reassessments still apply.
     // One preserves historical protocol. New N0 protocols may explicitly
     // require repeated native anchor/input pairs for every measured candidate.
     std::size_t n0CandidateRepeats=1;
