@@ -139,10 +139,8 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
 {
     Require(!c.candidateWindowPolicy || c.composite,"candidate_window_cold7_requires_native_policy2");
     ValidateInvalidMeasurementRecovery(c.search.invalidMeasurementRecovery,c.search.maximumInvalidObservations);
-    // The typed core transition is not an implicit extension of cold1..7.
-    // Until its own wire envelope exists, never serialize it as the default.
-    Require(c.search.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow,
-        "candidate_window_recovery_requires_versioned_wire_codec");
+    Require(c.search.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow ||
+        (c.candidateWindowPolicy && c.composite),"candidate_window_recovery_requires_candidate_window_contract");
     ValidateNativeModelSpec(c.model);const auto size=c.model.inputs.size();
     Require(ValidStimulusProfile(c.stimulusProfile) && c.stimulusProfile.generatorClass==c.model.generatorClass &&
         c.stimulusProfile.frequencyHz==c.model.frequencyHz,"invalid_configured_native_stimulus_profile");
@@ -197,7 +195,8 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
     }
     if(c.composite) {
         const auto& policy=*c.composite;
-        Require(c.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate,
+        Require(c.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate ||
+            (c.candidateWindowPolicy && c.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow),
             "composite_recovery_policy_not_implemented");
         Require(!c.recordSpikes && c.peakSelection==PeakSelectionPolicy::IsolatedWindow &&
             c.stimulusProfile.generatorClass=="NPulseGeneratorTransit" && c.stimulusProfile.amplitude>0. &&
@@ -255,13 +254,19 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 {
     MakeConfiguredNativeTrainingPlan(c);
     if(c.candidateWindowPolicy) {
-        auto base=c;base.composite.reset();base.candidateWindowPolicy.reset();auto result=EncodeConfiguredNativeTraining(base);
+        auto base=c;base.composite.reset();base.candidateWindowPolicy.reset();
+        base.search.invalidMeasurementRecovery=InvalidMeasurementRecovery::RetrySameCandidate;
+        auto result=EncodeConfiguredNativeTraining(base);
         // Own the value before inserting another key into this same object.
         // QJsonValueRef stores an index that insertion may shift.
         const QJsonValue baseSchema=result.value("schema_version");
         Require(baseSchema.toInt()>=1 && baseSchema.toInt()<=4,"candidate_window_base_schema_unsupported");
         result["base_schema_version"]=baseSchema;result["schema_version"]=7;
-        result["composite_measurement"]=EncodeCandidateWindowNativePolicy(*c.composite,*c.candidateWindowPolicy);return result;
+        result["composite_measurement"]=EncodeCandidateWindowNativePolicy(*c.composite,*c.candidateWindowPolicy);
+        if(c.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow) {
+            result["schema_version"]=8;result["invalid_measurement_recovery"]="advance_rejected_candidate_window";
+        }
+        return result;
     }
     if(c.composite) {
         auto base=c;base.composite.reset();auto result=EncodeConfiguredNativeTraining(base);
@@ -324,6 +329,14 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
 {
     const int schema=Int(o["schema_version"]);auto fields=o;
+    if(schema==8) {
+        Require(Text(o["invalid_measurement_recovery"])=="advance_rejected_candidate_window",
+            "unsupported_candidate_window_recovery_envelope");
+        fields.remove("invalid_measurement_recovery");fields["schema_version"]=7;
+        auto c=DecodeConfiguredNativeTraining(fields);
+        c.search.invalidMeasurementRecovery=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow;
+        MakeConfiguredNativeTrainingPlan(c);return c;
+    }
     if(schema==7) {
         const int base=Int(o["base_schema_version"]);Require(base>=1 && base<=4,"candidate_window_base_schema_unsupported");
         fields.remove("base_schema_version");fields.remove("composite_measurement");fields["schema_version"]=base;

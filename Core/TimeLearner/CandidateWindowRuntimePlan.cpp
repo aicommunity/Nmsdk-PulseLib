@@ -50,7 +50,8 @@ void ValidateDeclaration(const NativeTrainingPlan& plan) {
         (search.normalization!=Normalization::TipResistance || search.n0CandidateRepeats==1),
         "candidate_window_runtime2_search_limits");
     ValidateInvalidMeasurementRecovery(search.invalidMeasurementRecovery,search.maximumInvalidObservations);
-    Require(search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate,
+    Require(search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate ||
+        search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow,
         "candidate_window_runtime2_recovery_unsupported");
     for(auto value:{search.tolerances.amplitudeAbsolute,search.tolerances.amplitudeRelative,search.tolerances.sync})
         Require(Number(value)>=0.,"candidate_window_runtime2_tolerance");
@@ -81,9 +82,10 @@ QJsonObject Search(const BoundedTrainingConfig& search) {
         {"bounds",bounds},{"tolerances",QJsonObject{{"amplitude_absolute",Number(search.tolerances.amplitudeAbsolute)},
             {"amplitude_relative",Number(search.tolerances.amplitudeRelative)},{"sync",Number(search.tolerances.sync)}}},
         {"capacitance_search",search.capacitanceSearch?QJsonValue(EncodeCapacitanceSearchPolicy(*search.capacitanceSearch)):QJsonValue(QJsonValue::Null)},
-        {"invalid_measurement_recovery","retry_same_candidate"}};
+        {"invalid_measurement_recovery",search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate?
+            "retry_same_candidate":"advance_rejected_candidate_window"}};
 }
-BoundedTrainingConfig Search(const QJsonObject& object) {
+BoundedTrainingConfig Search(const QJsonObject& object,std::size_t version) {
     Keys(object,"normalization maximum_probes maximum_edits maximum_candidates_per_input maximum_sweeps maximum_invalid_observations resistance_subdivision_depth n0_candidate_repeats bounds tolerances capacitance_search invalid_measurement_recovery");
     BoundedTrainingConfig search;const auto normalization=Text(object["normalization"]);Require(normalization=="N0" || normalization=="N1");
     search.normalization=normalization=="N0"?Normalization::SynapseCount:Normalization::TipResistance;
@@ -101,13 +103,19 @@ BoundedTrainingConfig Search(const QJsonObject& object) {
     const auto tolerances=Object(object["tolerances"]);Keys(tolerances,"amplitude_absolute amplitude_relative sync");
     search.tolerances={Number(tolerances["amplitude_absolute"]),Number(tolerances["amplitude_relative"]),Number(tolerances["sync"])};
     if(!object["capacitance_search"].isNull())search.capacitanceSearch=DecodeCapacitanceSearchPolicy(Object(object["capacitance_search"]));
-    Require(Text(object["invalid_measurement_recovery"])=="retry_same_candidate");return search;
+    const auto policy=Text(object["invalid_measurement_recovery"]);
+    Require((version==2 && policy=="retry_same_candidate") ||
+        (version==3 && policy=="advance_rejected_candidate_window"),"candidate_window_runtime_recovery_version_mismatch");
+    search.invalidMeasurementRecovery=version==2?InvalidMeasurementRecovery::RetrySameCandidate:
+        InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow;
+    return search;
 }
 }
 QJsonObject EncodeCandidateWindowRuntimePlan(const NativeTrainingPlan& plan) {
     ValidateDeclaration(plan);auto common=EncodeNativeCompositeTrainingPolicy(*plan.composite);
     common["candidate_window_policy"]=EncodeCandidateWindowPolicy(plan.protocol.candidateWindowMeasurement->candidateWindowPolicy);
-    return {{"schema_version",2},{"protocol_binding",NmsdkTools::CanonicalModelDataSha256(EncodeVerificationProtocol(plan.protocol))},
+    return {{"schema_version",plan.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate?2:3},
+        {"protocol_binding",NmsdkTools::CanonicalModelDataSha256(EncodeVerificationProtocol(plan.protocol))},
         {"run_id",Text(plan.search.runId)},{"initial_model_revision",Text(plan.search.initialModelRevision)},
         {"initial_model_epoch",Count(plan.search.initialModelEpoch)},{"search",Search(plan.search)},
         {"maximum_reference_probes",Count(plan.maximumReferenceProbes)},
@@ -117,14 +125,15 @@ QJsonObject EncodeCandidateWindowRuntimePlan(const NativeTrainingPlan& plan) {
 }
 NativeTrainingPlan DecodeCandidateWindowRuntimePlan(const QJsonObject& object,const VerificationProtocol& protocol) {
     Keys(object,"schema_version protocol_binding run_id initial_model_revision initial_model_epoch search maximum_reference_probes maximum_invalid_reference_probes maximum_model_seconds maximum_wall_seconds record_capacitance_history composite_measurement");
-    Require(Count(object["schema_version"])==2 && object["record_capacitance_history"].isBool());
+    const auto version=Count(object["schema_version"]);
+    Require((version==2 || version==3) && object["record_capacitance_history"].isBool());
     ValidateVerificationProtocol(protocol);ValidateCandidateWindowMeasurementContract(protocol);
     Require(object["protocol_binding"]==QJsonValue(NmsdkTools::CanonicalModelDataSha256(EncodeVerificationProtocol(protocol))),
         "candidate_window_runtime2_protocol_binding");
     auto common=Object(object["composite_measurement"]);Keys(common,"schema_version method_id context_policy geometry_policy attempt_limits maximum_group_model_seconds maximum_group_wall_seconds maximum_total_primary_bytes candidate_window_policy");
     Require(DecodeCandidateWindowPolicy(Object(common.take("candidate_window_policy")))==protocol.candidateWindowMeasurement->candidateWindowPolicy,
         "candidate_window_runtime2_candidate_policy_mismatch");
-    NativeTrainingPlan plan;plan.protocol=protocol;plan.composite=DecodeNativeCompositeTrainingPolicy(common);plan.search=Search(Object(object["search"]));
+    NativeTrainingPlan plan;plan.protocol=protocol;plan.composite=DecodeNativeCompositeTrainingPolicy(common);plan.search=Search(Object(object["search"]),version);
     plan.search.runId=Text(object["run_id"]);plan.search.initialModelRevision=Text(object["initial_model_revision"]);
     plan.search.initialModelEpoch=Count(object["initial_model_epoch"]);plan.maximumReferenceProbes=Count(object["maximum_reference_probes"]);
     plan.maximumInvalidReferenceProbes=Count(object["maximum_invalid_reference_probes"]);
