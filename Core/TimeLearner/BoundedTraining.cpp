@@ -1019,7 +1019,7 @@ void BoundedTrainingSession::RejectCandidateWindow(const RejectedCompositeMeasur
     event.candidateWitnessId=failed.Prepared().identity->candidateWitnessId;
     event.issuedProbes=probes;event.appliedEdits=edits;event.acceptedCompositeObservations=acceptedComposite;
     seenTrials.insert(pending->trialId);seenRejectedCompositeProofs.insert(failed.ContentId());
-    const auto reason=std::string("rejected_candidate_window:")+DeclaredWindowBasinValidityName(failed.Validity());
+    const auto reason=std::string("rejected_candidate_window:")+PeakValidityName(e.validity);
     RecordIncompleteCandidateRepeats(reason);
     // ArmCandidateWindow charged the native logical probe. Reject charges the
     // same attempt-wide invalid budget used by every other observation path.
