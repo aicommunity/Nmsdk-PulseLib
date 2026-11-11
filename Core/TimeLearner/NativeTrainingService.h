@@ -27,6 +27,11 @@ struct NativeTrainingPlan {
     std::function<void(const NativeCompositeMeasurementRecord&)> compositeSink;
     std::function<void(const NativeCompositeMeasurementRecord&)> beforeCompositeConsume;
 };
+// Retained across control reset/warm attempts; not a physical checkpoint.
+struct NativeCandidateWindowRecoveryDelivery {
+    CandidateWindowRecoveryEvidence event;
+    QJsonObject runtimePlan;
+};
 
 // Component-specific adapters alone touch Rdk objects. BeforeTick is called
 // before native children; AfterTick after the existing probe executor sampled
@@ -123,6 +128,8 @@ public:
     const BoundedTrainingConfig& Configuration() const { return plan.search; }
     const std::optional<NativeTrainingCapacitanceHistory>& CapacitanceHistory() const {return capacitanceHistory;}
     const std::vector<NativeCompositeMeasurementRecord>& CompositeMeasurements() const {return compositeRecords;}
+    const std::vector<NativeCandidateWindowRecoveryDelivery>& CandidateWindowRecoveryDeliveries() const {return compositeRecoveryDeliveries;}
+    bool CandidateWindowRecoveryDeliveryLogIntact() const {return compositeRecoveryDeliveryLogIntact;}
     const std::vector<std::string>& CompositeReferenceGroupIds() const {return compositeReferenceGroups;}
     std::vector<std::string> CompositeFinalGroupIds() const {
         std::vector<std::string> result;for(const auto& id:compositeFinalGroups)if(!id.empty())result.push_back(id);return result;
@@ -161,7 +168,9 @@ private:
     std::vector<ReferenceEvidence> referenceEvidence;
     std::vector<NativeProbeResult> referencePackets,finalPackets,observedPackets;
     std::optional<std::pair<std::string,std::size_t>> incompleteCaptureConstraint;
-    std::unique_ptr<BoundedTrainingSession> search;
+    // In-flight proof guards may reenter owner reset. Keep a retired search
+    // alive until the current delivery returns; never republish it afterwards.
+    std::shared_ptr<BoundedTrainingSession> search;
     std::optional<TrainingAction> activeAction;
     std::optional<NativeTrainingCapacitanceHistory> capacitanceHistory;
     std::shared_ptr<NativeCompositeTrainingAttempt> composite;
@@ -169,6 +178,9 @@ private:
     std::shared_ptr<const CandidateWindowReferenceSet> compositeCandidateReferences;
     QJsonObject compositeSourceBinding,compositeInitialConfiguration;
     std::vector<NativeCompositeMeasurementRecord> compositeRecords;
+    std::vector<NativeCandidateWindowRecoveryDelivery> compositeRecoveryDeliveries;
+    QJsonObject compositeRecoveryRuntime;
+    bool compositeRecoveryDeliveryLogIntact=true;
     std::vector<ValidatedCompositeMeasurement> compositeReferenceMeasurements;
     std::vector<std::string> compositeReferenceGroups,compositeFinalGroups;
     std::optional<VerificationRequest> compositeRequest;

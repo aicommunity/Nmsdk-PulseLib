@@ -196,7 +196,7 @@ void NativeTrainingService::BeginSearch(const NativeTrainingAdapter& a)
     Require(bool(references),"missing_native_training_references");
     const auto actual=a.readModelRevision();Require(actual==referenceBinding,"reference_capture_model_changed");
     plan.search.initialModelRevision=actual;
-    search=std::make_unique<BoundedTrainingSession>(*references,plan.search,a.readParameters(),
+    search=std::make_shared<BoundedTrainingSession>(*references,plan.search,a.readParameters(),
         plan.search.normalization==Normalization::TipResistance,
         capacitanceHistory?std::optional<TrainingCapacitance>(capacitanceHistory->witnesses.at(
             capacitanceHistory->currentWitnessId).parameters):std::optional<TrainingCapacitance>{});
@@ -404,6 +404,7 @@ bool NativeTrainingService::ObserveTrainingRequestAtBoundary(bool requested,bool
 void NativeTrainingService::InvalidateTarget()
 {ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();
  composite.reset();compositeImportedProof.reset();compositeCandidateReferences.reset();compositeSourceBinding={};compositeInitialConfiguration={};compositeOwnerFamily.clear();compositeFinalRun.clear();compositeRecords.clear();compositeReferenceGroups.clear();compositeFinalGroups.clear();
+ compositeRecoveryDeliveries.clear();compositeRecoveryRuntime={};compositeRecoveryDeliveryLogIntact=true;
  compositeGroupWitnesses.clear();compositeGroupTrialWitnessIds.clear();compositeCapacitance.reset();
  compositeRawNotifications.clear();compositeRawTrialIds.clear();
  compositeNativeProbes=compositeGroups=compositeSampledFrames=compositePrimaryBytes=0;}

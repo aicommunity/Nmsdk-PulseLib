@@ -156,6 +156,9 @@ template<unsigned Protocol,unsigned Summary> QJsonObject CompositeSummary(const 
     const std::vector<InputParameters>& parameters) {
     static_assert((Protocol==4 && Summary==6) || (Protocol==5 && Summary==7));
     const auto& plan=service.Plan();Require(plan.protocol.schemaVersion==Protocol && plan.composite,"composite_summary_protocol");
+    Require(plan.search.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow &&
+        service.CandidateWindowRecoveryDeliveries().empty() && service.CandidateWindowRecoveryDeliveryLogIntact(),
+        "candidate_window_recovery_requires_versioned_summary_ledger");
     const auto& records=service.CompositeMeasurements();const auto find=[&](const std::string& id,bool trial=false)->const NativeCompositeMeasurementRecord& {
         const auto found=std::find_if(records.begin(),records.end(),[&](const auto& r){return (trial?r.logical.trialId:r.groupId)==id;});
         Require(found!=records.end() && found->consumed && !found->semanticProofId.empty(),"composite_summary_group_missing");return *found;
@@ -309,6 +312,9 @@ void CandidateWindowRuntime(const NativeTrainingPlan& plan,const DecodedNativeCo
 QJsonObject NativeCandidateWindowStateFactory::Export(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
     const std::string& implementation,const NativeCapacitanceCorrection* capacitance) {
+    Require(service.Configuration().invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow &&
+        service.CandidateWindowRecoveryDeliveries().empty() && service.CandidateWindowRecoveryDeliveryLogIntact(),
+        "candidate_window_recovery_requires_versioned_model_ledger");
     Require(service.Plan().protocol.schemaVersion==5 && service.State()==NativeTrainingState::Finished && service.SessionAttempt()>0 &&
         version==2 && (mode==0 || mode==1) && (structure==0 || structure==1) && !implementation.empty(),
         "candidate_window_export_requires_stopped_or_completed_boundary");

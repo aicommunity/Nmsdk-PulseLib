@@ -44,8 +44,6 @@ void Validate(const NativeTrainingPlan& p) {
     }
 }
 void ValidateCandidateWindowPlan(const NativeTrainingPlan& p) {
-    Require(p.search.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow,
-        "candidate_window_recovery_requires_versioned_service");
     ValidateVerificationProtocol(p.protocol);ValidateCandidateWindowMeasurementContract(p.protocol);
     Require(p.composite && p.composite->schemaVersion==2,"native_candidate_window_policy2_required");
     const auto& c=*p.composite;const auto& method=*p.protocol.candidateWindowMeasurement;const auto n=p.protocol.inputs.size();
@@ -196,13 +194,18 @@ void NativeTrainingService::StartCandidateWindowComposite(NativeTrainingPlan val
         initial=EncodeConfiguredNativeTraining(CaptureCandidateWindowInitialConfiguration(DecodeNativeModelSpec(source["model_spec"].toObject()),
             value,parameters,capacitance?capacitance->maximumRelativeChange:0.));
     }
-    auto closed=actor->windowReferences;std::unique_ptr<BoundedTrainingSession> preparedSearch;
+    auto closed=actor->windowReferences;std::shared_ptr<BoundedTrainingSession> preparedSearch;
     if(references) {
         Require(bool(closed),"native_candidate_window_retained_complete_reference_set_missing");
         CandidateWindowCoreDetail::RequireCapturedReferences(*references,*closed);
-        preparedSearch=std::make_unique<BoundedTrainingSession>(*references,*closed,runtime.search,parameters,
+        preparedSearch=std::make_shared<BoundedTrainingSession>(*references,*closed,runtime.search,parameters,
             runtime.search.normalization==Normalization::TipResistance,capacitance);
     } else Require(!closed,"native_candidate_window_unexpected_complete_reference_set");
+    QJsonObject recoveryRuntime;
+    if(runtime.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow) {
+        recoveryRuntime=EncodeCandidateWindowRuntimePlan(runtime);
+        actor->EnableRejectedSearchAdmission();
+    }
     // All allocations/cold7/archive replay precede this fresh actual guard and
     // publication. A rejected restart leaves the previous family/ledger intact.
     std::unique_ptr<std::optional<TrainingCapacitance>> preparedCapacitance;
@@ -214,6 +217,7 @@ void NativeTrainingService::StartCandidateWindowComposite(NativeTrainingPlan val
     plan=std::move(runtime);composite.swap(actor);compositeSourceBinding.swap(source);compositeInitialConfiguration.swap(initial);
     compositeOwnerFamily.swap(family);compositeRecords.swap(records);compositePrimaryBytes=bytes;compositeCapacitance.swap(preparedCapacitance);
     compositeCandidateReferences.swap(closed);search.swap(preparedSearch);attempt=nextAttempt;++compositeGeneration;
+    compositeRecoveryRuntime.swap(recoveryRuntime);
     startModel=lastModel=m;startWall=lastWall=w;retainedEpoch=plan.search.initialModelEpoch;
     compositeNativeProbes=compositeGroups=compositeSampledFrames=0;referenceProbes=invalidReferences=0;
     compositeReferenceMeasurements.clear();observedPackets.clear();finalPackets.clear();compositeFinalGroups.clear();compositeFinalRun.clear();
@@ -228,9 +232,9 @@ void NativeTrainingService::CompositeBeginSearch(const NativeTrainingAdapter& a)
     plan.search.initialModelRevision=referenceBinding;
     if(plan.protocol.schemaVersion==5) {
         Require(bool(compositeCandidateReferences),"native_candidate_window_complete_reference_set_missing");
-        search=std::make_unique<BoundedTrainingSession>(*references,*compositeCandidateReferences,plan.search,a.readParameters(),
+        search=std::make_shared<BoundedTrainingSession>(*references,*compositeCandidateReferences,plan.search,a.readParameters(),
             plan.search.normalization==Normalization::TipResistance,CompositeCapacitance());
-    } else search=std::make_unique<BoundedTrainingSession>(*references,plan.search,a.readParameters(),
+    } else search=std::make_shared<BoundedTrainingSession>(*references,plan.search,a.readParameters(),
         plan.search.normalization==Normalization::TipResistance,CompositeCapacitance());
     state=NativeTrainingState::Searching;SyncOutcome();
 }
@@ -436,6 +440,7 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
     if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor)return;
     if(!CheckCompositeGroupBudget(a,actor))return;
     const bool requested=a.trainingRequested();
+    if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || !actor->ownerLife.IsCurrent())return;
     if(plan.protocol.schemaVersion!=5 || record.purpose!=CompositeMeasurementPurpose::Reference)record.trainingRequestedAtConsume=requested;
     if(!requested){StopComposite(a,TrainingStatus::ExternalStop,"external_stop");return;}
     if(actor->Group()->maximumModelSeconds>0. && (record.endModel-record.startModel>=actor->Group()->maximumModelSeconds ||
@@ -443,6 +448,7 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
         StopComposite(a,TrainingStatus::BudgetExhausted,"native_composite_group_time_budget_exhausted");return;
     }
     bool syncAfterDelivery=false;
+    const auto consumingSearch=search;
     if(!actor->Measurement()) {
         if(actor->TimeBudgetExhausted() || record.groupState==NativeMatchedOmissionState::BudgetExhausted){StopComposite(a,TrainingStatus::BudgetExhausted,actor->RejectionReason());return;}
         if(state==NativeTrainingState::CapturingReferences) {
@@ -450,16 +456,40 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
         }
         else {
             const auto rejection=actor->RejectionReason().empty()?"native_composite_measurement_rejected":actor->RejectionReason();
-            if(plan.protocol.schemaVersion==5)search->RejectCandidateWindow(rejection);else search->RejectComposite(rejection);
+            if(plan.protocol.schemaVersion==5 && record.purpose==CompositeMeasurementPurpose::Search &&
+                plan.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow && actor->RejectedMeasurement()) {
+                const auto failed=*actor->RejectedMeasurement();
+                const auto revision=a.readModelRevision();
+                if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || !actor->ownerLife.IsCurrent())return;
+                Require(consumingSearch && search==consumingSearch,"candidate_window_recovery_search_changed");
+                const auto before=consumingSearch->CandidateWindowRecoveries().size();
+                try {
+                    consumingSearch->RejectCandidateWindow(failed,revision);
+                    if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || search!=consumingSearch || !actor->ownerLife.IsCurrent())return;
+                    const auto& events=consumingSearch->CandidateWindowRecoveries();
+                    Require(events.size()==before || events.size()==before+1,"candidate_window_recovery_delivery_count");
+                    if(events.size()>before) {
+                        Require(!compositeRecoveryRuntime.isEmpty(),"candidate_window_recovery_runtime_missing");
+                        compositeRecoveryDeliveries.push_back({events.back(),compositeRecoveryRuntime});
+                    }
+                } catch(...) {
+                    if(generation!=compositeGeneration || composite!=actor || attempt!=session || search!=consumingSearch)return;
+                    // A partially recorded transition cannot later masquerade
+                    // as a complete portable ledger, including after Reset.
+                    compositeRecoveryDeliveryLogIntact=false;throw;
+                }
+            } else if(plan.protocol.schemaVersion==5)search->RejectCandidateWindow(rejection);
+            else search->RejectComposite(rejection);
             syncAfterDelivery=true;
         }
     }
     else if(state==NativeTrainingState::CapturingReferences) {
-        const auto& measured=*actor->Measurement();const auto& logical=*compositeRequest;
+        const auto measured=*actor->Measurement();const auto logical=*compositeRequest;
         measured.prepared.Require(plan.protocol,logical.runId,logical.trialId,logical.inputIndex,
             logical.baseModelRevision,logical.epoch,CompositeMeasurementPurpose::Reference,
             measured.prepared.identity->ownerScope,actor->SourceOrigin(),true);
         measured.RequirePrepared(measured.prepared);
+        if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || !actor->ownerLife.IsCurrent())return;
         if(plan.protocol.schemaVersion==5)StageCandidateWindowReference(actor,measured);
         else {
             compositeReferenceMeasurements.push_back(measured);compositeReferenceGroups.push_back(record.groupId);
@@ -474,10 +504,20 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
         if(references){referenceBinding=plan.search.initialModelRevision;CompositeBeginSearch(a);}
     }
     else {
-        const auto wasAccepted=search->AcceptedCompositeObservations();const bool final=activeAction && activeAction->finalVerification;
-        if(plan.protocol.schemaVersion==5)search->ConsumeCandidateWindow(*actor->Measurement(),a.readModelRevision());
-        else search->ConsumeComposite(*actor->Measurement(),a.readModelRevision());
-        record.consumed=search->AcceptedCompositeObservations()>wasAccepted;
+        Require(bool(consumingSearch),"native_composite_search_missing");
+        const auto measured=*actor->Measurement();
+        const auto wasAccepted=consumingSearch->AcceptedCompositeObservations();const bool final=activeAction && activeAction->finalVerification;
+        const auto revision=a.readModelRevision();
+        if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || !actor->ownerLife.IsCurrent())return;
+        try {
+            if(plan.protocol.schemaVersion==5)consumingSearch->ConsumeCandidateWindow(measured,revision);
+            else consumingSearch->ConsumeComposite(measured,revision);
+        } catch(...) {
+            if(generation!=compositeGeneration || composite!=actor || attempt!=session || search!=consumingSearch)return;
+            throw;
+        }
+        if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || search!=consumingSearch || !actor->ownerLife.IsCurrent())return;
+        record.consumed=consumingSearch->AcceptedCompositeObservations()>wasAccepted;
         if(final && record.consumed) {
             if(compositeFinalGroups.empty())compositeFinalGroups.resize(plan.protocol.inputs.size());
             compositeFinalGroups.at(compositeRequest->inputIndex)=record.groupId;
