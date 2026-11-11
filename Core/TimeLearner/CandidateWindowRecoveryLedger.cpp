@@ -2,6 +2,7 @@
 #include "CandidateRecoveryEvidenceJson.h"
 #include "CandidateWindowMeasurementEvidence.h"
 #include "CandidateWindowTrainingDeclarations.h"
+#include "ConfiguredNativeTraining.h"
 #include "NativeCompositeTrainingEvidence.h"
 #include "ProbeEvidenceJson.h"
 #include "TrainingEvidenceJsonValues.h"
@@ -10,6 +11,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <stdexcept>
 
 namespace NMSDK::TimeLearner {
 namespace {

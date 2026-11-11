@@ -3,8 +3,10 @@
 #include "TrainingEvidenceJsonValues.h"
 #include "ModelIdentity.h"
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <set>
+#include <stdexcept>
 
 namespace NMSDK::TimeLearner {
 namespace {

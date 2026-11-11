@@ -30,6 +30,9 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
 // physical witnesses and trial links. Search/dynamics checkpoints are excluded.
 // Schema6 is the separate cold7/protocol5/runtime2/archive2/certificate3 native
 // boundary. Import is DATA/Finished only; a later Start creates live authority.
+// Schema7 adds recovery-delivery DATA and per-attempt runtime bindings, also
+// after a warm switch back to Retry. It does not restore controller traversal,
+// dynamics, callbacks or live authority, or assert independent ledger coverage.
 QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection& capacitance);

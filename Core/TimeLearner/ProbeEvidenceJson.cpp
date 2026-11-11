@@ -283,7 +283,10 @@ std::string NativeTrainingCapacitanceWitnessId(const TrainingCapacitanceWitness&
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)
 {
-    if(service.Plan().protocol.schemaVersion==5)return EncodeNativeCandidateWindowTrainingState(service,actualModelRevision,actualParameters);
+    if(service.Plan().protocol.schemaVersion==5) {
+        if(RequiresCandidateWindowRecoveryBoundary(service))return EncodeNativeCandidateWindowRecoveryTrainingState(service,actualModelRevision,actualParameters);
+        return EncodeNativeCandidateWindowTrainingState(service,actualModelRevision,actualParameters);
+    }
     if(service.Plan().protocol.schemaVersion==4)return EncodeNativeCompositeTrainingState(service,actualModelRevision,actualParameters);
     const auto parameters=Parameters;
     const auto& cfg=service.Configuration();

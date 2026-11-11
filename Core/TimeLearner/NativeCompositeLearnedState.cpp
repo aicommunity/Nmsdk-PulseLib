@@ -1,6 +1,7 @@
 #include "NativeCompositeLearnedState.h"
 #include "CompositeTrainingDeclarations.h"
 #include "CandidateWindowTrainingDeclarations.h"
+#include "CandidateWindowRecoveryLedger.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <QJsonDocument>
@@ -11,6 +12,12 @@
 #include <set>
 
 namespace NMSDK::TimeLearner {
+bool RequiresCandidateWindowRecoveryBoundary(const NativeTrainingService& service) {
+    return service.Plan().protocol.schemaVersion==5 &&
+        (service.CompositeInitialConfiguration()["schema_version"]==QJsonValue(8) ||
+         service.Configuration().invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow ||
+         !service.CandidateWindowRecoveryDeliveries().empty() || !service.CandidateWindowRecoveryDeliveryLogIntact());
+}
 namespace {
 void Require(bool value,const char* reason){if(!value)throw std::invalid_argument(reason);}
 QJsonObject Object(const QJsonValue& value){Require(value.isObject(),"composite_package_object_required");return value.toObject();}
@@ -154,10 +161,9 @@ QJsonObject NativeCompositeStateFactory::Export(RDK::UNet& owner,const NativeMod
 namespace {
 template<unsigned Protocol,unsigned Summary> QJsonObject CompositeSummary(const NativeTrainingService& service,const std::string& revision,
     const std::vector<InputParameters>& parameters) {
-    static_assert((Protocol==4 && Summary==6) || (Protocol==5 && Summary==7));
+    static_assert((Protocol==4 && Summary==6) || (Protocol==5 && (Summary==7 || Summary==8)));
     const auto& plan=service.Plan();Require(plan.protocol.schemaVersion==Protocol && plan.composite,"composite_summary_protocol");
-    Require(plan.search.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow &&
-        service.CandidateWindowRecoveryDeliveries().empty() && service.CandidateWindowRecoveryDeliveryLogIntact(),
+    if constexpr(Summary!=8)Require(!RequiresCandidateWindowRecoveryBoundary(service),
         "candidate_window_recovery_requires_versioned_summary_ledger");
     const auto& records=service.CompositeMeasurements();const auto find=[&](const std::string& id,bool trial=false)->const NativeCompositeMeasurementRecord& {
         const auto found=std::find_if(records.begin(),records.end(),[&](const auto& r){return (trial?r.logical.trialId:r.groupId)==id;});
@@ -196,7 +202,7 @@ template<unsigned Protocol,unsigned Summary> QJsonObject CompositeSummary(const 
     const auto certificate=service.Certificate();const bool matches=certificate && service.References() &&
         certificate->Matches(revision,*service.References(),t,ModelStateKind::LearnedSolo,service.ModelEpoch());
     const auto runtime=[&](){if constexpr(Protocol==4)return EncodeCompositeRuntimePlan(plan);else return EncodeCandidateWindowRuntimePlan(plan);}();
-    return {{"kind","native_training_state_summary"},{"schema_version",int(Summary)},{"state",NativeTrainingStateName(service.State())},
+    QJsonObject summary{{"kind","native_training_state_summary"},{"schema_version",int(Summary)},{"state",NativeTrainingStateName(service.State())},
         {"outcome",TrainingStatusName(service.Outcome())},{"reason",Text(service.Reason())},{"model_state_kind",certificate?"learned_solo":"diagnostic"},
         {"actual_model_revision",Text(revision)},{"model_epoch",Count(service.ModelEpoch())},{"actual_parameters",Parameters(parameters)},
         {"tolerances",QJsonObject{{"amplitude_absolute",t.amplitudeAbsolute},{"amplitude_relative",t.amplitudeRelative},{"sync",t.sync}}},
@@ -210,6 +216,17 @@ template<unsigned Protocol,unsigned Summary> QJsonObject CompositeSummary(const 
         {"accepted_parameters",search?QJsonValue(Parameters(search->Parameters())):QJsonValue(QJsonValue::Null)},
         {"applied_edits",search?Count(search->AppliedEdits()):QJsonValue(QJsonValue::Null)},
         {"search_probes",search?Count(search->IssuedProbes()):QJsonValue(QJsonValue::Null)}};
+    if constexpr(Summary==8) {
+        const auto initial=DecodeConfiguredNativeTraining(service.CompositeInitialConfiguration());
+        Require(plan.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow ||
+            initial.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow ||
+            !service.CandidateWindowRecoveryDeliveries().empty(),"recovery_summary_requires_explicit_recovery_family");
+        const auto archive=EncodeNativeCandidateWindowServiceArchive(service);
+        summary["recovery_ledger"]=EncodeCandidateWindowRecoveryLedger(service.CandidateWindowRecoveryDeliveries(),
+            DecodeNativeCompositeTrainingArchive(archive.document),service.CandidateWindowRecoveryDeliveryLogIntact());
+        summary["contains_controller_checkpoint"]=false;
+    }
+    return summary;
 }
 }
 QJsonObject EncodeNativeCompositeTrainingState(const NativeTrainingService& service,const std::string& revision,
@@ -219,6 +236,12 @@ QJsonObject EncodeNativeCandidateWindowTrainingState(const NativeTrainingService
     ValidateCandidateWindowMeasurementContract(service.Plan().protocol);
     Require(service.State()==NativeTrainingState::Finished && !service.CompositeSourceBinding().isEmpty(),"candidate_window_summary_requires_owned_finished_boundary");
     return CompositeSummary<5,7>(service,revision,parameters);
+}
+QJsonObject EncodeNativeCandidateWindowRecoveryTrainingState(const NativeTrainingService& service,const std::string& revision,
+    const std::vector<InputParameters>& parameters) {
+    ValidateCandidateWindowMeasurementContract(service.Plan().protocol);
+    Require(service.State()==NativeTrainingState::Finished && !service.CompositeSourceBinding().isEmpty(),"candidate_window_summary_requires_owned_finished_boundary");
+    return CompositeSummary<5,8>(service,revision,parameters);
 }
 void NativeCompositeStateFactory::Restore(NativeTrainingService& service,CompositePortableTrainingProof proof,NativeTrainingPlan plan,
     QJsonObject configuration,std::size_t sessions,TrainingStatus outcome,const std::string& reason,bool completed) {
@@ -312,8 +335,17 @@ void CandidateWindowRuntime(const NativeTrainingPlan& plan,const DecodedNativeCo
 QJsonObject NativeCandidateWindowStateFactory::Export(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
     const std::string& implementation,const NativeCapacitanceCorrection* capacitance) {
-    Require(service.Configuration().invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow &&
-        service.CandidateWindowRecoveryDeliveries().empty() && service.CandidateWindowRecoveryDeliveryLogIntact(),
+    return ExportImpl(owner,declaration,service,actual,version,mode,structure,implementation,capacitance,false);
+}
+QJsonObject NativeCandidateWindowStateFactory::ExportRecovery(RDK::UNet& owner,const NativeModelSpec& declaration,
+    const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
+    const std::string& implementation,const NativeCapacitanceCorrection* capacitance) {
+    return ExportImpl(owner,declaration,service,actual,version,mode,structure,implementation,capacitance,true);
+}
+QJsonObject NativeCandidateWindowStateFactory::ExportImpl(RDK::UNet& owner,const NativeModelSpec& declaration,
+    const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
+    const std::string& implementation,const NativeCapacitanceCorrection* capacitance,bool recovery) {
+    if(!recovery)Require(!RequiresCandidateWindowRecoveryBoundary(service),
         "candidate_window_recovery_requires_versioned_model_ledger");
     Require(service.Plan().protocol.schemaVersion==5 && service.State()==NativeTrainingState::Finished && service.SessionAttempt()>0 &&
         version==2 && (mode==0 || mode==1) && (structure==0 || structure==1) && !implementation.empty(),
@@ -329,6 +361,14 @@ QJsonObject NativeCandidateWindowStateFactory::Export(RDK::UNet& owner,const Nat
     const auto runtime=EncodeCandidateWindowRuntimePlan(service.Plan());auto plan=CandidateWindowPlan(c,service.Plan().protocol,runtime);
     auto archive=EncodeNativeCandidateWindowServiceArchive(service);
     auto proof=CandidateWindowPortableTrainingProof::Replay(DecodeNativeCompositeTrainingArchive(archive.document),plan.search.tolerances,revision,epoch);
+    QJsonObject recoveryLedger;
+    if(recovery) {
+        Require(plan.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow ||
+            c.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow ||
+            !service.CandidateWindowRecoveryDeliveries().empty(),"recovery_package_requires_explicit_recovery_family");
+        recoveryLedger=EncodeCandidateWindowRecoveryLedger(service.CandidateWindowRecoveryDeliveries(),proof.Archive(),
+            service.CandidateWindowRecoveryDeliveryLogIntact());
+    }
     CandidateWindowRuntime(plan,proof.Archive(),revision,epoch);
     Require(bool(proof.References())==bool(service.References()),"composite_package_reference_completeness");
     if(service.References())Require(proof.References()->Inputs()==service.References()->Inputs(),"composite_package_reference_readback");
@@ -347,11 +387,12 @@ QJsonObject NativeCandidateWindowStateFactory::Export(RDK::UNet& owner,const Nat
     const QJsonValue c0=capacitance?QJsonValue(EncodeNativeCapacitanceState(*capacitance,revision)):QJsonValue(QJsonValue::Null);CheckC0(source,c0,bindings,declaration);
     std::vector<std::string> images;for(const auto& image:source["storage_images"].toArray())images.push_back(Text(Object(image)["name"]));
     const auto status=std::string(TrainingStatusName(service.Outcome()));
-    const auto metadata=Metadata(c,plan,proof,implementation,status,service.Reason(),stopped,identity);
+    auto metadata=Metadata(c,plan,proof,implementation,status,service.Reason(),stopped,identity);
+    if(recovery)metadata["recovery_ledger_sha256"]=recoveryLedger["sha256"];
     const auto physical=NmsdkTools::ExportModelArchive(neuron.Get(),metadata,ports,images);
     Require(NmsdkTools::ModelImageDefinitionsFingerprint(Array(physical["class_definitions"]))==source["storage_images_sha256"].toString(),
         "composite_package_storage_changed");
-    QJsonObject package{{"kind",stopped?"timelearner_stopped_state":"timelearner_completed_state"},{"schema_version",6},{"dynamic_checkpoint",false},
+    QJsonObject package{{"kind",stopped?"timelearner_stopped_state":"timelearner_completed_state"},{"schema_version",recovery?7:6},{"dynamic_checkpoint",false},
         {"state_kind",stopped?"diagnostic":"learned_solo"},{"implementation_id",Text(implementation)},{"controller_version",version},{"calculate_mode",mode},
         {"structure_build_mode",structure},{"configuration",service.CompositeInitialConfiguration()},{"runtime_plan",runtime},
         {"protocol",EncodeVerificationProtocol(plan.protocol)},{"trained_inputs",Parameters(actual)},{"model_revision",Text(revision)},
@@ -360,6 +401,7 @@ QJsonObject NativeCandidateWindowStateFactory::Export(RDK::UNet& owner,const Nat
         {"capture_revision",source["initial_model"].toObject().value("sha256")},{"capture_epoch",source["initial_epoch"]},
         {"reference_complete",bool(proof.References())},{"measurement_archive",archive.document},{"dataset",NmsdkTools::ExportDatasetSnapshot(dataset.Get())},
         {"neuron",physical},{"capacitance_state",c0}};
+    if(recovery)package["recovery_ledger"]=recoveryLedger;
     package["sha256"]=NmsdkTools::CanonicalModelDataSha256(package);return package;
 }
 void NativeCandidateWindowStateFactory::Restore(NativeTrainingService& service,CandidateWindowPortableTrainingProof proof,
@@ -380,8 +422,17 @@ void NativeCandidateWindowStateFactory::Restore(NativeTrainingService& service,C
 }
 std::unique_ptr<PreparedNativeLearnedState> NativeCandidateWindowStateFactory::Prepare(const QJsonObject& package,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation) {
-    Keys(package,"kind schema_version dynamic_checkpoint state_kind implementation_id controller_version calculate_mode structure_build_mode configuration protocol runtime_plan trained_inputs model_revision model_epoch session_attempt training_outcome reason certificate capture_revision capture_epoch reference_complete measurement_archive dataset neuron capacitance_state sha256");
-    auto body=package;body.remove("sha256");Require(Count(package["schema_version"])==6 && package["dynamic_checkpoint"]==QJsonValue(false) &&
+    return PrepareImpl(package,storage,environment,implementation,false);
+}
+std::unique_ptr<PreparedNativeLearnedState> NativeCandidateWindowStateFactory::PrepareRecovery(const QJsonObject& package,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation) {
+    return PrepareImpl(package,storage,environment,implementation,true);
+}
+std::unique_ptr<PreparedNativeLearnedState> NativeCandidateWindowStateFactory::PrepareImpl(const QJsonObject& package,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation,bool recovery) {
+    const char* baseFields="kind schema_version dynamic_checkpoint state_kind implementation_id controller_version calculate_mode structure_build_mode configuration protocol runtime_plan trained_inputs model_revision model_epoch session_attempt training_outcome reason certificate capture_revision capture_epoch reference_complete measurement_archive dataset neuron capacitance_state sha256";
+    const auto fields=std::string(baseFields)+(recovery?" recovery_ledger":"");Keys(package,fields.c_str());
+    auto body=package;body.remove("sha256");Require(Count(package["schema_version"])==std::size_t(recovery?7:6) && package["dynamic_checkpoint"]==QJsonValue(false) &&
         package["sha256"]==QJsonValue(NmsdkTools::CanonicalModelDataSha256(body)),"candidate_window_package_schema_or_digest");
     const bool stopped=package["kind"]==QJsonValue("timelearner_stopped_state");
     Require((stopped && package["state_kind"]==QJsonValue("diagnostic")) ||
@@ -395,6 +446,15 @@ std::unique_ptr<PreparedNativeLearnedState> NativeCandidateWindowStateFactory::P
     const auto epoch=Count(package["model_epoch"]);
     auto proof=CandidateWindowPortableTrainingProof::Replay(DecodeNativeCompositeTrainingArchive(Object(package["measurement_archive"])),
         plan.search.tolerances,result->modelRevision,epoch);const auto& source=proof.Archive().SourceBinding();
+    std::vector<NativeCandidateWindowRecoveryDelivery> deliveries;
+    if(recovery) {
+        deliveries=DecodeCandidateWindowRecoveryLedger(Object(package["recovery_ledger"]),proof.Archive());
+        Require(plan.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow ||
+            c.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow || !deliveries.empty(),
+            "recovery_package_requires_explicit_recovery_family");
+    } else Require(plan.search.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow &&
+        c.search.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow,
+        "candidate_window_recovery_requires_versioned_model_ledger");
     CheckConfiguration(c,source);CandidateWindowRuntime(plan,proof.Archive(),result->modelRevision,epoch);
     Require(proof.Archive().Protocol()==protocol && proof.Archive().CurrentAttemptId()==plan.search.runId &&
         package["capture_revision"]==Object(source["initial_model"])["sha256"] && Count(package["capture_epoch"])==Count(source["initial_epoch"]) &&
@@ -408,7 +468,9 @@ std::unique_ptr<PreparedNativeLearnedState> NativeCandidateWindowStateFactory::P
     const auto physical=Object(package["neuron"]),identity=Object(Object(physical["graph"])["identity"]);
     Require(identity["sha256"]==package["model_revision"] && NmsdkTools::ModelImageDefinitionsFingerprint(Array(physical["class_definitions"]))==
         source["storage_images_sha256"].toString(),"composite_package_physical_revision_or_images");
-    Require(Object(physical["metadata"])==Metadata(c,plan,proof,implementation,Text(package["training_outcome"]),reason,stopped,identity),"composite_package_metadata");
+    auto expectedMetadata=Metadata(c,plan,proof,implementation,Text(package["training_outcome"]),reason,stopped,identity);
+    if(recovery)expectedMetadata["recovery_ledger_sha256"]=Object(package["recovery_ledger"])["sha256"];
+    Require(Object(physical["metadata"])==expectedMetadata,"composite_package_metadata");
     std::set<QString> declared;for(const auto& image:Array(physical["class_definitions"]))declared.insert(Object(image)["name"].toString());
     for(const auto& cls:Array(Object(package["dataset"])["required_class_names"]))Require(cls.isString() && declared.count(cls.toString()),"composite_package_dataset_dependency");
     NmsdkTools::PrepareModelArchive(physical,storage,environment,Text(implementation));
@@ -432,6 +494,13 @@ std::unique_ptr<PreparedNativeLearnedState> NativeCandidateWindowStateFactory::P
     CheckC0(source,package["capacitance_state"],bindings,declaration);if(!package["capacitance_state"].isNull())result->capacitanceState=Object(package["capacitance_state"]);
     result->controllerVersion=2;result->calculateMode=int(Count(package["calculate_mode"]));result->structureBuildMode=int(Count(package["structure_build_mode"]));
     result->configurationText=QJsonDocument(EncodeConfiguredNativeTraining(c)).toJson(QJsonDocument::Compact).toStdString();
-    Restore(result->service,std::move(proof),std::move(plan),Object(package["configuration"]),Count(package["session_attempt"]),outcome,reason,!stopped);return result;
+    Restore(result->service,std::move(proof),std::move(plan),Object(package["configuration"]),Count(package["session_attempt"]),outcome,reason,!stopped);
+    if(recovery) {
+        result->service.compositeRecoveryDeliveries=std::move(deliveries);
+        result->service.compositeRecoveryDeliveryLogIntact=true;
+        if(result->service.plan.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow)
+            result->service.compositeRecoveryRuntime=EncodeCandidateWindowRuntimePlan(result->service.plan);
+    }
+    return result;
 }
 }

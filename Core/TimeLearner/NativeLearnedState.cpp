@@ -181,8 +181,12 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
 static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
     int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance)
 {
-    if(service.Plan().protocol.schemaVersion==5)return NativeCandidateWindowStateFactory::Export(owner,declaration,service,actual,
-        version,calculateMode,structureMode,implementationId,capacitance);
+    if(service.Plan().protocol.schemaVersion==5) {
+        if(RequiresCandidateWindowRecoveryBoundary(service))return NativeCandidateWindowStateFactory::ExportRecovery(owner,declaration,service,actual,
+            version,calculateMode,structureMode,implementationId,capacitance);
+        return NativeCandidateWindowStateFactory::Export(owner,declaration,service,actual,
+            version,calculateMode,structureMode,implementationId,capacitance);
+    }
     if(service.Plan().protocol.schemaVersion==4)return NativeCompositeStateFactory::Export(owner,declaration,service,actual,
         version,calculateMode,structureMode,implementationId,capacitance);
     const bool stopped=!service.Certificate();
@@ -293,6 +297,7 @@ QJsonObject ParseNativeLearnedState(const std::string& text)
 std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
     RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId)
 {
+    if(package["schema_version"]==QJsonValue(7))return NativeCandidateWindowStateFactory::PrepareRecovery(package,storage,environment,implementationId);
     if(package["schema_version"]==QJsonValue(6))return NativeCandidateWindowStateFactory::Prepare(package,storage,environment,implementationId);
     if(package["schema_version"]==QJsonValue(5))return NativeCompositeStateFactory::Prepare(package,storage,environment,implementationId);
     auto body=package;body.remove("sha256");
