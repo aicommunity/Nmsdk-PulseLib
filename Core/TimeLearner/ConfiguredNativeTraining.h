@@ -8,6 +8,8 @@ struct ConfiguredNativeEvidenceSinks {
     std::function<void(const PreparedVerificationProbe&,const ProbeSpec&)> onPrepared;
     std::function<void(const NativeProbeSample&)> onSample;
     std::function<void(const NativeProbeResult&)> onObservation;
+    std::function<void(const NativeCompositeMeasurementRecord&)> onComposite;
+    std::function<void(const NativeCompositeMeasurementRecord&)> beforeCompositeConsume;
 };
 // Portable cold-run declaration. Runtime callbacks, model hashes, references
 // and certificates are deliberately not configuration or implicit checkpoints.
@@ -23,9 +25,18 @@ struct ConfiguredNativeTraining {
     BoundedTrainingConfig search;
     std::size_t maximumReferenceProbes=0,maximumInvalidReferenceProbes=0;
     double maximumModelSeconds=0.,maximumWallSeconds=0.;
+    bool recordCapacitanceHistory=false;
+    double capacitanceMaximumRelativeChange=0.;
+    std::optional<NativeCompositeTrainingPolicy> composite;
+    // Cold7 only. Presence requires explicit common policy2; the resulting
+    // protocol5 owns the authoritative full measurement declaration.
+    std::optional<CandidateWindowPolicy> candidateWindowPolicy;
 };
 QJsonObject EncodeNativeModelSpec(const NativeModelSpec& model);
 NativeModelSpec DecodeNativeModelSpec(const QJsonObject& object);
+// Single closed serializer shared by cold configuration and diagnostics.
+QJsonObject EncodeCapacitanceSearchPolicy(const CapacitanceSearchPolicy& policy);
+CapacitanceSearchPolicy DecodeCapacitanceSearchPolicy(const QJsonObject& object);
 QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& configuration);
 ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& object);
 // Reject duplicate keys (including escaped spellings), unknown fields, invalid
@@ -33,4 +44,8 @@ ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& objec
 ConfiguredNativeTraining ParseConfiguredNativeTraining(const std::string& text);
 QJsonObject ParseStrictNativeJsonObject(const std::string& text,std::size_t maximumBytes=16*1024*1024);
 NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraining& configuration);
+ConfiguredNativeTraining CaptureCompositeInitialConfiguration(const NativeModelSpec&,const NativeTrainingPlan&,
+    const std::vector<InputParameters>& actualInitialParameters,double capacitanceMaximumRelativeChange);
+ConfiguredNativeTraining CaptureCandidateWindowInitialConfiguration(const NativeModelSpec&,const NativeTrainingPlan&,
+    const std::vector<InputParameters>& actualInitialParameters,double capacitanceMaximumRelativeChange);
 }

@@ -47,11 +47,11 @@ StimulusProfile SourceProfile(NPulseGeneratorTransit* source)
 
 void NativeProbeExecutor::Queue(NativeProbeRequest value)
 {
-    if(state==NativeProbeStatus::Running || state==NativeProbeStatus::Queued || result)
+    if(state==NativeProbeStatus::Running || state==NativeProbeStatus::Queued || result || presentationSaved)
         throw std::logic_error("native_probe_busy_or_unconsumed_result");
     const auto key=std::make_pair(value.specification.runId,value.specification.trialId);
     if(!seenTrials.insert(key).second)throw std::logic_error("reused_native_trial_id");
-    request=std::move(value);state=NativeProbeStatus::Queued;prepared.reset();
+    ++controlGeneration;request=std::move(value);state=NativeProbeStatus::Queued;prepared.reset();
     lastEmission.reset();emitted=0;watched.clear();generatorParameters.clear();capturedGenerator=nullptr;
     ownerLife={};neuronLife={};datasetLife={};generatorLife={};stimulusProfile.reset();
 }
@@ -106,23 +106,114 @@ void NativeProbeExecutor::CheckSource(const NativeProbeBindings& b) const
 
 void NativeProbeExecutor::CheckPattern(const NativeProbeBindings& b) const
 {
+    const bool single=bool(request.specification.characterization);
+    const bool subset=bool(request.specification.stimulusSubset);
+    Require(b.inputCount>0 && request.expectedInputIsi.size()==std::size_t(b.inputCount),"unsupported_native_dataset_shape");
+    const auto presented=subset?PlanStimulusSubset(request.expectedInputIsi,
+        request.specification.stimulusSubset->sourceOrdinals).presentedIsi:
+        single?std::vector<double>{request.expectedInputIsi.front()}:std::vector<double>{};
+    const auto& expected=presentationSaved?presented:request.expectedInputIsi;
+    const int pulses=int(expected.size());
     Require(b.dataset && b.dataset->NumSamples.GetData()==1 && b.dataset->NumFeatures.GetData()==1 &&
-        b.dataset->Iteration.GetData()==0 && b.dataset->MaxSpikesPerFeature.GetData()==b.inputCount &&
-        b.dataset->MatrixData.GetRows()==b.inputCount && b.dataset->MatrixData.GetCols()==1 &&
+        b.dataset->Iteration.GetData()==0 && b.dataset->MaxSpikesPerFeature.GetData()==pulses &&
+        b.dataset->MatrixData.GetRows()==pulses && b.dataset->MatrixData.GetCols()==1 &&
         request.expectedInputIsi.size()==std::size_t(b.inputCount),"unsupported_native_dataset_shape");
     QJsonArray actual;
-    for(int i=0;i<b.inputCount;++i)
+    for(int i=0;i<pulses;++i)
     {
-        Require(Detail::Finite(request.expectedInputIsi[i]) && request.expectedInputIsi[i]>=0. &&
-            b.dataset->MatrixData(i,0)==request.expectedInputIsi[i],"native_pattern_changed");
+        Require(Detail::Finite(expected[i]) && expected[i]>=0. &&
+            b.dataset->MatrixData(i,0)==expected[i],"native_pattern_changed");
         actual.append(b.dataset->MatrixData(i,0));
     }
-    Require(NmsdkTools::CanonicalModelDataSha256(actual).toStdString()==request.specification.patternHash,
-        "native_pattern_hash_mismatch");
+    const auto& hash=!presentationSaved && (single || subset)?
+        (subset?request.specification.stimulusSubset->sourceTrainingPatternHash:
+         request.specification.characterization->sourceTrainingPatternHash):request.specification.patternHash;
+    Require(NmsdkTools::CanonicalModelDataSha256(actual).toStdString()==hash,"native_pattern_hash_mismatch");
+    if(subset)
+    {
+        const auto& c=*request.specification.stimulusSubset;
+        Require(ValidStimulusSubset(c) && c.physicalInputCount==std::size_t(b.inputCount) &&
+            request.specification.windows.empty() && request.specification.expectedStimulusIds.size()==presented.size(),
+            "invalid_native_stimulus_subset");
+        QJsonArray values;for(double gap:presented)values.append(gap);
+        Require(NmsdkTools::CanonicalModelDataSha256(values).toStdString()==request.specification.patternHash,
+            "native_subset_presented_hash_mismatch");
+        for(std::size_t i=0;i<c.sourceOrdinals.size();++i)
+            Require(request.specification.expectedStimulusIds[i]=="pulse"+std::to_string(c.sourceOrdinals[i]),
+                "native_subset_source_identity_mismatch");
+    }
+    if(single)
+    {
+        const auto& c=*request.specification.characterization;
+        QJsonArray presented{request.expectedInputIsi.front()};
+        Require(c.physicalInputCount==std::size_t(b.inputCount) && request.activeInput>=0 &&
+            c.selectedInputIndex==std::size_t(request.activeInput) && c.selectedInputIndex<c.physicalInputCount &&
+            request.inputId=="input"+std::to_string(request.activeInput) &&
+            request.specification.expectedStimulusIds.size()==1 &&
+            NmsdkTools::CanonicalModelDataSha256(presented).toStdString()==request.specification.patternHash,
+            "invalid_single_pulse_declaration");
+    }
+}
+
+void NativeProbeExecutor::PreparePresentation(const NativeProbeBindings& b)
+{
+    if(!request.specification.characterization && !request.specification.stimulusSubset)return;
+    // No connected parameters are silently detached for diagnostic playback.
+    for(const auto property:{static_cast<const RDK::UIProperty*>(&b.dataset->NumSamples),
+        static_cast<const RDK::UIProperty*>(&b.dataset->NumFeatures),
+        static_cast<const RDK::UIProperty*>(&b.dataset->MaxSpikesPerFeature),
+        static_cast<const RDK::UIProperty*>(&b.dataset->MatrixData),
+        static_cast<const RDK::UIProperty*>(&b.dataset->MatrixClasses)})
+        if(const auto input=dynamic_cast<const RDK::UIPropertyInput*>(property))
+            Require(!input->IsConnected() && !input->UsesExternalDataSource(),"connected_single_pulse_presentation");
+    Require(b.dataset->MatrixClasses.GetRows()==1 && b.dataset->MatrixClasses.GetCols()==1,
+        "unsupported_single_pulse_classes");
+    savedPattern.clear();savedClasses={b.dataset->MatrixClasses(0,0)};
+    for(int i=0;i<b.inputCount;++i)savedPattern.push_back(b.dataset->MatrixData(i,0));
+    presentationSaved=true; // Arm restoration before the first setter can fail.
+    const auto values=request.specification.stimulusSubset?
+        PlanStimulusSubset(savedPattern,request.specification.stimulusSubset->sourceOrdinals).presentedIsi:
+        std::vector<double>{savedPattern.front()};
+    b.dataset->MaxSpikesPerFeature=int(values.size());
+    RDK::MDMatrix<double> pattern;pattern.Assign(int(values.size()),1,0.);
+    for(std::size_t i=0;i<values.size();++i)pattern(int(i),0)=values[i];
+    b.dataset->MatrixData=pattern;
+    b.dataset->Build(); // Legal preparation boundary; never an extra Calculate.
+    Require(b.dataset->IsReady() && b.dataset->IsInit() && Generator(b)==capturedGenerator &&
+        generatorLife.IsAlive(),"single_pulse_dataset_build_failed");
+    Require(stimulusProfile && SourceProfile(capturedGenerator)==*stimulusProfile &&
+        SourceParameters(capturedGenerator)==generatorParameters,"single_pulse_source_changed");
+    CheckPattern(b);
+}
+
+void NativeProbeExecutor::RestorePresentation()
+{
+    if(!presentationSaved)return;
+    Require(SameLiveRoots() && generatorLife.IsAlive(),"single_pulse_restore_graph_unavailable");
+    const auto& b=*physical;
+    b.dataset->MaxSpikesPerFeature=int(savedPattern.size());
+    RDK::MDMatrix<double> pattern;pattern.Assign(int(savedPattern.size()),1,0.);
+    for(std::size_t i=0;i<savedPattern.size();++i)pattern(int(i),0)=savedPattern[i];
+    b.dataset->MatrixData=pattern;
+    RDK::MDMatrix<int> classes;classes.Assign(1,1,savedClasses.at(0));b.dataset->MatrixClasses=classes;
+    b.dataset->Build();
+    Require(b.dataset->IsReady() && b.dataset->IsInit() && Generator(b)==capturedGenerator &&
+        stimulusProfile && SourceProfile(capturedGenerator)==*stimulusProfile &&
+        SourceParameters(capturedGenerator)==generatorParameters,"single_pulse_restore_source_changed");
+    // Check original shape and every value independently of the live request.
+    Require(b.dataset->NumSamples.GetData()==1 && b.dataset->NumFeatures.GetData()==1 &&
+        b.dataset->MaxSpikesPerFeature.GetData()==int(savedPattern.size()) &&
+        b.dataset->MatrixData.GetRows()==int(savedPattern.size()) && b.dataset->MatrixData.GetCols()==1 &&
+        b.dataset->MatrixClasses.GetRows()==1 && b.dataset->MatrixClasses.GetCols()==1 &&
+        b.dataset->MatrixClasses(0,0)==savedClasses.at(0),"single_pulse_restore_shape_changed");
+    for(std::size_t i=0;i<savedPattern.size();++i)
+        Require(b.dataset->MatrixData(int(i),0)==savedPattern[i],"single_pulse_restore_pattern_changed");
+    presentationSaved=false;savedPattern.clear();savedClasses.clear();
 }
 
 void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double time)
 {
+    const auto enteredGeneration=controlGeneration;
     if(state==NativeProbeStatus::Running)
     {
         try
@@ -149,10 +240,18 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         Require(!b.postTuneActive,"concurrent_native_posttune");
         Require(Detail::Finite(time),"invalid_native_time");
         Require(bool(request.readModelRevision) && !request.baseModelRevision.empty(),"missing_native_revision_provider");
-        Require((request.specification.schemaVersion==2 || request.specification.schemaVersion==3) &&
+        Require((request.specification.schemaVersion==2 || request.specification.schemaVersion==3 ||
+            request.specification.schemaVersion==4 || request.specification.schemaVersion==5 ||
+            request.specification.schemaVersion==6) &&
             request.specification.begin==0. && request.specification.baseline.empty() &&
             request.specification.modelRevision.empty() && !request.specification.recordSpikes,
             "unsupported_native_probe_specification");
+        Require((request.specification.schemaVersion==4 || request.specification.schemaVersion==5)==bool(request.specification.characterization),
+            "invalid_single_pulse_schema");
+        Require((request.specification.schemaVersion==6)==bool(request.specification.stimulusSubset),
+            "invalid_stimulus_subset_schema");
+        Require(!request.specification.stimulusSubset || bool(request.onSample),
+            "missing_native_stimulus_subset_sample_sink");
         Require(b.branch==(request.routing==ProbeRouting::BranchSoloBurst),"native_routing_mismatch");
         Require(b.routingComplete,"missing_native_routing_component");
         Require(!b.branch || (request.activeInput>=0 && request.activeInput<b.inputCount &&
@@ -185,19 +284,25 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         Require(request.specification.maximumSampleGap>0. &&
             !Detail::After(request.specification.maximumSampleGap,1./frequency),"unsupported_native_sample_gap");
         Require(ReadRevision(true)==request.baseModelRevision,"native_base_revision_changed");
-        if(request.specification.schemaVersion==3)
+        if(request.specification.schemaVersion==3 || request.specification.characterization)
         {
             const auto& ids=request.specification.expectedStimulusIds;
-            Require(ids.size()==std::size_t(b.inputCount),"native_physical_input_count_mismatch");
+            Require(ids.size()==(request.specification.characterization?1u:std::size_t(b.inputCount)),"native_physical_input_count_mismatch");
             Require(!b.branch || request.specification.windows.size()==1,"native_solo_window_count_mismatch");
             for(const auto& window:request.specification.windows)
             {
                 const auto event=std::find(ids.begin(),ids.end(),window.stimulusId);
                 Require(event!=ids.end(),"native_window_stimulus_mismatch");
                 const auto index=std::size_t(event-ids.begin());
-                Require(window.channel==(b.branch?0u:index),"native_input_channel_mismatch");
-                Require(!b.branch || (index==std::size_t(request.activeInput) && window.inputId==request.inputId),
-                    "native_solo_selector_mismatch");
+                if(request.specification.characterization)
+                    Require(index==0 && window.channel==(b.branch?0u:std::size_t(request.activeInput)) &&
+                        window.inputId==request.inputId,"single_pulse_window_mapping_mismatch");
+                else
+                {
+                    Require(window.channel==(b.branch?0u:index),"native_input_channel_mismatch");
+                    Require(!b.branch || (index==std::size_t(request.activeInput) && window.inputId==request.inputId),
+                        "native_solo_selector_mismatch");
+                }
             }
         }
         // Snapshot all stimulus inputs before any transient Branch routing edit.
@@ -223,7 +328,7 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
             Require(selected.empty(),"native_solo_synapse_outside_graph");
         }
         oldDelay=b.dataset->Delay.GetData();oldAdvance=b.dataset->AdvanceSampleAfterBurst.GetData();sourceSaved=true;
-        StopSource();b.neuron->Reset();b.dataset->Reset();
+        StopSource();PreparePresentation(b);b.neuron->Reset();b.dataset->Reset();
         NmsdkTools::RequireNativeOperationsUnchanged(*b.owner,operationSequence);
         Require(ReadRevision(true)==request.baseModelRevision,"native_reset_changed_model");
         for(const auto& saved:savedInputs)
@@ -262,19 +367,28 @@ void NativeProbeExecutor::BeforeChildren(const NativeProbeBindings& b,double tim
         for(const auto& node:nodes)watched.push_back({node,node->GetLongName(b.owner),node->ObserveLifecycle(),node.Get()==b.dataset.Get()});
         prepared=PreparedVerificationProbe{request.routing,request.inputId,request.protocolRevision,
             request.baseModelRevision,spec.modelRevision,request.modelEpoch};
-        if(spec.schemaVersion==3 && b.branch)prepared->selectedInputIndex=std::size_t(request.activeInput);
-        if(request.onPrepared)request.onPrepared(*prepared,spec);
+        if(spec.schemaVersion>=3 && b.branch)prepared->selectedInputIndex=std::size_t(request.activeInput);
+        const auto* preparedRecorder=recorder.get();
+        const auto preparedSink=request.onPrepared;
+        const auto preparedContext=*prepared;
+        if(preparedSink)preparedSink(preparedContext,spec);
+        // An explicit callback cancellation/reset owns its result, as in the
+        // sample callback path below. Do not overwrite it with another failure
+        // or continue preparing a replacement request queued by the callback.
+        if(controlGeneration!=enteredGeneration || state!=NativeProbeStatus::Queued || recorder.get()!=preparedRecorder ||
+           request.specification.runId!=spec.runId || request.specification.trialId!=spec.trialId)return;
         CheckLiveGraph(b);CheckPattern(b);CheckSource(b);
         Require(ReadRevision(true)==spec.modelRevision,"native_prepared_callback_changed_model");
         state=NativeProbeStatus::Running;
     }
-    catch(const std::exception& error){Failure(time,error.what());}
-    catch(...){Failure(time,"native_preparation_exception");}
+    catch(const std::exception& error){if(controlGeneration==enteredGeneration && state==NativeProbeStatus::Queued)Failure(time,error.what());}
+    catch(...){if(controlGeneration==enteredGeneration && state==NativeProbeStatus::Queued)Failure(time,"native_preparation_exception");}
 }
 
 void NativeProbeExecutor::AfterChildren(const NativeProbeBindings& b,double time)
 {
     if(state!=NativeProbeStatus::Running)return;
+    const auto enteredGeneration=controlGeneration;
     lastTime=time;
     try
     {
@@ -305,18 +419,19 @@ void NativeProbeExecutor::AfterChildren(const NativeProbeBindings& b,double time
             values.push_back(soma->SumPotential(0,0));
         }
         recorder->Observe(time,values,revision);
-        if(request.onSample)
-        {sample.potentials=std::move(values);request.onSample(sample);}
+        const auto sampleSink=request.onSample;
+        if(sampleSink)
+        {sample.potentials=std::move(values);sampleSink(sample);}
         // An explicit callback cancellation/reset already owns the outcome.
-        if(state!=NativeProbeStatus::Running)return;
+        if(controlGeneration!=enteredGeneration || state!=NativeProbeStatus::Running)return;
         // A callback can change an inherited policy on the final sample too.
         // Diagnose it before closing a successful observation, retaining the
         // recorder and unrestricted revision reader for partial diagnostics.
         CheckLiveGraph(b);
         if(!Detail::After(end,time))Finish(time,"window_closed",NativeProbeStatus::Completed);
     }
-    catch(const std::exception& error){Failure(time,error.what());}
-    catch(...){Failure(time,"native_observation_exception");}
+    catch(const std::exception& error){if(controlGeneration==enteredGeneration && state==NativeProbeStatus::Running)Failure(time,error.what());}
+    catch(...){if(controlGeneration==enteredGeneration && state==NativeProbeStatus::Running)Failure(time,"native_observation_exception");}
 }
 
 void NativeProbeExecutor::StopSource()
@@ -337,6 +452,7 @@ void NativeProbeExecutor::Restore()
             else saved.synapse->Input.DetachFrom();
         }
     savedInputs.clear();
+    RestorePresentation();
     if(SameLiveRoots() && sourceSaved)
     {
         physical->dataset->Delay=oldDelay;
@@ -375,7 +491,8 @@ void NativeProbeExecutor::Finish(double time,const std::string& reason,NativePro
         completed.observation->valid=false;
         completed.observation->reasons.insert(completed.observation->reasons.end(),completed.reasons.begin(),completed.reasons.end());
     }
-    state=completed.status;result=std::move(completed);recorder.reset();physical.reset();watched.clear();
+    state=completed.status;result=std::move(completed);recorder.reset();
+    if(!presentationSaved){physical.reset();watched.clear();}
 }
 void NativeProbeExecutor::Failure(double time,const std::string& reason)
 { Finish(time,reason,NativeProbeStatus::Rejected); }
@@ -388,6 +505,7 @@ void NativeProbeExecutor::Cancel(const std::string& reason)
 }
 void NativeProbeExecutor::ResetControl()
 {
+    ++controlGeneration;
     Cancel("learner_reset");Restore();physical.reset();recorder.reset();result.reset();prepared.reset();
     request=NativeProbeRequest{};seenTrials.clear();state=NativeProbeStatus::Idle;
 }

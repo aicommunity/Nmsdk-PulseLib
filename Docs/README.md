@@ -1,5 +1,7 @@
 # Nmsdk-PulseLib - Документация
 
+- [Диагностические подмножества импульсов: native API, приёмка ещё открыта](StimulusSubsetDiagnostic.ru.md)
+
 ## RU
 
 ### Назначение
