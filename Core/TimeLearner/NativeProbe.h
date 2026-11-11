@@ -85,13 +85,18 @@ public:
     int ActiveInput() const { return request.activeInput; }
     bool AtEditBoundary() const {
         return OwnsControl() && state!=NativeProbeStatus::Queued && state!=NativeProbeStatus::Running &&
-            !result && !physical && savedInputs.empty();
+            !result && !physical && savedInputs.empty() && !presentationSaved;
     }
     void BeforeChildren(const NativeProbeBindings& bindings,double time);
     void AfterChildren(const NativeProbeBindings& bindings,double time);
     void Cancel(const std::string& reason);
     void ResetControl();
     const std::optional<NativeProbeResult>& Result() const { return result; }
+    std::size_t ControlGeneration() const {return controlGeneration;}
+    bool MatchesActiveTrial(const std::string& run,const std::string& trial,std::size_t generation) const {
+        return (state==NativeProbeStatus::Queued || state==NativeProbeStatus::Running) &&
+            controlGeneration==generation && request.specification.runId==run && request.specification.trialId==trial;
+    }
     std::optional<NativeProbeResult> TakeResult();
 private:
     struct SavedInput {
@@ -107,6 +112,7 @@ private:
         bool stable;
     };
     NativeProbeStatus state=NativeProbeStatus::Idle;
+    std::size_t controlGeneration=0;
     NativeProbeRequest request;
     std::optional<NativeProbeBindings> physical;
     std::vector<SavedInput> savedInputs;
@@ -122,6 +128,12 @@ private:
     std::set<std::pair<std::string,std::string>> seenTrials;
     double oldDelay=0.,end=0.,lastTime=0.;
     bool oldAdvance=false,sourceSaved=false;
+    // Plain-value presentation snapshot, not a dynamic component checkpoint.
+    bool presentationSaved=false;
+    std::vector<double> savedPattern;
+    std::vector<int> savedClasses;
+    void PreparePresentation(const NativeProbeBindings& bindings);
+    void RestorePresentation();
     std::optional<double> lastEmission;
     std::size_t emitted=0;
     double frequency=0.;

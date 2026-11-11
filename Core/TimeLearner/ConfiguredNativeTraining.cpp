@@ -1,4 +1,6 @@
 #include "ConfiguredNativeTraining.h"
+#include "CompositeTrainingDeclarations.h"
+#include "CandidateWindowTrainingDeclarations.h"
 #include "ModelIdentity.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -19,6 +21,20 @@ void Keys(const QJsonObject& o,const std::set<QString>& names)
 {
     Require(o.size()==int(names.size()),"native_configuration_field_set_mismatch");
     for(const auto& name:names)Require(o.contains(name),"missing_native_configuration_field");
+}
+QJsonObject EncodeCandidateWindowNativePolicy(const NativeCompositeTrainingPolicy& common,const CandidateWindowPolicy& window)
+{
+    Require(common.schemaVersion==2 && common.methodId==DeclaredWindowBasinResult::MethodId(),"candidate_window_native_policy2_required");
+    ValidateCandidateWindowPolicyDeclaration(window,window.inputs.size(),common.contextPolicy.maximumSamples);
+    auto result=EncodeNativeCompositeTrainingPolicy(common);result["candidate_window_policy"]=EncodeCandidateWindowPolicy(window);return result;
+}
+std::pair<NativeCompositeTrainingPolicy,CandidateWindowPolicy> DecodeCandidateWindowNativePolicy(const QJsonObject& object)
+{
+    Keys(object,{"schema_version","method_id","context_policy","geometry_policy","attempt_limits",
+        "maximum_group_model_seconds","maximum_group_wall_seconds","maximum_total_primary_bytes","candidate_window_policy"});
+    auto fields=object;fields.remove("candidate_window_policy");const auto common=DecodeNativeCompositeTrainingPolicy(fields);
+    const auto window=DecodeCandidateWindowPolicy(object["candidate_window_policy"].toObject());
+    Require(EncodeCandidateWindowNativePolicy(common,window)==object,"candidate_window_native_policy_roundtrip");return {common,window};
 }
 double Number(const QJsonValue& v)
 {Require(v.isDouble() && std::isfinite(v.toDouble()),"invalid_native_configuration_number");return v.toDouble();}
@@ -121,6 +137,8 @@ NativeModelSpec DecodeNativeModelSpec(const QJsonObject& o)
 }
 NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraining& c)
 {
+    Require(!c.candidateWindowPolicy || c.composite,"candidate_window_cold7_requires_native_policy2");
+    ValidateInvalidMeasurementRecovery(c.search.invalidMeasurementRecovery,c.search.maximumInvalidObservations);
     ValidateNativeModelSpec(c.model);const auto size=c.model.inputs.size();
     Require(ValidStimulusProfile(c.stimulusProfile) && c.stimulusProfile.generatorClass==c.model.generatorClass &&
         c.stimulusProfile.frequencyHz==c.model.frequencyHz,"invalid_configured_native_stimulus_profile");
@@ -135,6 +153,8 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
     Require(c.search.n0CandidateRepeats>=1 && c.search.n0CandidateRepeats<=128 &&
         (c.search.normalization==Normalization::SynapseCount || c.search.n0CandidateRepeats==1),"invalid_n0_candidate_repeats");
     Require(c.search.initialModelRevision.empty() && c.search.initialModelEpoch==0,"configuration_is_not_controller_checkpoint");
+    Require(std::isfinite(c.capacitanceMaximumRelativeChange) && c.capacitanceMaximumRelativeChange>=0. &&
+        (c.recordCapacitanceHistory || c.capacitanceMaximumRelativeChange==0.),"invalid_configured_capacitance_history_policy");
     for(double value:{c.search.tolerances.amplitudeAbsolute,c.search.tolerances.amplitudeRelative,c.search.tolerances.sync})
         Require(std::isfinite(value) && value>=0.,"invalid_configured_native_tolerance");
     NativeTrainingPlan plan;auto& p=plan.protocol;p.schemaVersion=3;
@@ -164,13 +184,91 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
         p.inputs.push_back({id,event});p.stimulusIds.push_back(event);s.expectedStimulusIds.push_back(event);
         plan.inputWindows.push_back({id,c.model.branch?0u:i,begin,end,event});
     }
+    if(c.search.capacitanceSearch)
+    {
+        Require(c.recordCapacitanceHistory && c.search.capacitanceSearch->minimumScale>=1.-c.capacitanceMaximumRelativeChange &&
+            c.search.capacitanceSearch->maximumScale<=1.+c.capacitanceMaximumRelativeChange,
+            "configured_capacitance_search_requires_compatible_recorded_C0");
+        ValidateCapacitanceSearchPolicy(c.search,p.routing);
+    }
+    if(c.composite) {
+        const auto& policy=*c.composite;
+        Require(c.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate,
+            "composite_recovery_policy_not_implemented");
+        Require(!c.recordSpikes && c.peakSelection==PeakSelectionPolicy::IsolatedWindow &&
+            c.stimulusProfile.generatorClass=="NPulseGeneratorTransit" && c.stimulusProfile.amplitude>0. &&
+            c.stimulusProfile.pulseLength>=1./c.stimulusProfile.frequencyHz && c.stimulusProfile.frequencyDeviation==0. &&
+            !c.stimulusProfile.useTransitSignal && !c.stimulusProfile.usePatternOutput,
+            "unsupported_composite_native_source_or_selection");
+        if(c.candidateWindowPolicy) {
+            Require(policy.schemaVersion==2,"candidate_window_cold7_requires_native_policy2");
+            Require(size>=2,"candidate_window_multi_input_method_requires_at_least_two_inputs");
+            p.schemaVersion=5;p.waveAssignment=WaveAssignmentPolicy::WindowOnly;s.waveAssignment=p.waveAssignment;
+            CandidateWindowMeasurementContract contract;contract.methodId=policy.methodId;
+            contract.contextPolicy=policy.contextPolicy;contract.geometryPolicy=policy.geometryPolicy;
+            contract.candidateWindowPolicy=*c.candidateWindowPolicy;
+            for(const auto& w:c.windows)contract.referenceInputWindows.push_back({w.first,w.second});
+            p.candidateWindowMeasurement=contract;ValidateCandidateWindowMeasurementContract(p);
+        } else {
+            p.schemaVersion=4;p.waveAssignment=WaveAssignmentPolicy::WindowOnly;s.waveAssignment=p.waveAssignment;
+            CompositeMeasurementContract contract;contract.schemaVersion=policy.schemaVersion;contract.methodId=policy.methodId;
+            contract.contextPolicy=policy.contextPolicy;contract.geometryPolicy=policy.geometryPolicy;
+            for(const auto& w:c.windows)contract.inputWindows.push_back({w.first,w.second});
+            p.compositeMeasurement=contract;ValidateCompositeMeasurementContract(p);
+        }
+        for(auto value:{policy.maximumGroups,policy.maximumNativeProbes,policy.maximumTotalSamples,policy.maximumTotalPrimaryBytes})
+            Require(value>0 && value<=9007199254740991ULL,"invalid_composite_attempt_limit");
+        Require(policy.maximumNativeProbes>=size+2 && policy.maximumTotalSamples>=policy.contextPolicy.maximumTotalSamples &&
+            c.maximumSamples<=policy.contextPolicy.maximumSamples && std::isfinite(policy.maximumGroupModelSeconds) &&
+            policy.maximumGroupModelSeconds>0. && policy.maximumGroupModelSeconds<=c.maximumModelSeconds &&
+            std::isfinite(policy.maximumGroupWallSeconds) && policy.maximumGroupWallSeconds>0. &&
+            policy.maximumGroupWallSeconds<=c.maximumWallSeconds,"invalid_composite_group_or_attempt_budget");
+        plan.composite=policy;
+    }
     ValidateVerificationProtocol(p);plan.search=c.search;plan.search.runId=c.runId;
     plan.maximumReferenceProbes=c.maximumReferenceProbes;plan.maximumInvalidReferenceProbes=c.maximumInvalidReferenceProbes;
-    plan.maximumModelSeconds=c.maximumModelSeconds;plan.maximumWallSeconds=c.maximumWallSeconds;return plan;
+    plan.maximumModelSeconds=c.maximumModelSeconds;plan.maximumWallSeconds=c.maximumWallSeconds;
+    plan.recordCapacitanceHistory=c.recordCapacitanceHistory;return plan;
+}
+QJsonObject EncodeCapacitanceSearchPolicy(const CapacitanceSearchPolicy& policy)
+{
+    ValidateCapacitanceSearchPolicy(policy);
+    return {{"enumeration","round_robin_absolute_C0_v1"},{"minimum_scale",Numeric(policy.minimumScale)},
+        {"maximum_scale",Numeric(policy.maximumScale)},{"subdivision_depth",double(policy.subdivisionDepth)},
+        {"maximum_contexts",Integer(policy.maximumContexts)},{"maximum_membranes",Integer(policy.maximumMembranes)},
+        {"maximum_cursor_elements",Integer(policy.maximumCursorElements)}};
+}
+CapacitanceSearchPolicy DecodeCapacitanceSearchPolicy(const QJsonObject& object)
+{
+    Keys(object,{"enumeration","minimum_scale","maximum_scale","subdivision_depth","maximum_contexts", "maximum_membranes","maximum_cursor_elements"});
+    Require(Text(object["enumeration"])=="round_robin_absolute_C0_v1","unsupported_capacitance_enumeration");
+    CapacitanceSearchPolicy policy{Number(object["minimum_scale"]),Number(object["maximum_scale"]),
+        unsigned(Count(object["subdivision_depth"],20)),Count(object["maximum_contexts"],4096),
+        Count(object["maximum_membranes"]),Count(object["maximum_cursor_elements"])};
+    ValidateCapacitanceSearchPolicy(policy);return policy;
 }
 QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 {
-    MakeConfiguredNativeTrainingPlan(c);QJsonArray windows,bounds;
+    MakeConfiguredNativeTrainingPlan(c);
+    if(c.candidateWindowPolicy) {
+        auto base=c;base.composite.reset();base.candidateWindowPolicy.reset();auto result=EncodeConfiguredNativeTraining(base);
+        // Own the value before inserting another key into this same object.
+        // QJsonValueRef stores an index that insertion may shift.
+        const QJsonValue baseSchema=result.value("schema_version");
+        Require(baseSchema.toInt()>=1 && baseSchema.toInt()<=4,"candidate_window_base_schema_unsupported");
+        result["base_schema_version"]=baseSchema;result["schema_version"]=7;
+        result["composite_measurement"]=EncodeCandidateWindowNativePolicy(*c.composite,*c.candidateWindowPolicy);return result;
+    }
+    if(c.composite) {
+        auto base=c;base.composite.reset();auto result=EncodeConfiguredNativeTraining(base);
+        // A mutable operator[] yields an index-based QJsonValueRef. Inserting
+        // base_schema_version can shift that index before proxy assignment.
+        const QJsonValue baseSchema=result.value("schema_version");
+        Require(baseSchema.toInt()>=1 && baseSchema.toInt()<=4,"composite_base_schema_unsupported");
+        result["base_schema_version"]=baseSchema;result["schema_version"]=6;
+        result["composite_measurement"]=EncodeNativeCompositeTrainingPolicy(*c.composite);return result;
+    }
+    QJsonArray windows,bounds;
     for(auto [begin,end]:c.windows)windows.append(QJsonObject{{"begin",Numeric(begin)},{"end",Numeric(end)}});
     for(const auto& b:c.search.bounds)bounds.append(QJsonObject{{"minimum_length",b.minimumLength},{"maximum_length",b.maximumLength},
         {"minimum_synapses",b.minimumSynapses},{"maximum_synapses",b.maximumSynapses},{"minimum_resistance",Numeric(b.minimumResistance)},
@@ -196,16 +294,72 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
         auto search=result["search"].toObject();search["n0_candidate_repeats"]=Integer(c.search.n0CandidateRepeats);
         result["search"]=search;
     }
+    if(c.recordCapacitanceHistory)
+    {
+        result["schema_version"]=3;
+        auto search=result["search"].toObject();search["n0_candidate_repeats"]=Integer(c.search.n0CandidateRepeats);
+        result["search"]=search;
+        result["capacitance_history"]=QJsonObject{{"record",true},{"maximum_relative_change",Numeric(c.capacitanceMaximumRelativeChange)}};
+    }
+    if(c.search.capacitanceSearch)
+    {
+        result["schema_version"]=4;
+        result["capacitance_search"]=EncodeCapacitanceSearchPolicy(*c.search.capacitanceSearch);
+    }
+    if(c.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceUnassignedBurst)
+    {
+        // An orthogonal envelope retains the exact established repeat/C codec.
+        // Missing envelope means the historical retry policy, never opt-in.
+        const auto baseSchema=result.value("schema_version");
+        result["base_schema_version"]=baseSchema;
+        result["schema_version"]=5;
+        result["invalid_measurement_recovery"]="advance_unassigned_burst";
+    }
     return result;
 }
 ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
 {
-    Keys(o,{"kind","schema_version","model","stimulus_profile","run_id","protocol_revision","sample_id","duration","maximum_sample_gap","minimum_amplitude",
+    const int schema=Int(o["schema_version"]);auto fields=o;
+    if(schema==7) {
+        const int base=Int(o["base_schema_version"]);Require(base>=1 && base<=4,"candidate_window_base_schema_unsupported");
+        fields.remove("base_schema_version");fields.remove("composite_measurement");fields["schema_version"]=base;
+        auto c=DecodeConfiguredNativeTraining(fields);const auto policy=DecodeCandidateWindowNativePolicy(Object(o["composite_measurement"]));
+        c.composite=policy.first;c.candidateWindowPolicy=policy.second;MakeConfiguredNativeTrainingPlan(c);return c;
+    }
+    if(schema==6) {
+        const int base=Int(o["base_schema_version"]);Require(base>=1 && base<=4,"composite_base_schema_unsupported");
+        fields.remove("base_schema_version");fields.remove("composite_measurement");fields["schema_version"]=base;
+        auto c=DecodeConfiguredNativeTraining(fields);c.composite=DecodeNativeCompositeTrainingPolicy(Object(o["composite_measurement"]));
+        MakeConfiguredNativeTrainingPlan(c);return c;
+    }
+    if(schema==5)
+    {
+        const int base=Int(o["base_schema_version"]);
+        Require(base>=1 && base<=4 &&
+            Text(o["invalid_measurement_recovery"])=="advance_unassigned_burst",
+            "unsupported_native_candidate_recovery_envelope");
+        // Re-enter only a strictly older flat codec. Unknown fields and all
+        // original validation still run there; nested envelopes are forbidden.
+        fields.remove("base_schema_version");fields.remove("invalid_measurement_recovery");
+        fields["schema_version"]=base;
+        auto c=DecodeConfiguredNativeTraining(fields);
+        c.search.invalidMeasurementRecovery=InvalidMeasurementRecovery::AdvanceUnassignedBurst;
+        MakeConfiguredNativeTrainingPlan(c);return c;
+    }
+    if(schema==3 || schema==4)fields.remove("capacitance_history");
+    if(schema==4)fields.remove("capacitance_search");
+    Keys(fields,{"kind","schema_version","model","stimulus_profile","run_id","protocol_revision","sample_id","duration","maximum_sample_gap","minimum_amplitude",
         "maximum_samples","record_spikes","peak_selection","windows","search","maximum_reference_probes","maximum_invalid_reference_probes",
         "maximum_model_seconds","maximum_wall_seconds"});
-    const int schema=Int(o["schema_version"]);
-    Require(Text(o["kind"])=="timelearner_native_cold_configuration" && (schema==1 || schema==2),"unsupported_native_configuration_schema");
+    Require(Text(o["kind"])=="timelearner_native_cold_configuration" && (schema==1 || schema==2 || schema==3 || schema==4),"unsupported_native_configuration_schema");
     ConfiguredNativeTraining c;c.model=DecodeNativeModelSpec(Object(o["model"]));c.runId=Text(o["run_id"]);
+    if(schema==3 || schema==4)
+    {
+        const auto history=Object(o["capacitance_history"]);Keys(history,{"record","maximum_relative_change"});
+        Require(Boolean(history["record"]),"configured_capacitance_history_requires_recording");
+        c.recordCapacitanceHistory=true;c.capacitanceMaximumRelativeChange=Number(history["maximum_relative_change"]);
+    }
+    if(schema==4)c.search.capacitanceSearch=DecodeCapacitanceSearchPolicy(Object(o["capacitance_search"]));
     const auto source=Object(o["stimulus_profile"]);Keys(source,{"generator_class","amplitude","pulse_length","frequency_hz",
         "frequency_deviation","use_transit_signal","use_pattern_output"});
     c.stimulusProfile={Text(source["generator_class"]),Number(source["amplitude"]),Number(source["pulse_length"]),Number(source["frequency_hz"]),
@@ -218,10 +372,10 @@ ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
     for(const auto& v:Array(o["windows"]))
     {const auto w=Object(v);Keys(w,{"begin","end"});c.windows.emplace_back(Number(w["begin"]),Number(w["end"]));}
     auto s=Object(o["search"]);
-    if(schema==2)
+    if(schema==2 || schema==3 || schema==4)
     {
         c.search.n0CandidateRepeats=Count(s["n0_candidate_repeats"],128);
-        Require(c.search.n0CandidateRepeats>=2 && c.model.normalization==Normalization::SynapseCount,"invalid_n0_candidate_repeats");
+        Require(schema>=3 || (c.search.n0CandidateRepeats>=2 && c.model.normalization==Normalization::SynapseCount),"invalid_n0_candidate_repeats");
         s.remove("n0_candidate_repeats");
     }
     Keys(s,{"maximum_probes","maximum_edits","maximum_candidates_per_input","maximum_sweeps",
@@ -248,4 +402,58 @@ QJsonObject ParseStrictNativeJsonObject(const std::string& text,std::size_t maxi
 }
 ConfiguredNativeTraining ParseConfiguredNativeTraining(const std::string& text)
 {return DecodeConfiguredNativeTraining(ParseStrictNativeJsonObject(text));}
+ConfiguredNativeTraining CaptureCompositeInitialConfiguration(const NativeModelSpec& declaration,const NativeTrainingPlan& plan,
+    const std::vector<InputParameters>& actual,double capacitanceMaximumRelativeChange) {
+    Require(bool(plan.composite) && plan.protocol.schemaVersion==4 && actual.size()==declaration.inputs.size(),"invalid_composite_initial_declaration");
+    ConfiguredNativeTraining c;c.model=declaration;for(std::size_t i=0;i<actual.size();++i)
+        c.model.inputs[i]={actual[i].length,actual[i].synapses,actual[i].resistance};
+    c.stimulusProfile=*plan.protocol.stimulusProfile;c.runId=plan.search.runId;c.protocolRevision=plan.protocol.revision;c.sampleId=plan.protocol.sampleId;
+    c.duration=plan.probe.specification.end;c.maximumSampleGap=plan.protocol.maximumSampleGap;c.minimumAmplitude=plan.protocol.minimumAmplitude;
+    c.maximumSamples=plan.probe.specification.maximumSamples;c.recordSpikes=plan.probe.specification.recordSpikes;c.peakSelection=plan.protocol.peakSelection;
+    for(const auto& w:plan.inputWindows)c.windows.emplace_back(w.begin,w.end);c.search=plan.search;c.search.initialModelRevision.clear();c.search.initialModelEpoch=0;
+    c.maximumReferenceProbes=plan.maximumReferenceProbes;c.maximumInvalidReferenceProbes=plan.maximumInvalidReferenceProbes;
+    c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
+    c.capacitanceMaximumRelativeChange=c.recordCapacitanceHistory?capacitanceMaximumRelativeChange:0.;c.composite=plan.composite;
+    MakeConfiguredNativeTrainingPlan(c);return c;
+}
+ConfiguredNativeTraining CaptureCandidateWindowInitialConfiguration(const NativeModelSpec& declaration,const NativeTrainingPlan& plan,
+    const std::vector<InputParameters>& actual,double capacitanceMaximumRelativeChange) {
+    ValidateVerificationProtocol(plan.protocol);ValidateCandidateWindowMeasurementContract(plan.protocol);
+    Require(plan.composite && plan.composite->schemaVersion==2 && actual.size()==declaration.inputs.size(),"invalid_candidate_window_initial_declaration");
+    const auto& method=*plan.protocol.candidateWindowMeasurement;
+    Require(plan.composite->methodId==method.methodId && plan.composite->contextPolicy==method.contextPolicy &&
+        plan.composite->geometryPolicy==method.geometryPolicy,"candidate_window_initial_policy_mismatch");
+    Require(plan.inputWindows.size()==plan.protocol.inputs.size(),"candidate_window_initial_window_mapping");
+    for(std::size_t i=0;i<plan.protocol.inputs.size();++i) {
+        const auto& window=plan.inputWindows[i];const auto& reference=method.referenceInputWindows[i];
+        Require(window.inputId==plan.protocol.inputs[i].id && window.stimulusId==plan.protocol.inputs[i].stimulusId &&
+            window.channel==(plan.protocol.routing==ProbeRouting::ClassicBurst?i:0u) &&
+            window.begin==reference.beginOffset && window.end==reference.endOffset,"candidate_window_initial_window_mapping");
+    }
+    ConfiguredNativeTraining c;c.model=declaration;for(std::size_t i=0;i<actual.size();++i)
+        c.model.inputs[i]={actual[i].length,actual[i].synapses,actual[i].resistance};
+    c.stimulusProfile=*plan.protocol.stimulusProfile;c.runId=plan.search.runId;c.protocolRevision=plan.protocol.revision;c.sampleId=plan.protocol.sampleId;
+    c.duration=plan.probe.specification.end;c.maximumSampleGap=plan.protocol.maximumSampleGap;c.minimumAmplitude=plan.protocol.minimumAmplitude;
+    c.maximumSamples=plan.probe.specification.maximumSamples;c.recordSpikes=plan.probe.specification.recordSpikes;c.peakSelection=plan.protocol.peakSelection;
+    for(const auto& w:method.referenceInputWindows)c.windows.emplace_back(w.beginOffset,w.endOffset);
+    c.search=plan.search;c.search.initialModelRevision.clear();c.search.initialModelEpoch=0;
+    c.maximumReferenceProbes=plan.maximumReferenceProbes;c.maximumInvalidReferenceProbes=plan.maximumInvalidReferenceProbes;
+    c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
+    c.capacitanceMaximumRelativeChange=c.recordCapacitanceHistory?capacitanceMaximumRelativeChange:0.;
+    c.composite=plan.composite;c.candidateWindowPolicy=method.candidateWindowPolicy;
+    const auto reconstructed=MakeConfiguredNativeTrainingPlan(c);
+    // Cold7 declares canonical input/stimulus IDs, origin and source pattern.
+    // A valid low-level protocol can use other values, but this configuration
+    // format must reject them instead of silently normalizing their meaning.
+    Require(reconstructed.protocol==plan.protocol && reconstructed.inputWindows.size()==plan.inputWindows.size(),
+        "candidate_window_initial_protocol_not_representable");
+    for(std::size_t i=0;i<plan.inputWindows.size();++i) {
+        const auto& expected=plan.inputWindows[i];const auto& actualWindow=reconstructed.inputWindows[i];
+        Require(actualWindow.inputId==expected.inputId && actualWindow.channel==expected.channel &&
+            actualWindow.begin==expected.begin && actualWindow.end==expected.end && actualWindow.stimulusId==expected.stimulusId,
+            "candidate_window_initial_protocol_not_representable");
+    }
+    return c;
+}
+
 }

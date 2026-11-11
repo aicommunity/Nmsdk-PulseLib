@@ -27,10 +27,31 @@ template<class Learner> NativeTrainingAdapter BindNativeTraining(Learner& owner,
     result.assessResistanceDomain=[&owner,&editDepth](const auto& parameters,std::size_t input) {
         NativeLifecycleScope scope(editDepth);return owner.AssessNativeResistanceDomain(parameters,input);
     };
+    result.readCapacitanceWitness=[&owner]{return owner.ReadNativeTrainingCapacitanceWitness();};
+    result.applyWithCapacitance=[&owner,&editDepth](const auto& parameters,const auto& capacitance) {
+        NativeLifecycleScope scope(editDepth);return owner.ApplyNativeTrainingParameters(parameters,capacitance);
+    };
+    result.assessResistanceDomainWithCapacitance=[&owner,&editDepth](const auto& parameters,std::size_t input,const auto& capacitance) {
+        NativeLifecycleScope scope(editDepth);return owner.AssessNativeTrainingResistanceDomain(parameters,input,capacitance);
+    };
     result.queue=[&probe](NativeProbeRequest request){probe.Queue(std::move(request));};
     result.probeState=[&probe]{return probe.Status();};
     result.takeResult=[&probe]{return probe.TakeResult();};
     result.cancel=[&probe](const std::string& reason){probe.Cancel(reason);};
+    result.createComposite=[&owner](VerificationProtocol protocol,CompositeAttemptLimits limits,double model,double wall) {
+        return std::make_shared<NativeCompositeTrainingAttempt>(owner,std::move(protocol),limits,model,wall);
+    };
+    result.createImportedComposite=[&owner](const CompositePortableTrainingProof& proof,CompositeAttemptLimits limits,double model,double wall) {
+        return std::make_shared<NativeCompositeTrainingAttempt>(owner,proof,limits,model,wall);
+    };
+    result.createCandidateWindowComposite=[&owner](VerificationProtocol protocol,CompositeAttemptLimits limits,
+        NativeCandidateWindowAttemptDeclaration declaration,double model,double wall) {
+        return std::make_shared<NativeCompositeTrainingAttempt>(owner,std::move(protocol),limits,std::move(declaration),model,wall);
+    };
+    result.createImportedCandidateWindowComposite=[&owner](const DecodedNativeCompositeArchive& archive,CompositeAttemptLimits limits,
+        NativeCandidateWindowAttemptDeclaration declaration,double model,double wall) {
+        return std::make_shared<NativeCompositeTrainingAttempt>(owner,archive,limits,std::move(declaration),model,wall);
+    };
     return result;
 }
 inline bool NativeTrainingIsActive(const NativeTrainingService& service)
