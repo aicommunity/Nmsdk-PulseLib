@@ -6,4 +6,7 @@ namespace NMSDK::TimeLearner {
 // a live lease, proof of execution, reference-set mint or training certificate.
 std::string CandidateWindowTrainingSemanticProofId(const VerificationProtocol&,
     const NativeCompositeMeasurementRecord&);
+// Diagnostic CONTENT only: no peak, live lease, reference or certificate.
+std::string CandidateWindowRejectedGroupContentId(const VerificationProtocol&,
+    const NativeCompositeMeasurementRecord&);
 }
