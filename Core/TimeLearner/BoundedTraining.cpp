@@ -135,9 +135,10 @@ void ValidateCapacitanceSearchPolicy(const BoundedTrainingConfig& config,ProbeRo
 
 void ValidateInvalidMeasurementRecovery(InvalidMeasurementRecovery policy,std::size_t invalidAllowance)
 {
-    if(policy!=InvalidMeasurementRecovery::RetrySameCandidate && policy!=InvalidMeasurementRecovery::AdvanceUnassignedBurst)
+    if(policy!=InvalidMeasurementRecovery::RetrySameCandidate && policy!=InvalidMeasurementRecovery::AdvanceUnassignedBurst &&
+        policy!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow)
         throw std::invalid_argument("invalid_candidate_recovery_policy");
-    if(policy==InvalidMeasurementRecovery::AdvanceUnassignedBurst && invalidAllowance==0)
+    if(policy!=InvalidMeasurementRecovery::RetrySameCandidate && invalidAllowance==0)
         throw std::invalid_argument("candidate_recovery_requires_invalid_observation_budget");
 }
 
@@ -173,6 +174,8 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
     ValidateVerificationProtocol(protocol);
     if(protocol.schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
     ValidateInvalidMeasurementRecovery(config.invalidMeasurementRecovery,config.maximumInvalidObservations);
+    if(config.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow)
+        throw std::invalid_argument("candidate_window_recovery_requires_closed_reference_admission");
     BoundedTrainingDetail::ValidateInputShape(protocol.inputs.size(),config,initial);
     if(protocol.schemaVersion!=3 && protocol.schemaVersion!=4)
         throw std::invalid_argument("invalid_bounded_training_configuration");
@@ -188,7 +191,8 @@ void ValidateCandidateWindowTrainingConfiguration(const VerificationProtocol& pr
     ValidateInvalidMeasurementRecovery(config.invalidMeasurementRecovery,config.maximumInvalidObservations);
     BoundedTrainingDetail::ValidateInputShape(protocol.inputs.size(),config,initial);
     BoundedTrainingDetail::ValidateInputRanges(config);
-    if(config.invalidMeasurementRecovery!=InvalidMeasurementRecovery::RetrySameCandidate)
+    if(config.invalidMeasurementRecovery!=InvalidMeasurementRecovery::RetrySameCandidate &&
+        config.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow)
         throw std::invalid_argument("composite_recovery_policy_not_implemented");
     ValidateCapacitanceSearchPolicy(config,protocol.routing);
     if(!ParametersLegal(protocol,config,initial))throw std::invalid_argument("initial_parameters_outside_search_domain");
@@ -977,6 +981,61 @@ void BoundedTrainingSession::RejectComposite(const std::string& reason)
 void BoundedTrainingSession::RejectCandidateWindow(const std::string& reason) {
     if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences || reason.empty())throw std::invalid_argument("invalid_candidate_window_rejection");
     RejectTyped(reason,&*candidateWindowReferences);
+}
+void BoundedTrainingSession::RejectCandidateWindow(const RejectedCompositeMeasurement& failed,const std::string& actualRevision) {
+    if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences ||
+        config.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow)
+        throw std::invalid_argument("typed_candidate_window_recovery_policy_required");
+    if(status!=TrainingStatus::Searching || phase==Phase::Verify)
+        throw std::invalid_argument("candidate_window_recovery_requires_active_search");
+    // A second delivery must not consume another invalid/probe allowance or
+    // move the cursor, even while the original native group remains current.
+    if(seenRejectedCompositeProofs.count(failed.ContentId()))
+        throw std::invalid_argument("replayed_candidate_window_rejection");
+    if(!pending || pending->kind!=TrainingActionKind::Probe || !compositeArmed)
+        throw std::logic_error("unrequested_candidate_window_rejection");
+    if(actualRevision.empty() || actualRevision!=revision) {
+        rejected.push_back({pending->trialId,"unexpected_training_model_revision"});
+        Stop(TrainingStatus::InvalidModel);return;
+    }
+    try {
+        failed.RequirePrepared(*compositeArmed);
+        failed.Prepared().RequireCandidateWindow(references.Protocol(),*candidateWindowReferences,
+            pending->runId,pending->trialId,pending->inputIndex,revision,epoch,CompositeMeasurementPurpose::Search,true);
+    }
+    catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
+    catch(const CompositeTrainingStopped&){ExternalStop();return;}
+    if(seenTrials.count(pending->trialId) || seenCompositeProofs.count(failed.ContentId()))
+        throw std::invalid_argument("unexpected_or_replayed_candidate_window_rejection");
+    CandidateWindowRecoveryEvidence event;auto& e=event.transition;
+    e.actionSerial=pending->serial;e.inputIndex=pending->inputIndex;e.candidateInputIndex=order.at(position);
+    e.sweep=sweep;e.modelEpoch=epoch;e.invalidBefore=invalid;e.runId=pending->runId;e.trialId=pending->trialId;
+    e.baseModelRevision=revision;e.effectiveModelRevision=failed.Prepared().identity->effectiveRevision;
+    e.anchor=phase==Phase::Anchor;
+    e.validity=failed.Validity()==DeclaredWindowBasinValidity::Missing?PeakValidity::Missing:PeakValidity::Ambiguous;
+    e.fullParameters=current;e.capacitance=currentCapacitance;
+    event.groupId=failed.Prepared().GroupId();event.rejectedContentId=failed.ContentId();
+    event.sourceOrigin=failed.Prepared().identity->sourceOrigin;event.ownerScope=failed.Prepared().identity->ownerScope;
+    event.candidateWitnessId=failed.Prepared().identity->candidateWitnessId;
+    event.issuedProbes=probes;event.appliedEdits=edits;event.acceptedCompositeObservations=acceptedComposite;
+    seenTrials.insert(pending->trialId);seenRejectedCompositeProofs.insert(failed.ContentId());
+    const auto reason=std::string("rejected_candidate_window:")+DeclaredWindowBasinValidityName(failed.Validity());
+    RecordIncompleteCandidateRepeats(reason);
+    // ArmCandidateWindow charged the native logical probe. Reject charges the
+    // same attempt-wide invalid budget used by every other observation path.
+    Reject(reason);
+    anchor.reset();anchorTrial.clear();compositeAnchorWitness.clear();
+    if(status==TrainingStatus::Searching) {
+        if(restoringBest) {
+            Stop(TrainingStatus::SearchUnresolved,"restored_best_candidate_has_rejected_window");
+            e.disposition=CandidateRecoveryDisposition::RestoredBestStop;
+        } else {
+            phase=Phase::Candidate;AdvanceCapacitanceContext();
+            e.disposition=CandidateRecoveryDisposition::CursorAdvanced;
+        }
+    }
+    e.invalidAfter=invalid;e.statusAfter=status;e.reasonAfter=stopReason;
+    candidateWindowRecoveries.push_back(std::move(event));
 }
 void BoundedTrainingSession::RejectTyped(const std::string& reason,const CandidateWindowReferenceSet* closed)
 {

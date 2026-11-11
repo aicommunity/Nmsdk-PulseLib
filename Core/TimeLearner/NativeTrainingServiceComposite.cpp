@@ -44,6 +44,8 @@ void Validate(const NativeTrainingPlan& p) {
     }
 }
 void ValidateCandidateWindowPlan(const NativeTrainingPlan& p) {
+    Require(p.search.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow,
+        "candidate_window_recovery_requires_versioned_service");
     ValidateVerificationProtocol(p.protocol);ValidateCandidateWindowMeasurementContract(p.protocol);
     Require(p.composite && p.composite->schemaVersion==2,"native_candidate_window_policy2_required");
     const auto& c=*p.composite;const auto& method=*p.protocol.candidateWindowMeasurement;const auto n=p.protocol.inputs.size();

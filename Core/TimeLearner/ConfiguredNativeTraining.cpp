@@ -139,6 +139,10 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
 {
     Require(!c.candidateWindowPolicy || c.composite,"candidate_window_cold7_requires_native_policy2");
     ValidateInvalidMeasurementRecovery(c.search.invalidMeasurementRecovery,c.search.maximumInvalidObservations);
+    // The typed core transition is not an implicit extension of cold1..7.
+    // Until its own wire envelope exists, never serialize it as the default.
+    Require(c.search.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow,
+        "candidate_window_recovery_requires_versioned_wire_codec");
     ValidateNativeModelSpec(c.model);const auto size=c.model.inputs.size();
     Require(ValidStimulusProfile(c.stimulusProfile) && c.stimulusProfile.generatorClass==c.model.generatorClass &&
         c.stimulusProfile.frequencyHz==c.model.frequencyHz,"invalid_configured_native_stimulus_profile");

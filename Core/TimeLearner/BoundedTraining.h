@@ -8,7 +8,7 @@
 namespace NMSDK::TimeLearner {
 enum class TrainingStatus { Searching, Verifying, Exact, SearchUnresolved, BudgetExhausted,
     InvalidModel, InvalidObservation, ExternalStop };
-enum class InvalidMeasurementRecovery { RetrySameCandidate, AdvanceUnassignedBurst };
+enum class InvalidMeasurementRecovery { RetrySameCandidate, AdvanceUnassignedBurst, AdvanceRejectedCandidateWindow };
 struct InputSearchBounds {
     int minimumLength=1,maximumLength=1,minimumSynapses=1,maximumSynapses=128;
     double minimumResistance=0.,maximumResistance=0.;
@@ -43,8 +43,9 @@ struct BoundedTrainingConfig {
     VerificationTolerances tolerances;
     std::vector<InputSearchBounds> bounds;
     std::optional<CapacitanceSearchPolicy> capacitanceSearch={};
-    // Default preserves compatibility. Advancing is restricted to a complete
-    // unassigned native burst; it never skips reference capture or final inputs.
+    // Default preserves compatibility. Scalar AdvanceUnassignedBurst and the
+    // sealed protocol5 AdvanceRejectedCandidateWindow are distinct policies.
+    // Neither can skip reference capture or a final-verification input.
     InvalidMeasurementRecovery invalidMeasurementRecovery=InvalidMeasurementRecovery::RetrySameCandidate;
 };
 void ValidateInvalidMeasurementRecovery(InvalidMeasurementRecovery policy,std::size_t invalidAllowance);
@@ -80,6 +81,13 @@ struct CandidateRecoveryEvidence {
     CandidateRecoveryDisposition disposition=CandidateRecoveryDisposition::InvalidBudgetStop;
     TrainingStatus statusAfter=TrainingStatus::InvalidObservation;
     std::string reasonAfter;
+};
+// Search control evidence only: a rejected group contributes no scalar residual.
+// This is DATA, not a constructor for RejectedCompositeMeasurement authority.
+struct CandidateWindowRecoveryEvidence {
+    CandidateRecoveryEvidence transition;
+    std::string groupId,rejectedContentId,sourceOrigin,ownerScope,candidateWitnessId;
+    std::size_t issuedProbes=0,appliedEdits=0,acceptedCompositeObservations=0;
 };
 struct CandidateRepeatEvidence {
     std::size_t inputIndex=0,modelEpoch=0;
@@ -138,6 +146,7 @@ public:
     void ArmCandidateWindow(std::size_t actionSerial,const PreparedCompositeMeasurement&);
     void ConsumeCandidateWindow(const ValidatedCompositeMeasurement&,const std::string& actualModelRevision);
     void RejectCandidateWindow(const std::string& reason);
+    void RejectCandidateWindow(const RejectedCompositeMeasurement&,const std::string& actualModelRevision);
     void ExternalStop();
     // Adapter-owned wall/model-time deadline; cannot manufacture convergence.
     void ExhaustBudget();
@@ -147,6 +156,7 @@ public:
     const std::vector<CandidateEvidence>& Evidence() const { return evidence; }
     const std::vector<TrainingRejection>& Rejected() const { return rejected; }
     const std::vector<CandidateRecoveryEvidence>& Recoveries() const { return recoveries; }
+    const std::vector<CandidateWindowRecoveryEvidence>& CandidateWindowRecoveries() const {return candidateWindowRecoveries;}
     const std::vector<CandidateRepeatEvidence>& CandidateRepeats() const { return candidateRepeats; }
     const std::vector<ResistanceDomainAssessment>& Domains() const { return domains; }
     const std::vector<InputParameters>& Parameters() const { return current; }
@@ -220,8 +230,10 @@ private:
     std::vector<CandidateRepeatEvidence> candidateRepeats;
     std::vector<TrainingRejection> rejected;
     std::vector<CandidateRecoveryEvidence> recoveries;
+    std::vector<CandidateWindowRecoveryEvidence> candidateWindowRecoveries;
     std::set<std::string> seenTrials;
     std::set<std::string> seenCompositeGroups,seenCompositeProofs;
+    std::set<std::string> seenRejectedCompositeProofs;
     std::unique_ptr<FinalVerificationSession> verification;
     std::size_t verificationInvalidAccounted=0;
     void BeginInput();
