@@ -1,6 +1,12 @@
 # Повторное использование проверенного архива при экспорте
 
-Кандидат12.11.2026, runtime-приёмка ещё не выполнена. Исходный случай: большой
+На M4012.11.2026 приняты свежая SDK-сборка и36/36 native проверок, включая
+четыре новых `NativeValidatedArchiveExport`. Проверены outer+36 closed groups,
+released lease и неизменность source/runtime/protected bytes. Точные версии:
+root08b898b1ad89d002cccde534e08e0925e080e45d,
+Pulse e9b80746103750d3b5a100d74549462d6d2c46c6.
+[Исходные JUnit и доказательства](https://github.com/aicommunity/Nmsdk/blob/fe6c29736/Docs/StructTrain/TimeLearner/ValidationPlans/M40ValidatedExport36A2-20261112/RESULT.ru.md).
+Elder и большой N4 export/performance ещё не приняты. Исходный случай: большой
 N4 Branch завершён process timeout во время экспорта, до записи итогового
 пакета. Это не доказательство ошибки измерения или физической невозможности.
 
@@ -36,7 +42,8 @@ Console publisher и внешние import/readers по-прежнему вып�
 
 Приёмка кандидата: четыре новые реальные Classic/Branch×completed/stopped
 проверки `NativeValidatedArchiveExport`, старые32 controls SDK. Проверяются
-точное равенство document bytes/primary старого и нового encoder, независимый
+точное равенство document bytes/primary старого API wrapper и нового API
+в одном новом бинарнике (не A/B двух бинарников), независимый
 decoder, portable proof/references/certificate, отказы на изменённый внешний
 CSV и coherently rehashed foreign source, неизменность живого графа/dataset.
 Численные проверки и сборка выполняются на серверах; локальный diff не является
