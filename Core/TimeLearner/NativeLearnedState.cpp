@@ -292,6 +292,17 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
     const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
     const NativeCapacitanceCorrection& capacitance)
 {return ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,&capacitance);}
+NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
+    const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
+    const NativeCapacitanceCorrection* capacitance)
+{
+    if(service.Plan().protocol.schemaVersion==5)return NativeCandidateWindowStateFactory::ExportBoundary(owner,declaration,service,parameters,
+        version,calculateMode,structureMode,implementation,capacitance);
+    NativeTrainingExport result;
+    result.learnedState=ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,capacitance);
+    result.summary=EncodeNativeTrainingState(service,result.learnedState["model_revision"].toString().toStdString(),parameters);
+    return result;
+}
 QJsonObject ParseNativeLearnedState(const std::string& text)
 {return ParseStrictNativeJsonObject(text,128*1024*1024);}
 std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,

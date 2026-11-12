@@ -5,6 +5,9 @@
 #include "NativeCapacitanceEdit.h"
 
 namespace NMSDK::TimeLearner {
+// One immutable export boundary; summary and model share the same checked evidence.
+// Neither value is a dynamics/controller checkpoint or restores live authority.
+struct NativeTrainingExport {QJsonObject learnedState,summary;};
 struct PreparedNativeLearnedState {
     RDK::UEPtr<RDK::UStorage> storage;
     RDK::UEPtr<NPulseNeuron> neuron;
@@ -36,6 +39,9 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
 QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection& capacitance);
+NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
+    const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
+    const std::string& implementationId,const NativeCapacitanceCorrection* capacitance=nullptr);
 QJsonObject ParseNativeLearnedState(const std::string& text);
 std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);

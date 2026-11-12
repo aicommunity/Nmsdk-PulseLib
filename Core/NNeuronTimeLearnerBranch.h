@@ -37,7 +37,7 @@ See file license.txt for more information
 #include <cstring>
 
 namespace NMSDK {
-namespace TimeLearner { class NativeCompositeTrainingAttempt; struct NativeLearnerLifecycle; struct NativeRecognitionControl; class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; class NativeLiveFinalization; struct NativeLiveFinalizationSpec; }
+namespace TimeLearner { struct NativeTrainingExport; class NativeCompositeTrainingAttempt; struct NativeLearnerLifecycle; struct NativeRecognitionControl; class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; class NativeLiveFinalization; struct NativeLiveFinalizationSpec; }
 
 using namespace RDK;
 
@@ -860,6 +860,8 @@ public: // Methods
      RDK::UEPtr<NPulseNeuron> neuron,RDK::UEPtr<NDatasetMatrix> dataset,
      const std::vector<TimeLearner::InputParameters>& parameters);
  QJsonObject ExportNativeLearnedState(const std::string& implementationId);
+ TimeLearner::NativeTrainingExport ExportNativeLearnedBoundary(const std::string& implementationId);
+ TimeLearner::NativeTrainingExport ExportNativeLearnedBoundary(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance);
  QJsonObject ExportNativeLearnedState(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance);
  QJsonObject OwnedNativeCapacitanceState() const {return NativeLearnedCapacitanceState;}
  // Compatibility alias: ownership now also starts at a successful bound edit.
@@ -893,6 +895,7 @@ public: // Methods
  bool NativeLiveFinalizationDone() const;
  void CancelNativeLiveFinalization(const std::string& reason);
  QJsonObject NativeLiveFinalizationReport() const;
+ QJsonObject NativeLiveTrainingSummary() const;
 
  
  // --------------------------
@@ -1054,7 +1057,7 @@ protected:
  std::optional<TimeLearner::NativeModelSpec> NativeModelDeclaration;
  QJsonObject NativeLearnedCapacitanceState;
  QJsonObject ExportNativeLearnedStateWithCapacitance(const std::string& implementationId,
-     const TimeLearner::NativeCapacitanceCorrection* capacitance);
+     const TimeLearner::NativeCapacitanceCorrection* capacitance,QJsonObject* trainingSummary=nullptr);
  std::optional<TimeLearner::ConfiguredNativeTraining> NativeConfiguredPlan;
  TimeLearner::ConfiguredNativeEvidenceSinks NativeConfiguredSinks;
  std::string NativeConfiguredText;

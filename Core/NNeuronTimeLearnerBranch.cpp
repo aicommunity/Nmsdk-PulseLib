@@ -35,6 +35,7 @@ See file license.txt for more information
 #include <map>
 #include <sstream>
 #include "NNeuronTimeLearnerBranch.h"
+#include "TimeLearner/NativeLearnedState.h"
 #include "TimeLearner/ConfiguredNativeTraining.h"
 #include "NNeuronTimeLearnerAmpReference.h"
 #include "NNeuronTimeLearnerScopedDefaults.h"
@@ -5030,8 +5031,26 @@ QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedState(const std::string
 }
 QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedState(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance)
 {return ExportNativeLearnedStateWithCapacitance(implementationId,&capacitance);}
+TimeLearner::NativeTrainingExport NNeuronTimeLearnerBranch::ExportNativeLearnedBoundary(const std::string& implementationId)
+{
+ TimeLearner::NativeTrainingExport result;
+ if(NativeLearnedCapacitanceState.isEmpty())result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,nullptr,&result.summary);
+ else {
+  std::string revision;
+  const auto correction=TimeLearner::ParseNativeCapacitanceState(QJsonDocument(NativeLearnedCapacitanceState).toJson(QJsonDocument::Compact).toStdString(),revision);
+  result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,&correction,&result.summary);
+ }
+ return result;
+}
+TimeLearner::NativeTrainingExport NNeuronTimeLearnerBranch::ExportNativeLearnedBoundary(const std::string& implementationId,
+ const TimeLearner::NativeCapacitanceCorrection& capacitance)
+{
+ TimeLearner::NativeTrainingExport result;
+ result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,&capacitance,&result.summary);
+ return result;
+}
 QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedStateWithCapacitance(const std::string& implementationId,
- const TimeLearner::NativeCapacitanceCorrection* capacitance)
+ const TimeLearner::NativeCapacitanceCorrection* capacitance,QJsonObject* trainingSummary)
 {
  if(NativeRecognition)throw std::logic_error("native_recognition_state_is_not_learned_solo");
  if(NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Queued || NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Running)
@@ -5039,6 +5058,11 @@ QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedStateWithCapacitance(co
  ValidateNativeModelDeclaration();
  const auto resolved=TimeLearner::ResolveOwnedNativeCapacitance(NativeProbeModelBindings(),NativeModelDeclaration,NativeLearnedCapacitanceState,capacitance);
  capacitance=resolved?&*resolved:nullptr;
+ if(trainingSummary) {
+  auto exported=TimeLearner::ExportNativeLearnedBoundary(*this,*NativeModelDeclaration,NativeTrainingControl,ReadNativeParameters(),
+   ControllerVersion.GetData(),CalculateMode.GetData(),StructureBuildMode.GetData(),implementationId,capacitance);
+  *trainingSummary=std::move(exported.summary);return std::move(exported.learnedState);
+ }
  if(capacitance)return TimeLearner::ExportNativeLearnedState(*this,*NativeModelDeclaration,NativeTrainingControl,ReadNativeParameters(),
   ControllerVersion.GetData(),CalculateMode.GetData(),StructureBuildMode.GetData(),implementationId,*capacitance);
  return TimeLearner::ExportNativeLearnedState(*this,*NativeModelDeclaration,NativeTrainingControl,ReadNativeParameters(),
@@ -5200,6 +5224,7 @@ void NNeuronTimeLearnerBranch::CancelNativeLiveFinalization(const std::string& r
 }
 bool NNeuronTimeLearnerBranch::NativeLiveFinalizationDone() const {return NativeLiveFinalization && NativeLiveFinalization->Done();}
 QJsonObject NNeuronTimeLearnerBranch::NativeLiveFinalizationReport() const {return NativeLiveFinalization?NativeLiveFinalization->Report():QJsonObject{};}
+QJsonObject NNeuronTimeLearnerBranch::NativeLiveTrainingSummary() const {return NativeLiveFinalization?NativeLiveFinalization->TrainingSummary():QJsonObject{};}
 void NNeuronTimeLearnerBranch::BeginNativeTraining(TimeLearner::NativeTrainingPlan plan,bool recaptureReferences)
 {
  if(NativeRecognition)throw std::logic_error("native_recognition_requires_explicit_solo_import_or_cold_model");
