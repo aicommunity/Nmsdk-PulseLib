@@ -6,7 +6,9 @@ released lease и неизменность source/runtime/protected bytes. То�
 root08b898b1ad89d002cccde534e08e0925e080e45d,
 Pulse e9b80746103750d3b5a100d74549462d6d2c46c6.
 [Исходные JUnit и доказательства](https://github.com/aicommunity/Nmsdk/blob/fe6c29736/Docs/StructTrain/TimeLearner/ValidationPlans/M40ValidatedExport36A2-20261112/RESULT.ru.md).
-Elder и большой N4 export/performance ещё не приняты. Исходный случай: большой
+Уточнение12.11: полный N4 native roundtrip принят2/2 на SDK448b153f2/Pulse7b524b8: Classic/Branch import → native Build/Init → export → второй fresh import, равные model revision/retained ledger и все stimulus/Soma samples,4 stimulus edges/ненулевой excursion. Whole outer+2 child groups closed, lease released, input/source/runtime неизменны. [Точные native proofs и scope](https://github.com/aicommunity/Nmsdk/blob/b6f1690f903959deceb7f6e04d1ed3f0716f1a93/Docs/StructTrain/TimeLearner/ValidationPlans/M40RecordedN4NativeRoundtrip2A3-20261112/RESULT.ru.md). Обе модели остаются stopped: invalid_observation/budget_exhausted без certificate; cold training и классификация этим не подтверждаются. Большой export теперь runtime-проверен, однако separate before/after binary performance, independent readback нового полного native2 corpus и Elder с optimized SDK ещё открыты.
+
+Исходный случай: большой
 N4 Branch завершён process timeout во время экспорта, до записи итогового
 пакета. Это не доказательство ошибки измерения или физической невозможности.
 
