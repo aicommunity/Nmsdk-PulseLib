@@ -20,9 +20,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseLifeNeuron::NPulseLifeNeuron(void)
 //: NPulseNeuron(name),
@@ -58,9 +58,9 @@ NPulseLifeNeuron::~NPulseLifeNeuron(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
-// Возвращает указатель на модель жизнеобеспечения
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РјРѕРґРµР»СЊ Р¶РёР·РЅРµРѕР±РµСЃРїРµС‡РµРЅРёСЏ
 NNeuronLife* NPulseLifeNeuron::GetNeuronLife(void)
 {
  return NeuronLife;
@@ -68,9 +68,9 @@ NNeuronLife* NPulseLifeNeuron::GetNeuronLife(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseLifeNeuron* NPulseLifeNeuron::New(void)
 {
  return new NPulseLifeNeuron;
@@ -78,12 +78,12 @@ NPulseLifeNeuron* NPulseLifeNeuron::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NPulseLifeNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(NPulseNeuron::CheckComponentType(comp) || dynamic_pointer_cast<NNeuronLife>(comp))
@@ -94,9 +94,9 @@ bool NPulseLifeNeuron::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseLifeNeuron::ADefault(void)
 {
  if(!NPulseNeuron::ADefault())
@@ -123,10 +123,10 @@ bool NPulseLifeNeuron::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseLifeNeuron::ABuild(void)
 {
  if(!NPulseNeuron::ABuild())
@@ -141,21 +141,21 @@ bool NPulseLifeNeuron::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseLifeNeuron::AReset(void)
 {
  if(!NPulseNeuron::AReset())
   return false;
 
- // Суммарный динамический вес
+ // РЎСѓРјРјР°СЂРЅС‹Р№ РґРёРЅР°РјРёС‡РµСЃРєРёР№ РІРµСЃ
  SummaryPosGd=0;
  SummaryNegGd=0;
 
- // Суммарный статический вес
+ // РЎСѓРјРјР°СЂРЅС‹Р№ СЃС‚Р°С‚РёС‡РµСЃРєРёР№ РІРµСЃ
  SummaryPosGs=0;
  SummaryNegGs=0;
 
- // Суммарный результирующий вес
+ // РЎСѓРјРјР°СЂРЅС‹Р№ СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰РёР№ РІРµСЃ
  SummaryPosG=0;
  SummaryNegG=0;
 
@@ -175,7 +175,7 @@ bool NPulseLifeNeuron::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseLifeNeuron::ACalculate(void)
 {
  if(/*!LTZone ||*/ !NeuronLife)
@@ -186,7 +186,7 @@ bool NPulseLifeNeuron::ACalculate(void)
 
  LTZone->Threshold=NeuronLife->OutputThreshold(0,0);
 
- // Суммарный динамический вес возбуждающей связи
+ // РЎСѓРјРјР°СЂРЅС‹Р№ РґРёРЅР°РјРёС‡РµСЃРєРёР№ РІРµСЃ РІРѕР·Р±СѓР¶РґР°СЋС‰РµР№ СЃРІСЏР·Рё
  OutputSummaryPosGd(0,0)=SummaryPosGd;
  if(ActivePosInputs(0,0) > 0)
   OutputSummaryPosGdNorm(0,0)=SummaryPosGd/ActivePosInputs(0,0);
@@ -194,7 +194,7 @@ bool NPulseLifeNeuron::ACalculate(void)
   OutputSummaryPosGdNorm(0,0)=0;
  SummaryPosGd=0;
 
- // Суммарный статический вес возбуждающей связи
+ // РЎСѓРјРјР°СЂРЅС‹Р№ СЃС‚Р°С‚РёС‡РµСЃРєРёР№ РІРµСЃ РІРѕР·Р±СѓР¶РґР°СЋС‰РµР№ СЃРІСЏР·Рё
  OutputSummaryPosGs(0,0)=SummaryPosGs;
  if(ActivePosInputs(0,0) > 0)
   OutputSummaryPosGsNorm(0,0)=SummaryPosGs/ActivePosInputs(0,0);
@@ -202,7 +202,7 @@ bool NPulseLifeNeuron::ACalculate(void)
   OutputSummaryPosGsNorm(0,0)=0;
  SummaryPosGs=0;
 
- // Суммарный результирующий вес возбуждающей связи
+ // РЎСѓРјРјР°СЂРЅС‹Р№ СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰РёР№ РІРµСЃ РІРѕР·Р±СѓР¶РґР°СЋС‰РµР№ СЃРІСЏР·Рё
  OutputSummaryPosG(0,0)=SummaryPosG;
  if(ActivePosInputs(0,0) > 0)
   OutputSummaryPosGNorm(0,0)=SummaryPosG/ActivePosInputs(0,0);
@@ -210,7 +210,7 @@ bool NPulseLifeNeuron::ACalculate(void)
   OutputSummaryPosGNorm(0,0)=0;
  SummaryPosG=0;
 
- // Суммарный динамический вес тормозной связи
+ // РЎСѓРјРјР°СЂРЅС‹Р№ РґРёРЅР°РјРёС‡РµСЃРєРёР№ РІРµСЃ С‚РѕСЂРјРѕР·РЅРѕР№ СЃРІСЏР·Рё
  OutputSummaryNegGd(0,0)=SummaryNegGd;
  if(ActiveNegInputs(0,0) > 0)
   OutputSummaryNegGdNorm(0,0)=SummaryNegGd/ActiveNegInputs(0,0);
@@ -218,7 +218,7 @@ bool NPulseLifeNeuron::ACalculate(void)
   OutputSummaryNegGdNorm(0,0)=0;
  SummaryNegGd=0;
 
- // Суммарный статический вес тормозной связи
+ // РЎСѓРјРјР°СЂРЅС‹Р№ СЃС‚Р°С‚РёС‡РµСЃРєРёР№ РІРµСЃ С‚РѕСЂРјРѕР·РЅРѕР№ СЃРІСЏР·Рё
  OutputSummaryNegGs(0,0)=SummaryNegGs;
  if(ActiveNegInputs(0,0) > 0)
   OutputSummaryNegGsNorm(0,0)=SummaryNegGs/ActiveNegInputs(0,0);
@@ -226,7 +226,7 @@ bool NPulseLifeNeuron::ACalculate(void)
   OutputSummaryNegGsNorm(0,0)=0;
  SummaryNegGs=0;
 
- // Суммарный результирующий вес тормозной связи
+ // РЎСѓРјРјР°СЂРЅС‹Р№ СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰РёР№ РІРµСЃ С‚РѕСЂРјРѕР·РЅРѕР№ СЃРІСЏР·Рё
  OutputSummaryNegG(0,0)=SummaryNegG;
  if(ActiveNegInputs(0,0) != 0)
   OutputSummaryNegGNorm(0,0)=SummaryNegG/ActiveNegInputs(0,0);

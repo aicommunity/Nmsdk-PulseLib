@@ -26,52 +26,52 @@ class NPulseNeuron;
 
 class RDK_LIB_TYPE NPulseSynapseCommon: public UNet
 {
-public: // Общедоступные свойства
-/// Тип синапса механизма
-/// <0 - тормозит накопление отрицательного вклада в потенциал (или деполяризует мембрану) - возбуждающий синапс
-/// >0 - тормозит накопление положительного вклада в потенциал (или гиперпорялизует мембрану) - тормозный синапс
-ULProperty<double,NPulseSynapseCommon, ptPubParameter> Type;
+public: //  
+/// РўРёРї СЃРёРЅР°РїСЃР°: <0 вЂ” С‚РѕСЂРјРѕР·РЅРѕР№ (РёРЅРіРёР±РёС‚РѕСЂРЅС‹Р№), >0 вЂ” РІРѕР·Р±СѓР¶РґР°СЋС‰РёР№ (СЌРєСЃР°Р№С‚Р°С‚РѕСЂРЅС‹Р№)
+UProperty<double,NPulseSynapseCommon, ptPubParameter> Type;
 
-/// Амплитуда входных импульсов
-ULProperty<double,NPulseSynapseCommon, ptPubParameter> PulseAmplitude;
+/// РђРјРїР»РёС‚СѓРґР° РІС…РѕРґРЅС‹С… РёРјРїСѓР»СЊСЃРѕРІ
+UProperty<double,NPulseSynapseCommon, ptPubParameter> PulseAmplitude;
 
-/// Сопротивление синапса
-ULProperty<double,NPulseSynapseCommon, ptPubParameter> Resistance;
+/// РЎРѕРїСЂРѕС‚РёРІР»РµРЅРёРµ СЃРёРЅР°РїСЃР°
+UProperty<double,NPulseSynapseCommon, ptPubParameter> Resistance;
 
-/// Вес синапса
-ULProperty<double, NPulseSynapseCommon, ptPubParameter> Weight;
+/// Р’РµСЃ СЃРёРЅР°РїСЃР°
+UProperty<double, NPulseSynapseCommon, ptPubParameter> Weight;
 
-/// Имя класса-учителя, настраивающего вес синапса
-ULProperty<std::string, NPulseSynapseCommon, ptPubParameter> TrainerClassName;
+/// РРјСЏ РєР»Р°СЃСЃР°-СѓС‡РёС‚РµР»СЏ, РЅР°СЃС‚СЂР°РёРІР°СЋС‰РµРіРѕ РІРµСЃ СЃРёРЅР°РїСЃР°
+UProperty<std::string, NPulseSynapseCommon, ptPubParameter> TrainerClassName;
 
-public: // Входы и выходы
-/// Входной сигнал с нейрона
-UPropertyInputData<MDMatrix<double>, NPulseSynapseCommon, ptInput | ptPubState> Input;
+public: //   
+/// Р’С…РѕРґРЅРѕР№ СЃРёРіРЅР°Р» СЃ РЅРµР№СЂРѕРЅР°
+UProperty<MDMatrix<double>, NPulseSynapseCommon, ptInput | ptPubState> Input;
 
-/// Внешний источник информации о весе. Перезаписывает параметр Weight если есть подключение
-UPropertyInputData<MDMatrix<double>, NPulseSynapseCommon, ptInput | ptPubState> WeightInput;
+/// Р’РЅРµС€РЅРёР№ РёСЃС‚РѕС‡РЅРёРє РёРЅС„РѕСЂРјР°С†РёРё Рѕ РІРµСЃРµ. РџРµСЂРµР·Р°РїРёСЃС‹РІР°РµС‚ РїР°СЂР°РјРµС‚СЂ Weight РµСЃР»Рё РµСЃС‚СЊ РїРѕРґРєР»СЋС‡РµРЅРёРµ
+UProperty<MDMatrix<double>, NPulseSynapseCommon, ptInput | ptPubState> WeightInput;
 
-/// Выходное влияние синапса на мембрану
-UPropertyOutputData<MDMatrix<double>,NPulseSynapseCommon, ptOutput | ptPubState> Output;
+/// Р’С‹С…РѕРґРЅРѕРµ РІР»РёСЏРЅРёРµ СЃРёРЅР°РїСЃР° РЅР° РјРµРјР±СЂР°РЅСѓ
+UProperty<MDMatrix<double>,NPulseSynapseCommon, ptOutput | ptPubState> Output;
 
-/// Технологический выход, дублирующий входной сигнал на синапс
-UPropertyOutputData<MDMatrix<double>,NPulseSynapseCommon, ptOutput | ptPubState> OutInCopy;
+/// РўРµС…РЅРѕР»РѕРіРёС‡РµСЃРєРёР№ РІС‹С…РѕРґ, РґСѓР±Р»РёСЂСѓСЋС‰РёР№ РІС…РѕРґРЅРѕР№ СЃРёРіРЅР°Р» РЅР° СЃРёРЅР°РїСЃ
+UProperty<MDMatrix<double>,NPulseSynapseCommon, ptOutput | ptPubState> OutInCopy;
 
-protected: // Временные переменные
-/// Промежуточное значение эффективности синапса
-ULProperty<double,NPulseSynapseCommon,ptPubState> PreOutput;
+protected: //  
+/// РџСЂРѕРјРµР¶СѓС‚РѕС‡РЅРѕРµ Р·РЅР°С‡РµРЅРёРµ СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚Рё СЃРёРЅР°РїСЃР°
+UProperty<double,NPulseSynapseCommon,ptPubState> PreOutput;
 
-/// Сигнал наличия входного импульса
-/// (сбрасывается автоматически в конце итерации)
-ULProperty<bool, NPulseSynapseCommon, ptPubState> InputPulseSignal;
+/// РЎРёРіРЅР°Р» РЅР°Р»РёС‡РёСЏ РІС…РѕРґРЅРѕРіРѕ РёРјРїСѓР»СЊСЃР°
+/// (СЃР±СЂР°СЃС‹РІР°РµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІ РєРѕРЅС†Рµ РёС‚РµСЂР°С†РёРё)
+UProperty<bool, NPulseSynapseCommon, ptPubState> InputPulseSignal;
 
 bool PulseSignalTemp;
 
 NSynapseTrainer* Trainer;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+// --------------------------
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
+// --------------------------
 // --------------------------
 NPulseSynapseCommon(void);
 virtual ~NPulseSynapseCommon(void);
@@ -79,52 +79,56 @@ virtual ~NPulseSynapseCommon(void);
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
 virtual bool SetType(const double &value);
 
-// Устанавливает амплитуду импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р°РјРїР»РёС‚СѓРґСѓ РёРјРїСѓР»СЊСЃРѕРІ
 virtual bool SetPulseAmplitude(const double &value);
 
-// Вес (эффективность синапса) синапса
+// Р’РµСЃ (СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ СЃРёРЅР°РїСЃР°) СЃРёРЅР°РїСЃР°
 virtual bool SetResistance(const double &value);
 
-/// Имя класса-учителя, настраивающего вес синапса
+/// РРјСЏ РєР»Р°СЃСЃР°-СѓС‡РёС‚РµР»СЏ, РЅР°СЃС‚СЂР°РёРІР°СЋС‰РµРіРѕ РІРµСЃ СЃРёРЅР°РїСЃР°
 virtual bool SetTrainerClassName(const std::string &value);
 // --------------------------
 
 public:
 // --------------------------
-// Системные методы управления объектом
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
+// --------------------------
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
+// --------------------------
 virtual NPulseSynapseCommon* New(void);
 
-// Возвращает указатель на учителя
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СѓС‡РёС‚РµР»СЏ
 NSynapseTrainer* GetTrainer(void);
 
-// Устанавливает связи тренера если он есть
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ СЃРІСЏР·Рё С‚СЂРµРЅРµСЂР° РµСЃР»Рё РѕРЅ РµСЃС‚СЊ
 virtual void RebuildInternalLinks(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// --------------------------
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
+// --------------------------
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 virtual bool ABuild(void);
 virtual bool AAfterBuild(void);
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 virtual bool ACalculate(void);
 virtual bool ACalculate2(void);
 // --------------------------

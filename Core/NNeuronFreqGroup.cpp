@@ -21,12 +21,12 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
 
 
-// Класс, создающий группу афферентных нейронов, чувствительных к разным диапазонам частот
+// РљР»Р°СЃСЃ, СЃРѕР·РґР°СЋС‰РёР№ РіСЂСѓРїРїСѓ Р°С„С„РµСЂРµРЅС‚РЅС‹С… РЅРµР№СЂРѕРЅРѕРІ, С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅС‹С… Рє СЂР°Р·РЅС‹Рј РґРёР°РїР°Р·РѕРЅР°Рј С‡Р°СЃС‚РѕС‚
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NNeuronFreqGroup::NNeuronFreqGroup(void)
 : StructureBuildMode("StructureBuildMode",this,&NNeuronFreqGroup::SetStructureBuildMode),
@@ -51,29 +51,29 @@ NNeuronFreqGroup::~NNeuronFreqGroup(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NNeuronFreqGroup::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
   Ready=false;
  return true;
 }
 
-/// Имя класса участка мембраны
+/// РРјСЏ РєР»Р°СЃСЃР° СѓС‡Р°СЃС‚РєР° РјРµРјР±СЂР°РЅС‹
 bool NNeuronFreqGroup::SetAffNeuronClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число афферентных нейронов
+/// Р§РёСЃР»Рѕ Р°С„С„РµСЂРµРЅС‚РЅС‹С… РЅРµР№СЂРѕРЅРѕРІ
 bool NNeuronFreqGroup::SetNumAffNeurons(const int &value)
 {
  Ready=false;
@@ -81,28 +81,28 @@ bool NNeuronFreqGroup::SetNumAffNeurons(const int &value)
  return true;
 }
 
-/// Минимальная входная частота
+/// РњРёРЅРёРјР°Р»СЊРЅР°СЏ РІС…РѕРґРЅР°СЏ С‡Р°СЃС‚РѕС‚Р°
 bool NNeuronFreqGroup::SetMinInputFreq(const int &value)
 {
  Ready=false;
  return true;
 }
 
-/// Максимальная входная частота
+/// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РІС…РѕРґРЅР°СЏ С‡Р°СЃС‚РѕС‚Р°
 bool NNeuronFreqGroup::SetMaxInputFreq(const int &value)
 {
  Ready=false;
  return true;
 }
 								/*
-/// Имя класса выделенного участка мембраны для генераторной зоны
+/// РРјСЏ РєР»Р°СЃСЃР° РІС‹РґРµР»РµРЅРЅРѕРіРѕ СѓС‡Р°СЃС‚РєР° РјРµРјР±СЂР°РЅС‹ РґР»СЏ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ Р·РѕРЅС‹
 bool NNeuronFreqGroup::SetLTMembraneClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса генераторной зоны
+/// РРјСЏ РєР»Р°СЃСЃР° РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ Р·РѕРЅС‹
 bool NNeuronFreqGroup::SetLTZoneClassName(const std::string &value)
 {
  Ready=false;
@@ -110,21 +110,21 @@ bool NNeuronFreqGroup::SetLTZoneClassName(const std::string &value)
 }
 
 
-/// Имя класса источника задающего сигнала для возбуждающего ионного механизма
+/// РРјСЏ РєР»Р°СЃСЃР° РёСЃС‚РѕС‡РЅРёРєР° Р·Р°РґР°СЋС‰РµРіРѕ СЃРёРіРЅР°Р»Р° РґР»СЏ РІРѕР·Р±СѓР¶РґР°СЋС‰РµРіРѕ РёРѕРЅРЅРѕРіРѕ РјРµС…Р°РЅРёР·РјР°
 bool NNeuronFreqGroup::SetExcGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса источника задающего сигнала для тормозного ионного механизма
+/// РРјСЏ РєР»Р°СЃСЃР° РёСЃС‚РѕС‡РЅРёРєР° Р·Р°РґР°СЋС‰РµРіРѕ СЃРёРіРЅР°Р»Р° РґР»СЏ С‚РѕСЂРјРѕР·РЅРѕРіРѕ РёРѕРЅРЅРѕРіРѕ РјРµС…Р°РЅРёР·РјР°
 bool NNeuronFreqGroup::SetInhGeneratorClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число участков мембраны тела нейрона
+/// Р§РёСЃР»Рѕ СѓС‡Р°СЃС‚РєРѕРІ РјРµРјР±СЂР°РЅС‹ С‚РµР»Р° РЅРµР№СЂРѕРЅР°
 bool NNeuronFreqGroup::SetNumSomaMembraneParts(const int &value)
 {
  OldNumSoma=NumSomaMembraneParts;
@@ -132,7 +132,7 @@ bool NNeuronFreqGroup::SetNumSomaMembraneParts(const int &value)
  return true;
 }
 
-/// Число участков мембраны дендритов (исключая участок тела)
+/// Р§РёСЃР»Рѕ СѓС‡Р°СЃС‚РєРѕРІ РјРµРјР±СЂР°РЅС‹ РґРµРЅРґСЂРёС‚РѕРІ (РёСЃРєР»СЋС‡Р°СЏ СѓС‡Р°СЃС‚РѕРє С‚РµР»Р°)
 bool NNeuronFreqGroup::SetNumDendriteMembraneParts(const int &value)
 {
  OldNumDendrited=NumDendriteMembraneParts;
@@ -142,9 +142,9 @@ bool NNeuronFreqGroup::SetNumDendriteMembraneParts(const int &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NNeuronFreqGroup* NNeuronFreqGroup::New(void)
 {
  return new NNeuronFreqGroup;
@@ -157,12 +157,12 @@ UComponent* NNeuronFreqGroup::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NNeuronFreqGroup::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {            /*
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
@@ -191,10 +191,10 @@ bool NNeuronFreqGroup::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> po
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NNeuronFreqGroup::ADelComponent(UEPtr<UContainer> comp)
 {                     /*
  if(comp == PosGenerator)
@@ -209,9 +209,9 @@ bool NNeuronFreqGroup::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &aff_neuron_class_name,
 										int old_num_aff_neurons, int num_aff_neurons, int min_inp_freq, int max_inp_freq)
 {
@@ -231,7 +231,7 @@ bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &af
 
   if(StructureBuildMode == 1)
   {
-   // Считаем диапазон частот для текущего афферентного нейрона
+   // РЎС‡РёС‚Р°РµРј РґРёР°РїР°Р·РѕРЅ С‡Р°СЃС‚РѕС‚ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ Р°С„С„РµСЂРµРЅС‚РЅРѕРіРѕ РЅРµР№СЂРѕРЅР°
    double freq_length = double(max_inp_freq - min_inp_freq + 1);
    double freq_step = freq_length / double(num_aff_neurons);
    min_freq = min_inp_freq + int(double(i)*freq_step + 0.5);
@@ -293,7 +293,7 @@ bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &af
   }
  }
 
- // Случай, если задана выделенная часть мембраны генераторной зоны
+ // РЎР»СѓС‡Р°Р№, РµСЃР»Рё Р·Р°РґР°РЅР° РІС‹РґРµР»РµРЅРЅР°СЏ С‡Р°СЃС‚СЊ РјРµРјР±СЂР°РЅС‹ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ Р·РѕРЅС‹
  if(!ltzonemembraneclass.empty())
  {
   ltmembr=AddMissingComponent<NPulseMembrane>("LTMembrane", ltzonemembraneclass);//dynamic_pointer_cast<NPulseMembrane>(Storage->TakeObject(ltzonemembraneclass));
@@ -302,10 +302,10 @@ bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &af
   ltchannel1=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("ExcChannel",true));
   ltchannel2=dynamic_pointer_cast<NPulseChannelCommon>(ltmembr->GetComponent("InhChannel",true));
 
-  // Устанавливаем обратную связь
+  // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РѕР±СЂР°С‚РЅСѓСЋ СЃРІСЏР·СЊ
   res&=CreateLink(ltzone->GetLongName(this),"Output",ltmembr->GetLongName(this),"InputFeedbackSignal");
 
-  // Устанавливаем связь мембраны с низкопороговой зоной
+  // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЃРІСЏР·СЊ РјРµРјР±СЂР°РЅС‹ СЃ РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅРѕР№
   if(ltchannel1)
    res&=CreateLink(ltchannel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
   if(ltchannel2)
@@ -322,8 +322,8 @@ bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &af
   channel1=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("ExcChannel",true));
   channel2=dynamic_pointer_cast<NPulseChannelCommon>(membr->GetComponent("InhChannel",true));
 
-  // Случай, если задана выделенная часть мембраны генераторной зоны
-  // тогда подключаем сому к ней
+  // РЎР»СѓС‡Р°Р№, РµСЃР»Рё Р·Р°РґР°РЅР° РІС‹РґРµР»РµРЅРЅР°СЏ С‡Р°СЃС‚СЊ РјРµРјР±СЂР°РЅС‹ РіРµРЅРµСЂР°С‚РѕСЂРЅРѕР№ Р·РѕРЅС‹
+  // С‚РѕРіРґР° РїРѕРґРєР»СЋС‡Р°РµРј СЃРѕРјСѓ Рє РЅРµР№
   if(!ltzonemembraneclass.empty())
   {
    if(channel1)
@@ -331,14 +331,14 @@ bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &af
    if(channel2)
 	res&=CreateLink(channel2->GetLongName(this),"Output",ltchannel2->GetLongName(this),"ChannelInputs");
   }
-  else // иначе подключаем сому напрямую к низкопороговой зоне
+  else // РёРЅР°С‡Рµ РїРѕРґРєР»СЋС‡Р°РµРј СЃРѕРјСѓ РЅР°РїСЂСЏРјСѓСЋ Рє РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅРµ
   {
    if(channel1)
 	res&=CreateLink(channel1->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
    if(channel2)
 	res&=CreateLink(channel2->GetLongName(this),"Output",ltzone->GetLongName(this),"Inputs");
 
-   // Устанавливаем обратную связь
+   // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РѕР±СЂР°С‚РЅСѓСЋ СЃРІСЏР·СЊ
    res&=CreateLink(ltzone->GetLongName(this),"Output",membr->GetLongName(this),"InputFeedbackSignal");
   }
 
@@ -359,7 +359,7 @@ bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &af
    channel2 = channel2temp;
   }
 
-  // Связь между начальными значениями мощностей ионных каналов и каналами
+  // РЎРІСЏР·СЊ РјРµР¶РґСѓ РЅР°С‡Р°Р»СЊРЅС‹РјРё Р·РЅР°С‡РµРЅРёСЏРјРё РјРѕС‰РЅРѕСЃС‚РµР№ РёРѕРЅРЅС‹С… РєР°РЅР°Р»РѕРІ Рё РєР°РЅР°Р»Р°РјРё
   if(channel1 && gen_neg)
    res&=CreateLink(gen_neg->GetLongName(this),"Output",channel1->GetLongName(this),"ChannelInputs");
   if(channel2 && gen_pos)
@@ -381,7 +381,7 @@ bool NNeuronFreqGroup::BuildStructure(int structure_build_mode, const string &af
  return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NNeuronFreqGroup::ADefault(void)
 {
  StructureBuildMode=1;
@@ -399,10 +399,10 @@ bool NNeuronFreqGroup::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NNeuronFreqGroup::ABuild(void)
 {
  if(StructureBuildMode>0)
@@ -417,13 +417,13 @@ bool NNeuronFreqGroup::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NNeuronFreqGroup::AReset(void)
 {
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NNeuronFreqGroup::ACalculate(void)
 {
  return true;

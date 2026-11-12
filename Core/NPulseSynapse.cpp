@@ -22,9 +22,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseSynapse::NPulseSynapse(void)
  //: NConnector(name),
@@ -47,15 +47,15 @@ NPulseSynapse::~NPulseSynapse(void)
 
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
-// Устанавливает амплитуду импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р°РјРїР»РёС‚СѓРґСѓ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPulseSynapse::SetPulseAmplitude(const double &value)
 {
  return true;
 }
 
-// Постоянная времени выделения медиатора
+// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё РІС‹РґРµР»РµРЅРёСЏ РјРµРґРёР°С‚РѕСЂР°
 bool NPulseSynapse::SetSecretionTC(const double &value)
 {
  if(value <= 0)
@@ -66,7 +66,7 @@ bool NPulseSynapse::SetSecretionTC(const double &value)
  return true;
 }
 
-// Постоянная времени распада медиатора
+// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё СЂР°СЃРїР°РґР° РјРµРґРёР°С‚РѕСЂР°
 bool NPulseSynapse::SetDissociationTC(const double &value)
 {
  if(value <= 0)
@@ -77,7 +77,7 @@ bool NPulseSynapse::SetDissociationTC(const double &value)
  return true;
 }
 
-/// Типовая длительность импульса, с
+/// РўРёРїРѕРІР°СЏ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ РёРјРїСѓР»СЊСЃР°, СЃ
 bool NPulseSynapse::SetTypicalPulseDuration(const double &value)
 {
  if(value <= 0)
@@ -88,15 +88,17 @@ bool NPulseSynapse::SetTypicalPulseDuration(const double &value)
  return true;
 }
 
-// Коэффициент пресинаптического торможения
+// РљРѕСЌС„С„РёС†РёРµРЅС‚ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРјРѕР¶РµРЅРёСЏ
 bool NPulseSynapse::SetInhibitionCoeff(const double &value)
 {
- if(Resistance.v > 0)
+ const double resistance = Resistance.GetData();
+ if(resistance > 0)
  {
-  if(value>0)
-   OutputConstData=4.0*(value+1)/Resistance.v;
+  // Peak-normalize like SetResistance: C=4k/R so max of (1-k*p)*p equals 1/R.
+  if(value > 0 && UsePresynapticInhibition)
+   OutputConstData=4.0*value/resistance;
   else
-   OutputConstData=1.0/Resistance.v;
+   OutputConstData=1.0/resistance;
  }
  else
   OutputConstData=0;
@@ -104,14 +106,15 @@ bool NPulseSynapse::SetInhibitionCoeff(const double &value)
  return true;
 }
 
-// Вес (эффективность синапса) синапса
+// Р’РµСЃ (СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ СЃРёРЅР°РїСЃР°) СЃРёРЅР°РїСЃР°
 bool NPulseSynapse::SetResistance(const double &value)
 {
  if(value<=0)
   return false;
 
- if(InhibitionCoeff.v>0 && UsePresynapticInhibition)
-  OutputConstData=4.0*InhibitionCoeff.v/value;
+ double inhibitionCoeffVal = InhibitionCoeff.GetData();
+ if(inhibitionCoeffVal>0 && UsePresynapticInhibition)
+  OutputConstData=4.0*inhibitionCoeffVal/value;
  else
   OutputConstData=1.0/value;
 
@@ -123,13 +126,15 @@ bool NPulseSynapse::SetUsePulseSignal(const bool &value)
  Ready=false;
  return true;
 }
-// Задание флага включения пресинаптического торомжения
+// Р—Р°РґР°РЅРёРµ С„Р»Р°РіР° РІРєР»СЋС‡РµРЅРёСЏ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРѕРјР¶РµРЅРёСЏ
 bool NPulseSynapse::SetUsePresynapticInhibition(const bool &value)
 {
- if(InhibitionCoeff.v>0 && value)
-  OutputConstData=4.0*InhibitionCoeff.v/Resistance;
+ const double inhibitionCoeffVal = InhibitionCoeff.GetData();
+ const double resistance = Resistance.GetData();
+ if(inhibitionCoeffVal>0 && value)
+  OutputConstData=4.0*inhibitionCoeffVal/resistance;
  else
-  OutputConstData=1.0/Resistance;
+  OutputConstData=1.0/resistance;
 
  return true;
 }
@@ -137,9 +142,9 @@ bool NPulseSynapse::SetUsePresynapticInhibition(const bool &value)
 
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseSynapse* NPulseSynapse::New(void)
 {
  return new NPulseSynapse;
@@ -147,30 +152,30 @@ NPulseSynapse* NPulseSynapse::New(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseSynapse::ADefault(void)
 {
  if(!NPulseSynapseCommon::ADefault())
   return false;
- // Начальные значения всем параметрам
- // Амплитуда входных импульсов
+ // РќР°С‡Р°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІСЃРµРј РїР°СЂР°РјРµС‚СЂР°Рј
+ // РђРјРїР»РёС‚СѓРґР° РІС…РѕРґРЅС‹С… РёРјРїСѓР»СЊСЃРѕРІ
  PulseAmplitude=1;
 
- // Постоянная времени выделения медиатора
+ // РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё РІС‹РґРµР»РµРЅРёСЏ РјРµРґРёР°С‚РѕСЂР°
  SecretionTC=0.001;
 
- // Постоянная времени распада медиатора
+ // РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё СЂР°СЃРїР°РґР° РјРµРґРёР°С‚РѕСЂР°
  DissociationTC=0.01;
 
- /// Типовая длительность импульса, с
+ /// РўРёРїРѕРІР°СЏ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ РёРјРїСѓР»СЊСЃР°, СЃ
  TypicalPulseDuration=0.001;
 
- // Коэффициент пресинаптического торможения
+ // РљРѕСЌС„С„РёС†РёРµРЅС‚ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРјРѕР¶РµРЅРёСЏ
  InhibitionCoeff=0;
 
- // Вес (эффективность синапса) синапса
+ // Р’РµСЃ (СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ СЃРёРЅР°РїСЃР°) СЃРёРЅР°РїСЃР°
  Resistance=1.0e9;
 
  UsePresynapticInhibition=false;
@@ -181,10 +186,10 @@ bool NPulseSynapse::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseSynapse::ABuild(void)
 {
  if(!NPulseSynapseCommon::ABuild())
@@ -193,10 +198,20 @@ bool NPulseSynapse::ABuild(void)
  VSecretionTC=SecretionTC*TimeStep;
  VDissociationTC=DissociationTC*TimeStep;
 
+ const double k = InhibitionCoeff.GetData();
+ const double r = Resistance.GetData();
+ if(r > 0.0)
+ {
+  if(k > 0.0 && UsePresynapticInhibition)
+   OutputConstData=4.0*k/r;
+  else
+   OutputConstData=1.0/r;
+ }
+
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseSynapse::AReset(void)
 {
  if(!NPulseSynapseCommon::AReset())
@@ -207,7 +222,7 @@ bool NPulseSynapse::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseSynapse::ACalculate2(void)
 {
  double input=0;
@@ -237,20 +252,30 @@ bool NPulseSynapse::ACalculate2(void)
  if(is_spike && MainOwner && Owner)
  {
   if(static_pointer_cast<NPulseChannel>(Owner)->Type() < 0)
-   ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
+   static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.GetData() + 1;
   else
-   ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
+   static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.GetData() + 1;
  }
 
+ double pulseAmplitudeVal = PulseAmplitude.GetData();
+ double preOutputVal = PreOutput.GetData();
  if(input>0)
-  PreOutput.v+=(input/PulseAmplitude.v-PreOutput.v)/VSecretionTC;
+  PreOutput = preOutputVal + (input/pulseAmplitudeVal - preOutputVal)/VSecretionTC;
  else
-  PreOutput.v-=PreOutput.v/VDissociationTC;
+  PreOutput = preOutputVal - preOutputVal/VDissociationTC;
 
+ double preOutputNewVal = PreOutput.GetData();
+ double inhibitionCoeffVal = InhibitionCoeff.GetData();
  if(UsePresynapticInhibition)
-  Output(0,0)=OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v)*PreOutput.v;
+ {
+  const double r = Resistance.GetData();
+  if(r > 0.0 && inhibitionCoeffVal > 0.0)
+   OutputConstData=4.0*inhibitionCoeffVal/r;
+  Output(0,0)=PresynapticInhibitionConductance(
+   OutputConstData, inhibitionCoeffVal, preOutputNewVal, input>0);
+ }
  else
-  Output(0,0)=OutputConstData*PreOutput.v;
+  Output(0,0)=OutputConstData*preOutputNewVal;
 
  if(Output(0,0)<0)
   Output(0,0)=0;

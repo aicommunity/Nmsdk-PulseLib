@@ -6,9 +6,9 @@
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseLTZoneIzhikevich::NPulseLTZoneIzhikevich(void)
 {
@@ -20,9 +20,9 @@ NPulseLTZoneIzhikevich::~NPulseLTZoneIzhikevich(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseLTZoneIzhikevich* NPulseLTZoneIzhikevich::New(void)
 {
  return new NPulseLTZoneIzhikevich;
@@ -31,9 +31,9 @@ NPulseLTZoneIzhikevich* NPulseLTZoneIzhikevich::New(void)
 
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseLTZoneIzhikevich::ADefault(void)
 {
  if(!NPulseLTZoneCommon::ADefault())
@@ -44,10 +44,10 @@ bool NPulseLTZoneIzhikevich::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseLTZoneIzhikevich::ABuild(void)
 {
  if(!NPulseLTZoneCommon::ABuild())
@@ -56,7 +56,7 @@ bool NPulseLTZoneIzhikevich::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета без потери настроек
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р° Р±РµР· РїРѕС‚РµСЂРё РЅР°СЃС‚СЂРѕРµРє
 bool NPulseLTZoneIzhikevich::AReset(void)
 {
  if(!NPulseLTZoneCommon::AReset())
@@ -65,18 +65,20 @@ bool NPulseLTZoneIzhikevich::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseLTZoneIzhikevich::ACalculate(void)
 {
  if(Inputs->size()<2)
   return true;
- PrePotential.v=Inputs[0](0,0);
+ PrePotential = Inputs[0](0,0);
 
  double current_time=GetTime().GetDoubleTime();
- OutputPotential(0,0)=PrePotential.v;
- if(PrePotential.v>=Threshold && !PulseFlag)
+ const double prePotential = PrePotential.GetData();
+ OutputPotential(0,0)=prePotential;
+ if(prePotential>=Threshold && !PulseFlag)
  {
-  Output(0,0)=PulseAmplitude.v;
+  const double pulseAmplitude = PulseAmplitude.GetData();
+  Output(0,0)=pulseAmplitude;
   if(!PulseFlag)
    AvgFrequencyCounter->push_back(current_time);
   PulseFlag=true;
@@ -91,7 +93,10 @@ bool NPulseLTZoneIzhikevich::ACalculate(void)
  }
 
  if(PulseFlag)
-  --PulseCounter.v;
+ {
+  const int pulseCounter = PulseCounter.GetData();
+  PulseCounter = pulseCounter - 1;
+ }
 
  list<double>::iterator I,J,K;
  I=AvgFrequencyCounter->begin();
@@ -131,18 +136,20 @@ bool NPulseLTZoneIzhikevich::ACalculate(void)
   OutputPulseTimes(0,i)=*I;
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
 
-/// Возвращает true если условие для генерации импульса выполнено
+/// Р’РѕР·РІСЂР°С‰Р°РµС‚ true РµСЃР»Рё СѓСЃР»РѕРІРёРµ РґР»СЏ РіРµРЅРµСЂР°С†РёРё РёРјРїСѓР»СЊСЃР° РІС‹РїРѕР»РЅРµРЅРѕ
 bool NPulseLTZoneIzhikevich::CheckPulseOn(void)
 {
- return PrePotential.v>=Threshold;
+ const double prePotential = PrePotential.GetData();
+ const double threshold = Threshold.GetData();
+ return prePotential >= threshold;
 }
 
-/// Возвращает true если условие для генерации имульса не выполнено
+/// Р’РѕР·РІСЂР°С‰Р°РµС‚ true РµСЃР»Рё СѓСЃР»РѕРІРёРµ РґР»СЏ РіРµРЅРµСЂР°С†РёРё РёРјСѓР»СЊСЃР° РЅРµ РІС‹РїРѕР»РЅРµРЅРѕ
 bool NPulseLTZoneIzhikevich::CheckPulseOff(void)
 {
  return false;

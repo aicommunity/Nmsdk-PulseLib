@@ -26,71 +26,75 @@ class NPulseNeuron;
 
 class RDK_LIB_TYPE NPulseMembrane: public NPulseMembraneCommon
 {
-public: // Основные свойства
-/// Коэффициент обратной связи
-ULProperty<double,NPulseMembrane, ptPubParameter> FeedbackGain;
+public: //  
+/// РљРѕСЌС„С„РёС†РёРµРЅС‚ РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·Рё
+UProperty<double,NPulseMembrane, ptPubParameter> FeedbackGain;
 
-/// Наличие механизма сброса
-ULProperty<bool,NPulseMembrane, ptPubParameter> ResetAvailable;
+/// РќР°Р»РёС‡РёРµ РјРµС…Р°РЅРёР·РјР° СЃР±СЂРѕСЃР°
+UProperty<bool,NPulseMembrane, ptPubParameter> ResetAvailable;
 
-/// Имя класса синапса
-ULProperty<std::string, NPulseMembrane, ptPubParameter> SynapseClassName;
+/// РРјСЏ РєР»Р°СЃСЃР° СЃРёРЅР°РїСЃР°
+UProperty<std::string, NPulseMembrane, ptPubParameter> SynapseClassName;
 
-/// Имя класса ионного канала
-ULProperty<std::string, NPulseMembrane, ptPubParameter> ExcChannelClassName;
+/// РРјСЏ РєР»Р°СЃСЃР° РёРѕРЅРЅРѕРіРѕ РєР°РЅР°Р»Р°
+UProperty<std::string, NPulseMembrane, ptPubParameter> ExcChannelClassName;
 
-/// Имя класса ионного канала
-ULProperty<std::string, NPulseMembrane, ptPubParameter> InhChannelClassName;
+/// РРјСЏ РєР»Р°СЃСЃР° РёРѕРЅРЅРѕРіРѕ РєР°РЅР°Р»Р°
+UProperty<std::string, NPulseMembrane, ptPubParameter> InhChannelClassName;
 
-/// Число возбуждающих синапсов
-ULProperty<int, NPulseMembrane, ptPubParameter> NumExcitatorySynapses;
+/// Р§РёСЃР»Рѕ РІРѕР·Р±СѓР¶РґР°СЋС‰РёС… СЃРёРЅР°РїСЃРѕРІ
+UProperty<int, NPulseMembrane, ptPubParameter> NumExcitatorySynapses;
 
-/// Число тормозных синапсов
-ULProperty<int, NPulseMembrane, ptPubParameter> NumInhibitorySynapses;
+/// Р§РёСЃР»Рѕ С‚РѕСЂРјРѕР·РЅС‹С… СЃРёРЅР°РїСЃРѕРІ
+UProperty<int, NPulseMembrane, ptPubParameter> NumInhibitorySynapses;
 
-public: // Входы и выходы
-/// Сигнал обратной связи от низкопороговой зоны
-UPropertyInputData<MDMatrix<double>, NPulseMembrane, ptInput | ptPubState> InputFeedbackSignal;
+public: //   
+/// РЎРёРіРЅР°Р» РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·Рё РѕС‚ РЅРёР·РєРѕРїРѕСЂРѕРіРѕРІРѕР№ Р·РѕРЅС‹
+UProperty<MDMatrix<double>, NPulseMembrane, ptInput | ptPubState> InputFeedbackSignal;
 
 
-protected: // Временные переменные
-// Ионные механизмы деполяризации
+protected: //  
+// РРѕРЅРЅС‹Рµ РјРµС…Р°РЅРёР·РјС‹ РґРµРїРѕР»СЏСЂРёР·Р°С†РёРё
 vector<NPulseChannelCommon*> ExcitatoryChannels;
 
-// Ионные механизмы гиперполяризации
+// РРѕРЅРЅС‹Рµ РјРµС…Р°РЅРёР·РјС‹ РіРёРїРµСЂРїРѕР»СЏСЂРёР·Р°С†РёРё
 vector<NPulseChannelCommon*> InhibitoryChannels;
 
-// Возбуждающие синапсы
+// Р’РѕР·Р±СѓР¶РґР°СЋС‰РёРµ СЃРёРЅР°РїСЃС‹
 vector<NPulseSynapseCommon*> ExcitatorySynapses;
 
-// Тормозные синапсы
+// РўРѕСЂРјРѕР·РЅС‹Рµ СЃРёРЅР°РїСЃС‹
 vector<NPulseSynapseCommon*> InhibitorySynapses;
 
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+// --------------------------
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
+// --------------------------
 // --------------------------
 NPulseMembrane(void);
 virtual ~NPulseMembrane(void);
 // --------------------------
 
 // --------------------------
-// Методы управления временными перменными
 // --------------------------
-// Ионные механизмы деполяризации
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РІСЂРµРјРµРЅРЅС‹РјРё РїРµСЂРјРµРЅРЅС‹РјРё
+// --------------------------
+// РРѕРЅРЅС‹Рµ РјРµС…Р°РЅРёР·РјС‹ РґРµРїРѕР»СЏСЂРёР·Р°С†РёРё
+// --------------------------
 size_t GetNumPosChannels(void) const;
 NPulseChannelCommon* GetPosChannel(size_t i);
 
-// Ионные механизмы гиперполяризации
+// РРѕРЅРЅС‹Рµ РјРµС…Р°РЅРёР·РјС‹ РіРёРїРµСЂРїРѕР»СЏСЂРёР·Р°С†РёРё
 size_t GetNumNegChannels(void) const;
 NPulseChannelCommon* GetNegChannel(size_t i);
 
-// Возбуждающие синапсы
+//  
 size_t GetNumExcitatorySynapses(void) const;
 NPulseSynapseCommon* GetExcitatorySynapses(size_t i);
 
-// Тормозные синапсы
+//  
 size_t GetNumInhibitorySynapses(void) const;
 NPulseSynapseCommon* GetInhibitorySynapses(size_t i);
 
@@ -100,12 +104,14 @@ virtual bool UpdateSynapseData(UEPtr<NPulseSynapseCommon> synapse, UEPtr<UIPoint
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
 // --------------------------
-/// Наличие механизма сброса
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
+// --------------------------
+/// РќР°Р»РёС‡РёРµ РјРµС…Р°РЅРёР·РјР° СЃР±СЂРѕСЃР°
+// --------------------------
 bool SetResetAvailable(const bool &value);
 
-// Коэффициент обратной связи
+// РљРѕСЌС„С„РёС†РёРµРЅС‚ РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·Рё
 bool SetFeedbackGain(const double &value);
 
 bool SetSynapseClassName(const std::string &value);
@@ -116,55 +122,61 @@ bool SetNumInhibitorySynapses(const int &value);
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
+// --------------------------
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
+// --------------------------
 virtual NPulseMembrane* New(void);
 
 protected:
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+//    
+//       
+//      comp 
+//     
 virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+//    
+//       
+//      comp
+//    
 virtual bool ADelComponent(UEPtr<UContainer> comp);
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
+// --------------------------
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
+// --------------------------
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// --------------------------
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
+// --------------------------
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 virtual bool ACalculate2(void);
 
-// Устанавливает компоненты в требуемый порядок расчета
+//      
 void UpdateComputationOrder(void);
 // --------------------------
 };

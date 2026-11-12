@@ -22,12 +22,12 @@ See file license.txt for more information
 #include "../../Nmsdk-PulseLib/Deploy/Include/Lib.h"
 
 
-// Класс, формирующий импульсный персептрон
+// РљР»Р°СЃСЃ, С„РѕСЂРјРёСЂСѓСЋС‰РёР№ РёРјРїСѓР»СЊСЃРЅС‹Р№ РїРµСЂСЃРµРїС‚СЂРѕРЅ
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulsePerseptron::NPulsePerseptron(void)
 : StructureBuildMode("StructureBuildMode",this,&NPulsePerseptron::SetStructureBuildMode),
@@ -49,43 +49,43 @@ NPulsePerseptron::~NPulsePerseptron(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к временным переменным
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РІСЂРµРјРµРЅРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 // --------------------------
 // --------------------------
 
 // --------------------------
-// Методы упраления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°Р»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
-/// Режим сборки структуры нейрона
+/// Р РµР¶РёРј СЃР±РѕСЂРєРё СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅРµР№СЂРѕРЅР°
 bool NPulsePerseptron::SetStructureBuildMode(const int &value)
 {
- if(value >0) // Пересборка структуры нужна только если StructureBuildMode не 0
+ if(value >0) // РџРµСЂРµСЃР±РѕСЂРєР° СЃС‚СЂСѓРєС‚СѓСЂС‹ РЅСѓР¶РЅР° С‚РѕР»СЊРєРѕ РµСЃР»Рё StructureBuildMode РЅРµ 0
   Ready=false;
  return true;
 }
 
-/// Имя класса, создающего слой групп афферентных нейронов, чувствительных к разным диапазонам частот
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СЃР»РѕР№ РіСЂСѓРїРї Р°С„С„РµСЂРµРЅС‚РЅС‹С… РЅРµР№СЂРѕРЅРѕРІ, С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅС‹С… Рє СЂР°Р·РЅС‹Рј РґРёР°РїР°Р·РѕРЅР°Рј С‡Р°СЃС‚РѕС‚
 bool NPulsePerseptron::SetNeuronFreqGroupLayerClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число признаков на входе перспептрона (размер вектора признаков)
+/// Р§РёСЃР»Рѕ РїСЂРёР·РЅР°РєРѕРІ РЅР° РІС…РѕРґРµ РїРµСЂСЃРїРµРїС‚СЂРѕРЅР° (СЂР°Р·РјРµСЂ РІРµРєС‚РѕСЂР° РїСЂРёР·РЅР°РєРѕРІ)
 bool NPulsePerseptron::SetNumInputFeatures(const int &value)
 {
  Ready=false;
  return true;
 }
 
-/// Имя класса, создающего слой нейронов
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ СЃР»РѕР№ РЅРµР№СЂРѕРЅРѕРІ
 bool NPulsePerseptron::SetNeuronsLayerClassName(const std::string &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число слоёв нейронов
+/// Р§РёСЃР»Рѕ СЃР»РѕС‘РІ РЅРµР№СЂРѕРЅРѕРІ
 bool NPulsePerseptron::SetNumNeuronsLayer(const int &value)
 {
  Ready=false;
@@ -94,21 +94,21 @@ bool NPulsePerseptron::SetNumNeuronsLayer(const int &value)
  return true;
 }
 
-/// Размер слоя афферентных нейронов.
+/// Р Р°Р·РјРµСЂ СЃР»РѕСЏ Р°С„С„РµСЂРµРЅС‚РЅС‹С… РЅРµР№СЂРѕРЅРѕРІ.
 bool NPulsePerseptron::SetAffNeuronsLayerSize(const MDMatrix<int> &value)
 {
  Ready=false;
  return true;
 }
 
-/// Размер слоя нейронов.
+/// Р Р°Р·РјРµСЂ СЃР»РѕСЏ РЅРµР№СЂРѕРЅРѕРІ.
 bool NPulsePerseptron::SetNeuronsLayerSize(const MDMatrix<int> &value)
 {
  Ready=false;
  return true;
 }
 
-/// Число афферентных нейронов в группе
+/// Р§РёСЃР»Рѕ Р°С„С„РµСЂРµРЅС‚РЅС‹С… РЅРµР№СЂРѕРЅРѕРІ РІ РіСЂСѓРїРїРµ
 bool NPulsePerseptron::SetNumAffNeuronsInGroup(const int &value)
 {
  Ready=false;
@@ -117,9 +117,9 @@ bool NPulsePerseptron::SetNumAffNeuronsInGroup(const int &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulsePerseptron* NPulsePerseptron::New(void)
 {
  return new NPulsePerseptron;
@@ -132,12 +132,12 @@ UComponent* NPulsePerseptron::NewStatic(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 bool NPulsePerseptron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {            /*
  if(!NPulseNeuronCommon::AAddComponent(comp,pointer))
@@ -166,10 +166,10 @@ bool NPulsePerseptron::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> po
  return true;
 }
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 bool NPulsePerseptron::ADelComponent(UEPtr<UContainer> comp)
 {                     /*
  if(comp == PosGenerator)
@@ -184,9 +184,9 @@ bool NPulsePerseptron::ADelComponent(UEPtr<UContainer> comp)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Осуществляет сборку структуры в соответствии с выбранными именами компонентов
+// РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚ СЃР±РѕСЂРєСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІС‹Р±СЂР°РЅРЅС‹РјРё РёРјРµРЅР°РјРё РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
 bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &neuron_freq_group_layer_class_name,
 										const string &neurons_layer_class_name,
 										int old_num_neurons_layer, int num_neurons_layer,
@@ -197,7 +197,7 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
  UEPtr <NNeuronsLayer> neurons_layer, neurons_layer2;
  bool res(true);
 
- // 1 - автоматическая сборка производится, 1 нейрон -> 1 дендрит, связь - каждый с каждым
+ // 1 - Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєР°СЏ СЃР±РѕСЂРєР° РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ, 1 РЅРµР№СЂРѕРЅ -> 1 РґРµРЅРґСЂРёС‚, СЃРІСЏР·СЊ - РєР°Р¶РґС‹Р№ СЃ РєР°Р¶РґС‹Рј
  if(StructureBuildMode == 1)
  {
   for(int i=num_neurons_layer;i<old_num_neurons_layer;i++)
@@ -223,13 +223,13 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
    neurons_layer->Build();
   }
 
-  // связь - каждый с каждым
+  // СЃРІСЏР·СЊ - РєР°Р¶РґС‹Р№ СЃ РєР°Р¶РґС‹Рј
   int affsize = aff_neurons_layer_size(0,0)*aff_neurons_layer_size(0,1);
   int neusize = neurons_layer_size(0,0)*neurons_layer_size(0,1);
-  // афферентные нейроны - импульсные нейроны
+  // Р°С„С„РµСЂРµРЅС‚РЅС‹Рµ РЅРµР№СЂРѕРЅС‹ - РёРјРїСѓР»СЊСЃРЅС‹Рµ РЅРµР№СЂРѕРЅС‹
   if(FlagFreqGroupLayer)
   {
-    for(int i = 0; i < affsize; i++) // выключать по флагу
+    for(int i = 0; i < affsize; i++) // РІС‹РєР»СЋС‡Р°С‚СЊ РїРѕ С„Р»Р°РіСѓ
     {
      for(int j = 0; j < num_aff_neurons_in_group; j++)
      {
@@ -265,7 +265,7 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
     }
   }
 
-  // импульсные нейроны - импульсные нейроны
+  // РёРјРїСѓР»СЊСЃРЅС‹Рµ РЅРµР№СЂРѕРЅС‹ - РёРјРїСѓР»СЊСЃРЅС‹Рµ РЅРµР№СЂРѕРЅС‹
   for(int i = 0; i < NumNeuronsLayer-1; i++)
   {
    neurons_layer = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(i+1),true);
@@ -331,7 +331,7 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
   }
  }
 
- // 2 - автоматическая сборка без связей
+ // 2 - Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєР°СЏ СЃР±РѕСЂРєР° Р±РµР· СЃРІСЏР·РµР№
  if(StructureBuildMode == 2)
  {
   for(int i=num_neurons_layer;i<old_num_neurons_layer;i++)
@@ -356,10 +356,10 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
    neurons_layer->Build();
   }
 
-  // связь - каждый с каждым
+  // СЃРІСЏР·СЊ - РєР°Р¶РґС‹Р№ СЃ РєР°Р¶РґС‹Рј
   int affsize = aff_neurons_layer_size(0,0)*aff_neurons_layer_size(0,1);
   int neusize = neurons_layer_size(0,0)*neurons_layer_size(0,1);
-  // афферентные нейроны - импульсные нейроны
+  // Р°С„С„РµСЂРµРЅС‚РЅС‹Рµ РЅРµР№СЂРѕРЅС‹ - РёРјРїСѓР»СЊСЃРЅС‹Рµ РЅРµР№СЂРѕРЅС‹
   if(FlagFreqGroupLayer)
   {
     for(int i = 0; i < affsize; i++)
@@ -398,7 +398,7 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
     }
   }
 
-  // импульсные нейроны - импульсные нейроны
+  // РёРјРїСѓР»СЊСЃРЅС‹Рµ РЅРµР№СЂРѕРЅС‹ - РёРјРїСѓР»СЊСЃРЅС‹Рµ РЅРµР№СЂРѕРЅС‹
   for(int i = 0; i < NumNeuronsLayer-1; i++)
   {
    neurons_layer = GetComponentL<NNeuronsLayer>(std::string("NeuronsLayer")+sntoa(i+1),true);
@@ -464,7 +464,7 @@ bool NPulsePerseptron::BuildStructure(int structure_build_mode, const string &ne
  return true;
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulsePerseptron::ADefault(void)
 {
  StructureBuildMode=1;
@@ -480,10 +480,10 @@ bool NPulsePerseptron::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulsePerseptron::ABuild(void)
 {
  if(StructureBuildMode>0)
@@ -499,13 +499,13 @@ bool NPulsePerseptron::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulsePerseptron::AReset(void)
 {
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulsePerseptron::ACalculate(void)
 {
  return true;

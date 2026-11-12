@@ -20,14 +20,15 @@ See file license.txt for more information
 #include "NPulseMembrane.h"
 #include "NPulseNeuron.h"
 #include "NPulseLifeNeuron.h"
+#include "NPulseSynapse.h"
 #include "NReceptor.h"
 
 
 namespace NMSDK {
 
-// Методы NPulseSynChannel
+// РњРµС‚РѕРґС‹ NPulseSynChannel
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseSynChannel::NPulseSynChannel(void)
 //: NPulseChannel(name),
@@ -52,16 +53,16 @@ NPulseSynChannel::~NPulseSynChannel(void)
 
 
 // --------------------------
-// Методы управления специфическими компонентами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃРїРµС†РёС„РёС‡РµСЃРєРёРјРё РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Возвращает число синапсов
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ С‡РёСЃР»Рѕ СЃРёРЅР°РїСЃРѕРІ
 int NPulseSynChannel::GetNumSynapses(void) const
 {
  return 0;
 // return GetNumComponents();
 }
 
-// Возвращает синапс по индексу
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРёРЅР°РїСЃ РїРѕ РёРЅРґРµРєСЃСѓ
 NPulseSynapse* NPulseSynChannel::GetSynapse(size_t i)
 {
 // return static_cast<NPulseSynapse*>(GetComponentByIndex(i));
@@ -70,15 +71,15 @@ NPulseSynapse* NPulseSynChannel::GetSynapse(size_t i)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
-// Устанавливает амплитуду импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р°РјРїР»РёС‚СѓРґСѓ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPulseSynChannel::SetPulseAmplitude(const double &value)
 {
  return true;
 }
 
-// Постоянная времени выделения медиатора
+// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё РІС‹РґРµР»РµРЅРёСЏ РјРµРґРёР°С‚РѕСЂР°
 bool NPulseSynChannel::SetSecretionTC(const double &value)
 {
  if(value <= 0)
@@ -89,7 +90,7 @@ bool NPulseSynChannel::SetSecretionTC(const double &value)
  return true;
 }
 
-// Постоянная времени распада медиатора
+// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё СЂР°СЃРїР°РґР° РјРµРґРёР°С‚РѕСЂР°
 bool NPulseSynChannel::SetDissociationTC(const double &value)
 {
  if(value <= 0)
@@ -100,15 +101,17 @@ bool NPulseSynChannel::SetDissociationTC(const double &value)
  return true;
 }
 
-// Коэффициент пресинаптического торможения
+// РљРѕСЌС„С„РёС†РёРµРЅС‚ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРјРѕР¶РµРЅРёСЏ
 bool NPulseSynChannel::SetInhibitionCoeff(const double &value)
 {
- if(SynapseResistance.v > 0)
+ double synapseResistanceVal = SynapseResistance.GetData();
+ if(synapseResistanceVal > 0)
  {
+  // Channel always uses quadratic output; C=4k/R peak-normalizes to 1/R.
   if(value>0)
-   OutputConstData=4.0*(value+1)/SynapseResistance.v;
+   OutputConstData=4.0*value/synapseResistanceVal;
   else
-   OutputConstData=1.0/SynapseResistance.v;
+   OutputConstData=1.0/synapseResistanceVal;
  }
  else
   OutputConstData=0;
@@ -116,14 +119,15 @@ bool NPulseSynChannel::SetInhibitionCoeff(const double &value)
  return true;
 }
 
-// Вес (эффективность синапса) синапса
+// Р’РµСЃ (СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ СЃРёРЅР°РїСЃР°) СЃРёРЅР°РїСЃР°
 bool NPulseSynChannel::SetSynapseResistance(const double &value)
 {
  if(value<=0)
   return false;
 
- if(InhibitionCoeff.v>0)
-  OutputConstData=4.0*(InhibitionCoeff.v+1)/value;
+ double inhibitionCoeffVal = InhibitionCoeff.GetData();
+ if(inhibitionCoeffVal>0)
+  OutputConstData=4.0*inhibitionCoeffVal/value;
  else
   OutputConstData=1.0/value;
 
@@ -132,9 +136,9 @@ bool NPulseSynChannel::SetSynapseResistance(const double &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseSynChannel* NPulseSynChannel::New(void)
 {
  return new NPulseSynChannel;
@@ -142,12 +146,12 @@ NPulseSynChannel* NPulseSynChannel::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NPulseSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NPulseSynapse*>(comp))
@@ -158,22 +162,22 @@ bool NPulseSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 /*bool NPulseSynChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  InstallHebbSynapses(comp);
  return true;
 }     */
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 /*bool NPulseSynChannel::ADelComponent(UEPtr<UContainer> comp)
 {
  return true;
@@ -181,7 +185,7 @@ bool NPulseSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
 double NPulseSynChannel::GetSynOutput()
 {
@@ -190,29 +194,29 @@ double NPulseSynChannel::GetSynOutput()
 
 bool NPulseSynChannel::ResetOut()
 {
-//	POutputData[0].Double[0]=channel_input; // TODO: тут что то другое теперь
+//	POutputData[0].Double[0]=channel_input; // TODO: С‚СѓС‚ С‡С‚Рѕ С‚Рѕ РґСЂСѓРіРѕРµ С‚РµРїРµСЂСЊ
     return true;
 }
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseSynChannel::ADefault(void)
 {
  if(!NPulseChannel::ADefault())
   return false;
 
- // Начальные значения всем параметрам
- // Амплитуда входных импульсов
+ // РќР°С‡Р°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІСЃРµРј РїР°СЂР°РјРµС‚СЂР°Рј
+ // РђРјРїР»РёС‚СѓРґР° РІС…РѕРґРЅС‹С… РёРјРїСѓР»СЊСЃРѕРІ
  PulseAmplitude=1;
 
- // Постоянная времени выделения медиатора
+ // РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё РІС‹РґРµР»РµРЅРёСЏ РјРµРґРёР°С‚РѕСЂР°
  SecretionTC=0.001;
 
- // Постоянная времени распада медиатора
+ // РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё СЂР°СЃРїР°РґР° РјРµРґРёР°С‚РѕСЂР°
  DissociationTC=0.01;
 
- // Коэффициент пресинаптического торможения
+ // РљРѕСЌС„С„РёС†РёРµРЅС‚ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРјРѕР¶РµРЅРёСЏ
  InhibitionCoeff=0;
 
- // Вес (эффективность синапса) синапса
+ // Р’РµСЃ (СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ СЃРёРЅР°РїСЃР°) СЃРёРЅР°РїСЃР°
  SynapseResistance=1.e8;
 
 // SetNumInputs(1);
@@ -220,10 +224,10 @@ bool NPulseSynChannel::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseSynChannel::ABuild(void)
 {
  if(!NPulseChannel::ABuild())
@@ -234,13 +238,13 @@ bool NPulseSynChannel::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseSynChannel::AReset(void)
 {
  if(!NPulseChannel::AReset())
   return false;
 
- // Сброс временных переменных
+ // РЎР±СЂРѕСЃ РІСЂРµРјРµРЅРЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С…
  if(Type>0)
  {
   Output(0,0)=1;
@@ -268,14 +272,14 @@ bool NPulseSynChannel::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseSynChannel::ACalculate2(void)
 {
  /*double*/ channel_input=0;
  size_t num_connected_channels=0;
  double G=0;
 
- // Расчет синапсов
+ // Р Р°СЃС‡РµС‚ СЃРёРЅР°РїСЃРѕРІ
  double input=0;
  int num_connected_synapsis=0;
  /*double*/ syn_output=0;
@@ -294,13 +298,14 @@ bool NPulseSynChannel::ACalculate2(void)
     channel_input+=*data;
    ++num_connected_channels;
   }
-  else // Остальные подключенные компоненты считаем входами синапсов
+  else // РћСЃС‚Р°Р»СЊРЅС‹Рµ РїРѕРґРєР»СЋС‡РµРЅРЅС‹Рµ РєРѕРјРїРѕРЅРµРЅС‚С‹ СЃС‡РёС‚Р°РµРј РІС…РѕРґР°РјРё СЃРёРЅР°РїСЃРѕРІ
   {
    ++num_connected_synapsis;
-   if(int(PreOutput->size())<num_connected_synapsis)
+   std::vector<double>& preOutputVec = *PreOutput;
+   if(int(preOutputVec.size())<num_connected_synapsis)
    {
-    PreOutput->resize(num_connected_synapsis);
-    PreOutput.v[num_connected_synapsis-1]=0;
+    preOutputVec.resize(num_connected_synapsis);
+    preOutputVec[num_connected_synapsis-1]=0;
    }
 
    input=ChannelInputs[n](0,0);
@@ -308,17 +313,21 @@ bool NPulseSynChannel::ACalculate2(void)
    if(MainOwner && Owner)
    {
     if(Type() < 0)
-     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
+     static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.GetData() + 1;
     else
-     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
+     static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.GetData() + 1;
    }
 
+   double pulseAmplitudeVal = PulseAmplitude.GetData();
+   double inhibitionCoeffVal = InhibitionCoeff.GetData();
    if(input>0)
-    PreOutput.v[num_connected_synapsis-1]+=(input/PulseAmplitude.v-PreOutput.v[num_connected_synapsis-1])/VSecretionTC;
+    preOutputVec[num_connected_synapsis-1]+=(input/pulseAmplitudeVal-preOutputVec[num_connected_synapsis-1])/VSecretionTC;
    else
-    PreOutput.v[num_connected_synapsis-1]-=PreOutput.v[num_connected_synapsis-1]/VDissociationTC;
+    preOutputVec[num_connected_synapsis-1]-=preOutputVec[num_connected_synapsis-1]/VDissociationTC;
 
-   syn_output=OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v[num_connected_synapsis-1])*PreOutput.v[num_connected_synapsis-1];
+   syn_output=PresynapticInhibitionConductance(
+    OutputConstData, inhibitionCoeffVal,
+    preOutputVec[num_connected_synapsis-1], input>0);
 
    if(syn_output>0)
     G+=syn_output;
@@ -334,15 +343,15 @@ bool NPulseSynChannel::ACalculate2(void)
   G/=num_connected_synapsis;
 
  double feedback=static_pointer_cast<NPulseMembrane>(Owner)->Feedback;
- // Получение информации об обратной связи
+ // РџРѕР»СѓС‡РµРЅРёРµ РёРЅС„РѕСЂРјР°С†РёРё РѕР± РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·Рё
  if(Owner)
   channel_input-=feedback;
 
- // Расчет
+ // Р Р°СЃС‡РµС‚
  double *out=&Output(0,0);
  double Ti(0.0),sum_u(0.0);
 
- // Проверяем необходимость сброса
+ // РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ СЃР±СЂРѕСЃР°
 // if(RestingFlag)
 // {
 //  if(G<RestingThreshold)
@@ -355,9 +364,9 @@ bool NPulseSynChannel::ACalculate2(void)
  {
   double resistance(0.0);
   if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))
-   resistance=RestingResistance.v;
+   resistance=RestingResistance.GetData();
   else
-   resistance=Resistance.v;
+   resistance=Resistance.GetData();
 
   Ti=Capacity/(G+1.0/resistance);
   sum_u=(1.0+G*resistance);
@@ -375,9 +384,9 @@ bool NPulseSynChannel::ACalculate2(void)
 // --------------------------
 
 
-// Методы NContinuesSynChannel
+// РњРµС‚РѕРґС‹ NContinuesSynChannel
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NContinuesSynChannel::NContinuesSynChannel(void)
 //: NPulseChannel(name),
@@ -401,16 +410,16 @@ NContinuesSynChannel::~NContinuesSynChannel(void)
 
 
 // --------------------------
-// Методы управления специфическими компонентами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃРїРµС†РёС„РёС‡РµСЃРєРёРјРё РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Возвращает число синапсов
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ С‡РёСЃР»Рѕ СЃРёРЅР°РїСЃРѕРІ
 int NContinuesSynChannel::GetNumSynapses(void) const
 {
  return 0;
 // return GetNumComponents();
 }
 
-// Возвращает синапс по индексу
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРёРЅР°РїСЃ РїРѕ РёРЅРґРµРєСЃСѓ
 NPulseSynapse* NContinuesSynChannel::GetSynapse(size_t i)
 {
 // return static_cast<NPulseSynapse*>(GetComponentByIndex(i));
@@ -419,15 +428,15 @@ NPulseSynapse* NContinuesSynChannel::GetSynapse(size_t i)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
-// Устанавливает амплитуду импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р°РјРїР»РёС‚СѓРґСѓ РёРјРїСѓР»СЊСЃРѕРІ
 bool NContinuesSynChannel::SetPulseAmplitude(const double &value)
 {
  return true;
 }
 
-// Постоянная времени выделения медиатора
+// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё РІС‹РґРµР»РµРЅРёСЏ РјРµРґРёР°С‚РѕСЂР°
 bool NContinuesSynChannel::SetSecretionTC(const double &value)
 {
  if(value <= 0)
@@ -438,7 +447,7 @@ bool NContinuesSynChannel::SetSecretionTC(const double &value)
  return true;
 }
 
-// Постоянная времени распада медиатора
+// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё СЂР°СЃРїР°РґР° РјРµРґРёР°С‚РѕСЂР°
 bool NContinuesSynChannel::SetDissociationTC(const double &value)
 {
  if(value <= 0)
@@ -449,33 +458,40 @@ bool NContinuesSynChannel::SetDissociationTC(const double &value)
  return true;
 }
 
-// Коэффициент пресинаптического торможения
+// РљРѕСЌС„С„РёС†РёРµРЅС‚ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРјРѕР¶РµРЅРёСЏ
 bool NContinuesSynChannel::SetInhibitionCoeff(const double &value)
 {
- if(SynapseResistance.v > 0)
-  OutputConstData=4.0*(value+1)/SynapseResistance.v;
+ const double synapseResistance = SynapseResistance.GetData();
+ if(synapseResistance > 0)
+ {
+  if(value > 0)
+   OutputConstData=4.0*value/synapseResistance;
+  else
+   OutputConstData=1.0/synapseResistance;
+ }
  else
   OutputConstData=0;
 
  return true;
 }
 
-// Вес (эффективность синапса) синапса
+// Р’РµСЃ (СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ СЃРёРЅР°РїСЃР°) СЃРёРЅР°РїСЃР°
 bool NContinuesSynChannel::SetSynapseResistance(const double &value)
 {
  if(value<=0)
   return false;
 
- OutputConstData=4.0*InhibitionCoeff.v/value;
+ const double inhibitionCoeff = InhibitionCoeff.GetData();
+ OutputConstData=4.0*inhibitionCoeff/value;
 
  return true;
 }
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NContinuesSynChannel* NContinuesSynChannel::New(void)
 {
  return new NContinuesSynChannel;
@@ -483,12 +499,12 @@ NContinuesSynChannel* NContinuesSynChannel::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NContinuesSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NPulseSynapse*>(comp))
@@ -499,22 +515,22 @@ bool NContinuesSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления компонентами
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р°РјРё
 // --------------------------
-// Выполняет завершающие пользовательские действия
-// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был
-// успешно добавлен в список компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ Р·Р°РІРµСЂС€Р°СЋС‰РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РІ СЌС‚РѕС‚ РѕР±СЉРµРєС‚
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp Р±С‹Р»
+// СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє РєРѕРјРїРѕРЅРµРЅС‚
 /*bool NContinuesSynChannel::AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer)
 {
  InstallHebbSynapses(comp);
  return true;
 }     */
 
-// Выполняет предварительные пользовательские действия
-// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp
-// существует в списке компонент
+// Р’С‹РїРѕР»РЅСЏРµС‚ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
+// РїСЂРё СѓРґР°Р»РµРЅРёРё РґРѕС‡РµСЂРЅРµРіРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РёР· СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ С‚РѕР»СЊРєРѕ РµСЃР»Рё comp
+// СЃСѓС‰РµСЃС‚РІСѓРµС‚ РІ СЃРїРёСЃРєРµ РєРѕРјРїРѕРЅРµРЅС‚
 /*bool NContinuesSynChannel::ADelComponent(UEPtr<UContainer> comp)
 {
  return true;
@@ -522,28 +538,28 @@ bool NContinuesSynChannel::CheckComponentType(UEPtr<UContainer> comp) const
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NContinuesSynChannel::ADefault(void)
 {
  if(!NPulseChannel::ADefault())
   return false;
 
- // Начальные значения всем параметрам
- // Амплитуда входных импульсов
+ // РќР°С‡Р°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІСЃРµРј РїР°СЂР°РјРµС‚СЂР°Рј
+ // РђРјРїР»РёС‚СѓРґР° РІС…РѕРґРЅС‹С… РёРјРїСѓР»СЊСЃРѕРІ
  PulseAmplitude=1;
 
- // Постоянная времени выделения медиатора
+ // РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё РІС‹РґРµР»РµРЅРёСЏ РјРµРґРёР°С‚РѕСЂР°
  SecretionTC=0.001;
 
- // Постоянная времени распада медиатора
+ // РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё СЂР°СЃРїР°РґР° РјРµРґРёР°С‚РѕСЂР°
  DissociationTC=0.01;
 
- // Коэффициент пресинаптического торможения
+ // РљРѕСЌС„С„РёС†РёРµРЅС‚ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРјРѕР¶РµРЅРёСЏ
  InhibitionCoeff=1;
 
- // Вес (эффективность синапса) синапса
+ // Р’РµСЃ (СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ СЃРёРЅР°РїСЃР°) СЃРёРЅР°РїСЃР°
  SynapseResistance=1.0e8;
 
 // SetNumInputs(1);
@@ -551,10 +567,10 @@ bool NContinuesSynChannel::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NContinuesSynChannel::ABuild(void)
 {
  if(!NPulseChannel::ABuild())
@@ -565,17 +581,17 @@ bool NContinuesSynChannel::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NContinuesSynChannel::AReset(void)
 {
  if(!NPulseChannel::AReset())
   return false;
 
- // Сброс временных переменных
+ // РЎР±СЂРѕСЃ РІСЂРµРјРµРЅРЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С…
 // PreOutput=0;
  PreOutput->assign(PreOutput->size(),0);
 
- //FillOutputData(); // TODO: тут что то другое теперь
+ //FillOutputData(); // TODO: С‚СѓС‚ С‡С‚Рѕ С‚Рѕ РґСЂСѓРіРѕРµ С‚РµРїРµСЂСЊ
 
  SynapseInputFlagsList.resize(ChannelInputs->size(),false);
  for(int n=0;n<int(ChannelInputs->size());n++)
@@ -588,14 +604,14 @@ bool NContinuesSynChannel::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NContinuesSynChannel::ACalculate2(void)
 {
- double channel_input=0;
+double channel_input_sum=0;
  int num_connected_channels=0;
  double G=0;
 
- // Расчет синапсов
+ // Р Р°СЃС‡РµС‚ СЃРёРЅР°РїСЃРѕРІ
  double input=0;
  int num_connected_synapsis=0;
  double syn_output=0;
@@ -615,17 +631,17 @@ bool NContinuesSynChannel::ACalculate2(void)
    {
     double *data=ChannelInputs[n].Data;
     for(int j=0;j<inpsize;j++,++data)
-     channel_input+=*data;
+     channel_input_sum+=*data;
     ++num_connected_channels;
    }
   }
-  else // Остальные подключенные компоненты считаем входами синапсов
+  else // РћСЃС‚Р°Р»СЊРЅС‹Рµ РїРѕРґРєР»СЋС‡РµРЅРЅС‹Рµ РєРѕРјРїРѕРЅРµРЅС‚С‹ СЃС‡РёС‚Р°РµРј РІС…РѕРґР°РјРё СЃРёРЅР°РїСЃРѕРІ
   {
    ++num_connected_synapsis;
    if(int(PreOutput->size())<num_connected_synapsis)
    {
     PreOutput->resize(num_connected_synapsis);
-    PreOutput.v[num_connected_synapsis-1]=0;
+    (*PreOutput)[num_connected_synapsis-1]=0;
    }
 
    input=ChannelInputs[n](0,0);
@@ -633,17 +649,17 @@ bool NContinuesSynChannel::ACalculate2(void)
    if(MainOwner && Owner)
    {
     if(Type() < 0)
-     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.v;
+     static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActivePosInputs.GetData() + 1;
     else
-     ++static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.v;
+     static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs = static_pointer_cast<NPulseNeuron>(MainOwner)->NumActiveNegInputs.GetData() + 1;
    }
 
    if(input>0)
-    PreOutput.v[num_connected_synapsis-1]+=(input/PulseAmplitude.v-PreOutput.v[num_connected_synapsis-1])/VSecretionTC;
+    (*PreOutput)[num_connected_synapsis-1] += (input/PulseAmplitude.GetData()-(*PreOutput)[num_connected_synapsis-1])/VSecretionTC;
    else
-    PreOutput.v[num_connected_synapsis-1]-=PreOutput.v[num_connected_synapsis-1]/VDissociationTC;
+    (*PreOutput)[num_connected_synapsis-1] -= (*PreOutput)[num_connected_synapsis-1]/VDissociationTC;
 
-   syn_output=PreOutput.v[num_connected_synapsis-1]/SynapseResistance.v;//OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v[num_connected_synapsis-1])*PreOutput.v[num_connected_synapsis-1];
+   syn_output=(*PreOutput)[num_connected_synapsis-1]/SynapseResistance.GetData();//OutputConstData*(1.0-InhibitionCoeff.v*PreOutput.v[num_connected_synapsis-1])*PreOutput.v[num_connected_synapsis-1];
 
    if(syn_output>0)
     G+=syn_output;
@@ -651,19 +667,19 @@ bool NContinuesSynChannel::ACalculate2(void)
  }
  NumConnectedSynapsis=num_connected_synapsis;
 
- if(UseAveragePotential && num_connected_channels>0)
-  channel_input/=num_connected_channels;
- SumChannelInput(0,0)=channel_input;
+if(UseAveragePotential && num_connected_channels>0)
+ channel_input_sum/=num_connected_channels;
+SumChannelInput(0,0)=channel_input_sum;
 
  if(UseAverageSynapsis && num_connected_synapsis>0)
   G/=num_connected_synapsis;
 
- // Расчет
- double *out=&Output(0,0);
+ // Р Р°СЃС‡РµС‚
+double *out=&Output(0,0);
  double Ti(0.0),sum_u(0.0);
 
 
- // Проверяем необходимость сброса
+ // РџСЂРѕРІРµСЂСЏРµРј РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ СЃР±СЂРѕСЃР°
 // if(RestingFlag)
 // {
 //  if(G<RestingThreshold)
@@ -673,15 +689,15 @@ bool NContinuesSynChannel::ACalculate2(void)
 // }
 
  double resistance(0.0);
- if((*out<channel_input && Type == 1) || (*out>channel_input && Type == -1))
-  resistance=RestingResistance.v;
+if((*out<channel_input_sum && Type == 1) || (*out>channel_input_sum && Type == -1))
+  resistance=RestingResistance.GetData();
  else
-  resistance=Resistance.v;
+  resistance=Resistance.GetData();
 
  Ti=Capacity/(G+1.0/resistance);
  sum_u=(1.0+G*resistance);
 
- *out+=(channel_input-(*out)*sum_u)/(Ti*TimeStep);
+*out+=(channel_input_sum-(*out)*sum_u)/(Ti*TimeStep);
 
  return true;
 }

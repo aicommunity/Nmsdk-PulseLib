@@ -23,42 +23,44 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseSynapse: public NPulseSynapseCommon
 {
-public: // Общедоступные свойства
-/// Постоянная времени выделения медиатора
-ULProperty<double,NPulseSynapse, ptPubParameter> SecretionTC;
+public: //  
+/// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё РІС‹РґРµР»РµРЅРёСЏ РјРµРґРёР°С‚РѕСЂР°
+UProperty<double,NPulseSynapse, ptPubParameter> SecretionTC;
 
-/// Постоянная времени распада медиатора
-ULProperty<double,NPulseSynapse, ptPubParameter> DissociationTC;
+/// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё СЂР°СЃРїР°РґР° РјРµРґРёР°С‚РѕСЂР°
+UProperty<double,NPulseSynapse, ptPubParameter> DissociationTC;
 
-/// Коэффициент пресинаптического торможения
-ULProperty<double,NPulseSynapse, ptPubParameter> InhibitionCoeff;
+/// РљРѕСЌС„С„РёС†РёРµРЅС‚ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРјРѕР¶РµРЅРёСЏ
+UProperty<double,NPulseSynapse, ptPubParameter> InhibitionCoeff;
 
-/// Типовая длительность импульса, с
-ULProperty<double,NPulseSynapse, ptPubParameter> TypicalPulseDuration;
+/// РўРёРїРѕРІР°СЏ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ РёРјРїСѓР»СЊСЃР°, СЃ
+UProperty<double,NPulseSynapse, ptPubParameter> TypicalPulseDuration;
 
-/// Флаг работы в режиме симуляции пришедшего импульса по сигналу
-ULProperty<bool,NPulseSynapse, ptPubParameter> UsePulseSignal;
+/// Р¤Р»Р°Рі СЂР°Р±РѕС‚С‹ РІ СЂРµР¶РёРјРµ СЃРёРјСѓР»СЏС†РёРё РїСЂРёС€РµРґС€РµРіРѕ РёРјРїСѓР»СЊСЃР° РїРѕ СЃРёРіРЅР°Р»Сѓ
+UProperty<bool,NPulseSynapse, ptPubParameter> UsePulseSignal;
 
-/// Флаг включения пресинаптического торможения
-ULProperty<bool,NPulseSynapse, ptPubParameter> UsePresynapticInhibition;
+/// Р¤Р»Р°Рі РІРєР»СЋС‡РµРЅРёСЏ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРјРѕР¶РµРЅРёСЏ
+UProperty<bool,NPulseSynapse, ptPubParameter> UsePresynapticInhibition;
 
-public: // Входы и выходы
+public: //   
 
-protected: // Основные свойства
+protected: //  
 
-protected: // Временные переменные
-// Постоянные времени выделения и распада медиатора в единицах шага интегрирования
+protected: //  
+// РџРѕСЃС‚РѕСЏРЅРЅС‹Рµ РІСЂРµРјРµРЅРё РІС‹РґРµР»РµРЅРёСЏ Рё СЂР°СЃРїР°РґР° РјРµРґРёР°С‚РѕСЂР° РІ РµРґРёРЅРёС†Р°С… С€Р°РіР° РёРЅС‚РµРіСЂРёСЂРѕРІР°РЅРёСЏ
 double VSecretionTC,VDissociationTC;
 
-// Постоянная составляющая результатов вычислений
+// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ СЃРѕСЃС‚Р°РІР»СЏСЋС‰Р°СЏ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РІС‹С‡РёСЃР»РµРЅРёР№
 double OutputConstData;
 
-/// Счетчик числа итераций в течении которых на входет присутствует импульс
+/// РЎС‡РµС‚С‡РёРє С‡РёСЃР»Р° РёС‚РµСЂР°С†РёР№ РІ С‚РµС‡РµРЅРёРё РєРѕС‚РѕСЂС‹С… РЅР° РІС…РѕРґРµС‚ РїСЂРёСЃСѓС‚СЃС‚РІСѓРµС‚ РёРјРїСѓР»СЊСЃ
 int PulseCounter;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+// --------------------------
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
+// --------------------------
 // --------------------------
 NPulseSynapse(void);
 virtual ~NPulseSynapse(void);
@@ -66,61 +68,91 @@ virtual ~NPulseSynapse(void);
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
 // --------------------------
-// Устанавливает амплитуду импульсов
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
+// --------------------------
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р°РјРїР»РёС‚СѓРґСѓ РёРјРїСѓР»СЊСЃРѕРІ
+// --------------------------
 bool SetPulseAmplitude(const double &value);
 
-// Постоянная времени выделения медиатора
+// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё РІС‹РґРµР»РµРЅРёСЏ РјРµРґРёР°С‚РѕСЂР°
 bool SetSecretionTC(const double &value);
 
-// Постоянная времени распада медиатора
+// РџРѕСЃС‚РѕСЏРЅРЅР°СЏ РІСЂРµРјРµРЅРё СЂР°СЃРїР°РґР° РјРµРґРёР°С‚РѕСЂР°
 bool SetDissociationTC(const double &value);
 
-/// Типовая длительность импульса, с
+/// РўРёРїРѕРІР°СЏ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ РёРјРїСѓР»СЊСЃР°, СЃ
 bool SetTypicalPulseDuration(const double &value);
 
-// Коэффициент пресинаптического торможения
+// РљРѕСЌС„С„РёС†РёРµРЅС‚ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРјРѕР¶РµРЅРёСЏ
 bool SetInhibitionCoeff(const double &value);
 
-/// Флаг работы в режиме симуляции пришедшего импульса по сигналу
+/// Р¤Р»Р°Рі СЂР°Р±РѕС‚С‹ РІ СЂРµР¶РёРјРµ СЃРёРјСѓР»СЏС†РёРё РїСЂРёС€РµРґС€РµРіРѕ РёРјРїСѓР»СЊСЃР° РїРѕ СЃРёРіРЅР°Р»Сѓ
 bool SetUsePulseSignal(const bool &value);
 
-// Задание флага включения пресинаптического торомжения
+// Р—Р°РґР°РЅРёРµ С„Р»Р°РіР° РІРєР»СЋС‡РµРЅРёСЏ РїСЂРµСЃРёРЅР°РїС‚РёС‡РµСЃРєРѕРіРѕ С‚РѕСЂРѕРјР¶РµРЅРёСЏ
 bool SetUsePresynapticInhibition(const bool &value);
 
-// Вес (эффективность синапса) синапса
+// Р’РµСЃ (СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ СЃРёРЅР°РїСЃР°) СЃРёРЅР°РїСЃР°
 bool SetResistance(const double &value);
 // --------------------------
 
 public:
 // --------------------------
-// Системные методы управления объектом
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
+// --------------------------
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
+// --------------------------
 virtual NPulseSynapse* New(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// --------------------------
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
+// --------------------------
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 virtual bool ACalculate2(void);
 // --------------------------
 };
+
+/// PSI conductance C*(1-k*p)*p.
+/// The parabola is <= 0 for p >= 1/k. With k=2 a shared burst keeps Pre above
+/// 0.5 after pulse 1, so later dendrite windows saw no peak and length sync
+/// never started. Apply a small residual only while input is active вЂ” flooring
+/// the gate during dissociation leaked DC and inflated soma amp at long L.
+inline double PresynapticInhibitionConductance(
+ double output_const, double inhibition_coeff, double pre, bool input_active)
+{
+ if(inhibition_coeff <= 0.0)
+  return output_const * pre;
+ double gate = 1.0 - inhibition_coeff * pre;
+ if(gate >= 0.0)
+  return output_const * gate * pre;
+ if(!input_active)
+  return 0.0;
+ constexpr double kPsiMinGate = 0.05;
+ double min_gate = kPsiMinGate;
+ // C=4k/R: residual C*0.05*p at k=2 is 0.4/R. For k>2 keep that absolute
+ // residual (scale gate by 2/k) so stronger PSI does not invert later spikes.
+ if(inhibition_coeff > 2.0)
+  min_gate = kPsiMinGate * (2.0 / inhibition_coeff);
+ return output_const * min_gate * pre;
+}
 
 }
 #endif

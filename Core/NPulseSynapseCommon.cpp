@@ -22,9 +22,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseSynapseCommon::NPulseSynapseCommon(void)
 : Type("Type", this, &NPulseSynapseCommon::SetType),
@@ -49,11 +49,11 @@ NPulseSynapseCommon::~NPulseSynapseCommon(void)
 
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
 bool NPulseSynapseCommon::SetType(const double &value)
 {
- Type.v=value;
+ Type.SetDataDirect(value);
 
  UEPtr<NPulseMembrane> membr=dynamic_pointer_cast<NPulseMembrane>(Owner);
  if(membr)
@@ -64,19 +64,19 @@ bool NPulseSynapseCommon::SetType(const double &value)
  return true;
 }
 
-// Устанавливает амплитуду импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р°РјРїР»РёС‚СѓРґСѓ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPulseSynapseCommon::SetPulseAmplitude(const double &value)
 {
  return true;
 }
 
-// Вес (эффективность синапса) синапса
+// Р’РµСЃ (СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ СЃРёРЅР°РїСЃР°) СЃРёРЅР°РїСЃР°
 bool NPulseSynapseCommon::SetResistance(const double &value)
 {
  return true;
 }
 
-/// Имя класса-учителя, настраивающего вес синапса
+/// РРјСЏ РєР»Р°СЃСЃР°-СѓС‡РёС‚РµР»СЏ, РЅР°СЃС‚СЂР°РёРІР°СЋС‰РµРіРѕ РІРµСЃ СЃРёРЅР°РїСЃР°
 bool NPulseSynapseCommon::SetTrainerClassName(const std::string &value)
 {
  Ready=false;
@@ -86,21 +86,21 @@ bool NPulseSynapseCommon::SetTrainerClassName(const std::string &value)
 
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseSynapseCommon* NPulseSynapseCommon::New(void)
 {
  return new NPulseSynapseCommon;
 }
 
-// Возвращает указатель на учителя
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СѓС‡РёС‚РµР»СЏ
 NSynapseTrainer* NPulseSynapseCommon::GetTrainer(void)
 {
  return Trainer;
 }
 
-// Устанавливает связи тренера если он есть
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ СЃРІСЏР·Рё С‚СЂРµРЅРµСЂР° РµСЃР»Рё РѕРЅ РµСЃС‚СЊ
 void NPulseSynapseCommon::RebuildInternalLinks(void)
 {
  if(Trainer)
@@ -109,18 +109,18 @@ void NPulseSynapseCommon::RebuildInternalLinks(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseSynapseCommon::ADefault(void)
 {
  Type = -1;
 
- // Начальные значения всем параметрам
- // Амплитуда входных импульсов
+ // РќР°С‡Р°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІСЃРµРј РїР°СЂР°РјРµС‚СЂР°Рј
+ // РђРјРїР»РёС‚СѓРґР° РІС…РѕРґРЅС‹С… РёРјРїСѓР»СЊСЃРѕРІ
  PulseAmplitude=1;
 
- // Вес (эффективность синапса) синапса
+ // Р’РµСЃ (СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ СЃРёРЅР°РїСЃР°) СЃРёРЅР°РїСЃР°
  Resistance=10.0;
 
  Output.Assign(1,1,0.0);
@@ -134,10 +134,10 @@ bool NPulseSynapseCommon::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseSynapseCommon::ABuild(void)
 {
  return true;
@@ -163,10 +163,10 @@ bool NPulseSynapseCommon::AAfterBuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseSynapseCommon::AReset(void)
 {
- // Сброс временных переменных
+ // РЎР±СЂРѕСЃ РІСЂРµРјРµРЅРЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С…
  PreOutput=0;
  InputPulseSignal=false;
  PulseSignalTemp=false;
@@ -174,7 +174,7 @@ bool NPulseSynapseCommon::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseSynapseCommon::ACalculate(void)
 {
  if((*Input)(0,0)>0 && !PulseSignalTemp)

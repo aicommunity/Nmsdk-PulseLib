@@ -24,37 +24,39 @@ using namespace RDK;
 
 class RDK_LIB_TYPE NEyeMuscle: public UNet
 {
-public: // Общедоступные свойства
-/// Коэффициенты
-UCLProperty<vector<double>,NEyeMuscle, ptPubParameter> MulCoeffs;
+public: //  
+/// 
+UProperty<vector<double>,NEyeMuscle, ptPubParameter> MulCoeffs;
 
-ULProperty<double,NEyeMuscle, ptPubParameter> K;
+UProperty<double,NEyeMuscle, ptPubParameter> K;
 
-/// Постоянные времени
-UCLProperty<vector<double>,NEyeMuscle, ptPubParameter> TC;
+///  
+UProperty<vector<double>,NEyeMuscle, ptPubParameter> TC;
 
-public: // Входы и выходы
-UPropertyInputCData<MDMatrix<double>, NEyeMuscle> Inputs;
+public: //   
+UProperty<std::vector<MDMatrix<double>>, NEyeMuscle, ptPubInput> Inputs;
 
-UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> OutputAcceleration;
-UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> OutputLength;
-UPropertyOutputData<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> OutputSpeed;
+UProperty<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> OutputAcceleration;
+UProperty<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> OutputLength;
+UProperty<MDMatrix<double>, NEyeMuscle, ptOutput | ptPubState> OutputSpeed;
 
-public: // Временные переменные
+public: //  
 vector<double> P1,P2,P3,L;
 
-// Порог
+// РџРѕСЂРѕРі
 vector<double> Threshold;
 
-// Скорость
+// РЎРєРѕСЂРѕСЃС‚СЊ
 vector<double> Speed;
 
-// Ускорение
+// РЈСЃРєРѕСЂРµРЅРёРµ
 vector<double> Acceleration;
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+// --------------------------
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
+// --------------------------
 // --------------------------
 NEyeMuscle(void);
 virtual ~NEyeMuscle(void);
@@ -62,51 +64,59 @@ virtual ~NEyeMuscle(void);
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
 // --------------------------
-// Устанавливает амплитуду синуса
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
+// --------------------------
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р°РјРїР»РёС‚СѓРґСѓ СЃРёРЅСѓСЃР°
+// --------------------------
 bool SetAmplitude(double value);
 
-// Устанавливает частоту генерации
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ С‡Р°СЃС‚РѕС‚Сѓ РіРµРЅРµСЂР°С†РёРё
 bool SetFrequency(double value);
 // --------------------------
 
 public:
 // --------------------------
-// Системные методы управления объектом
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
+// --------------------------
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
+// --------------------------
 virtual NEyeMuscle* New(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// --------------------------
+// Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ СЃРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
+// --------------------------
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 virtual bool ACalculate(void);
 // --------------------------
 
 // --------------------------
-// Дополнительные скрытые методы управления счетом
+// --------------------------
+// Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ СЃРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
+// --------------------------
 // --------------------------
 protected:
-// мускульное сокращение
+// РјСѓСЃРєСѓР»СЊРЅРѕРµ СЃРѕРєСЂР°С‰РµРЅРёРµ
 double MuscularReduction(size_t k,double in);
 
-// Пороговая функция
+// РџРѕСЂРѕРіРѕРІР°СЏ С„СѓРЅРєС†РёСЏ
 void ThresholdCount(size_t k);
 // --------------------------
 };

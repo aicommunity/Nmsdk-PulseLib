@@ -8,55 +8,55 @@ namespace NMSDK {
 class NSynapseStdp: public NPulseSynapseCommon
 {
 public:
-ULProperty<double,NSynapseStdp, ptPubParameter> XModCoeff;
+UProperty<double,NSynapseStdp, ptPubParameter> XModCoeff;
 
-ULProperty<double,NSynapseStdp, ptPubParameter> YModCoeff;
+UProperty<double,NSynapseStdp, ptPubParameter> YModCoeff;
 
-ULProperty<double,NSynapseStdp, ptPubParameter> APlus;
+UProperty<double,NSynapseStdp, ptPubParameter> APlus;
 
-ULProperty<double,NSynapseStdp, ptPubParameter> AMinus;
+UProperty<double,NSynapseStdp, ptPubParameter> AMinus;
 
-ULProperty<double,NSynapseStdp, ptPubParameter> XTau;
-ULProperty<double,NSynapseStdp, ptPubParameter> YTau;
+UProperty<double,NSynapseStdp, ptPubParameter> XTau;
+UProperty<double,NSynapseStdp, ptPubParameter> YTau;
 
-public: // Переменные состояния
-/// Усреденение входного импульса
-ULProperty<double,NSynapseStdp, ptPubState> XAvg;
+public: //  
+///   
+UProperty<double,NSynapseStdp, ptPubState> XAvg;
 
-/// Усреденение выходного импульса
-ULProperty<double,NSynapseStdp, ptPubState> YAvg;
+///   
+UProperty<double,NSynapseStdp, ptPubState> YAvg;
 
-/// Промежуточная разность влияния X и Y компонент
-ULProperty<double,NSynapseStdp, ptPubState> XYDiff;
-
-
-public: // Входы и выходы
-/// Входной сигнал постсинаптической активности (либо этого же нейрона, либо внещнего
-/// например модулирующего)
-UPropertyInputData<MDMatrix<double>, NSynapseStdp, ptInput | ptPubState> PsActivityInput;
-
-/// Выходной сигнал влияния STDP
-UPropertyOutputData<MDMatrix<double>, NSynapseStdp, ptOutput | ptPubState> StdpInfluence;
+///    X  Y 
+UProperty<double,NSynapseStdp, ptPubState> XYDiff;
 
 
-public: // Методы
+public: //   
+///     (   ,  
+///  )
+UProperty<MDMatrix<double>, NSynapseStdp, ptInput | ptPubState> PsActivityInput;
+
+///    STDP
+UProperty<MDMatrix<double>, NSynapseStdp, ptOutput | ptPubState> StdpInfluence;
+
+
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+//   
 // --------------------------
 NSynapseStdp(void);
 virtual ~NSynapseStdp(void);
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+//    
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+//         
 virtual NSynapseStdp* New(void);
 // --------------------------
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
+//    
 // --------------------------
 bool SetXModCoeff(const double &value);
 
@@ -72,22 +72,22 @@ bool SetYTau(const double &value);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом 
+//     
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+//        
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+//     
+//   
+//    Reset()   Ready  true
+//    
 virtual bool ABuild(void);
 
-// Сброс процесса счета без потери настроек
+//      
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+//    
 virtual bool ACalculate2(void);
 // --------------------------
 };

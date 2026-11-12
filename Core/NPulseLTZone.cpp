@@ -23,9 +23,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы NPulseLTZoneThreshold
+// РњРµС‚РѕРґС‹ NPulseLTZoneThreshold
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseLTZoneThreshold::NPulseLTZoneThreshold(void)
 {
@@ -37,9 +37,9 @@ NPulseLTZoneThreshold::~NPulseLTZoneThreshold(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseLTZoneThreshold* NPulseLTZoneThreshold::New(void)
 {
  return new NPulseLTZoneThreshold;
@@ -47,12 +47,12 @@ NPulseLTZoneThreshold* NPulseLTZoneThreshold::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NPulseLTZoneThreshold::CheckComponentType(UEPtr<UContainer> comp) const
 {
  return false;
@@ -61,14 +61,14 @@ bool NPulseLTZoneThreshold::CheckComponentType(UEPtr<UContainer> comp) const
 
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseLTZoneThreshold::ADefault(void)
 {
  NPulseLTZoneCommon::ADefault();
 
- // Начальные значения всем параметрам
+ // РќР°С‡Р°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІСЃРµРј РїР°СЂР°РјРµС‚СЂР°Рј
  Threshold=0.00001;
 
  NumChannelsInGroup=2;
@@ -76,34 +76,34 @@ bool NPulseLTZoneThreshold::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseLTZoneThreshold::ABuild(void)
 {
  NPulseLTZoneCommon::ABuild();
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseLTZoneThreshold::AReset(void)
 {
  NPulseLTZoneCommon::AReset();
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseLTZoneThreshold::ACalculate2(void)
 {
  double current_time=GetTime().GetDoubleTime();
  if(CheckPulseOn())
  {
-  // ----> ОТЛАДКА
+  // ----> РћРўР›РђР”РљРђ
   //double eee = Potential.v;
   // < ----
 
-  Output(0,0)=PulseAmplitude.v;
+  Output(0,0)=PulseAmplitude.GetData();
   if(!PulseFlag)
    AvgFrequencyCounter->push_back(current_time);
   PulseFlag=true;
@@ -115,7 +115,7 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
   Output(0,0)=0;
  }
 
- OutputPotential(0,0)=Potential.v;
+ OutputPotential(0,0)=Potential.GetData();
 
  list<double>::iterator I,J,K;
  I=AvgFrequencyCounter->begin();
@@ -155,28 +155,30 @@ bool NPulseLTZoneThreshold::ACalculate2(void)
   OutputPulseTimes(0,i)=*I;
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
 
-/// Возвращает true если условие для генерации импульса выполнено
+/// Р’РѕР·РІСЂР°С‰Р°РµС‚ true РµСЃР»Рё СѓСЃР»РѕРІРёРµ РґР»СЏ РіРµРЅРµСЂР°С†РёРё РёРјРїСѓР»СЊСЃР° РІС‹РїРѕР»РЅРµРЅРѕ
 bool NPulseLTZoneThreshold::CheckPulseOn(void)
 {
- return Potential.v>=Threshold.v;
+ const double potential = Potential.GetData();
+ const double threshold = Threshold.GetData();
+ return potential >= threshold;
 }
 
-/// Возвращает true если условие для генерации имульса не выполнено
+/// Р’РѕР·РІСЂР°С‰Р°РµС‚ true РµСЃР»Рё СѓСЃР»РѕРІРёРµ РґР»СЏ РіРµРЅРµСЂР°С†РёРё РёРјСѓР»СЊСЃР° РЅРµ РІС‹РїРѕР»РЅРµРЅРѕ
 bool NPulseLTZoneThreshold::CheckPulseOff(void)
 {
- return Potential.v<ThresholdOff;
+ return Potential.GetData() < ThresholdOff;
 }
 // --------------------------
 
 
-// Методы NPulseLTZone
+// РњРµС‚РѕРґС‹ NPulseLTZone
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseLTZone::NPulseLTZone(void)
  : TimeConstant("TimeConstant",this,&NPulseLTZone::SetTimeConstant),
@@ -191,9 +193,9 @@ NPulseLTZone::~NPulseLTZone(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
-// Устанавливает значение постоянной времени
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р·РЅР°С‡РµРЅРёРµ РїРѕСЃС‚РѕСЏРЅРЅРѕР№ РІСЂРµРјРµРЅРё
 bool NPulseLTZone::SetTimeConstant(const double &value)
 {
  if(value <= 0)
@@ -201,25 +203,25 @@ bool NPulseLTZone::SetTimeConstant(const double &value)
 
  return true;
 }
-// Устанавливает признак необходимости интеграции в LTZ
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РїСЂРёР·РЅР°Рє РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РёРЅС‚РµРіСЂР°С†РёРё РІ LTZ
 bool NPulseLTZone::SetLTZIntegtation(const bool &value)
 {
  return true;
 }
 
-// Флаг включения стабилизации длительности импульса
+// Р¤Р»Р°Рі РІРєР»СЋС‡РµРЅРёСЏ СЃС‚Р°Р±РёР»РёР·Р°С†РёРё РґР»РёС‚РµР»СЊРЅРѕСЃС‚Рё РёРјРїСѓР»СЊСЃР°
 bool NPulseLTZone::SetUseSpikeStabilizer(const bool &value)
 {
- TimeConstant=0.00144; // Force change time constant
+ TimeConstant.SetDataDirect(0.00144); // Force change time constant
  return true;
 }
 // --------------------------
 
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseLTZone* NPulseLTZone::New(void)
 {
  return new NPulseLTZone;
@@ -227,12 +229,12 @@ NPulseLTZone* NPulseLTZone::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NPulseLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NConnector*>(comp))
@@ -244,14 +246,14 @@ bool NPulseLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseLTZone::ADefault(void)
 {
  NPulseLTZoneThreshold::ADefault();
 
- // Начальные значения всем параметрам
+ // РќР°С‡Р°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІСЃРµРј РїР°СЂР°РјРµС‚СЂР°Рј
  NumChannelsInGroup=2;
  TimeConstant=0.00144;//0.005;
  Threshold=0.00001;
@@ -261,46 +263,50 @@ bool NPulseLTZone::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseLTZone::ABuild(void)
 {
  NPulseLTZoneThreshold::ABuild();
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseLTZone::AReset(void)
 {
  NPulseLTZoneThreshold::AReset();
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseLTZone::ACalculate2(void)
 {
  if(UseLTZIntegtation)
  {
   double input(0.0);
-  if(UseSpikeStabilizer.v)
+  double timeConstantVal = TimeConstant.GetData();
+  double thresholdVal = Threshold.GetData();
+  double neuralPotentialVal = NeuralPotential.GetData();
+  if(UseSpikeStabilizer.GetData())
   {
-   input=(Output(0,0)>0)?-Threshold.v:NeuralPotential.v;
+   input=(Output(0,0)>0)?-thresholdVal:neuralPotentialVal;
   }
-  PrePotential.v+=(input-PrePotential.v)/(TimeConstant.v*TimeStep);
+  double prePotentialVal = PrePotential.GetData();
+  PrePotential = prePotentialVal + (input-prePotentialVal)/(timeConstantVal*TimeStep);
  }
  else
-  PrePotential.v = NeuralPotential.v;
+  PrePotential = NeuralPotential.GetData();
 
- Potential.v=PrePotential.v;
+ Potential = PrePotential.GetData();
  return NPulseLTZoneThreshold::ACalculate2();
 }
 // --------------------------
 
-// Методы NContinuesLTZone
+// РњРµС‚РѕРґС‹ NContinuesLTZone
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NContinuesLTZone::NContinuesLTZone(void)
 {
@@ -312,9 +318,9 @@ NContinuesLTZone::~NContinuesLTZone(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NContinuesLTZone* NContinuesLTZone::New(void)
 {
  return new NContinuesLTZone;
@@ -322,12 +328,12 @@ NContinuesLTZone* NContinuesLTZone::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NContinuesLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NConnector*>(comp))
@@ -339,14 +345,14 @@ bool NContinuesLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NContinuesLTZone::ADefault(void)
 {
  NLTZone::ADefault();
 
- // Начальные значения всем параметрам
+ // РќР°С‡Р°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІСЃРµРј РїР°СЂР°РјРµС‚СЂР°Рј
  PulseAmplitude=1;
  PulseLength=0.001;
  Threshold=0.0;
@@ -355,20 +361,20 @@ bool NContinuesLTZone::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NContinuesLTZone::ABuild(void)
 {
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NContinuesLTZone::AReset(void)
 {
  NLTZone::AReset();
- // Сброс временных переменных
+ // РЎР±СЂРѕСЃ РІСЂРµРјРµРЅРЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С…
  NeuralPotential=0;
  PrePotential=0;
  PulseCounter=0;
@@ -380,37 +386,41 @@ bool NContinuesLTZone::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NContinuesLTZone::ACalculate2(void)
 {
- Potential.v=tanh(NeuralPotential.v);
+ Potential = tanh(NeuralPotential.GetData());
 
- if(Potential.v>=Threshold.v)
+ // РљСЌС€РёСЂСѓРµРј Р·РЅР°С‡РµРЅРёСЏ РґР»СЏ РѕРїС‚РёРјРёР·Р°С†РёРё
+ const double potential = Potential.GetData();
+ const double threshold = Threshold.GetData();
+ 
+ if(potential >= threshold)
  {
-  Output(0,0)=Potential.v;
-  OutputPotential(0,0)=Potential.v;
+  Output(0,0)=potential;
+  OutputPotential(0,0)=potential;
   PulseFlag=true;
  }
  else
- if(Potential.v<=0)
+ if(potential <= 0)
  {
   PulseFlag=false;
   Output(0,0)=0;
-  OutputPotential(0,0)=Potential.v;
+  OutputPotential(0,0)=potential;
  }
  else
-  OutputPotential(0,0)=Potential.v;
+  OutputPotential(0,0)=potential;
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
 // --------------------------
 
-// Методы NPulseSimpleLTZone
+// РњРµС‚РѕРґС‹ NPulseSimpleLTZone
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseSimpleLTZone::NPulseSimpleLTZone(void)
 : MaxFrequency("MaxFrequency",this)
@@ -424,9 +434,9 @@ NPulseSimpleLTZone::~NPulseSimpleLTZone(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseSimpleLTZone* NPulseSimpleLTZone::New(void)
 {
  return new NPulseSimpleLTZone;
@@ -434,12 +444,12 @@ NPulseSimpleLTZone* NPulseSimpleLTZone::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 {
  if(dynamic_pointer_cast<NPulseGenerator>(comp))
@@ -451,9 +461,9 @@ bool NPulseSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseSimpleLTZone::ADefault(void)
 {
  NPulseLTZone::ADefault();
@@ -465,17 +475,17 @@ bool NPulseSimpleLTZone::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseSimpleLTZone::ABuild(void)
 {
  //generator.Build();
  return NPulseLTZone::ABuild();
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseSimpleLTZone::AReset(void)
 {
  //generator.SetEnvironment(GetEnvironment());
@@ -484,17 +494,22 @@ bool NPulseSimpleLTZone::AReset(void)
  return NPulseLTZone::AReset();
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseSimpleLTZone::ACalculate2(void)
 {
+ // РљСЌС€РёСЂСѓРµРј С‡Р°СЃС‚Рѕ РёСЃРїРѕР»СЊР·СѓРµРјС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІ РЅР°С‡Р°Р»Рµ РјРµС‚РѕРґР°
+ const double potential = Potential.GetData();
+ const double maxFrequency = MaxFrequency.GetData();
+ 
  generator.Amplitude=PulseAmplitude;
- if(Potential.v>MaxFrequency)
-  Potential.v=MaxFrequency;
- if(Potential.v>0)
+ if(potential > maxFrequency)
+  Potential = maxFrequency;
+ if(potential > 0)
  {
-  if(fabs(generator.Frequency.v-Potential.v)>0.001)
+  const double generatorFreq = generator.Frequency.GetData();
+  if(fabs(generatorFreq - potential) > 0.001)
   {
-   generator.Frequency=Potential.v;
+   generator.Frequency = potential;
 //   generator.Reset();
   }
  }
@@ -506,20 +521,20 @@ bool NPulseSimpleLTZone::ACalculate2(void)
 
  Output(0,0)=generator.Output(0,0);
  OutputPotential(0,0)=generator.OutputPotential(0,0);
- OutputFrequency(0,0)=Potential.v;
+ OutputFrequency(0,0)=potential;
 
  OutputPulseTimes(0,0)=generator.OutputPulseTimes(0,0);
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }
 // --------------------------
 
-// Методы NContinuesSimpleLTZone
+// РњРµС‚РѕРґС‹ NContinuesSimpleLTZone
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NContinuesSimpleLTZone::NContinuesSimpleLTZone(void)
 {
@@ -531,9 +546,9 @@ NContinuesSimpleLTZone::~NContinuesSimpleLTZone(void)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NContinuesSimpleLTZone* NContinuesSimpleLTZone::New(void)
 {
  return new NContinuesSimpleLTZone;
@@ -541,12 +556,12 @@ NContinuesSimpleLTZone* NContinuesSimpleLTZone::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
-// Метод проверяет на допустимость объекта данного типа
-// в качестве компоненты данного объекта
-// Метод возвращает 'true' в случае допустимости
-// и 'false' в случае некорректного типа
+// РњРµС‚РѕРґ РїСЂРѕРІРµСЂСЏРµС‚ РЅР° РґРѕРїСѓСЃС‚РёРјРѕСЃС‚СЊ РѕР±СЉРµРєС‚Р° РґР°РЅРЅРѕРіРѕ С‚РёРїР°
+// РІ РєР°С‡РµСЃС‚РІРµ РєРѕРјРїРѕРЅРµРЅС‚С‹ РґР°РЅРЅРѕРіРѕ РѕР±СЉРµРєС‚Р°
+// РњРµС‚РѕРґ РІРѕР·РІСЂР°С‰Р°РµС‚ 'true' РІ СЃР»СѓС‡Р°Рµ РґРѕРїСѓСЃС‚РёРјРѕСЃС‚Рё
+// Рё 'false' РІ СЃР»СѓС‡Р°Рµ РЅРµРєРѕСЂСЂРµРєС‚РЅРѕРіРѕ С‚РёРїР°
 bool NContinuesSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 {
 // if(dynamic_cast<const NConnector*>(comp))
@@ -558,37 +573,37 @@ bool NContinuesSimpleLTZone::CheckComponentType(UEPtr<UContainer> comp) const
 
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NContinuesSimpleLTZone::ADefault(void)
 {
  return NContinuesLTZone::ADefault();
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NContinuesSimpleLTZone::ABuild(void)
 {
  return NContinuesLTZone::ABuild();
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NContinuesSimpleLTZone::AReset(void)
 {
  return NContinuesLTZone::AReset();
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NContinuesSimpleLTZone::ACalculate2(void)
 {
- Output(0,0)=Potential.v;
- OutputPotential(0,0)=Potential.v;
+ Output(0,0)=Potential.GetData();
+ OutputPotential(0,0)=Potential.GetData();
 
  if(MainOwner)
-  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.v+=CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
+  dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs = dynamic_pointer_cast<NPulseNeuronCommon>(MainOwner)->NumActiveOutputs.GetData() + CachedNumAConnectors;//static_cast<double>(GetNumAConnectors(0));
 
  return true;
 }

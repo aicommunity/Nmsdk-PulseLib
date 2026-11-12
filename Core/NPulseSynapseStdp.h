@@ -23,44 +23,46 @@ namespace NMSDK {
 
 class RDK_LIB_TYPE NPulseSynapseStdp: public NPulseSynapse
 {
-public: // Общедоступные свойства
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> XModCoeff;
+public: //  
+UProperty<double,NPulseSynapseStdp, ptPubParameter> XModCoeff;
 
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> YModCoeff;
+UProperty<double,NPulseSynapseStdp, ptPubParameter> YModCoeff;
 
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> APlus;
+UProperty<double,NPulseSynapseStdp, ptPubParameter> APlus;
 
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> AMinus;
+UProperty<double,NPulseSynapseStdp, ptPubParameter> AMinus;
 
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> XTau;
-ULProperty<double,NPulseSynapseStdp, ptPubParameter> YTau;
+UProperty<double,NPulseSynapseStdp, ptPubParameter> XTau;
+UProperty<double,NPulseSynapseStdp, ptPubParameter> YTau;
 
-public: // Переменные состояния
-/// Усреденение входного импульса
-ULProperty<double,NPulseSynapseStdp, ptPubState> XAvg;
+public: //  
+/// РЈСЃСЂРµРґРµРЅРµРЅРёРµ РІС…РѕРґРЅРѕРіРѕ РёРјРїСѓР»СЊСЃР°
+UProperty<double,NPulseSynapseStdp, ptPubState> XAvg;
 
-/// Усреденение выходного импульса
-ULProperty<double,NPulseSynapseStdp, ptPubState> YAvg;
+/// РЈСЃСЂРµРґРµРЅРµРЅРёРµ РІС‹С…РѕРґРЅРѕРіРѕ РёРјРїСѓР»СЊСЃР°
+UProperty<double,NPulseSynapseStdp, ptPubState> YAvg;
 
-/// Промежуточная разность влияния X и Y компонент
-ULProperty<double,NPulseSynapseStdp, ptPubState> XYDiff;
+/// РџСЂРѕРјРµР¶СѓС‚РѕС‡РЅР°СЏ СЂР°Р·РЅРѕСЃС‚СЊ РІР»РёСЏРЅРёСЏ X Рё Y РєРѕРјРїРѕРЅРµРЅС‚
+UProperty<double,NPulseSynapseStdp, ptPubState> XYDiff;
 
 
-public: // Входы и выходы
-/// Входной сигнал внешней постсинаптической активности
-/// (например модулирующего нейрона)
-UPropertyInputData<MDMatrix<double>, NPulseSynapseStdp, ptInput | ptPubState> PsActivityInput;
+public: //   
+/// Р’С…РѕРґРЅРѕР№ СЃРёРіРЅР°Р» РІРЅРµС€РЅРµР№ РїРѕСЃС‚СЃРёРЅР°РїС‚РёС‡РµСЃРєРѕР№ Р°РєС‚РёРІРЅРѕСЃС‚Рё
+/// (РЅР°РїСЂРёРјРµСЂ РјРѕРґСѓР»РёСЂСѓСЋС‰РµРіРѕ РЅРµР№СЂРѕРЅР°)
+UProperty<MDMatrix<double>, NPulseSynapseStdp, ptInput | ptPubState> PsActivityInput;
 
-/// Выходной сигнал влияния STDP
-UPropertyOutputData<MDMatrix<double>, NPulseSynapseStdp, ptOutput | ptPubState> StdpInfluence;
+/// Р’С‹С…РѕРґРЅРѕР№ СЃРёРіРЅР°Р» РІР»РёСЏРЅРёСЏ STDP
+UProperty<MDMatrix<double>, NPulseSynapseStdp, ptOutput | ptPubState> StdpInfluence;
 
-protected: // Основные свойства
+protected: //  
 
-protected: // Временные переменные
+protected: //  
 
-public: // Методы
+public: // 
 // --------------------------
-// Конструкторы и деструкторы
+// --------------------------
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
+// --------------------------
 // --------------------------
 NPulseSynapseStdp(void);
 virtual ~NPulseSynapseStdp(void);
@@ -68,7 +70,9 @@ virtual ~NPulseSynapseStdp(void);
 
 protected:
 // --------------------------
-// Методы управления общедоступными свойствами
+// --------------------------
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
+// --------------------------
 // --------------------------
 bool SetXModCoeff(const double &value);
 
@@ -85,29 +89,33 @@ bool SetYTau(const double &value);
 
 public:
 // --------------------------
-// Системные методы управления объектом
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
+// --------------------------
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
+// --------------------------
 virtual NPulseSynapseStdp* New(void);
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// --------------------------
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
+// --------------------------
 // --------------------------
 protected:
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 virtual bool ADefault(void);
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 virtual bool ABuild(void);
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 virtual bool AReset(void);
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 virtual bool ACalculate2(void);
 // --------------------------
 };

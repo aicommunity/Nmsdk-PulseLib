@@ -5,9 +5,9 @@
 
 namespace NMSDK {
 
-// ÃÂÚÓ‰˚
+// –ú–µ—Ç–æ–¥—ã
 // --------------------------
-//  ÓÌÒÚÛÍÚÓ˚ Ë ‰ÂÒÚÛÍÚÓ˚
+// –ö–æ–Ω—Å—Ç—Ä—É–∫—Ç–æ—Ä—ã –∏ –¥–µ—Å—Ç—Ä—É–∫—Ç–æ—Ä—ã
 // --------------------------
 NSynapseStdp::NSynapseStdp(void)
 : XModCoeff("XModCoeff",this, &NSynapseStdp::SetXModCoeff),
@@ -30,9 +30,9 @@ NSynapseStdp::~NSynapseStdp(void)
 // --------------------------
 
 // --------------------------
-// —ËÒÚÂÏÌ˚Â ÏÂÚÓ‰˚ ÛÔ‡‚ÎÂÌËˇ Ó·˙ÂÍÚÓÏ
+// –°–∏—Å—Ç–µ–º–Ω—ã–µ –º–µ—Ç–æ–¥—ã —É–ø—Ä–∞–≤–ª–µ–Ω–∏—è –æ–±—ä–µ–∫—Ç–æ–º
 // --------------------------
-// ¬˚‰ÂÎˇÂÚ Ô‡ÏˇÚ¸ ‰Îˇ ÌÓ‚ÓÈ ˜ËÒÚÓÈ ÍÓÔËË Ó·˙ÂÍÚ‡ ˝ÚÓ„Ó ÍÎ‡ÒÒ‡
+// –í—ã–¥–µ–ª—è–µ—Ç –ø–∞–º—è—Ç—å –¥–ª—è –Ω–æ–≤–æ–π —á–∏—Å—Ç–æ–π –∫–æ–ø–∏–∏ –æ–±—ä–µ–∫—Ç–∞ —ç—Ç–æ–≥–æ –∫–ª–∞—Å—Å–∞
 NSynapseStdp* NSynapseStdp::New(void)
 {
  return new NSynapseStdp;
@@ -40,7 +40,7 @@ NSynapseStdp* NSynapseStdp::New(void)
 // --------------------------
 
 // --------------------------
-// ÃÂÚÓ‰˚ ÛÔ‡‚ÎÂÌËˇ Ó·˘Â‰ÓÒÚÛÔÌ˚ÏË Ò‚ÓÈÒÚ‚‡ÏË
+// –ú–µ—Ç–æ–¥—ã —É–ø—Ä–∞–≤–ª–µ–Ω–∏—è –æ–±—â–µ–¥–æ—Å—Ç—É–ø–Ω—ã–º–∏ —Å–≤–æ–π—Å—Ç–≤–∞–º–∏
 // --------------------------
 bool NSynapseStdp::SetXModCoeff(const double &value)
 {
@@ -86,9 +86,9 @@ bool NSynapseStdp::SetYTau(const double &value)
 // --------------------------
 
 // --------------------------
-// —Í˚Ú˚Â ÏÂÚÓ‰˚ ÛÔ‡‚ÎÂÌËˇ Ò˜ÂÚÓÏ
+// –°–∫—Ä—ã—Ç—ã–µ –º–µ—Ç–æ–¥—ã —É–ø—Ä–∞–≤–ª–µ–Ω–∏—è —Å—á–µ—Ç–æ–º
 // --------------------------
-// ¬ÓÒÒÚ‡ÌÓ‚ÎÂÌËÂ Ì‡ÒÚÓÂÍ ÔÓ ÛÏÓÎ˜‡ÌË˛ Ë Ò·ÓÒ ÔÓˆÂÒÒ‡ Ò˜ÂÚ‡
+// –í–æ—Å—Å—Ç–∞–Ω–æ–≤–ª–µ–Ω–∏–µ –Ω–∞—Å—Ç—Ä–æ–µ–∫ –ø–æ —É–º–æ–ª—á–∞–Ω–∏—é –∏ —Å–±—Ä–æ—Å –ø—Ä–æ—Ü–µ—Å—Å–∞ —Å—á–µ—Ç–∞
 bool NSynapseStdp::ADefault(void)
 {
  if(!NPulseSynapseCommon::ADefault())
@@ -105,10 +105,10 @@ bool NSynapseStdp::ADefault(void)
  return true;
 }
 
-// Œ·ÂÒÔÂ˜Ë‚‡ÂÚ Ò·ÓÍÛ ‚ÌÛÚÂÌÌÂÈ ÒÚÛÍÚÛ˚ Ó·˙ÂÍÚ‡
-// ÔÓÒÎÂ Ì‡ÒÚÓÈÍË Ô‡‡ÏÂÚÓ‚
-// ¿‚ÚÓÏ‡ÚË˜ÂÒÍË ‚˚Á˚‚‡ÂÚ ÏÂÚÓ‰ Reset() Ë ‚˚ÒÚ‡‚ÎˇÂÚ Ready ‚ true
-// ‚ ÒÎÛ˜‡Â ÛÒÔÂ¯ÌÓÈ Ò·ÓÍË
+// –û–±–µ—Å–ø–µ—á–∏–≤–∞–µ—Ç —Å–±–æ—Ä–∫—É –≤–Ω—É—Ç—Ä–µ–Ω–Ω–µ–π —Å—Ç—Ä—É–∫—Ç—É—Ä—ã –æ–±—ä–µ–∫—Ç–∞
+// –ø–æ—Å–ª–µ –Ω–∞—Å—Ç—Ä–æ–π–∫–∏ –ø–∞—Ä–∞–º–µ—Ç—Ä–æ–≤
+// –ê–≤—Ç–æ–º–∞—Ç–∏—á–µ—Å–∫–∏ –≤—ã–∑—ã–≤–∞–µ—Ç –º–µ—Ç–æ–¥ Reset() –∏ –≤—ã—Å—Ç–∞–≤–ª—è–µ—Ç Ready –≤ true
+// –≤ —Å–ª—É—á–∞–µ —É—Å–ø–µ—à–Ω–æ–π —Å–±–æ—Ä–∫–∏
 bool NSynapseStdp::ABuild(void)
 {
  if(!NPulseSynapseCommon::ABuild())
@@ -117,7 +117,7 @@ bool NSynapseStdp::ABuild(void)
  return true;
 }
 
-// —·ÓÒ ÔÓˆÂÒÒ‡ Ò˜ÂÚ‡.
+// –°–±—Ä–æ—Å –ø—Ä–æ—Ü–µ—Å—Å–∞ —Å—á–µ—Ç–∞.
 bool NSynapseStdp::AReset(void)
 {
  if(!NPulseSynapseCommon::AReset())
@@ -130,7 +130,7 @@ bool NSynapseStdp::AReset(void)
  return true;
 }
 
-// ¬˚ÔÓÎÌˇÂÚ ‡Ò˜ÂÚ ˝ÚÓ„Ó Ó·˙ÂÍÚ‡
+// –í—ã–ø–æ–ª–Ω—è–µ—Ç —Ä–∞—Å—á–µ—Ç —ç—Ç–æ–≥–æ –æ–±—ä–µ–∫—Ç–∞
 bool NSynapseStdp::ACalculate2(void)
 {
  bool is_input_pulse_active(false);
@@ -148,23 +148,38 @@ bool NSynapseStdp::ACalculate2(void)
  if((*PsActivityInput)(0,0)>0)
   is_output_pulse_active=true;
 
+ double xTauVal = XTau.GetData();
+ double yTauVal = YTau.GetData();
+ double xModCoeffVal = XModCoeff.GetData();
+ double yModCoeffVal = YModCoeff.GetData();
+ double aPlusVal = APlus.GetData();
+ double aMinusVal = AMinus.GetData();
+ double resistanceVal = Resistance.GetData();
+ 
+ // –ö—ç—à–∏—Ä—É–µ–º —Ç–µ–∫—É—â–∏–µ –∑–Ω–∞—á–µ–Ω–∏—è –¥–ª—è –æ–ø—Ç–∏–º–∏–∑–∞—Ü–∏–∏
+ double xAvg = XAvg.GetData();
+ double yAvg = YAvg.GetData();
+ 
  if(is_output_pulse_active)
-  XAvg.v+=(XModCoeff.v-XAvg.v)/(XTau.v*TimeStep);
+  xAvg = xAvg + (xModCoeffVal - xAvg)/(xTauVal*TimeStep);
  else
-  XAvg.v-=XAvg.v/(XTau.v*TimeStep);
+  xAvg = xAvg - xAvg/(xTauVal*TimeStep);
+ XAvg = xAvg;
 
  if(is_input_pulse_active)
-  YAvg.v+=(YModCoeff.v-YAvg.v)/(YTau.v*TimeStep);
+  yAvg = yAvg + (yModCoeffVal - yAvg)/(yTauVal*TimeStep);
  else
-  YAvg.v-=YAvg.v/(YTau.v*TimeStep);
+  yAvg = yAvg - yAvg/(yTauVal*TimeStep);
+ YAvg = yAvg;
 
- double x_avg_res=(is_output_pulse_active)?XAvg.v*APlus.v:0;
- double y_avg_res=(is_input_pulse_active)?YAvg.v*AMinus.v:0;;
+ double x_avg_res=(is_output_pulse_active)?xAvg*aPlusVal:0;
+ double y_avg_res=(is_input_pulse_active)?yAvg*aMinusVal:0;;
 
- XYDiff.v+=(x_avg_res-y_avg_res)/TimeStep;
+ const double xyDiff = XYDiff.GetData();
+ XYDiff = xyDiff + (x_avg_res-y_avg_res)/TimeStep;
 
- StdpInfluence(0,0)=(1-XYDiff.v);
- Output(0,0)=StdpInfluence(0,0)*Resistance.v;
+ StdpInfluence(0,0)=(1-XYDiff.GetData());
+ Output(0,0)=StdpInfluence(0,0)*resistanceVal;
 
  return true;
 }

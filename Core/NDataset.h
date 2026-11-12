@@ -1,155 +1,57 @@
 #ifndef NDATASET_H
 #define NDATASET_H
 
-#include "NPulseGenerator.h"
-#include "../../../Rdk/Deploy/Include/rdk.h"
+#include "NDatasetBase.h"
 
 namespace NMSDK {
 
 using namespace RDK;
 
-// Класс, отвечающий за датасет
-class RDK_LIB_TYPE NDataset: public UNet
+/// File-backed dataset: loads feature/class matrices from disk and drives pulse generators
+class RDK_LIB_TYPE NDataset: public NDatasetBase
 {
-/// Имя класса, создающего генератор импульсов
-ULProperty<std::string, NDataset, ptPubParameter> PulseGeneratorClassName;
+public:
+/// Request dataset reload from file (cleared after successful load)
+UProperty<bool, NDataset, ptPubParameter> ReloadDataset;
 
-///Число генераторов
-ULProperty<int,NDataset, ptPubParameter> NumGenerators;
+/// Dataset file path (absolute, or relative to Config/Work per flags)
+UProperty<std::string, NDataset, ptPubParameter> FileName;
 
-///Число признаков (из файла)
-ULProperty<int,NDataset, ptPubParameter> NumFeatures;
+/// Interpret FileName relative to the project config/data directory
+UProperty<bool, NDataset, ptPubParameter> UseRelativePathFromConfig;
 
-///Число примеров (из файла)
-ULProperty<int,NDataset, ptPubParameter> NumSamples;
+/// Interpret FileName relative to the application work directory
+UProperty<bool, NDataset, ptPubParameter> UseRelativePathFromWorkDir;
 
-///Матрица считанных фьюч
-ULProperty<MDMatrix<double>,NDataset, ptPubParameter> MatrixData;
-
-///Матрица считанных классов
-ULProperty<MDMatrix<int>,NDataset, ptPubParameter> MatrixClasses;
-
-///Флаг повтора процедуры загрузки данных
-ULProperty<bool,NDataset, ptPubParameter> ReloadDataset;
-
-///Матрица временных сдвигов запусков генераторов
-ULProperty<MDMatrix<double>,NDataset, ptPubState> MatrixDelay;
-
-///Номер строки в датасете
-ULProperty<int,NDataset, ptPubParameter> Iteration;
-
-///Коэффициент во временной кодировке
-ULProperty<float,NDataset, ptPubParameter> Tay;
-
-/// Время задержки начала обучения относительно старта системы (сек)
-ULProperty<double, NDataset, ptPubParameter> Delay;
-
-///Параметр активации, режим выдачи данных: если =0, то генераторы выключены
-///если =1, то показывают время выдачи сигнала
-///если =2, то работают бесконечное время
-ULProperty<int, NDataset, ptPubState> StateGeneration;
-
-///Время генерации, в секундах
-ULProperty<double, NDataset, ptPubState> TimeGeneration;
-
-///Время работы
-ULProperty<double, NDataset, ptPubState> OperatingTime;
-
-///Параметр изменения работы генераторов
-ULProperty<bool, NDataset, ptPubState> ResetDelay;
-
-/// Частота генераторов (Гц)
-ULProperty<double, NDataset, ptPubParameter> SpikesFrequency;
-
-/// Число классифицируемых классов
-ULProperty<int,NDataset, ptPubState> NumClasses;
-
-/// Генераторы
-vector<NPulseGeneratorTransit*> Generators;
-
-///Файл с датасетом
-ULProperty<string,NDataset, ptPubState> FileName;
-
-protected:
-
- // <-------
-
-public: // Методы
-// --------------------------
-// Конструкторы и деструкторы
-// --------------------------
+public:
 NDataset(void);
 virtual ~NDataset(void);
-// --------------------------
 
-// --------------------------
-// Методы упраления параметрами
-// --------------------------
+bool SetFileName(const std::string &value);
+bool SetUseRelativePathFromConfig(const bool &value);
+bool SetUseRelativePathFromWorkDir(const bool &value);
 
-/// Имя класса, создающего генератор импульсов
-bool SetPulseGeneratorClassName(const std::string &value);
-
-///Число генераторов
-bool SetNumGenerators(const int &value);
-
-///Число признаков (из файла)
-bool SetNumFeatures(const int &value);
-
-///Матрица считанных фьюч
-bool SetMatrixData(const MDMatrix<double> &value);
-
-///Матрица считанных классов
-bool SetMatrixClasses(const MDMatrix<int> &value);
-
-/// Частота генераторов (Гц)
-bool SetSpikesFrequency(const double &value);
-
-/// Время задержки начала обучения относительно старта системы (сек)
-bool SetDelay(const double &value);
-
-/// Выполняет завершающие пользовательские действия
-/// при добавлении дочернего компонента в этот объект
-// Метод будет вызван только если comp был успешно добавлен в список компонент
-virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer = 0);
-
-/// Выполняет предварительные пользовательские действия
-/// при удалении дочернего компонента из этого объекта
-// Метод будет вызван только если comp существует в списке компонент
-virtual bool ADelComponent(UEPtr<UContainer> comp);
-
-// --------------------------
-// Системные методы управления объектом
-// --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
 virtual NDataset* New(void);
 static UComponent* NewStatic(void);
-// --------------------------
 
-
-// --------------------------
-// Скрытые методы управления счетом
-// --------------------------
 protected:
-// Функция для работы с файлами.
-// Осуществляет чтение входных данных из файла,
-// Обработку результатов
-bool TreatDataFromFile(void);
+/// Result of attempting to read FileName into MatrixData/MatrixClasses
+enum class FileLoadResult
+{
+    Loaded,      ///< File parsed into matrices
+    Unavailable, ///< Empty path or file missing вЂ” idle empty matrices OK
+    Invalid      ///< File opened but content/schema is wrong
+};
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+/// Load matrices from FileName; Unavailable clears matrices and keeps ReloadDataset
+FileLoadResult TreatDataFromFile(void);
+
+/// Resolve FileName using absolute / Config / Work rules
+std::string CalcActualSourceFilePath(const std::string &file_name);
+
+virtual bool PrepareDataset(void);
 virtual bool ADefault(void);
-
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
-virtual bool ABuild(void);
-
-// Сброс процесса счета.
-virtual bool AReset(void);
-
-// Выполняет расчет этого объекта
 virtual bool ACalculate(void);
-// --------------------------
 };
 
 }

@@ -23,9 +23,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPulseSynapseStdp::NPulseSynapseStdp(void)
  //: NConnector(name),
@@ -51,7 +51,7 @@ NPulseSynapseStdp::~NPulseSynapseStdp(void)
 
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
 bool NPulseSynapseStdp::SetXModCoeff(const double &value)
 {
@@ -98,9 +98,9 @@ bool NPulseSynapseStdp::SetYTau(const double &value)
 
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPulseSynapseStdp* NPulseSynapseStdp::New(void)
 {
  return new NPulseSynapseStdp;
@@ -108,9 +108,9 @@ NPulseSynapseStdp* NPulseSynapseStdp::New(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPulseSynapseStdp::ADefault(void)
 {
  if(!NPulseSynapse::ADefault())
@@ -127,10 +127,10 @@ bool NPulseSynapseStdp::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPulseSynapseStdp::ABuild(void)
 {
  if(!NPulseSynapse::ABuild())
@@ -139,7 +139,7 @@ bool NPulseSynapseStdp::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPulseSynapseStdp::AReset(void)
 {
  if(!NPulseSynapse::AReset())
@@ -152,7 +152,7 @@ bool NPulseSynapseStdp::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPulseSynapseStdp::ACalculate2(void)
 {
  if(!NPulseSynapse::ACalculate2())
@@ -189,22 +189,36 @@ bool NPulseSynapseStdp::ACalculate2(void)
    is_output_pulse_active=true;
  }
 
+ double xTauVal = XTau.GetData();
+ double yTauVal = YTau.GetData();
+ double xModCoeffVal = XModCoeff.GetData();
+ double yModCoeffVal = YModCoeff.GetData();
+ double aPlusVal = APlus.GetData();
+ double aMinusVal = AMinus.GetData();
+ 
+ // РљСЌС€РёСЂСѓРµРј С‚РµРєСѓС‰РёРµ Р·РЅР°С‡РµРЅРёСЏ РґР»СЏ РѕРїС‚РёРјРёР·Р°С†РёРё
+ double xAvg = XAvg.GetData();
+ double yAvg = YAvg.GetData();
+ 
  if(is_output_pulse_active)
-  XAvg.v+=(XModCoeff-XAvg.v)/(XTau.v*TimeStep);
+  xAvg = xAvg + (xModCoeffVal - xAvg)/(xTauVal*TimeStep);
  else
-  XAvg.v-=XAvg.v/(XTau.v*TimeStep);
+  xAvg = xAvg - xAvg/(xTauVal*TimeStep);
+ XAvg = xAvg;
 
  if(is_input_pulse_active)
-  YAvg.v+=(YModCoeff-YAvg.v)/(YTau.v*TimeStep);
+  yAvg = yAvg + (yModCoeffVal - yAvg)/(yTauVal*TimeStep);
  else
-  YAvg.v-=YAvg.v/(YTau.v*TimeStep);
+  yAvg = yAvg - yAvg/(yTauVal*TimeStep);
+ YAvg = yAvg;
 
- double x_avg_res=(is_output_pulse_active)?XAvg.v*APlus.v:0;
- double y_avg_res=(is_input_pulse_active)?YAvg.v*AMinus.v:0;;
+ double x_avg_res=(is_output_pulse_active)?xAvg*aPlusVal:0;
+ double y_avg_res=(is_input_pulse_active)?yAvg*aMinusVal:0;;
 
- XYDiff.v+=(x_avg_res-y_avg_res)/TimeStep;
+ const double xyDiff = XYDiff.GetData();
+ XYDiff = xyDiff + (x_avg_res-y_avg_res)/TimeStep;
 
- StdpInfluence(0,0)=(1-XYDiff.v);
+ StdpInfluence(0,0)=(1-XYDiff.GetData());
 
  if(StdpInfluence(0,0)<0)
   Output(0,0)=0;

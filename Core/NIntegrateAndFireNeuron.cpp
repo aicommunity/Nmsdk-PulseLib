@@ -6,7 +6,7 @@
 
 namespace NMSDK
 {
-    //Конструкторы
+    //РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹
     NIntegrateAndFireNeuron::NIntegrateAndFireNeuron(void)
      : C("C", this),
        U0("U0", this),
@@ -17,18 +17,18 @@ namespace NMSDK
     {
     }
 
-    // Деструкторы
+    // Р”РµСЃС‚СЂСѓРєС‚РѕСЂС‹
     NIntegrateAndFireNeuron::~NIntegrateAndFireNeuron(void)
     {
     }
 
-    // Выделяет память для новой чистой копии объекта этого класса
+    // Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
     NIntegrateAndFireNeuron* NIntegrateAndFireNeuron::New(void)
     {
         return new NIntegrateAndFireNeuron;
     }
 
-    // Восстановление настроек по умолчанию и сброс процесса счета
+    // Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
     bool NIntegrateAndFireNeuron::ADefault(void)
     {
         C = 10e-10;
@@ -37,10 +37,10 @@ namespace NMSDK
         return true;
     }
 
-    // Обеспечивает сборку внутренней структуры объекта
-    // после настройки параметров
-    // Автоматически вызывает метод Reset() и выставляет Ready в true
-    // в случае успешной сборки
+    // РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+    // РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+    // РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+    // РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
     bool NIntegrateAndFireNeuron::ABuild(void)
     {
      I->Assign(1,1,0.0);
@@ -48,7 +48,7 @@ namespace NMSDK
         return true;
     }
 
-    // Сброс процесса счета без потери настроек
+    // РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р° Р±РµР· РїРѕС‚РµСЂРё РЅР°СЃС‚СЂРѕРµРє
     bool NIntegrateAndFireNeuron::AReset(void)
     {
         (*U)(0,0)=U0;
@@ -56,12 +56,12 @@ namespace NMSDK
         return true;
     }
 
-    // Выполняет расчет этого объекта
+    // Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
     bool NIntegrateAndFireNeuron::ACalculate(void)
     {
      MDMatrix<double>& refI=*I;
      MDMatrix<double>& refU=*U;
-        //шаг
+        //С€Р°Рі
         double step=1./TimeStep;
         refU(0,0)=refI(0,0)*step/C+refU(0,0);
         if(refU(0,0)>Upr)

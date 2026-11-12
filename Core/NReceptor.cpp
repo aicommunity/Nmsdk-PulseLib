@@ -22,9 +22,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NReceptor::NReceptor(void)
 //: NSource(name),
@@ -50,9 +50,9 @@ NReceptor::~NReceptor(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
-// Коэффициент усиления входного сигнала
+// РљРѕСЌС„С„РёС†РёРµРЅС‚ СѓСЃРёР»РµРЅРёСЏ РІС…РѕРґРЅРѕРіРѕ СЃРёРіРЅР°Р»Р°
 bool NReceptor::SetGain(const double &value)
 {
  if(value <=0)
@@ -63,9 +63,9 @@ bool NReceptor::SetGain(const double &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NReceptor* NReceptor::New(void)
 {
  return new NReceptor;
@@ -73,9 +73,9 @@ NReceptor* NReceptor::New(void)
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NReceptor::ADefault(void)
 {
  Gain=1;
@@ -91,25 +91,27 @@ bool NReceptor::ADefault(void)
  return NSource::ADefault();
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NReceptor::ABuild(void)
 {
  return true;
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NReceptor::AReset(void)
 {
  return NSource::AReset();
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NReceptor::ACalculate(void)
 {
- OutputRange=MaxOutputRange.v-MinOutputRange.v;
+ const double maxOutputRange = MaxOutputRange.GetData();
+ const double minOutputRange = MinOutputRange.GetData();
+ OutputRange = maxOutputRange - minOutputRange;
 
  Output.Resize(Input->GetRows(),Input->GetCols());
 
@@ -119,68 +121,77 @@ bool NReceptor::ACalculate(void)
    double input=0;
    input=(*Input)(i,j);// GetInputData(i)->Double[j];
 
-   switch(InputAdaptationMode.v)
+   switch(InputAdaptationMode.GetData())
    {
    case 1:
-	if(input<MinInputRange.v)
+	if(input<MinInputRange.GetData())
 	 MinInputRange=input;
-	if(input>MaxInputRange.v)
+	if(input>MaxInputRange.GetData())
 	 MaxInputRange=input;
    break;
 
    case 2:
-	if(input<MinInputRange.v)
-	 MinInputRange=input;
-	else // забывание
 	{
-	 MinInputRange.v-=MinInputRange.v/(InputAdaptationArrestingTC*TimeStep);
-	}
+	 const double minInputRange = MinInputRange.GetData();
+	 if(input<minInputRange)
+	  MinInputRange=input;
+	 else // Р·Р°Р±С‹РІР°РЅРёРµ
+	 {
+	  MinInputRange = minInputRange - minInputRange/(InputAdaptationArrestingTC*TimeStep);
+	 }
 
-	if(input>MaxInputRange.v)
-	 MaxInputRange=input;
-	else // забывание
-	{
-     MaxInputRange.v-=MaxInputRange.v/(InputAdaptationArrestingTC*TimeStep);
+	 const double maxInputRange = MaxInputRange.GetData();
+	 if(input>maxInputRange)
+	  MaxInputRange=input;
+	 else // Р·Р°Р±С‹РІР°РЅРёРµ
+	 {
+      const double maxInputRangeVal = MaxInputRange.GetData();
+      MaxInputRange = maxInputRangeVal - maxInputRangeVal/(InputAdaptationArrestingTC*TimeStep);
+	 }
 	}
    break;
    }
 
-   InputRange=MaxInputRange.v-MinInputRange.v;
+   const double maxInputRangeFinal = MaxInputRange.GetData();
+   const double minInputRangeFinal = MinInputRange.GetData();
+   InputRange = maxInputRangeFinal - minInputRangeFinal;
    if(!InputRange)
 	return true;
 
-   // Преобразовываем сигнал к заданному диапазону
-   input=(input-MinInputRange.v)*OutputRange/InputRange+MinOutputRange.v;
+   // РџСЂРµРѕР±СЂР°Р·РѕРІС‹РІР°РµРј СЃРёРіРЅР°Р» Рє Р·Р°РґР°РЅРЅРѕРјСѓ РґРёР°РїР°Р·РѕРЅСѓ
+   input=(input-MinInputRange.GetData())*OutputRange/InputRange+MinOutputRange.GetData();
 
    double exp_coeff;
-   switch(OutputAdaptationMode.v)
+   double sumCoeffVal = SumCoeff.GetData();
+   double expCoeffVal = ExpCoeff.GetData();
+   switch(OutputAdaptationMode.GetData())
    {
    case 0:
 	Output(i,j)=Gain*input;
    break;
 
    case 1:
-	// Преобразовываем сигнал к заданному диапазону
-	Output(i,j)=Gain*(SumCoeff.v-exp(-ExpCoeff.v*input));
+	// РџСЂРµРѕР±СЂР°Р·РѕРІС‹РІР°РµРј СЃРёРіРЅР°Р» Рє Р·Р°РґР°РЅРЅРѕРјСѓ РґРёР°РїР°Р·РѕРЅСѓ
+	Output(i,j)=Gain*(sumCoeffVal-exp(-expCoeffVal*input));
    break;
 
    case 2:
-	// Преобразовываем сигнал к заданному диапазону
-	Output(i,j)=Gain*exp(-ExpCoeff.v*input);
+	// РџСЂРµРѕР±СЂР°Р·РѕРІС‹РІР°РµРј СЃРёРіРЅР°Р» Рє Р·Р°РґР°РЅРЅРѕРјСѓ РґРёР°РїР°Р·РѕРЅСѓ
+	Output(i,j)=Gain*exp(-expCoeffVal*input);
    break;
 
    case 3:
-	// Преобразовываем сигнал к автодиапазону
+	// РџСЂРµРѕР±СЂР°Р·РѕРІС‹РІР°РµРј СЃРёРіРЅР°Р» Рє Р°РІС‚РѕРґРёР°РїР°Р·РѕРЅСѓ
 	exp_coeff=-log(0.9)/InputRange;
-	Output(i,j)=Gain*(SumCoeff.v-exp(-exp_coeff*input));
+	Output(i,j)=Gain*(sumCoeffVal-exp(-exp_coeff*input));
    break;
 
    case 4:
-	Output(i,j)=Gain*(SumCoeff.v+input);
+	Output(i,j)=Gain*(sumCoeffVal+input);
    break;
 
    case 5:
-	Output(i,j)=Gain*(SumCoeff.v+(1.0-exp(-ExpCoeff.v*input)));
+	Output(i,j)=Gain*(sumCoeffVal+(1.0-exp(-expCoeffVal*input)));
    break;
    }
   }

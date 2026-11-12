@@ -23,9 +23,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// ÃÂÚÓ‰˚
+// –ú–µ—Ç–æ–¥—ã
 // --------------------------
-//  ÓÌÒÚÛÍÚÓ˚ Ë ‰ÂÒÚÛÍÚÓ˚
+// –ö–æ–Ω—Å—Ç—Ä—É–∫—Ç–æ—Ä—ã –∏ –¥–µ—Å—Ç—Ä—É–∫—Ç–æ—Ä—ã
 // --------------------------
 NPulseHebbSynapse::NPulseHebbSynapse(void)
 //: NPulseSynapse(name),
@@ -66,9 +66,9 @@ NPulseHebbSynapse::~NPulseHebbSynapse(void)
 // --------------------------
 
 // --------------------------
-// —ËÒÚÂÏÌ˚Â ÏÂÚÓ‰˚ ÛÔ‡‚ÎÂÌËˇ Ó·˙ÂÍÚÓÏ
+// –°–∏—Å—Ç–µ–º–Ω—ã–µ –º–µ—Ç–æ–¥—ã —É–ø—Ä–∞–≤–ª–µ–Ω–∏—è –æ–±—ä–µ–∫—Ç–æ–º
 // --------------------------
-// ¬˚‰ÂÎˇÂÚ Ô‡ÏˇÚ¸ ‰Îˇ ÌÓ‚ÓÈ ˜ËÒÚÓÈ ÍÓÔËË Ó·˙ÂÍÚ‡ ˝ÚÓ„Ó ÍÎ‡ÒÒ‡
+// –í—ã–¥–µ–ª—è–µ—Ç –ø–∞–º—è—Ç—å –¥–ª—è –Ω–æ–≤–æ–π —á–∏—Å—Ç–æ–π –∫–æ–ø–∏–∏ –æ–±—ä–µ–∫—Ç–∞ —ç—Ç–æ–≥–æ –∫–ª–∞—Å—Å–∞
 NPulseHebbSynapse* NPulseHebbSynapse::New(void)
 {
  return new NPulseHebbSynapse;
@@ -76,11 +76,11 @@ NPulseHebbSynapse* NPulseHebbSynapse::New(void)
 // --------------------------
 
 // --------------------------
-// —Í˚Ú˚Â ÏÂÚÓ‰˚ ÛÔ‡‚ÎÂÌËˇ Ò˜ÂÚÓÏ
+// –°–∫—Ä—ã—Ç—ã–µ –º–µ—Ç–æ–¥—ã —É–ø—Ä–∞–≤–ª–µ–Ω–∏—è —Å—á–µ—Ç–æ–º
 // --------------------------
-// œÓ‰ÍÎ˛˜‡ÂÚ ÒËÌ‡ÔÒ ıÂ··‡ synapse Í ÌËÁÍÓÔÓÓ„Ó‚ÓÈ ÁÓÌÂ ÌÂÈÓÌ‡-‚Î‡‰ÂÎ¸ˆ‡
-// ¬ÓÁ‚‡˘‡ÂÚ false ÚÓÎ¸ÍÓ ÂÒÎË ÔÓËÁÓ¯Î‡ Ó¯Ë·Í‡ ÛÒÚ‡ÌÓ‚ÍË Ò‚ˇÁË
-// ≈ÒÎË synapse == 0, ÚÓ ÔÓ‰ÍÎ˛˜‡ÂÚ ‚ÒÂ ÒËÌ‡ÔÒ˚ ıÂ··‡
+// –ü–æ–¥–∫–ª—é—á–∞–µ—Ç —Å–∏–Ω–∞–ø—Å —Ö–µ–±–±–∞ synapse –∫ –Ω–∏–∑–∫–æ–ø–æ—Ä–æ–≥–æ–≤–æ–π –∑–æ–Ω–µ –Ω–µ–π—Ä–æ–Ω–∞-–≤–ª–∞–¥–µ–ª—å—Ü–∞
+// –í–æ–∑–≤—Ä–∞—â–∞–µ—Ç false —Ç–æ–ª—å–∫–æ –µ—Å–ª–∏ –ø—Ä–æ–∏–∑–æ—à–ª–∞ –æ—à–∏–±–∫–∞ —É—Å—Ç–∞–Ω–æ–≤–∫–∏ —Å–≤—è–∑–∏
+// –ï—Å–ª–∏ synapse == 0, —Ç–æ –ø–æ–¥–∫–ª—é—á–∞–µ—Ç –≤—Å–µ —Å–∏–Ω–∞–ø—Å—ã —Ö–µ–±–±–∞
 bool NPulseHebbSynapse::InstallHebbianConnection(void)
 {
  bool res=true;
@@ -106,7 +106,7 @@ bool NPulseHebbSynapse::InstallHebbianConnection(void)
 	RDK::UStringLinkSide item,conn;
 //	item.Id=mlowner->GetNeuronLife()->GetLongName(mlowner);
 #pragma warning
-	if(Type.v>0)
+	if(Type.GetData()>0)
 	 item.Name="Output7";
 	else
 	 item.Name="Output6";
@@ -117,7 +117,7 @@ bool NPulseHebbSynapse::InstallHebbianConnection(void)
  return res;
 }
 
-// ¬ÓÒÒÚ‡ÌÓ‚ÎÂÌËÂ Ì‡ÒÚÓÂÍ ÔÓ ÛÏÓÎ˜‡ÌË˛ Ë Ò·ÓÒ ÔÓˆÂÒÒ‡ Ò˜ÂÚ‡
+// –í–æ—Å—Å—Ç–∞–Ω–æ–≤–ª–µ–Ω–∏–µ –Ω–∞—Å—Ç—Ä–æ–µ–∫ –ø–æ —É–º–æ–ª—á–∞–Ω–∏—é –∏ —Å–±—Ä–æ—Å –ø—Ä–æ—Ü–µ—Å—Å–∞ —Å—á–µ—Ç–∞
 bool NPulseHebbSynapse::ADefault(void)
 {
  if(!NPulseSynapse::ADefault())
@@ -160,7 +160,7 @@ bool NPulseHebbSynapse::ADefault(void)
  PassiveMs[3]=0.1;
  PassiveMs[4]=0.1;
 
- // ¬ÂÒ (˝ÙÙÂÍÚË‚ÌÓÒÚ¸ ÒËÌ‡ÔÒ‡) ÒËÌ‡ÔÒ‡
+ // –í–µ—Å (—ç—Ñ—Ñ–µ–∫—Ç–∏–≤–Ω–æ—Å—Ç—å —Å–∏–Ω–∞–ø—Å–∞) —Å–∏–Ω–∞–ø—Å–∞
  Resistance=1.0e10;
 // Resistance=1.0e8;
 
@@ -174,19 +174,19 @@ Output6.Assign(1,1,0.0);
  return true;
 }
 
-// Œ·ÂÒÔÂ˜Ë‚‡ÂÚ Ò·ÓÍÛ ‚ÌÛÚÂÌÌÂÈ ÒÚÛÍÚÛ˚ Ó·˙ÂÍÚ‡
-// ÔÓÒÎÂ Ì‡ÒÚÓÈÍË Ô‡‡ÏÂÚÓ‚
-// ¿‚ÚÓÏ‡ÚË˜ÂÒÍË ‚˚Á˚‚‡ÂÚ ÏÂÚÓ‰ Reset() Ë ‚˚ÒÚ‡‚ÎˇÂÚ Ready ‚ true
-// ‚ ÒÎÛ˜‡Â ÛÒÔÂ¯ÌÓÈ Ò·ÓÍË
+// –û–±–µ—Å–ø–µ—á–∏–≤–∞–µ—Ç —Å–±–æ—Ä–∫—É –≤–Ω—É—Ç—Ä–µ–Ω–Ω–µ–π —Å—Ç—Ä—É–∫—Ç—É—Ä—ã –æ–±—ä–µ–∫—Ç–∞
+// –ø–æ—Å–ª–µ –Ω–∞—Å—Ç—Ä–æ–π–∫–∏ –ø–∞—Ä–∞–º–µ—Ç—Ä–æ–≤
+// –ê–≤—Ç–æ–º–∞—Ç–∏—á–µ—Å–∫–∏ –≤—ã–∑—ã–≤–∞–µ—Ç –º–µ—Ç–æ–¥ Reset() –∏ –≤—ã—Å—Ç–∞–≤–ª—è–µ—Ç Ready –≤ true
+// –≤ —Å–ª—É—á–∞–µ —É—Å–ø–µ—à–Ω–æ–π —Å–±–æ—Ä–∫–∏
 bool NPulseHebbSynapse::ABuild(void)
 {
  return NPulseSynapse::ABuild();
 }
 
-// —·ÓÒ ÔÓˆÂÒÒ‡ Ò˜ÂÚ‡.
+// –°–±—Ä–æ—Å –ø—Ä–æ—Ü–µ—Å—Å–∞ —Å—á–µ—Ç–∞.
 bool NPulseHebbSynapse::AReset(void)
 {
- // —·ÓÒ ‚ÂÏÂÌÌ˚ı ÔÂÂÏÂÌÌ˚ı
+ // –°–±—Ä–æ—Å –≤—Ä–µ–º–µ–Ω–Ω—ã—Ö –ø–µ—Ä–µ–º–µ–Ω–Ω—ã—Ö
  Win=0;
  Wout=0;
  Gd=0;
@@ -200,7 +200,7 @@ bool NPulseHebbSynapse::AReset(void)
  return NPulseSynapse::AReset();
 }
 
-// ¬˚ÔÓÎÌˇÂÚ ‡Ò˜ÂÚ ˝ÚÓ„Ó Ó·˙ÂÍÚ‡
+// –í—ã–ø–æ–ª–Ω—è–µ—Ç —Ä–∞—Å—á–µ—Ç —ç—Ç–æ–≥–æ –æ–±—ä–µ–∫—Ç–∞
 bool NPulseHebbSynapse::ACalculate2(void)
 {
  double input=0;
@@ -218,7 +218,7 @@ bool NPulseHebbSynapse::ACalculate2(void)
  input=(*Input)(0,0);
  ltzoneoutput=(*InputLTZoneFeedbackSignal)(0,0);
 
- // œËÏÂÌˇÂÏ ÏÓÚË‚‡ˆË˛ ÂÒÎË ÂÒÚ¸
+ // –ü—Ä–∏–º–µ–Ω—è–µ–º –º–æ—Ç–∏–≤–∞—Ü–∏—é –µ—Å–ª–∏ –µ—Å—Ç—å
  if(InputMotivation.IsConnected() && InputMotivation->GetCols()>0)
  {
   int motmin=(int(Kmot->size())<InputMotivation->GetCols())?int(Kmot->size()):InputMotivation->GetCols();
@@ -226,35 +226,52 @@ bool NPulseHebbSynapse::ACalculate2(void)
    motivation[i]=(*InputMotivation)(0,i)*Kmot[i];
  }
 
- Win.v += (Kin.v*input - Min.v*Win.v)/TimeStep;
- Wout.v += (Kout.v*ltzoneoutput - Mout.v*Wout.v)/TimeStep;
+ // –ö—ç—à–∏—Ä—É–µ–º –≤—Å–µ —Å–≤–æ–π—Å—Ç–≤–∞ –≤ –Ω–∞—á–∞–ª–µ –º–µ—Ç–æ–¥–∞ –¥–ª—è –æ–ø—Ç–∏–º–∏–∑–∞—Ü–∏–∏
+ const double win = Win.GetData();
+ const double kin = Kin.GetData();
+ const double min = Min.GetData();
+ const double wout = Wout.GetData();
+ const double kout = Kout.GetData();
+ const double mout = Mout.GetData();
+ const double md = Md.GetData();
+ const double gd = Gd.GetData();
+ const double gdGain = GdGain.GetData();
+ const double gsGain = GsGain.GetData();
+
+ Win = win + (kin*input - min*win)/TimeStep;
+ Wout = wout + (kout*ltzoneoutput - mout*wout)/TimeStep;
 // Wout.v=1;
 
- Gd.v += (Win.v*Wout.v - Md.v*Gd.v)/TimeStep;
+ const double winUpdated = Win.GetData();
+ const double woutUpdated = Wout.GetData();
+ Gd = gd + (winUpdated*woutUpdated - md*gd)/TimeStep;
 
 // for(size_t i=0;i<Gs->size();i++)
 //  Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
 
+ const double gdUpdated = Gd.GetData();
  for(int i=0;i<int(Gs->size());i++)
   if(motivation[i]>0)
 //  if(motivation[i]*Gd.v > PassiveMs[i]*Gs[i])
-   Gs[i] += (motivation[i]*Gd.v - ActiveMs[i]*Gs[i])/TimeStep;
+   Gs[i] += (motivation[i]*gdUpdated - ActiveMs[i]*Gs[i])/TimeStep;
   else
-   Gs[i] += (motivation[i]*Gd.v - PassiveMs[i]*Gs[i])/TimeStep;
+   Gs[i] += (motivation[i]*gdUpdated - PassiveMs[i]*Gs[i])/TimeStep;
 
  double gs_res=0;
  for(int i=0;i<int(Gs->size());i++)
   gs_res+=Gs[i];
  GsSum=gs_res;
 
- G.v = (Gd.v*GdGain + GsSum.v*GsGain);
- Output(0,0)*=(1.0+G.v);
+ const double gsSum = GsSum.GetData();
+ G = (gdUpdated*gdGain + gsSum*gsGain);
+ const double g = G.GetData();
+ Output(0,0)*=(1.0+g);
  Output1(0,0)=Output(0,0);
- Output2(0,0)=G.v;
- Output3(0,0)=Gd.v*GdGain;
- Output4(0,0)=GsSum.v*GsGain;
- Output5(0,0)=Win.v;
- Output6(0,0)=Wout.v;
+ Output2(0,0)=g;
+ Output3(0,0)=gdUpdated*gdGain;
+ Output4(0,0)=gsSum*gsGain;
+ Output5(0,0)=winUpdated;
+ Output6(0,0)=woutUpdated;
    /*
  if(MainOwner && Owner)
  {
@@ -263,15 +280,15 @@ bool NPulseHebbSynapse::ACalculate2(void)
   {
    if(static_pointer_cast<NPulseChannel>(Owner)->Type()>0)
    {
-	neuron->SummaryNegGs.v+=gs_res*GsGain.v;
-	neuron->SummaryNegGd.v+=Gd.v*GdGain.v;
-	neuron->SummaryNegG.v+=G;
+	neuron->SummaryNegGs = neuron->SummaryNegGs.GetData() + gs_res*GsGain.GetData();
+	neuron->SummaryNegGd = neuron->SummaryNegGd.GetData() + Gd.GetData()*GdGain.GetData();
+	neuron->SummaryNegG = neuron->SummaryNegG.GetData() + G;
    }
    else
    {
-	neuron->SummaryPosGs.v+=gs_res*GsGain.v;
-	neuron->SummaryPosGd.v+=Gd.v*GdGain.v;
-	neuron->SummaryPosG.v+=G;
+	neuron->SummaryPosGs = neuron->SummaryPosGs.GetData() + gs_res*GsGain.GetData();
+	neuron->SummaryPosGd = neuron->SummaryPosGd.GetData() + Gd.GetData()*GdGain.GetData();
+	neuron->SummaryPosG = neuron->SummaryPosG.GetData() + G;
    }
   }
  } */

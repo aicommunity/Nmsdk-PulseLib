@@ -22,9 +22,9 @@ See file license.txt for more information
 
 namespace NMSDK {
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NPattern::NPattern(void)
  :
@@ -48,9 +48,9 @@ NPattern::~NPattern(void)
 // --------------------------
 
 // --------------------------
-// Методы управления общедоступными свойствами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±С‰РµРґРѕСЃС‚СѓРїРЅС‹РјРё СЃРІРѕР№СЃС‚РІР°РјРё
 // --------------------------
-/// Имя класса, создающего генератор импульсов
+/// РРјСЏ РєР»Р°СЃСЃР°, СЃРѕР·РґР°СЋС‰РµРіРѕ РіРµРЅРµСЂР°С‚РѕСЂ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPattern::SetPulseGeneratorClassName(const std::string &value)
 {
  Ready=false;
@@ -58,7 +58,7 @@ bool NPattern::SetPulseGeneratorClassName(const std::string &value)
 }
 
 
-// Устанавливает размер входного паттерна
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ СЂР°Р·РјРµСЂ РІС…РѕРґРЅРѕРіРѕ РїР°С‚С‚РµСЂРЅР°
 bool NPattern::SetNumGenerators(const int &value)
 {
  Ready = false;
@@ -69,7 +69,7 @@ bool NPattern::SetNumGenerators(const int &value)
  return true;
 }
 
-// Устанавливает генерируемый паттерн импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РіРµРЅРµСЂРёСЂСѓРµРјС‹Р№ РїР°С‚С‚РµСЂРЅ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPattern::SetInputPattern(const MDMatrix<double> &value)
 {
  Ready = false;
@@ -83,7 +83,7 @@ bool NPattern::SetInputPattern(const MDMatrix<double> &value)
  return true;
 }
 
-// Устанавливает частоту импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ С‡Р°СЃС‚РѕС‚Сѓ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPattern::SetFrequency(const double &value)
 {
  for(size_t i = 0; i < generators.size(); i++)
@@ -95,7 +95,7 @@ bool NPattern::SetFrequency(const double &value)
  return true;
 }
 
-// Устанавливает длительность импульса
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ РёРјРїСѓР»СЊСЃР°
 bool NPattern::SetPulseLength(const double &value)
 {
  for(size_t i = 0; i < generators.size(); i++)
@@ -106,7 +106,7 @@ bool NPattern::SetPulseLength(const double &value)
  return true;
 }
 
-// Устанавливает амплитуду импульсов
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р°РјРїР»РёС‚СѓРґСѓ РёРјРїСѓР»СЊСЃРѕРІ
 bool NPattern::SetAmplitude(const double &value)
 {
  for(size_t i = 0; i < generators.size(); i++)
@@ -117,7 +117,7 @@ bool NPattern::SetAmplitude(const double &value)
  return true;
 }
 
-// Устанавливает задержку запуска генератора
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р·Р°РґРµСЂР¶РєСѓ Р·Р°РїСѓСЃРєР° РіРµРЅРµСЂР°С‚РѕСЂР°
 bool NPattern::SetDelay(const double &value)
 {
  for(size_t i = 0; i < generators.size(); i++)
@@ -128,8 +128,8 @@ bool NPattern::SetDelay(const double &value)
  return true;
 }
 
-// Устанавливает отклонение частоты
-// (Задает диапазон, не является стандартным отклонением!)
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РѕС‚РєР»РѕРЅРµРЅРёРµ С‡Р°СЃС‚РѕС‚С‹
+// (Р—Р°РґР°РµС‚ РґРёР°РїР°Р·РѕРЅ, РЅРµ СЏРІР»СЏРµС‚СЃСЏ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Рј РѕС‚РєР»РѕРЅРµРЅРёРµРј!)
 bool NPattern::SetFrequencyDeviation(const double &value)
 {
  for(size_t i = 0; i < generators.size(); i++)
@@ -140,7 +140,7 @@ bool NPattern::SetFrequencyDeviation(const double &value)
  return true;
 }
 
-// Устанавливает необходимость транзита сигнала от внешнего источника
+// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ С‚СЂР°РЅР·РёС‚Р° СЃРёРіРЅР°Р»Р° РѕС‚ РІРЅРµС€РЅРµРіРѕ РёСЃС‚РѕС‡РЅРёРєР°
 bool NPattern::SetUseTransitSignal(const bool &value)
 {
  for(size_t i = 0; i < generators.size(); i++)
@@ -153,9 +153,9 @@ bool NPattern::SetUseTransitSignal(const bool &value)
 // --------------------------
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NPattern* NPattern::New(void)
 {
  return new NPattern;
@@ -163,15 +163,15 @@ NPattern* NPattern::New(void)
 // --------------------------
 
 // --------------------------
-// Методы доступа к компонентам
+// РњРµС‚РѕРґС‹ РґРѕСЃС‚СѓРїР° Рє РєРѕРјРїРѕРЅРµРЅС‚Р°Рј
 // --------------------------
 
 // --------------------------
 
 // --------------------------
-// Скрытые методы управления счетом
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј
 // --------------------------
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NPattern::ADefault(void)
 {
  PulseGeneratorClassName="NPulseGeneratorTransit";
@@ -187,7 +187,7 @@ bool NPattern::ADefault(void)
  return NSource::ADefault();
 }
 
-// Сброс процесса счета.
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°.
 bool NPattern::AReset(void)
 {
  OldNumGenerators = NumGenerators;
@@ -206,18 +206,18 @@ bool NPattern::AReset(void)
  return NSource::AReset();
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NPattern::ABuild(void)
 {
-	// Удаляем старые генераторы
+	// РЈРґР°Р»СЏРµРј СЃС‚Р°СЂС‹Рµ РіРµРЅРµСЂР°С‚РѕСЂС‹
 	for(int i = NumGenerators; i < OldNumGenerators; i++)
 	{
 		DelComponent(std::string("Source")+sntoa(i+1));
 	}
-	// Инициализируем генераторы импульсов
+	// РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РіРµРЅРµСЂР°С‚РѕСЂС‹ РёРјРїСѓР»СЊСЃРѕРІ
 	generators.resize(NumGenerators);
 	for(int i = 0; i < NumGenerators; i++)
 	{
@@ -230,7 +230,7 @@ bool NPattern::ABuild(void)
 	return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NPattern::ACalculate(void)
 {
  return true;

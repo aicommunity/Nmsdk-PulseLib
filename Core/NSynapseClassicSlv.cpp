@@ -15,9 +15,9 @@ NSynapseSpikeData::NSynapseSpikeData(const NSynapseSpikeData& value)
 {
 }
 
-// Методы
+// РњРµС‚РѕРґС‹
 // --------------------------
-// Конструкторы и деструкторы
+// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹ Рё РґРµСЃС‚СЂСѓРєС‚РѕСЂС‹
 // --------------------------
 NSynapseClassicSlv::NSynapseClassicSlv(void)
  : SpikeBufferSize("SpikeBufferSize",this)
@@ -30,7 +30,7 @@ NSynapseClassicSlv::~NSynapseClassicSlv(void)
 // --------------------------
 
 // --------------------------
-// Методы управления параметрами
+// РњРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°РјРё
 // --------------------------
 bool NSynapseClassicSlv::SetSpikeBufferSize(const int &value)
 {
@@ -41,9 +41,9 @@ bool NSynapseClassicSlv::SetSpikeBufferSize(const int &value)
 
 
 // --------------------------
-// Системные методы управления объектом
+// РЎРёСЃС‚РµРјРЅС‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РѕР±СЉРµРєС‚РѕРј
 // --------------------------
-// Выделяет память для новой чистой копии объекта этого класса
+// Р’С‹РґРµР»СЏРµС‚ РїР°РјСЏС‚СЊ РґР»СЏ РЅРѕРІРѕР№ С‡РёСЃС‚РѕР№ РєРѕРїРёРё РѕР±СЉРµРєС‚Р° СЌС‚РѕРіРѕ РєР»Р°СЃСЃР°
 NSynapseClassicSlv* NSynapseClassicSlv::New(void)
 {
  return new NSynapseClassicSlv;
@@ -52,16 +52,16 @@ NSynapseClassicSlv* NSynapseClassicSlv::New(void)
 
 
 // --------------------------
-// Скрытые методы управления счетом 
+// РЎРєСЂС‹С‚С‹Рµ РјРµС‚РѕРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ СЃС‡РµС‚РѕРј 
 // --------------------------
-// расчет тока синапса во временной точке
-/// time_value в секундах от прихода импульса
+// СЂР°СЃС‡РµС‚ С‚РѕРєР° СЃРёРЅР°РїСЃР° РІРѕ РІСЂРµРјРµРЅРЅРѕР№ С‚РѕС‡РєРµ
+/// time_value РІ СЃРµРєСѓРЅРґР°С… РѕС‚ РїСЂРёС…РѕРґР° РёРјРїСѓР»СЊСЃР°
 double NSynapseClassicSlv::CalcCurrent(double tau_s, double current, double time_value, double weight)
 {
  return weight*((time_value>0)?M_E*time_value*exp(-time_value/tau_s)*current/tau_s:0.0);
 }
 
-// Восстановление настроек по умолчанию и сброс процесса счета
+// Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ Рё СЃР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р°
 bool NSynapseClassicSlv::ADefault(void)
 {
  if(!NSynapseClassic::ADefault())
@@ -70,10 +70,10 @@ bool NSynapseClassicSlv::ADefault(void)
  return true;
 }
 
-// Обеспечивает сборку внутренней структуры объекта
-// после настройки параметров
-// Автоматически вызывает метод Reset() и выставляет Ready в true
-// в случае успешной сборки
+// РћР±РµСЃРїРµС‡РёРІР°РµС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂРµРЅРЅРµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РѕР±СЉРµРєС‚Р°
+// РїРѕСЃР»Рµ РЅР°СЃС‚СЂРѕР№РєРё РїР°СЂР°РјРµС‚СЂРѕРІ
+// РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІС‹Р·С‹РІР°РµС‚ РјРµС‚РѕРґ Reset() Рё РІС‹СЃС‚Р°РІР»СЏРµС‚ Ready РІ true
+// РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕР№ СЃР±РѕСЂРєРё
 bool NSynapseClassicSlv::ABuild(void)
 {
  if(!NSynapseClassic::ABuild())
@@ -83,7 +83,7 @@ bool NSynapseClassicSlv::ABuild(void)
  return true;
 }
 
-// Сброс процесса счета без потери настроек
+// РЎР±СЂРѕСЃ РїСЂРѕС†РµСЃСЃР° СЃС‡РµС‚Р° Р±РµР· РїРѕС‚РµСЂРё РЅР°СЃС‚СЂРѕРµРє
 bool NSynapseClassicSlv::AReset(void)
 {
  if(!NSynapseClassic::AReset())
@@ -96,7 +96,7 @@ bool NSynapseClassicSlv::AReset(void)
  return true;
 }
 
-// Выполняет расчет этого объекта
+// Р’С‹РїРѕР»РЅСЏРµС‚ СЂР°СЃС‡РµС‚ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 bool NSynapseClassicSlv::ACalculate2(void)
 {
  if(!Input.IsConnected() || Input->GetCols()<=0)
@@ -106,14 +106,14 @@ bool NSynapseClassicSlv::ACalculate2(void)
   return true;
  }
 
- // Обновляем буфер спайков если был новый спайк
+ // РћР±РЅРѕРІР»СЏРµРј Р±СѓС„РµСЂ СЃРїР°Р№РєРѕРІ РµСЃР»Рё Р±С‹Р» РЅРѕРІС‹Р№ СЃРїР°Р№Рє
  if((*Input)(0,0)>0)
  {
   if(PreviousInput.GetCols()<=0 || PreviousInput(0,0)>0)
   {
-   // не делаем ничего, спайк уже был
+   // РЅРµ РґРµР»Р°РµРј РЅРёС‡РµРіРѕ, СЃРїР°Р№Рє СѓР¶Рµ Р±С‹Р»
   }
-  else // начало спайка
+  else // РЅР°С‡Р°Р»Рѕ СЃРїР°Р№РєР°
   {
    LastSpikeBufferIndex++;
    if(LastSpikeBufferIndex>=SpikeBuffer.size())
@@ -133,7 +133,7 @@ bool NSynapseClassicSlv::ACalculate2(void)
  PreviousInput=*Input;
 
 
- // Рассчитываем влияние синапса
+ // Р Р°СЃСЃС‡РёС‚С‹РІР°РµРј РІР»РёСЏРЅРёРµ СЃРёРЅР°РїСЃР°
  double result(0.0);
  if(FirstSpikeBufferIndex<LastSpikeBufferIndex)
   for(size_t i=FirstSpikeBufferIndex;i<LastSpikeBufferIndex;i++)
