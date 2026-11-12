@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeTrainingService.h"
 #include "MatchedOmissionEvidenceJson.h"
+#include <utility>
 
 namespace NMSDK::TimeLearner {
 struct NativeCompositeArchiveDocument {
@@ -46,6 +47,13 @@ NativeCompositeArchiveDocument EncodeNativeCompositeTrainingArchive(const Native
 // Explicit service5 accepted journal; remains separate from actor-only STEP2
 // export and from a future completed learned6/certificate3 portable package.
 NativeCompositeArchiveDocument EncodeNativeCandidateWindowServiceArchive(const NativeTrainingService&,
+    const QString& primaryPrefix="composite-measurements");
+// One fresh, fully checked DATA boundary. The second value is the exact
+// decoder result for the first value, including its external primary mirror.
+// Consume it by move instead of decoding the same document again. This is
+// neither a persistent service cache nor restored execution authority.
+std::pair<NativeCompositeArchiveDocument,DecodedNativeCompositeArchive>
+EncodeAndValidateNativeCandidateWindowServiceArchive(const NativeTrainingService&,
     const QString& primaryPrefix="composite-measurements");
 // Explicit archive2 export of protocol5 factory history at a group boundary.
 // It does not enable the service, search/final admission or certificates.

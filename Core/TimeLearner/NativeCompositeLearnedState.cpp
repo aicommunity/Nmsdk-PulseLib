@@ -221,9 +221,9 @@ template<unsigned Protocol,unsigned Summary> QJsonObject CompositeSummary(const 
         Require(plan.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow ||
             initial.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow ||
             !service.CandidateWindowRecoveryDeliveries().empty(),"recovery_summary_requires_explicit_recovery_family");
-        const auto archive=EncodeNativeCandidateWindowServiceArchive(service);
+        const auto archive=EncodeAndValidateNativeCandidateWindowServiceArchive(service);
         summary["recovery_ledger"]=EncodeCandidateWindowRecoveryLedger(service.CandidateWindowRecoveryDeliveries(),
-            DecodeNativeCompositeTrainingArchive(archive.document),service.CandidateWindowRecoveryDeliveryLogIntact());
+            archive.second,service.CandidateWindowRecoveryDeliveryLogIntact());
         summary["contains_controller_checkpoint"]=false;
     }
     return summary;
@@ -359,8 +359,9 @@ QJsonObject NativeCandidateWindowStateFactory::ExportImpl(RDK::UNet& owner,const
     CheckConfiguration(c,source);CheckDataset(c,dataset,source);
     Require(QJsonValue(EncodeNativeModelSpec(declaration))==source["model_spec"],"composite_package_source_declaration_changed");
     const auto runtime=EncodeCandidateWindowRuntimePlan(service.Plan());auto plan=CandidateWindowPlan(c,service.Plan().protocol,runtime);
-    auto archive=EncodeNativeCandidateWindowServiceArchive(service);
-    auto proof=CandidateWindowPortableTrainingProof::Replay(DecodeNativeCompositeTrainingArchive(archive.document),plan.search.tolerances,revision,epoch);
+    auto checkedArchive=EncodeAndValidateNativeCandidateWindowServiceArchive(service);
+    auto& archive=checkedArchive.first;
+    auto proof=CandidateWindowPortableTrainingProof::Replay(std::move(checkedArchive.second),plan.search.tolerances,revision,epoch);
     QJsonObject recoveryLedger;
     if(recovery) {
         Require(plan.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow ||

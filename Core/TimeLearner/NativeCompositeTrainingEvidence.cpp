@@ -473,6 +473,11 @@ NativeCompositeArchiveDocument EncodeNativeCompositeTrainingArchive(const Native
 }
 
 NativeCompositeArchiveDocument EncodeNativeCandidateWindowServiceArchive(const NativeTrainingService& service,const QString& prefix) {
+    auto checked=EncodeAndValidateNativeCandidateWindowServiceArchive(service,prefix);
+    return std::move(checked.first);
+}
+std::pair<NativeCompositeArchiveDocument,DecodedNativeCompositeArchive>
+EncodeAndValidateNativeCandidateWindowServiceArchive(const NativeTrainingService& service,const QString& prefix) {
     SafePath(prefix);const auto& p=service.Plan().protocol;ValidateCandidateWindowMeasurementContract(p);const auto& source=service.CompositeSourceBinding();
     Require(!source.isEmpty(),"composite_archive_missing_initial_source");const auto origin=Hash(source).toStdString();CheckSource(p,source,origin);
     const auto& records=service.CompositeMeasurements();const auto& references=service.CompositeReferenceGroupIds();const auto finals=service.CompositeFinalGroupIds();
@@ -507,7 +512,8 @@ NativeCompositeArchiveDocument EncodeNativeCandidateWindowServiceArchive(const N
         {"maximum_total_primary_bytes",Count(service.Plan().composite->maximumTotalPrimaryBytes)},{"current_attempt_id",Text(service.Configuration().runId)},
         {"records",encoded},{"reference_group_ids",Strings(references)},{"final_group_ids",Strings(finals)},{"counters",counters},{"primary_blobs",blobs}};
     output.document["artifact_document_sha256"]=Hash(output.document);
-    (void)DecodeNativeCompositeTrainingArchive(output.document,[&](const QString& path){return output.primary.at(path);});return output;
+    auto checked=DecodeNativeCompositeTrainingArchive(output.document,[&](const QString& path){return output.primary.at(path);});
+    return {std::move(output),std::move(checked)};
 }
 
 NativeCompositeArchiveDocument EncodeNativeCandidateWindowTrainingArchive(const NativeCompositeTrainingAttempt& attempt,const QString& prefix) {
