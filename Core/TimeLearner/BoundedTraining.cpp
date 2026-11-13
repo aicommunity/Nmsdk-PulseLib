@@ -291,6 +291,7 @@ void BoundedTrainingSession::BeginInput()
     cursor.lengthIndex=cursor.normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
     cursor.initialCandidatePending=requireResistanceDomains;cursor.domainReady=false;cursor.domainLength=cursor.domainNormalizer=cursor.domainVariant=0;
     cursor.domainYieldPending=cursor.domainPassIssuedCandidate=false;
+    cursor.domainLocalTurnUsed=false;
     cursor.domainGeometry.clear();cursor.domainScope.clear();cursor.visitedDomainCandidates.clear();
     cursor.candidateResistanceScope.clear();cursor.resistanceMeasurements.clear();
     // Nearest integers first. Enumeration is bounded by the declared candidate
@@ -421,7 +422,10 @@ bool BoundedTrainingSession::NextCandidate(std::vector<InputParameters>& paramet
 }
 
 void BoundedTrainingSession::AdvanceDomainGeometry()
-{cursor.domainReady=false;if(++cursor.domainVariant==2){cursor.domainVariant=0;++cursor.domainLength;}}
+{
+    cursor.domainReady=false;cursor.domainLocalTurnUsed=false;
+    if(++cursor.domainVariant==2){cursor.domainVariant=0;++cursor.domainLength;}
+}
 
 void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& measurement)
 {
@@ -457,7 +461,9 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
     const auto input=order.at(position);
     // A valid observation's search order must not depend on how an invalid
     // burst would be recovered. Give each legal geometry one unissued Rs per
-    // pass: a dense Rs mesh at a mistimed length must not starve other lengths.
+    // pass, with at most one measured timing-ready normalization turn: a dense
+    // Rs mesh must not starve other lengths. Every edit still invalidates the
+    // domain and both anchor/input observations; no old interval is reused.
     // Every revisit still requires a fresh native domain assessment below.
     const bool interleave=config.normalization==Normalization::TipResistance;
     if(cursor.initialCandidatePending)
@@ -479,6 +485,7 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
             // stays mandatory: an old interval/scope is never a live bound.
             // A pass without an issued candidate proves only cursor exhaustion.
             cursor.domainLength=cursor.domainVariant=0;cursor.domainReady=false;
+            cursor.domainLocalTurnUsed=false;
             cursor.domainPassIssuedCandidate=false;
         }
         if(!cursor.domainReady)
@@ -1078,7 +1085,17 @@ void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasureme
     e.withinAmplitude=std::fabs(e.amplitudeResidual)<=AmplitudeTolerance(config,reference);
     evidence.push_back(e);
     if(requireResistanceDomains && !restoringBest && !cursor.candidateResistanceScope.empty())
+    {
         cursor.resistanceMeasurements.push_back({cursor.candidateResistanceScope,e});
+        if(e.withinTiming && !e.withinAmplitude && cursor.domainYieldPending && !cursor.domainLocalTurnUsed)
+        {
+            // Keep the broad cursor, but give this measured geometry one more
+            // legal unissued Rs before moving on. Reassess the effective domain
+            // first, then use the existing finite mesh/bracket proposer. This
+            // is a proposal, not an inference of monotonicity or preserved timing.
+            cursor.domainLocalTurnUsed=true;cursor.domainYieldPending=false;cursor.domainReady=false;
+        }
+    }
     if(config.normalization==Normalization::SynapseCount && config.n0CandidateRepeats>1)
     {
         candidateMeasurements.push_back(e);
