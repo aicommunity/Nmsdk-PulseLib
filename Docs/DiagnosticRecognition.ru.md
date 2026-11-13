@@ -46,3 +46,9 @@ waveform trials равны normal; root286f7e1b4499db2bc4e9ad49e5980dbd219866bf
 связывает их с просмотренными temporal reports. Предыдущая формулировка
 «следующий слой» описывает снимок API; слой теперь существует, но широкая
 матрица и полные этапы остаются открытыми.
+
+## Явный диагностический порог — разработка 13.11.2026
+
+CreateNativeDiagnosticThresholdCandidate/PrepareNativeDiagnosticThresholdCandidate применяют единственную разрешённую правку Threshold к приватному native import исходного diagnostic recognition. Новый kind=timelearner_diagnostic_threshold_candidate, state_kind=diagnostic_recognition; source_recognition сохраняется полностью. Ordinary Create/PrepareNativeThresholdCandidate, обычный recognition import и calibrated-state контур этот вид не принимают. Не допускается цепочка кандидатов. Весь graph/storage/native XML сравнивается; калибровка не сертифицируется, training/recognition certificates остаются null. Параметр меняется перед пробой, scheduler/lifecycle и bool-контракт не меняются. Это параметр конкретного эксперимента над порогом, не запись в общий storage prototype.
+
+Root Console diagnostic-evaluate job schema2 явно объявляет finite diagnostic_threshold. Schema1 сохраняет исходный порог. Не следует выдавать post-hoc same-matrix диагностику остановленной модели за завершённое обучение или независимый Test. Native Classic/Branch fixtures, Python DATA/corruption controls и реальное подтверждение научного кандидата ещё требуют серверной приёмки.

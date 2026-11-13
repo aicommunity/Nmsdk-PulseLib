@@ -17,14 +17,15 @@ struct Candidate {
     QJsonObject metadata,identity,record;
 };
 Candidate Construct(const QJsonObject& source,double threshold,RDK::UEPtr<RDK::UStorage> storage,
-    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation,int algorithmVersion=2)
+    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation,int algorithmVersion=2,bool diagnostic=false)
 {
     Require(std::isfinite(threshold) && (algorithmVersion==2 || threshold>0.),"invalid_threshold_candidate_value");
     // Do not accept a candidate as its own source, or recursively rebuild an
     // arbitrary chain of speculative changes. Conversion is applied only once.
-    Require(source["kind"]==QJsonValue("timelearner_recognition_state") && source["schema_version"]==QJsonValue(1),
+    Require(source["kind"]==QJsonValue(diagnostic?"timelearner_diagnostic_recognition_state":"timelearner_recognition_state") && source["schema_version"]==QJsonValue(1),
         "threshold_candidate_requires_base_recognition");
-    Candidate c;c.model=PrepareNativeRecognitionState(source,storage,environment,implementation);
+    Candidate c;c.model=diagnostic?PrepareNativeDiagnosticRecognitionState(source,storage,environment,implementation):
+                                  PrepareNativeRecognitionState(source,storage,environment,implementation);
     const auto archive=Object(source["neuron"]);c.metadata=Object(archive["metadata"]);
     auto calibration=Object(c.metadata["calibration"]);
     const auto path=calibration["ltzone_path"].toString();
@@ -58,31 +59,31 @@ Candidate Construct(const QJsonObject& source,double threshold,RDK::UEPtr<RDK::U
     return c;
 }
 }
-QJsonObject CreateNativeThresholdCandidate(const QJsonObject& source,double threshold,
-    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
+static QJsonObject CreateCandidate(const QJsonObject& source,double threshold,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation,bool diagnostic)
 {
-    auto c=Construct(source,threshold,storage,environment,implementation);
+    auto c=Construct(source,threshold,storage,environment,implementation,2,diagnostic);
     auto generator=c.model->dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     const auto dataset=Object(source["dataset"]);std::vector<std::string> roots;
     for(const auto& name:dataset["required_class_names"].toArray())roots.push_back(name.toString().toStdString());
     const auto archive=NmsdkTools::ExportModelArchive(c.model->neuron,c.metadata,{{&generator->Output,"burst"}},roots);
-    QJsonObject result{{"kind","timelearner_recognition_threshold_candidate"},{"schema_version",1},
-        {"dynamic_checkpoint",false},{"state_kind","recognition"},{"implementation_id",Text(implementation)},
+    QJsonObject result{{"kind",diagnostic?"timelearner_diagnostic_threshold_candidate":"timelearner_recognition_threshold_candidate"},{"schema_version",1},
+        {"dynamic_checkpoint",false},{"state_kind",diagnostic?"diagnostic_recognition":"recognition"},{"implementation_id",Text(implementation)},
         {"source_recognition",source},{"threshold",threshold},{"candidate_record",c.record},
         {"model_revision",c.identity["sha256"]},{"recognition_certificate",QJsonValue(QJsonValue::Null)},
         {"dataset",dataset},{"neuron",archive}};
     result["sha256"]=NmsdkTools::CanonicalModelDataSha256(result);return result;
 }
-std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeThresholdCandidate(const QJsonObject& package,
-    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
+static std::unique_ptr<PreparedNativeRecognitionState> PrepareCandidate(const QJsonObject& package,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation,bool diagnostic)
 {
     const std::set<QString> fields{"kind","schema_version","dynamic_checkpoint","state_kind","implementation_id",
         "source_recognition","threshold","candidate_record","model_revision","recognition_certificate","dataset","neuron","sha256"};
     Require(package.size()==int(fields.size()),"threshold_candidate_field_set_mismatch");
     for(const auto& field:fields)Require(package.contains(field),"threshold_candidate_missing_field");
-    Require(package["kind"]==QJsonValue("timelearner_recognition_threshold_candidate") &&
+    Require(package["kind"]==QJsonValue(diagnostic?"timelearner_diagnostic_threshold_candidate":"timelearner_recognition_threshold_candidate") &&
         package["schema_version"]==QJsonValue(1) && package["dynamic_checkpoint"]==QJsonValue(false) &&
-        package["state_kind"]==QJsonValue("recognition") && package["recognition_certificate"].isNull(),
+        package["state_kind"]==QJsonValue(diagnostic?"diagnostic_recognition":"recognition") && package["recognition_certificate"].isNull(),
         "unsupported_threshold_candidate_claim");
     auto body=package;body.remove("sha256");
     Require(package["sha256"]==QJsonValue(NmsdkTools::CanonicalModelDataSha256(body)),"threshold_candidate_digest_mismatch");
@@ -96,7 +97,7 @@ std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeThresholdCandidate(
         "unknown_threshold_candidate_algorithm");
     const auto source=Object(package["source_recognition"]);
     auto expected=Construct(source,package["threshold"].toDouble(),storage,environment,implementation,
-        algorithm==QJsonValue("explicit-native-threshold-v2")?2:1);
+        algorithm==QJsonValue("explicit-native-threshold-v2")?2:1,diagnostic);
     const auto archive=Object(package["neuron"]);
     Require(package["candidate_record"]==QJsonValue(expected.record) && package["model_revision"]==expected.identity["sha256"] &&
         package["dataset"]==source["dataset"] && archive["metadata"]==QJsonValue(expected.metadata) &&
@@ -108,4 +109,16 @@ std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeThresholdCandidate(
     Require(bool(m.neuron),"threshold_candidate_archive_not_neuron");
     return std::move(expected.model);
 }
+QJsonObject CreateNativeThresholdCandidate(const QJsonObject& source,double threshold,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
+{return CreateCandidate(source,threshold,storage,environment,implementation,false);}
+QJsonObject CreateNativeDiagnosticThresholdCandidate(const QJsonObject& source,double threshold,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
+{return CreateCandidate(source,threshold,storage,environment,implementation,true);}
+std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeThresholdCandidate(const QJsonObject& package,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
+{return PrepareCandidate(package,storage,environment,implementation,false);}
+std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeDiagnosticThresholdCandidate(const QJsonObject& package,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
+{return PrepareCandidate(package,storage,environment,implementation,true);}
 }
