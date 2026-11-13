@@ -292,6 +292,7 @@ void BoundedTrainingSession::BeginInput()
     cursor.initialCandidatePending=requireResistanceDomains;cursor.domainReady=false;cursor.domainLength=cursor.domainNormalizer=cursor.domainVariant=0;
     cursor.domainYieldPending=cursor.domainPassIssuedCandidate=false;
     cursor.domainLocalTurnUsed=false;
+    cursor.domainLocalTurnsRemaining=0;
     cursor.domainGeometry.clear();cursor.domainScope.clear();cursor.visitedDomainCandidates.clear();
     cursor.candidateResistanceScope.clear();cursor.resistanceMeasurements.clear();
     // Nearest integers first. Enumeration is bounded by the declared candidate
@@ -424,6 +425,7 @@ bool BoundedTrainingSession::NextCandidate(std::vector<InputParameters>& paramet
 void BoundedTrainingSession::AdvanceDomainGeometry()
 {
     cursor.domainReady=false;cursor.domainLocalTurnUsed=false;
+    cursor.domainLocalTurnsRemaining=0;
     if(++cursor.domainVariant==2){cursor.domainVariant=0;++cursor.domainLength;}
 }
 
@@ -432,6 +434,8 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
     if(restoringBest)return;
     cursor.lengthMeasurements.push_back(measurement);
     const auto input=measurement.inputIndex;
+    const bool branchFamily=requireResistanceDomains && config.normalization==Normalization::TipResistance &&
+        references.Protocol().routing==ProbeRouting::BranchSoloBurst;
     std::vector<MeasuredLengthPoint> points;
     for(const auto& previous:cursor.lengthMeasurements)
     {
@@ -439,12 +443,22 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
             !EquivalentTrainingCapacitance(previous.capacitance,measurement.capacitance))continue;
         auto geometry=previous.fullParameters;
         geometry[input].length=measurement.parameters.length;
-        if(geometry!=measurement.fullParameters)continue;
+        if(geometry!=measurement.fullParameters && (!branchFamily ||
+           !SameBranchLengthProposalFamily(background,input,previous.fullParameters,measurement.fullParameters)))continue;
         points.push_back({previous.parameters.length,previous.timingResidualLow,previous.timingResidualHigh});
     }
     const auto& bound=config.bounds[input];
-    const auto proposal=ProposeMeasuredLength(std::move(points),bound.minimumLength,bound.maximumLength,config.tolerances.sync);
+    auto proposal=ProposeMeasuredLength(std::move(points),bound.minimumLength,bound.maximumLength,config.tolerances.sync);
     if(!proposal)return;
+    if(branchFamily)
+    {
+        // Bound an extrapolated family proposal's displacement. This is a
+        // search order policy, never a numerical tolerance or a measured peak.
+        const auto length=std::int64_t(measurement.parameters.length);
+        *proposal=int(std::clamp<std::int64_t>(*proposal,
+            std::max<std::int64_t>(bound.minimumLength,(length+1)/2),
+            std::min<std::int64_t>(bound.maximumLength,2*length)));
+    }
     auto candidate=measurement.fullParameters;candidate[input].length=*proposal;
     if(!PrepareCandidate(candidate))return;
     // Do not interrupt an assessed N1 geometry or bypass its domain checks.
@@ -461,7 +475,7 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
     const auto input=order.at(position);
     // A valid observation's search order must not depend on how an invalid
     // burst would be recovered. Give each legal geometry one unissued Rs per
-    // pass, with at most one measured timing-ready normalization turn: a dense
+    // pass, with one bounded measured timing-ready normalization turn: a dense
     // Rs mesh must not starve other lengths. Every edit still invalidates the
     // domain and both anchor/input observations; no old interval is reused.
     // Every revisit still requires a fresh native domain assessment below.
@@ -486,6 +500,7 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
             // A pass without an issued candidate proves only cursor exhaustion.
             cursor.domainLength=cursor.domainVariant=0;cursor.domainReady=false;
             cursor.domainLocalTurnUsed=false;
+            cursor.domainLocalTurnsRemaining=0;
             cursor.domainPassIssuedCandidate=false;
         }
         if(!cursor.domainReady)
@@ -1089,11 +1104,21 @@ void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasureme
         cursor.resistanceMeasurements.push_back({cursor.candidateResistanceScope,e});
         if(e.withinTiming && !e.withinAmplitude && cursor.domainYieldPending && !cursor.domainLocalTurnUsed)
         {
-            // Keep the broad cursor, but give this measured geometry one more
-            // legal unissued Rs before moving on. Reassess the effective domain
-            // first, then use the existing finite mesh/bracket proposer. This
-            // is a proposal, not an inference of monotonicity or preserved timing.
-            cursor.domainLocalTurnUsed=true;cursor.domainYieldPending=false;cursor.domainReady=false;
+            // Enough local points can establish/refine a measured bracket,
+            // while reserving most remaining work for other geometries. Probe
+            // allowance counts fresh anchor/input pairs, not raw native waves.
+            cursor.domainLocalTurnUsed=true;
+            cursor.domainLocalTurnsRemaining=std::min({std::size_t(12),
+                (config.maximumCandidatesPerInput-candidates)/4,
+                (config.maximumProbes-probes)/8,(config.maximumEdits-edits)/4});
+        }
+        if(cursor.domainYieldPending && cursor.domainLocalTurnsRemaining && !(e.withinTiming && e.withinAmplitude))
+        {
+            // A valid endpoint can lose timing; it is not a certificate or a
+            // reason to discard the remaining finite mesh. Invalid observations
+            // never replenish this turn. Every candidate gets a fresh domain,
+            // edit readback and anchor/input measurement through the usual path.
+            --cursor.domainLocalTurnsRemaining;cursor.domainYieldPending=false;cursor.domainReady=false;
         }
     }
     if(config.normalization==Normalization::SynapseCount && config.n0CandidateRepeats>1)

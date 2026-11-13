@@ -6,6 +6,39 @@
 #include <tuple>
 
 namespace NMSDK::TimeLearner {
+bool SameBranchLengthProposalFamily(const std::vector<InputParameters>& background,std::size_t input,
+    const std::vector<InputParameters>& previous,const std::vector<InputParameters>& current)
+{
+    if(background.size()<2 || input>=background.size()-1 || previous.size()!=background.size() ||
+       current.size()!=background.size())return false;
+    for(std::size_t i=0;i<background.size();++i)
+    {
+        for(const auto* p:{&background[i],&previous[i],&current[i]})
+            if(p->length<1 || p->synapses<1 || !std::isfinite(p->resistance) || p->resistance<=0.)return false;
+        if(previous[i].resistance!=current[i].resistance || previous[i].synapses!=current[i].synapses)return false;
+        if(i!=input && (previous[i].resistance!=background[i].resistance ||
+                       previous[i].synapses!=background[i].synapses))return false;
+        if(i>input && (previous[i]!=background[i] || current[i]!=background[i]))return false;
+        if(i+1<background.size() && (background[i].length<background[i+1].length ||
+           previous[i].length<previous[i+1].length || current[i].length<current[i+1].length))return false;
+    }
+    for(const std::int64_t separation:{0,1})
+    {
+        if(separation && !input)continue;
+        bool same=true;
+        for(std::size_t i=0;i<input;++i)
+        {
+            const auto oldLength=std::max<std::int64_t>(background[i].length,
+                std::int64_t(previous[input].length)+separation);
+            const auto newLength=std::max<std::int64_t>(background[i].length,
+                std::int64_t(current[input].length)+separation);
+            same=same && previous[i].length==oldLength && current[i].length==newLength;
+        }
+        if(same)return true;
+    }
+    return false;
+}
+
 std::optional<int> ProposeMeasuredLength(std::vector<MeasuredLengthPoint> points,
     int minimumLength,int maximumLength,double tolerance)
 {

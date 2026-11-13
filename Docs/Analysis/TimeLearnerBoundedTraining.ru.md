@@ -120,3 +120,13 @@ checks, с actual input overlays. Все24 выбранных PNG просмот
 `e0adf29b2db4fb918e1c6a5c8a1994dfbb2a03cb`, отдельный selected QA в корне.
 Эта проверка сходимости не доказывает классификацию и не является replay
 августовских результатов либо сравнением legacy V1/V2.
+
+## Native N1: измеренный локальный интервал и Branch growth family (13.11.2026)
+
+Предыдущая версия9656b420 прошла77/77 controller checks. Реальный same-budget Branch A3(root4acc1f0ec) завершён, native completed/valid, outer test1/1 PASS2757.464s:52consumed candidates,55domain assessments,0rejections,5timing-ready и0joint-ready; BudgetExhausted, certificate=null. На геометрии[26,26,25,1] дляinput2 при86M измерены amp residual−0.0118549032499361/timing−0.015s, при2.880071555M residual+0.06956639592980918/timing−0.017s. Это измеренные opposite signs, а не PhysicalInfeasible или Exact.
+
+Следующая реализация перераспределяет прежние конечные global budgets: один local normalization turn на geometry visit, allowance=min(12, remaining candidates/4, remaining probes/8, remaining edits/4). Probes считаются парами fresh anchor/input. Allowance выдаётся только после valid timing-ready amplitude miss, не пополняется от новых scalar/invalid probes; после конечной mesh/refinement серии обход продолжает другие геометрии. Valid endpoint с потерей timing не создаёт сертификат и не отменяет оставшуюся конечную mesh-проверку. Domain вновь оценивается для каждого нового кандидата. Все прежние global budgets, CapturedPerInput и tolerances сохранены.
+
+Для Branch N1 length proposal допускает измеренные точки одного обычного или separated-bank семейства от одного background: только unvisited upstream lengths следуют max(background[j].length, activeLength+offset), offset0/1. Inactive Rs/Ns, anchor и committed downstream неизменны; варианты не смешиваются; C-context проверяется отдельно. Helper SameBranchLengthProposalFamily не утверждает физическую эквивалентность и не даёт measurement authority. Предсказанный length ограничен текущимL/2..2L и исходными bounds; он только меняет порядок legal candidates. Новые edit/readback/anchor/assigned-burst measurement и fresh all-input final verification обязательны.
+
+Новые изменения пока не приняты на сервере. Root tests добавляют N4 coupled-growth positive control и исключение смешанных bank families, чужих Rs/Ns/downstream и nonfinite inputs. Legacy controller1, Rdk lifecycle/scheduler, storage physics и N0 не меняются. Scientific acceptance нового варианта требует собственного native same-budget Train; old77/77 и A3 не переименовываются в его PASS.

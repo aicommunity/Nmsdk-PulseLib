@@ -34,8 +34,10 @@ struct BoundedTrainingConfig {
     // Exhaustion never proves infeasibility or global monotonicity.
     unsigned resistanceSubdivisionDepth=4;
     // Native N1 visits legal geometries in passes, one unissued Rs per
-    // geometry, plus at most one local turn after a measured timing-ready
-    // amplitude miss. This scheduling is independent of invalidMeasurementRecovery;
+    // geometry, plus a bounded local normalization turn after a measured
+    // timing-ready amplitude miss. Its allowance is at most12 and a quarter
+    // of remaining candidate/probe-pair/edit budgets; it is never replenished
+    // by an improving scalar. Scheduling is independent of invalidMeasurementRecovery;
     // all finite probe/candidate budgets and domain reassessments still apply.
     // One preserves historical protocol. New N0 protocols may explicitly
     // require repeated native anchor/input pairs for every measured candidate.
@@ -204,9 +206,9 @@ private:
         // of the policy used to recover an invalid measurement.
         // These belong to each suspended C context, not the whole session.
         bool domainYieldPending=false,domainPassIssuedCandidate=false;
-        // A timing-ready miss may defer this geometry's yield once. Never
-        // replenish this allowance from an improving scalar or invalid probe.
+        // One finite local turn per geometry visit, within all global budgets.
         bool domainLocalTurnUsed=false;
+        std::size_t domainLocalTurnsRemaining=0;
         std::size_t domainLength=0,domainNormalizer=0,domainVariant=0;
         std::vector<InputParameters> domainGeometry;
         std::string domainScope,candidateResistanceScope;
