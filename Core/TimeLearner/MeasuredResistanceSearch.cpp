@@ -57,7 +57,14 @@ std::optional<double> ProposeMeasuredResistanceRefinement(
         const auto& a=unique[i-1];const auto& b=unique[i];
         if((a.amplitudeResidual<0.)==(b.amplitudeResidual<0.))continue;
         const double logLow=std::log(a.resistance),span=std::log(b.resistance)-logLow;
-        const double candidate=std::exp(logLow+.5*span);
+        // Use measured residuals to propose a safeguarded secant in log(Rs).
+        // Normalize before adding magnitudes to avoid overflowing finite errors.
+        // The middle-half guard bounds contraction even for a poor local fit;
+        // no interpolated value is ever accepted as a measured amplitude.
+        const double scale=std::max(std::fabs(a.amplitudeResidual),std::fabs(b.amplitudeResidual));
+        const double left=std::fabs(a.amplitudeResidual)/scale,right=std::fabs(b.amplitudeResidual)/scale;
+        const double fraction=std::clamp(left/(left+right),.25,.75);
+        const double candidate=std::exp(logLow+fraction*span);
         if(!std::isfinite(candidate) || candidate<=a.resistance || candidate>=b.resistance)continue;
         const auto rank=std::tuple{std::min(std::fabs(a.amplitudeResidual),std::fabs(b.amplitudeResidual)),span,a.resistance};
         if(!result || rank<best){result=candidate;best=rank;}
