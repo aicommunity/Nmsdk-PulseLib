@@ -197,9 +197,14 @@ private:
     // it separate from measurements/references enables fair bounded traversal
     // of joint physical candidates without resetting the training session.
     struct CandidateCursor {
+        struct N0GeometryTurn {
+            CandidateEvidence best;
+            std::size_t proposalsRemaining=0;
+        };
         std::vector<int> lengths,counts;
         std::vector<double> resistances;
         std::vector<std::vector<InputParameters>> n0Priority,issuedN0Candidates;
+        std::vector<N0GeometryTurn> n0GeometryTurns;
         std::size_t lengthIndex=0,normalizerIndex=0;
         bool initialCandidatePending=false,domainReady=false;
         // N1 yields after one domain candidate per geometry turn, independent
@@ -257,6 +262,7 @@ private:
     DynamicCandidate NextDomainCandidate(std::vector<InputParameters>& parameters);
     void AdvanceDomainGeometry();
     void PrioritizeMeasuredLength(const CandidateEvidence& measurement);
+    void PrioritizeN0Neighbors(const CandidateEvidence& measurement);
     // Shared private acceptance path after legacy or typed admission.
     void AcceptValidatedScalar(const ValidatedProbeMeasurement& measurement);
     void Reject(const std::string& reason);

@@ -8,6 +8,7 @@
 #include "CapacitanceRegion.h"
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <limits>
 #include <stdexcept>
 #include <string_view>
@@ -288,6 +289,7 @@ void BoundedTrainingSession::BeginInput()
     background=current;cursor.lengths.clear();cursor.counts.clear();cursor.resistances.clear();best.reset();anchor.reset();anchorTrial.clear();
     backgroundCapacitance=currentCapacitance;
     candidateMeasurements.clear();cursor.lengthMeasurements.clear();cursor.n0Priority.clear();cursor.issuedN0Candidates.clear();
+    cursor.n0GeometryTurns.clear();
     cursor.lengthIndex=cursor.normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
     cursor.initialCandidatePending=requireResistanceDomains;cursor.domainReady=false;cursor.domainLength=cursor.domainNormalizer=cursor.domainVariant=0;
     cursor.domainYieldPending=cursor.domainPassIssuedCandidate=false;
@@ -468,6 +470,52 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
     if(next>cursor.lengths.size() || std::find(cursor.lengths.begin(),cursor.lengths.begin()+next,*proposal)!=cursor.lengths.begin()+next)return;
     cursor.lengths.erase(std::remove(cursor.lengths.begin()+next,cursor.lengths.end(),*proposal),cursor.lengths.end());
     cursor.lengths.insert(cursor.lengths.begin()+next,*proposal);
+}
+
+void BoundedTrainingSession::PrioritizeN0Neighbors(const CandidateEvidence& e)
+{
+    if(restoringBest || config.normalization!=Normalization::SynapseCount ||
+        !e.withinTiming || e.withinAmplitude)return;
+    const auto index=e.inputIndex;
+    auto turn=std::find_if(cursor.n0GeometryTurns.begin(),cursor.n0GeometryTurns.end(),[&](const auto& previous) {
+        if(previous.best.inputIndex!=index || previous.best.fullParameters.size()!=e.fullParameters.size() ||
+            !EquivalentTrainingCapacitance(previous.best.capacitance,e.capacitance))return false;
+        auto geometry=previous.best.fullParameters;
+        geometry[index].synapses=e.parameters.synapses;
+        return geometry==e.fullParameters;
+    });
+    if(turn==cursor.n0GeometryTurns.end())
+    {
+        const auto remainingCandidates=config.maximumCandidatesPerInput-candidates;
+        const auto remainingProbePairs=(config.maximumProbes-probes)/2/config.n0CandidateRepeats;
+        const auto remainingEdits=config.maximumEdits-edits;
+        // Reserve work for other geometries without disabling useful small-
+        // budget N0 searches. Each queued proposal consumes this finite turn;
+        // invalid observations and revisits never replenish it. Required
+        // repeats still use fresh anchor/input pairs through Consume.
+        const auto allowance=std::min({std::size_t(12),remainingCandidates,remainingProbePairs,
+            remainingEdits,std::max(std::size_t(4),remainingCandidates/4)});
+        cursor.n0GeometryTurns.push_back({e,allowance});
+        turn=std::prev(cursor.n0GeometryTurns.end());
+    }
+    else
+    {
+        if(!(Rank(e,config,references.Inputs().at(index))<Rank(turn->best,config,references.Inputs().at(index))))return;
+        turn->best=e;
+    }
+    const auto& bound=config.bounds[index];
+    for(const int delta:{1,-1})
+    {
+        if(!turn->proposalsRemaining)break;
+        auto candidate=e.fullParameters;candidate[index].synapses+=delta;
+        if(candidate[index].synapses<bound.minimumSynapses || candidate[index].synapses>bound.maximumSynapses ||
+            !PrepareCandidate(candidate))continue;
+        if(std::find(cursor.issuedN0Candidates.begin(),cursor.issuedN0Candidates.end(),candidate)==cursor.issuedN0Candidates.end() &&
+            std::find(cursor.n0Priority.begin(),cursor.n0Priority.end(),candidate)==cursor.n0Priority.end())
+        {
+            cursor.n0Priority.push_back(std::move(candidate));--turn->proposalsRemaining;
+        }
+    }
 }
 
 BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandidate(std::vector<InputParameters>& parameters)
@@ -1153,24 +1201,10 @@ void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasureme
     PrioritizeMeasuredLength(e);
     const bool improved=!best || Rank(e,config,reference)<Rank(*best,config,reference);
     if(improved)best=e;
-    if(improved && !restoringBest && config.normalization==Normalization::SynapseCount &&
-        e.withinTiming && !e.withinAmplitude)
-    {
-        // Normalize near a measured timing-ready geometry before spending the
-        // remaining budget on distant cursor.lengths. No amplitude monotonicity or
-        // preservation of timing is inferred, and both neighbors remain legal
-        // full-model candidates with fresh anchor/input measurements.
-        const auto& bound=config.bounds[index];
-        for(const int delta:{1,-1})
-        {
-            auto candidate=e.fullParameters;candidate[index].synapses+=delta;
-            if(candidate[index].synapses<bound.minimumSynapses || candidate[index].synapses>bound.maximumSynapses ||
-                !PrepareCandidate(candidate))continue;
-            if(std::find(cursor.issuedN0Candidates.begin(),cursor.issuedN0Candidates.end(),candidate)==cursor.issuedN0Candidates.end() &&
-                std::find(cursor.n0Priority.begin(),cursor.n0Priority.end(),candidate)==cursor.n0Priority.end())
-                cursor.n0Priority.push_back(std::move(candidate));
-        }
-    }
+    // A different timing-ready geometry may start far from the amplitude
+    // target. Its local search must not be gated by another geometry's best.
+    // Global ranking and the independent final-verification gate are unchanged.
+    PrioritizeN0Neighbors(e);
     if(restoringBest || (e.withinTiming && e.withinAmplitude))AdvanceInput();
     else {phase=Phase::Candidate;anchor.reset();anchorTrial.clear();AdvanceCapacitanceContext();}
 }
