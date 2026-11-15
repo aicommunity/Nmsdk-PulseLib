@@ -11,3 +11,7 @@
 Доказательства, полные JUnit, actual loaded libraries и история неуспешных постановок A1–A3 сохранены в корневом commit `aef8038e65ef35418480682049dc82780ac5a9de`, документ `Docs/StructTrain/TimeLearner/N1GeometryFairness-20261111.ru.md`, primary `Reports/StructTrain/TimeLearner/N1GeometryDecisionAB-20261111`. Все процессы A4 закрыты, lease освобождены. Эта правка документации не меняет скомпилированный Core.
 
 Полная SDK-сборка нового codec, native storage/Console A/B и вся обязательная матрица ещё ожидаются. Этап 7 и общий план остаются незавершёнными; unit-проверка не заменяет проверку реальной физики и Train→Test.
+
+## Уточнение16.11.2026
+
+Последний абзац выше описывает границу исходного11.11 снимка. После него M40 native SDK147/147 принят на candidate42e35, а Elder109/109 до/после подтверждает общий численный корпус. Это адресная проверка, не полная физическая/режимная матрица. Новое opt-in поведение только после sealed rejected-window описано в [N1RejectedCandidateCoverage](N1RejectedCandidateCoverage.ru.md); оно не меняет valid dense-Rs scheduling. Полные primary теперь хранятся во внешнем M40 архиве, прежние пути Reports являются историческими ссылками/метаданными.
