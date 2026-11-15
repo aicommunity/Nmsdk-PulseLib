@@ -1,6 +1,8 @@
 # Предложение длины по измеренной временной ошибке
 
-Состояние: feature implementation, серверная приёмка не завершена. Это изменение
+Состояние15.11: базовая measured-length policy адресно принята; новое широкое
+покрытие rejected-window прошло142 normal/native checks и сравнительный cold Train.
+Это изменение
 порядка кандидатов общего V2 BoundedTrainingSession; математическая цель,
 CapturedPerInput, допуски и штатный Rdk scheduler не меняются.
 
@@ -75,4 +77,31 @@ Independent ASan rerender восьми выбранных проб дал16/16 b
 Полные этапы6/7/11, legacy/V2 parity и полная физическая матрица остаются открытыми.
 
 
-> Подготовка15.11: в отдельной ветке исследуется широкое покрытие длин после typed rejected-window только для Branch N0 при исходных Ns/Rs. Оно меняет лишь порядок предложений; missing/ambiguous не дают измеренного остатка. Исходные budgets/допуски и native fresh-anchor path сохраняются. Серверная приёмка этого нового изменения пока не выполнена; завершённые результаты выше относятся к предыдущей версии64f452e.
+## Branch N0: покрытие после typed rejected-window (15.11)
+
+Production a82a7cd08a4334c5924839b7136ae9df5884da53 вводит только порядок
+предложений в исходном Ns/Rs-семействе. Штатный native edit/readback, свежие
+anchor/input measurements и бюджеты не меняются. Ambiguous/missing никогда
+не создают scalar residual или certificate; Classic/N1/legacy/default Retry
+не переключаются на этот поиск.
+
+Новый SDK normal142/142 (113 algorithm/codec и29 отдельными native gates)
+завершён с полным закрытием процессов. Четыре helper и два широких native
+регрессионных сценария входят в этот actual inventory. Восемь cold-reference
+CSV до/после scoped test logger-mask change совпали побайтово.
+
+Холодный Branch N4/N0 при исходных CapturedPerInput/tolerances и том же
+local12/global128probes реально проверил input1 L28,100,64,46,82 вместо
+28..32; все пять наблюдений ambiguous. Первые13 scalar measurements равны
+контролю, измерены только input2. Итог invalid_observation, certificate=null,
+terminal L=[82,82,27,1] не имеет consumed scalar measurement.
+Production CLI/DATA/physical1/1 завершены и закрыты. Это отрицательный
+научный результат ограниченного сравнения, не обоснование общей
+PhysicalInfeasible и не классификация. ASan-приёмка именно нового покрытия
+и полная режимная/физическая матрица пока не заявляются.
+
+Полный primary во внешнем архиве M40: sha256
+0c4f07e6c10a7586768a759ec95d73f7f356aa5daf90b17717a2ae3c72efb55a,
+17074560B. Корневой научный отчёт:
+Docs/StructTrain/TimeLearner/N0RecoveryCoverageScientificReport-20261115.ru.md.
+Исторические адресные normal/ASan доказательства выше сохраняют свой scope.
