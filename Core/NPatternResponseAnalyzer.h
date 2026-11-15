@@ -44,7 +44,8 @@ UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> ModelRevision;
 UProperty<bool, NPatternResponseAnalyzer, ptPubParameter> TraceLogEnabled;
 UProperty<std::string, NPatternResponseAnalyzer, ptPubParameter> TraceLogFileName;
 
-/// 0 = LTZ rising-edge match (default); 1 = ISI template vs trial-0 training pattern
+/// 0 = LTZ rising-edge match (default); 1 = input ISIs vs Neuron.TrainingPattern.
+/// Mode 1 does not establish a neural output response.
 UProperty<int, NPatternResponseAnalyzer, ptPubParameter> MatchMode;
 
 UProperty<int, NPatternResponseAnalyzer, ptPubState> TrialIndex;
@@ -74,6 +75,8 @@ bool EnsureCsvReady(void);
 std::string CsvHeader(void) const;
 bool EnsureTraceReady(void);
 void WriteTraceSample(double now);
+enum class IsiTemplateAssessment { Invalid, Mismatch, Match };
+IsiTemplateAssessment AssessIsiTemplate(void) const;
 bool IsIsiTemplateMatch(void) const;
 void CloseTrial(double now);
 void BeginTrial(double now);

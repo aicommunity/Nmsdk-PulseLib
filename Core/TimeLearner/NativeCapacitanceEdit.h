@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeModelEditor.h"
 #include <QJsonObject>
+#include <QJsonArray>
 #include <map>
 
 namespace NMSDK::TimeLearner {
@@ -37,6 +38,11 @@ NativeCapacitanceCorrection ParseNativeCapacitanceState(const std::string& text,
 // this is parameter state, not a controller or mid-probe dynamics checkpoint.
 void ValidateAppliedNativeCapacitanceState(const NativeProbeBindings& bindings,
     const NativeModelSpec& declaration,const QJsonObject& state);
+// Static historical witness validation. Checks effective archived C/physics,
+// active/dormant partitions and the image closure; does not initialize a graph
+// or claim a native replay/dynamics checkpoint.
+void ValidateArchivedNativeCapacitanceState(const QJsonObject& state,
+    const QJsonObject& identity,const QJsonArray& storageImages);
 // Absolute multipliers relative to the supplied baseline, not current C.
 // Each selected dendritic membrane scales its existing channels separately.
 // A new segment without an explicit baseline is rejected by the standalone

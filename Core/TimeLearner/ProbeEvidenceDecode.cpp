@@ -1,4 +1,6 @@
 #include "ProbeEvidenceJson.h"
+#include "CompositeTrainingDeclarations.h"
+#include "CandidateWindowTrainingDeclarations.h"
 #include <QJsonArray>
 #include <cmath>
 #include <limits>
@@ -37,13 +39,32 @@ ProbeSpec Spec(const QJsonValue& value)
     for(const auto& v:Array(o["windows"]))
     {const auto w=Object(v);s.windows.push_back({Text(w["input_id"]),Count(w["channel"]),Number(w["begin"]),Number(w["end"]),Text(w["stimulus_id"])});}
     s.expectedStimulusIds=Strings(o["expected_stimulus_ids"]);
+    if(o.contains("characterization"))
+    {
+        const auto c=Object(o["characterization"]);
+        Require(c.size()==4 && c["purpose"]==QJsonValue("single_pulse_characterization"));
+        s.characterization=SinglePulseCharacterization{Text(c["source_training_pattern_hash"]),
+            Count(c["physical_input_count"]),Count(c["selected_input_index"])};
+    }
+    Require((s.schemaVersion==4 || s.schemaVersion==5)==bool(s.characterization));
+    if(o.contains("stimulus_subset"))
+    {
+        const auto c=Object(o["stimulus_subset"]);
+        Require(c.size()==4 && c["purpose"]==QJsonValue("stimulus_subset_characterization"));
+        StimulusSubsetCharacterization subset;subset.sourceTrainingPatternHash=Text(c["source_training_pattern_hash"]);
+        subset.physicalInputCount=Count(c["physical_input_count"]);
+        for(const auto& index:Array(c["source_ordinals"]))subset.sourceOrdinals.push_back(Count(index));
+        Require(ValidStimulusSubset(subset));s.stimulusSubset=std::move(subset);
+    }
+    Require((s.schemaVersion==6)==bool(s.stimulusSubset));
     if(!o["stimulus_profile"].isNull())
     {const auto p=Object(o["stimulus_profile"]);s.stimulusProfile=StimulusProfile{Text(p["generator_class"]),Number(p["amplitude"]),Number(p["pulse_length"]),
         Number(p["frequency_hz"]),Number(p["frequency_deviation"]),Boolean(p["use_transit_signal"]),Boolean(p["use_pattern_output"])};}
     const auto a=Text(o["wave_assignment"]);Require(a=="window_only" || a=="ordered_whole_burst");
     s.waveAssignment=a=="window_only"?WaveAssignmentPolicy::WindowOnly:WaveAssignmentPolicy::OrderedWholeBurst;
-    const auto p=Text(o["peak_selection"]);Require(p=="isolated_window" || p=="assigned_burst_wave");
-    s.peakSelection=p=="isolated_window"?PeakSelectionPolicy::IsolatedWindow:PeakSelectionPolicy::AssignedBurstWave;return s;
+    const auto p=Text(o["peak_selection"]);Require(p=="isolated_window" || p=="assigned_burst_wave" || p=="single_impulse_maximum");
+    s.peakSelection=p=="isolated_window"?PeakSelectionPolicy::IsolatedWindow:
+        p=="assigned_burst_wave"?PeakSelectionPolicy::AssignedBurstWave:PeakSelectionPolicy::SingleImpulseMaximum;return s;
 }
 PreparedVerificationProbe Prepared(const QJsonValue& value)
 {
@@ -95,22 +116,31 @@ NativeProbeResult DecodeNativeProbeEvidence(const QJsonObject& o)
     if(EncodeNativeProbeEvidence(r)!=o)throw std::invalid_argument("noncanonical_native_probe_evidence");
     return r;
 }
+PreparedVerificationProbe DecodeNativeProbePreparation(const QJsonObject& o) {
+    const auto p=Prepared(o);Require(EncodeNativeProbePreparation(p)==o);return p;
+}
+ProbeSpec DecodeNativeProbeSpecification(const QJsonObject& o,bool relativeToTrialStart) {
+    const auto s=Spec(o);Require(EncodeNativeProbeSpecification(s,relativeToTrialStart)==o);return s;
+}
 VerificationProtocol DecodeVerificationProtocol(const QJsonObject& o)
 {
+    const auto version=Version(o["schema_version"]);const bool composite=version==4 || version==5;
     // Reuse the same strict primitive/profile/enum decoder; this temporary
     // specification is data only and is never scheduled or accepted as a probe.
-    QJsonObject spec{{"schema_version",o["schema_version"]},{"run_id",""},{"trial_id",""},
+    QJsonObject spec{{"schema_version",composite?QJsonValue(2):o["schema_version"]},{"run_id",""},{"trial_id",""},
         {"sample_id",o["sample_id"]},{"pattern_hash",o["pattern_hash"]},{"effective_model_revision",""},
         {"begin",0.},{"end",0.},{"maximum_sample_gap",o["maximum_sample_gap"]},{"minimum_amplitude",o["minimum_amplitude"]},
         {"maximum_samples",0},{"record_spikes",false},{"baseline",QJsonArray{}},{"windows",QJsonArray{}},
         {"expected_stimulus_ids",o["stimulus_ids"]},{"stimulus_profile",o["stimulus_profile"]},
         {"wave_assignment",o["wave_assignment"]},{"peak_selection",o["peak_selection"]}};
-    const auto s=Spec(spec);VerificationProtocol p;p.schemaVersion=s.schemaVersion;p.routing=Routing(o["routing"]);
+    const auto s=Spec(spec);VerificationProtocol p;p.schemaVersion=version;p.routing=Routing(o["routing"]);
     p.revision=Text(o["revision"]);p.sampleId=s.sampleId;p.patternHash=s.patternHash;p.originStimulusId=Text(o["origin_stimulus_id"]);
     p.stimulusIds=s.expectedStimulusIds;p.maximumSampleGap=s.maximumSampleGap;p.minimumAmplitude=s.minimumAmplitude;
     p.stimulusProfile=s.stimulusProfile;p.waveAssignment=s.waveAssignment;p.peakSelection=s.peakSelection;
     for(const auto& v:Array(o["inputs"]))
     {const auto i=Object(v);Require(i.size()==2);p.inputs.push_back({Text(i["id"]),Text(i["stimulus_id"])});}
+    if(version==4)p.compositeMeasurement=DecodeCompositeMeasurementContract(Object(o["composite_measurement"]));
+    if(version==5)p.candidateWindowMeasurement=DecodeCandidateWindowMeasurementContract(Object(o["composite_measurement"]));
     ValidateVerificationProtocol(p);Require(EncodeVerificationProtocol(p)==o);return p;
 }
 }

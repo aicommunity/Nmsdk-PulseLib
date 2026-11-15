@@ -1,0 +1,8 @@
+{
+  "status": "source_inverse_only_no_runtime_claim",
+  "base": "f925e37247bb987980fce80da47831a1c31d04c9",
+  "file": "Core/TimeLearner/FinalVerification.cpp",
+  "inverse_equals_base": true,
+  "base_lf_sha256": "eebb349437cbfe12350798070256ee825ecc0cba06041831c207e0ee53ffc3a5",
+  "numeric_tests_run_locally": false
+}

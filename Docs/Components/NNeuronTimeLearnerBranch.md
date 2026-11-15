@@ -1,5 +1,11 @@
 ## RU
 
+**Актуальное разделение режимов (07.11.2026):** отсутствие `ControllerVersion`
+означает legacy1; версия2 подключает общий configured native service и Branch
+adapter. См. [контракт версий, lifecycle и полного Train→Test](TimeLearnerControllerModes.ru.md)
+и [актуальный scope проверок](../../../../Docs/StructTrain/TimeLearner/ImplementationStatus.ru.md).
+Следующие исторические фазы и legacy helper calls относятся к версии1.
+
 **Сверка 2026-09-22:** фаза 0 — совместная настройка длины/амплитуды; 1 не назначается; 2 Done; 3 legacy CalibrateLtz при PostTune OFF; 4 PostTune. Defaults: EnablePostTrainTuning=true, AutoScaleIterationGap=true. SearchSynthetic вызывает ScaleTipR для snapshot. Done допускает best-effort. [Текущий контракт и ограничения](../../../../Bin/Configs/SpikeSamples/StructTrain/AUDIT_2026-09-22.md).
 
 
@@ -26,18 +32,41 @@ Sample: `Bin/Configs/SpikeSamples/StructTrain/TimeNeuronTimeLearnerBranch`.
 
 Общие вычисления задержки, пиков, импульсов и Rs вынесены в
 [legacy-политики контроллера](../Analysis/TimeLearnerSharedPolicies.ru.md).
-Это механическое устранение дублирования; новый контроллер версии 2 и
-независимая свежая финальная проверка всех входов этим не реализуются.
+Само механическое выделение legacy helpers не реализовало версию2.
+В текущем коде версия2 подключена отдельно; её критерии и управление
+нельзя выводить из перечисленных legacy helper calls.
 
 Отдельный [FinalVerificationSession](../Analysis/TimeLearnerFinalVerification.ru.md)
-реализует такую проверку как общий API, но ещё не подключён вместо legacy
-AllSynapsesNormalized/EndOfLearning. Его наличие не закрывает TL-001 в данном пути.
+реализует fresh all-input проверку и используется native service версии2.
+Legacy AllSynapsesNormalized/EndOfLearning сохраняются для совместимого пути;
+его старый Done не следует объявлять сертификатом нового контроллера.
 
 Для обоих классов добавлен внутренний [API native-проб](../Analysis/TimeLearnerNativeExecution.ru.md),
-включая временный Branch solo routing и lifecycle validation. Он ещё не
-переключает legacy Train на новый bounded search или ControllerVersion=2.
+включая временный Branch solo routing и lifecycle validation. Самостоятельный
+API не переключает старую конфигурацию автоматически: для нового bounded
+service явно выбирают ControllerVersion=2 и ControllerConfiguration.
 
 
 ### Уточнение 2026-09-23 (9a6cee0b)
 
 Search после выбора Tips запускает отдельный free-run; при плохом landscape возвращает snapshot. При включённом mid Search Train оставляет silent-порог, Finalize запрещает второй inference-mid в этом процессе; следующий Test использует новый процесс/reset. Обычный finite inference failure также оставляет silent, но Complete не означает успешную калибровку. Остаются NaN/setup/fallback-metric проблемы и неподдержанный выбор LTZ в free-run. Same-Matrix mid (sample 0 — target) принят как текущая особенность A07. [Текущий контракт](../../../../Bin/Configs/SpikeSamples/StructTrain/AUDIT_2026-09-22.md).
+
+
+Перенос owned C₀ описан в
+[TimeLearnerCapacitanceStateTransfer](../Analysis/TimeLearnerCapacitanceStateTransfer.ru.md).
+Раннее описание candidate schema3 не является текущим статусом всех codecs.
+Объём серверной приёмки и оставшаяся C-trim/physics matrix указаны в корневой
+сводке; её нельзя заменить фактом наличия одного API.
+
+
+### Контракт выбора пика, уточнение07.11.2026
+
+В Train измеряется максимум отклика закреплённого за входом импульса;
+глобальный максимум полной пачки его не заменяет. В Test амплитудная
+характеристика относится к паттерну целиком, а качество классификации — к
+реальным выходным спайкам, включая поздние ложные ответы. Общий пик слившихся
+откликов консервативно считается неоднозначным для раздельного назначения;
+научный вопрос не объявляется окончательно решённым. Несколько меньших
+экстремумов от одного одиночного импульса не запрещают уникальный наибольший
+максимум. [Диагностическая schema5, проверенный scope и ограничения](../Analysis/TimeLearnerSingleImpulseMaximum.ru.md)
+не заменяет обучение штатной пачкой и не выдаёт TrainingCertificate.

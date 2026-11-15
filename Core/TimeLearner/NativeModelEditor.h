@@ -50,7 +50,8 @@ ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor
     std::size_t inputIndex,bool scaleInhibitionWithInput);
 ResistanceDomainAssessment AssessNativeInputResistanceDomain(NativeProbeExecutor& executor,const NativeProbeBindings& bindings,
     const std::vector<int>& attachments,const std::vector<InputParameters>& geometry,const NativeEditSpec& specification,
-    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection& capacitance);
+    std::size_t inputIndex,bool scaleInhibitionWithInput,const NativeCapacitanceCorrection& capacitance,
+    bool recordTrainingCapacitance=false);
 std::vector<InputParameters> ReadNativeInputParameters(const NativeProbeBindings& bindings,
                                                       const std::vector<int>& attachments);
 // Native Save/Load preview validates a candidate before changing the live graph.

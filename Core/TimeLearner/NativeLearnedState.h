@@ -5,11 +5,15 @@
 #include "NativeCapacitanceEdit.h"
 
 namespace NMSDK::TimeLearner {
+// One immutable export boundary; summary and model share the same checked evidence.
+// Neither value is a dynamics/controller checkpoint or restores live authority.
+struct NativeTrainingExport {QJsonObject learnedState,summary;};
 struct PreparedNativeLearnedState {
     RDK::UEPtr<RDK::UStorage> storage;
     RDK::UEPtr<NPulseNeuron> neuron;
     RDK::UEPtr<NDatasetMatrix> dataset;
     ConfiguredNativeTraining configuration;
+    std::optional<NativeModelSpec> sourceDeclaration;
     std::vector<InputParameters> parameters;
     NativeTrainingService service;
     std::string configurationText,modelRevision;
@@ -25,9 +29,19 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
     const std::string& implementationId);
 // Schema 2 adds the immutable per-channel C0 and full absolute correction map.
 // The physical archive and certificate remain bound to the current graph.
+// Tracked services use schema3 (record-only) or schema4 (C-search policy), retaining required reference/final/stopped
+// physical witnesses and trial links. Search/dynamics checkpoints are excluded.
+// Schema6 is the separate cold7/protocol5/runtime2/archive2/certificate3 native
+// boundary. Import is DATA/Finished only; a later Start creates live authority.
+// Schema7 adds recovery-delivery DATA and per-attempt runtime bindings, also
+// after a warm switch back to Retry. It does not restore controller traversal,
+// dynamics, callbacks or live authority, or assert independent ledger coverage.
 QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection& capacitance);
+NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
+    const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
+    const std::string& implementationId,const NativeCapacitanceCorrection* capacitance=nullptr);
 QJsonObject ParseNativeLearnedState(const std::string& text);
 std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);
