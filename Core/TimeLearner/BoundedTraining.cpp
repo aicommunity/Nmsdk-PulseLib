@@ -290,6 +290,8 @@ void BoundedTrainingSession::BeginInput()
     backgroundCapacitance=currentCapacitance;
     candidateMeasurements.clear();cursor.lengthMeasurements.clear();cursor.n0Priority.clear();cursor.issuedN0Candidates.clear();
     cursor.n0GeometryTurns.clear();
+    cursor.n1RecoveryGeometry.reset();cursor.n1RejectedCandidates.clear();cursor.n1RecoveryLengths.clear();
+    cursor.n1RecoveryCount=0;cursor.n1RecoveryPreferMinimum=cursor.n1RecoveryFallbackAllowed=false;
     cursor.lengthIndex=cursor.normalizerIndex=candidates=0;restoringBest=false;phase=Phase::Candidate;
     cursor.initialCandidatePending=requireResistanceDomains;cursor.domainReady=false;cursor.domainLength=cursor.domainNormalizer=cursor.domainVariant=0;
     cursor.domainYieldPending=cursor.domainPassIssuedCandidate=false;
@@ -428,6 +430,8 @@ void BoundedTrainingSession::AdvanceDomainGeometry()
 {
     cursor.domainReady=false;cursor.domainLocalTurnUsed=false;
     cursor.domainLocalTurnsRemaining=0;
+    cursor.n1RecoveryGeometry.reset();cursor.n1RecoveryFallbackAllowed=false;
+    cursor.n1RecoveryPreferMinimum=false;
     if(++cursor.domainVariant==2){cursor.domainVariant=0;++cursor.domainLength;}
 }
 
@@ -525,6 +529,63 @@ void BoundedTrainingSession::PrioritizeRejectedN0BranchLength()
     cursor.n0Priority.insert(cursor.n0Priority.begin(),std::move(candidate));
 }
 
+bool BoundedTrainingSession::QueueRejectedN1Geometry(bool allowSameLength)
+{
+    if(!requireResistanceDomains || config.normalization!=Normalization::TipResistance)return false;
+    const auto input=order.at(position);const auto& bound=config.bounds.at(input);
+    const bool branch=references.Protocol().routing==ProbeRouting::BranchSoloBurst;
+    std::int64_t minimum=bound.minimumLength,maximum=bound.maximumLength;
+    if(branch)
+    {
+        if(input+1>=background.size())return false;
+        // A freely adjustable Rs cannot share a committed downstream bank.
+        minimum=std::max(minimum,std::int64_t(background[input+1].length)+1);
+        std::int64_t separation=1;
+        for(std::size_t k=input;k>0;--k)
+        {
+            maximum=std::min(maximum,std::int64_t(config.bounds[k-1].maximumLength)-separation);
+            if(k>1 && (background[k-2].synapses!=background[k-1].synapses ||
+                       background[k-2].resistance!=background[k-1].resistance))++separation;
+        }
+    }
+    if(minimum>maximum)return false;
+    std::vector<int> issued=cursor.n1RecoveryLengths;
+    for(const auto& candidate:cursor.visitedDomainCandidates)
+        if(candidate.second.size()==background.size())issued.push_back(candidate.second[input].length);
+    std::optional<int> length;
+    if(allowSameLength && current[input].length>=minimum && current[input].length<=maximum)
+        length=current[input].length;
+    else length=ProposeUnvisitedLength(std::move(issued),int(minimum),int(maximum));
+    if(!length)return false;
+    auto geometry=background;geometry[input].length=*length;
+    if(branch && input)
+        geometry[input-1].length=std::max(geometry[input-1].length,*length+1);
+    if(!PrepareCandidate(geometry))return false;
+    cursor.n1RecoveryGeometry=std::move(geometry);
+    UniquePush(cursor.n1RecoveryLengths,*length);++cursor.n1RecoveryCount;
+    cursor.n1RecoveryPreferMinimum=true;
+    // One same-length domain can be a locked singleton. Permit one far-length
+    // domain-only fallback without spending/replenishing any observation budget.
+    cursor.n1RecoveryFallbackAllowed=allowSameLength;
+    cursor.domainReady=false;cursor.domainYieldPending=false;cursor.domainLocalTurnUsed=false;
+    cursor.domainLocalTurnsRemaining=0;cursor.domainScope.clear();cursor.candidateResistanceScope.clear();
+    return true;
+}
+
+bool BoundedTrainingSession::FallbackRejectedN1Geometry()
+{
+    if(!cursor.n1RecoveryGeometry || !cursor.n1RecoveryFallbackAllowed)return false;
+    cursor.n1RecoveryFallbackAllowed=false;
+    return QueueRejectedN1Geometry(false);
+}
+
+void BoundedTrainingSession::PrioritizeRejectedN1()
+{
+    if(!requireResistanceDomains || config.normalization!=Normalization::TipResistance)return;
+    cursor.n1RejectedCandidates.push_back(current);
+    QueueRejectedN1Geometry(cursor.n1RecoveryCount==0);
+}
+
 void BoundedTrainingSession::PrioritizeN0Neighbors(const CandidateEvidence& e)
 {
     if(restoringBest || config.normalization!=Normalization::SynapseCount ||
@@ -606,7 +667,10 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
         }
         if(!cursor.domainReady)
         {
-            auto geometry=background;geometry[input].length=cursor.lengths[cursor.domainLength];
+            std::vector<InputParameters> geometry;
+            if(cursor.n1RecoveryGeometry)geometry=*cursor.n1RecoveryGeometry;
+            else {
+            geometry=background;geometry[input].length=cursor.lengths[cursor.domainLength];
             const bool branch=references.Protocol().routing==ProbeRouting::BranchSoloBurst;
             const bool locked=branch && geometry[input].length==geometry[input+1].length;
             if(locked)geometry[input].resistance=geometry[input+1].resistance;
@@ -631,6 +695,7 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
                 geometry[input-1].length=std::max(geometry[input-1].length,geometry[input].length+1);
                 if(!PrepareCandidate(geometry) || geometry==ordinary){AdvanceDomainGeometry();continue;}
             }
+            }
             pending=TrainingAction{TrainingActionKind::ResistanceDomain,++serial,input,epoch,
                 config.runId,{},revision,std::move(geometry),false};
             pending->capacitance=CandidateCapacitance(pending->parameters);
@@ -644,10 +709,14 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
                 return item.first==cursor.domainScope && item.second==parameters;
             });
             if(seen!=cursor.visitedDomainCandidates.end())continue;
+            if(cursor.n1RecoveryGeometry && std::find(cursor.n1RejectedCandidates.begin(),
+                cursor.n1RejectedCandidates.end(),parameters)!=cursor.n1RejectedCandidates.end())continue;
+            cursor.n1RecoveryPreferMinimum=false;
             cursor.visitedDomainCandidates.push_back({cursor.domainScope,parameters});
             if(interleave)cursor.domainYieldPending=cursor.domainPassIssuedCandidate=true;
             cursor.candidateResistanceScope=cursor.domainScope;return DynamicCandidate::Candidate;
         }
+        if(FallbackRejectedN1Geometry())continue;
         AdvanceDomainGeometry();
     }
 }
@@ -664,7 +733,7 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
         assessment.capacitance!=pending->capacitance)
     {rejected.push_back({{},"resistance_domain_context_mismatch:"+assessment.reason});Stop(TrainingStatus::InvalidModel);return;}
     if(assessment.status==ResistanceDomainStatus::Unavailable)
-    {rejected.push_back({{},"resistance_domain_unavailable:"+assessment.reason});pending.reset();AdvanceDomainGeometry();AdvanceCapacitanceContext();return;}
+    {rejected.push_back({{},"resistance_domain_unavailable:"+assessment.reason});pending.reset();if(!FallbackRejectedN1Geometry())AdvanceDomainGeometry();AdvanceCapacitanceContext();return;}
     if(assessment.status!=ResistanceDomainStatus::Available || assessment.previewModelRevision.empty())
     {rejected.push_back({{},"resistance_domain_unsupported:"+assessment.reason});Stop(TrainingStatus::InvalidModel);return;}
     const auto& bound=config.bounds.at(pending->inputIndex);
@@ -674,7 +743,7 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
         assessment.maximumResistance<assessment.minimumResistance)
     {rejected.push_back({{},"invalid_resistance_domain_interval"});Stop(TrainingStatus::InvalidModel);return;}
     if(low>high)
-    {rejected.push_back({{},"resistance_domain_outside_declared_box"});pending.reset();AdvanceDomainGeometry();AdvanceCapacitanceContext();return;}
+    {rejected.push_back({{},"resistance_domain_outside_declared_box"});pending.reset();if(!FallbackRejectedN1Geometry())AdvanceDomainGeometry();AdvanceCapacitanceContext();return;}
     cursor.domainGeometry=pending->parameters;cursor.domainScope=assessment.previewModelRevision;cursor.resistances.clear();
     const auto canAppend=[&] {
         if(capacitanceContexts.empty())return true;
@@ -723,6 +792,14 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
             if(!canAppend()){Stop(TrainingStatus::BudgetExhausted,"capacitance_cursor_inventory_budget_exhausted");return;}
             cursor.resistances.insert(cursor.resistances.begin(),*refined);
         }
+    }
+    if(cursor.n1RecoveryGeometry && cursor.n1RecoveryPreferMinimum)
+    {
+        // Try the fresh lower Rs endpoint first after a rejected point.
+        // This is a proposal, not a monotonicity assumption or evidence. Ordinary
+        // valid-observation scheduling and later measured refinements stay intact.
+        cursor.resistances.erase(std::remove(cursor.resistances.begin(),cursor.resistances.end(),low),cursor.resistances.end());
+        cursor.resistances.insert(cursor.resistances.begin(),low);
     }
     cursor.domainNormalizer=0;cursor.domainReady=true;pending.reset();
 }
@@ -1154,6 +1231,7 @@ void BoundedTrainingSession::RejectCandidateWindow(const RejectedCompositeMeasur
             e.disposition=CandidateRecoveryDisposition::RestoredBestStop;
         } else {
             PrioritizeRejectedN0BranchLength();
+            PrioritizeRejectedN1();
             phase=Phase::Candidate;AdvanceCapacitanceContext();
             e.disposition=CandidateRecoveryDisposition::CursorAdvanced;
         }
