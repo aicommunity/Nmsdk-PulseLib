@@ -1,5 +1,6 @@
 #pragma once
 #include "NativePostTuneConfiguration.h"
+#include "NativeLearnedState.h"
 #include "NativeTrainingIntentPolicy.h"
 #include <QJsonArray>
 #include <algorithm>
@@ -82,10 +83,11 @@ public:
     const QJsonObject& Document() const {return document;}
     QJsonObject Solo() const {return document["source_solo"].toObject();}
     QJsonObject Controls() const {return document["controls"].toObject();}
+    const QJsonObject& TrainingSummary() const {return trainingSummary;}
     bool DiagnosticOnly() const {return document["diagnostic_only"].toBool();}
 private:
-    explicit NativeFinalizationBoundary(QJsonObject value):document(std::move(value)){}
-    const QJsonObject document;
+    NativeFinalizationBoundary(QJsonObject value,QJsonObject summary):document(std::move(value)),trainingSummary(std::move(summary)){}
+    const QJsonObject document,trainingSummary;
     template<class Owner> friend NativeFinalizationBoundary CaptureNativeFinalizationBoundary(
         Owner&,const std::string&,bool);
 };
@@ -110,7 +112,8 @@ template<class Owner> NativeFinalizationBoundary CaptureNativeFinalizationBounda
     const auto trainingRequest=owner.NativeTrainingRequest();
     CheckNativeTrainingIntent(trainingRequest,controls,service);
     const auto outcome=service.Outcome();const auto attempt=service.SessionAttempt(),epoch=service.ModelEpoch();
-    const auto solo=owner.ExportNativeLearnedState(implementationId);
+    const auto exported=owner.ExportNativeLearnedBoundary(implementationId);
+    const auto& solo=exported.learnedState;
     const bool stopped=solo["kind"]==QJsonValue("timelearner_stopped_state");
     require(solo["kind"]==QJsonValue("timelearner_completed_state") || stopped,"invalid_finalization_solo_boundary");
     require(!stopped || allowDiagnostic,"finalization_boundary_stopped_training_requires_diagnostic_opt_in");
@@ -142,6 +145,6 @@ template<class Owner> NativeFinalizationBoundary CaptureNativeFinalizationBounda
         value["schema_version"]=2;value["training_request"]=trainingRequest;
     }
     value["sha256"]=NmsdkTools::CanonicalModelDataSha256(value);
-    return NativeFinalizationBoundary(std::move(value));
+    return NativeFinalizationBoundary(std::move(value),exported.summary);
 }
 }

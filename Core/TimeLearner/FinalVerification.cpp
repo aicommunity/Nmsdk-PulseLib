@@ -1,5 +1,7 @@
 #include "FinalVerification.h"
 #include "NumericChecks.h"
+#include "CandidateWindowContractValidation.h"
+#include "CandidateWindowCoreValidation.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -15,7 +17,18 @@ struct Measurement { double raw,arrival,plateauEnd; };
 
 void ProtocolValid(const VerificationProtocol& p)
 {
-    if((p.schemaVersion!=1 && p.schemaVersion!=2 && p.schemaVersion!=3) ||
+    const bool composite=p.schemaVersion==4 || p.schemaVersion==5;
+    if(composite) {
+        if(p.schemaVersion==4) {
+            if(p.candidateWindowMeasurement)throw std::invalid_argument("unexpected_candidate_window_contract");
+            ValidateCompositeMeasurementContract(p);
+        } else ValidateCandidateWindowMeasurementContract(p);
+        // Legacy flags retain their defaults and are not the new method ID.
+        if(p.waveAssignment!=WaveAssignmentPolicy::WindowOnly || p.peakSelection!=PeakSelectionPolicy::IsolatedWindow)
+            throw std::invalid_argument("composite_protocol_uses_explicit_method_contract");
+    }
+    else if(p.compositeMeasurement || p.candidateWindowMeasurement)throw std::invalid_argument("unexpected_composite_measurement_contract");
+    if((p.schemaVersion!=1 && p.schemaVersion!=2 && p.schemaVersion!=3 && !composite) ||
        (p.schemaVersion==1 && p.stimulusProfile) ||
        (p.schemaVersion>=2 && (!p.stimulusProfile || !ValidStimulusProfile(*p.stimulusProfile))) ||
        (p.schemaVersion<3 && p.waveAssignment!=WaveAssignmentPolicy::WindowOnly) ||
@@ -35,19 +48,23 @@ void ProtocolValid(const VerificationProtocol& p)
     for(const auto& input:p.inputs)
         if(input.id.empty() || !ids.insert(input.id).second || !stimuli.count(input.stimulusId) ||
            !mapped.insert(input.stimulusId).second)throw std::invalid_argument("invalid_protocol_input_mapping");
-    if(p.schemaVersion==3)for(std::size_t i=0;i<p.inputs.size();++i)
+    if(p.schemaVersion==3 || composite)for(std::size_t i=0;i<p.inputs.size();++i)
         if(p.inputs[i].stimulusId!=p.stimulusIds[i])throw std::invalid_argument("invalid_physical_input_order");
 }
 
-Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIndex,
-                               const PreparedVerificationProbe& prepared,const ProbeObservation& o)
+std::map<std::string,double> CheckedProbeContext(const VerificationProtocol& p,std::size_t inputIndex,
+    const PreparedVerificationProbe& prepared,const ProbeObservation& o,bool requireValid)
 {
     const auto fail=[](const char* reason){throw std::invalid_argument(reason);};
+    if(p.schemaVersion==4 || p.schemaVersion==5)fail("composite_measurement_requires_typed_admission");
     const auto& input=p.inputs.at(inputIndex);
     if(prepared.inputId!=input.id || prepared.routing!=p.routing ||
        prepared.protocolRevision!=p.revision || prepared.baseModelRevision.empty() ||
        prepared.effectiveModelRevision.empty())fail("prepared_probe_context_mismatch");
-    if(o.schemaVersion!=p.schemaVersion || !o.complete || !o.valid || !o.reasons.empty() || o.endReason.empty())
+    if(o.specification.characterization)fail("diagnostic_probe_cannot_certify_training");
+    if(o.specification.stimulusSubset)fail("diagnostic_probe_cannot_certify_training");
+    if(o.schemaVersion!=p.schemaVersion || !o.complete ||
+       (requireValid && (!o.valid || !o.reasons.empty())) || o.endReason.empty())
         fail("observation_not_valid_complete");
     // Reuse the production spec validator; do not infer valid data from a flag.
     ProbeRecorder specificationValidator(o.specification);
@@ -79,6 +96,16 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
            !events.emplace(event.id,event.time).second)fail("invalid_actual_stimuli");
         previous=event.time;
     }
+    return events;
+}
+
+Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIndex,
+                               const PreparedVerificationProbe& prepared,const ProbeObservation& o)
+{
+    const auto events=CheckedProbeContext(p,inputIndex,prepared,o,true);
+    const auto fail=[](const char* reason){throw std::invalid_argument(reason);};
+    const auto& input=p.inputs.at(inputIndex);
+    const auto& s=o.specification;
     std::map<std::size_t,const BurstAssignmentObservation*> assignments;
     if(p.schemaVersion<3 && !o.burstAssignments.empty())fail("unexpected_burst_assignment_evidence");
     if(p.schemaVersion==3)
@@ -112,6 +139,7 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
     for(const auto& peak:o.peaks)
         if(!peaks.emplace(peak.inputId,&peak).second)fail("duplicate_observed_input");
     std::optional<Measurement> result;
+    std::map<std::size_t,std::vector<const PeakObservation*>> measuredByChannel;
     for(const auto& window:s.windows)
     {
         auto definition=std::find_if(p.inputs.begin(),p.inputs.end(),[&](const auto& x){return x.id==window.inputId;});
@@ -145,16 +173,85 @@ Measurement CheckedMeasurement(const VerificationProtocol& p,std::size_t inputIn
         const double arrival=*peak.time-events.at(p.originStimulusId);
         const double plateau=*peak.plateauEnd-events.at(p.originStimulusId);
         if(!Finite(arrival) || !Finite(plateau))fail("nonfinite_measured_arrival");
+        measuredByChannel[window.channel].push_back(&peak);
         if(window.inputId==input.id)result=Measurement{*peak.rawPotential,arrival,plateau};
+    }
+    // A historical WindowOnly packet can label the same measured vertex with
+    // different stimulus IDs. Preserve its diagnostic representation, but do
+    // not use one vertex (or intersecting portions of one plateau) as two
+    // independent assigned responses. Coincident peaks on different physical
+    // channels are legitimate and must remain available for synchronization.
+    for(auto& [channel,measured]:measuredByChannel)
+    {
+        std::sort(measured.begin(),measured.end(),[](const auto* a,const auto* b){return *a->time<*b->time;});
+        for(std::size_t i=1;i<measured.size();++i)
+            if(*measured[i]->time<=*measured[i-1]->plateauEnd)
+                fail("shared_measured_peak_between_stimuli");
     }
     if(!result)fail("requested_input_not_measured");
     return *result;
 }
 }
 
+bool CanAdvanceUnassignedBurstCandidate(const VerificationProtocol& p,std::size_t inputIndex,
+    const PreparedVerificationProbe& prepared,const ProbeObservation& o)
+{
+    try
+    {
+        ProtocolValid(p);
+        CheckedProbeContext(p,inputIndex,prepared,o,false);
+        const auto& s=o.specification;
+        if(p.schemaVersion!=3 || o.valid || o.endReason!="window_closed" ||
+           s.windows.size()!=1 || o.peaks.size()!=1 || o.burstAssignments.size()!=1 ||
+           s.expectedStimulusIds!=p.stimulusIds)return false;
+        const auto& input=p.inputs.at(inputIndex);const auto& window=s.windows.front();
+        const auto& assignment=o.burstAssignments.front();const auto& peak=o.peaks.front();
+        if(window.inputId!=input.id || window.stimulusId!=input.stimulusId ||
+           window.channel!=(p.routing==ProbeRouting::ClassicBurst?inputIndex:0u) ||
+           assignment.channel!=window.channel || peak.inputId!=input.id || peak.stimulusId!=input.stimulusId ||
+           (assignment.validity!=PeakValidity::Missing && assignment.validity!=PeakValidity::Ambiguous) ||
+           peak.validity!=assignment.validity || peak.candidateCount!=0 ||
+           peak.amplitude || peak.rawPotential || peak.time || peak.plateauEnd || peak.delayFromStimulus)return false;
+        if((assignment.validity==PeakValidity::Missing && assignment.waves.size()>=p.stimulusIds.size()) ||
+           (assignment.validity==PeakValidity::Ambiguous && assignment.waves.size()<p.stimulusIds.size()) ||
+           assignment.waves.size()>(o.sampleCount-1)/2)return false;
+        const std::set<std::string> expectedReasons{
+            std::string("burst_")+PeakValidityName(assignment.validity)+":"+std::to_string(window.channel),
+            std::string("peak_")+PeakValidityName(peak.validity)+":"+input.id};
+        if(o.reasons.size()!=expectedReasons.size() ||
+           std::set<std::string>(o.reasons.begin(),o.reasons.end())!=expectedReasons)return false;
+        for(std::size_t i=0;i<o.stimuli.size();++i)
+            if(o.stimuli[i].id!=p.stimulusIds[i] || (i && o.stimuli[i].time<=o.stimuli[i-1].time))return false;
+        std::optional<double> previous;
+        for(const auto& wave:assignment.waves)
+        {
+            const double amplitude=wave.rawPotential-s.baseline.at(window.channel);
+            if(!wave.stimulusId.empty() || !Finite(wave.amplitude) || !Finite(wave.rawPotential) ||
+               !Finite(amplitude) || amplitude!=wave.amplitude || amplitude<p.minimumAmplitude ||
+               !Finite(wave.time) || !Finite(wave.plateauEnd) || wave.plateauEnd<wave.time ||
+               After(s.begin,wave.time) || After(wave.plateauEnd,s.end) ||
+               (previous && wave.time<=*previous))return false;
+            previous=wave.plateauEnd;
+        }
+        if((!s.recordSpikes && !o.spikes.empty()) ||
+           (!o.spikes.empty() && (o.spikes.size()-1)/s.baseline.size()>=s.maximumSamples))return false;
+        previous.reset();
+        for(const auto& spike:o.spikes)
+        {
+            if(spike.channel>=s.baseline.size() || !Finite(spike.time) || After(s.begin,spike.time) ||
+               After(spike.time,s.end) || (previous && spike.time<*previous))return false;
+            previous=spike.time;
+        }
+        return true;
+    }
+    catch(const std::invalid_argument&){return false;}
+    catch(const std::out_of_range&){return false;}
+}
+
 CapturedReferences CapturedReferences::Capture(VerificationProtocol p,const std::vector<ReferenceEvidence>& evidence)
 {
     ProtocolValid(p);
+    if(p.schemaVersion==4 || p.schemaVersion==5)throw std::invalid_argument("composite_reference_requires_typed_admission");
     if(evidence.size()!=p.inputs.size())throw std::invalid_argument("incomplete_reference_set");
     CapturedReferences result;result.protocol=std::move(p);
     std::set<std::pair<std::string,std::string>> branchTrials;
@@ -177,6 +274,38 @@ CapturedReferences CapturedReferences::Capture(VerificationProtocol p,const std:
     return result;
 }
 
+CapturedReferences CapturedReferences::CaptureComposite(VerificationProtocol p,
+    const std::vector<ValidatedCompositeMeasurement>& evidence)
+{
+    ProtocolValid(p);
+    if(p.schemaVersion==5)ValidateCandidateWindowMeasurementContract(p);
+    else ValidateCompositeMeasurementContract(p);
+    if(evidence.size()!=p.inputs.size())throw std::invalid_argument("incomplete_composite_reference_set");
+    CapturedReferences result;result.protocol=std::move(p);
+    std::set<std::string> groups,proofs,trials;
+    std::string candidateWitness;
+    for(std::size_t i=0;i<result.protocol.inputs.size();++i)
+    {
+        const auto found=std::find_if(evidence.begin(),evidence.end(),[&](const auto& e){return e.prepared.identity->inputIndex==i;});
+        if(found==evidence.end() || std::count_if(evidence.begin(),evidence.end(),[&](const auto& e){return e.prepared.identity->inputIndex==i;})!=1)
+            throw std::invalid_argument("missing_or_duplicate_composite_reference_input");
+        const auto& id=*found->prepared.identity;
+        if(!i) {
+            result.initialModelRevision=id.baseRevision;result.initialModelEpoch=id.modelEpoch;
+            result.compositeOwnerScope=id.ownerScope;result.compositeSourceOrigin=id.sourceOrigin;candidateWitness=id.candidateWitnessId;
+        }
+        found->prepared.Require(result.protocol,id.runId,id.trialId,i,result.initialModelRevision,result.initialModelEpoch,
+            CompositeMeasurementPurpose::Reference,result.compositeOwnerScope,result.compositeSourceOrigin,true);
+        found->RequirePrepared(found->prepared);
+        if(id.candidateWitnessId!=candidateWitness || !groups.insert(id.groupId).second ||
+            !proofs.insert(found->semanticProofId).second || !trials.insert(id.trialId).second)
+            throw std::invalid_argument("mixed_or_replayed_composite_reference_group");
+        result.inputs.push_back({result.protocol.inputs[i].id,id.runId,id.trialId,id.effectiveRevision,
+            found->rawPotential,id.groupId,found->semanticProofId});
+    }
+    return result;
+}
+
 ValidatedProbeMeasurement ValidateProbeMeasurement(const VerificationProtocol& protocol,
     std::size_t inputIndex,const PreparedVerificationProbe& prepared,const ProbeObservation& observation)
 {
@@ -194,7 +323,12 @@ bool TrainingCertificate::Matches(const std::string& currentModel,const Captured
         currentEpoch==modelEpoch && currentTolerances==tolerances &&
         currentReferences.Protocol()==protocol && currentReferences.Inputs()==referenceInputs &&
         currentReferences.InitialModelRevision()==referenceModelRevision &&
-        currentReferences.InitialModelEpoch()==referenceModelEpoch;
+        currentReferences.InitialModelEpoch()==referenceModelEpoch &&
+          ((protocol.schemaVersion!=4 && protocol.schemaVersion!=5) || (currentReferences.CompositeOwnerScope()==compositeOwnerFamilyBinding &&
+              currentReferences.CompositeSourceOrigin()==compositeSourceOrigin)) &&
+          (protocol.schemaVersion!=5 || (!candidateWindowProtocolBinding.empty() && !candidateWindowAttemptId.empty() &&
+              !candidateWindowFinalRunId.empty() && compositeProofIds.size()==referenceInputs.size() &&
+              finalWindowRecipeIds.size()==referenceInputs.size() && finalMeasurementInstanceIds.size()==referenceInputs.size()));
 }
 
 FinalVerificationSession::FinalVerificationSession(CapturedReferences refs,VerificationConfig cfg)
@@ -217,11 +351,15 @@ FinalVerificationSession::FinalVerificationSession(CapturedReferences refs,Verif
         order.push_back(references.Protocol().routing==ProbeRouting::ClassicBurst?i:n-1-i);
     }
 }
+FinalVerificationSession::FinalVerificationSession(CapturedReferences refs,CandidateWindowReferenceSet closed,VerificationConfig cfg)
+    :FinalVerificationSession(std::move(refs),std::move(cfg)) {
+    CandidateWindowCoreDetail::RequireCapturedReferences(references,closed);candidateWindowReferences=std::move(closed);
+}
 
 std::optional<VerificationRequest> FinalVerificationSession::NextRequest()
 {
     if(status!=VerificationStatus::Collecting)return {};
-    if(armed)return {};
+    if(armed || compositeArmed)return {};
     if(pending)return pending;
     if(budgetStopped || issued>=config.maximumProbes){ExhaustBudget();return {};}
     const auto& p=references.Protocol();
@@ -236,7 +374,7 @@ void FinalVerificationSession::Reject(const std::string& reason)
     rejected.push_back({pending?pending->trialId:std::string{},reason});
     const bool retry=invalidCount<config.maximumInvalidObservations;
     if(invalidCount<std::numeric_limits<std::size_t>::max())++invalidCount;
-    pending.reset();armed.reset();certificate.reset();
+    pending.reset();armed.reset();compositeArmed.reset();certificate.reset();
     if(!retry)status=VerificationStatus::InvalidObservation;
     else if(issued>=config.maximumProbes)ExhaustBudget();
 }
@@ -244,6 +382,7 @@ void FinalVerificationSession::Reject(const std::string& reason)
 void FinalVerificationSession::Arm(const PreparedVerificationProbe& prepared)
 {
     if(status!=VerificationStatus::Collecting)return;
+    if(references.Protocol().schemaVersion==4 || references.Protocol().schemaVersion==5)throw std::invalid_argument("composite_measurement_requires_typed_admission");
     if(!pending || armed)throw std::logic_error("verification_probe_not_requested_or_already_armed");
     if(issued>=config.maximumProbes){ExhaustBudget();return;}
     ++issued;
@@ -260,6 +399,7 @@ void FinalVerificationSession::Arm(const PreparedVerificationProbe& prepared)
 void FinalVerificationSession::Consume(const ProbeObservation& observation,const std::string& currentBaseRevision)
 {
     if(status!=VerificationStatus::Collecting)return;
+    if(references.Protocol().schemaVersion==4 || references.Protocol().schemaVersion==5)throw std::invalid_argument("composite_measurement_requires_typed_admission");
     if(currentBaseRevision.empty())
     {
         const auto trial=pending?pending->trialId:std::string{};
@@ -278,10 +418,120 @@ void FinalVerificationSession::Consume(const ProbeObservation& observation,const
     {
         const auto index=order.at(position);
         const auto measured=CheckedMeasurement(references.Protocol(),index,*armed,observation);
-        accepted[index]=Accepted{pending->trialId,armed->effectiveModelRevision,measured.raw,measured.arrival,measured.plateauEnd};
+        AcceptValidatedScalar(index,measured.raw,measured.arrival,measured.plateauEnd,armed->effectiveModelRevision);
     }
     catch(const std::invalid_argument& error){Reject(error.what());return;}
-    pending.reset();armed.reset();++position;
+    CompleteValidatedInput();
+}
+
+void FinalVerificationSession::ArmComposite(const PreparedCompositeMeasurement& prepared)
+{
+    if(status!=VerificationStatus::Collecting)return;
+    if(references.Protocol().schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
+    ArmTyped(prepared,nullptr);
+}
+void FinalVerificationSession::ArmCandidateWindow(const PreparedCompositeMeasurement& prepared) {
+    if(status!=VerificationStatus::Collecting)return;
+    if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences)
+        throw std::invalid_argument("candidate_window_closed_reference_admission_required");
+    ArmTyped(prepared,&*candidateWindowReferences);
+}
+void FinalVerificationSession::ArmTyped(const PreparedCompositeMeasurement& prepared,const CandidateWindowReferenceSet* closed)
+{
+    if(!pending || armed || compositeArmed)throw std::logic_error("verification_probe_not_requested_or_already_armed");
+    if(issued>=config.maximumProbes){ExhaustBudget();return;}++issued;
+    try {
+        if(closed)prepared.RequireCandidateWindow(references.Protocol(),*closed,pending->runId,pending->trialId,pending->inputIndex,
+            config.currentModelRevision,epoch,CompositeMeasurementPurpose::Final);
+        else prepared.Require(references.Protocol(),pending->runId,pending->trialId,pending->inputIndex,
+            config.currentModelRevision,epoch,CompositeMeasurementPurpose::Final,
+            references.CompositeOwnerScope(),references.CompositeSourceOrigin());
+        if(!seenCompositeGroups.insert(prepared.GroupId()).second)throw std::invalid_argument("replayed_composite_verification_group");
+        compositeArmed=prepared;
+    }
+    catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
+    catch(const CompositeTrainingStopped&){ExternalStop();return;}
+    catch(const std::exception& error){Reject(error.what());}
+}
+void FinalVerificationSession::ConsumeComposite(const ValidatedCompositeMeasurement& measured,const std::string& revision)
+{
+    if(status!=VerificationStatus::Collecting)return;
+    if(references.Protocol().schemaVersion==5)throw std::invalid_argument("candidate_window_training_requires_proposal_admission");
+    ConsumeTyped(measured,revision,nullptr);
+}
+void FinalVerificationSession::ConsumeCandidateWindow(const ValidatedCompositeMeasurement& measured,const std::string& revision) {
+    if(status!=VerificationStatus::Collecting)return;
+    if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences)
+        throw std::invalid_argument("candidate_window_closed_reference_admission_required");
+    ConsumeTyped(measured,revision,&*candidateWindowReferences);
+}
+void FinalVerificationSession::ConsumeTyped(const ValidatedCompositeMeasurement& measured,const std::string& revision,const CandidateWindowReferenceSet* closed)
+{
+    if(revision.empty()) {
+        const auto trial=pending?pending->trialId:std::string{};
+        Invalidate(config.currentModelRevision);rejected.push_back({trial,"missing_current_model_revision"});
+        status=VerificationStatus::InvalidObservation;return;
+    }
+    if(revision!=config.currentModelRevision){Invalidate(revision);return;}
+    if(!pending || !compositeArmed){Reject("unrequested_composite_verification_observation");return;}
+    try {
+        const auto index=order.at(position);
+        if(closed)measured.prepared.RequireCandidateWindow(references.Protocol(),*closed,pending->runId,pending->trialId,index,revision,epoch,
+            CompositeMeasurementPurpose::Final,true);
+        else measured.prepared.Require(references.Protocol(),pending->runId,pending->trialId,index,revision,epoch,
+            CompositeMeasurementPurpose::Final,references.CompositeOwnerScope(),references.CompositeSourceOrigin(),true);
+        measured.RequirePrepared(*compositeArmed);
+        if(!seenTrials.insert(pending->trialId).second || !seenCompositeProofs.insert(measured.semanticProofId).second)
+            throw std::invalid_argument("unexpected_or_replayed_composite_verification_proof");
+        for(const auto& previous:accepted)if(previous && previous->candidateWitnessId!=measured.prepared.identity->candidateWitnessId)
+            throw std::invalid_argument("mixed_composite_final_candidate_witness");
+        if(closed) {
+            const auto& proposal=measured.prepared.identity->candidateWindowProposal->Record();
+            for(const auto& previous:accepted)if(previous && (previous->candidateWindowAttemptId!=proposal.attemptId ||
+                previous->candidateWindowFinalRunId!=proposal.runId))throw std::invalid_argument("mixed_candidate_window_final_sweep");
+            // Before completing an all-input certificate, previously accepted
+            // values must still belong to the same live graph/source/lease.
+            // Their own measurement deadlines were enforced at consumption;
+            // later groups do not retroactively extend those measurements.
+            if(position+1==order.size())for(std::size_t i=0;i<accepted.size();++i)if(accepted[i]) {
+                if(!accepted[i]->candidateWindowPrepared)throw std::invalid_argument("missing_candidate_window_final_live_proof");
+                accepted[i]->candidateWindowPrepared->RequireIdentity(references.Protocol(),config.runId,accepted[i]->trialId,i,
+                    config.currentModelRevision,epoch,CompositeMeasurementPurpose::Final,closed->OwnerFamilyBinding(),closed->SourceOrigin(),true);
+            }
+        }
+        AcceptValidatedScalar(index,measured.rawPotential,measured.arrival,measured.plateauEnd,measured.prepared.identity->effectiveRevision);
+        accepted[index]->compositeProofId=measured.semanticProofId;
+        accepted[index]->candidateWitnessId=measured.prepared.identity->candidateWitnessId;
+        if(closed) {
+            const auto& proposal=measured.prepared.identity->candidateWindowProposal->Record();
+            accepted[index]->candidateWindowRecipeId=proposal.windowRecipeId;accepted[index]->candidateWindowInstanceId=proposal.measurementInstanceId;
+            accepted[index]->candidateWindowAttemptId=proposal.attemptId;accepted[index]->candidateWindowFinalRunId=proposal.runId;
+            accepted[index]->candidateWindowPrepared=measured.prepared;
+        }
+        ++acceptedComposite;
+    }
+    catch(const CompositeTrainingBudgetExhausted&){ExhaustBudget();return;}
+    catch(const CompositeTrainingStopped&){ExternalStop();return;}
+    catch(const std::exception& error){Reject(error.what());return;}
+    CompleteValidatedInput();
+}
+void FinalVerificationSession::RejectComposite(const std::string& reason)
+{
+    if(references.Protocol().schemaVersion!=4 || reason.empty())throw std::invalid_argument("invalid_composite_rejection");
+    if(status==VerificationStatus::Collecting)Reject(reason);
+}
+void FinalVerificationSession::RejectCandidateWindow(const std::string& reason) {
+    if(references.Protocol().schemaVersion!=5 || !candidateWindowReferences || reason.empty())throw std::invalid_argument("invalid_candidate_window_rejection");
+    if(status==VerificationStatus::Collecting)Reject(reason);
+}
+
+void FinalVerificationSession::AcceptValidatedScalar(std::size_t index,double raw,double arrival,double plateauEnd,const std::string& effectiveRevision)
+{
+    accepted[index]=Accepted{pending->trialId,effectiveRevision,raw,arrival,plateauEnd};
+}
+void FinalVerificationSession::CompleteValidatedInput()
+{
+    pending.reset();armed.reset();compositeArmed.reset();++position;
     if(position==order.size())Finish();
 }
 
@@ -290,10 +540,18 @@ void FinalVerificationSession::Finish()
     TrainingCertificate result;result.exact=true;result.modelRevision=config.currentModelRevision;
     result.protocol=references.Protocol();result.tolerances=config.tolerances;
     result.referenceInputs=references.Inputs();result.referenceModelRevision=references.InitialModelRevision();
+    if(result.protocol.schemaVersion==4 || result.protocol.schemaVersion==5){result.compositeSourceOrigin=references.CompositeSourceOrigin();result.compositeOwnerFamilyBinding=references.CompositeOwnerScope();}
     result.modelEpoch=epoch;result.referenceModelEpoch=references.InitialModelEpoch();
     if(accepted.empty() || std::any_of(accepted.begin(),accepted.end(),[](const auto& input){return !input;}))
     {status=VerificationStatus::InvalidObservation;return;}
     const auto& anchor=*accepted.back();
+    if(result.protocol.schemaVersion==5) {
+        if(!candidateWindowReferences || anchor.candidateWindowAttemptId.empty() || anchor.candidateWindowFinalRunId!=config.runId)
+        {status=VerificationStatus::InvalidObservation;return;}
+        CandidateWindowCoreDetail::RequireCapturedReferences(references,*candidateWindowReferences);
+        result.candidateWindowProtocolBinding=candidateWindowReferences->ProtocolBinding();
+        result.candidateWindowAttemptId=anchor.candidateWindowAttemptId;result.candidateWindowFinalRunId=anchor.candidateWindowFinalRunId;
+    }
     for(std::size_t i=0;i<accepted.size();++i)
     {
         const auto& measured=*accepted[i];const auto& target=references.Inputs()[i];
@@ -313,6 +571,13 @@ void FinalVerificationSession::Finish()
         residual.withinTiming=std::max(std::fabs(residual.timingResidualLow),std::fabs(residual.timingResidualHigh))<=config.tolerances.sync;
         result.exact=result.exact && residual.withinAmplitude && residual.withinTiming;
         result.residuals.push_back(std::move(residual));
+        if(result.protocol.schemaVersion==4 || result.protocol.schemaVersion==5)result.compositeProofIds.push_back(measured.compositeProofId);
+        if(result.protocol.schemaVersion==5) {
+            if(measured.compositeProofId.empty() || measured.candidateWindowRecipeId.empty() || measured.candidateWindowInstanceId.empty() ||
+                measured.candidateWindowAttemptId!=result.candidateWindowAttemptId || measured.candidateWindowFinalRunId!=result.candidateWindowFinalRunId)
+            {status=VerificationStatus::InvalidObservation;return;}
+            result.finalWindowRecipeIds.push_back(measured.candidateWindowRecipeId);result.finalMeasurementInstanceIds.push_back(measured.candidateWindowInstanceId);
+        }
     }
     status=result.exact?VerificationStatus::Exact:VerificationStatus::OutsideTolerance;
     certificate=std::move(result);
@@ -321,11 +586,12 @@ void FinalVerificationSession::Finish()
 void FinalVerificationSession::Invalidate(const std::string& newBaseRevision)
 {
     if(newBaseRevision.empty())throw std::invalid_argument("empty_model_revision");
-    if(armed && pending)rejected.push_back({pending->trialId,"model_revision_invalidated"});
+    if((armed || compositeArmed) && pending)rejected.push_back({pending->trialId,"model_revision_invalidated"});
     for(const auto& input:accepted)
         if(input)rejected.push_back({input->trialId,"model_revision_invalidated"});
-    config.currentModelRevision=newBaseRevision;certificate.reset();pending.reset();armed.reset();
-    for(auto& input:accepted)input.reset();position=0;
+    config.currentModelRevision=newBaseRevision;certificate.reset();pending.reset();armed.reset();compositeArmed.reset();
+    for(auto& input:accepted){input.reset();}
+    position=0;
     if(status==VerificationStatus::ExternalStop)return;
     if(epoch==std::numeric_limits<std::size_t>::max()){ExhaustBudget();return;}
     ++epoch;
@@ -336,11 +602,11 @@ void FinalVerificationSession::Invalidate(const std::string& newBaseRevision)
 void FinalVerificationSession::ExternalStop()
 {
     if(status!=VerificationStatus::Collecting)return;
-    pending.reset();armed.reset();certificate.reset();status=VerificationStatus::ExternalStop;
+    pending.reset();armed.reset();compositeArmed.reset();certificate.reset();status=VerificationStatus::ExternalStop;
 }
 void FinalVerificationSession::ExhaustBudget()
 {
-    budgetStopped=true;pending.reset();armed.reset();certificate.reset();status=VerificationStatus::BudgetExhausted;
+    budgetStopped=true;pending.reset();armed.reset();compositeArmed.reset();certificate.reset();status=VerificationStatus::BudgetExhausted;
 }
 std::size_t FinalVerificationSession::AcceptedInputs() const
 {return std::count_if(accepted.begin(),accepted.end(),[](const auto& value){return bool(value);});}

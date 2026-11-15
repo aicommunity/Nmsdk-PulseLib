@@ -1,0 +1,13 @@
+{
+  "kind": "training_scalar_acceptance_mechanical_extraction",
+  "schema_version": 1,
+  "source_commit": "c3ac0aad30ccc4b9894e0d4dccb3386d688d504f",
+  "normalization": "UTF-8 LF",
+  "bounded_acceptance_tail_sha256": "54fed5e210e8ce52ffef7439628a00e2d1c75bbe5f26b33de80335d2e913c326",
+  "bounded_inverse_exact": true,
+  "final_inverse_exact": true,
+  "bounded_admission_prefix_sha256": "b926a538cdca30c55ff302fedfee522e69b93254c92892c38f781271ca64ecaa",
+  "final_finish_sha256": "3b9630875ca3d2a8778d7e9864c7a7fc816a3e99985964cafd5288b96c55c0cd",
+  "new_public_admission": false,
+  "runtime_verified": false
+}

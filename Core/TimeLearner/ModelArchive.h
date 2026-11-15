@@ -2,6 +2,8 @@
 #include "ModelIdentity.h"
 #include <QJsonArray>
 #include <stdexcept>
+#include <map>
+#include <optional>
 
 namespace NmsdkTools {
 // Immutable storage image dependency closure for an initialized physical model.
@@ -25,6 +27,15 @@ RDK_LIB_TYPE QJsonObject ExportPhysicalGraphForEdit(
 RDK_LIB_TYPE RDK::UEPtr<RDK::UContainer> ImportPhysicalGraphForEdit(
     const QJsonObject& snapshot,RDK::UEPtr<RDK::UStorage> storage,
     RDK::UEPtr<RDK::UEnvironment> environment,const ModelBoundarySources& boundarySources = {});
+// Private native import through already registered derived images. Only exact
+// class substitutions and the optional uniform FeedbackGain may differ from
+// the complete source identity. Gain is inherited from each replacement image,
+// not assigned to live components. Does not modify/replace the source model,
+// register images, preserve a certificate, or resume controller history.
+RDK_LIB_TYPE RDK::UEPtr<RDK::UContainer> ImportFeedbackProfileGraphForEdit(
+    const QJsonObject& snapshot,RDK::UEPtr<RDK::UStorage> storage,
+    RDK::UEPtr<RDK::UEnvironment> environment,const std::map<std::string,std::string>& classRenames,
+    std::optional<double> feedbackGain = {},const ModelBoundarySources& boundarySources = {});
 class RDK_LIB_TYPE ModelArchiveError : public std::runtime_error
 {
 public:

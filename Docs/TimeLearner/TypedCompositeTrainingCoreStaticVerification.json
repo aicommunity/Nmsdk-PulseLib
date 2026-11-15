@@ -1,0 +1,18 @@
+{
+  "kind": "typed_composite_core_static_review",
+  "schema_version": 1,
+  "base_pulse_commit": "474df05b714415057bbcb4692ce224621ae55ac0",
+  "local_runtime_verified": false,
+  "local_build_run": false,
+  "bounded_scalar_body_inverse_exact": true,
+  "bounded_scalar_sha256": "ccf5d7e124ab8eaebdbc1ca8079a3e275f6517aabdb37930f3118372b9c69a4d",
+  "final_finish_math_inverse_exact": true,
+  "final_finish_math_sha256": "abb9e7b6bda3139253140dbe06e1a4d7ae950a643b95f19c5104d6dd820e84d5",
+  "unchanged_production_algorithms": {
+    "Core/TimeLearner/MatchedOmissionValidation.cpp": true,
+    "Core/TimeLearner/MatchedOmissionAssignment.cpp": true,
+    "Core/TimeLearner/DeclaredWindowBasinAssignment.cpp": true,
+    "Core/TimeLearner/NativeDeclaredWindowBasinAssignment.cpp": true
+  },
+  "scope": "Static text equality after removing explicit protocol4 bookkeeping; no runtime equivalence claim."
+}

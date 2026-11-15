@@ -161,6 +161,7 @@ public:
     bool Pending() const {return status=="queued" || status=="post_tune";}
     bool BlocksCalculation() const {return status=="failed" || status=="recovery_required";}
     bool Done() const {return status!="armed" && status!="training" && !Pending();}
+    QJsonObject TrainingSummary() const {return boundary?boundary->TrainingSummary():QJsonObject{};}
     QJsonObject Report() const {
         QJsonObject value{{"kind","native_live_finalization"},{"schema_version",1},{"plan",declaration},
             {"training_request",request},{"status",QString::fromStdString(status)},{"reason",QString::fromStdString(reason)},

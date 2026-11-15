@@ -17,4 +17,13 @@ QJsonObject CreateNativeThresholdCandidate(const QJsonObject& sourceRecognition,
 std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeThresholdCandidate(const QJsonObject& candidate,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,
     const std::string& implementationId);
+
+// Explicit stopped-model experiment. These packages remain diagnostic, with
+// null certificates; ordinary recognition/calibration imports reject them.
+QJsonObject CreateNativeDiagnosticThresholdCandidate(const QJsonObject& sourceRecognition,double threshold,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,
+    const std::string& implementationId);
+std::unique_ptr<PreparedNativeRecognitionState> PrepareNativeDiagnosticThresholdCandidate(const QJsonObject& candidate,
+    RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,
+    const std::string& implementationId);
 }

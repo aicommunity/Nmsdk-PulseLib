@@ -446,8 +446,8 @@ double NPatternResponseAnalyzer::ReadLtzPotential(void) const
  if(!ltz_source_ && GetOwner())
  {
   const std::string learner_name = std::string(LearnerComponentName);
-  if(UEPtr<NNeuronTimeLearner> learner =
-      GetOwner()->GetComponentL<NNeuronTimeLearner>(learner_name, true))
+  if(UEPtr<UContainer> learner =
+      GetOwner()->GetComponentL(learner_name, true))
   {
    if(UEPtr<NPulseNeuron> neuron =
        learner->GetComponentL<NPulseNeuron>(std::string("Neuron"), true))
@@ -643,40 +643,59 @@ void NPatternResponseAnalyzer::WriteTraceSample(double now)
 
 bool NPatternResponseAnalyzer::IsIsiTemplateMatch(void) const
 {
+ return AssessIsiTemplate() == IsiTemplateAssessment::Match;
+}
+
+NPatternResponseAnalyzer::IsiTemplateAssessment
+NPatternResponseAnalyzer::AssessIsiTemplate(void) const
+{
  if(!GetOwner())
-  return false;
+  return IsiTemplateAssessment::Invalid;
 
  const std::string learner_name = std::string(LearnerComponentName);
- UEPtr<NNeuronTimeLearner> learner =
-  GetOwner()->GetComponentL<NNeuronTimeLearner>(learner_name, true);
+ UEPtr<UContainer> learner = GetOwner()->GetComponentL(learner_name, true);
  if(!learner)
-  return false;
+  return IsiTemplateAssessment::Invalid;
 
  UEPtr<NPulseNeuron> neuron =
   learner->GetComponentL<NPulseNeuron>(std::string("Neuron"), true);
  if(!neuron)
-  return false;
+  return IsiTemplateAssessment::Invalid;
 
  const MDMatrix<double> &ref = neuron->TrainingPattern;
- if(ref.GetRows() < 1 || trial_stim_times_.size() < 2)
-  return false;
+ if(ref.GetRows() < 1 || ref.GetCols() < 1 || trial_stim_times_.size() < 2)
+  return IsiTemplateAssessment::Invalid;
+
+ // Validate before comparing: fabs(NaN) > tolerance is false. In particular,
+ // invalid evidence must not become a correct rejection of a foil.
+ for(int row = 0; row < ref.GetRows(); ++row)
+  for(int col = 0; col < ref.GetCols(); ++col)
+   if(!std::isfinite(ref(row, col)))
+    return IsiTemplateAssessment::Invalid;
+ for(size_t i = 0; i < trial_stim_times_.size(); ++i)
+  if(!std::isfinite(trial_stim_times_[i]) ||
+     (i && trial_stim_times_[i] <= trial_stim_times_[i - 1]))
+   return IsiTemplateAssessment::Invalid;
 
  const int n_gap = int(trial_stim_times_.size()) - 1;
  int ref_off = 0;
  if(ref.GetRows() == n_gap + 1)
   ref_off = 1;
  if(ref.GetRows() != n_gap + ref_off)
-  return false;
+  return IsiTemplateAssessment::Mismatch;
 
  const double eps = 1e-5;
  for(int i = 0; i < n_gap; ++i)
  {
   const double trial_isi = trial_stim_times_[static_cast<size_t>(i + 1)]
                          - trial_stim_times_[static_cast<size_t>(i)];
-  if(fabs(trial_isi - ref(i + ref_off, 0)) > eps)
-   return false;
+  const double residual = trial_isi - ref(i + ref_off, 0);
+  if(!std::isfinite(trial_isi) || !std::isfinite(residual))
+   return IsiTemplateAssessment::Invalid;
+  if(fabs(residual) > eps)
+   return IsiTemplateAssessment::Mismatch;
  }
- return true;
+ return IsiTemplateAssessment::Match;
 }
 
 void NPatternResponseAnalyzer::BeginTrial(double now)
@@ -804,7 +823,10 @@ void NPatternResponseAnalyzer::CloseTrial(double now)
   match = 0;
  else if(MatchMode.GetData() == 1)
  {
-  const bool isi_ok = IsIsiTemplateMatch();
+  const auto assessment = AssessIsiTemplate();
+  if(assessment == IsiTemplateAssessment::Invalid)
+   trial_measurement_valid_ = false;
+  const bool isi_ok = assessment == IsiTemplateAssessment::Match;
   match = (target != 0) ? (isi_ok ? 1 : 0) : (isi_ok ? 0 : 1);
  }
  else
