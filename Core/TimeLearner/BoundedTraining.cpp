@@ -482,6 +482,49 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
     cursor.lengths.insert(cursor.lengths.begin()+next,*proposal);
 }
 
+void BoundedTrainingSession::PrioritizeRejectedN0BranchLength()
+{
+    if(config.normalization!=Normalization::SynapseCount ||
+        references.Protocol().routing!=ProbeRouting::BranchSoloBurst)return;
+    const auto input=order.at(position);
+    if(input+1>=background.size())return;
+    // This recovery explores geometry at the input's original normalizer.
+    // A failed local Ns proposal must not silently reset its normalizer or
+    // lend its issued geometry to a different physical search family.
+    for(std::size_t i=0;i<background.size();++i)
+        if(current[i].synapses!=background[i].synapses ||
+           current[i].resistance!=background[i].resistance)return;
+    const auto& bound=config.bounds[input];
+    std::int64_t minimum=std::max(bound.minimumLength,background[input+1].length);
+    if(background[input].synapses!=background[input+1].synapses ||
+       background[input].resistance!=background[input+1].resistance)
+        minimum=std::max<std::int64_t>(minimum,std::int64_t(background[input+1].length)+1);
+    std::int64_t maximum=bound.maximumLength;
+    // PrepareCandidate may grow earlier banks, never a committed downstream
+    // input. Different adjacent bank physics requires one extra segment.
+    std::int64_t separation=0;
+    for(std::size_t k=input;k>0;--k)
+    {
+        if(background[k-1].synapses!=background[k].synapses ||
+           background[k-1].resistance!=background[k].resistance)++separation;
+        maximum=std::min(maximum,std::int64_t(config.bounds[k-1].maximumLength)-separation);
+    }
+    if(minimum>maximum)return;
+    std::vector<int> issued;
+    for(const auto& candidate:cursor.issuedN0Candidates)
+        if(SameBranchLengthProposalFamily(background,input,candidate,current))issued.push_back(candidate[input].length);
+    const auto proposed=ProposeUnvisitedLength(std::move(issued),int(minimum),int(maximum));
+    if(!proposed)return;
+    auto candidate=background;candidate[input].length=*proposed;
+    if(!PrepareCandidate(candidate))return;
+    if(std::find(cursor.issuedN0Candidates.begin(),cursor.issuedN0Candidates.end(),candidate)!=cursor.issuedN0Candidates.end())return;
+    // Reorder only. Normal edit/readback, fresh anchor/input observations and
+    // the existing attempt-wide budgets remain mandatory. No rejected peak
+    // becomes a scalar residual or a measured length trend.
+    cursor.n0Priority.erase(std::remove(cursor.n0Priority.begin(),cursor.n0Priority.end(),candidate),cursor.n0Priority.end());
+    cursor.n0Priority.insert(cursor.n0Priority.begin(),std::move(candidate));
+}
+
 void BoundedTrainingSession::PrioritizeN0Neighbors(const CandidateEvidence& e)
 {
     if(restoringBest || config.normalization!=Normalization::SynapseCount ||
@@ -1110,6 +1153,7 @@ void BoundedTrainingSession::RejectCandidateWindow(const RejectedCompositeMeasur
             Stop(TrainingStatus::SearchUnresolved,"restored_best_candidate_has_rejected_window");
             e.disposition=CandidateRecoveryDisposition::RestoredBestStop;
         } else {
+            PrioritizeRejectedN0BranchLength();
             phase=Phase::Candidate;AdvanceCapacitanceContext();
             e.disposition=CandidateRecoveryDisposition::CursorAdvanced;
         }

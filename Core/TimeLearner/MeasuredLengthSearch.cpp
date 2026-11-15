@@ -6,6 +6,33 @@
 #include <tuple>
 
 namespace NMSDK::TimeLearner {
+std::optional<int> ProposeUnvisitedLength(std::vector<int> issued,int minimumLength,int maximumLength)
+{
+    if(minimumLength<1 || maximumLength<minimumLength)
+        throw std::invalid_argument("invalid_exploration_length_domain");
+    issued.erase(std::remove_if(issued.begin(),issued.end(),[&](int length) {
+        return length<minimumLength || length>maximumLength;
+    }),issued.end());
+    if(issued.empty())return {};
+    std::sort(issued.begin(),issued.end());
+    issued.erase(std::unique(issued.begin(),issued.end()),issued.end());
+    std::int64_t bestDistance=0;
+    std::optional<int> result;
+    const auto consider=[&](std::int64_t length,std::int64_t distance) {
+        // Deterministic ties prefer the smaller geometry; zero is visited.
+        if(distance>bestDistance || (distance==bestDistance && distance>0 && length<*result))
+        {bestDistance=distance;result=int(length);}
+    };
+    consider(minimumLength,std::int64_t(issued.front())-minimumLength);
+    for(std::size_t i=1;i<issued.size();++i)
+    {
+        const auto distance=(std::int64_t(issued[i])-issued[i-1])/2;
+        consider(std::int64_t(issued[i-1])+distance,distance);
+    }
+    consider(maximumLength,std::int64_t(maximumLength)-issued.back());
+    return result;
+}
+
 bool SameBranchLengthProposalFamily(const std::vector<InputParameters>& background,std::size_t input,
     const std::vector<InputParameters>& previous,const std::vector<InputParameters>& current)
 {
