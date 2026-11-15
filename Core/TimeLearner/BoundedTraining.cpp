@@ -438,6 +438,9 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
     const auto input=measurement.inputIndex;
     const bool branchFamily=requireResistanceDomains && config.normalization==Normalization::TipResistance &&
         references.Protocol().routing==ProbeRouting::BranchSoloBurst;
+    const bool n0BranchFamily=config.normalization==Normalization::SynapseCount && input>0 &&
+        references.Protocol().routing==ProbeRouting::BranchSoloBurst;
+    bool usedN0Family=false;
     std::vector<MeasuredLengthPoint> points;
     for(const auto& previous:cursor.lengthMeasurements)
     {
@@ -445,15 +448,22 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
             !EquivalentTrainingCapacitance(previous.capacitance,measurement.capacitance))continue;
         auto geometry=previous.fullParameters;
         geometry[input].length=measurement.parameters.length;
-        if(geometry!=measurement.fullParameters && (!branchFamily ||
-           !SameBranchLengthProposalFamily(background,input,previous.fullParameters,measurement.fullParameters)))continue;
+        if(geometry!=measurement.fullParameters)
+        {
+            if((!branchFamily && !n0BranchFamily) ||
+               !SameBranchLengthProposalFamily(background,input,previous.fullParameters,measurement.fullParameters))continue;
+            usedN0Family=usedN0Family || n0BranchFamily;
+        }
         points.push_back({previous.parameters.length,previous.timingResidualLow,previous.timingResidualHigh});
     }
     const auto& bound=config.bounds[input];
     auto proposal=ProposeMeasuredLength(std::move(points),bound.minimumLength,bound.maximumLength,config.tolerances.sync);
     if(!proposal)return;
-    if(branchFamily)
+    if(branchFamily || usedN0Family)
     {
+        // N0 borrows growth-family points only for a proposal, never for a
+        // measured residual/certificate or a geometry-local amplitude turn.
+        // Preserve the old N0 order when no additional family point was used.
         // Bound an extrapolated family proposal's displacement. This is a
         // search order policy, never a numerical tolerance or a measured peak.
         const auto length=std::int64_t(measurement.parameters.length);
