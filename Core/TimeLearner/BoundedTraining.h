@@ -220,6 +220,14 @@ private:
         std::vector<std::pair<std::string,CandidateEvidence>> resistanceMeasurements;
         std::vector<std::pair<std::string,std::vector<InputParameters>>> visitedDomainCandidates;
         std::vector<CandidateEvidence> lengthMeasurements;
+        // Opt-in sealed rejection recovery only. Each C context owns its
+        // own rejected points and finite domain-only fallback. Geometry is
+        // proposed here; its Rs interval must still come from a fresh adapter.
+        std::optional<std::vector<InputParameters>> n1RecoveryGeometry;
+        std::vector<std::vector<InputParameters>> n1RejectedCandidates;
+        std::vector<int> n1RecoveryLengths;
+        std::size_t n1RecoveryCount=0;
+        bool n1RecoveryPreferMinimum=false,n1RecoveryFallbackAllowed=false;
     };
     CandidateCursor cursor;
     struct CapacitanceContext {
@@ -264,6 +272,9 @@ private:
     void PrioritizeMeasuredLength(const CandidateEvidence& measurement);
     void PrioritizeN0Neighbors(const CandidateEvidence& measurement);
     void PrioritizeRejectedN0BranchLength();
+    void PrioritizeRejectedN1();
+    bool QueueRejectedN1Geometry(bool allowSameLength);
+    bool FallbackRejectedN1Geometry();
     // Shared private acceptance path after legacy or typed admission.
     void AcceptValidatedScalar(const ValidatedProbeMeasurement& measurement);
     void Reject(const std::string& reason);
