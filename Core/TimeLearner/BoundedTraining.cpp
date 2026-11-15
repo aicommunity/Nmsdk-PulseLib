@@ -555,7 +555,13 @@ bool BoundedTrainingSession::QueueRejectedN1Geometry(bool allowSameLength)
     std::optional<int> length;
     if(allowSameLength && current[input].length>=minimum && current[input].length<=maximum)
         length=current[input].length;
-    else length=ProposeUnvisitedLength(std::move(issued),int(minimum),int(maximum));
+    else {
+        // Keep the first recovery center fixed: do not double geometry after
+        // every rejected observation. A costly endpoint can otherwise consume
+        // the group deadline before its fresh anchor/input pair completes.
+        const int center=cursor.n1RecoveryLengths.empty()?current[input].length:cursor.n1RecoveryLengths.front();
+        length=ProposeModerateUnvisitedLength(std::move(issued),center,int(minimum),int(maximum));
+    }
     if(!length)return false;
     auto geometry=background;geometry[input].length=*length;
     if(branch && input)
@@ -564,7 +570,7 @@ bool BoundedTrainingSession::QueueRejectedN1Geometry(bool allowSameLength)
     cursor.n1RecoveryGeometry=std::move(geometry);
     UniquePush(cursor.n1RecoveryLengths,*length);++cursor.n1RecoveryCount;
     cursor.n1RecoveryPreferMinimum=true;
-    // One same-length domain can be a locked singleton. Permit one far-length
+    // One same-length domain can be a locked singleton. Permit one new-length
     // domain-only fallback without spending/replenishing any observation budget.
     cursor.n1RecoveryFallbackAllowed=allowSameLength;
     cursor.domainReady=false;cursor.domainYieldPending=false;cursor.domainLocalTurnUsed=false;
