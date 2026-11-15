@@ -45,7 +45,52 @@ NPulseMembrane, NPulseNeuron, NLTZone и NConstGenerator. Рецепт откл�
 Конкретные принятые результаты публикуются в корневом
 `Reports/StructTrain/TimeLearner`; до публикации прогон считается незавершённым.
 
-Полный ModelSpec, экспорт определений образов, перенос Train → Test и
-сопоставление всех исторических профилей остаются следующими задачами.
+Полный native model archive и отдельные completed/stopped-state API уже
+реализованы: [ModelArchive](../../../../Docs/StructTrain/TimeLearner/ModelArchive.ru.md),
+[NativeLearnedState](../../../../Docs/StructTrain/TimeLearner/NativeLearnedState.ru.md) и
+[NativeCandidateWindowStateFactory](../../Core/TimeLearner/NativeCompositeLearnedState.h).
+Они переносят определения образов, реальный граф и индивидуальное состояние;
+остановленное обучение не получает сертификат завершённого. Адресные roundtrip
+проверки не закрывают все физические/структурные варианты или весь этап5.
+Сопоставление всех исторических профилей остаётся незавершённым.
 Process-local descriptor registry нельзя использовать как переносимый
 научный fingerprint или checkpoint физической динамики.
+
+## Уточнение владения физикой — 16.11.2026
+
+Два вида регистрации имеют разный контракт. Полный RegisterStorageProfile
+применяет физические поля ChannelProfile/SynapseProfile из рецепта. Их defaults
+не являются чтением произвольного исходного образа: при сохранении иной физики
+значения должны быть явно получены из её эффективных дочерних компонентов.
+Отсутствующий specification.ltMembrane задаёт пустое LTMembraneClassName и
+означает модель без промежуточной LT-мембраны. Это не команда «сохранить LT
+исходного нейрона»; наличие/отсутствие проверяется на конечном графе.
+
+RegisterFeedbackStorageProfile, напротив, создаёт производные образы от полных
+исходных образов и меняет только явно заданный FeedbackGain соответствующей
+мембраны. Отсутствующий bodyFeedbackGain/ltFeedbackGain сохраняет исходный образ;
+запрос ltFeedbackGain при отсутствии LT-мембраны отклоняется. Этот путь не
+подставляет defaults общего физического рецепта и не применяется к живому
+обученному графу как неполный overlay. Для такого графа Console использует
+отдельный native import/readback путь с сохранением dataset, индивидуальных
+Rs/C и исходных связей.
+
+PSI — физика синапса: в полном рецепте usePresynapticInhibition и
+inhibitionCoefficient задаются отдельно для excSynapse/inhSynapse каждой
+мембранной роли. Образ регистрируется до создания/роста экземпляров. NextSeg и
+SegEI задают иные факторы — тормозные банки, их attach offsets, Rs и реальные
+связи через NativeEditSpec.inhibition. Наличие PSI в образе не создаёт эти
+связи автоматически, как и структурное торможение не включает PSI. До
+эксперимента необходим effective readback всех участвующих детей и соединений.
+
+Различать доступность core API и Console-протокола: текущий training job
+принимает sync_capacitance_trim=0; PostTune разрешён только с объявленным
+finalization_plan, auto_calibrate_threshold=false. Фактор, отклоняемый этим
+конкретным preflight, нельзя выдавать за применённый режим. Общая матрица
+других клиентов/режимов проверяется отдельно.
+
+Эти уточнения подтверждены исходниками StorageProfiles.cpp, NativeModelBuilder.cpp,
+NativeModelEditor.cpp и App/NeuroModelerConsole/TimeLearnerTrainingJob.cpp;
+новой runtime-приёмки всех перечисленных вариантов эта запись не заявляет.
+Полные primary и изображения новых опытов хранятся во внешнем архиве M40;
+в Git — код, настройки, компактные refs и отчёты: [политика хранения](../../../../Docs/StructTrain/TimeLearner/ExternalExperimentArchive.ru.md).
