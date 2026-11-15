@@ -17,6 +17,12 @@ struct MeasuredLengthPoint {
 std::optional<int> ProposeMeasuredLength(std::vector<MeasuredLengthPoint> points,
     int minimumLength,int maximumLength,double syncTolerance);
 
+// Coverage proposal after a rejected observation, not a timing estimate.
+// Maximize distance to already issued lengths in one unchanged search family.
+// Work is bounded by the recorded inventory, not the integer domain width.
+std::optional<int> ProposeUnvisitedLength(std::vector<int> issued,
+    int minimumLength,int maximumLength);
+
 // Proposal eligibility only, not physical equivalence or measurement authority.
 // Branch growth can move unvisited upstream attachments together. Admit only
 // the ordinary or separated-bank family of one unchanged background; never

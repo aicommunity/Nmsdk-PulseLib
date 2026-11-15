@@ -263,6 +263,7 @@ private:
     void AdvanceDomainGeometry();
     void PrioritizeMeasuredLength(const CandidateEvidence& measurement);
     void PrioritizeN0Neighbors(const CandidateEvidence& measurement);
+    void PrioritizeRejectedN0BranchLength();
     // Shared private acceptance path after legacy or typed admission.
     void AcceptValidatedScalar(const ValidatedProbeMeasurement& measurement);
     void Reject(const std::string& reason);
