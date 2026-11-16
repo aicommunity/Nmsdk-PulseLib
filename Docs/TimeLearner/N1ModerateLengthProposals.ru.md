@@ -1,4 +1,4 @@
-# N1: умеренная геометрия перед дальними границами — кандидат16.11
+# N1: умеренная геометрия перед дальними границами — проверка16.11
 
 Основание: после предыдущего recovery Pulse42e35 Stock Train перешёл L28→255 и исчерпал300с на anchor до нового input1 measurement. Первый low-Rs кандидат приL28 остался ambiguous. [Фактический научный отчёт](../../../../Docs/StructTrain/TimeLearner/N1RecoveryScientificReport-20261116.ru.md).
 
@@ -8,4 +8,6 @@
 
 Первый independent same-L Rs endpoint, native domain assessment для каждого полного графа, фиксированные downstream/anchor и upstream separation сохраняются. Все edits применяются штатно между пробами и требуют нового anchor/input; допуски, бюджеты и сертификаты не меняются. N0 и valid-observation scheduling используют прежние функции.
 
-Сначала helper добавляется отдельным коммитом без использования контроллером. После этого — отдельное подключение к sealed N1 recovery. Требуется real-native сравнение обновлённых fixed-Rs контрпримеров, полный scoped SDK и unchanged decision-kernel regressions, затем same-condition cold Train. На момент этой записи helper и новый порядок ещё не приняты runtime-проверками; научное улучшение не заявляется.
+Helper введён отдельным коммитом f4e8bc29ca3529e683c53f842edc29bf86171acb; подключён к sealed N1 recovery в9e7653a400761d6c2f3ea68fddcd40a4307d85e7. Одинаковые116 decision-kernel cases на Elder проходят на обеих версиях: исходные109 сохранены и добавлены7 helper cases. M40 scoped SDK154/154 принят, в том числе реальные native fixtures; два fixed-Rs контрпримера отдельно воспроизведены на прежнем контроллере тем же baseline binary. Его исходный SDK остаётся FAILED, verifier не превращает его в PASS. [Инженерные квитанции и SHA](../../../../Docs/StructTrain/TimeLearner/N1ModerateRecoveryStatus-20261116.json).
+
+Same-condition cold Branch N4/N1 завершён: CLI/DATA/physical приняты, все процессы закрыты. Первые22 scalar measurements равны предыдущему sealed-recovery опыту. Полные input1-группы на L28/56/42/35 после independent low-Rs proposal остались ambiguous;58 групп/348 native probes полные, новых валидных input1 scalar нет. Остановка invalid_observation, certificate=null. Конечные L36/35/27/1 включают отделённый upstream bank. Это подтверждение измеренного охвата, без общего convergence/recognition PASS и без доказательства PhysicalInfeasible. [Научный разбор](../../../../Docs/StructTrain/TimeLearner/N1ModerateRecoveryScientificReport-20261116.ru.md). Следующий вопрос — объявленное физическое вмешательство с проверкой effective children и свежими references, а не очередная непроверенная перестановка L.
