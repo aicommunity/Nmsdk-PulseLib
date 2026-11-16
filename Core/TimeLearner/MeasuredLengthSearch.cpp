@@ -33,6 +33,22 @@ std::optional<int> ProposeUnvisitedLength(std::vector<int> issued,int minimumLen
     return result;
 }
 
+std::optional<int> ProposeModerateUnvisitedLength(std::vector<int> issued,
+    int centerLength,int minimumLength,int maximumLength)
+{
+    if(centerLength<1 || minimumLength<1 || maximumLength<minimumLength)
+        throw std::invalid_argument("invalid_moderate_exploration_length_domain");
+    const int nearest=std::clamp(centerLength,minimumLength,maximumLength);
+    if(std::find(issued.begin(),issued.end(),nearest)==issued.end())return nearest;
+    const auto minimum=std::max<std::int64_t>(minimumLength,(std::int64_t(centerLength)+1)/2);
+    const auto maximum=std::min<std::int64_t>(maximumLength,2*std::int64_t(centerLength));
+    if(minimum<=maximum)
+        if(const auto proposal=ProposeUnvisitedLength(issued,int(minimum),int(maximum)))return proposal;
+    // The declared global domain stays reachable. Exhaustion is only a cursor
+    // fact, never physical infeasibility or permission to relax tolerances.
+    return ProposeUnvisitedLength(std::move(issued),minimumLength,maximumLength);
+}
+
 bool SameBranchLengthProposalFamily(const std::vector<InputParameters>& background,std::size_t input,
     const std::vector<InputParameters>& previous,const std::vector<InputParameters>& current)
 {

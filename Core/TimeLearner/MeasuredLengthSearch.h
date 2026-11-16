@@ -23,6 +23,13 @@ std::optional<int> ProposeMeasuredLength(std::vector<MeasuredLengthPoint> points
 std::optional<int> ProposeUnvisitedLength(std::vector<int> issued,
     int minimumLength,int maximumLength);
 
+// Recovery proposal order only. First cover the legal half-to-double band
+// around a fixed first-rejection center; if that finite band is exhausted,
+// fall back to the unchanged full declared domain. No timing/validity claim.
+// Bounded by the recorded inventory, including for INT_MAX-wide domains.
+std::optional<int> ProposeModerateUnvisitedLength(std::vector<int> issued,
+    int centerLength,int minimumLength,int maximumLength);
+
 // Proposal eligibility only, not physical equivalence or measurement authority.
 // Branch growth can move unvisited upstream attachments together. Admit only
 // the ordinary or separated-bank family of one unchanged background; never
