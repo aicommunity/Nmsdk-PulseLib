@@ -115,29 +115,34 @@ void Collect(UEPtr<UContainer> component, const QString& path, std::vector<Node>
 
 // Length-framed UTF8 and explicit value tags avoid Qt5/Qt6 JSON number-format
 // differences, locale dependence, compiler typeid names and ambiguous joins.
-void Frame(QByteArray& destination, const QByteArray& bytes)
+void Frame(QCryptographicHash& destination, const QByteArray& bytes)
 {
-    destination += QByteArray::number(bytes.size()); destination += ':'; destination += bytes;
+    destination.addData(QByteArray::number(bytes.size()));
+    destination.addData(":", 1);
+    destination.addData(bytes);
 }
 
-void Canonical(QByteArray& bytes, const QJsonValue& value)
+// Feed exactly the original canonical byte sequence to SHA256. Retaining that
+// sequence as one QByteArray makes a portable training export allocate another
+// document-sized buffer while raw observations and decoded proofs are live.
+void Canonical(QCryptographicHash& bytes, const QJsonValue& value)
 {
     if(value.isObject())
     {
-        bytes += 'o'; const auto object = value.toObject();
+        bytes.addData("o", 1); const auto object = value.toObject();
         Frame(bytes, QByteArray::number(object.size()));
         for(auto i = object.begin(); i != object.end(); ++i)
         { Frame(bytes, i.key().toUtf8()); Canonical(bytes, i.value()); }
     }
     else if(value.isArray())
     {
-        bytes += 'a'; const auto array = value.toArray(); Frame(bytes, QByteArray::number(array.size()));
+        bytes.addData("a", 1); const auto array = value.toArray(); Frame(bytes, QByteArray::number(array.size()));
         for(const auto& element : array) Canonical(bytes, element);
     }
-    else if(value.isString()) { bytes += 's'; Frame(bytes, value.toString().toUtf8()); }
-    else if(value.isBool()) bytes += value.toBool() ? 't' : 'f';
-    else if(value.isDouble()) { bytes += 'd'; Frame(bytes, F64(value.toDouble()).toLatin1()); }
-    else if(value.isNull()) bytes += 'n';
+    else if(value.isString()) { bytes.addData("s", 1); Frame(bytes, value.toString().toUtf8()); }
+    else if(value.isBool()) bytes.addData(value.toBool() ? "t" : "f", 1);
+    else if(value.isDouble()) { bytes.addData("d", 1); Frame(bytes, F64(value.toDouble()).toLatin1()); }
+    else if(value.isNull()) bytes.addData("n", 1);
     else throw std::runtime_error("undefined_identity_value");
 }
 
@@ -190,8 +195,8 @@ QString FirstDifference(const QJsonValue& a, const QJsonValue& b, const QString&
 
 QString CanonicalModelDataSha256(const QJsonValue& data)
 {
-    QByteArray canonical; Canonical(canonical, data);
-    return QString::fromLatin1(QCryptographicHash::hash(canonical, QCryptographicHash::Sha256).toHex());
+    QCryptographicHash canonical(QCryptographicHash::Sha256); Canonical(canonical, data);
+    return QString::fromLatin1(canonical.result().toHex());
 }
 
 QJsonObject IdentifyModel(UEPtr<UContainer> model, const ModelBoundarySources& boundarySources)

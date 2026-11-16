@@ -6,6 +6,8 @@
 
 namespace NmsdkTools {
 // Version-1 length-framed UTF8/binary64 encoding shared by identity and archive.
+// Streams canonical bytes into SHA256 without retaining a document-sized
+// canonical byte buffer. Encoding and existing archive/model hashes are unchanged.
 RDK_LIB_TYPE QString CanonicalModelDataSha256(const QJsonValue& data);
 // Read-only semantic identity of a complete, ready graph. Version 1 is closed;
 // version 2 records explicitly declared external matrix-double stimulus ports.
