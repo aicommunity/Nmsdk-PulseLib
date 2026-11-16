@@ -581,11 +581,10 @@ QJsonObject VerifyModelIdentity(const QJsonObject& expected, UEPtr<UContainer> m
     {
         result["reason"] = "invalid_expected_identity"; return result;
     }
-    QByteArray canonical;
-    try { Canonical(canonical, semantic); }
+    QString recomputed;
+    try { recomputed = CanonicalModelDataSha256(semantic); }
     catch(const std::exception&)
     { result["reason"] = "invalid_expected_identity"; return result; }
-    const auto recomputed = QString::fromLatin1(QCryptographicHash::hash(canonical, QCryptographicHash::Sha256).toHex());
     if(expected["sha256"].toString() != recomputed)
     {
         result["reason"] = "expected_digest_mismatch"; return result;
