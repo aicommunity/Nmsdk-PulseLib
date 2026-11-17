@@ -238,7 +238,15 @@ private:
     // The active cursor lives in cursor; only inactive cursors are suspended.
     std::vector<CapacitanceContext> capacitanceContexts;
     std::size_t activeCapacitanceContext=0,nextCapacitanceContext=0;
-    std::vector<std::pair<std::vector<InputParameters>,std::optional<TrainingCapacitance>>> issuedJointCandidates;
+    struct JointCandidate {
+        std::vector<InputParameters> parameters;
+        std::optional<TrainingCapacitance> capacitance;
+        // Native N1 preview identity: equal scalar parameters/C are not proof
+        // of equal physical bindings, allocated graph or effective children.
+        // Empty only for the standalone/no-domain and N0 paths.
+        std::string modelScope;
+    };
+    std::vector<JointCandidate> issuedJointCandidates;
     void SelectCapacitanceContext(std::size_t index);
     void AdvanceCapacitanceContext();
     std::optional<TrainingCapacitance> CandidateCapacitance(const std::vector<InputParameters>& parameters) const;

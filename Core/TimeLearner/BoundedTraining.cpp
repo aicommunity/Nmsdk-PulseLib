@@ -743,7 +743,9 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
                 cursor.n1RejectedCandidates.end(),parameters)!=cursor.n1RejectedCandidates.end())continue;
             cursor.n1RecoveryPreferMinimum=false;
             cursor.visitedDomainCandidates.push_back({cursor.domainScope,parameters});
-            if(interleave)cursor.domainYieldPending=cursor.domainPassIssuedCandidate=true;
+            // A proposal can still be rejected by cross-C-context dedup below.
+            // Charge an issued pass only after actual candidate admission.
+            if(interleave)cursor.domainYieldPending=true;
             cursor.candidateResistanceScope=cursor.domainScope;return DynamicCandidate::Candidate;
         }
         if(FallbackRejectedN1Geometry())continue;
@@ -917,6 +919,8 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
             {
                 const auto next=NextDomainCandidate(candidate);
                 if(next==DynamicCandidate::NeedDomain)return pending;
+                if(next==DynamicCandidate::Candidate && cursor.domainYieldPending)
+                    cursor.domainPassIssuedCandidate=true;
                 exhausted=next==DynamicCandidate::Exhausted;
             }
             else if(!exhausted)exhausted=!NextCandidate(candidate);
@@ -942,11 +946,15 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
                 if(next==DynamicCandidate::Exhausted)
                 {context.exhausted=true;--remainingContexts;AdvanceCapacitanceContext();continue;}
                 candidateCapacitance=CandidateCapacitance(candidate);
+                const std::string modelScope=requireResistanceDomains?
+                    (cursor.candidateResistanceScope.empty()?revision:cursor.candidateResistanceScope):std::string{};
                 const bool duplicate=std::any_of(issuedJointCandidates.begin(),issuedJointCandidates.end(),[&](const auto& issued) {
-                    return issued.first==candidate && EquivalentTrainingCapacitance(issued.second,candidateCapacitance);
+                    return issued.parameters==candidate && issued.modelScope==modelScope &&
+                        EquivalentTrainingCapacitance(issued.capacitance,candidateCapacitance);
                 });
                 if(duplicate){AdvanceCapacitanceContext();continue;}
-                issuedJointCandidates.push_back({candidate,candidateCapacitance});break;
+                if(requireResistanceDomains && cursor.domainYieldPending)cursor.domainPassIssuedCandidate=true;
+                issuedJointCandidates.push_back({candidate,candidateCapacitance,modelScope});break;
             }
         }
         if(exhausted)
