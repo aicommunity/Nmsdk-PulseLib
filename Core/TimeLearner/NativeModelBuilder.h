@@ -52,6 +52,10 @@ NativeModelBuildResult ConstructNativeLearnerModel(RDK::UNet& owner,const Native
 // overlay. Attachments are current learned values; Rs/C may differ from initial.
 NativeModelBuildResult InspectNativeLearnerModel(RDK::UNet& owner,const NativeModelSpec& specification,
                                                const std::vector<int>& attachments);
+// The same child-graph/readback checks before owner attachment. Owner clock,
+// sibling order and lifecycle belong to the subsequent native commit boundary.
+NativeModelBuildResult InspectNativePreparedChildren(const NativeModelSpec& specification,
+    RDK::UEPtr<NPulseNeuron> neuron,RDK::UEPtr<NDatasetMatrix> dataset,const std::vector<int>& attachments);
 // Reconstruct the actual physical neuron through the common native snapshot
 // path. Dataset, images, effective child physics and owner order are retained.
 // No defaults, inferred parent physics or nested Calculate. The caller must
