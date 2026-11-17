@@ -3,8 +3,6 @@
 #include "CandidateWindowTrainingDeclarations.h"
 #include "ModelIdentity.h"
 #include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonParseError>
 #include <cmath>
 #include <limits>
 #include <set>
@@ -62,34 +60,7 @@ Normalization Norm(const QJsonValue& v)
 {const auto n=Text(v);Require(n=="N0" || n=="N1","invalid_native_configuration_normalization");return n=="N0"?Normalization::SynapseCount:Normalization::TipResistance;}
 QString Selection(PeakSelectionPolicy p)
 {Require(p==PeakSelectionPolicy::IsolatedWindow || p==PeakSelectionPolicy::AssignedBurstWave,"invalid_native_configuration_selection");return p==PeakSelectionPolicy::IsolatedWindow?"isolated_window":"assigned_burst_wave";}
-// Qt validates syntax first. This second traversal preserves object-member
-// multiplicity, which QJsonObject by itself would silently discard.
-struct DuplicateKeys {
-    QByteArray bytes;int position=0;
-    void Space(){while(position<bytes.size() && (bytes[position]==' ' || bytes[position]=='\n' || bytes[position]=='\r' || bytes[position]=='\t'))++position;}
-    QByteArray String(){const int start=position++;while(position<bytes.size()){const char c=bytes[position++];if(c=='\\')++position;else if(c=='"')break;}return bytes.mid(start,position-start);}
-    void Value(unsigned depth=0)
-    {
-        Require(depth<=64,"native_configuration_depth_exceeded");Space();const char c=bytes.at(position);
-        if(c=='{')
-        {
-            ++position;Space();std::set<QString> seen;if(bytes.at(position)=='}'){++position;return;}
-            while(true)
-            {
-                Space();const auto key=QJsonDocument::fromJson(QByteArray("[")+String()+"]").array().at(0).toString();
-                Require(seen.insert(key).second,"duplicate_native_configuration_key");Space();++position;Value(depth+1);Space();
-                if(bytes.at(position++)=='}')break;
-            }
-        }
-        else if(c=='[')
-        {
-            ++position;Space();if(bytes.at(position)==']'){++position;return;}
-            while(true){Value(depth+1);Space();if(bytes.at(position++)==']')break;}
-        }
-        else if(c=='"')String();
-        else while(position<bytes.size() && bytes[position]!=',' && bytes[position]!='}' && bytes[position]!=']')++position;
-    }
-};
+
 }
 QJsonObject EncodeNativeModelSpec(const NativeModelSpec& s)
 {
@@ -409,13 +380,6 @@ ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
     c.maximumReferenceProbes=Count(o["maximum_reference_probes"]);c.maximumInvalidReferenceProbes=Count(o["maximum_invalid_reference_probes"]);
     c.maximumModelSeconds=Number(o["maximum_model_seconds"]);c.maximumWallSeconds=Number(o["maximum_wall_seconds"]);
     MakeConfiguredNativeTrainingPlan(c);return c;
-}
-QJsonObject ParseStrictNativeJsonObject(const std::string& text,std::size_t maximumBytes)
-{
-    Require(!text.empty() && text.size()<=maximumBytes && text.size()<=std::size_t(std::numeric_limits<int>::max()),"invalid_native_configuration_size");
-    const auto bytes=QByteArray::fromStdString(text);QJsonParseError error;const auto document=QJsonDocument::fromJson(bytes,&error);
-    Require(error.error==QJsonParseError::NoError && document.isObject(),"invalid_native_configuration_json");
-    DuplicateKeys{bytes}.Value();return document.object();
 }
 ConfiguredNativeTraining ParseConfiguredNativeTraining(const std::string& text)
 {return DecodeConfiguredNativeTraining(ParseStrictNativeJsonObject(text));}
