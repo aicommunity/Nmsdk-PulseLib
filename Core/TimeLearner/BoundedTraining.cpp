@@ -871,6 +871,10 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return {};
     if(armed || compositeArmed)return {};
     if(pending)return pending;
+    // Do not issue another geometry/domain edit when no observation can be
+    // afforded. Otherwise the terminal export contains a newly staged,
+    // unmeasured candidate instead of the state at the last completed probe.
+    if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted,"maximum_probes_exhausted");return {};}
     if(phase==Phase::Candidate)
     {
         std::vector<InputParameters> candidate;
@@ -939,7 +943,6 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
             pending->capacitance=std::move(candidateCapacitance);return pending;
         }
     }
-    if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted,"maximum_probes_exhausted");return {};}
     if(phase==Phase::Verify)
     {
         auto request=verification->NextRequest();
