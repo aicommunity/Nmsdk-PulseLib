@@ -12,11 +12,30 @@ UTF16-порядок ключей, UTF8 framing, типовые теги, binary
 raw observations, primary blobs и decoded proofs. Потоковый hash устраняет
 именно этот буфер; сами JSON и полная история пока остаются в памяти.
 
-Серверная приёмка этой ветки ещё не проведена. Нужны независимые Python golden
-digests, исходные native identity/storage tests и реальная сохранённая модель
-размером более 100 МБ. Для последней требуется явный
-TIMELEARNER_CANONICAL_PACKAGE. Отсутствующая fixture даёт skip, который нельзя
-засчитать за прохождение. Память измерять на реальном процессе отдельно.
-Один успешный hash не доказывает успешного полного export/import либо
-устранения OOM последнего Train. Разделение физической модели, checkpoint
-контроллера и истории измерений остаётся частью основного плана.
+Серверная приёмка 17 ноября выполнена на M40: PulseLib
+9883f9493d0672e603dfb4a03dc572955469ccdf, SDK root
+9b7fb0eac7107093d2fd87748b85c532c4f2ad9e. Приняты 20/20 native
+identity/revision/export случаев, включая пять независимо вычисленных Python
+golden digests. Отдельный native control прочитал действительный package
+317475838 байт при лимите 4 ГиБ: semantic digest сохранился, исходный файл не
+изменился, единственный ожидаемый GTest исполнен без skip.
+
+Полные retained-model roundtrips Classic (raw175521654 байт) и Branch
+(raw192607805 байт) также прошли при собственном native лимите 8 ГиБ:
+import → штатные Build/Init → export → новый import, семантическая модель,
+ledger и все stimulus/Soma samples сохранены. Это воспроизведение остановленных
+состояний, а не новое обучение или восстановление checkpoint контроллера.
+Реальные JUnit и три закрытые kernel groups связаны с исходным заданием по
+именам и точным test ID, независимо от порядка выполнения топологий.
+
+Полные primary и provenance находятся во внешнем архиве M40, каталог
+`experiments/2026-11-17/native-export-memory/acceptance-a1.json`.
+[Квитанция, контрольные SHA и ограничения](../../../../Docs/StructTrain/TimeLearner/NativeExportMemory-20261117.ru.md).
+Для большого hash-control требуется явный TIMELEARNER_CANONICAL_PACKAGE;
+он зарегистрирован только при NMSDK_RECORDED_MODEL_INPUT_TESTS=ON. Отсутствующая
+fixture даёт skip, который нельзя засчитать за прохождение.
+
+Не измерено ускорение относительно прежнего кода или пиковая память свежего
+Train. Эти проверки не закрывают OOM последнего 759-probe Train. Разделение
+физической модели, checkpoint контроллера и истории измерений, а также полный
+учёт ресурсов owner и sibling native units остаются частью основного плана.
