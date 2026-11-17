@@ -23,6 +23,12 @@ std::optional<int> ProposeMeasuredLength(std::vector<MeasuredLengthPoint> points
 std::optional<int> ProposeUnvisitedLength(std::vector<int> issued,
     int minimumLength,int maximumLength);
 
+// Exploration around a measured timing-ready amplitude miss, not a timing or
+// amplitude prediction. Prefer the nearest unissued integer, then the smaller
+// length. Work is bounded by issued inventory even for INT_MAX-wide domains.
+std::optional<int> ProposeNearestUnvisitedLength(std::vector<int> issued,
+    int centerLength,int minimumLength,int maximumLength);
+
 // Recovery proposal order only. First cover the legal half-to-double band
 // around a fixed first-rejection center; if that finite band is exhausted,
 // fall back to the unchanged full declared domain. No timing/validity claim.

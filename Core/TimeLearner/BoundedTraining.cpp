@@ -462,6 +462,31 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
     }
     const auto& bound=config.bounds[input];
     auto proposal=ProposeMeasuredLength(std::move(points),bound.minimumLength,bound.maximumLength,config.tolerances.sync);
+    const std::size_t next=requireResistanceDomains?cursor.domainLength+1:cursor.lengthIndex;
+    if(next>cursor.lengths.size())return;
+    if(!proposal && requireResistanceDomains && config.normalization==Normalization::TipResistance &&
+       measurement.withinTiming && !measurement.withinAmplitude)
+    {
+        // A timing-ready point is not an amplitude solution. After its finite
+        // Rs turn, explore a nearby unvisited geometry rather than returning
+        // directly to the distant initial length mesh. This is a proposal only:
+        // the ordinary N1 cursor still assesses the new effective Rs domain,
+        // applies the native edit and measures a fresh anchor/input pair.
+        std::vector<int> issued(cursor.lengths.begin(),cursor.lengths.begin()+next);
+        UniquePush(issued,measurement.parameters.length);
+        const auto attempts=config.maximumCandidatesPerInput;
+        for(std::size_t i=0;i<attempts;++i)
+        {
+            proposal=ProposeNearestUnvisitedLength(issued,measurement.parameters.length,
+                bound.minimumLength,bound.maximumLength);
+            if(!proposal)break;
+            auto candidate=measurement.fullParameters;candidate[input].length=*proposal;
+            if(PrepareCandidate(candidate))break;
+            // A forbidden shared-bank geometry is not a measured failure or
+            // proof of infeasibility. Skip it in this bounded proposal turn.
+            issued.push_back(*proposal);proposal.reset();
+        }
+    }
     if(!proposal)return;
     if(branchFamily || usedN0Family)
     {
@@ -480,8 +505,7 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
     // Do not interrupt an assessed N1 geometry or bypass its domain checks.
     // The next geometry is still assessed/applied through the native adapter.
     // N0 uses its existing full-vector deduplication and repeated probes.
-    const std::size_t next=requireResistanceDomains?cursor.domainLength+1:cursor.lengthIndex;
-    if(next>cursor.lengths.size() || std::find(cursor.lengths.begin(),cursor.lengths.begin()+next,*proposal)!=cursor.lengths.begin()+next)return;
+    if(std::find(cursor.lengths.begin(),cursor.lengths.begin()+next,*proposal)!=cursor.lengths.begin()+next)return;
     cursor.lengths.erase(std::remove(cursor.lengths.begin()+next,cursor.lengths.end(),*proposal),cursor.lengths.end());
     cursor.lengths.insert(cursor.lengths.begin()+next,*proposal);
 }
