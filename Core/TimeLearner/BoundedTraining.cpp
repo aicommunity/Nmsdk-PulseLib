@@ -901,6 +901,13 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
     if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted,"maximum_probes_exhausted");return {};}
     if(phase==Phase::Candidate)
     {
+        // Every new search point needs a fresh anchor/input pair. An odd last
+        // probe cannot measure that point, so it must not buy a domain/edit
+        // that leaves an unmeasured graph in the terminal export. Repeated N0
+        // measurements already in progress and final verification have their
+        // existing accounting; this does not reserve or replenish a budget.
+        if(config.maximumProbes-probes<2)
+        {Stop(TrainingStatus::BudgetExhausted,"candidate_probe_pair_budget_exhausted");return {};}
         std::vector<InputParameters> candidate;
         auto candidateCapacitance=RestoreTrainingCapacitance(backgroundCapacitance,currentCapacitance);
         bool exhausted=candidates>=config.maximumCandidatesPerInput;
