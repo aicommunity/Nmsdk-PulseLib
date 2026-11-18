@@ -49,7 +49,9 @@ public:
         auto source=owner.template GetComponentL<NPulseGeneratorTransit>("DatasetMatrix.Generator1",true);
         Require(neuron && dataset && source,"measured_boundary_children_missing");
         std::vector<std::string> additional;
-        for(const auto& definition:result->capacitanceState["baseline"].toObject()["storage_images"].toArray())
+        // QJsonObject's non-const operator[] inserts a null member. Reading an
+        // absent baseline must preserve the genuinely absent owned C-state.
+        for(const auto& definition:result->capacitanceState.value("baseline").toObject().value("storage_images").toArray())
             additional.push_back(definition.toObject()["name"].toString().toStdString());
         additional.push_back(dataset->GetCompClassName());
         additional.push_back(source->GetCompClassName());

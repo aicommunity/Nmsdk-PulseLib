@@ -38,3 +38,9 @@ deadline after a real unmeasured edit, response replay, owned C-state, external
 stop, Reset, insufficient edit reservation and failed attachment. These cases
 are pending server validation. Passing them will not finish the portable
 export/replay requirement or the full TimeLearner refactoring plan.
+
+The earlier snapshot-only M40 gate ran all30 cases:26 passed and four ordinary
+empty-C snapshots failed their independent C-state equality. Non-const JSON
+lookup had inserted a null baseline while collecting image dependencies.
+Capture now uses value() lookup, preserving absent C-state. The original
+failures remain evidence; the correction requires a new server run.
