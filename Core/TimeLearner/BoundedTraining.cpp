@@ -1380,7 +1380,14 @@ void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasureme
     }
     PrioritizeMeasuredLength(e);
     const bool improved=!best || Rank(e,config,reference)<Rank(*best,config,reference);
-    if(improved)best=e;
+    if(improved)
+    {
+        const auto previous=selectedMeasuredBoundary?selectedMeasuredBoundary->serial:0;
+        if(previous==std::numeric_limits<std::size_t>::max())
+        {Stop(TrainingStatus::InvalidModel,"measured_boundary_selection_serial_exhausted");return;}
+        MeasuredCandidateSelection selected{previous+1,sweep,position,e};
+        best=e;selectedMeasuredBoundary=std::move(selected);
+    }
     // A different timing-ready geometry may start far from the amplitude
     // target. Its local search must not be gated by another geometry's best.
     // Global ranking and the independent final-verification gate are unchanged.

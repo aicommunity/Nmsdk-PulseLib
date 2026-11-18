@@ -72,6 +72,13 @@ struct CandidateEvidence {
     std::vector<InputParameters> fullParameters;
     std::optional<TrainingCapacitance> capacitance={};
 };
+// The controller's completed local ranking decision, retained after moving to
+// the next input. This is evidence for a future native graph checkpoint, not a
+// physical snapshot, restoration capability or all-input certificate.
+struct MeasuredCandidateSelection {
+    std::size_t serial=0,sweep=0,inputPosition=0;
+    CandidateEvidence candidate;
+};
 struct TrainingRejection { std::string trialId,reason; };
 enum class CandidateRecoveryDisposition { CursorAdvanced, InvalidBudgetStop, RestoredBestStop };
 struct CandidateRecoveryEvidence {
@@ -157,6 +164,7 @@ public:
     const std::string& Reason() const { return stopReason; }
     const std::optional<TrainingCertificate>& Certificate() const;
     const std::vector<CandidateEvidence>& Evidence() const { return evidence; }
+    const std::optional<MeasuredCandidateSelection>& SelectedMeasuredBoundary() const {return selectedMeasuredBoundary;}
     const std::vector<TrainingRejection>& Rejected() const { return rejected; }
     const std::vector<CandidateRecoveryEvidence>& Recoveries() const { return recoveries; }
     const std::vector<CandidateWindowRecoveryEvidence>& CandidateWindowRecoveries() const {return candidateWindowRecoveries;}
@@ -192,6 +200,9 @@ private:
     std::optional<PreparedVerificationProbe> armed;
     std::optional<PreparedCompositeMeasurement> compositeArmed;
     std::optional<CandidateEvidence> best;
+    // Do not clear with the local cursor: an adapter must still observe a
+    // selection made immediately before AdvanceInput or terminal Stop.
+    std::optional<MeasuredCandidateSelection> selectedMeasuredBoundary;
     bool restoringBest=false;
     // Enumeration state belongs to a single physical search context. Keeping
     // it separate from measurements/references enables fair bounded traversal
