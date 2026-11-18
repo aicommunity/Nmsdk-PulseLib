@@ -4397,22 +4397,40 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeDiagnosticRe
 {
  return ImportNativeRecognitionStateWithBoundary(package,implementationId,{},true);
 }
+TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativePhysicalModelData(const QJsonObject& package,const std::string& implementationId)
+{
+ if(NativePostTunePhaseDepth || (NativeLiveFinalization && !NativeLiveFinalization->Done()))
+ {TimeLearner::NativeModelBuildResult result;result.reason="physical_model_data_cannot_enter_owned_finalization";return result;}
+ return ImportNativeRecognitionStateWithBoundary(package,implementationId,{},false,true);
+}
+QJsonObject NNeuronTimeLearner::ExportNativePhysicalModelData(const std::string& implementationId)
+{
+ return TimeLearner::NativeRecognitionControl::ExportNativePhysicalModelData(*this,implementationId);
+}
+bool NNeuronTimeLearner::HasNativePhysicalModelData() const
+{
+ return NativeRecognition && NativeRecognition->physicalDataOnly;
+}
 TimeLearner::NativeModelBuildResult NNeuronTimeLearner::ImportNativeRecognitionStateWithBoundary(const QJsonObject& package,const std::string& implementationId,
- const QJsonObject& boundary,bool diagnostic)
+ const QJsonObject& boundary,bool diagnostic,bool physicalData)
 {
  if(NativePostTunePhase && !NativePostTunePhase->Done() && !NativePostTunePhaseDepth)
  {TimeLearner::NativeModelBuildResult result;result.reason="native_owned_post_tune_owns_model";return result;}
 
- auto result=TimeLearner::InstallNativeRecognitionState(*this,false,package,implementationId,NativeTrainingOwned,NativeModelDeclaration,
-  NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition,boundary,diagnostic);
+ auto result=physicalData?
+  TimeLearner::InstallNativePhysicalModelData(*this,false,package,implementationId,NativeTrainingOwned,NativeModelDeclaration,
+   NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition):
+  TimeLearner::InstallNativeRecognitionState(*this,false,package,implementationId,NativeTrainingOwned,NativeModelDeclaration,
+   NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition,boundary,diagnostic);
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
  {
   if(!NativePostTunePhaseDepth)NativePostTunePhase.reset();
   NativeTrainingRequestIntent.Clear();
+  if(physicalData){NativeLiveFinalization.reset();NativeLearnedCapacitanceState={};}
   NativeConfiguredSinks={};OldDendriteLength=DendriteLength.GetData();
   LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
-  CapApplyPending=false;TrainingPhase.SetDataDirect(kPhaseDone);Ready=false;
+  CapApplyPending=false;TrainingPhase.SetDataDirect(physicalData?kPhaseSync:kPhaseDone);Ready=false;
  }
  return result;
 }

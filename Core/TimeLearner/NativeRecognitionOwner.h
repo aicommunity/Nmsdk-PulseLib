@@ -1,5 +1,6 @@
 #pragma once
 #include "NativeRecognitionState.h"
+#include "NativePhysicalModelData.h"
 #include "NativeModelOwner.h"
 #include "NativeRecognitionTrial.h"
 #include "NativeFinalizationControlPolicy.h"
@@ -19,6 +20,7 @@ struct NativeRecognitionHold {
     int controllerVersion=1,calculateMode=0,structureBuildMode=1;
     double threshold=0.;
     bool calibrationConfirmed=false;
+    bool physicalDataOnly=false;
     QJsonObject finalizationBoundary; // Empty for ordinary frozen evaluation.
     bool finalizationClosed=false; // Administrative lease, never a calibration claim.
     // Ephemeral instance identity: not a physical parameter or checkpoint.
@@ -72,11 +74,11 @@ template<class Owner> void CheckNativeRecognitionHold(Owner& owner,NativeRecogni
         throw std::invalid_argument("native_recognition_model_changed");
 }
 
-template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner& owner,bool branch,const QJsonObject& package,
-    const std::string& implementation,bool& owned,std::optional<NativeModelSpec>& declaration,
+template<class Owner,class Prepare> NativeModelBuildResult InstallNativeFrozenState(Owner& owner,bool branch,const QJsonObject& package,
+    bool& owned,std::optional<NativeModelSpec>& declaration,
     std::optional<ConfiguredNativeTraining>& configured,std::string& configuredText,
     NativeProbeExecutor& probe,NativeTrainingService& service,std::string& failure,std::unique_ptr<NativeRecognitionHold>& hold,
-    const QJsonObject& finalizationBoundary={},bool diagnostic=false)
+    Prepare prepare,const QJsonObject& finalizationBoundary={},bool diagnostic=false,bool physicalDataOnly=false)
 {
     NativeModelBuildResult result;const bool wasOwned=owned;
     if((hold && (hold->trials.Busy() || hold->trials.HasResult())) || NativeTrainingIsActive(service) || probe.Status()==NativeProbeStatus::Queued || probe.Status()==NativeProbeStatus::Running)
@@ -84,12 +86,13 @@ template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner
     try
     {
         CheckNativeOwnerOverrides(owner);
+        if(physicalDataOnly && !finalizationBoundary.isEmpty())
+            throw std::invalid_argument("physical_model_data_cannot_finalize_training");
         CheckNativeFinalizationControls(owner,finalizationBoundary);
         if(!finalizationBoundary.isEmpty() && NativeFinalizationSourceSolo(package)!=finalizationBoundary["source_solo"].toObject())
             throw std::logic_error("native_finalization_candidate_source_changed");
         if(diagnostic && !finalizationBoundary.isEmpty())throw std::invalid_argument("diagnostic_recognition_cannot_finalize_training");
-        auto prepared=diagnostic?PrepareNativeDiagnosticRecognitionState(package,owner.GetStorage(),owner.GetEnvironment(),implementation):
-                                 PrepareNativeRecognitionState(package,owner.GetStorage(),owner.GetEnvironment(),implementation);
+        auto prepared=prepare();
         if(prepared->configuration.model.branch!=branch)throw std::invalid_argument("native_recognition_import_topology_mismatch");
         auto next=std::make_unique<NativeRecognitionHold>();next->package=package;next->model=prepared->configuration.model;
         next->finalizationBoundary=finalizationBoundary;
@@ -98,6 +101,7 @@ template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner
         next->configurationText=prepared->configurationText;next->controllerVersion=prepared->controllerVersion;
         next->calculateMode=prepared->calculateMode;next->structureBuildMode=prepared->structureBuildMode;
         next->calibrationConfirmed=prepared->calibrationConfirmed;
+        next->physicalDataOnly=physicalDataOnly;
         // Qt 5 operator[] on a temporary object returns QJsonValueRef.
         // Materialize an owning value before the temporary calibration dies.
         const QJsonValue threshold=package["neuron"].toObject()["metadata"].toObject()["calibration"].toObject()["threshold"];
@@ -122,6 +126,30 @@ template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner
         if(result.modelMayHaveChanged){failure=result.reason;service.FailConfiguration(result.reason);}
     }
     return result;
+}
+
+template<class Owner> NativeModelBuildResult InstallNativeRecognitionState(Owner& owner,bool branch,const QJsonObject& package,
+    const std::string& implementation,bool& owned,std::optional<NativeModelSpec>& declaration,
+    std::optional<ConfiguredNativeTraining>& configured,std::string& configuredText,
+    NativeProbeExecutor& probe,NativeTrainingService& service,std::string& failure,std::unique_ptr<NativeRecognitionHold>& hold,
+    const QJsonObject& finalizationBoundary={},bool diagnostic=false)
+{
+    return InstallNativeFrozenState(owner,branch,package,owned,declaration,configured,configuredText,
+        probe,service,failure,hold,[&] {
+            return diagnostic?PrepareNativeDiagnosticRecognitionState(package,owner.GetStorage(),owner.GetEnvironment(),implementation):
+                PrepareNativeRecognitionState(package,owner.GetStorage(),owner.GetEnvironment(),implementation);
+        },finalizationBoundary,diagnostic);
+}
+
+template<class Owner> NativeModelBuildResult InstallNativePhysicalModelData(Owner& owner,bool branch,const QJsonObject& package,
+    const std::string& implementation,bool& owned,std::optional<NativeModelSpec>& declaration,
+    std::optional<ConfiguredNativeTraining>& configured,std::string& configuredText,
+    NativeProbeExecutor& probe,NativeTrainingService& service,std::string& failure,std::unique_ptr<NativeRecognitionHold>& hold)
+{
+    return InstallNativeFrozenState(owner,branch,package,owned,declaration,configured,configuredText,
+        probe,service,failure,hold,[&] {
+            return PrepareNativeFrozenPhysicalModelData(package,owner.GetStorage(),owner.GetEnvironment(),implementation);
+        },{},false,true);
 }
 
 template<class Owner> void BeforeNativeRecognitionTrial(Owner& owner,NativeRecognitionHold& h,

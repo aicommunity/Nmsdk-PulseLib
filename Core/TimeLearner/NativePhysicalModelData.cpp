@@ -1,5 +1,6 @@
 #include "NativePhysicalModelData.h"
 #include "NativeRecognitionState.h"
+#include "../NPulseLTZoneCommon.h"
 #include <QJsonArray>
 #include <algorithm>
 #include <cmath>
@@ -208,5 +209,21 @@ std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativePhysicalModelData(
         QString::fromStdString(implementation),{{&generator->Output,"burst"}}));
     Require(bool(result->neuron),"physical_model_neuron_class");
     CheckPhysical(*result);return result;
+}
+std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativeFrozenPhysicalModelData(const QJsonObject& document,
+    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
+{
+    const auto boundary=Object(document["source_boundary"]);
+    Require(!SoloKind(boundary["kind"].toString()),"physical_model_frozen_requires_explicit_recognition_conversion");
+    auto prepared=PrepareNativePhysicalModelData(document,storage,environment,implementation);
+    Require(!prepared->configuration.model.allowMutedInputBaseline,
+        "physical_model_frozen_requires_all_input_banks");
+    // Metadata is not authority, but it must agree with the actual frozen
+    // decision element. Do not apply a parent threshold overlay to repair it.
+    const QJsonValue threshold=Object(Object(document["neuron"])["metadata"])["calibration"].toObject()["threshold"];
+    auto zone=prepared->neuron->GetComponentL<NPulseLTZoneCommon>("LTZone",true);
+    Require(zone && threshold.isDouble() && std::isfinite(threshold.toDouble()) &&
+        zone->Threshold.GetData()==threshold.toDouble(),"physical_model_frozen_threshold_metadata_mismatch");
+    return prepared;
 }
 }

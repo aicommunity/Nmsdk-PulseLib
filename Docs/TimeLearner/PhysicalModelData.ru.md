@@ -1,6 +1,10 @@
 # Полная физическая модель отдельно от истории обучения
 
-Статус: реализация подготовлена; сборка и native-проверки ещё не выполнены.
+Статус: исходный SDK a3 собран,228 случаев выполнены,226 прошли. Два новых
+transfer fixtures сравнили одинаковые полные трассы, но ошибочно требовали
+однозначного пика; исправление сохраняет честный peak_ambiguous. Эта правка
+проверялась отдельной сборкой Windows; её итог пока недоступен после потери VPN.
+Следующее расширение frozen DATA API подготовлено в коде, ещё не собрано.
 Это частичное выполнение этапа 5, а не новый подтверждённый научный результат.
 
 `Core/TimeLearner/NativePhysicalModelData.{h,cpp}` вводит документ
@@ -42,3 +46,38 @@ Fixture начинается с честно остановленной cold-г�
 Она не заменяет проверку реальных обученных моделей, heterogeneous/C-trim,
 fresh process и всех паттернов. Эти проверки и подключение frozen evaluation
 к новому формату остаются открытыми.
+
+## Замороженное выполнение DATA-модели
+
+Оба learner получают явные методы ImportNativePhysicalModelData,
+ExportNativePhysicalModelData и HasNativePhysicalModelData. Импорт допускает
+только документ из recognition/diagnostic recognition/threshold/calibrated
+границы. Solo-архив сначала требует явного Convert; входы не подключаются
+неявно ради прохождения проверки. Проверяются все input banks и совпадение
+физического Threshold реального LTZone с metadata, без исправляющих overlays.
+
+Общий InstallNativeFrozenState сохраняет существующую native commit boundary,
+проверки owner/control/lifetime, порядок детей и readback. Прежние proof importers
+вызывают тот же код через прежний PrepareNativeRecognitionState. Для DATA
+вызывается PrepareNativeFrozenPhysicalModelData; static calibrationConfirmed=false
+не позволяет вернуть полномочия калибровки из metadata исходного архива.
+
+После импорта используется прежний QueueNativeRecognitionTrial и штатный
+scheduler. BeginNativeTraining и экспорт recognition proof отвергаются.
+Возвращать исходный DATA-документ разрешено отдельным ExportNativePhysicalModelData
+только после полной проверки frozen hold. Нельзя заменить граф при queued/running
+trial или войти через DATA в owned finalization. Старое solo C-control состояние
+и завершённая finalization metadata не переносятся на новый DATA hold; физические
+дочерние C сохраняются самим архивом. Native training service остаётся Idle,
+certificate отсутствует, административный legacy phase не обозначает Done.
+
+Новый корневой fixture сравнивает старый full-source import и DATA import на
+полных target/foil окнах: Soma, фактические входы, LT output, LT decision potential,
+stimulus/spike timestamps, reset policy, completeness и model revisions. Отличаться
+может только собственный run_id. Дополнительный отрицательный случай проверяет
+solo и заново подписанную противоречивую threshold metadata. JSON/CSV сохраняются
+для графиков при TIMELEARNER_EXECUTION_OUTPUT. Эти новые случаи пока не выполнены.
+
+Console/runner entry point для DATA evaluation и resolver опубликованной исходной
+границы ещё требуют интеграции. Наличие методов компонента не завершает этап5,
+не подтверждает реальные большие обученные модели и не даёт научный PASS.

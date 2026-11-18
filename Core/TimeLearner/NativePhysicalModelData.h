@@ -6,6 +6,9 @@ namespace NMSDK::TimeLearner {
 // Deliberately has no training service, certificate, search cursor or callbacks.
 // Source-boundary metadata is provenance DATA, not restored proof authority.
 struct PreparedNativePhysicalModelData {
+    // Physical DATA cannot restore calibration proof, including when its
+    // source archive originally came from a calibrated recognition model.
+    static constexpr bool calibrationConfirmed=false;
     RDK::UEPtr<RDK::UStorage> storage;
     RDK::UEPtr<NPulseNeuron> neuron;
     RDK::UEPtr<NDatasetMatrix> dataset;
@@ -33,6 +36,11 @@ unsigned NativePhysicalModelSourceFrequency(const QJsonObject& source);
 // No live owner replacement, Calculate, shared-prototype mutation, controller
 // continuation or certificate/calibration authority is installed.
 std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativePhysicalModelData(
+    const QJsonObject& document,RDK::UEPtr<RDK::UStorage> storage,
+    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);
+// Frozen evaluation requires an explicitly converted recognition boundary and
+// all input banks connected. A solo DATA archive is not implicitly converted.
+std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativeFrozenPhysicalModelData(
     const QJsonObject& document,RDK::UEPtr<RDK::UStorage> storage,
     RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);
 }

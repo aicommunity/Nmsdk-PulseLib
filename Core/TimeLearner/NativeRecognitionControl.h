@@ -64,9 +64,21 @@ struct NativeRecognitionControl {
     static QJsonObject ExportNativeRecognitionState(Owner& owner,const std::string& implementationId)
 {
  if(!owner.NativeRecognition)throw std::logic_error("native_recognition_state_not_installed");
+ if(owner.NativeRecognition->physicalDataOnly)throw std::logic_error("physical_model_data_is_not_recognition_proof");
  if(!owner.NativeEditFailure.empty())throw std::logic_error(owner.NativeEditFailure);
  if(owner.NativeRecognition->package["implementation_id"].toString().toStdString()!=implementationId)
   throw std::invalid_argument("recognition_implementation_mismatch");
+ TimeLearner::CheckNativeRecognitionHold(owner,*owner.NativeRecognition,true);return owner.NativeRecognition->package;
+}
+
+    template<class Owner>
+    static QJsonObject ExportNativePhysicalModelData(Owner& owner,const std::string& implementationId)
+{
+ if(!owner.NativeRecognition || !owner.NativeRecognition->physicalDataOnly)
+  throw std::logic_error("native_physical_model_data_not_installed");
+ if(!owner.NativeEditFailure.empty())throw std::logic_error(owner.NativeEditFailure);
+ if(owner.NativeRecognition->package["implementation_id"].toString().toStdString()!=implementationId)
+  throw std::invalid_argument("physical_model_implementation_mismatch");
  TimeLearner::CheckNativeRecognitionHold(owner,*owner.NativeRecognition,true);return owner.NativeRecognition->package;
 }
 };
