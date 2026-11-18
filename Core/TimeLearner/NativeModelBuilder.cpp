@@ -315,6 +315,11 @@ std::unique_ptr<NativeLearnerGraphCheckpoint> NativeLearnerGraphCheckpoint::Capt
     result->datasetSnapshot=NmsdkTools::ExportDatasetSnapshot(dataset);
     return result;
 }
+std::size_t NativeLearnerGraphCheckpoint::EncodedBytes() const
+{
+    return std::size_t(QJsonDocument(neuronSnapshot).toJson(QJsonDocument::Compact).size())+
+        std::size_t(QJsonDocument(datasetSnapshot).toJson(QJsonDocument::Compact).size());
+}
 NativeModelBuildResult NativeLearnerGraphCheckpoint::Restore(UNet& owner) const
 {
     NativeModelBuildResult result;

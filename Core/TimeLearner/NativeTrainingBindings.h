@@ -2,6 +2,7 @@
 #include "NativeTrainingService.h"
 #include "ModelIdentity.h"
 #include "NativeCalculationPolicy.h"
+#include "NativeMeasuredTrainingBoundary.h"
 
 namespace NMSDK::TimeLearner {
 double NativeTrainingWallTime();
@@ -37,6 +38,9 @@ template<class Learner> NativeTrainingAdapter BindNativeTraining(Learner& owner,
     result.queue=[&probe](NativeProbeRequest request){probe.Queue(std::move(request));};
     result.probeState=[&probe]{return probe.Status();};
     result.takeResult=[&probe]{return probe.TakeResult();};
+    result.captureMeasuredBoundary=[&owner](const MeasuredCandidateSelection& selected) {
+        return NativeMeasuredTrainingBoundary::Capture(owner,selected);
+    };
     result.cancel=[&probe](const std::string& reason){probe.Cancel(reason);};
     result.createComposite=[&owner](VerificationProtocol protocol,CompositeAttemptLimits limits,double model,double wall) {
         return std::make_shared<NativeCompositeTrainingAttempt>(owner,std::move(protocol),limits,model,wall);

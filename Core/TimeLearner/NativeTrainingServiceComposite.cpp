@@ -5,6 +5,7 @@
 #include "CompositePrimaryBudget.h"
 #include "CandidateWindowCoreValidation.h"
 #include "NativeCompositeTrainingEvidence.h"
+#include "NativeMeasuredTrainingBoundary.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -146,7 +147,7 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     compositeRawNotifications.clear();compositeRawTrialIds.clear();
     compositeCancellationDiagnostics.clear();
     if(!references){referencePackets.clear();referenceEvidence.clear();}
-    certificate.reset();search.reset();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
+    certificate.reset();search.reset();measuredBoundary.reset();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
     InvalidateOwnerControlLifetime();
     ++attempt;++compositeGeneration;plan.search.runId+="/session/"+std::to_string(attempt);
     state=NativeTrainingState::CapturingReferences;incompleteCaptureConstraint.reset();
@@ -518,7 +519,11 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
             throw;
         }
         if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || search!=consumingSearch || !actor->ownerLife.IsCurrent())return;
+        // Consumption is already a production-kernel fact. Preserve it even
+        // if retaining the physical checkpoint subsequently exhausts storage.
         record.consumed=consumingSearch->AcceptedCompositeObservations()>wasAccepted;
+        RetainSelectedBoundary(a);
+        if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || search!=consumingSearch || !actor->ownerLife.IsCurrent())return;
         if(final && record.consumed) {
             if(compositeFinalGroups.empty())compositeFinalGroups.resize(plan.protocol.inputs.size());
             compositeFinalGroups.at(compositeRequest->inputIndex)=record.groupId;
@@ -602,6 +607,7 @@ void NativeTrainingService::BeforeComposite(const NativeTrainingAdapter& a,doubl
             plan.protocol.patternHash,plan.protocol.revision,action.baseModelRevision,plan.protocol.routing,action.modelEpoch,action.inputIndex};
         QueueComposite(a,request,action.finalVerification?CompositeMeasurementPurpose::Final:CompositeMeasurementPurpose::Search,m,w);
     }
+    catch(const NativeBoundaryRetentionBudgetExhausted& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::BudgetExhausted,e.what());}
     catch(const CompositeTrainingBudgetExhausted& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::BudgetExhausted,e.what());}
     catch(const CompositeBudget& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::BudgetExhausted,e.what());}
     catch(const CompositeTrainingStopped&){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::ExternalStop,"external_stop");}
@@ -624,6 +630,7 @@ void NativeTrainingService::AfterComposite(const NativeTrainingAdapter& a,double
         if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor)return;
         CheckBudget(a,m,NativeTrainingWallTime());if(!ActiveComposite(state))return;ClosedComposite(a,actor);
     }
+    catch(const NativeBoundaryRetentionBudgetExhausted& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::BudgetExhausted,e.what());}
     catch(const CompositeTrainingBudgetExhausted& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::BudgetExhausted,e.what());}
     catch(const CompositeTrainingStopped&){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::ExternalStop,"external_stop");}
     catch(const std::exception& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::InvalidObservation,e.what());}

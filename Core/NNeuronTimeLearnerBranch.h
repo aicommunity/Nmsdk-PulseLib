@@ -37,6 +37,7 @@ See file license.txt for more information
 #include <cstring>
 
 namespace NMSDK {
+namespace TimeLearner { class NativeMeasuredTrainingBoundary; }
 namespace TimeLearner { struct NativeTrainingExport; class NativeCompositeTrainingAttempt; struct NativeLearnerLifecycle; struct NativeRecognitionControl; class NativePostTuneOwnerBoundary; class NativeFinalizationBoundary; struct NativeRecognitionHold; class NativeOwnedPostTunePhase; struct NativePostTuneTransactionSpec; class NativeLiveFinalization; struct NativeLiveFinalizationSpec; }
 
 using namespace RDK;
@@ -48,6 +49,7 @@ class RDK_LIB_TYPE NNeuronTimeLearnerBranch: public UNet
 {
  friend class TimeLearner::NativeCompositeTrainingAttempt;
  friend class TimeLearner::NativePostTuneOwnerBoundary;
+ friend class TimeLearner::NativeMeasuredTrainingBoundary;
  friend struct TimeLearner::NativeLearnerLifecycle;
  friend struct TimeLearner::NativeRecognitionControl;
 public:

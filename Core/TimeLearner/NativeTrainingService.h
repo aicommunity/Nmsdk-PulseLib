@@ -7,6 +7,7 @@
 #include <set>
 
 namespace NMSDK::TimeLearner {
+class NativeMeasuredTrainingBoundary;
 enum class NativeTrainingState { Idle, CapturingReferences, Searching, Finished };
 double NativeTrainingWallTime();
 
@@ -66,6 +67,9 @@ struct NativeTrainingAdapter {
         NativeCandidateWindowAttemptDeclaration,double,double)> createCandidateWindowComposite;
     std::function<std::shared_ptr<NativeCompositeTrainingAttempt>(const DecodedNativeCompositeArchive&,CompositeAttemptLimits,
         NativeCandidateWindowAttemptDeclaration,double,double)> createImportedCandidateWindowComposite;
+    // Actual component bindings retain the complete physical model when the
+    // controller selects a measured point. Pure control fixtures may omit it.
+    std::function<std::shared_ptr<const NativeMeasuredTrainingBoundary>(const MeasuredCandidateSelection&)> captureMeasuredBoundary;
 };
 
 struct NativeTrainingCapacitanceHistory {
@@ -131,6 +135,7 @@ public:
         const std::string& captureRevision,std::size_t captureEpoch,bool referenceComplete,
         TrainingStatus outcome,const std::string& reason);
     const BoundedTrainingSession* Search() const { return search.get(); }
+    const std::shared_ptr<const NativeMeasuredTrainingBoundary>& SelectedNativeBoundary() const {return measuredBoundary;}
     std::size_t IssuedReferenceProbes() const { return referenceProbes; }
     std::size_t ModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
     const BoundedTrainingConfig& Configuration() const { return plan.search; }
@@ -179,6 +184,7 @@ private:
     // In-flight proof guards may reenter owner reset. Keep a retired search
     // alive until the current delivery returns; never republish it afterwards.
     std::shared_ptr<BoundedTrainingSession> search;
+    std::shared_ptr<const NativeMeasuredTrainingBoundary> measuredBoundary;
     std::optional<TrainingAction> activeAction;
     std::optional<NativeTrainingCapacitanceHistory> capacitanceHistory;
     std::shared_ptr<NativeCompositeTrainingAttempt> composite;
@@ -225,6 +231,7 @@ private:
                                const std::string& revision,std::size_t epoch);
     void Finish(TrainingStatus result,const std::string& diagnostic);
     void SyncOutcome();
+    void RetainSelectedBoundary(const NativeTrainingAdapter&);
     void RecordCancelled(const NativeTrainingAdapter& adapter);
     std::string RememberCapacitance(const NativeTrainingAdapter& adapter,const std::string& revision,
         const std::optional<TrainingCapacitance>& requested);

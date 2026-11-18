@@ -1,6 +1,7 @@
 #include "NativeTrainingService.h"
 #include "NativeTrainingProof.h"
 #include "ProbeEvidenceJson.h"
+#include "NativeMeasuredTrainingBoundary.h"
 #include <QJsonDocument>
 #include <cmath>
 #include <chrono>
@@ -125,7 +126,7 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
     startModel=lastModel=modelTime;startWall=lastWall=wallTime;
     referenceProbes=invalidReferences=0;if(!references){referenceEvidence.clear();referencePackets.clear();}
     finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();
-    certificate.reset();search.reset();activeAction.reset();
+    certificate.reset();search.reset();measuredBoundary.reset();activeAction.reset();
     waiting=false;reason.clear();outcome=TrainingStatus::Searching;
     InvalidateOwnerControlLifetime();++attempt;
     plan.search.runId+="/session/"+std::to_string(attempt);
@@ -325,9 +326,11 @@ void NativeTrainingService::AfterTick(const NativeTrainingAdapter& a,double mode
                     finalPackets.clear();
                 finalPackets.push_back(*result);
             }
-            search->Consume(*result->observation,result->currentBaseRevision);activeAction.reset();SyncOutcome();
+            search->Consume(*result->observation,result->currentBaseRevision);
+            RetainSelectedBoundary(a);activeAction.reset();SyncOutcome();
         }
     }
+    catch(const NativeBoundaryRetentionBudgetExhausted& error){a.cancel(error.what());if(search)search->ExhaustBudget();Finish(TrainingStatus::BudgetExhausted,error.what());RecordCancelled(a);}
     catch(const std::exception& error){a.cancel("native_training_observation_error");Finish(TrainingStatus::InvalidObservation,error.what());RecordCancelled(a);}
     catch(...){a.cancel("native_training_observation_error");Finish(TrainingStatus::InvalidObservation,"native_training_observation_exception");RecordCancelled(a);}
 }
@@ -360,6 +363,25 @@ void NativeTrainingService::SyncOutcome()
     certificate=search->Certificate();
     Finish(status,search->Reason().empty()?TrainingStatusName(status):search->Reason());
 }
+void NativeTrainingService::RetainSelectedBoundary(const NativeTrainingAdapter& a)
+{
+    if(!a.captureMeasuredBoundary || !search || !search->SelectedMeasuredBoundary())return;
+    const auto sourceSearch=search;const auto session=attempt,generation=compositeGeneration;
+    const auto selected=*sourceSearch->SelectedMeasuredBoundary();
+    if(measuredBoundary && measuredBoundary->Selection().serial==selected.serial)return;
+    Require(!measuredBoundary || measuredBoundary->Selection().serial<selected.serial,
+        "native_measured_boundary_selection_regressed");
+    auto retained=a.captureMeasuredBoundary(selected);
+    // A diagnostic/provider callback can reenter Reset or retarget. Never
+    // publish an old checkpoint into the replacement controller scope.
+    if(search!=sourceSearch || attempt!=session || compositeGeneration!=generation || state!=NativeTrainingState::Searching)return;
+    Require(retained && retained->Selection().serial==selected.serial &&
+        retained->Selection().candidate.modelRevision==selected.candidate.modelRevision &&
+        retained->Selection().candidate.modelEpoch==selected.candidate.modelEpoch &&
+        retained->Selection().candidate.fullParameters==selected.candidate.fullParameters,
+        "native_measured_boundary_capture_mismatch");
+    measuredBoundary=std::move(retained);
+}
 void NativeTrainingService::ExternalStop(const NativeTrainingAdapter& a)
 {
     if(plan.protocol.schemaVersion==4){if(Active(state))StopComposite(a,TrainingStatus::ExternalStop,"external_stop");return;}
@@ -384,7 +406,7 @@ void NativeTrainingService::ResetControl()
     if(!references && attempt>0 && !plan.search.initialModelRevision.empty() && !incompleteCaptureConstraint)
         incompleteCaptureConstraint.emplace(plan.search.initialModelRevision,plan.search.initialModelEpoch);
     state=NativeTrainingState::Idle;outcome=TrainingStatus::Searching;reason.clear();waiting=false;
-    search.reset();activeAction.reset();if(!references){referenceEvidence.clear();referencePackets.clear();}
+    search.reset();measuredBoundary.reset();activeAction.reset();if(!references){referenceEvidence.clear();referencePackets.clear();}
     if(capacitanceHistory)capacitanceHistory->domainBaseWitnessIds.clear();
     referenceProbes=invalidReferences=0;compositeRequest.reset();compositeReferenceMeasurements.clear();
     compositeRawNotifications.clear();
@@ -421,7 +443,7 @@ void NativeTrainingService::RestoreBoundary(NativeTrainingPlan value,std::vector
     plan=std::move(value);referencePackets=std::move(refs);finalPackets=std::move(finals);referenceEvidence=std::move(observations);
     observedPackets.clear();incompleteCaptureConstraint.reset();
     references=proof.references;certificate=proof.certificate;referenceBinding=revision;retainedEpoch=epoch;attempt=sessions;
-    search.reset();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
+    search.reset();measuredBoundary.reset();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
     outcome=certificate->Exact()?TrainingStatus::Exact:TrainingStatus::SearchUnresolved;
     capacitanceHistory.reset();
     reason="restored_completed_training_boundary";state=NativeTrainingState::Finished;
@@ -445,7 +467,7 @@ void NativeTrainingService::RestoreStoppedBoundary(NativeTrainingPlan value,std:
     observedPackets=std::move(observations);referenceEvidence=std::move(accepted);references=std::move(captured);
     certificate.reset();referenceBinding=complete?revision:captureRevision;retainedEpoch=epoch;attempt=sessions;
     incompleteCaptureConstraint.reset();if(!complete)incompleteCaptureConstraint.emplace(captureRevision,captureEpoch);
-    search.reset();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
+    search.reset();measuredBoundary.reset();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
     outcome=terminal;reason=diagnostic;state=NativeTrainingState::Finished;
     capacitanceHistory.reset();
 }
