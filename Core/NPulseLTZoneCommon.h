@@ -35,7 +35,7 @@ UProperty<double,NLTZone, ptPubParameter> ThresholdOff;
 UProperty<bool,NLTZone, ptPubParameter> UseAveragePotential;
 
 public: //   
-///      
+/// Данные с ионных механизмов участков мембраны
 UProperty<std::vector<MDMatrix<double>>,NLTZone, ptInput | ptPubState> Inputs;
 
 /// Выход источника сигнала
@@ -46,7 +46,7 @@ public: //
 UProperty<double,NLTZone, ptPubState> Potential;
 
 
-///    
+/// Нейрон владелец мембраны канала
 //NPulseNeuron* Neuron;
 
 protected: //  
@@ -134,7 +134,7 @@ RDK::UProperty<double,NPulseLTZoneCommon,ptPubState> NeuralPotential;
 /// Флаг наличия генерации
 UProperty<int,NPulseLTZoneCommon,ptPubState> PulseCounter;
 
-///      
+/// Средняя частота за заданный интервал времени
 UProperty<list<double>,NPulseLTZoneCommon,ptPubState> AvgFrequencyCounter;
 
 /// Признак текущей генерации импульса

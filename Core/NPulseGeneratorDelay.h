@@ -23,37 +23,37 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseGeneratorDelay: public NSource
 {
 public: // 
-///   ()
+/// Длительность импульса (с)
 UProperty<double,NPulseGeneratorDelay, ptPubParameter> PulseLength;
 
-///  
+/// Амплитуда импульса
 UProperty<double,NPulseGeneratorDelay, ptPubParameter> Amplitude;
 
-///    ( 1  4)
+/// Входной параметр данных (от 1 до 4)
 UProperty<int,NPulseGeneratorDelay, ptPubParameter> ParameterData;
 
-///   
+/// Минимальное значение выборки
 UProperty<double,NPulseGeneratorDelay, ptPubParameter> MinSample;
 
-///   
+/// Максимальное значение выборки
 UProperty<double,NPulseGeneratorDelay, ptPubParameter> MaxSample;
 
 protected: //  
 
-///   
+/// Задержка запуска генератора
 double Delay;
 
 public: //   
-///   
+/// Вход вещественного числа
 UProperty<double,NPulseGeneratorDelay, ptPubInput> Number;
 
-///   
+/// Момент отсчёта задержки
 UProperty<int,NPulseGeneratorDelay,ptPubInput> FlagStart;
 
 
 public: // 
 // --------------------------
-//   
+// Конструкторы и деструкторы
 // --------------------------
 NPulseGeneratorDelay(void);
 virtual ~NPulseGeneratorDelay(void);
@@ -61,59 +61,59 @@ virtual ~NPulseGeneratorDelay(void);
 
 protected:
 // --------------------------
-//    
+// Методы управления общедоступными свойствами
 // --------------------------
 
-//   
+// Устанавливает длительность импульса
 bool SetPulseLength(const double &value);
 
-//   
+// Устанавливает амплитуду импульсов
 bool SetAmplitude(const double &value);
 
-//   
+// Устанавливает амплитуду импульсов
 bool SetParameterData(const int &value);
 
-//     
+// Устанавливает минимальное значение в семпле
 bool SetMinSample(const double &value);
 
-//     
+// Устанавливает максимальное значение в семпле
 bool SetMaxSample(const double &value);
 
 public:
 // --------------------------
-//    
+// Системные методы управления объектом
 // --------------------------
-//         
+// Выделяет память для новой чистой копии объекта этого класса
 virtual NPulseGeneratorDelay* New(void);
 // --------------------------
 
 // --------------------------
-//    
+// Методы доступа к компонентам
 // --------------------------
-//       
-//     
-//   'true'   
-//  'false'    
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
-//    
+// Скрытые методы управления счетом
 // --------------------------
 protected:
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//     
-//   
-//    Reset()   Ready  true
-//    
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
 virtual bool ABuild(void);
 
-//   .
+// Сброс процесса счета.
 virtual bool AReset(void);
 
-//    
+// Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
 };

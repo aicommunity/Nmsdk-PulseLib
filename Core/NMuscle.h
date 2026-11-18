@@ -26,12 +26,12 @@ using namespace RDK;
 class RDK_LIB_TYPE NMuscle: public UNet
 {
 public: //  
-/// 
+/// Коэффициенты
 UProperty<vector<double>,NMuscle, ptPubParameter> MulCoeffs;
 
 UProperty<vector<double>,NMuscle, ptPubParameter> Param;
 
-///  
+/// Постоянные времени
 UProperty<vector<double>,NMuscle, ptPubParameter> TC;
 
 /// Масса
@@ -44,10 +44,10 @@ UProperty<double,NMuscle, ptPubParameter> Threshold;
 UProperty<double,NMuscle, ptPubParameter> G;
 
 public: //   
-///   ( )
+/// Сигнальный вход (активация мышцы)
 UProperty<MDMatrix<double>, NMuscle, ptPubInput> Input;
 
-/// Length input
+/// Указатель на вход по длине
 UProperty<MDMatrix<double>, NMuscle, ptPubInput> LengthInput;
 
 UProperty<MDMatrix<double>, NMuscle, ptOutput | ptPubState> Output;
@@ -87,12 +87,12 @@ virtual ~NMuscle(void);
 
 protected:
 // --------------------------
-//    
+// Методы управления общедоступными свойствами
 // --------------------------
-//   
+// Устанавливает амплитуду синуса
 //bool SetAmplitude(double value);
 
-//   
+// Устанавливает частоту генерации
 //bool SetFrequency(double value);
 // --------------------------
 

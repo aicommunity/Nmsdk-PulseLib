@@ -39,7 +39,7 @@ UProperty<double,NPulseChannel, ptPubParameter> RestingResistance;
 /// Число подключенных к каналу синапсов
 UProperty<int,NPulseChannel, ptPubState> NumConnectedSynapsis;
 
-///   
+/// Текущая постоянная времени
 UProperty<double,NPulseChannel, ptPubState> TimeConstant;
 
 public: //   

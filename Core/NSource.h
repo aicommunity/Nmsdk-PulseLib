@@ -25,12 +25,12 @@ using namespace RDK;
 class RDK_LIB_TYPE NSource: public UNet
 {
 public: //  
-///      ()
-/// 0 -  
+/// Длительность работы с момента включения (с)
+/// 0 - постоянная работа
 UProperty<UTime,NSource, ptPubParameter> ActionPeriod;
 
 public: //   
-///   
+/// Выход источника сигнала
 UProperty<MDMatrix<double>, NSource, ptOutput | ptPubState> Output;
 
 protected: //  
@@ -38,7 +38,7 @@ UProperty<UTime,NSource, ptPubState> ActionCounter;
 
 public: // 
 // --------------------------
-//   
+// Конструкторы и деструкторы
 // --------------------------
 NSource(void);
 virtual ~NSource(void);
@@ -46,28 +46,28 @@ virtual ~NSource(void);
 
 protected:
 // --------------------------
-//    
+// Методы управления общедоступными свойствами
 // --------------------------
-//     
+// Длительность работы с момента включения
 bool SetActionPeriod(const RDK::UTime &value);
 // --------------------------
 
 // --------------------------
-//    
+// Системные методы управления объектом
 // --------------------------
-//         
+// Выделяет память для новой чистой копии объекта этого класса
 virtual NSource* New(void);
 // --------------------------
 
 
 // --------------------------
-//    
+// Скрытые методы управления счетом
 // --------------------------
 protected:
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//   .
+// Сброс процесса счета.
 virtual bool AReset(void);
 // --------------------------
 };

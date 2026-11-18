@@ -24,59 +24,59 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseLifeNeuron: public NPulseNeuron
 {
 public: // 
-///     
+/// Суммарный динамический вес возбуждающих связей
 UProperty<double, NPulseLifeNeuron,ptPubState> SummaryPosGd;
 
-///     
+/// Суммарный статический вес возбуждающих связей
 UProperty<double, NPulseLifeNeuron,ptPubState> SummaryPosGs;
 
-///     
+/// Суммарный результирующий вес возбуждающих связей
 UProperty<double, NPulseLifeNeuron,ptPubState> SummaryPosG;
 
-///     
+/// Суммарный динамический вес тормозных связей
 UProperty<double, NPulseLifeNeuron,ptPubState> SummaryNegGd;
 
-///     
+/// Суммарный статический вес тормозных связей
 UProperty<double, NPulseLifeNeuron,ptPubState> SummaryNegGs;
 
-///     
+/// Суммарный результирующий вес тормозных связей
 UProperty<double, NPulseLifeNeuron,ptPubState> SummaryNegG;
 
 public: //   
-/// :     
+/// Выход: суммарный динамический вес возбуждающих связей
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryPosGd;
 
-/// :           
+/// Выход: суммарный динамический вес возбуждающих связей отнесенный к числу активных возбуждающих входов
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryPosGdNorm;
 
-/// :     
+/// Выход: суммарный статический вес возбуждающих связей
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryPosGs;
 
-/// :           
+/// Выход: суммарный статический вес возбуждающих связей отнесенный к числу активных возбуждающих входов
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryPosGsNorm;
 
-///     
+/// Суммарный результирующий вес возбуждающих связей
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryPosG;
 
-///           
+/// Суммарный результирующий вес возбуждающих связей отнесенный к числу активных возбуждающих входов
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryPosGNorm;
 
-/// :     
+/// Выход: суммарный динамический вес тормозных связей
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryNegGd;
 
-/// :           
+/// Выход: суммарный динамический вес тормозных связей отнесенный к числу активных тормозных входов
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryNegGdNorm;
 
-/// :     
+/// Выход: суммарный статический вес тормозных связей
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryNegGs;
 
-/// :           
+/// Выход: суммарный статический вес тормозных связей отнесенный к числу активных тормозных входов
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryNegGsNorm;
 
-///     
+/// Суммарный результирующий вес тормозных связей
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryNegG;
 
-///           
+/// Суммарный результирующий вес тормозных связей отнесенный к числу активных тормозных входов
 UProperty<MDMatrix<double>, NPulseLifeNeuron,ptOutput | ptPubState> OutputSummaryNegGNorm;
 
 protected: //  
@@ -85,53 +85,53 @@ UEPointer<NNeuronLife,NPulseLifeNeuron> NeuronLife;
 
 public: // 
 // --------------------------
-//   
+// Конструкторы и деструкторы
 // --------------------------
 NPulseLifeNeuron(void);
 virtual ~NPulseLifeNeuron(void);
 // --------------------------
 
 // --------------------------
-//     
+// Методы доступа к временным переменным
 // --------------------------
-//     
+// Возвращает указатель на модель жизнеобеспечения
 NNeuronLife* GetNeuronLife(void);
 // --------------------------
 
 // --------------------------
-//    
+// Системные методы управления объектом
 // --------------------------
-//         
+// Выделяет память для новой чистой копии объекта этого класса
 virtual NPulseLifeNeuron* New(void);
 // --------------------------
 
 // --------------------------
-//    
+// Методы доступа к компонентам
 // --------------------------
-//       
-//     
-//   'true'   
-//  'false'    
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
-//    
+// Скрытые методы управления счетом
 // --------------------------
 protected:
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//     
-//   
-//    Reset()   Ready  true
-//    
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
 virtual bool ABuild(void);
 
-//   .
+// Сброс процесса счета.
 virtual bool AReset(void);
 
-//    
+// Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
 

@@ -26,81 +26,81 @@ using namespace RDK;
 class RDK_LIB_TYPE NMExtrapolator: public UNet
 {
 public: //  
-//  , 
+// Время прогноза, с
 UProperty<RDK::UTime,NMExtrapolator, ptPubParameter> PredictionTime;
 
-//   
+// Число уровней сети
 UProperty<size_t,NMExtrapolator, ptPubParameter> NumLevels;
 
 public: //   
-///   
+/// Входные массивы данных
 UProperty<std::vector<MDMatrix<double>>, NMExtrapolator, ptInput | ptPubState> Inputs;
 
-///   
+/// Выходной массив данных
 UProperty<MDMatrix<double>, NMExtrapolator, ptOutput | ptPubState> Output;
 
 protected: //  
-//   
+// Коэффициенты треугольника паскаля
 vector<size_t> PascalCoeffs;
 
 protected: //  
-//  
+// История сигнала
 RDK::UQueue<std::vector<double> > History;
 //vector<Real> History2;
 
-//   
+// Счетчик пополнения истории
 int HistoryCounter;
 
 public:
 // --------------------------
-//   
+// Конструкторы и деструкторы
 // --------------------------
 NMExtrapolator(void);
 virtual ~NMExtrapolator(void);
 // --------------------------
 
 // --------------------------
-//    
+// Методы управления общедоступными свойствами
 // --------------------------
-//  , 
+// Время прогноза, с
 bool SetPredictionTime(const RDK::UTime &ptime);
 
-//   
+// Число уровней сети
 bool SetNumLevels(const size_t &value);
 // --------------------------
 
 // --------------------------
-//    
+// Системные методы управления объектом
 // --------------------------
-//         
+// Выделяет память для новой чистой копии объекта этого класса
 virtual UContainer* New(void);
 // --------------------------
 
 // --------------------------
-//    
+// Скрытые методы управления счетом
 // --------------------------
 protected:
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//     
-//   
-//    Reset()   Ready  true
-//    
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
 virtual bool ABuild(void);
 
-//   .
+// Сброс процесса счета.
 virtual bool AReset(void);
 
-//    
+// Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
 
 // --------------------------
-//   
+// Скрытые методы счета
 // --------------------------
 protected:
-//    
+// Вычисляет коэффициенты треугольника паскаля
 void CalcPascalCoeff(size_t level, vector<size_t> &coeffs);
 // --------------------------
 };

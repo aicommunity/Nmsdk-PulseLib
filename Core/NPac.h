@@ -23,16 +23,16 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPac: public UNet
 {
 public: //  
-///   
+/// Амплитуда входных импульсов
 UProperty<vector<vector<double> >,NPac, ptPubParameter> PulseAmplitude;
 
-///    
+/// Постоянная времени выделения медиатора
 UProperty<vector<vector<double> >,NPac, ptPubParameter> SecretionTC;
 
-///    
+/// Постоянная времени распада медиатора
 UProperty<vector<vector<double> >,NPac, ptPubParameter> DissociationTC;
 
-///  
+/// Коэффициент усиления
 UProperty<vector<vector<double> >,NPac, ptPubParameter> Gain;
 
 /// Режим работы
@@ -51,7 +51,7 @@ UProperty<std::vector<MDMatrix<double>>, NPac, ptPubInput> Inputs;
 UProperty<MDMatrix<double>, NPac, ptOutput | ptPubState> Output;
 
 protected: //  
-///    
+/// Промежуточное значение эффективности синапса
 UProperty<vector<vector<double> >,NPac, ptPubState> PreOutput;
 
 public: // 

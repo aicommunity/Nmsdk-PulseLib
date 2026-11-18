@@ -23,51 +23,51 @@ namespace NMSDK {
 class NPulseChannelCable: public NPulseChannelClassic
 {
 public: // 
-///  , 
+/// Потенциал покоя, В
 UProperty<double, NPulseChannelCable, ptPubParameter> EL;
 
-///   , *
+/// Удельное сопротивление цитоплазмы, Ом*м
 UProperty<double, NPulseChannelCable, ptPubParameter> Ri;
 
-///  , 
+/// Сопротивление мембраны, Ом
 UProperty<double, NPulseChannelCable, ptPubParameter> CableMembraneResistance;
 
-///  , 
+/// Диаметр дендрита, м
 UProperty<double, NPulseChannelCable, ptPubParameter> D;
 
-///   , *^2
+/// Удельное сопротивление мембраны, Ом*м^2
 UProperty<double, NPulseChannelCable, ptPubParameter> Rm;
 
-///  , 
+/// Емкость мембраны, Ф
 UProperty<double, NPulseChannelCable, ptPubParameter> Cm;
 
-///     , 
+/// Длина моделируемого отрезка нервного волокна, м
 UProperty<double, NPulseChannelCable, ptPubParameter> ModelMaxLength;
 
-///    , 
+/// Длина моделируемого отрезка времени, сек
 UProperty<double, NPulseChannelCable, ptPubState> ModelMaxTime;
 
-///     , 
+/// Шаг моделирования по длине дендрита, м
 UProperty<double, NPulseChannelCable, ptPubParameter> dx;
 
-///    , 
+/// Шаг моделирования по времени, с
 UProperty<double, NPulseChannelCable, ptPubState> dt;
 
-///  :
-/// 0/false -  D   CableMembraneResistance,
-/// 1/true -  CableMembraneResistance   D
+/// Режим расчета:
+/// 0/false - Вычислять D на основе CableMembraneResistance,
+/// 1/true - Вычислять CableMembraneResistance на основе D
 UProperty<bool, NPulseChannelCable, ptPubParameter> CalcMode;
 
 
 
 protected: //  
-///   
+/// Постоянная времени мембраны
 UProperty<double, NPulseChannelCable, ptPubState> TauM;
 
-/////   
+///// Потенциал клеточной мембраны
 UProperty<MDMatrix<double>, NPulseChannelCable, ptPubState> Vm;
 
-/////  
+///// Входное воздействие
 UProperty<MDMatrix<double>, NPulseChannelCable, ptPubState> InpV;
 
 /////
@@ -76,30 +76,30 @@ MDMatrix<double> x;
 /////
 MDMatrix<double> t;
 
-/////      
+/////Число точек сетки по оси длины дендрита
 int x_points_number;
 
-/////     
+/////Число точек сетки по оси времени
 int t_points_number;
 
-/////  ,    
+/////Момент подачи импульса, номер точки по стеке
 int inpT;
 
-/////  ,    
+/////Координата подачи импульса, номер точки по стеке
 int inpX;
 
 public: // 
 // --------------------------
-//   
+// Конструкторы и деструкторы
 // --------------------------
 NPulseChannelCable(void);
 virtual ~NPulseChannelCable(void);
 // --------------------------
 
 // --------------------------
-//   
+// Методы упраления параметрами
 // --------------------------
-/// 
+///Потенциал покоя
 bool SetEL(const double &value);
 
 ///
@@ -138,33 +138,33 @@ bool SetCalcMode(const bool &value);
 
 
 // --------------------------
-//    
+// Системные методы управления объектом
 // --------------------------
-//         
+// Выделяет память для новой чистой копии объекта этого класса
 virtual NPulseChannelCable* New(void);
 // --------------------------
 
 // --------------------------
-//     
+// Скрытые методы управления счетом
 // --------------------------
 protected:
 
 void FormingInput();
 
 
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//     
-//   
-//    Reset()   Ready  true
-//    
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
 virtual bool ABuild(void);
 
-//      
+// Сброс процесса счета без потери настроек
 virtual bool AReset(void);
 
-//    
+// Выполняет расчет этого объекта
 virtual bool ACalculate2(void);
 // --------------------------
 };

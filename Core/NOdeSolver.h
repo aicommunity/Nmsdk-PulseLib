@@ -22,7 +22,7 @@ public: //
 /// 2 - GPU
 UProperty<int, NOdeSolver, ptPubParameter> DeviceMode;
 
-///  
+/// Число уравнений
 UProperty<int, NOdeSolver, ptPubParameter> NumEquations;
 
 UProperty<MDMatrix<float>, NOdeSolver, ptPubParameter> Coeffs;
@@ -49,7 +49,7 @@ std::unique_ptr<ode::OdeSolverBase> Solver;
 
 public: // 
 // --------------------------
-//   
+// Конструкторы и деструкторы
 // --------------------------
 NOdeSolver(void);
 virtual ~NOdeSolver(void);
@@ -57,7 +57,7 @@ virtual ~NOdeSolver(void);
 
 protected:
 // --------------------------
-//    
+// Методы управления общедоступными свойствами
 // --------------------------
 bool SetInternalTimeStep(const float &value);
 
@@ -68,9 +68,9 @@ bool SetNumEquations(const int &value);
 
 public:
 // --------------------------
-//    
+// Системные методы управления объектом
 // --------------------------
-//         
+// Выделяет память для новой чистой копии объекта этого класса
 virtual NOdeSolver* New(void);
 // --------------------------
 
@@ -78,22 +78,22 @@ protected: // Setters
 bool SetCoeffs(const MDMatrix<float> &value);
 
 // --------------------------
-//    
+// Скрытые методы управления счетом
 // --------------------------
 protected:
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//     
-//   
-//    Reset()   Ready  true
-//    
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
 virtual bool ABuild(void);
 
-//   .
+// Сброс процесса счета.
 virtual bool AReset(void);
 
-//    
+// Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
 };

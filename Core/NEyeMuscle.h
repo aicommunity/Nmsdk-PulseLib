@@ -25,12 +25,12 @@ using namespace RDK;
 class RDK_LIB_TYPE NEyeMuscle: public UNet
 {
 public: //  
-/// 
+/// Коэффициенты
 UProperty<vector<double>,NEyeMuscle, ptPubParameter> MulCoeffs;
 
 UProperty<double,NEyeMuscle, ptPubParameter> K;
 
-///  
+/// Постоянные времени
 UProperty<vector<double>,NEyeMuscle, ptPubParameter> TC;
 
 public: //   

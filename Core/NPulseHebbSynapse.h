@@ -33,10 +33,10 @@ UProperty<vector<double>,NPulseHebbSynapse, ptPubParameter> Kmot;
 UProperty<double,NPulseHebbSynapse, ptPubParameter> Kin;
 UProperty<double,NPulseHebbSynapse, ptPubParameter> Kout;
 
-// -   
+// К-т усиления динамической связи
 RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> GdGain;
 
-// -   
+// К-т усиления статической связи
 RDK::UProperty<double,NPulseHebbSynapse, ptPubParameter> GsGain;
 
 public: //   
@@ -87,7 +87,7 @@ virtual NPulseHebbSynapse* New(void);
 // --------------------------
 // --------------------------
 protected:
-//       -
+// Подключает синапс хебба к низкопороговой зоне нейрона-владельца
 // Подключает синапс хебба к низкопороговой зоне нейрона-владельца
 // Возвращает false только если произошла ошибка установки связи
 // Если synapse == 0, то подключает все синапсы хебба

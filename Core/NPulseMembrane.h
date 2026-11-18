@@ -90,11 +90,11 @@ NPulseChannelCommon* GetPosChannel(size_t i);
 size_t GetNumNegChannels(void) const;
 NPulseChannelCommon* GetNegChannel(size_t i);
 
-//  
+// Возбуждающие синапсы
 size_t GetNumExcitatorySynapses(void) const;
 NPulseSynapseCommon* GetExcitatorySynapses(size_t i);
 
-//  
+// Тормозные синапсы
 size_t GetNumInhibitorySynapses(void) const;
 NPulseSynapseCommon* GetInhibitorySynapses(size_t i);
 
@@ -130,16 +130,16 @@ bool SetNumInhibitorySynapses(const int &value);
 virtual NPulseMembrane* New(void);
 
 protected:
-//    
-//       
-//      comp 
-//     
+// Выполняет завершающие пользовательские действия
+// при добавлении дочернего компонента в этот объект
+// Метод будет вызван только если comp был
+// успешно добавлен в список компонент
 virtual bool AAddComponent(UEPtr<UContainer> comp, UEPtr<UIPointer> pointer=0);
 
-//    
-//       
-//      comp
-//    
+// Выполняет предварительные пользовательские действия
+// при удалении дочернего компонента из этого объекта
+// Метод будет вызван только если comp
+// существует в списке компонент
 virtual bool ADelComponent(UEPtr<UContainer> comp);
 // --------------------------
 
@@ -176,7 +176,7 @@ virtual bool AReset(void);
 // Выполняет расчет этого объекта
 virtual bool ACalculate2(void);
 
-//      
+// Устанавливает компоненты в требуемый порядок расчета
 void UpdateComputationOrder(void);
 // --------------------------
 };

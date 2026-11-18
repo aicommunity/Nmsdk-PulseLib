@@ -23,59 +23,59 @@ namespace NMSDK {
 class RDK_LIB_TYPE NPulseGenerator: public NSource
 {
 public: // 
-///   () ( )
+/// Частота генерации (Гц) (Математическое ожидание)
 UProperty<double,NPulseGenerator, ptPubParameter> Frequency;
 
-///   ()
+/// Длительность импульса (с)
 UProperty<double,NPulseGenerator, ptPubParameter> PulseLength;
 
-///  
+/// Амплитуда импульса
 UProperty<double,NPulseGenerator, ptPubParameter> Amplitude;
 
-///   
+/// Задержка запуска генератора
 UProperty<double,NPulseGenerator, ptPubParameter> Delay;
 
-///  
-/// ( ,    !)
+/// Отклонение частоты
+/// (Задает диапазон, не является стандартным отклонением!)
 UProperty<double,NPulseGenerator, ptPubParameter> FrequencyDeviation;
 
-///     
+/// Интервал времени оценки частоты генерации
 UProperty<double,NPulseGenerator, ptPubParameter> AvgInterval;
 
 public: //   
-///  (    PulseOutput) (1)
+/// Потенциал (для этого компонента копирует PulseOutput) (1)
 UProperty<MDMatrix<double>,NPulseGenerator, ptOutput | ptPubState> OutputPotential;
 
-///  (2)
+/// Частота (2)
 UProperty<MDMatrix<double>,NPulseGenerator, ptOutput | ptPubState> OutputFrequency;
 
-///      (3)
+/// Массив моментов времени начала импульсов (3)
 UProperty<MDMatrix<double>,NPulseGenerator, ptOutput | ptPubState> OutputPulseTimes;
 
 public: //  
-///  
+/// Счетчик импульса
 UProperty<int,NPulseGenerator,ptPubState> PulseCounter;
 
-///    
+/// Случайное значение текущей частоты
 UProperty<double,NPulseGenerator,ptPubState> RandomFrequency;
 
-///      
+/// Средняя частота за заданный интервал времени
 UProperty<list<double>,NPulseGenerator,ptPubState> AvgFrequencyCounter;
 
-//      (UsePatternOutput)
+//Флаг генерации сигнала в повышенной частоте (UsePatternOutput)
 bool IsInPatternMode;
 
 protected:
 
 double OldFrequency;
 
-//   ----->
-//    Reset
+// Добавил Корсаков ----->
+// Время последнего вызова Reset
 double ResetTime;
 // <-----
 
-//   ----->
-//        (UsePatternOutput)
+// Добавила Демчева ----->
+//Время начала работы генератора в режиме повышенной частоты (UsePatternOutput)
 double PatternStartTime;
 
 // <-----
@@ -83,7 +83,7 @@ double PatternStartTime;
 
 public: // 
 // --------------------------
-//   
+// Конструкторы и деструкторы
 // --------------------------
 NPulseGenerator(void);
 virtual ~NPulseGenerator(void);
@@ -91,60 +91,60 @@ virtual ~NPulseGenerator(void);
 
 protected:
 // --------------------------
-//    
+// Методы управления общедоступными свойствами
 // --------------------------
-//   
+// Устанавливает частоту импульсов
 bool SetFrequency(const double &value);
 
-//   
+// Устанавливает длительность импульса
 bool SetPulseLength(const double &value);
 
-//   
+// Устанавливает амплитуду импульсов
 bool SetAmplitude(const double &value);
 
-//    
+// Устанавливает задержку запуска генератора
 bool SetDelay(const double &value);
 
-//    
-// ( ,    !)
+// Устанавливает случайное отклонение частоты
+// (Задает диапазон, не является стандартным отклонением!)
 bool SetFrequencyDeviation(const double &value);
 // --------------------------
 
 public:
 // --------------------------
-//    
+// Системные методы управления объектом
 // --------------------------
-//         
+// Выделяет память для новой чистой копии объекта этого класса
 virtual NPulseGenerator* New(void);
 // --------------------------
 
 // --------------------------
-//    
+// Методы доступа к компонентам
 // --------------------------
-//       
-//     
-//   'true'   
-//  'false'    
+// Метод проверяет на допустимость объекта данного типа
+// в качестве компоненты данного объекта
+// Метод возвращает 'true' в случае допустимости
+// и 'false' в случае некорректного типа
 virtual bool CheckComponentType(UEPtr<UContainer> comp) const;
 // --------------------------
 
 // --------------------------
-//    
+// Скрытые методы управления счетом
 // --------------------------
 protected:
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//     
-//   
-//    Reset()   Ready  true
-//    
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
 virtual bool ABuild(void);
 
-//   .
+// Сброс процесса счета.
 virtual bool AReset(void);
 
-//    
+// Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
 };
@@ -152,36 +152,36 @@ virtual bool ACalculate(void);
 class RDK_LIB_TYPE NPulseGeneratorTransit: public NPulseGenerator
 {
 public: // 
-///       
+/// Признак необходимости транзита сигнала от внешнего источника
 UProperty<bool,NPulseGeneratorTransit, ptPubParameter> UseTransitSignal;
 
-///  
+/// Транзитный сигнал
 UProperty<MDMatrix<double>,NPulseGeneratorTransit, ptInput | ptPubState> Input;
 
-///        PatternFrequency   
-///  :
-/// 1.         PatternDuration
-/// 2.         ,  
+/// Признак необходимости генерации сигнала с повышенной частотой PatternFrequency по внешнему импульсу
+/// Два формата:
+/// 1. Генерация с повышенной частотой в течение заданного периода PatternDuration
+/// 2. Генерация с повышенной частотой до получения повторного входного сигнала, прекращающего генерацию
 UProperty<bool,NPulseGeneratorTransit, ptPubParameter> UsePatternOutput;
 
-///        (UsePatternOutput) (c)
+/// Продолжительность периода работы в режиме повышенной частоты (UsePatternOutput) (c)
 UProperty<double,NPulseGeneratorTransit, ptPubParameter> PatternDuration;
 
-///       (UsePatternOutput) ()
+/// Частота генерации в режиме повышенной частоты (UsePatternOutput) (Гц)
 UProperty<double,NPulseGeneratorTransit, ptPubParameter> PatternFrequency;
 
 
 protected:
 
-/// ,       ,     
-///      ,     > 0
-///         ,  TheSamePulse == true
+/// Метка, что на входе фиксируется тот же импульс, что и на предыдущем такте
+/// За время импульса происходит несколько тактов, и поэтому входное значение > 0
+/// на очередном такте не должно воприниматься как новый импульс, если TheSamePulse == true
 bool TheSamePulse = false;
 
 
 public: // 
 // --------------------------
-//   
+// Конструкторы и деструкторы
 // --------------------------
 NPulseGeneratorTransit(void);
 virtual ~NPulseGeneratorTransit(void);
@@ -189,46 +189,46 @@ virtual ~NPulseGeneratorTransit(void);
 
 protected:
 // --------------------------
-//    
+// Методы управления общедоступными свойствами
 // --------------------------
-//       
+// Устанавливает необходимость транзита сигнала от внешнего источника
 bool SetUseTransitSignal(const bool &value);
 // --------------------------
-//      (   )   
+// Устанавливает необходимость увеличения частоты сигнала (на определенный период времени) по внешнему импульсу
 bool SetUsePatternOutput(const bool &value);
 // --------------------------
-//         (UsePatternOutput)
+// Устанавливает продолжительность периода работы в режиме повышенной частоты (UsePatternOutput)
 bool SetPatternDuration(const double &value);
 // --------------------------
-//        (UsePatternOutput)
+// Устанавливает частоту генерации в режиме повышенной частоты (UsePatternOutput)
 bool SetPatternFrequency(const double &value);
 // --------------------------
 
 public:
 // --------------------------
-//    
+// Системные методы управления объектом
 // --------------------------
-//         
+// Выделяет память для новой чистой копии объекта этого класса
 virtual NPulseGeneratorTransit* New(void);
 // --------------------------
 
 // --------------------------
-//    
+// Скрытые методы управления счетом
 // --------------------------
 protected:
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//     
-//   
-//    Reset()   Ready  true
-//    
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
 virtual bool ABuild(void);
 
-//   .
+// Сброс процесса счета.
 virtual bool AReset(void);
 
-//    
+// Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
 };

@@ -8,49 +8,49 @@ namespace NMSDK
 {
     class NIntegrateAndFireNeuron: public RDK::UNet
     {
-        // 
+        // Свойства
         protected:
-        //  
+        // Емкость конденсатора
 		UProperty<double, NIntegrateAndFireNeuron, ptPubParameter> C;
 
-		//   
+		//Начальное напряжение на мембране
 		UProperty<double, NIntegrateAndFireNeuron, ptPubParameter> U0;
 
-		//   
+		//Пороговое напряжение на мембране
         UProperty<double, NIntegrateAndFireNeuron, ptPubParameter> Upr;
 
         protected:
-        //  
-        //   
+        // Переменные состояния
+        // Напряжение на конденсаторе
         UProperty<MDMatrix<double>, NIntegrateAndFireNeuron, ptOutput | ptPubState> U;
 
-        //  
+        // Стимулирующий ток
         UProperty<MDMatrix<double>, NIntegrateAndFireNeuron, ptInput | ptPubState> I;
 
-        // 
+        // Методы
         public:
-        // 
+        // Конструктор
         NIntegrateAndFireNeuron(void);
-        // 
+        // Деструктор
         virtual ~NIntegrateAndFireNeuron(void);
-        //         
+        // Выделяет память для новой чистой копии объекта этого класса
         virtual NIntegrateAndFireNeuron* New(void);
 
-        //    
+        // Скрытые методы управления счетом
         protected:
-        //        
+        // Восстановление настроек по умолчанию и сброс процесса счета
         virtual bool ADefault(void);
 
-        //     
-        //   
-        //    Reset()   Ready  true
-        //    
+        // Обеспечивает сборку внутренней структуры объекта
+        // после настройки параметров
+        // Автоматически вызывает метод Reset() и выставляет Ready в true
+        // в случае успешной сборки
         virtual bool ABuild(void);
 
-        //      
+        // Сброс процесса счета без потери настроек
         virtual bool AReset(void);
 
-        //    
+        // Выполняет расчет этого объекта
         virtual bool ACalculate(void);
 
     };

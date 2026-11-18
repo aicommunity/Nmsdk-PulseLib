@@ -35,20 +35,20 @@ UProperty<bool, NPulseChannelCommon, ptPubParameter> UseAveragePotential;
 UProperty<bool, NPulseChannelCommon, ptPubParameter> UseAverageSynapsis;
 
 public: //   
-///       
+/// Входной сигнал от канала предыдущего участка мембраны
 UProperty<std::vector<MDMatrix<double>>, NPulseChannelCommon, ptInput | ptPubState> ChannelInputs;
 
-///    
+/// Входной сигнал от синапсов
 UProperty<std::vector<MDMatrix<double>>, NPulseChannelCommon, ptInput | ptPubState> SynapticInputs;
 
 /// Выходное влияние синапса на мембрану
 UProperty<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> Output;
 
-///         
-/// (, ..  )
+/// Суммарное входное влияние от каналов всех предыдущих участков мембраны
+/// (всех, т.к. возможно ветвление)
 UProperty<MDMatrix<double>,NPulseChannelCommon, ptOutput | ptPubState> SumChannelInput;
 
-///   
+/// Суммарное влияние синапсов
 UProperty<MDMatrix<double>, NPulseChannelCommon, ptOutput | ptPubState> SumSynapticInput;
 
 public: //  

@@ -294,7 +294,7 @@ virtual bool AReset(void);
 // Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 
-//      
+// Устанавливает компоненты в требуемый порядок расчета
 void UpdateComputationOrder(void);
 // --------------------------
 public:

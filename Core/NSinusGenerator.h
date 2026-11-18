@@ -24,20 +24,20 @@ namespace NMSDK {
 class RDK_LIB_TYPE NSinusGenerator: public NSource
 {
 public: //  
-//  
+// Амплитуда синуса
 UProperty<double,NSinusGenerator, ptPubParameter> Amplitude;
 
-//   ()
+// Частота генерации (Гц)
 UProperty<double,NSinusGenerator, ptPubParameter> Frequency;
 
 public: //  
-//  
+// Счетчик времени
 RDK::UProperty<double,NSinusGenerator, ptPubParameter> TimeCounter;
 
 
 public: // 
 // --------------------------
-//   
+// Конструкторы и деструкторы
 // --------------------------
 NSinusGenerator(void);
 virtual ~NSinusGenerator(void);
@@ -45,40 +45,40 @@ virtual ~NSinusGenerator(void);
 
 protected:
 // --------------------------
-//    
+// Методы управления общедоступными свойствами
 // --------------------------
-//   
+// Устанавливает амплитуду синуса
 bool SetAmplitude(const double &value);
 
-//   
+// Устанавливает частоту генерации
 bool SetFrequency(const double &value);
 // --------------------------
 
 public:
 // --------------------------
-//    
+// Системные методы управления объектом
 // --------------------------
-//         
+// Выделяет память для новой чистой копии объекта этого класса
 virtual NSinusGenerator* New(void);
 // --------------------------
 
 // --------------------------
-//    
+// Скрытые методы управления счетом
 // --------------------------
 protected:
-//        
+// Восстановление настроек по умолчанию и сброс процесса счета
 virtual bool ADefault(void);
 
-//     
-//   
-//    Reset()   Ready  true
-//    
+// Обеспечивает сборку внутренней структуры объекта
+// после настройки параметров
+// Автоматически вызывает метод Reset() и выставляет Ready в true
+// в случае успешной сборки
 virtual bool ABuild(void);
 
-//   .
+// Сброс процесса счета.
 virtual bool AReset(void);
 
-//    
+// Выполняет расчет этого объекта
 virtual bool ACalculate(void);
 // --------------------------
 };
