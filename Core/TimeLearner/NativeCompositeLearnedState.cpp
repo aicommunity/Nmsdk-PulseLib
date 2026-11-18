@@ -120,14 +120,25 @@ template<class Proof> QJsonObject Metadata(const ConfiguredNativeTraining& c,con
 }
 QJsonObject NativeCompositeStateFactory::Export(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
     const std::vector<InputParameters>& actual,int version,int mode,int structure,const std::string& implementation,const NativeCapacitanceCorrection* capacitance) {
-    Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
+    return ExportImpl(owner,declaration,service,actual,version,mode,structure,implementation,capacitance,nullptr);
+}
+QJsonObject NativeCompositeStateFactory::ExportHistorical(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
+    const std::vector<InputParameters>& actual,int version,int mode,int structure,const std::string& implementation,const NativeCapacitanceCorrection* capacitance,
+    const NativeHistoricalExportBoundary& historical) {
+    return ExportImpl(owner,declaration,service,actual,version,mode,structure,implementation,capacitance,&historical);
+}
+QJsonObject NativeCompositeStateFactory::ExportImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
+    const std::vector<InputParameters>& actual,int version,int mode,int structure,const std::string& implementation,const NativeCapacitanceCorrection* capacitance,
+    const NativeHistoricalExportBoundary* historical) {
+    if(historical)historical->Validate(owner,service,actual);
+    else Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     Require(service.Plan().protocol.schemaVersion==4 && service.State()==NativeTrainingState::Finished && service.SessionAttempt()>0 &&
         version==2 && (mode==0 || mode==1) && (structure==0 || structure==1) && !implementation.empty(),"composite_export_requires_stopped_or_completed_boundary");
     auto neuron=owner.GetComponentL<NPulseNeuron>("Neuron",true);auto dataset=owner.GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
     Require(neuron && dataset,"composite_package_missing_graph");auto generator=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     Require(bool(generator),"composite_package_missing_source");const NmsdkTools::ModelBoundarySources ports{{&generator->Output,"burst"}};
     const auto identity=NmsdkTools::IdentifyModel(neuron.Get(),ports);Require(identity["valid"]==QJsonValue(true),"composite_package_invalid_model");
-    const auto revision=Text(identity["sha256"]);const auto epoch=service.ModelEpoch();const bool stopped=!service.Certificate();
+    const auto revision=Text(identity["sha256"]);const auto epoch=historical?historical->ModelEpoch():service.ModelEpoch();const bool stopped=!service.Certificate();
     const auto c=DecodeConfiguredNativeTraining(service.CompositeInitialConfiguration());CheckConfiguration(c,service.CompositeSourceBinding());
     CheckDataset(c,dataset,service.CompositeSourceBinding());Require(QJsonValue(EncodeNativeModelSpec(declaration))==service.CompositeSourceBinding()["model_spec"],"composite_package_source_declaration_changed");
     auto archive=EncodeNativeCompositeTrainingArchive(service);auto proof=CompositePortableTrainingProof::Replay(
@@ -350,6 +361,12 @@ QJsonObject NativeCandidateWindowStateFactory::ExportRecovery(RDK::UNet& owner,c
     const std::string& implementation,const NativeCapacitanceCorrection* capacitance) {
     return ExportImpl(owner,declaration,service,actual,version,mode,structure,implementation,capacitance,true);
 }
+QJsonObject NativeCandidateWindowStateFactory::ExportHistorical(RDK::UNet& owner,const NativeModelSpec& declaration,
+    const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
+    const std::string& implementation,const NativeCapacitanceCorrection* capacitance,const NativeHistoricalExportBoundary& historical) {
+    return ExportImpl(owner,declaration,service,actual,version,mode,structure,implementation,capacitance,
+        RequiresCandidateWindowRecoveryBoundary(service),nullptr,&historical);
+}
 NativeTrainingExport NativeCandidateWindowStateFactory::ExportBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
     const std::string& implementation,const NativeCapacitanceCorrection* capacitance) {
@@ -360,8 +377,10 @@ NativeTrainingExport NativeCandidateWindowStateFactory::ExportBoundary(RDK::UNet
 }
 QJsonObject NativeCandidateWindowStateFactory::ExportImpl(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
-    const std::string& implementation,const NativeCapacitanceCorrection* capacitance,bool recovery,QJsonObject* trainingSummary) {
-    Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
+    const std::string& implementation,const NativeCapacitanceCorrection* capacitance,bool recovery,QJsonObject* trainingSummary,
+    const NativeHistoricalExportBoundary* historical) {
+    if(historical)historical->Validate(owner,service,actual);
+    else Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     if(!recovery)Require(!RequiresCandidateWindowRecoveryBoundary(service),
         "candidate_window_recovery_requires_versioned_model_ledger");
     Require(service.Plan().protocol.schemaVersion==5 && service.State()==NativeTrainingState::Finished && service.SessionAttempt()>0 &&
@@ -372,7 +391,7 @@ QJsonObject NativeCandidateWindowStateFactory::ExportImpl(RDK::UNet& owner,const
     Require(neuron && dataset,"composite_package_missing_graph");auto generator=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     Require(bool(generator),"composite_package_missing_source");const NmsdkTools::ModelBoundarySources ports{{&generator->Output,"burst"}};
     const auto identity=NmsdkTools::IdentifyModel(neuron.Get(),ports);Require(identity["valid"]==QJsonValue(true),"composite_package_invalid_model");
-    const auto revision=Text(identity["sha256"]);const auto epoch=service.ModelEpoch();const bool stopped=!service.Certificate();
+    const auto revision=Text(identity["sha256"]);const auto epoch=historical?historical->ModelEpoch():service.ModelEpoch();const bool stopped=!service.Certificate();
     const auto c=DecodeConfiguredNativeTraining(service.CompositeInitialConfiguration());const auto& source=service.CompositeSourceBinding();
     CheckConfiguration(c,source);CheckDataset(c,dataset,source);
     Require(QJsonValue(EncodeNativeModelSpec(declaration))==source["model_spec"],"composite_package_source_declaration_changed");
@@ -412,7 +431,7 @@ QJsonObject NativeCandidateWindowStateFactory::ExportImpl(RDK::UNet& owner,const
     Require(NmsdkTools::ModelImageDefinitionsFingerprint(Array(physical["class_definitions"]))==source["storage_images_sha256"].toString(),
         "composite_package_storage_changed");
     Require(service.State()==NativeTrainingState::Finished && service.SessionAttempt()==boundaryAttempt &&
-        service.ModelEpoch()==epoch && service.Outcome()==boundaryOutcome && service.Reason()==boundaryReason &&
+        (historical?historical->ModelEpoch():service.ModelEpoch())==epoch && service.Outcome()==boundaryOutcome && service.Reason()==boundaryReason &&
         service.CompositeMeasurements().size()==proof.Archive().Records().size() &&
         service.CompositeReferenceGroupIds()==proof.Archive().ReferenceGroups() && service.CompositeFinalGroupIds()==proof.Archive().FinalGroups() &&
         Object(Object(physical["graph"])["identity"])["sha256"]==QJsonValue(Text(revision)),"candidate_window_export_boundary_changed");

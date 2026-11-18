@@ -179,17 +179,22 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
     if(dataset && !dataset->GetOwner()){dataset->BreakLinks();storage->ReturnObject(dataset);}
 }
 static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
-    int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance)
+    int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance,
+    const NativeHistoricalExportBoundary* historical=nullptr)
 {
-    Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
+    if(historical)historical->Validate(owner,service,actual);
+    else Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     if(service.Plan().protocol.schemaVersion==5) {
+        if(historical)return NativeCandidateWindowStateFactory::ExportHistorical(owner,declaration,service,actual,
+            version,calculateMode,structureMode,implementationId,capacitance,*historical);
         if(RequiresCandidateWindowRecoveryBoundary(service))return NativeCandidateWindowStateFactory::ExportRecovery(owner,declaration,service,actual,
             version,calculateMode,structureMode,implementationId,capacitance);
         return NativeCandidateWindowStateFactory::Export(owner,declaration,service,actual,
             version,calculateMode,structureMode,implementationId,capacitance);
     }
-    if(service.Plan().protocol.schemaVersion==4)return NativeCompositeStateFactory::Export(owner,declaration,service,actual,
-        version,calculateMode,structureMode,implementationId,capacitance);
+    if(service.Plan().protocol.schemaVersion==4)return historical?
+        NativeCompositeStateFactory::ExportHistorical(owner,declaration,service,actual,version,calculateMode,structureMode,implementationId,capacitance,*historical):
+        NativeCompositeStateFactory::Export(owner,declaration,service,actual,version,calculateMode,structureMode,implementationId,capacitance);
     const bool stopped=!service.Certificate();
     const bool tracked=service.Plan().recordCapacitanceHistory;
     Require(tracked==bool(service.CapacitanceHistory()) && (!tracked || capacitance),"learned_capacitance_history_requires_owned_state");
@@ -204,7 +209,7 @@ static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeMod
     auto source=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
     const auto identity=NmsdkTools::IdentifyModel(neuron,ports);Require(identity["valid"].toBool(),"learned_state_invalid_model");
-    const auto revision=identity["sha256"].toString().toStdString();const auto epoch=service.ModelEpoch();
+    const auto revision=identity["sha256"].toString().toStdString();const auto epoch=historical?historical->ModelEpoch():service.ModelEpoch();
     const auto& protocol=service.References()?service.References()->Protocol():service.Plan().protocol;
     std::optional<NativeTrainingProof> proof;
     if(stopped)
@@ -293,6 +298,10 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
     const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
     const NativeCapacitanceCorrection& capacitance)
 {return ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,&capacitance);}
+QJsonObject ExportNativeHistoricalLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
+    const std::vector<InputParameters>& parameters,int version,int mode,int structure,const std::string& implementation,
+    const NativeCapacitanceCorrection* capacitance,const NativeHistoricalExportBoundary& historical)
+{return ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,mode,structure,implementation,capacitance,&historical);}
 NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
     const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
     const NativeCapacitanceCorrection* capacitance)

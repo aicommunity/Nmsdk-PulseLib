@@ -61,3 +61,12 @@ continue rejecting the explicit terminal scope. Additional integration
 assertions compare the source snapshot with independent pre-transition
 readbacks, including rollback and insufficient-edit cases. Those assertions
 are not present in the already running Root3c5/Pulse1d8 jobs.
+
+Historical export plumbing now has a read-only, factory-created context. The
+existing protocol3, composite4 and candidate-window5 exporters can validate a
+private historical graph and use the stopped transcript epoch. They continue
+their original native/proof/C0/image checks; primary records are referenced
+from the original service rather than copying the whole controller or its raw
+sample journal. Ordinary exports still reject terminal scopes. The versioned
+factory, import/replay, cold/runtime declarations and experimental pipeline are
+not implemented by this plumbing; no public configuration enables it yet.

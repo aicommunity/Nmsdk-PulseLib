@@ -3,6 +3,7 @@
 #include "ModelArchive.h"
 #include "ProbeEvidenceJson.h"
 #include "NativeCapacitanceEdit.h"
+#include "NativeHistoricalExportBoundary.h"
 
 namespace NMSDK::TimeLearner {
 // One immutable export boundary; summary and model share the same checked evidence.
@@ -39,6 +40,12 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
 QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection& capacitance);
+// Internal versioned-factory path: validates the stopped historical graph and
+// exports the old schema only as an explicitly nested historical source.
+QJsonObject ExportNativeHistoricalLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
+    const NativeTrainingService&,const std::vector<InputParameters>&,int controllerVersion,
+    int calculateMode,int structureBuildMode,const std::string& implementationId,
+    const NativeCapacitanceCorrection*,const NativeHistoricalExportBoundary&);
 NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection* capacitance=nullptr);
