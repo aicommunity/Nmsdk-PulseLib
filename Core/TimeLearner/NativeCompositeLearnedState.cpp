@@ -120,6 +120,7 @@ template<class Proof> QJsonObject Metadata(const ConfiguredNativeTraining& c,con
 }
 QJsonObject NativeCompositeStateFactory::Export(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
     const std::vector<InputParameters>& actual,int version,int mode,int structure,const std::string& implementation,const NativeCapacitanceCorrection* capacitance) {
+    Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     Require(service.Plan().protocol.schemaVersion==4 && service.State()==NativeTrainingState::Finished && service.SessionAttempt()>0 &&
         version==2 && (mode==0 || mode==1) && (structure==0 || structure==1) && !implementation.empty(),"composite_export_requires_stopped_or_completed_boundary");
     auto neuron=owner.GetComponentL<NPulseNeuron>("Neuron",true);auto dataset=owner.GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
@@ -161,6 +162,7 @@ QJsonObject NativeCompositeStateFactory::Export(RDK::UNet& owner,const NativeMod
 namespace {
 template<unsigned Protocol,unsigned Summary> QJsonObject CompositeSummary(const NativeTrainingService& service,const std::string& revision,
     const std::vector<InputParameters>& parameters,const QJsonObject* checkedRecoveryLedger=nullptr) {
+    Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_summary");
     static_assert((Protocol==4 && Summary==6) || (Protocol==5 && (Summary==7 || Summary==8)));
     const auto& plan=service.Plan();Require(plan.protocol.schemaVersion==Protocol && plan.composite,"composite_summary_protocol");
     if constexpr(Summary!=8)Require(!RequiresCandidateWindowRecoveryBoundary(service),
@@ -359,6 +361,7 @@ NativeTrainingExport NativeCandidateWindowStateFactory::ExportBoundary(RDK::UNet
 QJsonObject NativeCandidateWindowStateFactory::ExportImpl(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
     const std::string& implementation,const NativeCapacitanceCorrection* capacitance,bool recovery,QJsonObject* trainingSummary) {
+    Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     if(!recovery)Require(!RequiresCandidateWindowRecoveryBoundary(service),
         "candidate_window_recovery_requires_versioned_model_ledger");
     Require(service.Plan().protocol.schemaVersion==5 && service.State()==NativeTrainingState::Finished && service.SessionAttempt()>0 &&

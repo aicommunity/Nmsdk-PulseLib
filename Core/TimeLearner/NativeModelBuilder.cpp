@@ -321,7 +321,7 @@ std::size_t NativeLearnerGraphCheckpoint::EncodedBytes() const
     return std::size_t(QJsonDocument(neuronSnapshot).toJson(QJsonDocument::Compact).size())+
         std::size_t(QJsonDocument(datasetSnapshot).toJson(QJsonDocument::Compact).size());
 }
-NativeModelBuildResult NativeLearnerGraphCheckpoint::Restore(UNet& owner) const
+NativeModelBuildResult NativeLearnerGraphCheckpoint::Restore(UNet& owner,const std::function<void()>& beforeCommit) const
 {
     NativeModelBuildResult result;
     UEPtr<NPulseNeuron> neuron,oldNeuron;UEPtr<NDatasetMatrix> dataset,oldDataset;
@@ -360,6 +360,9 @@ NativeModelBuildResult NativeLearnerGraphCheckpoint::Restore(UNet& owner) const
         neuron=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ImportPhysicalGraphForEdit(
             neuronSnapshot,owner.GetStorage(),owner.GetEnvironment(),ports));
         Tree(neuron,frequency);Tree(dataset,frequency);
+        // The caller can revalidate a separately granted terminal transaction
+        // AFTER private construction and BEFORE the first live mutation.
+        if(beforeCommit)beforeCommit();
         // Do not release old objects until BOTH attachments and readbacks pass.
         detached=true;owner.DelComponent("Neuron",false);owner.DelComponent("DatasetMatrix",false);
         UEPtr<UContainer> child=dataset;Require(owner.AddComponent(child)!=ForbiddenId,"boundary_checkpoint_dataset_attach_failed");

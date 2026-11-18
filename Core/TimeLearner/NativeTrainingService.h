@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeModelEditor.h"
 #include "NativeCompositeTrainingAttempt.h"
+#include "NativeTerminalSelection.h"
 #include <functional>
 #include <memory>
 #include <utility>
@@ -8,7 +9,7 @@
 
 namespace NMSDK::TimeLearner {
 class NativeMeasuredTrainingBoundary;
-enum class NativeTrainingState { Idle, CapturingReferences, Searching, Finished };
+enum class NativeTrainingState { Idle, CapturingReferences, Searching, Finished, Finalizing };
 double NativeTrainingWallTime();
 
 struct NativeTrainingPlan {
@@ -27,6 +28,7 @@ struct NativeTrainingPlan {
     std::optional<NativeCompositeTrainingPolicy> composite={};
     std::function<void(const NativeCompositeMeasurementRecord&)> compositeSink;
     std::function<void(const NativeCompositeMeasurementRecord&)> beforeCompositeConsume;
+    std::optional<NativeTerminalSelectionPolicy> terminalSelection;
 };
 // Retained across control reset/warm attempts; not a physical checkpoint.
 struct NativeCandidateWindowRecoveryDelivery {
@@ -70,6 +72,7 @@ struct NativeTrainingAdapter {
     // Actual component bindings retain the complete physical model when the
     // controller selects a measured point. Pure control fixtures may omit it.
     std::function<std::shared_ptr<const NativeMeasuredTrainingBoundary>(const MeasuredCandidateSelection&)> captureMeasuredBoundary;
+    std::function<NativeTerminalGraphResult(const NativeMeasuredTrainingBoundary&,const NativeTerminalSelectionPermit&)> restoreMeasuredBoundary;
 };
 
 struct NativeTrainingCapacitanceHistory {
@@ -136,8 +139,12 @@ public:
         TrainingStatus outcome,const std::string& reason);
     const BoundedTrainingSession* Search() const { return search.get(); }
     const std::shared_ptr<const NativeMeasuredTrainingBoundary>& SelectedNativeBoundary() const {return measuredBoundary;}
+    const QJsonObject& TerminalSelectionEvent() const {return terminalSelectionEvent;}
+    std::size_t TerminalSelectionTransactions() const {return terminalSelectionTransactions;}
+    bool RequiresTerminalSelectionArchive() const {return terminalSelectionArchiveRequired;}
     std::size_t IssuedReferenceProbes() const { return referenceProbes; }
-    std::size_t ModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
+    std::size_t TranscriptModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
+    std::size_t ModelEpoch() const { return terminalPhysicalEpoch?*terminalPhysicalEpoch:TranscriptModelEpoch(); }
     const BoundedTrainingConfig& Configuration() const { return plan.search; }
     const std::optional<NativeTrainingCapacitanceHistory>& CapacitanceHistory() const {return capacitanceHistory;}
     const std::vector<NativeCompositeMeasurementRecord>& CompositeMeasurements() const {return compositeRecords;}
@@ -185,6 +192,11 @@ private:
     // alive until the current delivery returns; never republish it afterwards.
     std::shared_ptr<BoundedTrainingSession> search;
     std::shared_ptr<const NativeMeasuredTrainingBoundary> measuredBoundary;
+    std::shared_ptr<const int> terminalSelectionAuthority;
+    QJsonObject terminalSelectionEvent;
+    std::optional<std::size_t> terminalPhysicalEpoch;
+    std::size_t terminalSelectionTransactions=0;
+    bool terminalSelectionArchiveRequired=false;
     std::optional<TrainingAction> activeAction;
     std::optional<NativeTrainingCapacitanceHistory> capacitanceHistory;
     std::shared_ptr<NativeCompositeTrainingAttempt> composite;
@@ -232,6 +244,10 @@ private:
     void Finish(TrainingStatus result,const std::string& diagnostic);
     void SyncOutcome();
     void RetainSelectedBoundary(const NativeTrainingAdapter&);
+    void FinalizeMeasuredBoundary(const NativeTrainingAdapter&);
+    void ClearTerminalSelection() {
+        terminalSelectionAuthority.reset();terminalSelectionEvent={};terminalPhysicalEpoch.reset();terminalSelectionTransactions=0;
+    }
     void RecordCancelled(const NativeTrainingAdapter& adapter);
     std::string RememberCapacitance(const NativeTrainingAdapter& adapter,const std::string& revision,
         const std::optional<TrainingCapacitance>& requested);

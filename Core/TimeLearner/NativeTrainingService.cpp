@@ -7,6 +7,7 @@
 #include <chrono>
 #include <stdexcept>
 #include <set>
+#include <limits>
 
 namespace NMSDK::TimeLearner {
 double NativeTrainingWallTime()
@@ -37,6 +38,11 @@ void PreservedBaseline(const TrainingCapacitanceWitness& previous,const Training
 
 void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingAdapter& a,double modelTime,double wallTime)
 {
+    if(value.terminalSelection) {
+        ValidateNativeTerminalSelectionPolicy(*value.terminalSelection);
+        Require(bool(a.captureMeasuredBoundary) && bool(a.restoreMeasuredBoundary) && bool(a.readFullModelRevision),
+            "native_terminal_selection_requires_complete_native_adapter");
+    }
     if(value.protocol.schemaVersion==4){StartComposite(std::move(value),a,modelTime,wallTime);return;}
     if(value.protocol.schemaVersion==5){StartCandidateWindowComposite(std::move(value),a,modelTime,wallTime);return;}
     Require(!value.composite,"unexpected_native_composite_policy");
@@ -120,13 +126,14 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
         capacitanceHistory->trialWitnessIds=std::move(keptTrials);capacitanceHistory->witnesses=std::move(keptWitnesses);
     }
     plan=std::move(value);plan.search.initialModelRevision=revision;plan.probe.readModelRevision=a.readModelRevision;
+    terminalSelectionArchiveRequired=terminalSelectionArchiveRequired || bool(plan.terminalSelection);
     plan.probe.readFullModelRevision=a.readFullModelRevision;
     if(references || incompleteCaptureConstraint)plan.search.initialModelEpoch=retainedEpoch;
     else retainedEpoch=plan.search.initialModelEpoch;
     startModel=lastModel=modelTime;startWall=lastWall=wallTime;
     referenceProbes=invalidReferences=0;if(!references){referenceEvidence.clear();referencePackets.clear();}
     finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();
-    certificate.reset();search.reset();measuredBoundary.reset();activeAction.reset();
+    certificate.reset();search.reset();measuredBoundary.reset();ClearTerminalSelection();activeAction.reset();
     waiting=false;reason.clear();outcome=TrainingStatus::Searching;
     InvalidateOwnerControlLifetime();++attempt;
     plan.search.runId+="/session/"+std::to_string(attempt);
@@ -206,6 +213,7 @@ void NativeTrainingService::BeginSearch(const NativeTrainingAdapter& a)
 
 void NativeTrainingService::BeforeTick(const NativeTrainingAdapter& a,double modelTime,double wallTime)
 {
+    if(state==NativeTrainingState::Finalizing){FinalizeMeasuredBoundary(a);return;}
     if(plan.protocol.schemaVersion==4){BeforeComposite(a,modelTime,wallTime);return;}
     if(plan.protocol.schemaVersion==5){BeforeComposite(a,modelTime,wallTime);return;}
     if(!Active(state))return;
@@ -351,10 +359,18 @@ void NativeTrainingService::CheckBudget(const NativeTrainingAdapter& a,double mo
 }
 void NativeTrainingService::Finish(TrainingStatus result,const std::string& diagnostic)
 {
-    if(search)retainedEpoch=search->ModelEpoch();
+    retainedEpoch=ModelEpoch();terminalSelectionAuthority.reset();
     outcome=result;reason=diagnostic;state=NativeTrainingState::Finished;waiting=false;activeAction.reset();
     if(result!=TrainingStatus::Exact && !(result==TrainingStatus::SearchUnresolved && search && search->Certificate()))
         certificate.reset();
+    if(result==TrainingStatus::BudgetExhausted && plan.terminalSelection && measuredBoundary && search && !certificate)
+    {
+        InvalidateOwnerControlLifetime();
+        if(composite)composite->RevokeLive();
+        if(compositeGeneration==std::numeric_limits<std::size_t>::max())
+        {outcome=TrainingStatus::InvalidModel;reason="terminal_selection_generation_exhausted";return;}
+        ++compositeGeneration;state=NativeTrainingState::Finalizing;
+    }
 }
 void NativeTrainingService::SyncOutcome()
 {
@@ -384,6 +400,10 @@ void NativeTrainingService::RetainSelectedBoundary(const NativeTrainingAdapter& 
 }
 void NativeTrainingService::ExternalStop(const NativeTrainingAdapter& a)
 {
+    if(state==NativeTrainingState::Finalizing) {
+        terminalSelectionAuthority.reset();
+        outcome=TrainingStatus::ExternalStop;reason="external_stop";certificate.reset();state=NativeTrainingState::Finished;return;
+    }
     if(plan.protocol.schemaVersion==4){if(Active(state))StopComposite(a,TrainingStatus::ExternalStop,"external_stop");return;}
     if(plan.protocol.schemaVersion==5){if(Active(state))StopComposite(a,TrainingStatus::ExternalStop,"external_stop");return;}
     if(!Active(state))return;a.cancel("external_stop");if(search)search->ExternalStop();
@@ -400,6 +420,7 @@ void NativeTrainingService::FailConfiguration(const std::string& diagnostic)
 {Finish(TrainingStatus::InvalidModel,diagnostic);}
 void NativeTrainingService::ResetControl()
 {
+    retainedEpoch=ModelEpoch();ClearTerminalSelection();
     observedTrainingRequestLow=false;
     InvalidateOwnerControlLifetime();
     if(composite){composite->RevokeLive();++compositeGeneration;}
@@ -424,7 +445,7 @@ bool NativeTrainingService::ObserveTrainingRequestAtBoundary(bool requested,bool
     ResetControl();return true;
 }
 void NativeTrainingService::InvalidateTarget()
-{ResetControl();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();
+{ResetControl();terminalSelectionArchiveRequired=false;certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();
  composite.reset();compositeImportedProof.reset();compositeCandidateReferences.reset();compositeSourceBinding={};compositeInitialConfiguration={};compositeOwnerFamily.clear();compositeFinalRun.clear();compositeRecords.clear();compositeReferenceGroups.clear();compositeFinalGroups.clear();
  compositeRecoveryDeliveries.clear();compositeRecoveryRuntime={};compositeRecoveryDeliveryLogIntact=true;
  compositeGroupWitnesses.clear();compositeGroupTrialWitnessIds.clear();compositeCapacitance.reset();
@@ -433,7 +454,8 @@ void NativeTrainingService::InvalidateTarget()
 void NativeTrainingService::RestoreBoundary(NativeTrainingPlan value,std::vector<NativeProbeResult> refs,
     std::vector<NativeProbeResult> finals,const std::string& revision,std::size_t epoch,std::size_t sessions)
 {
-    Require(!Active(state),"native_boundary_import_requires_idle_controller");
+    Require(!Active(state) && state!=NativeTrainingState::Finalizing,"native_boundary_import_requires_idle_controller");
+    Require(!value.terminalSelection,"terminal_selection_requires_versioned_import");
     const auto proof=ReplayNativeTrainingProof(value.protocol,value.search.tolerances,refs,finals,revision,epoch,
         value.search.maximumInvalidObservations);
     Require(sessions>0,"invalid_native_boundary_session");
@@ -443,7 +465,7 @@ void NativeTrainingService::RestoreBoundary(NativeTrainingPlan value,std::vector
     plan=std::move(value);referencePackets=std::move(refs);finalPackets=std::move(finals);referenceEvidence=std::move(observations);
     observedPackets.clear();incompleteCaptureConstraint.reset();
     references=proof.references;certificate=proof.certificate;referenceBinding=revision;retainedEpoch=epoch;attempt=sessions;
-    search.reset();measuredBoundary.reset();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
+    search.reset();measuredBoundary.reset();ClearTerminalSelection();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
     outcome=certificate->Exact()?TrainingStatus::Exact:TrainingStatus::SearchUnresolved;
     capacitanceHistory.reset();
     reason="restored_completed_training_boundary";state=NativeTrainingState::Finished;
@@ -454,7 +476,8 @@ void NativeTrainingService::RestoreStoppedBoundary(NativeTrainingPlan value,std:
     const std::string& captureRevision,std::size_t captureEpoch,bool complete,
     TrainingStatus terminal,const std::string& diagnostic)
 {
-    Require(!Active(state),"native_boundary_import_requires_idle_controller");
+    Require(!Active(state) && state!=NativeTrainingState::Finalizing,"native_boundary_import_requires_idle_controller");
+    Require(!value.terminalSelection,"terminal_selection_requires_versioned_import");
     Require(sessions>0 && !revision.empty() && !diagnostic.empty() &&
         (terminal==TrainingStatus::BudgetExhausted || terminal==TrainingStatus::ExternalStop ||
          terminal==TrainingStatus::InvalidModel || terminal==TrainingStatus::InvalidObservation || terminal==TrainingStatus::SearchUnresolved),
@@ -467,7 +490,7 @@ void NativeTrainingService::RestoreStoppedBoundary(NativeTrainingPlan value,std:
     observedPackets=std::move(observations);referenceEvidence=std::move(accepted);references=std::move(captured);
     certificate.reset();referenceBinding=complete?revision:captureRevision;retainedEpoch=epoch;attempt=sessions;
     incompleteCaptureConstraint.reset();if(!complete)incompleteCaptureConstraint.emplace(captureRevision,captureEpoch);
-    search.reset();measuredBoundary.reset();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
+    search.reset();measuredBoundary.reset();ClearTerminalSelection();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
     outcome=terminal;reason=diagnostic;state=NativeTrainingState::Finished;
     capacitanceHistory.reset();
 }
@@ -519,5 +542,6 @@ void NativeTrainingService::RestoreCapacitanceBoundary(NativeTrainingCapacitance
 }
 const char* NativeTrainingStateName(NativeTrainingState state)
 {switch(state){case NativeTrainingState::Idle:return "idle";case NativeTrainingState::CapturingReferences:return "capturing_references";
- case NativeTrainingState::Searching:return "searching";case NativeTrainingState::Finished:return "finished";}return "unknown";}
+ case NativeTrainingState::Searching:return "searching";case NativeTrainingState::Finished:return "finished";
+ case NativeTrainingState::Finalizing:return "finalizing";}return "unknown";}
 }

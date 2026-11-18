@@ -142,12 +142,13 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     compositeRecords=std::move(retainedRecords);compositePrimaryBytes=retainedBytes;
     if(!references){compositeReferenceGroups.clear();compositeReferenceMeasurements.clear();}
     plan=std::move(value);startModel=lastModel=m;startWall=lastWall=w;
+    terminalSelectionArchiveRequired=terminalSelectionArchiveRequired || bool(plan.terminalSelection);
     retainedEpoch=plan.search.initialModelEpoch;referenceProbes=invalidReferences=0;
     observedPackets.clear();finalPackets.clear();compositeFinalGroups.clear();compositeFinalRun.clear();compositeRequest.reset();
     compositeRawNotifications.clear();compositeRawTrialIds.clear();
     compositeCancellationDiagnostics.clear();
     if(!references){referencePackets.clear();referenceEvidence.clear();}
-    certificate.reset();search.reset();measuredBoundary.reset();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
+    certificate.reset();search.reset();measuredBoundary.reset();ClearTerminalSelection();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
     InvalidateOwnerControlLifetime();
     ++attempt;++compositeGeneration;plan.search.runId+="/session/"+std::to_string(attempt);
     state=NativeTrainingState::CapturingReferences;incompleteCaptureConstraint.reset();
@@ -217,6 +218,7 @@ void NativeTrainingService::StartCandidateWindowComposite(NativeTrainingPlan val
     static_assert(std::is_nothrow_swappable_v<decltype(compositeCapacitance)>);
     InvalidateOwnerControlLifetime();
     plan=std::move(runtime);composite.swap(actor);compositeSourceBinding.swap(source);compositeInitialConfiguration.swap(initial);
+    terminalSelectionArchiveRequired=terminalSelectionArchiveRequired || bool(plan.terminalSelection);
     compositeOwnerFamily.swap(family);compositeRecords.swap(records);compositePrimaryBytes=bytes;compositeCapacitance.swap(preparedCapacitance);
     compositeCandidateReferences.swap(closed);search.swap(preparedSearch);attempt=nextAttempt;++compositeGeneration;
     compositeRecoveryRuntime.swap(recoveryRuntime);
@@ -225,7 +227,7 @@ void NativeTrainingService::StartCandidateWindowComposite(NativeTrainingPlan val
     compositeReferenceMeasurements.clear();observedPackets.clear();finalPackets.clear();compositeFinalGroups.clear();compositeFinalRun.clear();
     compositeRequest.reset();compositeRawNotifications.clear();compositeRawTrialIds.clear();compositeCancellationDiagnostics.clear();
     if(!references){referencePackets.clear();referenceEvidence.clear();compositeReferenceGroups.clear();}
-    certificate.reset();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
+    certificate.reset();measuredBoundary.reset();ClearTerminalSelection();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
     incompleteCaptureConstraint.reset();state=references?NativeTrainingState::Searching:NativeTrainingState::CapturingReferences;
     referenceBinding.swap(binding);
 }

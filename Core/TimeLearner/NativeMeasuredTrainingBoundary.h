@@ -4,6 +4,7 @@
 #include "ModelArchive.h"
 #include <QJsonDocument>
 #include <stdexcept>
+#include <map>
 #include <tuple>
 #include <type_traits>
 
@@ -15,8 +16,9 @@ public:
 
 // A process-local physical checkpoint of a controller-selected, fully measured
 // candidate. It carries neither a certificate nor reusable training authority.
-// Capture does not Build/Reset/Calculate or restore a graph. Terminal restore
-// must separately reconcile the stopped controller, epoch and portable export.
+// Capture does not Build/Reset/Calculate or restore a graph. A terminal restore
+// requires the service's separate short-lived permit and a quiet boundary.
+// Portable terminal-transition export/import remains a separate release gate.
 class NativeMeasuredTrainingBoundary {
 public:
     static constexpr std::size_t MaximumRetainedBytes=64*1024*1024;
@@ -36,7 +38,7 @@ public:
             owner.ReadNativeParameters()==selected.candidate.fullParameters,
             "measured_boundary_parameters_or_epoch_changed");
         auto result=std::shared_ptr<NativeMeasuredTrainingBoundary>(new NativeMeasuredTrainingBoundary);
-        result->selection=selected;result->ownerLifecycle=owner.ObserveLifecycle();
+        result->selection=selected;result->capturedOwner=&owner;result->ownerLifecycle=owner.ObserveLifecycle();
         result->graph=NativeLearnerGraphCheckpoint::Capture(owner);
         Require(result->graph->NeuronIdentity()["sha256"].toString().toStdString()==selected.candidate.modelRevision,
             "measured_boundary_physical_revision_changed");
@@ -79,6 +81,7 @@ public:
                 "measured_boundary_owner_readback_mismatch");
             if(!state.isEmpty())owner.ValidateAppliedNativeCapacitanceState(state);
         };
+        result->matchesMirrors=[&owner,values,local] {return Matches(Mirrors(owner),values) && Matches(Local(owner),local);};
         result->refresh=[&owner] {
             owner.Neuron=owner.template GetComponentL<NPulseNeuron>("Neuron",true);
             owner.Dataset=owner.template GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
@@ -91,10 +94,109 @@ public:
     const QJsonObject& CapacitanceState() const {return capacitanceState;}
     const std::string& StorageFingerprint() const {return imageFingerprint;}
     std::size_t RetainedBytes() const {return retainedBytes;}
+    template<class Owner> NativeTerminalGraphResult RestoreForTerminal(Owner& owner,const NativeTerminalSelectionPermit& permit) const
+    {
+        NativeTerminalGraphResult result;
+        std::unique_ptr<NativeLearnerGraphCheckpoint> rollback;
+        std::function<void()> restorePrevious;
+        bool entered=false;
+        try
+        {
+            Require(&owner==capturedOwner,"measured_boundary_different_owner");
+            Require(ownerLifecycle.IsCurrent(),"measured_boundary_owner_lifecycle_changed");
+            permit.RequireCurrent();checkScope();CheckLocalProperties(owner);ValidateImages(owner);
+            auto neuron=owner.template GetComponentL<NPulseNeuron>("Neuron",true);
+            auto dataset=owner.template GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
+            auto source=owner.template GetComponentL<NPulseGeneratorTransit>("DatasetMatrix.Generator1",true);
+            Require(neuron && dataset && source,"measured_boundary_current_children_missing");
+            const auto before=NmsdkTools::IdentifyModel(neuron,{{&source->Output,"burst"}});
+            const auto previousDataset=NmsdkTools::IdentifyModel(dataset);
+            const auto previousValues=Values(Mirrors(owner));
+            const auto previousLocal=Values(Local(owner));
+            const auto previousCapacitance=owner.NativeLearnedCapacitanceState;
+            if(before==NeuronIdentity() && previousDataset==DatasetIdentity() &&
+                owner.ReadNativeParameters()==selection.candidate.fullParameters && previousCapacitance==capacitanceState && matchesMirrors())
+            {
+                permit.RequireCurrent();
+                result.model.status=NativeModelBuildStatus::Adopted;
+                result.model.modelRevision=selection.candidate.modelRevision;return result;
+            }
+            rollback=NativeLearnerGraphCheckpoint::Capture(owner);
+            restorePrevious=[&owner,previousValues,previousLocal,previousCapacitance] {
+                AssignProperties(Mirrors(owner),previousValues);AssignLocal(Local(owner),previousLocal);
+                owner.NativeLearnedCapacitanceState=previousCapacitance;
+                Require(Matches(Mirrors(owner),previousValues) && Matches(Local(owner),previousLocal),
+                    "measured_boundary_rollback_owner_mismatch");
+                if(!previousCapacitance.isEmpty())owner.ValidateAppliedNativeCapacitanceState(previousCapacitance);
+            };
+            result.model=graph->Restore(owner,[&] {
+                Require(ownerLifecycle.IsCurrent(),"measured_boundary_owner_lifecycle_changed");
+                permit.RequireCurrent();checkScope();CheckLocalProperties(owner);ValidateImages(owner);entered=true;
+            });
+            result.transactions=entered?1u:0u;refresh();
+            if(result.model.status!=NativeModelBuildStatus::Adopted)
+            {
+                // The ordinary checkpoint has already rolled back a rejected
+                // attachment. A failed rollback needs the outer transaction.
+                if(!result.model.modelMayHaveChanged)
+                {
+                    neuron=owner.template GetComponentL<NPulseNeuron>("Neuron",true);
+                    dataset=owner.template GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
+                    source=owner.template GetComponentL<NPulseGeneratorTransit>("DatasetMatrix.Generator1",true);
+                    Require(neuron && dataset && source &&
+                        NmsdkTools::IdentifyModel(neuron.Get(),{{&source->Output,"burst"}})==before &&
+                        NmsdkTools::IdentifyModel(dataset.Get())==previousDataset &&
+                        Matches(Mirrors(owner),previousValues) && Matches(Local(owner),previousLocal) &&
+                        owner.NativeLearnedCapacitanceState==previousCapacitance,
+                        "measured_boundary_rejected_transaction_changed_model");
+                    return result;
+                }
+                throw std::logic_error(result.model.reason);
+            }
+            permit.RequireScope();checkScope();restoreMirrors();
+            neuron=owner.template GetComponentL<NPulseNeuron>("Neuron",true);
+            dataset=owner.template GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
+            source=owner.template GetComponentL<NPulseGeneratorTransit>("DatasetMatrix.Generator1",true);
+            Require(neuron && dataset && source && owner.ReadNativeParameters()==selection.candidate.fullParameters &&
+                NmsdkTools::IdentifyModel(neuron,{{&source->Output,"burst"}})==NeuronIdentity() &&
+                NmsdkTools::IdentifyModel(dataset)==DatasetIdentity() && owner.NativeLearnedCapacitanceState==capacitanceState,
+                "measured_boundary_restored_model_readback_mismatch");
+            permit.RequireScope();return result;
+        }
+        catch(const std::exception& error)
+        {
+            result.model.reason=error.what();result.transactions=entered?1u:0u;
+            result.model.status=entered?NativeModelBuildStatus::Failed:NativeModelBuildStatus::Rejected;
+            result.model.modelMayHaveChanged=entered;
+            if(entered && rollback)
+            {
+                result.rollbackAttempted=true;
+                try
+                {
+                    Require(ownerLifecycle.IsCurrent(),"measured_boundary_rollback_owner_lifecycle_changed");
+                    permit.RequireScope();
+                    const auto reverted=rollback->Restore(owner,[&] {
+                        permit.RequireScope();checkScope();result.transactions=2;
+                    });
+                    refresh();
+                    Require(reverted.status==NativeModelBuildStatus::Adopted,"measured_boundary_rollback_graph_failed");
+                    restorePrevious();result.rollbackSucceeded=true;
+                    result.model.status=NativeModelBuildStatus::Rejected;result.model.modelMayHaveChanged=false;
+                }
+                catch(const std::exception& rollbackError)
+                {
+                    result.model.reason+=";"+std::string(rollbackError.what());
+                    owner.NativeEditFailure="terminal_selection_rollback_failed";
+                }
+            }
+            return result;
+        }
+    }
 private:
     friend class NativeTrainingService;
     NativeMeasuredTrainingBoundary()=default;
     MeasuredCandidateSelection selection;
+    RDK::UNet* capturedOwner=nullptr;
     RDK::UModuleLifecycleObservation ownerLifecycle;
     std::unique_ptr<NativeLearnerGraphCheckpoint> graph;
     QJsonObject capacitanceState;
@@ -104,7 +206,26 @@ private:
     // Mutating callbacks intentionally remain private until the service's
     // separate terminal transaction and versioned portable event are bound.
     std::function<void()> checkScope,restoreMirrors,refresh;
+    std::function<bool()> matchesMirrors;
     static void Require(bool value,const char* reason){if(!value)throw std::logic_error(reason);}
+    template<class Owner> void ValidateImages(Owner& owner) const
+    {
+        auto neuron=owner.template GetComponentL<NPulseNeuron>("Neuron",true);
+        auto source=owner.template GetComponentL<NPulseGeneratorTransit>("DatasetMatrix.Generator1",true);
+        Require(neuron && source,"measured_boundary_image_context_missing");
+        std::vector<std::string> roots;for(const auto& image:images)roots.push_back(image.toObject()["name"].toString().toStdString());
+        const auto observed=NmsdkTools::CaptureModelImageDefinitions(neuron,{{&source->Output,"burst"}},roots);
+        std::map<QString,QJsonObject> byName;
+        for(const auto& image:observed)byName.emplace(image.toObject()["name"].toString(),image.toObject());
+        QJsonArray ordered;
+        for(const auto& image:images)
+        {
+            const auto name=image.toObject()["name"].toString();
+            Require(byName.contains(name),"measured_boundary_storage_image_missing");ordered.append(byName.at(name));
+        }
+        Require(NmsdkTools::ModelImageDefinitionsFingerprint(ordered).toStdString()==imageFingerprint,
+            "measured_boundary_storage_images_changed");
+    }
     template<class Owner> static void RequireQuiet(const Owner& owner)
     {
         Require(owner.NativeProbeControl.Status()!=NativeProbeStatus::Queued &&

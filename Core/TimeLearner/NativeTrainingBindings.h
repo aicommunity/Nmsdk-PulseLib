@@ -41,6 +41,9 @@ template<class Learner> NativeTrainingAdapter BindNativeTraining(Learner& owner,
     result.captureMeasuredBoundary=[&owner](const MeasuredCandidateSelection& selected) {
         return NativeMeasuredTrainingBoundary::Capture(owner,selected);
     };
+    result.restoreMeasuredBoundary=[&owner,&editDepth](const NativeMeasuredTrainingBoundary& selected,const NativeTerminalSelectionPermit& permit) {
+        NativeLifecycleScope scope(editDepth);return selected.RestoreForTerminal(owner,permit);
+    };
     result.cancel=[&probe](const std::string& reason){probe.Cancel(reason);};
     result.createComposite=[&owner](VerificationProtocol protocol,CompositeAttemptLimits limits,double model,double wall) {
         return std::make_shared<NativeCompositeTrainingAttempt>(owner,std::move(protocol),limits,model,wall);
@@ -59,7 +62,8 @@ template<class Learner> NativeTrainingAdapter BindNativeTraining(Learner& owner,
     return result;
 }
 inline bool NativeTrainingIsActive(const NativeTrainingService& service)
-{return service.State()==NativeTrainingState::CapturingReferences || service.State()==NativeTrainingState::Searching;}
+{return service.State()==NativeTrainingState::CapturingReferences || service.State()==NativeTrainingState::Searching ||
+    service.State()==NativeTrainingState::Finalizing;}
 template<class Pattern> bool NativeTrainingPatternEqual(const Pattern& a,const Pattern& b)
 {
     if(a.GetRows()!=b.GetRows() || a.GetCols()!=b.GetCols())return false;

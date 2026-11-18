@@ -70,7 +70,7 @@ NativeModelBuildResult ReconstructNativeLearnerNeuron(RDK::UNet& owner,
 class NativeLearnerGraphCheckpoint {
 public:
     static std::unique_ptr<NativeLearnerGraphCheckpoint> Capture(RDK::UNet& owner);
-    NativeModelBuildResult Restore(RDK::UNet& owner) const;
+    NativeModelBuildResult Restore(RDK::UNet& owner,const std::function<void()>& beforeCommit={}) const;
     QJsonObject NeuronIdentity() const {return neuronSnapshot["identity"].toObject();}
     QJsonObject DatasetIdentity() const {return datasetSnapshot["identity"].toObject();}
     std::size_t EncodedBytes() const;

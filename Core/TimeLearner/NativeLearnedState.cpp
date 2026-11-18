@@ -181,6 +181,7 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
 static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
     int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance)
 {
+    Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     if(service.Plan().protocol.schemaVersion==5) {
         if(RequiresCandidateWindowRecoveryBoundary(service))return NativeCandidateWindowStateFactory::ExportRecovery(owner,declaration,service,actual,
             version,calculateMode,structureMode,implementationId,capacitance);
@@ -296,6 +297,7 @@ NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeMo
     const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
     const NativeCapacitanceCorrection* capacitance)
 {
+    Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     if(service.Plan().protocol.schemaVersion==5)return NativeCandidateWindowStateFactory::ExportBoundary(owner,declaration,service,parameters,
         version,calculateMode,structureMode,implementation,capacitance);
     NativeTrainingExport result;
