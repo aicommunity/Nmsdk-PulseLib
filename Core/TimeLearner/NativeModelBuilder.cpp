@@ -3,6 +3,7 @@
 #include "ModelArchive.h"
 #include "NativeThresholdSupport.h"
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <algorithm>
 #include <cmath>
 #include <limits>
