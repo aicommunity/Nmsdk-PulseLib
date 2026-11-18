@@ -36,14 +36,19 @@ graph as an ordinary terminal search state would be incorrect.
 Native integration cases cover both topologies and N0/N1 with a real wall
 deadline after a real unmeasured edit, response replay, owned C-state, external
 stop, Reset, insufficient edit reservation and failed attachment. These cases
-are pending server validation. Passing them will not finish the portable
-export/replay requirement or the full TimeLearner refactoring plan.
+passed14/14 independently on Elder and as part of44/44 on M40 at
+Root3c5bfe01609a6e6bd290aa9697938e885d5904b6 /
+Pulse1d8fc24cdb19b4b0e399483d198314b84548f9ea. Workers and whole child groups
+are closed; both primary archives are externally published on M40. This does
+not finish portable export/replay or the full TimeLearner refactoring plan.
+Later source-retention/assertion and historical-export changes are not covered
+by those accepted gates.
 
 The earlier snapshot-only M40 gate ran all30 cases:26 passed and four ordinary
 empty-C snapshots failed their independent C-state equality. Non-const JSON
 lookup had inserted a null baseline while collecting image dependencies.
 Capture now uses value() lookup, preserving absent C-state. The original
-failures remain evidence; the correction requires a new server run.
+failures remain evidence; all six snapshot cases passed in the new M4044 gate.
 
 Terminal finalization also retains the physical SOURCE immediately before the
 transaction, separately from the selected measured destination. Full native
