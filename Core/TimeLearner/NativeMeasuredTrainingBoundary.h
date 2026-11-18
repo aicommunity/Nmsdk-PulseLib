@@ -1,5 +1,6 @@
 #pragma once
 #include "NativeModelBuilder.h"
+#include "NativeTerminalSelection.h"
 #include "ConfiguredNativeTraining.h"
 #include "ModelArchive.h"
 #include <QJsonDocument>
@@ -96,6 +97,22 @@ public:
     const QJsonObject& CapacitanceState() const {return capacitanceState;}
     const std::string& StorageFingerprint() const {return imageFingerprint;}
     std::size_t RetainedBytes() const {return retainedBytes;}
+    template<class Owner> static std::shared_ptr<const NativeTerminalSourceBoundary> CaptureTerminalSource(Owner& owner)
+    {
+        Require(owner.NativeTrainingOwned && owner.NativeTrainingControl.State()==NativeTrainingState::Finalizing,
+            "terminal_source_requires_finalizing_owner");
+        RequireQuiet(owner);CheckLocalProperties(owner);
+        const auto lifetime=owner.ObserveLifecycle();
+        auto result=std::shared_ptr<NativeTerminalSourceBoundary>(new NativeTerminalSourceBoundary);
+        result->graph=NativeLearnerGraphCheckpoint::Capture(owner);
+        result->capacitanceState=owner.NativeLearnedCapacitanceState;
+        if(!result->capacitanceState.isEmpty())owner.ValidateAppliedNativeCapacitanceState(result->capacitanceState);
+        const auto bytes=result->graph->EncodedBytes()+
+            std::size_t(QJsonDocument(result->capacitanceState).toJson(QJsonDocument::Compact).size());
+        if(bytes>MaximumRetainedBytes)throw NativeBoundaryRetentionBudgetExhausted{};
+        Require(lifetime.IsCurrent(),"terminal_source_owner_lifecycle_changed");
+        return result;
+    }
     template<class Owner> NativeTerminalGraphResult RestoreForTerminal(Owner& owner,const NativeTerminalSelectionPermit& permit) const
     {
         NativeTerminalGraphResult result;

@@ -73,6 +73,7 @@ struct NativeTrainingAdapter {
     // controller selects a measured point. Pure control fixtures may omit it.
     std::function<std::shared_ptr<const NativeMeasuredTrainingBoundary>(const MeasuredCandidateSelection&)> captureMeasuredBoundary;
     std::function<NativeTerminalGraphResult(const NativeMeasuredTrainingBoundary&,const NativeTerminalSelectionPermit&)> restoreMeasuredBoundary;
+    std::function<std::shared_ptr<const NativeTerminalSourceBoundary>()> captureTerminalSource;
 };
 
 struct NativeTrainingCapacitanceHistory {
@@ -142,6 +143,7 @@ public:
     const QJsonObject& TerminalSelectionEvent() const {return terminalSelectionEvent;}
     std::size_t TerminalSelectionTransactions() const {return terminalSelectionTransactions;}
     bool RequiresTerminalSelectionArchive() const {return terminalSelectionArchiveRequired;}
+    const std::shared_ptr<const NativeTerminalSourceBoundary>& TerminalSourceBoundary() const {return terminalSourceBoundary;}
     std::size_t IssuedReferenceProbes() const { return referenceProbes; }
     std::size_t TranscriptModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
     std::size_t ModelEpoch() const { return terminalPhysicalEpoch?*terminalPhysicalEpoch:TranscriptModelEpoch(); }
@@ -194,6 +196,7 @@ private:
     std::shared_ptr<const NativeMeasuredTrainingBoundary> measuredBoundary;
     std::shared_ptr<const int> terminalSelectionAuthority;
     QJsonObject terminalSelectionEvent;
+    std::shared_ptr<const NativeTerminalSourceBoundary> terminalSourceBoundary;
     std::optional<std::size_t> terminalPhysicalEpoch;
     std::size_t terminalSelectionTransactions=0;
     bool terminalSelectionArchiveRequired=false;
@@ -247,6 +250,7 @@ private:
     void FinalizeMeasuredBoundary(const NativeTrainingAdapter&);
     void ClearTerminalSelection() {
         terminalSelectionAuthority.reset();terminalSelectionEvent={};terminalPhysicalEpoch.reset();terminalSelectionTransactions=0;
+        terminalSourceBoundary.reset();
     }
     void RecordCancelled(const NativeTrainingAdapter& adapter);
     std::string RememberCapacitance(const NativeTrainingAdapter& adapter,const std::string& revision,

@@ -44,3 +44,20 @@ empty-C snapshots failed their independent C-state equality. Non-const JSON
 lookup had inserted a null baseline while collecting image dependencies.
 Capture now uses value() lookup, preserving absent C-state. The original
 failures remain evidence; the correction requires a new server run.
+
+Terminal finalization also retains the physical SOURCE immediately before the
+transaction, separately from the selected measured destination. Full native
+neuron/Dataset snapshots and owned C-state are retained as immutable DATA;
+the public source view exposes no Restore method or permit. Capture is bounded
+to64MiB, uses the already declared finalization wall allowance, and precedes
+edit-budget admission. Retention exhaustion stops without a physical edit and
+keeps BudgetExhausted. Source identity/C-state are linked into the event.
+Reset and a new control session release this transient source boundary.
+
+This is the foundation for exporting historical search against its original
+graph while separately exporting the restored actual graph. The portable
+factory and cold/runtime schema are still required; the existing exporters
+continue rejecting the explicit terminal scope. Additional integration
+assertions compare the source snapshot with independent pre-transition
+readbacks, including rollback and insufficient-edit cases. Those assertions
+are not present in the already running Root3c5/Pulse1d8 jobs.

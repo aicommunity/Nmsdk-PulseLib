@@ -2,6 +2,7 @@
 #include "NativeModelBuilder.h"
 #include <cmath>
 #include <functional>
+#include <memory>
 #include <stdexcept>
 
 namespace NMSDK::TimeLearner {
@@ -32,5 +33,23 @@ struct NativeTerminalGraphResult {
     NativeModelBuildResult model;
     std::size_t transactions=0;
     bool rollbackAttempted=false,rollbackSucceeded=false;
+};
+// Retained physical source of a terminal transition, separate from the chosen
+// measured snapshot. This is immutable DATA, never a restoration permit.
+// Serializing primary/search history remains an explicit operation outside
+// Calculate; retaining this graph does not rebind that historical evidence.
+class NativeTerminalSourceBoundary {
+public:
+    QJsonObject NeuronIdentity() const {return graph->NeuronIdentity();}
+    QJsonObject DatasetIdentity() const {return graph->DatasetIdentity();}
+    const QJsonObject& NeuronSnapshot() const {return graph->NeuronSnapshot();}
+    const QJsonObject& DatasetSnapshot() const {return graph->DatasetSnapshot();}
+    const QJsonObject& CapacitanceState() const {return capacitanceState;}
+private:
+    friend class NativeMeasuredTrainingBoundary;
+    friend class NativeTrainingService;
+    NativeTerminalSourceBoundary()=default;
+    std::shared_ptr<const NativeLearnerGraphCheckpoint> graph;
+    QJsonObject capacitanceState;
 };
 }

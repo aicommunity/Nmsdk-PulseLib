@@ -69,6 +69,23 @@ void NativeTrainingService::FinalizeMeasuredBoundary(const NativeTrainingAdapter
         const auto actualParameters=adapter.readParameters();if(!current())return;
         RequireTerminal(actualRevision==sourceRevision && actualParameters==sourceParameters,
             "terminal_selection_search_and_actual_model_differ");
+        RequireTerminal(bool(adapter.captureTerminalSource),"terminal_selection_source_capture_missing");
+        std::shared_ptr<const NativeTerminalSourceBoundary> source;
+        try {source=adapter.captureTerminalSource();}
+        catch(const NativeBoundaryRetentionBudgetExhausted&) {
+            publish("budget_exhausted","terminal_source_snapshot_storage_budget_exhausted");return;
+        }
+        if(!current())return;
+        RequireTerminal(source && source->graph &&
+            source->graph->NeuronIdentity().value("sha256")==QJsonValue(QString::fromStdString(sourceRevision)),
+            "terminal_source_snapshot_revision_mismatch");
+        RequireTerminal(adapter.readFullModelRevision()==sourceRevision && adapter.readParameters()==sourceParameters,
+            "terminal_source_capture_changed_model");
+        if(!current())return;
+        terminalSourceBoundary=std::move(source);
+        event["source_neuron_identity"]=terminalSourceBoundary->graph->NeuronIdentity();
+        event["source_dataset_identity"]=terminalSourceBoundary->graph->DatasetIdentity();
+        event["source_capacitance_state"]=terminalSourceBoundary->capacitanceState;
         const auto used=transcript->AppliedEdits();const auto limit=plan.search.maximumEdits;
         if(used>limit || limit-used<NativeTerminalSelectionPolicy::MaximumTransactions) {
             publish("budget_exhausted","terminal_selection_requires_commit_and_rollback_edit_reservation");return;

@@ -73,6 +73,8 @@ public:
     NativeModelBuildResult Restore(RDK::UNet& owner,const std::function<void()>& beforeCommit={}) const;
     QJsonObject NeuronIdentity() const {return neuronSnapshot["identity"].toObject();}
     QJsonObject DatasetIdentity() const {return datasetSnapshot["identity"].toObject();}
+    const QJsonObject& NeuronSnapshot() const {return neuronSnapshot;}
+    const QJsonObject& DatasetSnapshot() const {return datasetSnapshot;}
     std::size_t EncodedBytes() const;
 private:
     NativeLearnerGraphCheckpoint()=default;

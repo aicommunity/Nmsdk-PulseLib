@@ -40,7 +40,8 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
 {
     if(value.terminalSelection) {
         ValidateNativeTerminalSelectionPolicy(*value.terminalSelection);
-        Require(bool(a.captureMeasuredBoundary) && bool(a.restoreMeasuredBoundary) && bool(a.readFullModelRevision),
+        Require(bool(a.captureMeasuredBoundary) && bool(a.restoreMeasuredBoundary) && bool(a.readFullModelRevision) &&
+            bool(a.captureTerminalSource),
             "native_terminal_selection_requires_complete_native_adapter");
     }
     if(value.protocol.schemaVersion==4){StartComposite(std::move(value),a,modelTime,wallTime);return;}
