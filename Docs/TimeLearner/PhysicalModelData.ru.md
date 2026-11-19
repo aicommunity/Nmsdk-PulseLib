@@ -1,11 +1,14 @@
 # Полная физическая модель отдельно от истории обучения
 
-Статус: исходный SDK a3 собран,228 случаев выполнены,226 прошли. Два новых
-transfer fixtures сравнили одинаковые полные трассы, но ошибочно требовали
-однозначного пика; исправление сохраняет честный peak_ambiguous. Эта правка
-проверялась отдельной сборкой Windows; её итог пока недоступен после потери VPN.
-Следующее расширение frozen DATA API подготовлено в коде, ещё не собрано.
-Это частичное выполнение этапа 5, а не новый подтверждённый научный результат.
+Статус на19.11: исходные7 physical DATA cases приняты на свежем Elder SDK
+Root893b7344eb8794e5ef981eb133e669b6060e5aa3 /
+Pulsec508392a8c963ceb639050d737717bff0d853b3a. Полный primary находится в
+центральном M40 archive, каталог
+experiments/2026-11-19/native-terminal-portable/elder-recognition7-a1.json.
+Эти7 проверяют asymmetric graph и native target/foil responses исходной версии.
+Прямой solo terminal8 DATA roundtrip — новое расширение ниже; оно ещё не
+собрано и не принято серверной проверкой. Этап5 остаётся частичным, нового
+научного результата из этих проверок не следует.
 
 `Core/TimeLearner/NativePhysicalModelData.{h,cpp}` вводит документ
 `timelearner_physical_model_data`, schema 1. Он содержит целые штатные архивы
@@ -42,10 +45,11 @@ InspectNativePreparedChildren; проверки прикреплённого own
 Обязательные проверки корневого репозитория: Classic/Branch с несимметричными
 входами, полное сравнение Soma waveform через native scheduler, противоречие
 параметров/класса и попытка придать DATA документу certificate/checkpoint.
-Fixture начинается с честно остановленной cold-границы без выдуманного обучения.
-Она не заменяет проверку реальных обученных моделей, heterogeneous/C-trim,
-fresh process и всех паттернов. Эти проверки и подключение frozen evaluation
-к новому формату остаются открытыми.
+Первоначальный fixture начинается с честно остановленной cold-границы без
+выдуманного обучения. Он не заменяет проверку реальных обученных моделей,
+heterogeneous/C-trim, fresh process и всех паттернов. Новые terminal8 assertions
+ниже используют существующие completed/restored native fixtures; научная N4
+и полная физическая/режимная матрица остаются открытыми.
 
 ## Замороженное выполнение DATA-модели
 
@@ -71,13 +75,36 @@ trial или войти через DATA в owned finalization. Старое solo
 дочерние C сохраняются самим архивом. Native training service остаётся Idle,
 certificate отсутствует, административный legacy phase не обозначает Done.
 
-Новый корневой fixture сравнивает старый full-source import и DATA import на
+Принятый корневой fixture сравнивает старый full-source import и DATA import на
 полных target/foil окнах: Soma, фактические входы, LT output, LT decision potential,
 stimulus/spike timestamps, reset policy, completeness и model revisions. Отличаться
 может только собственный run_id. Дополнительный отрицательный случай проверяет
 solo и заново подписанную противоречивую threshold metadata. JSON/CSV сохраняются
-для графиков при TIMELEARNER_EXECUTION_OUTPUT. Эти новые случаи пока не выполнены.
+для графиков при TIMELEARNER_EXECUTION_OUTPUT. Исходные7 случаев выполнены;
+расширение terminal8 ожидает отдельной проверки.
 
-Console/runner entry point для DATA evaluation и resolver опубликованной исходной
-границы ещё требуют интеграции. Наличие методов компонента не завершает этап5,
+Console/runner имеют physical-model-export/physical-model-evaluate и source-only
+DATA snapshot. Полная проверка больших terminal8 моделей и опубликованной source
+closure ещё требуется. Наличие методов компонента не завершает этап5,
 не подтверждает реальные большие обученные модели и не даёт научный PASS.
+
+## Terminal8: изменение в коде, runtime-проверка ожидается
+
+Для source_boundary типов completed_state/stopped_state верхняя допустимая
+версия повышена7→8. Для recognition/candidate/calibrated источников остаётся7;
+неизвестные solo9 и recognition8 отклоняются. DATA schema1 и роли не меняются.
+Полный исходный пакет сначала проходит штатный importer, затем сохраняется
+actual физика; historical_state не подставляется вместо actual graph.
+
+В корневом CompositeTraining corpus расширены16 существующих случаев:
+8 configured completed и8 actual changed-graph restores, обе топологии,
+Fixed4/Window5, N0/N1. Дополнительный fresh storage owner должен сохранить
+граф/параметры и ненулевой штатный burst response, оставаясь Idle/epoch0 без
+certificate/search. Источник не теряет собственное состояние. Все отсчёты
+двух native probes сохраняются и независимо сравниваются Python reader.
+Допуск≤1e−12 относится только к roundtrip response, не к обучению.
+
+Дополнительно проверяются явная solo→recognition conversion и frozen DATA
+import/snapshot без history siblings. Полная frozen waveform/Console проверка
+новой комбинации и настоящая N4 оценка обязательны до научного использования.
+Прежние успешные7/native78 не принимают новые assertions автоматически.

@@ -35,6 +35,8 @@ unsigned NativePhysicalModelSourceFrequency(const QJsonObject& source);
 // Verifies effective graph, input parameters, frequency and stimulus/target.
 // No live owner replacement, Calculate, shared-prototype mutation, controller
 // continuation or certificate/calibration authority is installed.
+// Solo source references include terminal8. Recognition references keep their
+// existing 1..7 range; unknown solo9/recognition8 do not become valid DATA.
 std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativePhysicalModelData(
     const QJsonObject& document,RDK::UEPtr<RDK::UStorage> storage,
     RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);

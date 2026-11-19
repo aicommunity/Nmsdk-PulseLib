@@ -171,7 +171,10 @@ std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativePhysicalModelData(
     const char* expectedState=sourceKind=="timelearner_completed_state"?"learned_solo":
         sourceKind=="timelearner_stopped_state"?"diagnostic":DiagnosticKind(sourceKind)?"diagnostic_recognition":"recognition";
     Require(boundary["state_kind"]==QJsonValue(expectedState),"physical_model_source_state");
-    Require(Integer(boundary["schema_version"],1,7)>=1,"physical_model_source_schema");
+    // Terminal schema8 is a supported solo boundary. Its reference carries no
+    // proof/checkpoint authority into DATA; recognition source schemas retain
+    // their existing bound instead of admitting an unknown recognition8.
+    Require(Integer(boundary["schema_version"],1,solo?8:7)>=1,"physical_model_source_schema");
     auto result=std::make_unique<PreparedNativePhysicalModelData>();result->storage=storage;
     result->sourceBoundary=boundary;result->configuration=DecodeConfiguredNativeTraining(Object(document["configuration"]));
     result->configurationText=Text(document["configuration_text"]);result->protocol=Object(document["protocol"]);
