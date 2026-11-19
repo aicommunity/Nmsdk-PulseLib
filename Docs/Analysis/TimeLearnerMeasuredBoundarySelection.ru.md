@@ -78,3 +78,12 @@ restore/import, сохраняет его через ResetControl и прове�
 обычный boundary import очищают этот дополнительный DATA-контекст.
 Source и actual physics не объединяются, допуски не изменяются. Исправление
 и усиленные fresh-process assertions ожидают серверной проверки.
+
+Отдельный existing-runtime actual8 gate на SDK A5 подтвердил ещё один отказ:
+protocol4 native imported actor требовал proof.ModelEpoch==actual epoch после
+реального восстановления L3→L2. Bind теперь допускает эту разницу только для
+того же typed proof, установленного в actual owner, и точной пары source/actual
+revision+epoch последнего проверенного terminal journal event. Новый actor
+запускается на фактическом графе; исходные family/references/measurements
+сохраняются. Обычная DATA proof без такого owner-контекста по-прежнему
+отклоняется при несовпадении. Изменение ожидает новой native приёмки.
