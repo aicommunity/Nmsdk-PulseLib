@@ -112,8 +112,25 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     // A rejected warm declaration is not a partially committed new attempt.
     auto retainedRecords=compositeRecords;
     const std::set<std::string> retained(compositeReferenceGroups.begin(),compositeReferenceGroups.end());
-    if(references)std::erase_if(retainedRecords,[&](const auto& r){return !retained.count(r.groupId);});
-    else retainedRecords.clear();
+    // A terminal journal is persistent evidence, not a controller checkpoint.
+    // Its measured candidate/anchor groups must survive a warm attempt along
+    // with the captured references. Keeping only references makes the next
+    // export contain dangling selection trial IDs after a valid DATA import.
+    std::set<std::string> journalTrials;
+    for(const auto& event:terminalJournal) {
+        const auto selected=event.value("selected").toObject();
+        for(const auto* key:{"trial_id","anchor_trial_id"}) {
+            const auto trial=selected.value(key);
+            Require(trial.isString() && !trial.toString().isEmpty(),"native_composite_terminal_journal_trial_missing");
+            journalTrials.insert(trial.toString().toStdString());
+        }
+    }
+    std::set<std::string> foundJournalTrials;
+    std::erase_if(retainedRecords,[&](const auto& r){
+        if(journalTrials.count(r.logical.trialId)){foundJournalTrials.insert(r.logical.trialId);return false;}
+        return !references || !retained.count(r.groupId);
+    });
+    Require(foundJournalTrials==journalTrials,"native_composite_terminal_journal_primary_missing");
     std::size_t retainedBytes=0;for(const auto& r:retainedRecords) {
         const auto bytes=CompositeRecordPrimaryBytes(r);
         Require(bytes<=value.composite->maximumTotalPrimaryBytes && retainedBytes<=value.composite->maximumTotalPrimaryBytes-bytes,
