@@ -14,6 +14,12 @@ QJsonObject EncodeNativeCandidateWindowTrainingState(const NativeTrainingService
 // Summary8 retains supplied recovery delivery DATA; not a controller checkpoint.
 QJsonObject EncodeNativeCandidateWindowRecoveryTrainingState(const NativeTrainingService&,const std::string& actualModelRevision,
     const std::vector<InputParameters>& actualParameters);
+// Explicit historical DATA views; ordinary summary entry points keep their
+// existing signature and continue rejecting terminal scopes.
+QJsonObject EncodeNativeCompositeTrainingTranscript(const NativeTrainingService&,const std::string& sourceModelRevision,
+    const std::vector<InputParameters>& sourceParameters);
+QJsonObject EncodeNativeCandidateWindowTrainingTranscript(const NativeTrainingService&,const std::string& sourceModelRevision,
+    const std::vector<InputParameters>& sourceParameters);
 class NativeCompositeStateFactory {
 public:
     static QJsonObject Export(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,

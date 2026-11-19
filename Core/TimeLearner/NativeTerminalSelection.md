@@ -90,3 +90,20 @@ topologies and protocol4/5. Large heterogeneous C0 growth/warm coverage and
 aggregate memory accounting remain required. Cold/runtime declarations and
 Python DATA/scorer/publishing support are still open; no public configuration
 enables this capability yet.
+
+The first portable A2 SDK built and ran all56 cases:44 passed and12 failed.
+All12 new composite boundaries passed. The twelve plain child-process checks
+attempted warm Start before the fresh owner's ordinary Build/Init sequence and
+were rejected by the ready/initialized guard. The corrected fixture starts warm
+control only after that existing sequence; it adds no learner-specific wake-up
+Build. The original rejected gate and its full primary remain archived.
+
+The current follow-up adds `historical_summary` to summary9, retaining the
+original transcript epoch, trial identities, C0 witnesses and counters rather
+than relabelling them as actual-epoch measurements. Ordinary summary signatures
+and semantics remain unchanged. Legacy plain completed packages did not store
+a reason: schema8 retains that terminal diagnostic without inventing an absent
+historical reason binding, while all certificate/outcome/model checks remain.
+Four new plain completed no-transition controls cover Classic/Branch and N0/N1;
+their broad sync.2 is explicitly an engineering transport fixture. This follow-up
+and the new Python DATA reader are not covered by the rejected A2 gate.

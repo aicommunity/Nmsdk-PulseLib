@@ -34,4 +34,9 @@ std::string NativeTrainingCapacitanceWitnessId(const TrainingCapacitanceWitness&
 // verdict. The actual graph/readback is supplied independently by the adapter.
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters);
+// Read-only transcript DATA at its original epoch. The terminal factory checks
+// the private native source graph separately before publishing a model boundary.
+// This does not rebind observations to the restored graph or grant authority.
+QJsonObject EncodeNativeHistoricalTrainingState(const NativeTrainingService& service,const std::string& sourceModelRevision,
+                                      const std::vector<InputParameters>& sourceParameters);
 }

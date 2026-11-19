@@ -198,7 +198,12 @@ std::unique_ptr<PreparedNativeLearnedState> NativeTerminalStateFactory::Prepare(
     const auto history=Object(package.value("historical_state"));Require(Count(history.value("schema_version"))>=1 && Count(history.value("schema_version"))<=7,"terminal_package_recursive_history");
     for(const auto* key:{"kind","state_kind","implementation_id","controller_version","calculate_mode","structure_build_mode","configuration","protocol","session_attempt","training_outcome","certificate"})
         Require(package.value(key)==history.value(key),"terminal_package_history_metadata");
-    Require(package.value("reason")==history.value("reason") || (package.value("reason")==QJsonValue("") && !history.contains("reason")),"terminal_package_history_reason");
+    // Legacy plain completed packages did not serialize a reason. Preserve the
+    // terminal diagnostic without pretending that absent historical DATA bound
+    // it; certificate/outcome/native model checks remain mandatory below.
+    Require(package.value("reason").isString() && (history.contains("reason")?
+        package.value("reason")==history.value("reason"):history.value("kind")==QJsonValue("timelearner_completed_state")),
+        "terminal_package_history_reason");
     auto result=PrepareNativeLearnedState(history,storage,environment,implementation);
     const auto policy=Policy(package.value("terminal_policy"));const auto journal=Array(package.value("terminal_journal"));const auto event=package.value("terminal_event");
     ValidateJournal(journal,event,result->service);
@@ -245,6 +250,16 @@ QJsonObject NativeTerminalStateFactory::Summary(const NativeTrainingService& ser
     else if(service.Certificate())Require(service.Certificate()->ModelRevision()==revision && service.Certificate()->ModelEpoch()==service.ModelEpoch(),"terminal_summary_certificate_binding");
     else if(!service.terminalImportedHistory.isEmpty())Require(service.terminalImportedHistory.value("model_revision")==QJsonValue(Text(revision)) &&
         service.terminalImportedHistory.value("trained_inputs")==QJsonValue(Parameters(parameters)),"terminal_summary_imported_binding");
+    QJsonValue historical(QJsonValue::Null);
+    if(service.State()==NativeTrainingState::Finished) {
+        auto sourceRevision=revision;auto sourceParameters=parameters;
+        if(service.Search()){sourceRevision=service.Search()->ModelRevision();sourceParameters=service.Search()->Parameters();}
+        else if(!service.terminalImportedHistory.isEmpty()) {
+            sourceRevision=String(service.terminalImportedHistory.value("model_revision"));
+            sourceParameters=Parameters(service.terminalImportedHistory.value("trained_inputs"),service.Plan().protocol.inputs.size());
+        }
+        historical=EncodeNativeHistoricalTrainingState(service,sourceRevision,sourceParameters);
+    }
     QJsonObject result{{"kind","native_training_state_summary"},{"schema_version",9},{"state",NativeTrainingStateName(service.State())},
         {"outcome",TrainingStatusName(service.Outcome())},{"reason",Text(service.Reason())},{"actual_model_revision",Text(revision)},
         {"model_epoch",Integer(service.ModelEpoch())},{"transcript_model_epoch",Integer(service.TranscriptModelEpoch())},
@@ -252,7 +267,7 @@ QJsonObject NativeTerminalStateFactory::Summary(const NativeTrainingService& ser
         {"certificate",service.Certificate()?QJsonValue(EncodeTrainingCertificate(*service.Certificate())):QJsonValue(QJsonValue::Null)},
         {"terminal_policy",Policy(service.Plan())},{"terminal_event",event},{"terminal_journal",Journal(service)},
         {"closed_boundary",service.State()==NativeTrainingState::Finished},
-        {"controller_checkpoint",false},{"restored_live_authority",false}};
+        {"controller_checkpoint",false},{"restored_live_authority",false},{"historical_summary",historical}};
     result["sha256"]=NmsdkTools::CanonicalModelDataSha256(result);return result;
 }
 }
