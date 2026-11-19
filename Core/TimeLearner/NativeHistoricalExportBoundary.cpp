@@ -11,10 +11,10 @@ NativeHistoricalExportBoundary::NativeHistoricalExportBoundary(const NativeTrain
     QJsonObject neuron,QJsonObject dataset,std::vector<InputParameters> values)
     :service(&source),neuronIdentity(std::move(neuron)),datasetIdentity(std::move(dataset)),
      parameters(std::move(values)),epoch(source.TranscriptModelEpoch()),session(source.SessionAttempt()),
-     outcome(source.Outcome()),reason(source.Reason())
+     certified(bool(source.Certificate())),outcome(source.Outcome()),reason(source.Reason())
 {
     Require(source.RequiresTerminalSelectionArchive() && source.State()==NativeTrainingState::Finished &&
-        session>0 && !source.Certificate(),"historical_export_requires_stopped_terminal_scope");
+        session>0 && (!certified || source.ModelEpoch()==epoch),"historical_export_requires_closed_terminal_scope");
     Require(neuronIdentity.value("valid")==QJsonValue(true) && datasetIdentity.value("valid")==QJsonValue(true),
         "historical_export_requires_valid_source_graphs");
     if(source.Search())Require(neuronIdentity.value("sha256")==QJsonValue(QString::fromStdString(source.Search()->ModelRevision())) &&
@@ -26,7 +26,8 @@ void NativeHistoricalExportBoundary::Validate(RDK::UNet& owner,const NativeTrain
     Require(service==&source && source.State()==NativeTrainingState::Finished &&
         source.RequiresTerminalSelectionArchive() && source.SessionAttempt()==session &&
         source.TranscriptModelEpoch()==epoch && source.Outcome()==outcome && source.Reason()==reason &&
-        !source.Certificate() && actual==parameters,"historical_export_boundary_changed");
+        bool(source.Certificate())==certified && (!certified || source.ModelEpoch()==epoch) &&
+        actual==parameters,"historical_export_boundary_changed");
     auto neuron=owner.GetComponentL<NPulseNeuron>("Neuron",true);
     auto dataset=owner.GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
     auto generator=owner.GetComponentL<NPulseGeneratorTransit>("DatasetMatrix.Generator1",true);

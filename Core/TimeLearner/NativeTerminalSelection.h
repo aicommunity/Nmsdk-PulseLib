@@ -11,6 +11,7 @@ namespace NMSDK::TimeLearner {
 struct NativeTerminalSelectionPolicy {
     double maximumWallSeconds=30.;
     static constexpr std::size_t MaximumTransactions=2; // commit plus reserved rollback
+    static constexpr std::size_t MaximumJournalEntries=4096;
 };
 inline void ValidateNativeTerminalSelectionPolicy(const NativeTerminalSelectionPolicy& policy)
 {

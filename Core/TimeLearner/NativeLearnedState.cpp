@@ -1,5 +1,6 @@
 #include "NativeLearnedState.h"
 #include "NativeCompositeLearnedState.h"
+#include "NativeTerminalLearnedState.h"
 #include "NativeTrainingProof.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -182,6 +183,8 @@ static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeMod
     int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance,
     const NativeHistoricalExportBoundary* historical=nullptr)
 {
+    if(!historical && service.RequiresTerminalSelectionArchive())
+        return NativeTerminalStateFactory::Export(owner,declaration,service,actual,version,calculateMode,structureMode,implementationId,capacitance).learnedState;
     if(historical)historical->Validate(owner,service,actual);
     else Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     if(service.Plan().protocol.schemaVersion==5) {
@@ -306,7 +309,8 @@ NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeMo
     const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
     const NativeCapacitanceCorrection* capacitance)
 {
-    Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
+    if(service.RequiresTerminalSelectionArchive())return NativeTerminalStateFactory::Export(owner,declaration,service,parameters,
+        version,calculateMode,structureMode,implementation,capacitance);
     if(service.Plan().protocol.schemaVersion==5)return NativeCandidateWindowStateFactory::ExportBoundary(owner,declaration,service,parameters,
         version,calculateMode,structureMode,implementation,capacitance);
     NativeTrainingExport result;
@@ -319,6 +323,7 @@ QJsonObject ParseNativeLearnedState(const std::string& text)
 std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
     RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId)
 {
+    if(package.value("schema_version")==QJsonValue(8))return NativeTerminalStateFactory::Prepare(package,storage,environment,implementationId);
     if(package["schema_version"]==QJsonValue(7))return NativeCandidateWindowStateFactory::PrepareRecovery(package,storage,environment,implementationId);
     if(package["schema_version"]==QJsonValue(6))return NativeCandidateWindowStateFactory::Prepare(package,storage,environment,implementationId);
     if(package["schema_version"]==QJsonValue(5))return NativeCompositeStateFactory::Prepare(package,storage,environment,implementationId);

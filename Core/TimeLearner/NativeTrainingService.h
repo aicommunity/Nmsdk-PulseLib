@@ -107,9 +107,9 @@ public:
     // Build may initialize its adopted graph while retaining this boundary;
     // explicit learner Reset still resets transient controller state.
     bool HasDetachedCompositeBoundary() const {
-        return (plan.protocol.schemaVersion==4 || plan.protocol.schemaVersion==5) &&
-            state==NativeTrainingState::Finished && !composite && !search && attempt>0 &&
-            !compositeInitialConfiguration.isEmpty();
+        return state==NativeTrainingState::Finished && !composite && !search && attempt>0 &&
+            (((plan.protocol.schemaVersion==4 || plan.protocol.schemaVersion==5) &&
+              !compositeInitialConfiguration.isEmpty()) || !terminalImportedHistory.isEmpty());
     }
     TrainingStatus Outcome() const { return outcome; }
     const std::string& Reason() const { return reason; }
@@ -144,6 +144,7 @@ public:
     std::size_t TerminalSelectionTransactions() const {return terminalSelectionTransactions;}
     bool RequiresTerminalSelectionArchive() const {return terminalSelectionArchiveRequired;}
     const std::shared_ptr<const NativeTerminalSourceBoundary>& TerminalSourceBoundary() const {return terminalSourceBoundary;}
+    const std::vector<QJsonObject>& TerminalJournal() const {return terminalJournal;}
     std::size_t IssuedReferenceProbes() const { return referenceProbes; }
     std::size_t TranscriptModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
     std::size_t ModelEpoch() const { return terminalPhysicalEpoch?*terminalPhysicalEpoch:TranscriptModelEpoch(); }
@@ -174,6 +175,7 @@ private:
     friend class NativeCompositeTrainingAttempt;
     friend class NativeCompositeStateFactory;
     friend class NativeCandidateWindowStateFactory;
+    friend class NativeTerminalStateFactory;
     // Process-local owner-control identity only. Portable accounting counters
     // and model/family proofs cannot recreate it. Bind allocates lazily;
     // control takeover/reset invalidates without allocation or callbacks.
@@ -197,6 +199,9 @@ private:
     std::shared_ptr<const int> terminalSelectionAuthority;
     QJsonObject terminalSelectionEvent;
     std::shared_ptr<const NativeTerminalSourceBoundary> terminalSourceBoundary;
+    // DATA journal survives warm/control resets; cold retarget alone drops it.
+    std::vector<QJsonObject> terminalJournal;
+    QJsonObject terminalImportedHistory;
     std::optional<std::size_t> terminalPhysicalEpoch;
     std::size_t terminalSelectionTransactions=0;
     bool terminalSelectionArchiveRequired=false;
@@ -251,6 +256,7 @@ private:
     void ClearTerminalSelection() {
         terminalSelectionAuthority.reset();terminalSelectionEvent={};terminalPhysicalEpoch.reset();terminalSelectionTransactions=0;
         terminalSourceBoundary.reset();
+        terminalImportedHistory={};
     }
     void RecordCancelled(const NativeTrainingAdapter& adapter);
     std::string RememberCapacitance(const NativeTrainingAdapter& adapter,const std::string& revision,

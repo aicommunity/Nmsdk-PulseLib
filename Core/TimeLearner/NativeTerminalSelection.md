@@ -2,8 +2,9 @@
 
 This is an explicit `NativeTrainingPlan::terminalSelection` capability, currently
 for native validation. Existing cold JSON configurations do not enable it.
-It is not yet a complete experimental release: versioned portable export,
-import and replay of the transition remain required.
+It is not yet a complete experimental release: the new versioned portable
+boundary is implemented but still requires native validation and cold/runtime
+and analysis integration.
 
 After a budget stop with a retained controller-selected measured boundary, the
 service enters `Finalizing`. The old actor's control lifetime is revoked. The
@@ -27,11 +28,15 @@ Search history keeps its original epoch; the physical epoch advances by the
 charged native transactions. Old observations are never rebound to the new
 epoch. The event records source/selected/actual identities, charges and outcome.
 
-Until the portable transition format is implemented, old learned-state,
-summary and boundary exporters reject this explicit capability. Reset/warm
-control alone cannot remove that requirement. Explicit cold retarget starts a
-new evidence scope. Returning an old-format package describing the restored
-graph as an ordinary terminal search state would be incorrect.
+Terminal scopes now dispatch to learned-state schema8 and summary schema9.
+Schema8 nests the original schema1–7 historical search package separately
+from the actual native graph, Dataset, individual parameters and owned C-state.
+It validates both through their original native/proof paths. Import creates a
+closed Finished DATA boundary, never a controller/dynamics checkpoint or live
+authority. A restored graph cannot inherit the historical certificate.
+Reset/warm control retains the terminal DATA journal; explicit cold retarget
+starts a new evidence scope. Returning an old-format package describing the
+restored graph as an ordinary terminal search state would be incorrect.
 
 Native integration cases cover both topologies and N0/N1 with a real wall
 deadline after a real unmeasured edit, response replay, owned C-state, external
@@ -61,17 +66,27 @@ Reset and a new control session release this transient source boundary.
 
 This is the foundation for exporting historical search against its original
 graph while separately exporting the restored actual graph. The portable
-factory and cold/runtime schema are still required; the existing exporters
-continue rejecting the explicit terminal scope. Additional integration
+factory now exports the separate actual and historical boundaries. Additional integration
 assertions compare the source snapshot with independent pre-transition
 readbacks, including rollback and insufficient-edit cases. Those assertions
-are not present in the already running Root3c5/Pulse1d8 jobs.
+were not present in the accepted Root3c5/Pulse1d8 jobs.
 
 Historical export plumbing now has a read-only, factory-created context. The
 existing protocol3, composite4 and candidate-window5 exporters can validate a
 private historical graph and use the stopped transcript epoch. They continue
 their original native/proof/C0/image checks; primary records are referenced
 from the original service rather than copying the whole controller or its raw
-sample journal. Ordinary exports still reject terminal scopes. The versioned
-factory, import/replay, cold/runtime declarations and experimental pipeline are
-not implemented by this plumbing; no public configuration enables it yet.
+sample journal. The schema8 factory uses this context; ordinary schema1–7
+exports do not silently reinterpret a terminal transition. Event schema2
+retains source/selected/actual bindings and charged transactions. Its journal
+is bounded to4096 entries, with plain probe evidence or references to the
+retained composite family measurements.
+
+The new code and its expanded tests are not covered by the earlier44/14 gates.
+The pending native gate includes fresh-process response comparison, altered
+actual epoch/parameters/images, external stop, failed attachment, edit-budget
+exhaustion, warm control, and unchanged completed/stopped boundaries in both
+topologies and protocol4/5. Large heterogeneous C0 growth/warm coverage and
+aggregate memory accounting remain required. Cold/runtime declarations and
+Python DATA/scorer/publishing support are still open; no public configuration
+enables this capability yet.

@@ -1,4 +1,5 @@
 #include "ProbeEvidenceJson.h"
+#include "NativeTerminalLearnedState.h"
 #include "NativeCompositeLearnedState.h"
 #include "CompositeTrainingDeclarations.h"
 #include "CandidateWindowTrainingDeclarations.h"
@@ -283,7 +284,7 @@ std::string NativeTrainingCapacitanceWitnessId(const TrainingCapacitanceWitness&
 QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
                                       const std::vector<InputParameters>& actualParameters)
 {
-    if(service.RequiresTerminalSelectionArchive())throw std::invalid_argument("terminal_selection_requires_versioned_summary");
+    if(service.RequiresTerminalSelectionArchive())return NativeTerminalStateFactory::Summary(service,actualModelRevision,actualParameters);
     if(service.Plan().protocol.schemaVersion==5) {
         if(RequiresCandidateWindowRecoveryBoundary(service))return EncodeNativeCandidateWindowRecoveryTrainingState(service,actualModelRevision,actualParameters);
         return EncodeNativeCandidateWindowTrainingState(service,actualModelRevision,actualParameters);

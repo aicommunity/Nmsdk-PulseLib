@@ -20,6 +20,7 @@ private:
     QJsonObject neuronIdentity,datasetIdentity;
     std::vector<InputParameters> parameters;
     std::size_t epoch=0,session=0;
+    bool certified=false;
     TrainingStatus outcome;
     std::string reason;
 };

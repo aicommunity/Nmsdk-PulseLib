@@ -37,6 +37,9 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
 // Schema7 adds recovery-delivery DATA and per-attempt runtime bindings, also
 // after a warm switch back to Retry. It does not restore controller traversal,
 // dynamics, callbacks or live authority, or assert independent ledger coverage.
+// Schema8 separates the historical search proof (schema1–7) from a terminal
+// selected actual graph, charged transition and retained DATA journal. Import
+// is a closed boundary; summary9 describes the actual rather than search epoch.
 QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection& capacitance);

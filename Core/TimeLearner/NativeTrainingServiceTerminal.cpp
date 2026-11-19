@@ -1,5 +1,7 @@
 #include "NativeTrainingService.h"
 #include "NativeMeasuredTrainingBoundary.h"
+#include "ProbeEvidenceJson.h"
+#include <algorithm>
 #include <limits>
 
 namespace NMSDK::TimeLearner {
@@ -22,9 +24,9 @@ void NativeTrainingService::FinalizeMeasuredBoundary(const NativeTrainingAdapter
         return state==NativeTrainingState::Finalizing && attempt==session && compositeGeneration==generation &&
             search==transcript && measuredBoundary==retained && terminalSelectionAuthority==authority;
     };
-    QJsonObject event{{"kind","timelearner_native_terminal_selection_event"},{"schema_version",1},
+    QJsonObject event{{"kind","timelearner_native_terminal_selection_event"},{"schema_version",2},
         {"stopped_outcome",TrainingStatusName(outcome)},{"stopped_reason",QString::fromStdString(reason)},
-        {"session_attempt",double(session)},{"portable_export_supported",false},
+        {"session_attempt",double(session)},{"portable_export_supported",true},
         {"fresh_all_input_verification",false},{"certificate",QJsonValue(QJsonValue::Null)}};
     const auto publish=[&](const char* status,const std::string& diagnostic) {
         if(!current())return;
@@ -34,10 +36,14 @@ void NativeTrainingService::FinalizeMeasuredBoundary(const NativeTrainingAdapter
         event["actual_model_epoch"]=double(ModelEpoch());
         event["historical_measurements_rebound_to_actual_epoch"]=false;
         event["sha256"]=NmsdkTools::CanonicalModelDataSha256(event);
-        terminalSelectionEvent=event;terminalSelectionAuthority.reset();state=NativeTrainingState::Finished;
+        terminalJournal.push_back(event);terminalSelectionEvent=event;
+        terminalSelectionAuthority.reset();state=NativeTrainingState::Finished;
     };
     try
     {
+        RequireTerminal(terminalJournal.size()<NativeTerminalSelectionPolicy::MaximumJournalEntries,
+            "native_terminal_journal_budget_exhausted");
+        terminalJournal.reserve(terminalJournal.size()+1);
         RequireTerminal(plan.terminalSelection.has_value() && retained && transcript && !certificate &&
             outcome==TrainingStatus::BudgetExhausted,"terminal_selection_invalid_finished_scope");
         if(adapter.trainingRequested && !adapter.trainingRequested()) {ExternalStop(adapter);return;}
@@ -59,12 +65,31 @@ void NativeTrainingService::FinalizeMeasuredBoundary(const NativeTrainingAdapter
         event["search_terminal_epoch"]=double(sourceEpoch);event["search_terminal_revision"]=QString::fromStdString(sourceRevision);
         event["search_terminal_parameters"]=TerminalParameters(sourceParameters);
         event["selected"]=QJsonObject{{"serial",double(selection.serial)},{"sweep",double(selection.sweep)},
+            {"input_index",double(selection.candidate.inputIndex)},
             {"input_position",double(selection.inputPosition)},{"trial_id",QString::fromStdString(selection.candidate.trialId)},
             {"anchor_trial_id",QString::fromStdString(selection.candidate.anchorTrialId)},
             {"model_epoch",double(selection.candidate.modelEpoch)},{"parameters",TerminalParameters(selection.candidate.fullParameters)},
             {"neuron_identity",retained->NeuronIdentity()},{"dataset_identity",retained->DatasetIdentity()},
             {"capacitance_state",retained->CapacitanceState()},
             {"storage_fingerprint",QString::fromStdString(retained->StorageFingerprint())}};
+        event["edit_budget"]=QJsonObject{{"search_applied_edits",double(transcript->AppliedEdits())},
+            {"maximum_edits",double(plan.search.maximumEdits)},
+            {"reserved_transactions",double(NativeTerminalSelectionPolicy::MaximumTransactions)},
+            {"maximum_finalization_wall_seconds",plan.terminalSelection->maximumWallSeconds}};
+        // Plain probe packets are small mathematical evidence, not raw sample
+        // journals. Retain them for a later warm attempt's transition replay.
+        // Composite primary stays in its existing retained family archive.
+        QJsonArray selectedPackets;
+        if(plan.protocol.schemaVersion==3) {
+            for(const auto& id:{selection.candidate.trialId,selection.candidate.anchorTrialId}) {
+                const auto found=std::find_if(observedPackets.begin(),observedPackets.end(),[&](const auto& packet) {
+                    return packet.requestedSpecification && packet.requestedSpecification->trialId==id;
+                });
+                RequireTerminal(found!=observedPackets.end(),"terminal_selection_measurement_packet_missing");
+                selectedPackets.append(EncodeNativeProbeEvidence(*found));
+            }
+        }
+        event["selected_probe_packets"]=selectedPackets;
         const auto actualRevision=adapter.readFullModelRevision();if(!current())return;
         const auto actualParameters=adapter.readParameters();if(!current())return;
         RequireTerminal(actualRevision==sourceRevision && actualParameters==sourceParameters,

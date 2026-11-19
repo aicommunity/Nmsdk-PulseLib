@@ -40,6 +40,8 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
 {
     if(value.terminalSelection) {
         ValidateNativeTerminalSelectionPolicy(*value.terminalSelection);
+        Require(terminalJournal.size()<NativeTerminalSelectionPolicy::MaximumJournalEntries,
+            "native_terminal_journal_budget_exhausted");
         Require(bool(a.captureMeasuredBoundary) && bool(a.restoreMeasuredBoundary) && bool(a.readFullModelRevision) &&
             bool(a.captureTerminalSource),
             "native_terminal_selection_requires_complete_native_adapter");
@@ -446,7 +448,7 @@ bool NativeTrainingService::ObserveTrainingRequestAtBoundary(bool requested,bool
     ResetControl();return true;
 }
 void NativeTrainingService::InvalidateTarget()
-{ResetControl();terminalSelectionArchiveRequired=false;certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();
+{ResetControl();terminalSelectionArchiveRequired=false;terminalJournal.clear();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();
  composite.reset();compositeImportedProof.reset();compositeCandidateReferences.reset();compositeSourceBinding={};compositeInitialConfiguration={};compositeOwnerFamily.clear();compositeFinalRun.clear();compositeRecords.clear();compositeReferenceGroups.clear();compositeFinalGroups.clear();
  compositeRecoveryDeliveries.clear();compositeRecoveryRuntime={};compositeRecoveryDeliveryLogIntact=true;
  compositeGroupWitnesses.clear();compositeGroupTrialWitnessIds.clear();compositeCapacitance.reset();
