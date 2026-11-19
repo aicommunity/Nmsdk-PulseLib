@@ -53,6 +53,16 @@ NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeMo
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection* capacitance=nullptr);
 QJsonObject ParseNativeLearnedState(const std::string& text);
+// Only package8's validating factory can prepare an embedded historical
+// configuration9 source. It remains DATA with no terminal/live control policy;
+// the outer package separately restores the current actual boundary policy.
+class NativeHistoricalImportBoundary {
+    friend class NativeTerminalStateFactory;
+    NativeHistoricalImportBoundary()=default;
+};
+std::unique_ptr<PreparedNativeLearnedState> PrepareNativeHistoricalLearnedState(const QJsonObject& package,
+    RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string& implementationId,
+    const NativeHistoricalImportBoundary&);
 std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);
 }

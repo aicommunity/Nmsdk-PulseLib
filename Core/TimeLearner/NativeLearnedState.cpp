@@ -320,10 +320,12 @@ NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeMo
 }
 QJsonObject ParseNativeLearnedState(const std::string& text)
 {return ParseStrictNativeJsonObject(text,128*1024*1024);}
-std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
-    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId)
+static std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedStateImpl(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
+    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId,bool historical)
 {
     if(package.value("schema_version")==QJsonValue(8))return NativeTerminalStateFactory::Prepare(package,storage,environment,implementationId);
+    Require(historical || Object(package.value("configuration")).value("schema_version")!=QJsonValue(9),
+        "terminal_configuration_requires_package8_boundary");
     if(package["schema_version"]==QJsonValue(7))return NativeCandidateWindowStateFactory::PrepareRecovery(package,storage,environment,implementationId);
     if(package["schema_version"]==QJsonValue(6))return NativeCandidateWindowStateFactory::Prepare(package,storage,environment,implementationId);
     if(package["schema_version"]==QJsonValue(5))return NativeCompositeStateFactory::Prepare(package,storage,environment,implementationId);
@@ -355,6 +357,10 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
     Require(result->parameters.size()==c.model.inputs.size(),"learned_state_input_dimension_mismatch");
     const auto protocol=DecodeVerificationProtocol(Object(package["protocol"]));auto plan=Plan(c,protocol);
     if(version==2)Require(protocol==MakeConfiguredNativeTrainingPlan(c).protocol,"configured_learned_state_requires_canonical_protocol");
+    // Source DATA retains its exact configuration bytes; do not acquire its
+    // declared terminal behavior while replaying an old schema1-4 transcript.
+    // Only the outer factory installs the actual current policy afterwards.
+    if(historical)plan.terminalSelection.reset();
     if(stopped)
     {
         Require(package["certificate"].isNull() && package["reference_complete"].isBool() &&
@@ -415,5 +421,14 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
         ValidateAppliedNativeCapacitanceState(bindings,c.model,state);result->capacitanceState=state;
     }
     result->configurationText=QJsonDocument(EncodeConfiguredNativeTraining(c)).toJson(QJsonDocument::Compact).toStdString();return result;
+}
+std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
+    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
+{return PrepareNativeLearnedStateImpl(package,storage,environment,implementation,false);}
+std::unique_ptr<PreparedNativeLearnedState> PrepareNativeHistoricalLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
+    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation,const NativeHistoricalImportBoundary&)
+{
+    const auto version=Count(package.value("schema_version"));Require(version>=1 && version<=7,"terminal_recursive_historical_import");
+    return PrepareNativeLearnedStateImpl(package,storage,environment,implementation,true);
 }
 }

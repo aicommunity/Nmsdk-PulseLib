@@ -87,3 +87,15 @@ revision+epoch последнего проверенного terminal journal ev
 запускается на фактическом графе; исходные family/references/measurements
 сохраняются. Обычная DATA proof без такого owner-контекста по-прежнему
 отклоняется при несовпадении. Изменение ожидает новой native приёмки.
+
+A6 подтвердил все8 actual composite restoration/warm cases и codec2, но plain
+terminal import после переноса explicit cold9 policy обнаружил отказ
+terminal_selection_requires_versioned_import. Historical schema1–4 source
+должен воспроизводить доказательства с прежним Finish-контекстом, не включать
+terminal control policy. Введён закрытый NativeHistoricalImportBoundary,
+создаваемый только validating package8 factory: он разрешает read-only prepare
+исходной configuration9 и сбрасывает только временную service policy перед
+replay. JSON/configuration/hash source не меняются; outer8 затем устанавливает
+текущую политику actual boundary. Публичный standalone import извлечённого
+schema1–7 с configuration9 отвергается. Старые конфигурации1–8 сохраняют путь.
+Новые assertions проверяют этот отказ; серверная приёмка исправления впереди.

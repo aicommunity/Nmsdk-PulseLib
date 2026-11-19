@@ -205,7 +205,7 @@ std::unique_ptr<PreparedNativeLearnedState> NativeTerminalStateFactory::Prepare(
     Require(package.value("reason").isString() && (history.contains("reason")?
         package.value("reason")==history.value("reason"):history.value("kind")==QJsonValue("timelearner_completed_state")),
         "terminal_package_history_reason");
-    auto result=PrepareNativeLearnedState(history,storage,environment,implementation);
+    auto result=PrepareNativeHistoricalLearnedState(history,storage,environment,implementation,NativeHistoricalImportBoundary{});
     const auto policy=Policy(package.value("terminal_policy"));const auto journal=Array(package.value("terminal_journal"));const auto event=package.value("terminal_event");
     ValidateJournal(journal,event,result->service);
     const auto physical=Object(package.value("neuron"));const auto identity=Object(Object(physical.value("graph")).value("identity"));
