@@ -127,7 +127,7 @@ void ValidateJournal(const QJsonArray& values,const QJsonValue& current,const Na
 void ValidateActualEvent(const QJsonValue& value,const QJsonObject& history,const QJsonObject& actual,const QJsonObject& dataset,const QJsonValue& c0,
     const std::vector<InputParameters>& parameters,std::size_t epoch){
     const auto sourceIdentity=Object(Object(Object(history.value("neuron")).value("graph")).value("identity"));
-    if(value.isNull()){Require(actual==sourceIdentity && epoch==Count(history.value("model_epoch")) && Parameters(parameters)==history.value("trained_inputs"),"terminal_no_transition_changed_model");return;}
+    if(value.isNull()){Require(actual==sourceIdentity && epoch==Count(history.value("model_epoch")) && QJsonValue(Parameters(parameters))==history.value("trained_inputs"),"terminal_no_transition_changed_model");return;}
     const auto e=Object(value);Require(e.value("search_terminal_revision")==history.value("model_revision") && e.value("search_terminal_epoch")==history.value("model_epoch") &&
         e.value("search_terminal_parameters")==history.value("trained_inputs") && e.value("actual_model_epoch")==Integer(epoch),"terminal_history_source_binding");
     if(e.contains("source_neuron_identity"))Require(e.value("source_neuron_identity")==QJsonValue(sourceIdentity),"terminal_history_source_graph");
@@ -136,7 +136,7 @@ void ValidateActualEvent(const QJsonValue& value,const QJsonObject& history,cons
         Require(e.value("actual_model_revision")==actual.value("sha256") && e.value("actual_parameters")==QJsonValue(Parameters(parameters)) &&
             selected.value("neuron_identity")==QJsonValue(actual) && selected.value("dataset_identity")==QJsonValue(dataset) &&
             selected.value("parameters")==QJsonValue(Parameters(parameters)) && selected.value("capacitance_state")==QJsonValue(c0.isNull()?QJsonObject{}:Object(c0)),"terminal_actual_selected_graph");
-    }else Require(actual==sourceIdentity && Parameters(parameters)==history.value("trained_inputs"),"terminal_rejected_transition_changed_model");
+    }else Require(actual==sourceIdentity && QJsonValue(Parameters(parameters))==history.value("trained_inputs"),"terminal_rejected_transition_changed_model");
 }
 }
 
