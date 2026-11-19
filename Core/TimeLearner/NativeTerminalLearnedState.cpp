@@ -2,6 +2,8 @@
 #include "NativeCompositeLearnedState.h"
 #include "NativeMeasuredTrainingBoundary.h"
 #include "NativeTrainingProof.h"
+#include "NativeTerminalPolicyJson.h"
+#include "NativeTrainingCapacitance.h"
 #include <QJsonDocument>
 #include <algorithm>
 #include <cmath>
@@ -34,10 +36,9 @@ std::vector<InputParameters> Parameters(const QJsonValue& v,std::size_t size){st
             "terminal_package_input_value");result.push_back({int(l),int(n),r.toDouble()});}return result;}
 QJsonArray Journal(const NativeTrainingService& s){QJsonArray result;for(const auto& e:s.TerminalJournal())result.append(e);return result;}
 QJsonValue Policy(const NativeTrainingPlan& p){if(!p.terminalSelection)return QJsonValue(QJsonValue::Null);
-    return QJsonObject{{"schema_version",1},{"maximum_wall_seconds",p.terminalSelection->maximumWallSeconds}};}
+    return EncodeNativeTerminalSelectionPolicy(*p.terminalSelection);}
 std::optional<NativeTerminalSelectionPolicy> Policy(const QJsonValue& v){if(v.isNull())return {};
-    const auto o=Object(v);Keys(o,"schema_version maximum_wall_seconds");Require(o.value("schema_version")==QJsonValue(1) && o.value("maximum_wall_seconds").isDouble(),"terminal_package_policy");
-    NativeTerminalSelectionPolicy result{o.value("maximum_wall_seconds").toDouble()};ValidateNativeTerminalSelectionPolicy(result);return result;}
+    return DecodeNativeTerminalSelectionPolicy(Object(v));}
 std::pair<QString,double> Threshold(const QJsonObject& identity){QString path;const auto model=Object(identity.value("model"));
     for(const auto& c:Array(model.value("caches"))){const auto candidate=Object(c).value("cached_ltzone").toString();if(!candidate.isEmpty()){path=candidate;break;}}
     Require(!path.isEmpty(),"terminal_package_ltzone_missing");for(const auto& n:Array(model.value("nodes"))){const auto node=Object(n);if(node.value("path")!=QJsonValue(path))continue;
@@ -234,7 +235,20 @@ std::unique_ptr<PreparedNativeLearnedState> NativeTerminalStateFactory::Prepare(
     result->neuron=actual.neuron;actual.neuron=nullptr;result->dataset=actual.dataset;actual.dataset=nullptr;
     result->parameters=parameters;result->modelRevision=String(package.value("model_revision"));
     auto& service=result->service;service.plan.terminalSelection=policy;service.terminalSelectionArchiveRequired=true;
+    // The immutable historical configuration describes its source attempt.
+    // A later warm attempt may choose a different terminal budget or turn it
+    // off. Restore CURRENT configured control from the explicit outer policy,
+    // without editing historical evidence or acquiring live authority.
+    result->configuration.terminalSelection=policy;
+    result->configurationText=QJsonDocument(EncodeConfiguredNativeTraining(result->configuration)).toJson(QJsonDocument::Compact).toStdString();
     service.terminalPhysicalEpoch=Count(package.value("model_epoch"));service.referenceBinding=result->modelRevision;
+    if(!c0.isNull()) {
+        NativeProbeBindings bindings;bindings.neuron=result->neuron;bindings.dataset=result->dataset;
+        NativeProbeExecutor idle;
+        service.terminalCapacitanceBoundary=ReadNativeTrainingCapacitanceWitness(idle,bindings,declaration,Object(c0));
+        Require(service.terminalCapacitanceBoundary && service.terminalCapacitanceBoundary->modelRevision==result->modelRevision,
+            "terminal_package_actual_capacitance_witness_mismatch");
+    }
     service.terminalSelectionEvent=event.isNull()?QJsonObject{}:Object(event);service.terminalSelectionTransactions=event.isNull()?0:Count(Object(event).value("native_transactions"));
     for(const auto& v:journal)service.terminalJournal.push_back(Object(v));service.terminalImportedHistory=history;
     return result;

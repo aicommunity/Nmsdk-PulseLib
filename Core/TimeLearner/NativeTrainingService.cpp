@@ -104,7 +104,11 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
         const auto id=NativeTrainingCapacitanceWitnessId(*initialWitness);
         if(capacitanceHistory)
         {
-            const auto& prior=capacitanceHistory->witnesses.at(capacitanceHistory->currentWitnessId);
+            const auto& prior=terminalCapacitanceBoundary?*terminalCapacitanceBoundary:
+                capacitanceHistory->witnesses.at(capacitanceHistory->currentWitnessId);
+            if(terminalCapacitanceBoundary)
+                Require(NativeTrainingCapacitanceWitnessId(prior)==id,
+                    "native_training_terminal_capacitance_boundary_changed_on_restart");
             PreservedBaseline(prior,*initialWitness);
             Require(prior.parameters==initialWitness->parameters,"native_training_capacitance_changed_on_restart");
         }
@@ -128,6 +132,7 @@ void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingA
         for(const auto& key:required)keptWitnesses.emplace(key,capacitanceHistory->witnesses.at(key));
         capacitanceHistory->trialWitnessIds=std::move(keptTrials);capacitanceHistory->witnesses=std::move(keptWitnesses);
     }
+    terminalCapacitanceBoundary.reset();
     plan=std::move(value);plan.search.initialModelRevision=revision;plan.probe.readModelRevision=a.readModelRevision;
     terminalSelectionArchiveRequired=terminalSelectionArchiveRequired || bool(plan.terminalSelection);
     plan.probe.readFullModelRevision=a.readFullModelRevision;
@@ -448,7 +453,7 @@ bool NativeTrainingService::ObserveTrainingRequestAtBoundary(bool requested,bool
     ResetControl();return true;
 }
 void NativeTrainingService::InvalidateTarget()
-{ResetControl();terminalSelectionArchiveRequired=false;terminalJournal.clear();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();
+{ResetControl();terminalSelectionArchiveRequired=false;terminalJournal.clear();terminalCapacitanceBoundary.reset();certificate.reset();references.reset();referenceEvidence.clear();referencePackets.clear();finalPackets.clear();observedPackets.clear();incompleteCaptureConstraint.reset();referenceBinding.clear();retainedEpoch=0;plan={};capacitanceHistory.reset();
  composite.reset();compositeImportedProof.reset();compositeCandidateReferences.reset();compositeSourceBinding={};compositeInitialConfiguration={};compositeOwnerFamily.clear();compositeFinalRun.clear();compositeRecords.clear();compositeReferenceGroups.clear();compositeFinalGroups.clear();
  compositeRecoveryDeliveries.clear();compositeRecoveryRuntime={};compositeRecoveryDeliveryLogIntact=true;
  compositeGroupWitnesses.clear();compositeGroupTrialWitnessIds.clear();compositeCapacitance.reset();
@@ -470,7 +475,7 @@ void NativeTrainingService::RestoreBoundary(NativeTrainingPlan value,std::vector
     references=proof.references;certificate=proof.certificate;referenceBinding=revision;retainedEpoch=epoch;attempt=sessions;
     search.reset();measuredBoundary.reset();ClearTerminalSelection();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
     outcome=certificate->Exact()?TrainingStatus::Exact:TrainingStatus::SearchUnresolved;
-    capacitanceHistory.reset();
+    capacitanceHistory.reset();terminalCapacitanceBoundary.reset();
     reason="restored_completed_training_boundary";state=NativeTrainingState::Finished;
 }
 void NativeTrainingService::RestoreStoppedBoundary(NativeTrainingPlan value,std::vector<NativeProbeResult> refs,
@@ -495,7 +500,7 @@ void NativeTrainingService::RestoreStoppedBoundary(NativeTrainingPlan value,std:
     incompleteCaptureConstraint.reset();if(!complete)incompleteCaptureConstraint.emplace(captureRevision,captureEpoch);
     search.reset();measuredBoundary.reset();ClearTerminalSelection();activeAction.reset();waiting=false;referenceProbes=invalidReferences=0;
     outcome=terminal;reason=diagnostic;state=NativeTrainingState::Finished;
-    capacitanceHistory.reset();
+    capacitanceHistory.reset();terminalCapacitanceBoundary.reset();
 }
 void ValidateNativeTrainingCapacitanceBoundary(const NativeTrainingCapacitanceHistory& history,
     const NativeTrainingService& service,const std::string& revision,const QJsonObject& actualState)

@@ -2,6 +2,7 @@
 #include "CompositeTrainingDeclarations.h"
 #include "CandidateWindowTrainingDeclarations.h"
 #include "ModelIdentity.h"
+#include "NativeTerminalPolicyJson.h"
 #include <QJsonArray>
 #include <cmath>
 #include <limits>
@@ -130,7 +131,9 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
         (c.recordCapacitanceHistory || c.capacitanceMaximumRelativeChange==0.),"invalid_configured_capacitance_history_policy");
     for(double value:{c.search.tolerances.amplitudeAbsolute,c.search.tolerances.amplitudeRelative,c.search.tolerances.sync})
         Require(std::isfinite(value) && value>=0.,"invalid_configured_native_tolerance");
-    NativeTrainingPlan plan;auto& p=plan.protocol;p.schemaVersion=3;
+    NativeTrainingPlan plan;plan.terminalSelection=c.terminalSelection;
+    if(plan.terminalSelection)ValidateNativeTerminalSelectionPolicy(*plan.terminalSelection);
+    auto& p=plan.protocol;p.schemaVersion=3;
     p.routing=c.model.branch?ProbeRouting::BranchSoloBurst:ProbeRouting::ClassicBurst;
     p.revision=c.protocolRevision;p.sampleId=c.sampleId;p.originStimulusId="pulse0";
     p.maximumSampleGap=c.maximumSampleGap;p.minimumAmplitude=c.minimumAmplitude;p.stimulusProfile=c.stimulusProfile;
@@ -224,6 +227,15 @@ CapacitanceSearchPolicy DecodeCapacitanceSearchPolicy(const QJsonObject& object)
 QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 {
     MakeConfiguredNativeTrainingPlan(c);
+    if(c.terminalSelection) {
+        auto base=c;base.terminalSelection.reset();auto result=EncodeConfiguredNativeTraining(base);
+        const QJsonValue baseSchema=result.value("schema_version");
+        Require(baseSchema.toInt()>=1 && baseSchema.toInt()<=8,"terminal_configuration_base_schema");
+        // base_schema_version belongs to existing composite/recovery envelopes.
+        // Keep it unchanged and use a separate outer-envelope discriminator.
+        result["terminal_base_schema_version"]=baseSchema;result["schema_version"]=9;
+        result["terminal_selection"]=EncodeNativeTerminalSelectionPolicy(*c.terminalSelection);return result;
+    }
     if(c.candidateWindowPolicy) {
         auto base=c;base.composite.reset();base.candidateWindowPolicy.reset();
         base.search.invalidMeasurementRecovery=InvalidMeasurementRecovery::RetrySameCandidate;
@@ -300,6 +312,14 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
 {
     const int schema=Int(o["schema_version"]);auto fields=o;
+    if(schema==9) {
+        const int base=Int(o.value("terminal_base_schema_version"));
+        Require(base>=1 && base<=8,"terminal_configuration_base_schema");
+        const auto policy=DecodeNativeTerminalSelectionPolicy(Object(o.value("terminal_selection")));
+        fields.remove("terminal_base_schema_version");fields.remove("terminal_selection");fields["schema_version"]=base;
+        auto c=DecodeConfiguredNativeTraining(fields);Require(!c.terminalSelection,"recursive_terminal_configuration");
+        c.terminalSelection=policy;MakeConfiguredNativeTrainingPlan(c);return c;
+    }
     if(schema==8) {
         Require(Text(o["invalid_measurement_recovery"])=="advance_rejected_candidate_window",
             "unsupported_candidate_window_recovery_envelope");
@@ -395,6 +415,7 @@ ConfiguredNativeTraining CaptureCompositeInitialConfiguration(const NativeModelS
     c.maximumReferenceProbes=plan.maximumReferenceProbes;c.maximumInvalidReferenceProbes=plan.maximumInvalidReferenceProbes;
     c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
     c.capacitanceMaximumRelativeChange=c.recordCapacitanceHistory?capacitanceMaximumRelativeChange:0.;c.composite=plan.composite;
+    c.terminalSelection=plan.terminalSelection;
     MakeConfiguredNativeTrainingPlan(c);return c;
 }
 ConfiguredNativeTraining CaptureCandidateWindowInitialConfiguration(const NativeModelSpec& declaration,const NativeTrainingPlan& plan,
@@ -421,7 +442,7 @@ ConfiguredNativeTraining CaptureCandidateWindowInitialConfiguration(const Native
     c.maximumReferenceProbes=plan.maximumReferenceProbes;c.maximumInvalidReferenceProbes=plan.maximumInvalidReferenceProbes;
     c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
     c.capacitanceMaximumRelativeChange=c.recordCapacitanceHistory?capacitanceMaximumRelativeChange:0.;
-    c.composite=plan.composite;c.candidateWindowPolicy=method.candidateWindowPolicy;
+    c.composite=plan.composite;c.candidateWindowPolicy=method.candidateWindowPolicy;c.terminalSelection=plan.terminalSelection;
     const auto reconstructed=MakeConfiguredNativeTrainingPlan(c);
     // Cold7 declares canonical input/stimulus IDs, origin and source pattern.
     // A valid low-level protocol can use other values, but this configuration

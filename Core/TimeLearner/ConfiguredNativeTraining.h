@@ -32,6 +32,9 @@ struct ConfiguredNativeTraining {
     // Cold7 only. Presence requires explicit common policy2; the resulting
     // protocol5 owns the authoritative full measurement declaration.
     std::optional<CandidateWindowPolicy> candidateWindowPolicy;
+    // Orthogonal schema9 envelope over a complete schema1..8 declaration.
+    // Absence preserves the legacy no-terminal-selection configuration.
+    std::optional<NativeTerminalSelectionPolicy> terminalSelection;
 };
 QJsonObject EncodeNativeModelSpec(const NativeModelSpec& model);
 NativeModelSpec DecodeNativeModelSpec(const QJsonObject& object);

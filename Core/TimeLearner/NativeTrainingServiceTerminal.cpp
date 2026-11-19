@@ -1,6 +1,7 @@
 #include "NativeTrainingService.h"
 #include "NativeMeasuredTrainingBoundary.h"
 #include "ProbeEvidenceJson.h"
+#include <QJsonDocument>
 #include <algorithm>
 #include <limits>
 
@@ -138,15 +139,29 @@ void NativeTrainingService::FinalizeMeasuredBoundary(const NativeTrainingAdapter
         const auto afterParameters=adapter.readParameters();if(!current())return;
         event["actual_model_revision"]=QString::fromStdString(afterRevision);
         event["actual_parameters"]=TerminalParameters(afterParameters);
+        // Preserve the source ledger unchanged. The selected shorter graph can
+        // legitimately omit channels that only existed in its later source.
+        auto actualCapacitance=adapter.readCapacitanceWitness?adapter.readCapacitanceWitness():
+            std::optional<TrainingCapacitanceWitness>{};
+        if(!current())return;
+        RequireTerminal(!capacitanceHistory || actualCapacitance.has_value(),
+            "terminal_selection_actual_capacitance_witness_missing");
+        if(actualCapacitance)RequireTerminal(actualCapacitance->modelRevision==afterRevision,
+            "terminal_selection_actual_capacitance_revision_mismatch");
         certificate.reset();
         if(changed.model.status==NativeModelBuildStatus::Adopted) {
             RequireTerminal(afterRevision==selection.candidate.modelRevision && afterParameters==selection.candidate.fullParameters,
                 "terminal_selection_committed_model_mismatch");
+            if(actualCapacitance)RequireTerminal(QJsonDocument::fromJson(QByteArray::fromStdString(
+                actualCapacitance->nativeStateJson)).object()==retained->CapacitanceState(),
+                "terminal_selection_actual_capacitance_state_mismatch");
+            terminalCapacitanceBoundary=std::move(actualCapacitance);
             compositeCapacitance.swap(selectedCapacitance);referenceBinding=afterRevision;
             publish(changed.transactions?"restored":"already_current","");return;
         }
         RequireTerminal(!changed.model.modelMayHaveChanged && afterRevision==sourceRevision && afterParameters==sourceParameters,
             "terminal_selection_failed_without_verified_rollback");
+        terminalCapacitanceBoundary=std::move(actualCapacitance);
         referenceBinding=afterRevision;
         publish(changed.rollbackSucceeded?"rolled_back":
             (changed.model.reason=="terminal_selection_finalization_time_budget_exhausted"?"budget_exhausted":"rejected"),changed.model.reason);

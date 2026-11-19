@@ -207,6 +207,10 @@ private:
     bool terminalSelectionArchiveRequired=false;
     std::optional<TrainingAction> activeAction;
     std::optional<NativeTrainingCapacitanceHistory> capacitanceHistory;
+    // Actual C0 after full terminal graph restoration, separate from the last
+    // historical source witness. Survives ResetControl for warm admission;
+    // never restores live authority or invents later-grown channel baselines.
+    std::optional<TrainingCapacitanceWitness> terminalCapacitanceBoundary;
     std::shared_ptr<NativeCompositeTrainingAttempt> composite;
     std::shared_ptr<const CompositePortableTrainingProof> compositeImportedProof;
     std::shared_ptr<const CandidateWindowReferenceSet> compositeCandidateReferences;

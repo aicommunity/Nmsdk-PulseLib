@@ -6,8 +6,8 @@
 #include <stdexcept>
 
 namespace NMSDK::TimeLearner {
-// Explicit native-plan capability. Cold JSON configuration does not yet enable
-// it: portable terminal-transition export/import must be bound separately.
+// Explicit native-plan/schema9 declaration. Schemas1..8 do not enable it.
+// Deployment still requires the matching runtime/analysis acceptance.
 struct NativeTerminalSelectionPolicy {
     double maximumWallSeconds=30.;
     static constexpr std::size_t MaximumTransactions=2; // commit plus reserved rollback

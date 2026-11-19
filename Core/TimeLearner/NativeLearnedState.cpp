@@ -86,7 +86,7 @@ ConfiguredNativeTraining Configuration(const NativeModelSpec& declaration,const 
     for(const auto& w:plan.inputWindows)c.windows.emplace_back(w.begin,w.end);
     c.search=plan.search;c.search.initialModelRevision.clear();c.search.initialModelEpoch=0;
     c.maximumReferenceProbes=plan.maximumReferenceProbes;c.maximumInvalidReferenceProbes=plan.maximumInvalidReferenceProbes;
-    c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;
+    c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;c.terminalSelection=plan.terminalSelection;
     c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
     if(c.recordCapacitanceHistory)
     {

@@ -56,3 +56,25 @@ Native probe и scheduler уже считают pending physics только в�
 с действующим условием обоих learner: pending && trim>0. Флаг не сбрасывается,
 параметры модели не переписываются; включённый pending trim и PostTune остаются
 запрещены. Отдельная native приёмка исправления ещё впереди.
+
+В рабочем коде подготовлена cold configuration9: плоский явный terminal_selection
+поверх неизменённой schema1–8 с отдельным terminal_base_schema_version.
+Существующий base_schema_version composite/recovery сохраняется. Один codec
+политики используется конфигурацией и package8. Историческая конфигурация
+описывает её source attempt; при DATA import текущая политика берётся из
+outer terminal_policy без изменения старых измерений. Отсутствующая политика
+не включается автоматически. Codecs, configured owner ticks и DATA readers
+ещё требуют серверной приёмки. Console execution/publication integration
+не завершена; корневой runner явно отклоняет cold9 до её реализации.
+
+Native portable A5 завершён:59/60 исходных checks PASS; единственный отказ —
+Classic C0 fresh-process warm admission. Исторический source L3 содержит
+baseline нового сегмента, а восстановленная выбранная модель L2 корректно
+его не содержит. Проверка ошибочно требовала L3 inventory у actual L2.
+Контроллер теперь удерживает отдельный фактический C0 witness после native
+restore/import, сохраняет его через ResetControl и проверяет точное совпадение
+при warm admission. Историческая ledger не переписывается; новый attempt
+сохраняет исходные reference witnesses и actual current witness. Retarget и
+обычный boundary import очищают этот дополнительный DATA-контекст.
+Source и actual physics не объединяются, допуски не изменяются. Исправление
+и усиленные fresh-process assertions ожидают серверной проверки.

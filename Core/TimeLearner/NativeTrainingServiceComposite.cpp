@@ -158,6 +158,7 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     }
     compositeRecords=std::move(retainedRecords);compositePrimaryBytes=retainedBytes;
     if(!references){compositeReferenceGroups.clear();compositeReferenceMeasurements.clear();}
+    terminalCapacitanceBoundary.reset();
     plan=std::move(value);startModel=lastModel=m;startWall=lastWall=w;
     terminalSelectionArchiveRequired=terminalSelectionArchiveRequired || bool(plan.terminalSelection);
     retainedEpoch=plan.search.initialModelEpoch;referenceProbes=invalidReferences=0;
@@ -234,6 +235,7 @@ void NativeTrainingService::StartCandidateWindowComposite(NativeTrainingPlan val
     static_assert(std::is_nothrow_move_assignable_v<NativeTrainingPlan>);
     static_assert(std::is_nothrow_swappable_v<decltype(compositeCapacitance)>);
     InvalidateOwnerControlLifetime();
+    terminalCapacitanceBoundary.reset();
     plan=std::move(runtime);composite.swap(actor);compositeSourceBinding.swap(source);compositeInitialConfiguration.swap(initial);
     terminalSelectionArchiveRequired=terminalSelectionArchiveRequired || bool(plan.terminalSelection);
     compositeOwnerFamily.swap(family);compositeRecords.swap(records);compositePrimaryBytes=bytes;compositeCapacitance.swap(preparedCapacitance);
