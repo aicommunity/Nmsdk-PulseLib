@@ -48,3 +48,11 @@ selections, проверяет отсутствие потерянного prima
 Исправление ожидает отдельной серверной приёмки. Warm regression теперь должна
 принять реальное новое logical measurement перед stop/export/import, а не только
 выполнить немедленный Start/Stop. Protocol5 уже удерживает весь свой archive.
+
+Другой отказ A3 затронул четыре completed plain cases на штатно построенном
+графе: legacy Build оставлял CapApplyPending=true при SyncCapacitanceTrim=0.
+Native probe и scheduler уже считают pending physics только включённый trim,
+но snapshot guard ошибочно отвергал сам неактивный sentinel. Guard согласован
+с действующим условием обоих learner: pending && trim>0. Флаг не сбрасывается,
+параметры модели не переписываются; включённый pending trim и PostTune остаются
+запрещены. Отдельная native приёмка исправления ещё впереди.

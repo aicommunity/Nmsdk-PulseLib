@@ -250,7 +250,12 @@ private:
         Require(owner.NativeProbeControl.Status()!=NativeProbeStatus::Queued &&
             owner.NativeProbeControl.Status()!=NativeProbeStatus::Running && !owner.NativeProbeControl.Result(),
             "measured_boundary_probe_not_consumed");
-        Require(!owner.CapApplyPending && !owner.PostTuneFreeRunActive && !owner.PostTuneInferenceMidPending,
+        // Legacy Build leaves this sentinel set even when C-trim is Off.
+        // Match NativeProbeModelBindings and the native scheduler: only an
+        // enabled, pending trim is competing physical control. Do not clear
+        // the flag or write the effective model merely to permit a snapshot.
+        Require(!(owner.CapApplyPending && owner.SyncCapacitanceTrim.GetData()>0) &&
+            !owner.PostTuneFreeRunActive && !owner.PostTuneInferenceMidPending,
             "measured_boundary_other_control_active");
     }
     template<class Owner> static auto Mirrors(Owner& o)
