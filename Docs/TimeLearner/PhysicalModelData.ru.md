@@ -103,6 +103,10 @@ Fixed4/Window5, N0/N1. Дополнительный fresh storage owner долж
 certificate/search. Источник не теряет собственное состояние. Все отсчёты
 двух native probes сохраняются и независимо сравниваются Python reader.
 Допуск≤1e−12 относится только к roundtrip response, не к обучению.
+Solo DATA после PrepareNativePhysicalModelData устанавливается штатным
+InstallNativePreparedModel. Публичный ImportNativePhysicalModelData остаётся
+только frozen входом после явного recognition conversion; implicit solo
+conversion по-прежнему отвергается.
 
 Дополнительно проверяются явная solo→recognition conversion и frozen DATA
 import/snapshot без history siblings. Полная frozen waveform/Console проверка
