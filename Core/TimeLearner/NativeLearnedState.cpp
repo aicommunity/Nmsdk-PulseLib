@@ -181,7 +181,7 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
 }
 static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
     int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance,
-    const NativeHistoricalExportBoundary* historical=nullptr)
+    const NativeHistoricalExportBoundary* historical=nullptr,QJsonObject* checkedSummary=nullptr)
 {
     if(!historical && service.RequiresTerminalSelectionArchive())
         return NativeTerminalStateFactory::Export(owner,declaration,service,actual,version,calculateMode,structureMode,implementationId,capacitance).learnedState;
@@ -189,7 +189,7 @@ static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeMod
     else Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     if(service.Plan().protocol.schemaVersion==5) {
         if(historical)return NativeCandidateWindowStateFactory::ExportHistorical(owner,declaration,service,actual,
-            version,calculateMode,structureMode,implementationId,capacitance,*historical);
+            version,calculateMode,structureMode,implementationId,capacitance,*historical,checkedSummary);
         if(RequiresCandidateWindowRecoveryBoundary(service))return NativeCandidateWindowStateFactory::ExportRecovery(owner,declaration,service,actual,
             version,calculateMode,structureMode,implementationId,capacitance);
         return NativeCandidateWindowStateFactory::Export(owner,declaration,service,actual,
@@ -303,8 +303,15 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
 {return ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,&capacitance);}
 QJsonObject ExportNativeHistoricalLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
     const std::vector<InputParameters>& parameters,int version,int mode,int structure,const std::string& implementation,
-    const NativeCapacitanceCorrection* capacitance,const NativeHistoricalExportBoundary& historical)
-{return ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,mode,structure,implementation,capacitance,&historical);}
+    const NativeCapacitanceCorrection* capacitance,const NativeHistoricalExportBoundary& historical,QJsonObject* checkedSummary)
+{
+    auto package=ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,mode,structure,implementation,capacitance,&historical,checkedSummary);
+    // Protocol5 can reuse the archive/recovery proof that the export just
+    // validated. Older protocols have no such expensive summary replay.
+    if(checkedSummary && service.Plan().protocol.schemaVersion!=5)
+        *checkedSummary=EncodeNativeHistoricalTrainingState(service,package.value("model_revision").toString().toStdString(),parameters);
+    return package;
+}
 NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
     const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
     const NativeCapacitanceCorrection* capacitance)

@@ -12,5 +12,10 @@ public:
         RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string&);
     static QJsonObject Summary(const NativeTrainingService&,const std::string&,
         const std::vector<InputParameters>&);
+private:
+    // Only Export supplies this view, from its own validated historical
+    // boundary. Public Summary still independently checks historical DATA.
+    static QJsonObject SummaryImpl(const NativeTrainingService&,const std::string&,
+        const std::vector<InputParameters>&,const QJsonObject* checkedHistoricalSummary);
 };
 }

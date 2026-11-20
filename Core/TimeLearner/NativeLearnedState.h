@@ -48,7 +48,7 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
 QJsonObject ExportNativeHistoricalLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService&,const std::vector<InputParameters>&,int controllerVersion,
     int calculateMode,int structureBuildMode,const std::string& implementationId,
-    const NativeCapacitanceCorrection*,const NativeHistoricalExportBoundary&);
+    const NativeCapacitanceCorrection*,const NativeHistoricalExportBoundary&,QJsonObject* checkedSummary=nullptr);
 NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection* capacitance=nullptr);

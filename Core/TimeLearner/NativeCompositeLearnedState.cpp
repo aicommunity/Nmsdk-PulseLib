@@ -373,9 +373,9 @@ QJsonObject NativeCandidateWindowStateFactory::ExportRecovery(RDK::UNet& owner,c
 }
 QJsonObject NativeCandidateWindowStateFactory::ExportHistorical(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
-    const std::string& implementation,const NativeCapacitanceCorrection* capacitance,const NativeHistoricalExportBoundary& historical) {
+    const std::string& implementation,const NativeCapacitanceCorrection* capacitance,const NativeHistoricalExportBoundary& historical,QJsonObject* checkedSummary) {
     return ExportImpl(owner,declaration,service,actual,version,mode,structure,implementation,capacitance,
-        RequiresCandidateWindowRecoveryBoundary(service),nullptr,&historical);
+        RequiresCandidateWindowRecoveryBoundary(service),checkedSummary,&historical);
 }
 NativeTrainingExport NativeCandidateWindowStateFactory::ExportBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
@@ -459,8 +459,8 @@ QJsonObject NativeCandidateWindowStateFactory::ExportImpl(RDK::UNet& owner,const
         {"neuron",physical},{"capacitance_state",c0}};
     if(recovery)package["recovery_ledger"]=recoveryLedger;
     package["sha256"]=NmsdkTools::CanonicalModelDataSha256(package);
-    if(trainingSummary)*trainingSummary=recovery?CompositeSummary<5,8>(service,revision,actual,&recoveryLedger):
-        CompositeSummary<5,7>(service,revision,actual);
+    if(trainingSummary)*trainingSummary=recovery?CompositeSummary<5,8>(service,revision,actual,&recoveryLedger,historical!=nullptr):
+        CompositeSummary<5,7>(service,revision,actual,nullptr,historical!=nullptr);
     return package;
 }
 void NativeCandidateWindowStateFactory::Restore(NativeTrainingService& service,CandidateWindowPortableTrainingProof proof,

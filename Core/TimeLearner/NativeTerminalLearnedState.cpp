@@ -153,7 +153,7 @@ NativeTrainingExport NativeTerminalStateFactory::Export(UNet& owner,const Native
     std::vector<int> positions;for(const auto& p:parameters)positions.push_back(p.length);
     const auto inspected=InspectNativeLearnerModel(owner,declaration,positions);Require(inspected.status==NativeModelBuildStatus::Adopted && inspected.modelRevision==revision && inspected.effective==parameters,"terminal_export_actual_readback");
     const auto current=service.TerminalSelectionEvent().isEmpty()?QJsonValue(QJsonValue::Null):QJsonValue(service.TerminalSelectionEvent());const auto journal=Journal(service);
-    QJsonObject history=service.terminalImportedHistory;
+    QJsonObject history=service.terminalImportedHistory,checkedHistoricalSummary;
     if(history.isEmpty()){
         const auto source=service.TerminalSourceBoundary();std::unique_ptr<SourceOwner> privateSource;
         UNet* sourceOwner=&owner;QJsonObject sourceC=capacitance?EncodeNativeCapacitanceState(*capacitance,revision):QJsonObject{};
@@ -167,7 +167,7 @@ NativeTrainingExport NativeTerminalStateFactory::Export(UNet& owner,const Native
         if(!sourceC.isEmpty()){std::string sourceRevision;sourceCorrection=ParseNativeCapacitanceState(QJsonDocument(sourceC).toJson(QJsonDocument::Compact).toStdString(),sourceRevision);
             Require(sourceRevision==String(sourceIdentity.value("sha256")),"terminal_export_source_C_revision");}
         history=ExportNativeHistoricalLearnedState(*sourceOwner,declaration,service,sourceParameters,version,mode,structure,implementation,
-            sourceCorrection?&*sourceCorrection:nullptr,boundary);
+            sourceCorrection?&*sourceCorrection:nullptr,boundary,&checkedHistoricalSummary);
     }
     Require(history.value("implementation_id")==QJsonValue(Text(implementation)) && history.value("controller_version")==QJsonValue(version) &&
         history.value("calculate_mode")==QJsonValue(mode) && history.value("structure_build_mode")==QJsonValue(structure),"terminal_export_history_options");
@@ -189,7 +189,8 @@ NativeTrainingExport NativeTerminalStateFactory::Export(UNet& owner,const Native
         {"dataset",NmsdkTools::ExportDatasetSnapshot(dataset.Get())},{"neuron",physical},{"capacitance_state",c0}};
     package["sha256"]=NmsdkTools::CanonicalModelDataSha256(package);
     Require(service.State()==NativeTrainingState::Finished && NmsdkTools::IdentifyModel(neuron.Get(),ports)==actual && Journal(service)==journal,
-        "terminal_export_boundary_changed");return {package,Summary(service,revision,parameters)};
+        "terminal_export_boundary_changed");
+    return {package,SummaryImpl(service,revision,parameters,checkedHistoricalSummary.isEmpty()?nullptr:&checkedHistoricalSummary)};
 }
 
 std::unique_ptr<PreparedNativeLearnedState> NativeTerminalStateFactory::Prepare(const QJsonObject& package,UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
@@ -255,6 +256,10 @@ std::unique_ptr<PreparedNativeLearnedState> NativeTerminalStateFactory::Prepare(
 }
 
 QJsonObject NativeTerminalStateFactory::Summary(const NativeTrainingService& service,const std::string& revision,const std::vector<InputParameters>& parameters)
+{return SummaryImpl(service,revision,parameters,nullptr);}
+
+QJsonObject NativeTerminalStateFactory::SummaryImpl(const NativeTrainingService& service,const std::string& revision,
+    const std::vector<InputParameters>& parameters,const QJsonObject* checkedHistoricalSummary)
 {
     Require(service.RequiresTerminalSelectionArchive(),"terminal_summary_requires_terminal_scope");
     const auto event=service.TerminalSelectionEvent().isEmpty()?QJsonValue(QJsonValue::Null):QJsonValue(service.TerminalSelectionEvent());
@@ -272,7 +277,15 @@ QJsonObject NativeTerminalStateFactory::Summary(const NativeTrainingService& ser
             sourceRevision=String(service.terminalImportedHistory.value("model_revision"));
             sourceParameters=Parameters(service.terminalImportedHistory.value("trained_inputs"),service.Plan().protocol.inputs.size());
         }
-        historical=EncodeNativeHistoricalTrainingState(service,sourceRevision,sourceParameters);
+        if(checkedHistoricalSummary) {
+            Require(checkedHistoricalSummary->value("actual_model_revision")==QJsonValue(Text(sourceRevision)) &&
+                checkedHistoricalSummary->value("actual_parameters")==QJsonValue(Parameters(sourceParameters)) &&
+                checkedHistoricalSummary->value("model_epoch")==Integer(service.TranscriptModelEpoch()) &&
+                checkedHistoricalSummary->value("state")==QJsonValue(NativeTrainingStateName(service.State())) &&
+                checkedHistoricalSummary->value("outcome")==QJsonValue(TrainingStatusName(service.Outcome())) &&
+                checkedHistoricalSummary->value("reason")==QJsonValue(Text(service.Reason())),"terminal_export_checked_summary_binding");
+            historical=*checkedHistoricalSummary;
+        }else historical=EncodeNativeHistoricalTrainingState(service,sourceRevision,sourceParameters);
     }
     QJsonObject result{{"kind","native_training_state_summary"},{"schema_version",9},{"state",NativeTrainingStateName(service.State())},
         {"outcome",TrainingStatusName(service.Outcome())},{"reason",Text(service.Reason())},{"actual_model_revision",Text(revision)},

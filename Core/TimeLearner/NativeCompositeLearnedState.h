@@ -46,7 +46,7 @@ public:
         const std::string& implementationId,const NativeCapacitanceCorrection*);
     static QJsonObject ExportHistorical(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,
         const std::vector<InputParameters>&,int,int,int,const std::string&,
-        const NativeCapacitanceCorrection*,const NativeHistoricalExportBoundary&);
+        const NativeCapacitanceCorrection*,const NativeHistoricalExportBoundary&,QJsonObject* checkedSummary=nullptr);
     static std::unique_ptr<PreparedNativeLearnedState> Prepare(const QJsonObject&,
         RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string& implementationId);
     // Explicit package7 boundary. Legacy Export/Prepare remain package6-only.
