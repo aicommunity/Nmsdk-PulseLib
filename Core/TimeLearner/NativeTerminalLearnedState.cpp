@@ -142,7 +142,8 @@ void ValidateActualEvent(const QJsonValue& value,const QJsonObject& history,cons
 }
 
 NativeTrainingExport NativeTerminalStateFactory::Export(UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
-    const std::vector<InputParameters>& parameters,int version,int mode,int structure,const std::string& implementation,const NativeCapacitanceCorrection* capacitance)
+    const std::vector<InputParameters>& parameters,int version,int mode,int structure,const std::string& implementation,const NativeCapacitanceCorrection* capacitance,
+    const NativeLearnedStateSink& onStateReady)
 {
     Require(service.RequiresTerminalSelectionArchive() && service.State()==NativeTrainingState::Finished && service.SessionAttempt()>0,
         "terminal_export_requires_closed_boundary");
@@ -190,6 +191,14 @@ NativeTrainingExport NativeTerminalStateFactory::Export(UNet& owner,const Native
     package["sha256"]=NmsdkTools::CanonicalModelDataSha256(package);
     Require(service.State()==NativeTrainingState::Finished && NmsdkTools::IdentifyModel(neuron.Get(),ports)==actual && Journal(service)==journal,
         "terminal_export_boundary_changed");
+    if(onStateReady) {
+        onStateReady(package);
+        Require(service.State()==NativeTrainingState::Finished &&
+            Integer(service.SessionAttempt())==package.value("session_attempt") && Integer(service.ModelEpoch())==package.value("model_epoch") &&
+            QJsonValue(TrainingStatusName(service.Outcome()))==package.value("training_outcome") && QJsonValue(Text(service.Reason()))==package.value("reason") &&
+            NmsdkTools::IdentifyModel(neuron.Get(),ports)==actual && NmsdkTools::IdentifyModel(dataset.Get())==actualDataset && Journal(service)==journal,
+            "terminal_export_sink_changed_boundary");
+    }
     return {package,SummaryImpl(service,revision,parameters,checkedHistoricalSummary.isEmpty()?nullptr:&checkedHistoricalSummary)};
 }
 

@@ -315,13 +315,32 @@ QJsonObject ExportNativeHistoricalLearnedState(RDK::UNet& owner,const NativeMode
 NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
     const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
     const NativeCapacitanceCorrection* capacitance)
+{return ExportNativeLearnedBoundary(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,capacitance,{});}
+
+NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
+    const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
+    const NativeCapacitanceCorrection* capacitance,const NativeLearnedStateSink& onStateReady)
 {
     if(service.RequiresTerminalSelectionArchive())return NativeTerminalStateFactory::Export(owner,declaration,service,parameters,
-        version,calculateMode,structureMode,implementation,capacitance);
+        version,calculateMode,structureMode,implementation,capacitance,onStateReady);
     if(service.Plan().protocol.schemaVersion==5)return NativeCandidateWindowStateFactory::ExportBoundary(owner,declaration,service,parameters,
-        version,calculateMode,structureMode,implementation,capacitance);
+        version,calculateMode,structureMode,implementation,capacitance,onStateReady);
     NativeTrainingExport result;
     result.learnedState=ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,capacitance);
+    if(onStateReady) {
+        const auto state=service.State();const auto outcome=service.Outcome();const auto reason=service.Reason();
+        const auto epoch=service.ModelEpoch(),attempt=service.SessionAttempt();
+        auto neuron=owner.GetComponentL<NPulseNeuron>("Neuron",true);
+        auto dataset=owner.GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
+        auto generator=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+        const auto identity=NmsdkTools::IdentifyModel(neuron.Get(),{{&generator->Output,"burst"}});
+        const auto datasetIdentity=NmsdkTools::IdentifyModel(dataset.Get());
+        onStateReady(result.learnedState);
+        Require(service.State()==state && service.Outcome()==outcome && service.Reason()==reason &&
+            service.ModelEpoch()==epoch && service.SessionAttempt()==attempt &&
+            NmsdkTools::IdentifyModel(neuron.Get(),{{&generator->Output,"burst"}})==identity && NmsdkTools::IdentifyModel(dataset.Get())==datasetIdentity,
+            "learned_export_sink_changed_boundary");
+    }
     result.summary=EncodeNativeTrainingState(service,result.learnedState["model_revision"].toString().toStdString(),parameters);
     return result;
 }

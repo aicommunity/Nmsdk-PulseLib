@@ -7,7 +7,7 @@ namespace NMSDK::TimeLearner {
 class NativeTerminalStateFactory {
 public:
     static NativeTrainingExport Export(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,
-        const std::vector<InputParameters>&,int,int,int,const std::string&,const NativeCapacitanceCorrection*);
+        const std::vector<InputParameters>&,int,int,int,const std::string&,const NativeCapacitanceCorrection*,const NativeLearnedStateSink& onStateReady={});
     static std::unique_ptr<PreparedNativeLearnedState> Prepare(const QJsonObject&,
         RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string&);
     static QJsonObject Summary(const NativeTrainingService&,const std::string&,

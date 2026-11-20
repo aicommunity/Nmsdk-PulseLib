@@ -379,16 +379,16 @@ QJsonObject NativeCandidateWindowStateFactory::ExportHistorical(RDK::UNet& owner
 }
 NativeTrainingExport NativeCandidateWindowStateFactory::ExportBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
-    const std::string& implementation,const NativeCapacitanceCorrection* capacitance) {
+    const std::string& implementation,const NativeCapacitanceCorrection* capacitance,const NativeLearnedStateSink& onStateReady) {
     NativeTrainingExport result;
     result.learnedState=ExportImpl(owner,declaration,service,actual,version,mode,structure,implementation,capacitance,
-        RequiresCandidateWindowRecoveryBoundary(service),&result.summary);
+        RequiresCandidateWindowRecoveryBoundary(service),&result.summary,nullptr,onStateReady);
     return result;
 }
 QJsonObject NativeCandidateWindowStateFactory::ExportImpl(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& actual,int version,int mode,int structure,
     const std::string& implementation,const NativeCapacitanceCorrection* capacitance,bool recovery,QJsonObject* trainingSummary,
-    const NativeHistoricalExportBoundary* historical) {
+    const NativeHistoricalExportBoundary* historical,const NativeLearnedStateSink& onStateReady) {
     if(historical)historical->Validate(owner,service,actual);
     else Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     if(!recovery)Require(!RequiresCandidateWindowRecoveryBoundary(service),
@@ -445,9 +445,6 @@ QJsonObject NativeCandidateWindowStateFactory::ExportImpl(RDK::UNet& owner,const
         service.CompositeMeasurements().size()==proof.Archive().Records().size() &&
         service.CompositeReferenceGroupIds()==proof.Archive().ReferenceGroups() && service.CompositeFinalGroupIds()==proof.Archive().FinalGroups() &&
         Object(Object(physical["graph"])["identity"])["sha256"]==QJsonValue(Text(revision)),"candidate_window_export_boundary_changed");
-    if(recovery && trainingSummary)Require(recoveryLedger==EncodeCandidateWindowRecoveryLedger(
-        service.CandidateWindowRecoveryDeliveries(),proof.Archive(),service.CandidateWindowRecoveryDeliveryLogIntact()),
-        "candidate_window_export_recovery_deliveries_changed");
     QJsonObject package{{"kind",stopped?"timelearner_stopped_state":"timelearner_completed_state"},{"schema_version",recovery?7:6},{"dynamic_checkpoint",false},
         {"state_kind",stopped?"diagnostic":"learned_solo"},{"implementation_id",Text(implementation)},{"controller_version",version},{"calculate_mode",mode},
         {"structure_build_mode",structure},{"configuration",service.CompositeInitialConfiguration()},{"runtime_plan",runtime},
@@ -459,6 +456,17 @@ QJsonObject NativeCandidateWindowStateFactory::ExportImpl(RDK::UNet& owner,const
         {"neuron",physical},{"capacitance_state",c0}};
     if(recovery)package["recovery_ledger"]=recoveryLedger;
     package["sha256"]=NmsdkTools::CanonicalModelDataSha256(package);
+    if(onStateReady) {
+        onStateReady(package);
+        Require(service.State()==NativeTrainingState::Finished && service.SessionAttempt()==boundaryAttempt &&
+            service.ModelEpoch()==epoch && service.Outcome()==boundaryOutcome && service.Reason()==boundaryReason &&
+            NmsdkTools::IdentifyModel(neuron.Get(),ports)==identity &&
+            service.CompositeMeasurements().size()==proof.Archive().Records().size(),"candidate_window_export_sink_changed_boundary");
+        CheckDataset(c,dataset,source);
+    }
+    if(recovery && trainingSummary)Require(recoveryLedger==EncodeCandidateWindowRecoveryLedger(
+        service.CandidateWindowRecoveryDeliveries(),proof.Archive(),service.CandidateWindowRecoveryDeliveryLogIntact()),
+        "candidate_window_export_recovery_deliveries_changed");
     if(trainingSummary)*trainingSummary=recovery?CompositeSummary<5,8>(service,revision,actual,&recoveryLedger,historical!=nullptr):
         CompositeSummary<5,7>(service,revision,actual,nullptr,historical!=nullptr);
     return package;

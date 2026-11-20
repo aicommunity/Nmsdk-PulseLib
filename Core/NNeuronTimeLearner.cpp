@@ -4253,25 +4253,31 @@ QJsonObject NNeuronTimeLearner::ExportNativeLearnedState(const std::string& impl
 QJsonObject NNeuronTimeLearner::ExportNativeLearnedState(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance)
 {return ExportNativeLearnedStateWithCapacitance(implementationId,&capacitance);}
 TimeLearner::NativeTrainingExport NNeuronTimeLearner::ExportNativeLearnedBoundary(const std::string& implementationId)
+{return ExportNativeLearnedBoundary(implementationId,TimeLearner::NativeLearnedStateSink{});}
+TimeLearner::NativeTrainingExport NNeuronTimeLearner::ExportNativeLearnedBoundary(const std::string& implementationId,
+ const TimeLearner::NativeLearnedStateSink& onStateReady)
 {
  TimeLearner::NativeTrainingExport result;
- if(NativeLearnedCapacitanceState.isEmpty())result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,nullptr,&result.summary);
+ if(NativeLearnedCapacitanceState.isEmpty())result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,nullptr,&result.summary,onStateReady);
  else {
   std::string revision;
   const auto correction=TimeLearner::ParseNativeCapacitanceState(QJsonDocument(NativeLearnedCapacitanceState).toJson(QJsonDocument::Compact).toStdString(),revision);
-  result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,&correction,&result.summary);
+  result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,&correction,&result.summary,onStateReady);
  }
  return result;
 }
 TimeLearner::NativeTrainingExport NNeuronTimeLearner::ExportNativeLearnedBoundary(const std::string& implementationId,
  const TimeLearner::NativeCapacitanceCorrection& capacitance)
+{return ExportNativeLearnedBoundary(implementationId,capacitance,TimeLearner::NativeLearnedStateSink{});}
+TimeLearner::NativeTrainingExport NNeuronTimeLearner::ExportNativeLearnedBoundary(const std::string& implementationId,
+ const TimeLearner::NativeCapacitanceCorrection& capacitance,const TimeLearner::NativeLearnedStateSink& onStateReady)
 {
  TimeLearner::NativeTrainingExport result;
- result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,&capacitance,&result.summary);
+ result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,&capacitance,&result.summary,onStateReady);
  return result;
 }
 QJsonObject NNeuronTimeLearner::ExportNativeLearnedStateWithCapacitance(const std::string& implementationId,
- const TimeLearner::NativeCapacitanceCorrection* capacitance,QJsonObject* trainingSummary)
+ const TimeLearner::NativeCapacitanceCorrection* capacitance,QJsonObject* trainingSummary,const TimeLearner::NativeLearnedStateSink& onStateReady)
 {
  if(NativeRecognition)throw std::logic_error("native_recognition_state_is_not_learned_solo");
  if(NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Queued || NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Running)
@@ -4281,7 +4287,7 @@ QJsonObject NNeuronTimeLearner::ExportNativeLearnedStateWithCapacitance(const st
  capacitance=resolved?&*resolved:nullptr;
  if(trainingSummary) {
   auto exported=TimeLearner::ExportNativeLearnedBoundary(*this,*NativeModelDeclaration,NativeTrainingControl,ReadNativeParameters(),
-   ControllerVersion.GetData(),CalculateMode.GetData(),StructureBuildMode.GetData(),implementationId,capacitance);
+   ControllerVersion.GetData(),CalculateMode.GetData(),StructureBuildMode.GetData(),implementationId,capacitance,onStateReady);
   *trainingSummary=std::move(exported.summary);return std::move(exported.learnedState);
  }
  if(capacitance)return TimeLearner::ExportNativeLearnedState(*this,*NativeModelDeclaration,NativeTrainingControl,ReadNativeParameters(),

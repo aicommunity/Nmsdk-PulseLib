@@ -30,6 +30,7 @@ See file license.txt for more information
 #include "TimeLearner/NativeTrainingIntent.h"
 #include "TimeLearner/NativeModelBuilder.h"
 #include "TimeLearner/ConfiguredNativeTraining.h"
+#include "TimeLearner/NativeLearnedStateSink.h"
 #include "../../../Rdk/Deploy/Include/rdk.h"
 #include <iostream>
 #include <fstream>
@@ -837,6 +838,8 @@ public: // Methods
  QJsonObject ExportNativeLearnedState(const std::string& implementationId);
  TimeLearner::NativeTrainingExport ExportNativeLearnedBoundary(const std::string& implementationId);
  TimeLearner::NativeTrainingExport ExportNativeLearnedBoundary(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance);
+ TimeLearner::NativeTrainingExport ExportNativeLearnedBoundary(const std::string& implementationId,const TimeLearner::NativeLearnedStateSink& onStateReady);
+ TimeLearner::NativeTrainingExport ExportNativeLearnedBoundary(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance,const TimeLearner::NativeLearnedStateSink& onStateReady);
  QJsonObject ExportNativeLearnedState(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance);
  QJsonObject OwnedNativeCapacitanceState() const {return NativeLearnedCapacitanceState;}
  // Compatibility alias: ownership now also starts at a successful bound edit.
@@ -1034,7 +1037,7 @@ protected:
  std::optional<TimeLearner::NativeModelSpec> NativeModelDeclaration;
  QJsonObject NativeLearnedCapacitanceState;
  QJsonObject ExportNativeLearnedStateWithCapacitance(const std::string& implementationId,
-     const TimeLearner::NativeCapacitanceCorrection* capacitance,QJsonObject* trainingSummary=nullptr);
+     const TimeLearner::NativeCapacitanceCorrection* capacitance,QJsonObject* trainingSummary=nullptr,const TimeLearner::NativeLearnedStateSink& onStateReady={});
  std::optional<TimeLearner::ConfiguredNativeTraining> NativeConfiguredPlan;
  TimeLearner::ConfiguredNativeEvidenceSinks NativeConfiguredSinks;
  std::string NativeConfiguredText;

@@ -4,6 +4,7 @@
 #include "ProbeEvidenceJson.h"
 #include "NativeCapacitanceEdit.h"
 #include "NativeHistoricalExportBoundary.h"
+#include "NativeLearnedStateSink.h"
 
 namespace NMSDK::TimeLearner {
 // One immutable export boundary; summary and model share the same checked evidence.
@@ -52,6 +53,9 @@ QJsonObject ExportNativeHistoricalLearnedState(RDK::UNet& owner,const NativeMode
 NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection* capacitance=nullptr);
+NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
+    const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
+    const std::string& implementationId,const NativeCapacitanceCorrection*,const NativeLearnedStateSink&);
 QJsonObject ParseNativeLearnedState(const std::string& text);
 // Only package8's validating factory can prepare an embedded historical
 // configuration9 source. It remains DATA with no terminal/live control policy;
