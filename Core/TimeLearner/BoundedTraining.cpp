@@ -462,6 +462,31 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
     }
     const auto& bound=config.bounds[input];
     auto proposal=ProposeMeasuredLength(std::move(points),bound.minimumLength,bound.maximumLength,config.tolerances.sync);
+    const std::size_t next=requireResistanceDomains?cursor.domainLength+1:cursor.lengthIndex;
+    if(next>cursor.lengths.size())return;
+    if(!proposal && requireResistanceDomains && config.normalization==Normalization::TipResistance &&
+       measurement.withinTiming && !measurement.withinAmplitude)
+    {
+        // A timing-ready point is not an amplitude solution. After its finite
+        // Rs turn, explore a nearby unvisited geometry rather than returning
+        // directly to the distant initial length mesh. This is a proposal only:
+        // the ordinary N1 cursor still assesses the new effective Rs domain,
+        // applies the native edit and measures a fresh anchor/input pair.
+        std::vector<int> issued(cursor.lengths.begin(),cursor.lengths.begin()+next);
+        UniquePush(issued,measurement.parameters.length);
+        const auto attempts=config.maximumCandidatesPerInput;
+        for(std::size_t i=0;i<attempts;++i)
+        {
+            proposal=ProposeNearestUnvisitedLength(issued,measurement.parameters.length,
+                bound.minimumLength,bound.maximumLength);
+            if(!proposal)break;
+            auto candidate=measurement.fullParameters;candidate[input].length=*proposal;
+            if(PrepareCandidate(candidate))break;
+            // A forbidden shared-bank geometry is not a measured failure or
+            // proof of infeasibility. Skip it in this bounded proposal turn.
+            issued.push_back(*proposal);proposal.reset();
+        }
+    }
     if(!proposal)return;
     if(branchFamily || usedN0Family)
     {
@@ -480,8 +505,7 @@ void BoundedTrainingSession::PrioritizeMeasuredLength(const CandidateEvidence& m
     // Do not interrupt an assessed N1 geometry or bypass its domain checks.
     // The next geometry is still assessed/applied through the native adapter.
     // N0 uses its existing full-vector deduplication and repeated probes.
-    const std::size_t next=requireResistanceDomains?cursor.domainLength+1:cursor.lengthIndex;
-    if(next>cursor.lengths.size() || std::find(cursor.lengths.begin(),cursor.lengths.begin()+next,*proposal)!=cursor.lengths.begin()+next)return;
+    if(std::find(cursor.lengths.begin(),cursor.lengths.begin()+next,*proposal)!=cursor.lengths.begin()+next)return;
     cursor.lengths.erase(std::remove(cursor.lengths.begin()+next,cursor.lengths.end(),*proposal),cursor.lengths.end());
     cursor.lengths.insert(cursor.lengths.begin()+next,*proposal);
 }
@@ -719,7 +743,9 @@ BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandi
                 cursor.n1RejectedCandidates.end(),parameters)!=cursor.n1RejectedCandidates.end())continue;
             cursor.n1RecoveryPreferMinimum=false;
             cursor.visitedDomainCandidates.push_back({cursor.domainScope,parameters});
-            if(interleave)cursor.domainYieldPending=cursor.domainPassIssuedCandidate=true;
+            // A proposal can still be rejected by cross-C-context dedup below.
+            // Charge an issued pass only after actual candidate admission.
+            if(interleave)cursor.domainYieldPending=true;
             cursor.candidateResistanceScope=cursor.domainScope;return DynamicCandidate::Candidate;
         }
         if(FallbackRejectedN1Geometry())continue;
@@ -871,8 +897,19 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
     if(status!=TrainingStatus::Searching && status!=TrainingStatus::Verifying)return {};
     if(armed || compositeArmed)return {};
     if(pending)return pending;
+    // Do not issue another geometry/domain edit when no observation can be
+    // afforded. Otherwise the terminal export contains a newly staged,
+    // unmeasured candidate instead of the state at the last completed probe.
+    if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted,"maximum_probes_exhausted");return {};}
     if(phase==Phase::Candidate)
     {
+        // Every new search point needs a fresh anchor/input pair. An odd last
+        // probe cannot measure that point, so it must not buy a domain/edit
+        // that leaves an unmeasured graph in the terminal export. Repeated N0
+        // measurements already in progress and final verification have their
+        // existing accounting; this does not reserve or replenish a budget.
+        if(config.maximumProbes-probes<2)
+        {Stop(TrainingStatus::BudgetExhausted,"candidate_probe_pair_budget_exhausted");return {};}
         std::vector<InputParameters> candidate;
         auto candidateCapacitance=RestoreTrainingCapacitance(backgroundCapacitance,currentCapacitance);
         bool exhausted=candidates>=config.maximumCandidatesPerInput;
@@ -882,6 +919,8 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
             {
                 const auto next=NextDomainCandidate(candidate);
                 if(next==DynamicCandidate::NeedDomain)return pending;
+                if(next==DynamicCandidate::Candidate && cursor.domainYieldPending)
+                    cursor.domainPassIssuedCandidate=true;
                 exhausted=next==DynamicCandidate::Exhausted;
             }
             else if(!exhausted)exhausted=!NextCandidate(candidate);
@@ -907,11 +946,15 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
                 if(next==DynamicCandidate::Exhausted)
                 {context.exhausted=true;--remainingContexts;AdvanceCapacitanceContext();continue;}
                 candidateCapacitance=CandidateCapacitance(candidate);
+                const std::string modelScope=requireResistanceDomains?
+                    (cursor.candidateResistanceScope.empty()?revision:cursor.candidateResistanceScope):std::string{};
                 const bool duplicate=std::any_of(issuedJointCandidates.begin(),issuedJointCandidates.end(),[&](const auto& issued) {
-                    return issued.first==candidate && EquivalentTrainingCapacitance(issued.second,candidateCapacitance);
+                    return issued.parameters==candidate && issued.modelScope==modelScope &&
+                        EquivalentTrainingCapacitance(issued.capacitance,candidateCapacitance);
                 });
                 if(duplicate){AdvanceCapacitanceContext();continue;}
-                issuedJointCandidates.push_back({candidate,candidateCapacitance});break;
+                if(requireResistanceDomains && cursor.domainYieldPending)cursor.domainPassIssuedCandidate=true;
+                issuedJointCandidates.push_back({candidate,candidateCapacitance,modelScope});break;
             }
         }
         if(exhausted)
@@ -939,7 +982,6 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
             pending->capacitance=std::move(candidateCapacitance);return pending;
         }
     }
-    if(probes>=config.maximumProbes){Stop(TrainingStatus::BudgetExhausted,"maximum_probes_exhausted");return {};}
     if(phase==Phase::Verify)
     {
         auto request=verification->NextRequest();
@@ -1338,7 +1380,14 @@ void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasureme
     }
     PrioritizeMeasuredLength(e);
     const bool improved=!best || Rank(e,config,reference)<Rank(*best,config,reference);
-    if(improved)best=e;
+    if(improved)
+    {
+        const auto previous=selectedMeasuredBoundary?selectedMeasuredBoundary->serial:0;
+        if(previous==std::numeric_limits<std::size_t>::max())
+        {Stop(TrainingStatus::InvalidModel,"measured_boundary_selection_serial_exhausted");return;}
+        MeasuredCandidateSelection selected{previous+1,sweep,position,e};
+        best=e;selectedMeasuredBoundary=std::move(selected);
+    }
     // A different timing-ready geometry may start far from the amplitude
     // target. Its local search must not be gated by another geometry's best.
     // Global ranking and the independent final-verification gate are unchanged.

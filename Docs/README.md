@@ -1,6 +1,7 @@
 # Nmsdk-PulseLib - Документация
 
 - [Диагностические подмножества импульсов: native API, приёмка ещё открыта](StimulusSubsetDiagnostic.ru.md)
+- [Полная физическая модель отдельно от истории: DATA export, проверки ещё открыты](TimeLearner/PhysicalModelData.ru.md)
 
 ## RU
 

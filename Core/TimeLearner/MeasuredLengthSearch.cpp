@@ -6,6 +6,25 @@
 #include <tuple>
 
 namespace NMSDK::TimeLearner {
+std::optional<int> ProposeNearestUnvisitedLength(std::vector<int> issued,
+    int centerLength,int minimumLength,int maximumLength)
+{
+    if(centerLength<1 || minimumLength<1 || maximumLength<minimumLength)
+        throw std::invalid_argument("invalid_nearest_exploration_length_domain");
+    std::sort(issued.begin(),issued.end());
+    issued.erase(std::unique(issued.begin(),issued.end()),issued.end());
+    const auto center=std::int64_t(std::clamp(centerLength,minimumLength,maximumLength));
+    const auto visited=[&](std::int64_t length) {
+        return std::binary_search(issued.begin(),issued.end(),int(length));
+    };
+    auto below=center,above=center;
+    while(below>=minimumLength && visited(below))--below;
+    while(above<=maximumLength && visited(above))++above;
+    if(below<minimumLength && above>maximumLength)return {};
+    if(above>maximumLength || (below>=minimumLength && center-below<=above-center))return int(below);
+    return int(above);
+}
+
 std::optional<int> ProposeUnvisitedLength(std::vector<int> issued,int minimumLength,int maximumLength)
 {
     if(minimumLength<1 || maximumLength<minimumLength)

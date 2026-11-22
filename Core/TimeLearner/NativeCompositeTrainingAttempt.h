@@ -104,6 +104,9 @@ private:
     std::function<double()> actualModelTime;
     std::function<RDK::UModuleLifecycleObservation()> observeOwner;
     std::function<void()> requireOwnerControl;
+    // Only the actual owner's validated package8 boundary may admit an old
+    // source proof at a later physical epoch. Raw portable DATA alone cannot.
+    std::function<std::optional<std::string>(const CompositePortableTrainingProof&)> importedTerminalRevision;
     std::function<std::optional<TrainingCapacitanceWitness>()> capacitanceWitness;
     std::function<std::vector<InputParameters>()> readWindowParameters;
     NativeMatchedOmissionAdapter adapter;

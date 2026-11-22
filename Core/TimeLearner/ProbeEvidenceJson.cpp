@@ -1,4 +1,5 @@
 #include "ProbeEvidenceJson.h"
+#include "NativeTerminalLearnedState.h"
 #include "NativeCompositeLearnedState.h"
 #include "CompositeTrainingDeclarations.h"
 #include "CandidateWindowTrainingDeclarations.h"
@@ -280,14 +281,18 @@ std::string NativeTrainingCapacitanceWitnessId(const TrainingCapacitanceWitness&
 {
     return NmsdkTools::CanonicalModelDataSha256(EncodeNativeTrainingCapacitanceWitness(witness)).toStdString();
 }
-QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& actualModelRevision,
-                                      const std::vector<InputParameters>& actualParameters)
+static QJsonObject EncodeNativeTrainingStateImpl(const NativeTrainingService& service,const std::string& actualModelRevision,
+                                      const std::vector<InputParameters>& actualParameters,bool historicalTranscript)
 {
+    if(!historicalTranscript && service.RequiresTerminalSelectionArchive())return NativeTerminalStateFactory::Summary(service,actualModelRevision,actualParameters);
+    const auto epoch=historicalTranscript?service.TranscriptModelEpoch():service.ModelEpoch();
     if(service.Plan().protocol.schemaVersion==5) {
+        if(historicalTranscript)return EncodeNativeCandidateWindowTrainingTranscript(service,actualModelRevision,actualParameters);
         if(RequiresCandidateWindowRecoveryBoundary(service))return EncodeNativeCandidateWindowRecoveryTrainingState(service,actualModelRevision,actualParameters);
         return EncodeNativeCandidateWindowTrainingState(service,actualModelRevision,actualParameters);
     }
-    if(service.Plan().protocol.schemaVersion==4)return EncodeNativeCompositeTrainingState(service,actualModelRevision,actualParameters);
+    if(service.Plan().protocol.schemaVersion==4)return historicalTranscript?EncodeNativeCompositeTrainingTranscript(service,actualModelRevision,actualParameters):
+        EncodeNativeCompositeTrainingState(service,actualModelRevision,actualParameters);
     const auto parameters=Parameters;
     const auto& cfg=service.Configuration();
     const auto& history=service.CapacitanceHistory();
@@ -309,7 +314,7 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         {"state",NativeTrainingStateName(service.State())},{"outcome",TrainingStatusName(service.Outcome())},
         {"reason",Text(service.Reason())},{"model_state_kind",
             service.State()==NativeTrainingState::Finished && !service.Certificate()?"diagnostic":"learned_solo"},
-        {"actual_model_revision",Text(actualModelRevision)},{"model_epoch",Count(service.ModelEpoch())},
+        {"actual_model_revision",Text(actualModelRevision)},{"model_epoch",Count(epoch)},
         {"actual_parameters",parameters(actualParameters)},{"tolerances",tolerances},
         {"reference_probes",Count(service.IssuedReferenceProbes())},{"contains_evaluation_verdict",false}};
     // A model boundary retains physical parameters and final proof, not the
@@ -446,7 +451,7 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
     {
         result["certificate"]=EncodeTrainingCertificate(*certificate);
         result["certificate_matches_actual_model"]=service.References() && certificate->Matches(actualModelRevision,
-            *service.References(),cfg.tolerances,ModelStateKind::LearnedSolo,service.ModelEpoch());
+            *service.References(),cfg.tolerances,ModelStateKind::LearnedSolo,epoch);
     }
     if(cfg.capacitanceSearch)
     {
@@ -476,5 +481,16 @@ QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const
         result["candidate_recovery_events"]=events;
     }
     return result;
+}
+QJsonObject EncodeNativeTrainingState(const NativeTrainingService& service,const std::string& revision,
+    const std::vector<InputParameters>& parameters)
+{return EncodeNativeTrainingStateImpl(service,revision,parameters,false);}
+QJsonObject EncodeNativeHistoricalTrainingState(const NativeTrainingService& service,const std::string& revision,
+    const std::vector<InputParameters>& parameters)
+{
+    if(!service.RequiresTerminalSelectionArchive() || service.State()!=NativeTrainingState::Finished || revision.empty() ||
+        (service.Search() && (service.Search()->ModelRevision()!=revision || service.Search()->Parameters()!=parameters)))
+        throw std::invalid_argument("historical_summary_requires_closed_source_transcript");
+    return EncodeNativeTrainingStateImpl(service,revision,parameters,true);
 }
 }

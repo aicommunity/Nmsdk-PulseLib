@@ -1,13 +1,15 @@
 #pragma once
 #include "NativeModelEditor.h"
 #include "NativeCompositeTrainingAttempt.h"
+#include "NativeTerminalSelection.h"
 #include <functional>
 #include <memory>
 #include <utility>
 #include <set>
 
 namespace NMSDK::TimeLearner {
-enum class NativeTrainingState { Idle, CapturingReferences, Searching, Finished };
+class NativeMeasuredTrainingBoundary;
+enum class NativeTrainingState { Idle, CapturingReferences, Searching, Finished, Finalizing };
 double NativeTrainingWallTime();
 
 struct NativeTrainingPlan {
@@ -26,6 +28,7 @@ struct NativeTrainingPlan {
     std::optional<NativeCompositeTrainingPolicy> composite={};
     std::function<void(const NativeCompositeMeasurementRecord&)> compositeSink;
     std::function<void(const NativeCompositeMeasurementRecord&)> beforeCompositeConsume;
+    std::optional<NativeTerminalSelectionPolicy> terminalSelection;
 };
 // Retained across control reset/warm attempts; not a physical checkpoint.
 struct NativeCandidateWindowRecoveryDelivery {
@@ -66,6 +69,11 @@ struct NativeTrainingAdapter {
         NativeCandidateWindowAttemptDeclaration,double,double)> createCandidateWindowComposite;
     std::function<std::shared_ptr<NativeCompositeTrainingAttempt>(const DecodedNativeCompositeArchive&,CompositeAttemptLimits,
         NativeCandidateWindowAttemptDeclaration,double,double)> createImportedCandidateWindowComposite;
+    // Actual component bindings retain the complete physical model when the
+    // controller selects a measured point. Pure control fixtures may omit it.
+    std::function<std::shared_ptr<const NativeMeasuredTrainingBoundary>(const MeasuredCandidateSelection&)> captureMeasuredBoundary;
+    std::function<NativeTerminalGraphResult(const NativeMeasuredTrainingBoundary&,const NativeTerminalSelectionPermit&)> restoreMeasuredBoundary;
+    std::function<std::shared_ptr<const NativeTerminalSourceBoundary>()> captureTerminalSource;
 };
 
 struct NativeTrainingCapacitanceHistory {
@@ -99,9 +107,9 @@ public:
     // Build may initialize its adopted graph while retaining this boundary;
     // explicit learner Reset still resets transient controller state.
     bool HasDetachedCompositeBoundary() const {
-        return (plan.protocol.schemaVersion==4 || plan.protocol.schemaVersion==5) &&
-            state==NativeTrainingState::Finished && !composite && !search && attempt>0 &&
-            !compositeInitialConfiguration.isEmpty();
+        return state==NativeTrainingState::Finished && !composite && !search && attempt>0 &&
+            (((plan.protocol.schemaVersion==4 || plan.protocol.schemaVersion==5) &&
+              !compositeInitialConfiguration.isEmpty()) || !terminalImportedHistory.isEmpty());
     }
     TrainingStatus Outcome() const { return outcome; }
     const std::string& Reason() const { return reason; }
@@ -131,8 +139,15 @@ public:
         const std::string& captureRevision,std::size_t captureEpoch,bool referenceComplete,
         TrainingStatus outcome,const std::string& reason);
     const BoundedTrainingSession* Search() const { return search.get(); }
+    const std::shared_ptr<const NativeMeasuredTrainingBoundary>& SelectedNativeBoundary() const {return measuredBoundary;}
+    const QJsonObject& TerminalSelectionEvent() const {return terminalSelectionEvent;}
+    std::size_t TerminalSelectionTransactions() const {return terminalSelectionTransactions;}
+    bool RequiresTerminalSelectionArchive() const {return terminalSelectionArchiveRequired;}
+    const std::shared_ptr<const NativeTerminalSourceBoundary>& TerminalSourceBoundary() const {return terminalSourceBoundary;}
+    const std::vector<QJsonObject>& TerminalJournal() const {return terminalJournal;}
     std::size_t IssuedReferenceProbes() const { return referenceProbes; }
-    std::size_t ModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
+    std::size_t TranscriptModelEpoch() const { return search?search->ModelEpoch():retainedEpoch; }
+    std::size_t ModelEpoch() const { return terminalPhysicalEpoch?*terminalPhysicalEpoch:TranscriptModelEpoch(); }
     const BoundedTrainingConfig& Configuration() const { return plan.search; }
     const std::optional<NativeTrainingCapacitanceHistory>& CapacitanceHistory() const {return capacitanceHistory;}
     const std::vector<NativeCompositeMeasurementRecord>& CompositeMeasurements() const {return compositeRecords;}
@@ -160,6 +175,7 @@ private:
     friend class NativeCompositeTrainingAttempt;
     friend class NativeCompositeStateFactory;
     friend class NativeCandidateWindowStateFactory;
+    friend class NativeTerminalStateFactory;
     // Process-local owner-control identity only. Portable accounting counters
     // and model/family proofs cannot recreate it. Bind allocates lazily;
     // control takeover/reset invalidates without allocation or callbacks.
@@ -179,8 +195,22 @@ private:
     // In-flight proof guards may reenter owner reset. Keep a retired search
     // alive until the current delivery returns; never republish it afterwards.
     std::shared_ptr<BoundedTrainingSession> search;
+    std::shared_ptr<const NativeMeasuredTrainingBoundary> measuredBoundary;
+    std::shared_ptr<const int> terminalSelectionAuthority;
+    QJsonObject terminalSelectionEvent;
+    std::shared_ptr<const NativeTerminalSourceBoundary> terminalSourceBoundary;
+    // DATA journal survives warm/control resets; cold retarget alone drops it.
+    std::vector<QJsonObject> terminalJournal;
+    QJsonObject terminalImportedHistory;
+    std::optional<std::size_t> terminalPhysicalEpoch;
+    std::size_t terminalSelectionTransactions=0;
+    bool terminalSelectionArchiveRequired=false;
     std::optional<TrainingAction> activeAction;
     std::optional<NativeTrainingCapacitanceHistory> capacitanceHistory;
+    // Actual C0 after full terminal graph restoration, separate from the last
+    // historical source witness. Survives ResetControl for warm admission;
+    // never restores live authority or invents later-grown channel baselines.
+    std::optional<TrainingCapacitanceWitness> terminalCapacitanceBoundary;
     std::shared_ptr<NativeCompositeTrainingAttempt> composite;
     std::shared_ptr<const CompositePortableTrainingProof> compositeImportedProof;
     std::shared_ptr<const CandidateWindowReferenceSet> compositeCandidateReferences;
@@ -225,6 +255,13 @@ private:
                                const std::string& revision,std::size_t epoch);
     void Finish(TrainingStatus result,const std::string& diagnostic);
     void SyncOutcome();
+    void RetainSelectedBoundary(const NativeTrainingAdapter&);
+    void FinalizeMeasuredBoundary(const NativeTrainingAdapter&);
+    void ClearTerminalSelection() {
+        terminalSelectionAuthority.reset();terminalSelectionEvent={};terminalPhysicalEpoch.reset();terminalSelectionTransactions=0;
+        terminalSourceBoundary.reset();
+        terminalImportedHistory={};
+    }
     void RecordCancelled(const NativeTrainingAdapter& adapter);
     std::string RememberCapacitance(const NativeTrainingAdapter& adapter,const std::string& revision,
         const std::optional<TrainingCapacitance>& requested);

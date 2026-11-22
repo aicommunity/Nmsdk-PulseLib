@@ -5,6 +5,7 @@
 #include "CompositePrimaryBudget.h"
 #include "CandidateWindowCoreValidation.h"
 #include "NativeCompositeTrainingEvidence.h"
+#include "NativeMeasuredTrainingBoundary.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -111,8 +112,25 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     // A rejected warm declaration is not a partially committed new attempt.
     auto retainedRecords=compositeRecords;
     const std::set<std::string> retained(compositeReferenceGroups.begin(),compositeReferenceGroups.end());
-    if(references)std::erase_if(retainedRecords,[&](const auto& r){return !retained.count(r.groupId);});
-    else retainedRecords.clear();
+    // A terminal journal is persistent evidence, not a controller checkpoint.
+    // Its measured candidate/anchor groups must survive a warm attempt along
+    // with the captured references. Keeping only references makes the next
+    // export contain dangling selection trial IDs after a valid DATA import.
+    std::set<std::string> journalTrials;
+    for(const auto& event:terminalJournal) {
+        const auto selected=event.value("selected").toObject();
+        for(const auto* key:{"trial_id","anchor_trial_id"}) {
+            const auto trial=selected.value(key);
+            Require(trial.isString() && !trial.toString().isEmpty(),"native_composite_terminal_journal_trial_missing");
+            journalTrials.insert(trial.toString().toStdString());
+        }
+    }
+    std::set<std::string> foundJournalTrials;
+    std::erase_if(retainedRecords,[&](const auto& r){
+        if(journalTrials.count(r.logical.trialId)){foundJournalTrials.insert(r.logical.trialId);return false;}
+        return !references || !retained.count(r.groupId);
+    });
+    Require(foundJournalTrials==journalTrials,"native_composite_terminal_journal_primary_missing");
     std::size_t retainedBytes=0;for(const auto& r:retainedRecords) {
         const auto bytes=CompositeRecordPrimaryBytes(r);
         Require(bytes<=value.composite->maximumTotalPrimaryBytes && retainedBytes<=value.composite->maximumTotalPrimaryBytes-bytes,
@@ -140,13 +158,15 @@ void NativeTrainingService::StartComposite(NativeTrainingPlan value,const Native
     }
     compositeRecords=std::move(retainedRecords);compositePrimaryBytes=retainedBytes;
     if(!references){compositeReferenceGroups.clear();compositeReferenceMeasurements.clear();}
+    terminalCapacitanceBoundary.reset();
     plan=std::move(value);startModel=lastModel=m;startWall=lastWall=w;
+    terminalSelectionArchiveRequired=terminalSelectionArchiveRequired || bool(plan.terminalSelection);
     retainedEpoch=plan.search.initialModelEpoch;referenceProbes=invalidReferences=0;
     observedPackets.clear();finalPackets.clear();compositeFinalGroups.clear();compositeFinalRun.clear();compositeRequest.reset();
     compositeRawNotifications.clear();compositeRawTrialIds.clear();
     compositeCancellationDiagnostics.clear();
     if(!references){referencePackets.clear();referenceEvidence.clear();}
-    certificate.reset();search.reset();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
+    certificate.reset();search.reset();measuredBoundary.reset();ClearTerminalSelection();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
     InvalidateOwnerControlLifetime();
     ++attempt;++compositeGeneration;plan.search.runId+="/session/"+std::to_string(attempt);
     state=NativeTrainingState::CapturingReferences;incompleteCaptureConstraint.reset();
@@ -215,7 +235,9 @@ void NativeTrainingService::StartCandidateWindowComposite(NativeTrainingPlan val
     static_assert(std::is_nothrow_move_assignable_v<NativeTrainingPlan>);
     static_assert(std::is_nothrow_swappable_v<decltype(compositeCapacitance)>);
     InvalidateOwnerControlLifetime();
+    terminalCapacitanceBoundary.reset();
     plan=std::move(runtime);composite.swap(actor);compositeSourceBinding.swap(source);compositeInitialConfiguration.swap(initial);
+    terminalSelectionArchiveRequired=terminalSelectionArchiveRequired || bool(plan.terminalSelection);
     compositeOwnerFamily.swap(family);compositeRecords.swap(records);compositePrimaryBytes=bytes;compositeCapacitance.swap(preparedCapacitance);
     compositeCandidateReferences.swap(closed);search.swap(preparedSearch);attempt=nextAttempt;++compositeGeneration;
     compositeRecoveryRuntime.swap(recoveryRuntime);
@@ -224,7 +246,7 @@ void NativeTrainingService::StartCandidateWindowComposite(NativeTrainingPlan val
     compositeReferenceMeasurements.clear();observedPackets.clear();finalPackets.clear();compositeFinalGroups.clear();compositeFinalRun.clear();
     compositeRequest.reset();compositeRawNotifications.clear();compositeRawTrialIds.clear();compositeCancellationDiagnostics.clear();
     if(!references){referencePackets.clear();referenceEvidence.clear();compositeReferenceGroups.clear();}
-    certificate.reset();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
+    certificate.reset();measuredBoundary.reset();ClearTerminalSelection();activeAction.reset();waiting=false;compositeHarvested=true;reason.clear();outcome=TrainingStatus::Searching;
     incompleteCaptureConstraint.reset();state=references?NativeTrainingState::Searching:NativeTrainingState::CapturingReferences;
     referenceBinding.swap(binding);
 }
@@ -518,7 +540,11 @@ void NativeTrainingService::ClosedComposite(const NativeTrainingAdapter& a,const
             throw;
         }
         if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || search!=consumingSearch || !actor->ownerLife.IsCurrent())return;
+        // Consumption is already a production-kernel fact. Preserve it even
+        // if retaining the physical checkpoint subsequently exhausts storage.
         record.consumed=consumingSearch->AcceptedCompositeObservations()>wasAccepted;
+        RetainSelectedBoundary(a);
+        if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor || attempt!=session || search!=consumingSearch || !actor->ownerLife.IsCurrent())return;
         if(final && record.consumed) {
             if(compositeFinalGroups.empty())compositeFinalGroups.resize(plan.protocol.inputs.size());
             compositeFinalGroups.at(compositeRequest->inputIndex)=record.groupId;
@@ -602,6 +628,7 @@ void NativeTrainingService::BeforeComposite(const NativeTrainingAdapter& a,doubl
             plan.protocol.patternHash,plan.protocol.revision,action.baseModelRevision,plan.protocol.routing,action.modelEpoch,action.inputIndex};
         QueueComposite(a,request,action.finalVerification?CompositeMeasurementPurpose::Final:CompositeMeasurementPurpose::Search,m,w);
     }
+    catch(const NativeBoundaryRetentionBudgetExhausted& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::BudgetExhausted,e.what());}
     catch(const CompositeTrainingBudgetExhausted& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::BudgetExhausted,e.what());}
     catch(const CompositeBudget& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::BudgetExhausted,e.what());}
     catch(const CompositeTrainingStopped&){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::ExternalStop,"external_stop");}
@@ -624,6 +651,7 @@ void NativeTrainingService::AfterComposite(const NativeTrainingAdapter& a,double
         if(generation!=compositeGeneration || !ActiveComposite(state) || composite!=actor)return;
         CheckBudget(a,m,NativeTrainingWallTime());if(!ActiveComposite(state))return;ClosedComposite(a,actor);
     }
+    catch(const NativeBoundaryRetentionBudgetExhausted& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::BudgetExhausted,e.what());}
     catch(const CompositeTrainingBudgetExhausted& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::BudgetExhausted,e.what());}
     catch(const CompositeTrainingStopped&){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::ExternalStop,"external_stop");}
     catch(const std::exception& e){if(enteredGeneration==compositeGeneration)StopComposite(a,TrainingStatus::InvalidObservation,e.what());}

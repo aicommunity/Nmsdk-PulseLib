@@ -14,14 +14,26 @@ QJsonObject EncodeNativeCandidateWindowTrainingState(const NativeTrainingService
 // Summary8 retains supplied recovery delivery DATA; not a controller checkpoint.
 QJsonObject EncodeNativeCandidateWindowRecoveryTrainingState(const NativeTrainingService&,const std::string& actualModelRevision,
     const std::vector<InputParameters>& actualParameters);
+// Explicit historical DATA views; ordinary summary entry points keep their
+// existing signature and continue rejecting terminal scopes.
+QJsonObject EncodeNativeCompositeTrainingTranscript(const NativeTrainingService&,const std::string& sourceModelRevision,
+    const std::vector<InputParameters>& sourceParameters);
+QJsonObject EncodeNativeCandidateWindowTrainingTranscript(const NativeTrainingService&,const std::string& sourceModelRevision,
+    const std::vector<InputParameters>& sourceParameters);
 class NativeCompositeStateFactory {
 public:
     static QJsonObject Export(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,
         const std::vector<InputParameters>&,int controllerVersion,int calculateMode,int structureBuildMode,
         const std::string& implementationId,const NativeCapacitanceCorrection*);
+    static QJsonObject ExportHistorical(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,
+        const std::vector<InputParameters>&,int,int,int,const std::string&,
+        const NativeCapacitanceCorrection*,const NativeHistoricalExportBoundary&);
     static std::unique_ptr<PreparedNativeLearnedState> Prepare(const QJsonObject&,
         RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string& implementationId);
 private:
+    static QJsonObject ExportImpl(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,
+        const std::vector<InputParameters>&,int,int,int,const std::string&,
+        const NativeCapacitanceCorrection*,const NativeHistoricalExportBoundary*);
     static void Restore(NativeTrainingService&,CompositePortableTrainingProof,NativeTrainingPlan,
         QJsonObject initialConfiguration,std::size_t sessions,TrainingStatus,const std::string&,bool completed);
 };
@@ -32,6 +44,9 @@ public:
     static QJsonObject Export(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,
         const std::vector<InputParameters>&,int controllerVersion,int calculateMode,int structureBuildMode,
         const std::string& implementationId,const NativeCapacitanceCorrection*);
+    static QJsonObject ExportHistorical(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,
+        const std::vector<InputParameters>&,int,int,int,const std::string&,
+        const NativeCapacitanceCorrection*,const NativeHistoricalExportBoundary&,QJsonObject* checkedSummary=nullptr);
     static std::unique_ptr<PreparedNativeLearnedState> Prepare(const QJsonObject&,
         RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string& implementationId);
     // Explicit package7 boundary. Legacy Export/Prepare remain package6-only.
@@ -40,12 +55,13 @@ public:
         const std::string& implementationId,const NativeCapacitanceCorrection*);
     static NativeTrainingExport ExportBoundary(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,
         const std::vector<InputParameters>&,int controllerVersion,int calculateMode,int structureBuildMode,
-        const std::string& implementationId,const NativeCapacitanceCorrection*);
+        const std::string& implementationId,const NativeCapacitanceCorrection*,const NativeLearnedStateSink& onStateReady={});
     static std::unique_ptr<PreparedNativeLearnedState> PrepareRecovery(const QJsonObject&,
         RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string& implementationId);
 private:
     static QJsonObject ExportImpl(RDK::UNet&,const NativeModelSpec&,const NativeTrainingService&,
-        const std::vector<InputParameters>&,int,int,int,const std::string&,const NativeCapacitanceCorrection*,bool recovery,QJsonObject* trainingSummary=nullptr);
+        const std::vector<InputParameters>&,int,int,int,const std::string&,const NativeCapacitanceCorrection*,bool recovery,QJsonObject* trainingSummary=nullptr,
+        const NativeHistoricalExportBoundary* historical=nullptr,const NativeLearnedStateSink& onStateReady={});
     static std::unique_ptr<PreparedNativeLearnedState> PrepareImpl(const QJsonObject&,
         RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string&,bool recovery);
     static void Restore(NativeTrainingService&,CandidateWindowPortableTrainingProof,NativeTrainingPlan,

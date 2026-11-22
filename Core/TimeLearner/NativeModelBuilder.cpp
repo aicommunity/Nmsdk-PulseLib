@@ -3,6 +3,7 @@
 #include "ModelArchive.h"
 #include "NativeThresholdSupport.h"
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -168,13 +169,13 @@ void ValidateNativeModelSpec(const NativeModelSpec& s)
     for(const auto& rule:s.editPolicy.inhibition)Require(rule.inputIndex<s.inputs.size() && rule.offset>0 && Positive(rule.resistance),"invalid_native_initial_inhibition");
     Allocation(s);
 }
-static NativeModelBuildResult InspectBuiltModel(UNet& owner,const NativeModelSpec& s,const std::vector<int>& attachments,
+static NativeModelBuildResult InspectBuiltModel(UNet* owner,const NativeModelSpec& s,const std::vector<int>& attachments,
                                                NativeProbeBindings b)
 {
     NativeModelBuildResult r;
     try
     {
-        ValidateNativeModelSpec(s);OwnerRate(owner,s.frequencyHz);
+        ValidateNativeModelSpec(s);if(owner)OwnerRate(*owner,s.frequencyHz);
         Require(b.neuron && b.dataset,"missing_native_model_children");
         Require(b.neuron->GetCompClassName()==s.neuronClass && b.dataset->GetCompClassName()==s.datasetClass,"native_model_class_mismatch");
         Require(!b.neuron->UseElementDefaults.GetData(),"native_model_requires_storage_owned_physics");
@@ -238,7 +239,14 @@ static NativeModelBuildResult InspectBuiltModel(UNet& owner,const NativeModelSpe
     return r;
 }
 NativeModelBuildResult InspectNativeLearnerModel(UNet& owner,const NativeModelSpec& s,const std::vector<int>& attachments)
-{return InspectBuiltModel(owner,s,attachments,Bindings(owner,s));}
+{return InspectBuiltModel(&owner,s,attachments,Bindings(owner,s));}
+NativeModelBuildResult InspectNativePreparedChildren(const NativeModelSpec& s,UEPtr<NPulseNeuron> neuron,
+    UEPtr<NDatasetMatrix> dataset,const std::vector<int>& attachments)
+{
+    NativeProbeBindings bindings;bindings.neuron=neuron;bindings.dataset=dataset;
+    bindings.branch=s.branch;bindings.inputCount=int(s.inputs.size());
+    return InspectBuiltModel(nullptr,s,attachments,bindings);
+}
 NativeModelBuildResult ReconstructNativeLearnerNeuron(UNet& owner,const NmsdkTools::ModelBoundarySources& sources)
 {
     NativeModelBuildResult result;UEPtr<NPulseNeuron> original,candidate;
@@ -308,7 +316,12 @@ std::unique_ptr<NativeLearnerGraphCheckpoint> NativeLearnerGraphCheckpoint::Capt
     result->datasetSnapshot=NmsdkTools::ExportDatasetSnapshot(dataset);
     return result;
 }
-NativeModelBuildResult NativeLearnerGraphCheckpoint::Restore(UNet& owner) const
+std::size_t NativeLearnerGraphCheckpoint::EncodedBytes() const
+{
+    return std::size_t(QJsonDocument(neuronSnapshot).toJson(QJsonDocument::Compact).size())+
+        std::size_t(QJsonDocument(datasetSnapshot).toJson(QJsonDocument::Compact).size());
+}
+NativeModelBuildResult NativeLearnerGraphCheckpoint::Restore(UNet& owner,const std::function<void()>& beforeCommit) const
 {
     NativeModelBuildResult result;
     UEPtr<NPulseNeuron> neuron,oldNeuron;UEPtr<NDatasetMatrix> dataset,oldDataset;
@@ -347,6 +360,9 @@ NativeModelBuildResult NativeLearnerGraphCheckpoint::Restore(UNet& owner) const
         neuron=dynamic_pointer_cast<NPulseNeuron>(NmsdkTools::ImportPhysicalGraphForEdit(
             neuronSnapshot,owner.GetStorage(),owner.GetEnvironment(),ports));
         Tree(neuron,frequency);Tree(dataset,frequency);
+        // The caller can revalidate a separately granted terminal transaction
+        // AFTER private construction and BEFORE the first live mutation.
+        if(beforeCommit)beforeCommit();
         // Do not release old objects until BOTH attachments and readbacks pass.
         detached=true;owner.DelComponent("Neuron",false);owner.DelComponent("DatasetMatrix",false);
         UEPtr<UContainer> child=dataset;Require(owner.AddComponent(child)!=ForbiddenId,"boundary_checkpoint_dataset_attach_failed");
@@ -401,7 +417,7 @@ NativeModelBuildResult CommitNativeLearnerChildren(UNet& owner,const NativeModel
         Require(neuron->GetName()=="Neuron" && dataset->GetName()=="DatasetMatrix","import_children_name_mismatch");
         std::vector<int> positions;for(const auto& p:expected)positions.push_back(p.length);
         NativeProbeBindings b;b.owner=&owner;b.neuron=neuron;b.dataset=dataset;b.branch=s.branch;b.inputCount=int(s.inputs.size());
-        const auto preview=InspectBuiltModel(owner,s,positions,b);
+        const auto preview=InspectBuiltModel(&owner,s,positions,b);
         Require(preview.status==NativeModelBuildStatus::Adopted,preview.reason.c_str());
         Require(preview.effective==expected,"import_effective_parameters_mismatch");
         auto source=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
@@ -510,7 +526,7 @@ NativeModelBuildResult ConstructNativeLearnerModel(UNet& owner,const NativeModel
         std::vector<int> positions;for(const auto& p:s.inputs)positions.push_back(p.attachment);
         NativeProbeBindings preview;preview.owner=&owner;preview.neuron=neuron;preview.dataset=dataset;
         preview.branch=s.branch;preview.inputCount=int(s.inputs.size());
-        const auto expected=InspectBuiltModel(owner,s,positions,preview);
+        const auto expected=InspectBuiltModel(&owner,s,positions,preview);
         Require(expected.status==NativeModelBuildStatus::Adopted,expected.reason.c_str());
         if(beforeCommit)beforeCommit(s,expected.effective,dataset->MatrixData.GetData());
         r.modelMayHaveChanged=true;

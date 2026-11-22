@@ -52,6 +52,10 @@ NativeModelBuildResult ConstructNativeLearnerModel(RDK::UNet& owner,const Native
 // overlay. Attachments are current learned values; Rs/C may differ from initial.
 NativeModelBuildResult InspectNativeLearnerModel(RDK::UNet& owner,const NativeModelSpec& specification,
                                                const std::vector<int>& attachments);
+// The same child-graph/readback checks before owner attachment. Owner clock,
+// sibling order and lifecycle belong to the subsequent native commit boundary.
+NativeModelBuildResult InspectNativePreparedChildren(const NativeModelSpec& specification,
+    RDK::UEPtr<NPulseNeuron> neuron,RDK::UEPtr<NDatasetMatrix> dataset,const std::vector<int>& attachments);
 // Reconstruct the actual physical neuron through the common native snapshot
 // path. Dataset, images, effective child physics and owner order are retained.
 // No defaults, inferred parent physics or nested Calculate. The caller must
@@ -66,8 +70,12 @@ NativeModelBuildResult ReconstructNativeLearnerNeuron(RDK::UNet& owner,
 class NativeLearnerGraphCheckpoint {
 public:
     static std::unique_ptr<NativeLearnerGraphCheckpoint> Capture(RDK::UNet& owner);
-    NativeModelBuildResult Restore(RDK::UNet& owner) const;
+    NativeModelBuildResult Restore(RDK::UNet& owner,const std::function<void()>& beforeCommit={}) const;
     QJsonObject NeuronIdentity() const {return neuronSnapshot["identity"].toObject();}
+    QJsonObject DatasetIdentity() const {return datasetSnapshot["identity"].toObject();}
+    const QJsonObject& NeuronSnapshot() const {return neuronSnapshot;}
+    const QJsonObject& DatasetSnapshot() const {return datasetSnapshot;}
+    std::size_t EncodedBytes() const;
 private:
     NativeLearnerGraphCheckpoint()=default;
     RDK::UNet* capturedOwner=nullptr;

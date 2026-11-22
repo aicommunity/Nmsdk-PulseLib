@@ -5032,25 +5032,31 @@ QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedState(const std::string
 QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedState(const std::string& implementationId,const TimeLearner::NativeCapacitanceCorrection& capacitance)
 {return ExportNativeLearnedStateWithCapacitance(implementationId,&capacitance);}
 TimeLearner::NativeTrainingExport NNeuronTimeLearnerBranch::ExportNativeLearnedBoundary(const std::string& implementationId)
+{return ExportNativeLearnedBoundary(implementationId,TimeLearner::NativeLearnedStateSink{});}
+TimeLearner::NativeTrainingExport NNeuronTimeLearnerBranch::ExportNativeLearnedBoundary(const std::string& implementationId,
+ const TimeLearner::NativeLearnedStateSink& onStateReady)
 {
  TimeLearner::NativeTrainingExport result;
- if(NativeLearnedCapacitanceState.isEmpty())result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,nullptr,&result.summary);
+ if(NativeLearnedCapacitanceState.isEmpty())result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,nullptr,&result.summary,onStateReady);
  else {
   std::string revision;
   const auto correction=TimeLearner::ParseNativeCapacitanceState(QJsonDocument(NativeLearnedCapacitanceState).toJson(QJsonDocument::Compact).toStdString(),revision);
-  result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,&correction,&result.summary);
+  result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,&correction,&result.summary,onStateReady);
  }
  return result;
 }
 TimeLearner::NativeTrainingExport NNeuronTimeLearnerBranch::ExportNativeLearnedBoundary(const std::string& implementationId,
  const TimeLearner::NativeCapacitanceCorrection& capacitance)
+{return ExportNativeLearnedBoundary(implementationId,capacitance,TimeLearner::NativeLearnedStateSink{});}
+TimeLearner::NativeTrainingExport NNeuronTimeLearnerBranch::ExportNativeLearnedBoundary(const std::string& implementationId,
+ const TimeLearner::NativeCapacitanceCorrection& capacitance,const TimeLearner::NativeLearnedStateSink& onStateReady)
 {
  TimeLearner::NativeTrainingExport result;
- result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,&capacitance,&result.summary);
+ result.learnedState=ExportNativeLearnedStateWithCapacitance(implementationId,&capacitance,&result.summary,onStateReady);
  return result;
 }
 QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedStateWithCapacitance(const std::string& implementationId,
- const TimeLearner::NativeCapacitanceCorrection* capacitance,QJsonObject* trainingSummary)
+ const TimeLearner::NativeCapacitanceCorrection* capacitance,QJsonObject* trainingSummary,const TimeLearner::NativeLearnedStateSink& onStateReady)
 {
  if(NativeRecognition)throw std::logic_error("native_recognition_state_is_not_learned_solo");
  if(NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Queued || NativeProbeControl.Status()==TimeLearner::NativeProbeStatus::Running)
@@ -5060,7 +5066,7 @@ QJsonObject NNeuronTimeLearnerBranch::ExportNativeLearnedStateWithCapacitance(co
  capacitance=resolved?&*resolved:nullptr;
  if(trainingSummary) {
   auto exported=TimeLearner::ExportNativeLearnedBoundary(*this,*NativeModelDeclaration,NativeTrainingControl,ReadNativeParameters(),
-   ControllerVersion.GetData(),CalculateMode.GetData(),StructureBuildMode.GetData(),implementationId,capacitance);
+   ControllerVersion.GetData(),CalculateMode.GetData(),StructureBuildMode.GetData(),implementationId,capacitance,onStateReady);
   *trainingSummary=std::move(exported.summary);return std::move(exported.learnedState);
  }
  if(capacitance)return TimeLearner::ExportNativeLearnedState(*this,*NativeModelDeclaration,NativeTrainingControl,ReadNativeParameters(),
@@ -5176,22 +5182,40 @@ TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeDiagno
 {
  return ImportNativeRecognitionStateWithBoundary(package,implementationId,{},true);
 }
+TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativePhysicalModelData(const QJsonObject& package,const std::string& implementationId)
+{
+ if(NativePostTunePhaseDepth || (NativeLiveFinalization && !NativeLiveFinalization->Done()))
+ {TimeLearner::NativeModelBuildResult result;result.reason="physical_model_data_cannot_enter_owned_finalization";return result;}
+ return ImportNativeRecognitionStateWithBoundary(package,implementationId,{},false,true);
+}
+QJsonObject NNeuronTimeLearnerBranch::ExportNativePhysicalModelData(const std::string& implementationId)
+{
+ return TimeLearner::NativeRecognitionControl::ExportNativePhysicalModelData(*this,implementationId);
+}
+bool NNeuronTimeLearnerBranch::HasNativePhysicalModelData() const
+{
+ return NativeRecognition && NativeRecognition->physicalDataOnly;
+}
 TimeLearner::NativeModelBuildResult NNeuronTimeLearnerBranch::ImportNativeRecognitionStateWithBoundary(const QJsonObject& package,const std::string& implementationId,
- const QJsonObject& boundary,bool diagnostic)
+ const QJsonObject& boundary,bool diagnostic,bool physicalData)
 {
  if(NativePostTunePhase && !NativePostTunePhase->Done() && !NativePostTunePhaseDepth)
  {TimeLearner::NativeModelBuildResult result;result.reason="native_owned_post_tune_owns_model";return result;}
 
- auto result=TimeLearner::InstallNativeRecognitionState(*this,true,package,implementationId,NativeTrainingOwned,NativeModelDeclaration,
-  NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition,boundary,diagnostic);
+ auto result=physicalData?
+  TimeLearner::InstallNativePhysicalModelData(*this,true,package,implementationId,NativeTrainingOwned,NativeModelDeclaration,
+   NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition):
+  TimeLearner::InstallNativeRecognitionState(*this,true,package,implementationId,NativeTrainingOwned,NativeModelDeclaration,
+   NativeConfiguredPlan,NativeConfiguredText,NativeProbeControl,NativeTrainingControl,NativeEditFailure,NativeRecognition,boundary,diagnostic);
  Dataset=GetComponentL<NDatasetMatrix>("DatasetMatrix",true);Neuron=GetComponentL<NPulseNeuron>("Neuron",true);
  if(result.status==TimeLearner::NativeModelBuildStatus::Adopted)
  {
   if(!NativePostTunePhaseDepth)NativePostTunePhase.reset();
   NativeTrainingRequestIntent.Clear();
+  if(physicalData){NativeLiveFinalization.reset();NativeLearnedCapacitanceState={};}
   NativeConfiguredSinks={};OldDendriteLength=DendriteLength.GetData();
   LoadedTipSynapseResistance=TipSynapseResistance.GetData();HasLoadedTipSynapseResistance=true;
-  CapApplyPending=false;TrainingPhase.SetDataDirect(kPhaseDone);Ready=false;
+  CapApplyPending=false;TrainingPhase.SetDataDirect(physicalData?kPhaseSync:kPhaseDone);Ready=false;
  }
  return result;
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeModelBuilder.h"
 #include "NativeTrainingService.h"
+#include "StrictNativeJson.h"
 #include <QJsonObject>
 
 namespace NMSDK::TimeLearner {
@@ -31,6 +32,9 @@ struct ConfiguredNativeTraining {
     // Cold7 only. Presence requires explicit common policy2; the resulting
     // protocol5 owns the authoritative full measurement declaration.
     std::optional<CandidateWindowPolicy> candidateWindowPolicy;
+    // Orthogonal schema9 envelope over a complete schema1..8 declaration.
+    // Absence preserves the legacy no-terminal-selection configuration.
+    std::optional<NativeTerminalSelectionPolicy> terminalSelection;
 };
 QJsonObject EncodeNativeModelSpec(const NativeModelSpec& model);
 NativeModelSpec DecodeNativeModelSpec(const QJsonObject& object);
@@ -42,7 +46,6 @@ ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& objec
 // Reject duplicate keys (including escaped spellings), unknown fields, invalid
 // types/nonfinite numbers and unsupported schema. Parsing never touches Rdk.
 ConfiguredNativeTraining ParseConfiguredNativeTraining(const std::string& text);
-QJsonObject ParseStrictNativeJsonObject(const std::string& text,std::size_t maximumBytes=16*1024*1024);
 NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraining& configuration);
 ConfiguredNativeTraining CaptureCompositeInitialConfiguration(const NativeModelSpec&,const NativeTrainingPlan&,
     const std::vector<InputParameters>& actualInitialParameters,double capacitanceMaximumRelativeChange);

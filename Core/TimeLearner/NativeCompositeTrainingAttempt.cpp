@@ -64,6 +64,21 @@ template<class Owner> void NativeCompositeTrainingAttempt::Bind(Owner& owner) {
         Require(bool(live) && live==current.ownerControlLifetime,"native_training_owner_control_replaced");
     };
     initialEpoch=owner.NativeTrainingControl.ModelEpoch();
+    importedTerminalRevision=[this,&owner](const CompositePortableTrainingProof& proof)->std::optional<std::string> {
+        const auto& service=owner.NativeTrainingControl;
+        if(service.compositeImportedProof.get()!=&proof || service.TerminalJournal().empty())return {};
+        const auto& event=service.TerminalJournal().back();
+        const auto actual=adapter.readModelRevision();
+        // This journal has been checked by the native terminal-state factory.
+        // Bind its exact historical source and actual readback, never change
+        // the proof's epoch/revision or grant a portable proof a live lease.
+        if(event.value("search_terminal_revision")!=QJsonValue(Text(proof.ModelRevision())) ||
+            event.value("search_terminal_epoch")!=QJsonValue(double(proof.ModelEpoch())) ||
+            event.value("actual_model_revision")!=QJsonValue(Text(actual)) ||
+            event.value("actual_model_epoch")!=QJsonValue(double(service.ModelEpoch())) ||
+            service.ModelEpoch()!=initialEpoch)return {};
+        return actual;
+    };
     bindings=[&owner](){return owner.NativeProbeModelBindings();};
     declaration=[&owner](){return owner.NativeModelDeclaration?EncodeNativeModelSpec(*owner.NativeModelDeclaration):QJsonObject{};};
     actualModelTime=[&owner](){Require(bool(owner.Environment),"composite_train_missing_native_environment");
@@ -150,7 +165,11 @@ void NativeCompositeTrainingAttempt::AdoptOwned(const CompositePortableTrainingP
     ValidateVerificationProtocol(*protocol);ValidateCompositeMeasurementContract(*protocol);
     sourceBinding=archive.SourceBinding();sourceOrigin=archive.SourceOrigin();ownerScope=archive.OwnerFamilyBinding();
     initialDeclaration=sourceBinding["model_spec"].toObject();initialRevision=sourceBinding["initial_model"].toObject()["sha256"].toString().toStdString();
-    Require(proof.ModelEpoch()==initialEpoch,"composite_imported_epoch_changed");
+    const auto actualRevision=adapter.readModelRevision();
+    if(proof.ModelEpoch()!=initialEpoch || proof.ModelRevision()!=actualRevision) {
+        const auto terminal=importedTerminalRevision?importedTerminalRevision(proof):std::nullopt;
+        Require(terminal && *terminal==actualRevision,"composite_imported_epoch_changed");
+    }
     initialEpoch=std::size_t(sourceBinding["initial_epoch"].toDouble());storageFingerprint=sourceBinding["storage_images_sha256"].toString().toStdString();
     initialCapacitanceOrigin=sourceBinding["optional_C0_origin"].toString().toStdString();
     if(!sourceBinding["optional_C0_witness"].isNull())initialCapacitanceMaximumRelativeChange=
@@ -160,7 +179,7 @@ void NativeCompositeTrainingAttempt::AdoptOwned(const CompositePortableTrainingP
         b.branch==(protocol->routing==ProbeRouting::BranchSoloBurst),"composite_imported_owner_protocol_mismatch");
     Require(adapter.probeState()!=NativeProbeStatus::Queued && adapter.probeState()!=NativeProbeStatus::Running,
         "composite_imported_owner_probe_active");
-    RestartOwned(l,m,w,proof.ModelRevision());
+    RestartOwned(l,m,w,actualRevision);
 }
 void NativeCompositeTrainingAttempt::AdoptCandidateWindowArchive(const DecodedNativeCompositeArchive& archive,CompositeAttemptLimits l,
     NativeCandidateWindowAttemptDeclaration d,double m,double w) {

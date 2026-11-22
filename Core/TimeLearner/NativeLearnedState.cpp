@@ -1,5 +1,6 @@
 #include "NativeLearnedState.h"
 #include "NativeCompositeLearnedState.h"
+#include "NativeTerminalLearnedState.h"
 #include "NativeTrainingProof.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -85,7 +86,7 @@ ConfiguredNativeTraining Configuration(const NativeModelSpec& declaration,const 
     for(const auto& w:plan.inputWindows)c.windows.emplace_back(w.begin,w.end);
     c.search=plan.search;c.search.initialModelRevision.clear();c.search.initialModelEpoch=0;
     c.maximumReferenceProbes=plan.maximumReferenceProbes;c.maximumInvalidReferenceProbes=plan.maximumInvalidReferenceProbes;
-    c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;
+    c.maximumModelSeconds=plan.maximumModelSeconds;c.maximumWallSeconds=plan.maximumWallSeconds;c.terminalSelection=plan.terminalSelection;
     c.recordCapacitanceHistory=plan.recordCapacitanceHistory;
     if(c.recordCapacitanceHistory)
     {
@@ -179,16 +180,24 @@ PreparedNativeLearnedState::~PreparedNativeLearnedState()
     if(dataset && !dataset->GetOwner()){dataset->BreakLinks();storage->ReturnObject(dataset);}
 }
 static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,const std::vector<InputParameters>& actual,
-    int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance)
+    int version,int calculateMode,int structureMode,const std::string& implementationId,const NativeCapacitanceCorrection* capacitance,
+    const NativeHistoricalExportBoundary* historical=nullptr,QJsonObject* checkedSummary=nullptr)
 {
+    if(!historical && service.RequiresTerminalSelectionArchive())
+        return NativeTerminalStateFactory::Export(owner,declaration,service,actual,version,calculateMode,structureMode,implementationId,capacitance).learnedState;
+    if(historical)historical->Validate(owner,service,actual);
+    else Require(!service.RequiresTerminalSelectionArchive(),"terminal_selection_requires_versioned_export");
     if(service.Plan().protocol.schemaVersion==5) {
+        if(historical)return NativeCandidateWindowStateFactory::ExportHistorical(owner,declaration,service,actual,
+            version,calculateMode,structureMode,implementationId,capacitance,*historical,checkedSummary);
         if(RequiresCandidateWindowRecoveryBoundary(service))return NativeCandidateWindowStateFactory::ExportRecovery(owner,declaration,service,actual,
             version,calculateMode,structureMode,implementationId,capacitance);
         return NativeCandidateWindowStateFactory::Export(owner,declaration,service,actual,
             version,calculateMode,structureMode,implementationId,capacitance);
     }
-    if(service.Plan().protocol.schemaVersion==4)return NativeCompositeStateFactory::Export(owner,declaration,service,actual,
-        version,calculateMode,structureMode,implementationId,capacitance);
+    if(service.Plan().protocol.schemaVersion==4)return historical?
+        NativeCompositeStateFactory::ExportHistorical(owner,declaration,service,actual,version,calculateMode,structureMode,implementationId,capacitance,*historical):
+        NativeCompositeStateFactory::Export(owner,declaration,service,actual,version,calculateMode,structureMode,implementationId,capacitance);
     const bool stopped=!service.Certificate();
     const bool tracked=service.Plan().recordCapacitanceHistory;
     Require(tracked==bool(service.CapacitanceHistory()) && (!tracked || capacitance),"learned_capacitance_history_requires_owned_state");
@@ -203,7 +212,7 @@ static QJsonObject ExportNativeLearnedStateImpl(RDK::UNet& owner,const NativeMod
     auto source=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     const NmsdkTools::ModelBoundarySources ports{{&source->Output,"burst"}};
     const auto identity=NmsdkTools::IdentifyModel(neuron,ports);Require(identity["valid"].toBool(),"learned_state_invalid_model");
-    const auto revision=identity["sha256"].toString().toStdString();const auto epoch=service.ModelEpoch();
+    const auto revision=identity["sha256"].toString().toStdString();const auto epoch=historical?historical->ModelEpoch():service.ModelEpoch();
     const auto& protocol=service.References()?service.References()->Protocol():service.Plan().protocol;
     std::optional<NativeTrainingProof> proof;
     if(stopped)
@@ -292,22 +301,57 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
     const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
     const NativeCapacitanceCorrection& capacitance)
 {return ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,&capacitance);}
+QJsonObject ExportNativeHistoricalLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
+    const std::vector<InputParameters>& parameters,int version,int mode,int structure,const std::string& implementation,
+    const NativeCapacitanceCorrection* capacitance,const NativeHistoricalExportBoundary& historical,QJsonObject* checkedSummary)
+{
+    auto package=ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,mode,structure,implementation,capacitance,&historical,checkedSummary);
+    // Protocol5 can reuse the archive/recovery proof that the export just
+    // validated. Older protocols have no such expensive summary replay.
+    if(checkedSummary && service.Plan().protocol.schemaVersion!=5)
+        *checkedSummary=EncodeNativeHistoricalTrainingState(service,package.value("model_revision").toString().toStdString(),parameters);
+    return package;
+}
 NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
     const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
     const NativeCapacitanceCorrection* capacitance)
+{return ExportNativeLearnedBoundary(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,capacitance,{});}
+
+NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,const NativeTrainingService& service,
+    const std::vector<InputParameters>& parameters,int version,int calculateMode,int structureMode,const std::string& implementation,
+    const NativeCapacitanceCorrection* capacitance,const NativeLearnedStateSink& onStateReady)
 {
+    if(service.RequiresTerminalSelectionArchive())return NativeTerminalStateFactory::Export(owner,declaration,service,parameters,
+        version,calculateMode,structureMode,implementation,capacitance,onStateReady);
     if(service.Plan().protocol.schemaVersion==5)return NativeCandidateWindowStateFactory::ExportBoundary(owner,declaration,service,parameters,
-        version,calculateMode,structureMode,implementation,capacitance);
+        version,calculateMode,structureMode,implementation,capacitance,onStateReady);
     NativeTrainingExport result;
     result.learnedState=ExportNativeLearnedStateImpl(owner,declaration,service,parameters,version,calculateMode,structureMode,implementation,capacitance);
+    if(onStateReady) {
+        const auto state=service.State();const auto outcome=service.Outcome();const auto reason=service.Reason();
+        const auto epoch=service.ModelEpoch(),attempt=service.SessionAttempt();
+        auto neuron=owner.GetComponentL<NPulseNeuron>("Neuron",true);
+        auto dataset=owner.GetComponentL<NDatasetMatrix>("DatasetMatrix",true);
+        auto generator=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+        const auto identity=NmsdkTools::IdentifyModel(neuron.Get(),{{&generator->Output,"burst"}});
+        const auto datasetIdentity=NmsdkTools::IdentifyModel(dataset.Get());
+        onStateReady(result.learnedState);
+        Require(service.State()==state && service.Outcome()==outcome && service.Reason()==reason &&
+            service.ModelEpoch()==epoch && service.SessionAttempt()==attempt &&
+            NmsdkTools::IdentifyModel(neuron.Get(),{{&generator->Output,"burst"}})==identity && NmsdkTools::IdentifyModel(dataset.Get())==datasetIdentity,
+            "learned_export_sink_changed_boundary");
+    }
     result.summary=EncodeNativeTrainingState(service,result.learnedState["model_revision"].toString().toStdString(),parameters);
     return result;
 }
 QJsonObject ParseNativeLearnedState(const std::string& text)
 {return ParseStrictNativeJsonObject(text,128*1024*1024);}
-std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
-    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId)
+static std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedStateImpl(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
+    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId,bool historical)
 {
+    if(package.value("schema_version")==QJsonValue(8))return NativeTerminalStateFactory::Prepare(package,storage,environment,implementationId);
+    Require(historical || Object(package.value("configuration")).value("schema_version")!=QJsonValue(9),
+        "terminal_configuration_requires_package8_boundary");
     if(package["schema_version"]==QJsonValue(7))return NativeCandidateWindowStateFactory::PrepareRecovery(package,storage,environment,implementationId);
     if(package["schema_version"]==QJsonValue(6))return NativeCandidateWindowStateFactory::Prepare(package,storage,environment,implementationId);
     if(package["schema_version"]==QJsonValue(5))return NativeCompositeStateFactory::Prepare(package,storage,environment,implementationId);
@@ -339,6 +383,10 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
     Require(result->parameters.size()==c.model.inputs.size(),"learned_state_input_dimension_mismatch");
     const auto protocol=DecodeVerificationProtocol(Object(package["protocol"]));auto plan=Plan(c,protocol);
     if(version==2)Require(protocol==MakeConfiguredNativeTrainingPlan(c).protocol,"configured_learned_state_requires_canonical_protocol");
+    // Source DATA retains its exact configuration bytes; do not acquire its
+    // declared terminal behavior while replaying an old schema1-4 transcript.
+    // Only the outer factory installs the actual current policy afterwards.
+    if(historical)plan.terminalSelection.reset();
     if(stopped)
     {
         Require(package["certificate"].isNull() && package["reference_complete"].isBool() &&
@@ -399,5 +447,14 @@ std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJso
         ValidateAppliedNativeCapacitanceState(bindings,c.model,state);result->capacitanceState=state;
     }
     result->configurationText=QJsonDocument(EncodeConfiguredNativeTraining(c)).toJson(QJsonDocument::Compact).toStdString();return result;
+}
+std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
+    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation)
+{return PrepareNativeLearnedStateImpl(package,storage,environment,implementation,false);}
+std::unique_ptr<PreparedNativeLearnedState> PrepareNativeHistoricalLearnedState(const QJsonObject& package,RDK::UEPtr<RDK::UStorage> storage,
+    RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementation,const NativeHistoricalImportBoundary&)
+{
+    const auto version=Count(package.value("schema_version"));Require(version>=1 && version<=7,"terminal_recursive_historical_import");
+    return PrepareNativeLearnedStateImpl(package,storage,environment,implementation,true);
 }
 }

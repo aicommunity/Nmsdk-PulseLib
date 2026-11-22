@@ -3,6 +3,8 @@
 #include "ModelArchive.h"
 #include "ProbeEvidenceJson.h"
 #include "NativeCapacitanceEdit.h"
+#include "NativeHistoricalExportBoundary.h"
+#include "NativeLearnedStateSink.h"
 
 namespace NMSDK::TimeLearner {
 // One immutable export boundary; summary and model share the same checked evidence.
@@ -36,13 +38,35 @@ QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& dec
 // Schema7 adds recovery-delivery DATA and per-attempt runtime bindings, also
 // after a warm switch back to Retry. It does not restore controller traversal,
 // dynamics, callbacks or live authority, or assert independent ledger coverage.
+// Schema8 separates the historical search proof (schema1–7) from a terminal
+// selected actual graph, charged transition and retained DATA journal. Import
+// is a closed boundary; summary9 describes the actual rather than search epoch.
 QJsonObject ExportNativeLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection& capacitance);
+// Internal versioned-factory path: validates the stopped historical graph and
+// exports the old schema only as an explicitly nested historical source.
+QJsonObject ExportNativeHistoricalLearnedState(RDK::UNet& owner,const NativeModelSpec& declaration,
+    const NativeTrainingService&,const std::vector<InputParameters>&,int controllerVersion,
+    int calculateMode,int structureBuildMode,const std::string& implementationId,
+    const NativeCapacitanceCorrection*,const NativeHistoricalExportBoundary&,QJsonObject* checkedSummary=nullptr);
 NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
     const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
     const std::string& implementationId,const NativeCapacitanceCorrection* capacitance=nullptr);
+NativeTrainingExport ExportNativeLearnedBoundary(RDK::UNet& owner,const NativeModelSpec& declaration,
+    const NativeTrainingService& service,const std::vector<InputParameters>& parameters,int controllerVersion,int calculateMode,int structureBuildMode,
+    const std::string& implementationId,const NativeCapacitanceCorrection*,const NativeLearnedStateSink&);
 QJsonObject ParseNativeLearnedState(const std::string& text);
+// Only package8's validating factory can prepare an embedded historical
+// configuration9 source. It remains DATA with no terminal/live control policy;
+// the outer package separately restores the current actual boundary policy.
+class NativeHistoricalImportBoundary {
+    friend class NativeTerminalStateFactory;
+    NativeHistoricalImportBoundary()=default;
+};
+std::unique_ptr<PreparedNativeLearnedState> PrepareNativeHistoricalLearnedState(const QJsonObject& package,
+    RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string& implementationId,
+    const NativeHistoricalImportBoundary&);
 std::unique_ptr<PreparedNativeLearnedState> PrepareNativeLearnedState(const QJsonObject& package,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,const std::string& implementationId);
 }
