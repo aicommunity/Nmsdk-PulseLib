@@ -207,3 +207,8 @@ For overview information see root project documentation:
 - [Documentation-Status.md](Documentation-Status.md) - documentation status and code sync checklist
 - [FAQ.md](FAQ.md) - frequently asked questions
 - [CONTRIBUTING-docs.md](CONTRIBUTING-docs.md) - documentation extension guide
+# Предложение числа синапсов
+
+Исследуемый вариант контроллера2:
+[измеренный подбор Nₛ](TimeLearner/MeasuredSynapseCountSearch.ru.md).
+Приёмка нативного алгоритма ещё не завершена.

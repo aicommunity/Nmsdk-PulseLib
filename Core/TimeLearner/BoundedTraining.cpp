@@ -3,6 +3,7 @@
 #include "CandidateWindowCoreValidation.h"
 #include "NumericChecks.h"
 #include "MeasuredResistanceSearch.h"
+#include "MeasuredSynapseCountSearch.h"
 #include "MeasuredLengthSearch.h"
 #include "MeasuredCapacitanceSearch.h"
 #include "CapacitanceRegion.h"
@@ -628,6 +629,7 @@ void BoundedTrainingSession::PrioritizeN0Neighbors(const CandidateEvidence& e)
         geometry[index].synapses=e.parameters.synapses;
         return geometry==e.fullParameters;
     });
+    bool improved=true;
     if(turn==cursor.n0GeometryTurns.end())
     {
         const auto remainingCandidates=config.maximumCandidatesPerInput-candidates;
@@ -644,10 +646,49 @@ void BoundedTrainingSession::PrioritizeN0Neighbors(const CandidateEvidence& e)
     }
     else
     {
-        if(!(Rank(e,config,references.Inputs().at(index))<Rank(turn->best,config,references.Inputs().at(index))))return;
-        turn->best=e;
+        improved=Rank(e,config,references.Inputs().at(index))<Rank(turn->best,config,references.Inputs().at(index));
+        if(improved)turn->best=e;
     }
     const auto& bound=config.bounds[index];
+    const double tolerance=AmplitudeTolerance(config,references.Inputs().at(index));
+    std::vector<MeasuredSynapseCountPoint> countMeasurements;
+    bool repeatable=true;
+    for(const auto& previous:cursor.lengthMeasurements)
+    {
+        if(previous.inputIndex!=index || !previous.withinTiming || previous.fullParameters.size()!=e.fullParameters.size() ||
+           !EquivalentTrainingCapacitance(previous.capacitance,e.capacitance))continue;
+        auto geometry=previous.fullParameters;
+        geometry[index].synapses=e.parameters.synapses;
+        if(geometry!=e.fullParameters)continue;
+        if(config.n0CandidateRepeats>1)
+        {
+            const auto group=std::find_if(candidateRepeats.begin(),candidateRepeats.end(),[&](const auto& g) {
+                return g.inputIndex==index && g.modelRevision==previous.modelRevision &&
+                    g.fullParameters==previous.fullParameters &&
+                    std::find(g.trialIds.begin(),g.trialIds.end(),previous.trialId)!=g.trialIds.end();
+            });
+            if(group==candidateRepeats.end() || group->maximumRawPotential-group->minimumRawPotential>tolerance)
+            {repeatable=false;break;}
+        }
+        countMeasurements.push_back({previous.parameters.synapses,previous.amplitudeResidual,true});
+    }
+    if(repeatable && turn->proposalsRemaining)
+        if(const auto count=ProposeMeasuredSynapseCount(std::move(countMeasurements),
+                bound.minimumSynapses,bound.maximumSynapses,tolerance))
+        {
+            auto candidate=e.fullParameters;candidate[index].synapses=*count;
+            const auto requested=candidate;
+            // A Branch fixup that moves another attachment is a different
+            // geometry. Keep ordinary exploration, not this fitted proposal.
+            if(PrepareCandidate(candidate) && candidate==requested &&
+               std::find(cursor.issuedN0Candidates.begin(),cursor.issuedN0Candidates.end(),candidate)==cursor.issuedN0Candidates.end() &&
+               std::find(cursor.n0Priority.begin(),cursor.n0Priority.end(),candidate)==cursor.n0Priority.end())
+            {cursor.n0Priority.insert(cursor.n0Priority.begin(),std::move(candidate));--turn->proposalsRemaining;}
+        }
+    // A measured overshoot can add a useful bracket without improving the
+    // incumbent. Only the fitted proposal may use that information; unchanged
+    // ordinary neighbour exploration still requires an improving measurement.
+    if(!improved)return;
     for(const int delta:{1,-1})
     {
         if(!turn->proposalsRemaining)break;
