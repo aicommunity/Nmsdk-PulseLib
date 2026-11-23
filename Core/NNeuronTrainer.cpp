@@ -30,6 +30,28 @@ See file license.txt for more information
 namespace NMSDK {
 
 namespace {
+
+// Research lifecycle factor: initialize newly built descendants only.
+// No reset, stimulus, parameter, or stopping-criterion change is made here.
+bool InitNewTrainingComponents(UContainer* node)
+{
+ if(!node)
+  return false;
+ if(node->GetActivity() && !node->IsInit())
+ {
+  node->Init();
+  if(!node->IsInit())
+   return false;
+ }
+ for(int i = 0; i < node->GetNumComponents(); ++i)
+ {
+  auto child = node->GetComponentByIndex(i);
+  if(child && !InitNewTrainingComponents(child.Get()))
+   return false;
+ }
+ return true;
+}
+
 constexpr double kThresholdEpsilon = 1.0e-6;
 constexpr double kMinIterationLength = 1.0e-6;
 }
@@ -1463,6 +1485,8 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 				synapse->Resistance = SynapseResistanceStep;
 
 				neuron->Reset();
+                if(!InitNewTrainingComponents(neuron.Get()))
+                 return false;
 			}
 			// Удаляем синапс
 			else if(dend_status[i] == -2)
@@ -1489,6 +1513,8 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 
 
 				neuron->Reset();
+                if(!InitNewTrainingComponents(neuron.Get()))
+                 return false;
 			}
 		}
 
@@ -1613,6 +1639,8 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 			DendriteLength[i] = 1;
 		}
 		neuron->Reset();
+                if(!InitNewTrainingComponents(neuron.Get()))
+                 return false;
 
 		// Параметры для синхронизации по времени
 		is_need_to_build = false; // Флаг необходимости досабрать нейрон
@@ -1699,6 +1727,8 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 					{
 						neuron->NumDendriteMembraneParts = DendriteLength[i];
 						neuron->Reset();
+                if(!InitNewTrainingComponents(neuron.Get()))
+                 return false;
 					}
 				}
 				else
@@ -1710,6 +1740,8 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 					dend_length[i]++;
 					neuron->NumDendriteMembranePartsVec = dend_length;
 					neuron->Reset();
+                if(!InitNewTrainingComponents(neuron.Get()))
+                 return false;
 
                     int temp_length2=neuron->NumDendriteMembranePartsVec[i];
                     if(dend_length[i] != temp_length2)
@@ -1739,6 +1771,8 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
                  BreakLink(MakeSourceName(i+1),"Output",synapse->GetLongName(this),"Input");
 
 				neuron->Reset();
+                if(!InitNewTrainingComponents(neuron.Get()))
+                 return false;
 			}
 			// Укорачиваем дендрит
 			else if(dend_status[i] == -1)
@@ -1770,6 +1804,8 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
 						neuron->NumDendriteMembranePartsVec = dend_length;
 					}
 					neuron->Reset();
+                if(!InitNewTrainingComponents(neuron.Get()))
+                 return false;
                     int temp_length2=neuron->NumDendriteMembranePartsVec[i];
                     if(temp_length1 != temp_length2)
                     {
@@ -1797,6 +1833,8 @@ bool NNeuronTrainer::SomaSynchronizePattern(void)
                  BreakLink(MakeSourceName(i+1),"Output",synapse->GetLongName(this),"Input");
 
 				neuron->Reset();
+                if(!InitNewTrainingComponents(neuron.Get()))
+                 return false;
 			}
 		}
 

@@ -30,6 +30,28 @@ See file license.txt for more information
 namespace NMSDK {
 
 namespace {
+
+// Research lifecycle factor: initialize newly built descendants only.
+// No reset, stimulus, parameter, or stopping-criterion change is made here.
+bool InitNewTrainingComponents(UContainer* node)
+{
+ if(!node)
+  return false;
+ if(node->GetActivity() && !node->IsInit())
+ {
+  node->Init();
+  if(!node->IsInit())
+   return false;
+ }
+ for(int i = 0; i < node->GetNumComponents(); ++i)
+ {
+  auto child = node->GetComponentByIndex(i);
+  if(child && !InitNewTrainingComponents(child.Get()))
+   return false;
+ }
+ return true;
+}
+
 std::string MakeLearnerSourceName(const int index1)
 {
  return std::string("Source") + sntoa(index1);
@@ -1099,6 +1121,8 @@ bool NNeuronLearner::ChangeDendriteLength(int num)
 
  // Neuron->GetStorage()->FreeObjectsStorage();
  Neuron->Reset();
+ if(!InitNewTrainingComponents(Neuron.Get()))
+  return false;
  // Neuron->GetStorage()->FreeObjectsStorage();
 
  return true;
@@ -1193,6 +1217,8 @@ bool NNeuronLearner::ChangeSynapseNumber(int num)
 
  // Neuron->GetStorage()->FreeObjectsStorage();
  Neuron->Reset();
+ if(!InitNewTrainingComponents(Neuron.Get()))
+  return false;
  // Neuron->GetStorage()->FreeObjectsStorage();
 
  return true;
