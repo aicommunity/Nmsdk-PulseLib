@@ -1326,6 +1326,8 @@ protected:
  
  /// Effective Dataset delay used between bursts (sec)
  double EffectiveDatasetDelaySec() const;
+ // Rdk calls SetDelay before it stores the candidate in the property.
+ double EffectiveDatasetDelaySec(double requestedDelay) const;
  
  /// Resize PeakRel / Delay / status vectors to n
  void ResizeSyncVectors(int n);

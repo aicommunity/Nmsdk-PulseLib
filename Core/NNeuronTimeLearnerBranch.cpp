@@ -171,12 +171,17 @@ double NNeuronTimeLearnerBranch::EffectiveIterationGapSec() const
 /// Effective Dataset delay used between bursts (sec)
 double NNeuronTimeLearnerBranch::EffectiveDatasetDelaySec() const
 {
+ return EffectiveDatasetDelaySec(Delay.GetData());
+}
+
+double NNeuronTimeLearnerBranch::EffectiveDatasetDelaySec(double requestedDelay) const
+{
  const double phys = SettleMarginSec() + kGapSlack;
  const double late_bound = 1.5 + 0.05;
  double base = phys;
  if(!AutoScaleIterationGap.GetData())
  {
-  const double configured = Delay.GetData() > 0.0 ? Delay.GetData() : 0.5;
+  const double configured = requestedDelay > 0.0 ? requestedDelay : 0.5;
   base = std::max(configured, phys);
  }
  return std::max(base, late_bound);
@@ -3655,9 +3660,18 @@ bool NNeuronTimeLearnerBranch::SetCalculateMode(const int &value)
 /// Set DatasetMatrix.Delay (pause between bursts, sec)
 bool NNeuronTimeLearnerBranch::SetDelay(const double &value)
 {
- (void)value;
+ if(!std::isfinite(value))return false;
+ if(NativeTrainingOwned || NativeModelDeclaration || NativeRecognition || NativeProbeControl.OwnsControl())
+  return value==Delay.GetData();
  if(Dataset)
-  Dataset->Delay = EffectiveDatasetDelaySec();
+ {
+  const double effective=EffectiveDatasetDelaySec(value);
+  if(!std::isfinite(effective))return false;
+  // Connected properties belong to their source. Do not write through them.
+  if(Dataset->Delay.IsConnected() || Dataset->Delay.UsesExternalDataSource())
+   return Dataset->Delay.GetData()==effective;
+  Dataset->Delay=effective;
+ }
  return true;
 }
 
