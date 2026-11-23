@@ -683,7 +683,16 @@ void BoundedTrainingSession::PrioritizeN0Neighbors(const CandidateEvidence& e)
             if(PrepareCandidate(candidate) && candidate==requested &&
                std::find(cursor.issuedN0Candidates.begin(),cursor.issuedN0Candidates.end(),candidate)==cursor.issuedN0Candidates.end() &&
                std::find(cursor.n0Priority.begin(),cursor.n0Priority.end(),candidate)==cursor.n0Priority.end())
-            {cursor.n0Priority.insert(cursor.n0Priority.begin(),std::move(candidate));--turn->proposalsRemaining;}
+            {
+                cursor.n0Priority.insert(cursor.n0Priority.begin(),std::move(candidate));
+                --turn->proposalsRemaining;
+                // Spend this finite turn on the fitted measurement first.
+                // Reserving ordinary neighbours now can exhaust the turn
+                // before that measurement can refine its still-unbracketed
+                // root. Fallback remains available if no legal unissued fit
+                // exists; no candidate/probe/edit allowance is replenished.
+                return;
+            }
         }
     // A measured overshoot can add a useful bracket without improving the
     // incumbent. Only the fitted proposal may use that information; unchanged
