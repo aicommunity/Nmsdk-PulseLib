@@ -94,6 +94,7 @@ QJsonObject EncodeCompositeRuntimePlan(const NativeTrainingPlan& p) {
     ValidateCompositeMeasurementContract(p.protocol);Require(bool(p.composite));const auto& c=p.search;
     Require(c.normalization==Normalization::SynapseCount || c.normalization==Normalization::TipResistance);
     Require(c.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate);
+    ValidateN0LengthProposalBudget(c);
     QJsonArray bounds;for(const auto& b:c.bounds)bounds.append(QJsonObject{{"minimum_length",b.minimumLength},{"maximum_length",b.maximumLength},
         {"minimum_synapses",b.minimumSynapses},{"maximum_synapses",b.maximumSynapses},{"minimum_resistance",Number(b.minimumResistance)},{"maximum_resistance",Number(b.maximumResistance)}});
     QJsonObject search{{"normalization",c.normalization==Normalization::SynapseCount?"N0":"N1"},
@@ -105,6 +106,7 @@ QJsonObject EncodeCompositeRuntimePlan(const NativeTrainingPlan& p) {
             {"amplitude_relative",Number(c.tolerances.amplitudeRelative)},{"sync",Number(c.tolerances.sync)}}},
         {"capacitance_search",c.capacitanceSearch?QJsonValue(EncodeCapacitanceSearchPolicy(*c.capacitanceSearch)):QJsonValue(QJsonValue::Null)},
         {"invalid_measurement_recovery","retry_same_candidate"}};
+    if(c.maximumN0LengthProposals)search["maximum_n0_length_proposals"]=Count(c.maximumN0LengthProposals);
     return {{"schema_version",1},{"run_id",Text(c.runId)},{"initial_model_revision",Text(c.initialModelRevision)},
         {"initial_model_epoch",Count(c.initialModelEpoch)},{"search",search},
         {"maximum_reference_probes",Count(p.maximumReferenceProbes)},{"maximum_invalid_reference_probes",Count(p.maximumInvalidReferenceProbes)},
@@ -116,7 +118,12 @@ NativeTrainingPlan DecodeCompositeRuntimePlan(const QJsonObject& o,const Verific
     Require(Version(o["schema_version"])==1 && o["record_capacitance_history"].isBool());
     NativeTrainingPlan p;p.protocol=protocol;p.composite=DecodeNativeCompositeTrainingPolicy(Object(o["composite_measurement"]));
     auto& c=p.search;c.runId=Text(o["run_id"]);c.initialModelRevision=Text(o["initial_model_revision"]);c.initialModelEpoch=Count(o["initial_model_epoch"]);
-    const auto search=Object(o["search"]);Keys(search,"normalization maximum_probes maximum_edits maximum_candidates_per_input maximum_sweeps maximum_invalid_observations resistance_subdivision_depth n0_candidate_repeats bounds tolerances capacitance_search invalid_measurement_recovery");
+    auto search=Object(o["search"]);
+    if(search.contains("maximum_n0_length_proposals")) {
+        c.maximumN0LengthProposals=Count(search["maximum_n0_length_proposals"]);
+        Require(c.maximumN0LengthProposals>0);search.remove("maximum_n0_length_proposals");
+    }
+    Keys(search,"normalization maximum_probes maximum_edits maximum_candidates_per_input maximum_sweeps maximum_invalid_observations resistance_subdivision_depth n0_candidate_repeats bounds tolerances capacitance_search invalid_measurement_recovery");
     const auto norm=Text(search["normalization"]);Require(norm=="N0" || norm=="N1");c.normalization=norm=="N0"?Normalization::SynapseCount:Normalization::TipResistance;
     c.maximumProbes=Count(search["maximum_probes"]);c.maximumEdits=Count(search["maximum_edits"]);c.maximumCandidatesPerInput=Count(search["maximum_candidates_per_input"]);
     c.maximumSweeps=Count(search["maximum_sweeps"]);c.maximumInvalidObservations=Count(search["maximum_invalid_observations"]);

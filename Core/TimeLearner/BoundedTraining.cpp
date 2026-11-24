@@ -144,6 +144,14 @@ void ValidateInvalidMeasurementRecovery(InvalidMeasurementRecovery policy,std::s
         throw std::invalid_argument("candidate_recovery_requires_invalid_observation_budget");
 }
 
+void ValidateN0LengthProposalBudget(const BoundedTrainingConfig& config)
+{
+    if(config.maximumN0LengthProposals &&
+       (config.normalization!=Normalization::SynapseCount ||
+        config.maximumN0LengthProposals>config.maximumCandidatesPerInput))
+        throw std::invalid_argument("invalid_n0_length_proposal_budget");
+}
+
 namespace BoundedTrainingDetail {
 void ValidateInputShape(std::size_t inputs,const BoundedTrainingConfig& config,
                         const std::vector<InputParameters>& initial)
@@ -155,6 +163,7 @@ void ValidateInputShape(std::size_t inputs,const BoundedTrainingConfig& config,
         (config.normalization!=Normalization::SynapseCount && config.normalization!=Normalization::TipResistance) ||
         config.bounds.size()!=inputs || initial.size()!=inputs || initial.empty())
         throw std::invalid_argument("invalid_bounded_training_configuration");
+    ValidateN0LengthProposalBudget(config);
 }
 void ValidateInputRanges(const BoundedTrainingConfig& config)
 {
@@ -619,8 +628,9 @@ void BoundedTrainingSession::PrioritizeRejectedN1()
 
 void BoundedTrainingSession::PrioritizeN0Neighbors(const CandidateEvidence& e)
 {
-    if(restoringBest || config.normalization!=Normalization::SynapseCount ||
-        !e.withinTiming || e.withinAmplitude)return;
+    if(restoringBest || config.normalization!=Normalization::SynapseCount)return;
+    if(!e.withinTiming) {PrioritizeN0LengthNeighborhood();return;}
+    if(e.withinAmplitude)return;
     const auto index=e.inputIndex;
     auto turn=std::find_if(cursor.n0GeometryTurns.begin(),cursor.n0GeometryTurns.end(),[&](const auto& previous) {
         if(previous.best.inputIndex!=index || previous.best.fullParameters.size()!=e.fullParameters.size() ||
@@ -694,6 +704,9 @@ void BoundedTrainingSession::PrioritizeN0Neighbors(const CandidateEvidence& e)
                 return;
             }
         }
+    // An adjacent measured count bracket has no interior integer. A finite
+    // opt-in geometry proposal still needs a new edit and fresh observations.
+    if(PrioritizeN0LengthNeighborhood())return;
     // A measured overshoot can add a useful bracket without improving the
     // incumbent. Only the fitted proposal may use that information; unchanged
     // ordinary neighbour exploration still requires an improving measurement.
@@ -710,6 +723,81 @@ void BoundedTrainingSession::PrioritizeN0Neighbors(const CandidateEvidence& e)
             cursor.n0Priority.push_back(std::move(candidate));--turn->proposalsRemaining;
         }
     }
+}
+
+bool BoundedTrainingSession::PrioritizeN0LengthNeighborhood()
+{
+    if(restoringBest || config.normalization!=Normalization::SynapseCount ||
+       !config.maximumN0LengthProposals)return false;
+    const auto input=order.at(position);const auto& bound=config.bounds[input];
+    auto& issued=n0LengthProposalsIssued[input];
+    if(issued>=config.maximumN0LengthProposals)return false;
+    const auto& reference=references.Inputs().at(input);
+    const double tolerance=AmplitudeTolerance(config,reference);
+    struct Family {std::vector<const CandidateEvidence*> points;bool repeatable=true;};
+    std::vector<Family> families;
+    for(const auto& e:cursor.lengthMeasurements)
+    {
+        if(e.inputIndex!=input || !e.withinTiming)continue;
+        auto family=std::find_if(families.begin(),families.end(),[&](const auto& f) {
+            const auto& old=*f.points.front();auto geometry=old.fullParameters;
+            geometry[input].synapses=e.parameters.synapses;
+            return geometry==e.fullParameters && EquivalentTrainingCapacitance(old.capacitance,e.capacitance);
+        });
+        if(family==families.end()) {families.push_back({});family=std::prev(families.end());}
+        family->points.push_back(&e);
+        if(config.n0CandidateRepeats>1)
+        {
+            const auto group=std::find_if(candidateRepeats.begin(),candidateRepeats.end(),[&](const auto& g) {
+                return g.inputIndex==input && g.modelRevision==e.modelRevision &&
+                    g.fullParameters==e.fullParameters &&
+                    EquivalentTrainingCapacitance(g.capacitance,e.capacitance) &&
+                    std::find(g.trialIds.begin(),g.trialIds.end(),e.trialId)!=g.trialIds.end();
+            });
+            family->repeatable=family->repeatable && group!=candidateRepeats.end() &&
+                group->maximumRawPotential-group->minimumRawPotential<=tolerance;
+        }
+    }
+    const CandidateEvidence* bestSeed=nullptr;
+    std::vector<InputParameters> bestProposal;
+    for(const auto& family:families)
+    {
+        if(!family.repeatable)continue;
+        std::vector<MeasuredSynapseCountPoint> counts;
+        for(const auto* e:family.points)counts.push_back({e->parameters.synapses,e->amplitudeResidual,true});
+        for(const auto& bracket:MeasuredAdjacentSynapseCountBrackets(std::move(counts),
+                bound.minimumSynapses,bound.maximumSynapses,tolerance))
+        {
+            // Rank real measured endpoints across every retained local family:
+            // a worse recent geometry must not pull the search away from a
+            // better measured bracket. Repeated evidence is conservative.
+            const CandidateEvidence* seed=nullptr;
+            for(const int n:{bracket.lower,bracket.upper})
+            {
+                const CandidateEvidence* endpoint=nullptr;
+                for(const auto* e:family.points)
+                    if(e->parameters.synapses==n &&
+                       (!endpoint || Rank(*endpoint,config,reference)<Rank(*e,config,reference)))endpoint=e;
+                if(endpoint && (!seed || Rank(*endpoint,config,reference)<Rank(*seed,config,reference)))seed=endpoint;
+            }
+            if(!seed || (bestSeed && !(Rank(*seed,config,reference)<Rank(*bestSeed,config,reference))))continue;
+            std::vector<int> considered{seed->parameters.length};
+            for(std::size_t attempt=0;attempt<config.maximumCandidatesPerInput;++attempt)
+            {
+                const auto length=ProposeNearestUnvisitedLength(considered,seed->parameters.length,
+                    bound.minimumLength,bound.maximumLength);
+                if(!length)break;
+                considered.push_back(*length);auto candidate=seed->fullParameters;candidate[input].length=*length;
+                if(!PrepareCandidate(candidate) ||
+                   std::find(cursor.issuedN0Candidates.begin(),cursor.issuedN0Candidates.end(),candidate)!=cursor.issuedN0Candidates.end() ||
+                   std::find(cursor.n0Priority.begin(),cursor.n0Priority.end(),candidate)!=cursor.n0Priority.end())continue;
+                bestSeed=seed;bestProposal=std::move(candidate);break;
+            }
+        }
+    }
+    if(!bestSeed)return false;
+    cursor.n0Priority.insert(cursor.n0Priority.begin(),std::move(bestProposal));
+    ++issued;return true;
 }
 
 BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextDomainCandidate(std::vector<InputParameters>& parameters)
@@ -1328,7 +1416,7 @@ void BoundedTrainingSession::RejectCandidateWindow(const RejectedCompositeMeasur
             Stop(TrainingStatus::SearchUnresolved,"restored_best_candidate_has_rejected_window");
             e.disposition=CandidateRecoveryDisposition::RestoredBestStop;
         } else {
-            PrioritizeRejectedN0BranchLength();
+            if(!PrioritizeN0LengthNeighborhood())PrioritizeRejectedN0BranchLength();
             PrioritizeRejectedN1();
             phase=Phase::Candidate;AdvanceCapacitanceContext();
             e.disposition=CandidateRecoveryDisposition::CursorAdvanced;

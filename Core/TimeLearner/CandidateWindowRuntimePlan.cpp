@@ -50,6 +50,7 @@ void ValidateDeclaration(const NativeTrainingPlan& plan) {
         (search.normalization!=Normalization::TipResistance || search.n0CandidateRepeats==1),
         "candidate_window_runtime2_search_limits");
     ValidateInvalidMeasurementRecovery(search.invalidMeasurementRecovery,search.maximumInvalidObservations);
+    ValidateN0LengthProposalBudget(search);
     Require(search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate ||
         search.invalidMeasurementRecovery==InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow,
         "candidate_window_runtime2_recovery_unsupported");
@@ -74,7 +75,7 @@ QJsonObject Search(const BoundedTrainingConfig& search) {
         {"minimum_length",bound.minimumLength},{"maximum_length",bound.maximumLength},
         {"minimum_synapses",bound.minimumSynapses},{"maximum_synapses",bound.maximumSynapses},
         {"minimum_resistance",Number(bound.minimumResistance)},{"maximum_resistance",Number(bound.maximumResistance)}});
-    return {{"normalization",search.normalization==Normalization::SynapseCount?"N0":"N1"},
+    QJsonObject result{{"normalization",search.normalization==Normalization::SynapseCount?"N0":"N1"},
         {"maximum_probes",Count(search.maximumProbes)},{"maximum_edits",Count(search.maximumEdits)},
         {"maximum_candidates_per_input",Count(search.maximumCandidatesPerInput)},{"maximum_sweeps",Count(search.maximumSweeps)},
         {"maximum_invalid_observations",Count(search.maximumInvalidObservations)},
@@ -84,10 +85,17 @@ QJsonObject Search(const BoundedTrainingConfig& search) {
         {"capacitance_search",search.capacitanceSearch?QJsonValue(EncodeCapacitanceSearchPolicy(*search.capacitanceSearch)):QJsonValue(QJsonValue::Null)},
         {"invalid_measurement_recovery",search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate?
             "retry_same_candidate":"advance_rejected_candidate_window"}};
+    if(search.maximumN0LengthProposals)result["maximum_n0_length_proposals"]=Count(search.maximumN0LengthProposals);
+    return result;
 }
 BoundedTrainingConfig Search(const QJsonObject& object,std::size_t version) {
-    Keys(object,"normalization maximum_probes maximum_edits maximum_candidates_per_input maximum_sweeps maximum_invalid_observations resistance_subdivision_depth n0_candidate_repeats bounds tolerances capacitance_search invalid_measurement_recovery");
+    auto fields=object;fields.remove("maximum_n0_length_proposals");
+    Keys(fields,"normalization maximum_probes maximum_edits maximum_candidates_per_input maximum_sweeps maximum_invalid_observations resistance_subdivision_depth n0_candidate_repeats bounds tolerances capacitance_search invalid_measurement_recovery");
     BoundedTrainingConfig search;const auto normalization=Text(object["normalization"]);Require(normalization=="N0" || normalization=="N1");
+    if(object.contains("maximum_n0_length_proposals")) {
+        search.maximumN0LengthProposals=Count(object["maximum_n0_length_proposals"]);
+        Require(search.maximumN0LengthProposals>0,"zero_n0_length_proposal_budget_must_be_omitted");
+    }
     search.normalization=normalization=="N0"?Normalization::SynapseCount:Normalization::TipResistance;
     search.maximumProbes=Count(object["maximum_probes"]);search.maximumEdits=Count(object["maximum_edits"]);
     search.maximumCandidatesPerInput=Count(object["maximum_candidates_per_input"]);search.maximumSweeps=Count(object["maximum_sweeps"]);

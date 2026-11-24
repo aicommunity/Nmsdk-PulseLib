@@ -331,6 +331,12 @@ static QJsonObject EncodeNativeTrainingStateImpl(const NativeTrainingService& se
         {"maximum_candidates_per_input",Count(cfg.maximumCandidatesPerInput)},{"maximum_sweeps",Count(cfg.maximumSweeps)},
         {"maximum_invalid_observations",Count(cfg.maximumInvalidObservations)},
         {"resistance_subdivision_depth",int(cfg.resistanceSubdivisionDepth)},{"bounds",bounds}};
+    if(cfg.maximumN0LengthProposals)
+    {
+        auto configuration=result["configuration"].toObject();
+        configuration["maximum_n0_length_proposals"]=Count(cfg.maximumN0LengthProposals);
+        result["configuration"]=configuration;
+    }
     if(cfg.n0CandidateRepeats>1)
     {
         result["schema_version"]=2;

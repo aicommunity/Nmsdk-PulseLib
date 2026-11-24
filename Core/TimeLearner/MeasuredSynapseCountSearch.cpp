@@ -5,6 +5,41 @@
 #include <tuple>
 
 namespace NMSDK::TimeLearner {
+std::vector<MeasuredSynapseCountBracket> MeasuredAdjacentSynapseCountBrackets(
+    std::vector<MeasuredSynapseCountPoint> points,int minimum,int maximum,double tolerance)
+{
+    if(minimum<1 || maximum<minimum || !std::isfinite(tolerance) || tolerance<0.)
+        throw std::invalid_argument("invalid_measured_synapse_count_domain");
+    for(const auto& p:points)
+        if(p.synapses<1 || !std::isfinite(p.amplitudeResidual) || !p.withinTiming)return {};
+    points.erase(std::remove_if(points.begin(),points.end(),[&](const auto& p) {
+        return p.synapses<minimum || p.synapses>maximum;
+    }),points.end());
+    std::sort(points.begin(),points.end(),[](const auto& a,const auto& b){return a.synapses<b.synapses;});
+    std::vector<MeasuredSynapseCountPoint> unique;
+    for(std::size_t begin=0;begin<points.size();)
+    {
+        auto representative=points[begin];std::size_t end=begin+1;
+        double low=representative.amplitudeResidual,high=low;
+        while(end<points.size() && points[end].synapses==representative.synapses)
+        {
+            const auto& p=points[end++];low=std::min(low,p.amplitudeResidual);high=std::max(high,p.amplitudeResidual);
+            if(std::fabs(p.amplitudeResidual)>std::fabs(representative.amplitudeResidual))representative=p;
+        }
+        if(!std::isfinite(high-low) || high-low>tolerance ||
+            std::fabs(representative.amplitudeResidual)<=tolerance)return {};
+        unique.push_back(representative);begin=end;
+    }
+    std::vector<MeasuredSynapseCountBracket> result;
+    for(std::size_t i=1;i<unique.size();++i)
+    {
+        const auto& a=unique[i-1];const auto& b=unique[i];
+        if(b.synapses-a.synapses==1 && ((a.amplitudeResidual<0.)!=(b.amplitudeResidual<0.)))
+            result.push_back({a.synapses,b.synapses});
+    }
+    return result;
+}
+
 std::optional<int> ProposeMeasuredSynapseCount(std::vector<MeasuredSynapseCountPoint> points,
     int minimum,int maximum,double tolerance)
 {

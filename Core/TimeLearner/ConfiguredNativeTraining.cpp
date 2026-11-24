@@ -126,6 +126,7 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
         "invalid_configured_native_search");
     Require(c.search.n0CandidateRepeats>=1 && c.search.n0CandidateRepeats<=128 &&
         (c.search.normalization==Normalization::SynapseCount || c.search.n0CandidateRepeats==1),"invalid_n0_candidate_repeats");
+    ValidateN0LengthProposalBudget(c.search);
     Require(c.search.initialModelRevision.empty() && c.search.initialModelEpoch==0,"configuration_is_not_controller_checkpoint");
     Require(std::isfinite(c.capacitanceMaximumRelativeChange) && c.capacitanceMaximumRelativeChange>=0. &&
         (c.recordCapacitanceHistory || c.capacitanceMaximumRelativeChange==0.),"invalid_configured_capacitance_history_policy");
@@ -280,6 +281,12 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
                 {"amplitude_relative",Numeric(c.search.tolerances.amplitudeRelative)},{"sync",Numeric(c.search.tolerances.sync)}}}}},
         {"maximum_reference_probes",Integer(c.maximumReferenceProbes)},{"maximum_invalid_reference_probes",Integer(c.maximumInvalidReferenceProbes)},
         {"maximum_model_seconds",Numeric(c.maximumModelSeconds)},{"maximum_wall_seconds",Numeric(c.maximumWallSeconds)}};
+    if(c.search.maximumN0LengthProposals)
+    {
+        auto search=result["search"].toObject();
+        search["maximum_n0_length_proposals"]=Integer(c.search.maximumN0LengthProposals);
+        result["search"]=search;
+    }
     if(c.search.n0CandidateRepeats!=1)
     {
         result["schema_version"]=2;
@@ -380,6 +387,12 @@ ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
     for(const auto& v:Array(o["windows"]))
     {const auto w=Object(v);Keys(w,{"begin","end"});c.windows.emplace_back(Number(w["begin"]),Number(w["end"]));}
     auto s=Object(o["search"]);
+    if(s.contains("maximum_n0_length_proposals"))
+    {
+        c.search.maximumN0LengthProposals=Count(s["maximum_n0_length_proposals"]);
+        Require(c.search.maximumN0LengthProposals>0,"zero_n0_length_proposal_budget_must_be_omitted");
+        s.remove("maximum_n0_length_proposals");
+    }
     if(schema==2 || schema==3 || schema==4)
     {
         c.search.n0CandidateRepeats=Count(s["n0_candidate_repeats"],128);

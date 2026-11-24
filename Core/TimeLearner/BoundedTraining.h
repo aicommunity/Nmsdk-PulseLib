@@ -4,6 +4,7 @@
 #include "ResistanceDomain.h"
 #include "TrainingCapacitance.h"
 #include <memory>
+#include <map>
 
 namespace NMSDK::TimeLearner {
 enum class TrainingStatus { Searching, Verifying, Exact, SearchUnresolved, BudgetExhausted,
@@ -50,7 +51,12 @@ struct BoundedTrainingConfig {
     // sealed protocol5 AdvanceRejectedCandidateWindow are distinct policies.
     // Neither can skip reference capture or a final-verification input.
     InvalidMeasurementRecovery invalidMeasurementRecovery=InvalidMeasurementRecovery::RetrySameCandidate;
+    // Opt-in N0 coupled search. Zero preserves the historical proposal order.
+    // One input shares this finite allowance across all C contexts and sweeps;
+    // improvements, revisits and invalid observations never replenish it.
+    std::size_t maximumN0LengthProposals=0;
 };
+void ValidateN0LengthProposalBudget(const BoundedTrainingConfig& configuration);
 void ValidateInvalidMeasurementRecovery(InvalidMeasurementRecovery policy,std::size_t invalidAllowance);
 enum class TrainingActionKind { Edit, Probe, ResistanceDomain };
 struct TrainingAction {
@@ -204,6 +210,7 @@ private:
     // selection made immediately before AdvanceInput or terminal Stop.
     std::optional<MeasuredCandidateSelection> selectedMeasuredBoundary;
     bool restoringBest=false;
+    std::map<std::size_t,std::size_t> n0LengthProposalsIssued;
     // Enumeration state belongs to a single physical search context. Keeping
     // it separate from measurements/references enables fair bounded traversal
     // of joint physical candidates without resetting the training session.
@@ -290,6 +297,7 @@ private:
     void AdvanceDomainGeometry();
     void PrioritizeMeasuredLength(const CandidateEvidence& measurement);
     void PrioritizeN0Neighbors(const CandidateEvidence& measurement);
+    bool PrioritizeN0LengthNeighborhood();
     void PrioritizeRejectedN0BranchLength();
     void PrioritizeRejectedN1();
     bool QueueRejectedN1Geometry(bool allowSameLength);
