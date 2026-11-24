@@ -1,5 +1,6 @@
 #pragma once
 #include "NativeLearnedState.h"
+#include "NativeRecognitionState.h"
 
 namespace NMSDK::TimeLearner {
 // Complete, freshly initialized physical children and their native declaration.
@@ -28,6 +29,17 @@ struct PreparedNativePhysicalModelData {
 QJsonObject ExportNativePhysicalModelData(const QJsonObject& source,
     RDK::UEPtr<RDK::UStorage> storage,RDK::UEPtr<RDK::UEnvironment> environment,
     const std::string& implementationId);
+// Explicit physical DATA transition, retaining its complete compact solo DATA
+// source and conversion specification in schema2. Uses the same native graph
+// conversion as full recognition packages. The source stays immutable and no
+// training/calibration certificate or source-evidence validation is granted.
+// HistoricalBranchN1 requires separately supplied per-input captured amplitudes;
+// they are DATA to reproduce the physical edit, not certified measurements.
+// Identity requires an empty amplitude vector. Every PostTune mode is supported
+// through the common primitive; candidates remain unmeasured and unconfirmed.
+QJsonObject ConvertNativeSoloPhysicalModelDataToRecognition(const QJsonObject& soloData,
+    const NativeRecognitionSpec&,const std::vector<double>& referenceAmplitudes,
+    RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string& implementationId);
 // Constructor preflight only; does not validate history or grant authority.
 unsigned NativePhysicalModelSourceFrequency(const QJsonObject& source);
 

@@ -106,6 +106,22 @@ void CheckPhysical(PreparedNativePhysicalModelData& result)
     Require(inspected.modelRevision==result.modelRevision,
         "physical_model_effective_graph_mismatch");
 }
+struct PhysicalConversion {
+    QJsonObject document;
+    std::unique_ptr<PreparedNativePhysicalModelData> prepared;
+};
+PhysicalConversion ConvertPhysicalData(const QJsonObject&,const NativeRecognitionSpec&,const std::vector<double>&,
+    UEPtr<UStorage>,UEPtr<UEnvironment>,const std::string&);
+std::vector<double> Amplitudes(const QJsonValue& value)
+{
+    Require(value.isArray(),"physical_conversion_reference_array");std::vector<double> result;
+    for(const auto& item:value.toArray())
+    {
+        Require(item.isDouble() && std::isfinite(item.toDouble()) && item.toDouble()>0.,
+            "physical_conversion_reference_amplitude");result.push_back(item.toDouble());
+    }
+    return result;
+}
 template<class Prepared> QJsonObject Capture(const QJsonObject& source,const QJsonObject& solo,
     const Prepared& prepared,const std::string& soloRevision,const QJsonValue& conversion)
 {
@@ -151,6 +167,19 @@ std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativePhysicalModelData(
     UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
 {
     Require(storage && environment && !implementation.empty(),"physical_model_import_context");
+    if(document["schema_version"]==QJsonValue(2))
+    {
+        Keys(document,{"kind","schema_version","data_only","dynamic_checkpoint","certificate","implementation_id",
+            "source_boundary","configuration","configuration_text","protocol","controls","parameters","model_revision",
+            "source_solo_revision","conversion_record","dataset","neuron","sha256",
+            "source_model_data","conversion_spec","reference_amplitudes"});
+        Require(Sha(document["sha256"]) && Signed(document)==document,"physical_model_document_digest");
+        auto converted=ConvertPhysicalData(Object(document["source_model_data"]),
+            DecodeNativeRecognitionSpec(Object(document["conversion_spec"])),Amplitudes(document["reference_amplitudes"]),
+            storage,environment,implementation);
+        Require(converted.document==document,"physical_model_native_conversion_mismatch");
+        return std::move(converted.prepared);
+    }
     Keys(document,{"kind","schema_version","data_only","dynamic_checkpoint","certificate","implementation_id",
         "source_boundary","configuration","configuration_text","protocol","controls","parameters","model_revision",
         "source_solo_revision","conversion_record","dataset","neuron","sha256"});
@@ -213,11 +242,60 @@ std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativePhysicalModelData(
     Require(bool(result->neuron),"physical_model_neuron_class");
     CheckPhysical(*result);return result;
 }
+namespace {
+PhysicalConversion ConvertPhysicalData(const QJsonObject& source,const NativeRecognitionSpec& specification,
+    const std::vector<double>& referenceAmplitudes,UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,
+    const std::string& implementation)
+{
+    // A single solo DATA source is mandatory: neither already converted DATA
+    // nor full history packages are silently reduced or scaled a second time.
+    Require(source["schema_version"]==QJsonValue(1) &&
+        SoloKind(Object(source["source_boundary"])["kind"].toString()),"physical_conversion_requires_solo_data1");
+    Require(specification.mode!=RecognitionConversionMode::Identity || referenceAmplitudes.empty(),
+        "physical_identity_has_unused_references");
+    QJsonArray amplitudes;
+    for(double amplitude:referenceAmplitudes)
+    {
+        Require(std::isfinite(amplitude) && amplitude>0.,"physical_conversion_reference_amplitude");
+        amplitudes.append(amplitude);
+    }
+    PhysicalConversion result;result.prepared=PrepareNativePhysicalModelData(source,storage,environment,implementation);
+    auto& model=*result.prepared;
+    const auto converted=detail::ApplyNativeRecognitionConversion(model.sourceBoundary,specification,model.configuration,
+        model.neuron,model.dataset,model.parameters,referenceAmplitudes);
+    auto generator=model.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+    const auto originalArchive=Object(source["neuron"]);
+    const auto metadata=detail::NativeRecognitionMetadata(Object(originalArchive["metadata"]),model.sourceBoundary,converted);
+    std::vector<std::string> roots;
+    const auto dataset=Object(source["dataset"]);
+    Require(dataset["required_class_names"].isArray(),"physical_conversion_required_classes");
+    for(const auto& name:dataset["required_class_names"].toArray())roots.push_back(Text(name));
+    const auto archive=NmsdkTools::ExportModelArchive(model.neuron,metadata,{{&generator->Output,"burst"}},roots);
+    model.configuration.model.allowMutedInputBaseline=false;
+    model.modelRevision=Text(converted.identity["sha256"]);
+    CheckPhysical(model);
+    auto document=source;document["schema_version"]=2;
+    document["source_model_data"]=source;document["conversion_spec"]=EncodeNativeRecognitionSpec(specification);
+    document["reference_amplitudes"]=amplitudes;document["conversion_record"]=converted.record;
+    document["configuration"]=EncodeConfiguredNativeTraining(model.configuration);
+    document["parameters"]=Parameters(model.parameters);document["model_revision"]=QString::fromStdString(model.modelRevision);
+    document["neuron"]=archive;
+    // source_boundary still names the actual separately retained solo source;
+    // the changed result is justified by this explicit reproducible transition.
+    // No synthetic recognition source boundary or new proof authority is added.
+    result.document=Signed(document);return result;
+}
+}
+QJsonObject ConvertNativeSoloPhysicalModelDataToRecognition(const QJsonObject& source,const NativeRecognitionSpec& specification,
+    const std::vector<double>& amplitudes,UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,
+    const std::string& implementation)
+{return ConvertPhysicalData(source,specification,amplitudes,storage,environment,implementation).document;}
 std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativeFrozenPhysicalModelData(const QJsonObject& document,
     UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
 {
     const auto boundary=Object(document["source_boundary"]);
-    Require(!SoloKind(boundary["kind"].toString()),"physical_model_frozen_requires_explicit_recognition_conversion");
+    Require(document["schema_version"]==QJsonValue(2) || !SoloKind(boundary["kind"].toString()),
+        "physical_model_frozen_requires_explicit_recognition_conversion");
     auto prepared=PrepareNativePhysicalModelData(document,storage,environment,implementation);
     Require(!prepared->configuration.model.allowMutedInputBaseline,
         "physical_model_frozen_requires_all_input_banks");
