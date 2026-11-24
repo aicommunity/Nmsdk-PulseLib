@@ -1,5 +1,6 @@
 #include "NativePhysicalModelData.h"
 #include "NativeRecognitionState.h"
+#include "NativeThresholdCandidate.h"
 #include "../NPulseLTZoneCommon.h"
 #include <QJsonArray>
 #include <algorithm>
@@ -112,6 +113,8 @@ struct PhysicalConversion {
 };
 PhysicalConversion ConvertPhysicalData(const QJsonObject&,const NativeRecognitionSpec&,const std::vector<double>&,
     UEPtr<UStorage>,UEPtr<UEnvironment>,const std::string&);
+PhysicalConversion ThresholdPhysicalData(const QJsonObject&,double,
+    UEPtr<UStorage>,UEPtr<UEnvironment>,const std::string&);
 std::vector<double> Amplitudes(const QJsonValue& value)
 {
     Require(value.isArray(),"physical_conversion_reference_array");std::vector<double> result;
@@ -167,6 +170,19 @@ std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativePhysicalModelData(
     UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
 {
     Require(storage && environment && !implementation.empty(),"physical_model_import_context");
+    if(document["schema_version"]==QJsonValue(3))
+    {
+        Keys(document,{"kind","schema_version","data_only","dynamic_checkpoint","certificate","implementation_id",
+            "source_boundary","configuration","configuration_text","protocol","controls","parameters","model_revision",
+            "source_solo_revision","conversion_record","dataset","neuron","sha256",
+            "source_recognition_data","threshold","candidate_record"});
+        Require(Sha(document["sha256"]) && Signed(document)==document,"physical_model_document_digest");
+        Require(document["threshold"].isDouble(),"invalid_threshold_candidate_value");
+        auto candidate=ThresholdPhysicalData(Object(document["source_recognition_data"]),document["threshold"].toDouble(),
+            storage,environment,implementation);
+        Require(candidate.document==document,"physical_model_native_threshold_candidate_mismatch");
+        return std::move(candidate.prepared);
+    }
     if(document["schema_version"]==QJsonValue(2))
     {
         Keys(document,{"kind","schema_version","data_only","dynamic_checkpoint","certificate","implementation_id",
@@ -243,6 +259,37 @@ std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativePhysicalModelData(
     CheckPhysical(*result);return result;
 }
 namespace {
+PhysicalConversion ThresholdPhysicalData(const QJsonObject& source,double threshold,
+    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
+{
+    Require(std::isfinite(threshold),"invalid_threshold_candidate_value");
+    const auto boundary=Object(source["source_boundary"]);
+    const bool baseRecognition=boundary["kind"]==QJsonValue("timelearner_recognition_state") ||
+        boundary["kind"]==QJsonValue("timelearner_diagnostic_recognition_state");
+    Require((source["schema_version"]==QJsonValue(2) ||
+        (source["schema_version"]==QJsonValue(1) && baseRecognition)) &&
+        source["kind"]==QJsonValue("timelearner_physical_model_data"),"physical_threshold_requires_base_recognition_data");
+    PhysicalConversion result;
+    result.prepared=PrepareNativeFrozenPhysicalModelData(source,storage,environment,implementation);
+    auto& model=*result.prepared;
+    const auto edit=detail::ApplyNativePhysicalThresholdCandidate(source,Object(Object(source["neuron"])["metadata"]),
+        model.neuron,model.dataset,threshold);
+    auto generator=model.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+    std::vector<std::string> roots;
+    const auto dataset=Object(source["dataset"]);
+    Require(dataset["required_class_names"].isArray(),"physical_threshold_required_classes");
+    for(const auto& name:dataset["required_class_names"].toArray())roots.push_back(Text(name));
+    const auto archive=NmsdkTools::ExportModelArchive(model.neuron,edit.metadata,{{&generator->Output,"burst"}},roots);
+    model.modelRevision=Text(edit.identity["sha256"]);CheckPhysical(model);
+    auto document=source;
+    // A separate bounded transition, rather than relabelling the original
+    // boundary or extending the solo conversion record with a fictitious proof.
+    document.remove("source_model_data");document.remove("conversion_spec");document.remove("reference_amplitudes");
+    document["schema_version"]=3;document["source_recognition_data"]=source;
+    document["threshold"]=threshold;document["candidate_record"]=edit.record;
+    document["model_revision"]=QString::fromStdString(model.modelRevision);document["neuron"]=archive;
+    result.document=Signed(document);return result;
+}
 PhysicalConversion ConvertPhysicalData(const QJsonObject& source,const NativeRecognitionSpec& specification,
     const std::vector<double>& referenceAmplitudes,UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,
     const std::string& implementation)
@@ -290,11 +337,15 @@ QJsonObject ConvertNativeSoloPhysicalModelDataToRecognition(const QJsonObject& s
     const std::vector<double>& amplitudes,UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,
     const std::string& implementation)
 {return ConvertPhysicalData(source,specification,amplitudes,storage,environment,implementation).document;}
+QJsonObject CreateNativePhysicalThresholdCandidate(const QJsonObject& source,double threshold,
+    UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
+{return ThresholdPhysicalData(source,threshold,storage,environment,implementation).document;}
 std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativeFrozenPhysicalModelData(const QJsonObject& document,
     UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const std::string& implementation)
 {
     const auto boundary=Object(document["source_boundary"]);
-    Require(document["schema_version"]==QJsonValue(2) || !SoloKind(boundary["kind"].toString()),
+    Require(document["schema_version"]==QJsonValue(2) || document["schema_version"]==QJsonValue(3) ||
+        !SoloKind(boundary["kind"].toString()),
         "physical_model_frozen_requires_explicit_recognition_conversion");
     auto prepared=PrepareNativePhysicalModelData(document,storage,environment,implementation);
     Require(!prepared->configuration.model.allowMutedInputBaseline,

@@ -67,6 +67,7 @@ NativePhysicalThresholdCandidate ApplyNativePhysicalThresholdCandidate(const QJs
     calibration["threshold"]=threshold;calibration["candidate_record"]=c.record;
     c.metadata["calibration"]=calibration;
     auto verification=Object(c.metadata["recognition_verification"]);
+    verification["status"]="unverified";verification["certificate"]=QJsonValue(QJsonValue::Null);
     verification["model_identity"]=c.identity["sha256"];c.metadata["recognition_verification"]=verification;
     return c;
 }

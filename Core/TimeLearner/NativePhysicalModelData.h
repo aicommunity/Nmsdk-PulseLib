@@ -40,6 +40,12 @@ QJsonObject ExportNativePhysicalModelData(const QJsonObject& source,
 QJsonObject ConvertNativeSoloPhysicalModelDataToRecognition(const QJsonObject& soloData,
     const NativeRecognitionSpec&,const std::vector<double>& referenceAmplitudes,
     RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string& implementationId);
+// Schema3 is one explicit threshold candidate from immutable recognition DATA1
+// or DATA2. The complete compact source is retained, including its original
+// stopped/diagnostic boundary. Candidates cannot be chained or grant proof.
+// Uses the same supported scalar threshold edit as full recognition packages.
+QJsonObject CreateNativePhysicalThresholdCandidate(const QJsonObject& recognitionData,double threshold,
+    RDK::UEPtr<RDK::UStorage>,RDK::UEPtr<RDK::UEnvironment>,const std::string& implementationId);
 // Constructor preflight only; does not validate history or grant authority.
 unsigned NativePhysicalModelSourceFrequency(const QJsonObject& source);
 
