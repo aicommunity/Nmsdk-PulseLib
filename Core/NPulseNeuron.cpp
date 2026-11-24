@@ -21,6 +21,7 @@ See file license.txt for more information
 #endif
 
 #include <algorithm>
+#include <cstdlib>
 #include "NPulseNeuron.h"
 #include "NPulseMembrane.h"
 #include "NPulseLTZone.h"
@@ -1026,6 +1027,9 @@ bool NPulseNeuron::ACalculate(void)
 // Устанавливает компоненты в требуемый порядок расчета
 void NPulseNeuron::UpdateComputationOrder(void)
 {
+ const char* disabled=std::getenv("NMSDK_DIAG_DISABLE_NEURON_REORDER");
+ if(disabled && disabled[0]=='1' && disabled[1]=='\0') return;
+
  int position = 0;
  int num_soma=NumSomaMembraneParts;
  for(int i=0;i<num_soma;i++)
