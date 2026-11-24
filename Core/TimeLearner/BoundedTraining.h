@@ -14,6 +14,8 @@ enum class InvalidMeasurementRecovery { RetrySameCandidate, AdvanceUnassignedBur
 // Classic mode yields only at a completed candidate (including all repeats),
 // never between an anchor and its input or in the middle of a native burst.
 enum class InputTraversalPolicy { Sequential, ClassicCandidateRoundRobin };
+inline constexpr std::size_t DefaultTraversalSeedElements=131072;
+inline constexpr std::size_t DefaultCandidatesPerInputVisit=1;
 struct InputSearchBounds {
     int minimumLength=1,maximumLength=1,minimumSynapses=1,maximumSynapses=128;
     double minimumResistance=0.,maximumResistance=0.;
@@ -60,16 +62,22 @@ struct BoundedTrainingConfig {
     // improvements, revisits and invalid observations never replenish it.
     std::size_t maximumN0LengthProposals=0;
     InputTraversalPolicy inputTraversal=InputTraversalPolicy::Sequential;
+    // Explicit scheduling quantum, in COMPLETE measured candidates. Three
+    // allows a fresh length trend before another input changes the background;
+    // one retains the first standalone candidate. This is not a tolerance.
+    std::size_t candidatesPerInputVisit=DefaultCandidatesPerInputVisit;
     // Aggregate initial L/Ns/Rs seed storage across retained input/C cursors.
     // Measurement history remains bounded separately by the global budgets.
-    std::size_t maximumTraversalSeedElements=131072;
+    std::size_t maximumTraversalSeedElements=DefaultTraversalSeedElements;
 };
 void ValidateN0LengthProposalBudget(const BoundedTrainingConfig& configuration);
 void ValidateInvalidMeasurementRecovery(InvalidMeasurementRecovery policy,std::size_t invalidAllowance);
-// Until the native declaration/evidence codecs bind the new opt-in policy,
-// reject it at native admission/export rather than silently serializing it as
-// Sequential. The pure decision controller supports the policy independently.
+// Shared native declaration validation, before admission or serialization.
+// Branch keeps its own reverse traversal and rejects a Classic-only choice.
 void ValidateNativeInputTraversalConfiguration(const BoundedTrainingConfig& configuration);
+void ValidateNativeInputTraversalConfiguration(const BoundedTrainingConfig& configuration,ProbeRouting routing);
+// Numeric/routing preflight only; grants no reference/measurement authority.
+void ValidateInputTraversalConfiguration(const VerificationProtocol& protocol,const BoundedTrainingConfig& configuration);
 enum class TrainingActionKind { Edit, Probe, ResistanceDomain };
 struct TrainingAction {
     TrainingActionKind kind=TrainingActionKind::Probe;
@@ -279,6 +287,7 @@ private:
         std::vector<InputParameters> background;
         std::optional<TrainingCapacitance> backgroundCapacitance;
         std::size_t candidates=0;
+        std::size_t candidatesInVisit=0;
         std::optional<CandidateEvidence> best;
         // Coordinates only after a background change. Its old residuals must
         // not rank/accept a point in the current graph; remeasure the proposal.

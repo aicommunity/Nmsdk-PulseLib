@@ -1,5 +1,6 @@
 #include "CompositeTrainingDeclarations.h"
 #include "ConfiguredNativeTraining.h"
+#include "InputTraversalJson.h"
 #include <QJsonArray>
 #include <QStringList>
 #include <cmath>
@@ -91,8 +92,9 @@ QJsonObject CompositeTrainingProtocolBinding(const VerificationProtocol& p) {
         {"geometry_policy",QJsonArray{int(g.schemaVersion),double(g.maximumInputs),double(g.maximumSamples),double(g.maximumTotalSamples),g.repeatabilityAbsolute}}};
 }
 QJsonObject EncodeCompositeRuntimePlan(const NativeTrainingPlan& p) {
-    ValidateNativeInputTraversalConfiguration(p.search);
+    ValidateNativeInputTraversalConfiguration(p.search,p.protocol.routing);
     ValidateCompositeMeasurementContract(p.protocol);Require(bool(p.composite));const auto& c=p.search;
+    ValidateInputTraversalConfiguration(p.protocol,c);
     Require(c.normalization==Normalization::SynapseCount || c.normalization==Normalization::TipResistance);
     Require(c.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate);
     ValidateN0LengthProposalBudget(c);
@@ -108,6 +110,7 @@ QJsonObject EncodeCompositeRuntimePlan(const NativeTrainingPlan& p) {
         {"capacitance_search",c.capacitanceSearch?QJsonValue(EncodeCapacitanceSearchPolicy(*c.capacitanceSearch)):QJsonValue(QJsonValue::Null)},
         {"invalid_measurement_recovery","retry_same_candidate"}};
     if(c.maximumN0LengthProposals)search["maximum_n0_length_proposals"]=Count(c.maximumN0LengthProposals);
+    AppendInputTraversalDeclaration(search,c);
     return {{"schema_version",1},{"run_id",Text(c.runId)},{"initial_model_revision",Text(c.initialModelRevision)},
         {"initial_model_epoch",Count(c.initialModelEpoch)},{"search",search},
         {"maximum_reference_probes",Count(p.maximumReferenceProbes)},{"maximum_invalid_reference_probes",Count(p.maximumInvalidReferenceProbes)},
@@ -120,6 +123,7 @@ NativeTrainingPlan DecodeCompositeRuntimePlan(const QJsonObject& o,const Verific
     NativeTrainingPlan p;p.protocol=protocol;p.composite=DecodeNativeCompositeTrainingPolicy(Object(o["composite_measurement"]));
     auto& c=p.search;c.runId=Text(o["run_id"]);c.initialModelRevision=Text(o["initial_model_revision"]);c.initialModelEpoch=Count(o["initial_model_epoch"]);
     auto search=Object(o["search"]);
+    TakeInputTraversalDeclaration(search,c);
     if(search.contains("maximum_n0_length_proposals")) {
         c.maximumN0LengthProposals=Count(search["maximum_n0_length_proposals"]);
         Require(c.maximumN0LengthProposals>0);search.remove("maximum_n0_length_proposals");

@@ -3,6 +3,7 @@
 #include "CandidateWindowTrainingDeclarations.h"
 #include "ModelIdentity.h"
 #include "NativeTerminalPolicyJson.h"
+#include "InputTraversalJson.h"
 #include <QJsonArray>
 #include <cmath>
 #include <limits>
@@ -136,6 +137,7 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
     if(plan.terminalSelection)ValidateNativeTerminalSelectionPolicy(*plan.terminalSelection);
     auto& p=plan.protocol;p.schemaVersion=3;
     p.routing=c.model.branch?ProbeRouting::BranchSoloBurst:ProbeRouting::ClassicBurst;
+    ValidateNativeInputTraversalConfiguration(c.search,p.routing);
     p.revision=c.protocolRevision;p.sampleId=c.sampleId;p.originStimulusId="pulse0";
     p.maximumSampleGap=c.maximumSampleGap;p.minimumAmplitude=c.minimumAmplitude;p.stimulusProfile=c.stimulusProfile;
     p.waveAssignment=WaveAssignmentPolicy::OrderedWholeBurst;p.peakSelection=c.peakSelection;Selection(c.peakSelection);
@@ -203,7 +205,8 @@ NativeTrainingPlan MakeConfiguredNativeTrainingPlan(const ConfiguredNativeTraini
             policy.maximumGroupWallSeconds<=c.maximumWallSeconds,"invalid_composite_group_or_attempt_budget");
         plan.composite=policy;
     }
-    ValidateVerificationProtocol(p);plan.search=c.search;plan.search.runId=c.runId;
+    ValidateVerificationProtocol(p);ValidateInputTraversalConfiguration(p,c.search);
+    plan.search=c.search;plan.search.runId=c.runId;
     plan.maximumReferenceProbes=c.maximumReferenceProbes;plan.maximumInvalidReferenceProbes=c.maximumInvalidReferenceProbes;
     plan.maximumModelSeconds=c.maximumModelSeconds;plan.maximumWallSeconds=c.maximumWallSeconds;
     plan.recordCapacitanceHistory=c.recordCapacitanceHistory;return plan;
@@ -287,6 +290,9 @@ QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
         auto search=result["search"].toObject();
         search["maximum_n0_length_proposals"]=Integer(c.search.maximumN0LengthProposals);
         result["search"]=search;
+    }
+    {
+        auto search=result["search"].toObject();AppendInputTraversalDeclaration(search,c.search);result["search"]=search;
     }
     if(c.search.n0CandidateRepeats!=1)
     {
@@ -388,6 +394,7 @@ ConfiguredNativeTraining DecodeConfiguredNativeTraining(const QJsonObject& o)
     for(const auto& v:Array(o["windows"]))
     {const auto w=Object(v);Keys(w,{"begin","end"});c.windows.emplace_back(Number(w["begin"]),Number(w["end"]));}
     auto s=Object(o["search"]);
+    TakeInputTraversalDeclaration(s,c.search);
     if(s.contains("maximum_n0_length_proposals"))
     {
         c.search.maximumN0LengthProposals=Count(s["maximum_n0_length_proposals"]);

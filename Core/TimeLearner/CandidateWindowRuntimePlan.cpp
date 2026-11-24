@@ -3,6 +3,7 @@
 #include "ConfiguredNativeTraining.h"
 #include "ModelIdentity.h"
 #include "ProbeEvidenceJson.h"
+#include "InputTraversalJson.h"
 #include <QJsonArray>
 #include <QStringList>
 #include <cmath>
@@ -87,12 +88,14 @@ QJsonObject Search(const BoundedTrainingConfig& search) {
         {"invalid_measurement_recovery",search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate?
             "retry_same_candidate":"advance_rejected_candidate_window"}};
     if(search.maximumN0LengthProposals)result["maximum_n0_length_proposals"]=Count(search.maximumN0LengthProposals);
+    AppendInputTraversalDeclaration(result,search);
     return result;
 }
 BoundedTrainingConfig Search(const QJsonObject& object,std::size_t version) {
     auto fields=object;fields.remove("maximum_n0_length_proposals");
+    BoundedTrainingConfig search;TakeInputTraversalDeclaration(fields,search);
     Keys(fields,"normalization maximum_probes maximum_edits maximum_candidates_per_input maximum_sweeps maximum_invalid_observations resistance_subdivision_depth n0_candidate_repeats bounds tolerances capacitance_search invalid_measurement_recovery");
-    BoundedTrainingConfig search;const auto normalization=Text(object["normalization"]);Require(normalization=="N0" || normalization=="N1");
+    const auto normalization=Text(object["normalization"]);Require(normalization=="N0" || normalization=="N1");
     if(object.contains("maximum_n0_length_proposals")) {
         search.maximumN0LengthProposals=Count(object["maximum_n0_length_proposals"]);
         Require(search.maximumN0LengthProposals>0,"zero_n0_length_proposal_budget_must_be_omitted");
@@ -121,6 +124,8 @@ BoundedTrainingConfig Search(const QJsonObject& object,std::size_t version) {
 }
 }
 QJsonObject EncodeCandidateWindowRuntimePlan(const NativeTrainingPlan& plan) {
+    ValidateNativeInputTraversalConfiguration(plan.search,plan.protocol.routing);
+    ValidateInputTraversalConfiguration(plan.protocol,plan.search);
     ValidateDeclaration(plan);auto common=EncodeNativeCompositeTrainingPolicy(*plan.composite);
     common["candidate_window_policy"]=EncodeCandidateWindowPolicy(plan.protocol.candidateWindowMeasurement->candidateWindowPolicy);
     return {{"schema_version",plan.search.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate?2:3},

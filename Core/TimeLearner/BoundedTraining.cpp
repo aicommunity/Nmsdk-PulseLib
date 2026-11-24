@@ -20,26 +20,21 @@ namespace {
 bool Finite(double value) { return Detail::Finite(value); }
 void ValidateInputTraversal(const VerificationProtocol& protocol,const BoundedTrainingConfig& config)
 {
-    switch(config.inputTraversal)
-    {
-    case InputTraversalPolicy::Sequential:return;
-    case InputTraversalPolicy::ClassicCandidateRoundRobin:
-        if(protocol.routing!=ProbeRouting::ClassicBurst)
-            throw std::invalid_argument("round_robin_input_traversal_requires_classic");
-        break;
-    default:throw std::invalid_argument("unknown_input_traversal_policy");
-    }
-    if(!config.maximumTraversalSeedElements)
-        throw std::invalid_argument("round_robin_seed_budget_is_zero");
+    ValidateNativeInputTraversalConfiguration(config,protocol.routing);
+    if(config.inputTraversal==InputTraversalPolicy::Sequential)return;
     const auto contexts=config.capacitanceSearch?config.capacitanceSearch->maximumContexts:1;
+    if(!contexts)throw std::invalid_argument("round_robin_seed_contexts_are_zero");
     auto remaining=config.maximumTraversalSeedElements;
     for(std::size_t input=0;input+1<config.bounds.size();++input)
     {
         const auto& bound=config.bounds[input];
+        if(bound.minimumLength<1 || bound.maximumLength<bound.minimumLength || bound.minimumSynapses<1 ||
+            bound.maximumSynapses<bound.minimumSynapses || bound.maximumSynapses>128)
+            throw std::invalid_argument("round_robin_seed_bounds_are_invalid");
         const auto lengths=std::min(config.maximumCandidatesPerInput,
             std::size_t(std::int64_t(bound.maximumLength)-bound.minimumLength+1));
         const auto normalizers=config.normalization==Normalization::SynapseCount?
-            std::size_t(bound.maximumSynapses-bound.minimumSynapses+1):config.maximumCandidatesPerInput;
+            std::size_t(bound.maximumSynapses-bound.minimumSynapses+1):std::max(std::size_t(3),config.maximumCandidatesPerInput);
         if(lengths>remaining/contexts || normalizers>remaining/contexts-lengths)
             throw std::invalid_argument("round_robin_seed_inventory_exceeds_declared_budget");
         remaining-=contexts*(lengths+normalizers);
@@ -131,9 +126,30 @@ void ValidateCapacitanceSearchPolicy(const CapacitanceSearchPolicy& policy)
 
 void ValidateNativeInputTraversalConfiguration(const BoundedTrainingConfig& config)
 {
-    if(config.inputTraversal!=InputTraversalPolicy::Sequential || config.maximumTraversalSeedElements!=131072)
-        throw std::invalid_argument("native_input_traversal_requires_versioned_configuration_codec");
+    switch(config.inputTraversal)
+    {
+    case InputTraversalPolicy::Sequential:
+        if(config.maximumTraversalSeedElements!=DefaultTraversalSeedElements ||
+            config.candidatesPerInputVisit!=DefaultCandidatesPerInputVisit)
+            throw std::invalid_argument("unused_sequential_traversal_seed_budget");
+        return;
+    case InputTraversalPolicy::ClassicCandidateRoundRobin:
+        if(!config.maximumTraversalSeedElements || config.maximumTraversalSeedElements>9007199254740991ULL ||
+            !config.candidatesPerInputVisit || config.candidatesPerInputVisit>9007199254740991ULL ||
+            config.candidatesPerInputVisit>config.maximumCandidatesPerInput)
+            throw std::invalid_argument("invalid_round_robin_seed_budget");
+        return;
+    }
+    throw std::invalid_argument("unknown_input_traversal_policy");
 }
+void ValidateNativeInputTraversalConfiguration(const BoundedTrainingConfig& config,ProbeRouting routing)
+{
+    ValidateNativeInputTraversalConfiguration(config);
+    if(config.inputTraversal==InputTraversalPolicy::ClassicCandidateRoundRobin && routing!=ProbeRouting::ClassicBurst)
+        throw std::invalid_argument("round_robin_input_traversal_requires_classic");
+}
+void ValidateInputTraversalConfiguration(const VerificationProtocol& protocol,const BoundedTrainingConfig& config)
+{ValidateInputTraversal(protocol,config);}
 void ValidateCapacitanceSearchPolicy(const BoundedTrainingConfig& config,ProbeRouting routing)
 {
     if(config.capacitanceSearch && routing!=ProbeRouting::ClassicBurst && routing!=ProbeRouting::BranchSoloBurst)
@@ -491,6 +507,7 @@ void BoundedTrainingSession::SelectRoundRobinInput()
             RebaseClassicInputSearch();phase=Phase::Candidate;
         }
         else {inputSearch=InputSearchState{};BeginInput();}
+        inputSearch.candidatesInVisit=0;
         return;
     }
     BeginVerification();
@@ -1663,7 +1680,8 @@ void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasureme
     else
     {
         phase=Phase::Candidate;anchor.reset();anchorTrial.clear();AdvanceCapacitanceContext();
-        if(RoundRobinInputs())SelectRoundRobinInput();
+        if(RoundRobinInputs() && ++inputSearch.candidatesInVisit>=config.candidatesPerInputVisit)
+        {inputSearch.candidatesInVisit=0;SelectRoundRobinInput();}
     }
 }
 

@@ -1,4 +1,5 @@
 #include "ProbeEvidenceJson.h"
+#include "InputTraversalJson.h"
 #include "NativeTerminalLearnedState.h"
 #include "NativeCompositeLearnedState.h"
 #include "CompositeTrainingDeclarations.h"
@@ -295,7 +296,7 @@ static QJsonObject EncodeNativeTrainingStateImpl(const NativeTrainingService& se
         EncodeNativeCompositeTrainingState(service,actualModelRevision,actualParameters);
     const auto parameters=Parameters;
     const auto& cfg=service.Configuration();
-    ValidateNativeInputTraversalConfiguration(cfg);
+    ValidateNativeInputTraversalConfiguration(cfg,service.Plan().protocol.routing);
     const auto& history=service.CapacitanceHistory();
     const auto encodeCapacitance=CapacitanceParameters;
     const auto trialWitness=[&](const std::string& trial,const std::string& revision,
@@ -337,6 +338,10 @@ static QJsonObject EncodeNativeTrainingStateImpl(const NativeTrainingService& se
         auto configuration=result["configuration"].toObject();
         configuration["maximum_n0_length_proposals"]=Count(cfg.maximumN0LengthProposals);
         result["configuration"]=configuration;
+    }
+    {
+        auto configuration=result["configuration"].toObject();
+        AppendInputTraversalDeclaration(configuration,cfg);result["configuration"]=configuration;
     }
     if(cfg.n0CandidateRepeats>1)
     {
