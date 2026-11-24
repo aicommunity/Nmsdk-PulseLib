@@ -88,41 +88,40 @@ QJsonArray Parameters(const std::vector<InputParameters>& parameters)
 {QJsonArray r;for(const auto& p:parameters)r.append(QJsonObject{{"length",p.length},{"synapses",p.synapses},{"resistance",p.resistance}});return r;}
 std::string Membrane(bool branch,std::size_t index,int length)
 {return "Dendrite"+std::to_string(branch?1:index+1)+"_"+std::to_string(length);}
-struct Converted {
+struct Converted : detail::NativeRecognitionPhysicalConversion {
     std::unique_ptr<PreparedNativeLearnedState> model;
-    QJsonObject record,identity;
 };
-Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UEPtr<UStorage> storage,
-                  UEPtr<UEnvironment> environment,const std::string& implementation,bool diagnostic=false)
+}
+namespace detail {
+NativeRecognitionPhysicalConversion ApplyNativeRecognitionConversion(const QJsonObject& source,
+    const NativeRecognitionSpec& spec,const ConfiguredNativeTraining& configuration,
+    UEPtr<NPulseNeuron> neuron,UEPtr<NDatasetMatrix> dataset,std::vector<InputParameters>& parameters,
+    const std::vector<double>& referenceAmplitudes)
 {
     Validate(spec);
-    if(diagnostic)
-        Require(source["kind"]==QJsonValue("timelearner_stopped_state") && source["state_kind"]==QJsonValue("diagnostic") &&
-            source["certificate"].isNull(),"diagnostic_recognition_requires_stopped_solo");
-    else Require(source["kind"]==QJsonValue("timelearner_completed_state") && source["state_kind"]==QJsonValue("learned_solo"),
-                 "recognition_requires_completed_solo");
-    Converted converted;converted.model=PrepareNativeLearnedState(source,storage,environment,implementation);
-    auto& m=*converted.model;const auto& declaration=m.configuration.model;const auto n=m.parameters.size();
-    auto generator=m.dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(generator),"missing_recognition_source");
+    Require(neuron && dataset && !neuron->GetOwner() && !dataset->GetOwner(),"recognition_conversion_requires_private_children");
+    NativeRecognitionPhysicalConversion converted;
+    const auto& declaration=configuration.model;const auto n=parameters.size();
+    auto generator=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);Require(bool(generator),"missing_recognition_source");
     std::vector<double> factors(n,1.);
     if(spec.mode==RecognitionConversionMode::HistoricalBranchN1)
     {
         Require(declaration.branch && declaration.normalization==Normalization::TipResistance,"historical_conversion_requires_branch_n1");
         Require(spec.resistanceBounds.size()==n,"recognition_bounds_dimension_mismatch");
-        const auto& references=m.service.References();Require(bool(references) && references->Inputs().size()==n,"recognition_missing_references");
+        Require(referenceAmplitudes.size()==n,"recognition_missing_references");
         if(n>1)
         {
             double mean=0.;
             for(std::size_t i=0;i<n;++i)
             {
-                const auto amplitude=references->Inputs()[i].rawPotential;
+                const auto amplitude=referenceAmplitudes[i];
                 Require(Positive(amplitude),"historical_conversion_requires_positive_references");
                 if(i+1<n)mean+=amplitude/double(n-1);
             }
             Require(Positive(mean),"nonfinite_recognition_reference_mean");
             for(std::size_t i=0;i<n;++i)
             {
-                factors[i]=double(n)*(references->Inputs()[i].rawPotential/mean);
+                factors[i]=double(n)*(referenceAmplitudes[i]/mean);
                 Require(Positive(factors[i]),"nonfinite_recognition_factor");
             }
         }
@@ -131,10 +130,10 @@ Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UE
     std::map<std::string,Bank> banks;QJsonArray decisions,activation;
     for(std::size_t i=0;i<n;++i)
     {
-        const auto original=m.parameters[i];double low=original.resistance,high=original.resistance,applied=original.resistance;
+        const auto original=parameters[i];double low=original.resistance,high=original.resistance,applied=original.resistance;
         const double requested=original.resistance*factors[i];Require(Positive(requested),"nonfinite_recognition_resistance");
         const auto path=Membrane(declaration.branch,i,original.length);
-        auto membrane=m.neuron->GetComponentL<NPulseMembrane>(path,true);Require(bool(membrane),"missing_recognition_membrane");
+        auto membrane=neuron->GetComponentL<NPulseMembrane>(path,true);Require(bool(membrane),"missing_recognition_membrane");
         if(spec.mode==RecognitionConversionMode::HistoricalBranchN1)
         {
             Require(membrane->GetNumPosChannels()>0,"missing_recognition_channel");
@@ -150,14 +149,14 @@ Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UE
         for(int k=1;k<=original.synapses;++k)
         {
             auto synapse=membrane->GetComponentL<NPulseSynapseCommon>("ExcSynapse"+std::to_string(k),true);
-            Require(bool(synapse),"missing_recognition_synapse");const auto name=synapse->GetLongName(m.neuron.Get());
+            Require(bool(synapse),"missing_recognition_synapse");const auto name=synapse->GetLongName(neuron.Get());
             auto [found,inserted]=banks.emplace(name,Bank{synapse,applied});
             Require(inserted || found->second.resistance==applied,"shared_recognition_bank_conflict");
         }
         decisions.append(QJsonObject{{"input_index",double(i)},{"original_resistance",original.resistance},
             {"factor",factors[i]},{"requested_resistance",requested},{"minimum_resistance",low},{"maximum_resistance",high},
             {"applied_resistance",applied},{"clipped",applied!=requested}});
-        m.parameters[i].resistance=applied;
+        parameters[i].resistance=applied;
     }
     for(auto& [path,bank]:banks)
     {
@@ -179,7 +178,7 @@ Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UE
     if(spec.postTune)
     {
         const auto& p=*spec.postTune;
-        const auto base=NmsdkTools::IdentifyModel(m.neuron,{{&generator->Output,"burst"}});
+        const auto base=NmsdkTools::IdentifyModel(neuron,{{&generator->Output,"burst"}});
         Require(base["valid"].toBool() && base["sha256"]==QJsonValue(Text(p.sourceModelRevision)),"post_tune_source_revision_mismatch");
         const bool edit=p.mode!=NativePostTuneMode::Off && p.mode!=NativePostTuneMode::KeepDone;
         Require(!edit || p.resistanceBounds.size()==n,"post_tune_bounds_dimension_mismatch");
@@ -187,12 +186,12 @@ Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UE
         std::map<std::string,double> requests;QJsonArray postDecisions;
         for(std::size_t i=0;i<n;++i)
         {
-            auto& input=m.parameters[i];const double previous=input.resistance;
+            auto& input=parameters[i];const double previous=input.resistance;
             double requested=previous,low=previous,high=previous;
             if(p.mode==NativePostTuneMode::CanonRmin)requested=i+1==n?p.canonicalLast:p.canonicalFloor;
             else if(p.mode==NativePostTuneMode::FlatLastR)requested=p.canonicalLast;
             else if(p.mode==NativePostTuneMode::SearchSyntheticCandidate)requested=p.requestedResistances[i];
-            auto membrane=m.neuron->GetComponentL<NPulseMembrane>(Membrane(declaration.branch,i,input.length),true);
+            auto membrane=neuron->GetComponentL<NPulseMembrane>(Membrane(declaration.branch,i,input.length),true);
             Require(bool(membrane),"missing_post_tune_membrane");
             if(edit)
             {
@@ -208,7 +207,7 @@ Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UE
             for(int k=1;k<=input.synapses;++k)
             {
                 auto synapse=membrane->GetComponentL<NPulseSynapseCommon>("ExcSynapse"+std::to_string(k),true);
-                Require(bool(synapse),"missing_post_tune_synapse");const auto path=synapse->GetLongName(m.neuron.Get());
+                Require(bool(synapse),"missing_post_tune_synapse");const auto path=synapse->GetLongName(neuron.Get());
                 auto [it,inserted]=requests.emplace(path,applied);
                 Require(inserted || it->second==applied,"shared_post_tune_bank_conflict");
             }
@@ -226,12 +225,12 @@ Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UE
         postRecord={{"mode",PostMode(p.mode)},{"source_model_revision",base["sha256"]},{"decisions",postDecisions},
             {"selection_status","candidate_unmeasured"},{"calibration_status","unconfirmed"}};
     }
-    const auto integration=AssessNativeIntegration(m.neuron,generator->Amplitude.GetData());
+    const auto integration=AssessNativeIntegration(neuron,generator->Amplitude.GetData());
     Require(integration.valid,integration.reason.c_str());
-    NativeProbeBindings bindings;bindings.neuron=m.neuron;bindings.branch=declaration.branch;bindings.inputCount=int(n);
-    std::vector<int> positions;for(const auto& p:m.parameters)positions.push_back(p.length);
-    Require(ReadNativeInputParameters(bindings,positions)==m.parameters,"recognition_parameter_graph_mismatch");
-    converted.identity=NmsdkTools::IdentifyModel(m.neuron,{{&generator->Output,"burst"}});
+    NativeProbeBindings bindings;bindings.neuron=neuron;bindings.branch=declaration.branch;bindings.inputCount=int(n);
+    std::vector<int> positions;for(const auto& p:parameters)positions.push_back(p.length);
+    Require(ReadNativeInputParameters(bindings,positions)==parameters,"recognition_parameter_graph_mismatch");
+    converted.identity=NmsdkTools::IdentifyModel(neuron,{{&generator->Output,"burst"}});
     Require(converted.identity["valid"].toBool(),"invalid_recognition_model_identity");
     converted.record={{"schema_version",1},{"algorithm",Mode(spec.mode)},{"source_solo_sha256",source["sha256"]},
         {"source_solo_identity",source["model_revision"]},{"result_identity",converted.identity["sha256"]},
@@ -239,10 +238,11 @@ Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UE
     if(spec.postTune){converted.record["schema_version"]=2;converted.record["post_tune"]=postRecord;}
     return converted;
 }
-QJsonObject Metadata(const QJsonObject& source,const Converted& c)
+QJsonObject NativeRecognitionMetadata(const QJsonObject& sourceMetadata,const QJsonObject& source,
+    const NativeRecognitionPhysicalConversion& c)
 {
     const bool diagnostic=source["kind"]==QJsonValue("timelearner_stopped_state");
-    auto metadata=Object(Object(source["neuron"])["metadata"]);metadata["state_kind"]=diagnostic?"diagnostic_recognition":"recognition";
+    auto metadata=sourceMetadata;metadata["state_kind"]=diagnostic?"diagnostic_recognition":"recognition";
     metadata["recognition_schema_version"]=1;
     auto training=Object(metadata["training"]);training["scope"]="source_solo";metadata["training"]=training;
     auto calibration=Object(metadata["calibration"]);calibration["protocol"]="fixed-inherited-from-solo";
@@ -254,6 +254,28 @@ QJsonObject Metadata(const QJsonObject& source,const Converted& c)
         {"certificate",QJsonValue(QJsonValue::Null)}};
     return metadata;
 }
+}
+namespace {
+Converted Convert(const QJsonObject& source,const NativeRecognitionSpec& spec,UEPtr<UStorage> storage,
+                  UEPtr<UEnvironment> environment,const std::string& implementation,bool diagnostic=false)
+{
+    Validate(spec);
+    if(diagnostic)
+        Require(source["kind"]==QJsonValue("timelearner_stopped_state") && source["state_kind"]==QJsonValue("diagnostic") &&
+            source["certificate"].isNull(),"diagnostic_recognition_requires_stopped_solo");
+    else Require(source["kind"]==QJsonValue("timelearner_completed_state") && source["state_kind"]==QJsonValue("learned_solo"),
+                 "recognition_requires_completed_solo");
+    Converted converted;converted.model=PrepareNativeLearnedState(source,storage,environment,implementation);
+    std::vector<double> amplitudes;
+    if(spec.mode==RecognitionConversionMode::HistoricalBranchN1 && converted.model->service.References())
+        for(const auto& reference:converted.model->service.References()->Inputs())amplitudes.push_back(reference.rawPotential);
+    const auto result=detail::ApplyNativeRecognitionConversion(source,spec,converted.model->configuration,
+        converted.model->neuron,converted.model->dataset,converted.model->parameters,amplitudes);
+    converted.record=result.record;converted.identity=result.identity;return converted;
+}
+QJsonObject Metadata(const QJsonObject& source,const Converted& converted)
+{return detail::NativeRecognitionMetadata(Object(Object(source["neuron"])["metadata"]),source,converted);}
+
 }
 QJsonObject EncodeNativeRecognitionSpec(const NativeRecognitionSpec& s)
 {

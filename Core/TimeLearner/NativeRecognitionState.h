@@ -23,6 +23,18 @@ struct NativeRecognitionSpec {
     // calibration certificate. Absence preserves schema-1 packages exactly.
     std::optional<NativePostTuneSpec> postTune;
 };
+// Shared implementation for full-proof and physical-DATA importers. Callers
+// first construct private native children; this edit must never operate on a
+// live owner, calculate a component, mutate a prototype or manufacture proof.
+namespace detail {
+struct NativeRecognitionPhysicalConversion {QJsonObject record,identity;};
+NativeRecognitionPhysicalConversion ApplyNativeRecognitionConversion(const QJsonObject& sourceBoundary,
+    const NativeRecognitionSpec&,const ConfiguredNativeTraining&,
+    RDK::UEPtr<NPulseNeuron>,RDK::UEPtr<NDatasetMatrix>,std::vector<InputParameters>&,
+    const std::vector<double>& referenceAmplitudes);
+QJsonObject NativeRecognitionMetadata(const QJsonObject& sourceMetadata,const QJsonObject& sourceBoundary,
+    const NativeRecognitionPhysicalConversion&);
+}
 struct PreparedNativeRecognitionState {
     RDK::UEPtr<RDK::UStorage> storage;
     RDK::UEPtr<NPulseNeuron> neuron;
