@@ -132,6 +132,7 @@ protected:
  std::vector<double> InitialDendritePotential;
  // Массив количества синапсов на дендрите
  std::vector<int> SynapseNum;
+ std::vector<double> ResearchPreviousAmplitudeError;
 
  // Обрабатываемый по счёту дендрит
  int dend_counter;

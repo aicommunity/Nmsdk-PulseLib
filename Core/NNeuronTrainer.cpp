@@ -27,6 +27,27 @@ See file license.txt for more information
 //#include <QFile>
 
 // Класс, создающий нейрон со структурой, оптимизованной для распознавания заданного паттерна импульсов
+
+#include <cstdlib>
+#include <string_view>
+
+namespace {
+enum class NTStop { Default, Tolerance, KeepAfterRemoval, Strict, Crossing };
+
+NTStop ResearchStopRule()
+{
+ static const NTStop rule=[] {
+  const auto* value=std::getenv("NMSDK_DIAG_NT_STOP");
+  const std::string_view name=value?value:"";
+  if(name=="tolerance") return NTStop::Tolerance;
+  if(name=="keep") return NTStop::KeepAfterRemoval;
+  if(name=="strict") return NTStop::Strict;
+  if(name=="crossing") return NTStop::Crossing;
+  return NTStop::Default;
+ }();
+ return rule;
+}
+}
 namespace NMSDK {
 
 namespace {
@@ -430,6 +451,7 @@ bool NNeuronTrainer::BuildStructure(int structure_build_mode, const string &puls
 	DendriteLength.assign(num_input_dendrite,0);
 	// Массив выходов дендритов при единичной их длине
 	InitialDendritePotential.assign(num_input_dendrite,0);
+ ResearchPreviousAmplitudeError.assign(num_input_dendrite,0.0);
 	// Массив количества синапсов на дендрите
 	SynapseNum.assign(num_input_dendrite,1);
 
@@ -1503,7 +1525,9 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 				// Удаляем синапс
 				SynapseNum[i]--;
 				// Помечаем как посчитанный
-				dend_status[i] = 0;
+				if(ResearchStopRule()!=NTStop::KeepAfterRemoval && ResearchStopRule()!=NTStop::Strict
+                   && ResearchStopRule()!=NTStop::Crossing)
+                 dend_status[i] = 0;
 
 				UEPtr<NPulseMembrane> dendrite = neuron->GetComponentL<NPulseMembrane>("Dendrite"+sntoa(i+1)+"_"+sntoa(DendriteLength[i]),true);
 				if(!dendrite)
@@ -1569,7 +1593,17 @@ bool NNeuronTrainer::SomaSynapseNormalization(void)
 			 continue;
 
 			// Если амплитуда меньше начальной - добавляем синапсы дальше
-			if(max_iter_dend_amp[i] < InitialDendritePotential[i] + 0.000005)
+			const auto rule=ResearchStopRule();
+            if(rule==NTStop::Tolerance || rule==NTStop::Strict || rule==NTStop::Crossing)
+            {
+             const double difference=max_iter_dend_amp[i]-InitialDendritePotential[i];
+             const double previous=ResearchPreviousAmplitudeError[i];
+             const bool crossed=rule==NTStop::Crossing && difference*previous<0.0
+                 && std::fabs(difference)<=std::fabs(previous);
+             dend_status[i]=std::fabs(difference)<=1.0e-6 || crossed ? 0 : (difference<0.0 ? 2 : -2);
+             ResearchPreviousAmplitudeError[i]=difference;
+            }
+            else if(max_iter_dend_amp[i] < InitialDendritePotential[i] + 0.000005)
 			{
 				dend_status[i] = 2;
 			}
