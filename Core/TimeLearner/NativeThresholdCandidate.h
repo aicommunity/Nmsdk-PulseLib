@@ -2,6 +2,15 @@
 #include "NativeRecognitionState.h"
 
 namespace NMSDK::TimeLearner {
+namespace detail {
+// Shared physical edit on private native children. This constructs an explicit
+// uncalibrated candidate; no owner tick, controller reset or storage-image edit.
+struct NativePhysicalThresholdCandidate {QJsonObject metadata,identity,record;};
+NativePhysicalThresholdCandidate ApplyNativePhysicalThresholdCandidate(
+    const QJsonObject& source,QJsonObject metadata,
+    RDK::UEPtr<NPulseNeuron> neuron,RDK::UEPtr<NDatasetMatrix> dataset,
+    double threshold,int algorithmVersion=2);
+}
 // A candidate is a distinct frozen physical model, not a calibrated result.
 // Every candidate starts from the same immutable converted recognition package.
 // No controller certificate is transferred to the changed recognition graph.

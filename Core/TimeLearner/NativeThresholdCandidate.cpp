@@ -26,13 +26,26 @@ Candidate Construct(const QJsonObject& source,double threshold,RDK::UEPtr<RDK::U
         "threshold_candidate_requires_base_recognition");
     Candidate c;c.model=diagnostic?PrepareNativeDiagnosticRecognitionState(source,storage,environment,implementation):
                                   PrepareNativeRecognitionState(source,storage,environment,implementation);
-    const auto archive=Object(source["neuron"]);c.metadata=Object(archive["metadata"]);
+    auto edit=detail::ApplyNativePhysicalThresholdCandidate(source,Object(Object(source["neuron"])["metadata"]),
+        c.model->neuron,c.model->dataset,threshold,algorithmVersion);
+    c.metadata=std::move(edit.metadata);c.identity=std::move(edit.identity);c.record=std::move(edit.record);
+    c.model->modelRevision=c.identity["sha256"].toString().toStdString();
+    return c;
+}
+}
+namespace detail {
+NativePhysicalThresholdCandidate ApplyNativePhysicalThresholdCandidate(const QJsonObject& source,
+    QJsonObject metadata,RDK::UEPtr<NPulseNeuron> neuron,RDK::UEPtr<NDatasetMatrix> dataset,
+    double threshold,int algorithmVersion)
+{
+    Require(std::isfinite(threshold) && (algorithmVersion==2 || threshold>0.),"invalid_threshold_candidate_value");
+    NativePhysicalThresholdCandidate c;c.metadata=std::move(metadata);
     auto calibration=Object(c.metadata["calibration"]);
     const auto path=calibration["ltzone_path"].toString();
     Require(path.startsWith("$."),"threshold_candidate_invalid_ltzone_path");
     // Identity paths are rooted at '$'; native GetComponentL uses names
     // relative to the neuron. Keep the semantic path in the provenance.
-    auto zone=c.model->neuron->GetComponentL<NPulseLTZoneCommon>(path.mid(2).toStdString(),true);
+    auto zone=neuron->GetComponentL<NPulseLTZoneCommon>(path.mid(2).toStdString(),true);
     Require(bool(zone),"threshold_candidate_missing_ltzone");
     if(algorithmVersion==2)RequireNativeScalarSpikeThreshold(*zone);
     Require(!zone->Threshold.IsConnected() && !zone->Threshold.UsesExternalDataSource(),
@@ -40,9 +53,9 @@ Candidate Construct(const QJsonObject& source,double threshold,RDK::UEPtr<RDK::U
     const double original=zone->Threshold.GetData();
     if(original!=threshold)zone->Threshold=threshold;
     Require(zone->Threshold.GetData()==threshold,"threshold_candidate_readback_mismatch");
-    auto generator=c.model->dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
+    auto generator=dataset->GetComponentL<NPulseGeneratorTransit>("Generator1",true);
     Require(bool(generator),"threshold_candidate_missing_generator");
-    c.identity=NmsdkTools::IdentifyModel(c.model->neuron,{{&generator->Output,"burst"}});
+    c.identity=NmsdkTools::IdentifyModel(neuron,{{&generator->Output,"burst"}});
     Require(c.identity["valid"]==QJsonValue(true),"threshold_candidate_invalid_identity");
     c.record={{"schema_version",1},{"algorithm",algorithmVersion==2?"explicit-native-threshold-v2":"explicit-native-threshold-v1"},
         {"source_recognition_sha256",source["sha256"]},{"source_model_revision",source["model_revision"]},
@@ -55,7 +68,6 @@ Candidate Construct(const QJsonObject& source,double threshold,RDK::UEPtr<RDK::U
     c.metadata["calibration"]=calibration;
     auto verification=Object(c.metadata["recognition_verification"]);
     verification["model_identity"]=c.identity["sha256"];c.metadata["recognition_verification"]=verification;
-    c.model->modelRevision=c.identity["sha256"].toString().toStdString();
     return c;
 }
 }
