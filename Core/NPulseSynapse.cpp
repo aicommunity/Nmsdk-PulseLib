@@ -19,6 +19,8 @@ See file license.txt for more information
 #include "NPulseSynapse.h"
 #include "NPulseNeuron.h"
 #include "NPulseChannel.h"
+#include <cstdlib>
+#include <string_view>
 
 namespace NMSDK {
 
@@ -231,6 +233,23 @@ bool NPulseSynapse::AReset(void)
 // Выполняет расчет этого объекта
 bool NPulseSynapse::ACalculate2(void)
 {
+ // Explicit research intervention after all factory and trainer assignments.
+ // Each process receives precisely one profile from the diagnostic controller.
+ enum class Profile { Default, Secretion2, Dissociation2, Resistance100 };
+ static const Profile profile=[] {
+  const auto* value=std::getenv("NMSDK_DIAG_PROFILE");
+  const std::string_view name=value?value:"";
+  if(name=="secretion2") return Profile::Secretion2;
+  if(name=="dissociation2") return Profile::Dissociation2;
+  if(name=="resistance100") return Profile::Resistance100;
+  return Profile::Default;
+ }();
+ if(profile==Profile::Secretion2 && SecretionTC.GetData()!=0.002)
+  SecretionTC=0.002;
+ if(profile==Profile::Dissociation2 && DissociationTC.GetData()!=0.002)
+  DissociationTC=0.002;
+ if(profile==Profile::Resistance100 && Resistance.GetData()!=100000000.0)
+  Resistance=100000000.0;
  double input=0;
  bool is_spike(false);
 
