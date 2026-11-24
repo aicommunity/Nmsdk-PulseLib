@@ -194,10 +194,10 @@ private:
     TrainingStatus status=TrainingStatus::Searching;
     std::string stopReason;
     Phase phase=Phase::Candidate;
-    std::vector<InputParameters> current,background;
-    std::optional<TrainingCapacitance> currentCapacitance,backgroundCapacitance;
+    std::vector<InputParameters> current;
+    std::optional<TrainingCapacitance> currentCapacitance;
     std::vector<std::size_t> order;
-    std::size_t position=0,sweep=0,candidates=0;
+    std::size_t position=0,sweep=0;
     std::size_t serial=0,epoch=0,probes=0,edits=0,invalid=0,acceptedComposite=0;
     std::string revision,anchorTrial;
     std::string compositeAnchorWitness;
@@ -205,11 +205,9 @@ private:
     std::optional<TrainingAction> pending;
     std::optional<PreparedVerificationProbe> armed;
     std::optional<PreparedCompositeMeasurement> compositeArmed;
-    std::optional<CandidateEvidence> best;
     // Do not clear with the local cursor: an adapter must still observe a
     // selection made immediately before AdvanceInput or terminal Stop.
     std::optional<MeasuredCandidateSelection> selectedMeasuredBoundary;
-    bool restoringBest=false;
     std::map<std::size_t,std::size_t> n0LengthProposalsIssued;
     // Enumeration state belongs to a single physical search context. Keeping
     // it separate from measurements/references enables fair bounded traversal
@@ -247,15 +245,11 @@ private:
         std::size_t n1RecoveryCount=0;
         bool n1RecoveryPreferMinimum=false,n1RecoveryFallbackAllowed=false;
     };
-    CandidateCursor cursor;
     struct CapacitanceContext {
         CandidateCursor suspended;
         std::optional<double> absoluteScale={};
         bool exhausted=false;
     };
-    // The active cursor lives in cursor; only inactive cursors are suspended.
-    std::vector<CapacitanceContext> capacitanceContexts;
-    std::size_t activeCapacitanceContext=0,nextCapacitanceContext=0;
     struct JointCandidate {
         std::vector<InputParameters> parameters;
         std::optional<TrainingCapacitance> capacitance;
@@ -264,14 +258,31 @@ private:
         // Empty only for the standalone/no-domain and N0 paths.
         std::string modelScope;
     };
-    std::vector<JointCandidate> issuedJointCandidates;
+    // Workspace of the current input search, deliberately separate from the
+    // attempt-wide budgets, replay guards, pending/armed measurements and the
+    // independent final-verification owner. This is NOT a model checkpoint.
+    // Historical fullParameters/C maps and residuals cannot be reapplied to a
+    // changed background as though they were fresh evidence for that graph.
+    struct InputSearchState {
+        std::vector<InputParameters> background;
+        std::optional<TrainingCapacitance> backgroundCapacitance;
+        std::size_t candidates=0;
+        std::optional<CandidateEvidence> best;
+        bool restoringBest=false;
+        CandidateCursor cursor;
+        // Only inactive C cursors are suspended; the active one is cursor.
+        std::vector<CapacitanceContext> capacitanceContexts;
+        std::size_t activeCapacitanceContext=0,nextCapacitanceContext=0;
+        std::vector<JointCandidate> issuedJointCandidates;
+        std::vector<CandidateEvidence> candidateMeasurements;
+    };
+    InputSearchState inputSearch;
     void SelectCapacitanceContext(std::size_t index);
     void AdvanceCapacitanceContext();
     std::optional<TrainingCapacitance> CandidateCapacitance(const std::vector<InputParameters>& parameters) const;
     bool requireResistanceDomains=false;
     std::vector<ResistanceDomainAssessment> domains;
     std::vector<CandidateEvidence> evidence;
-    std::vector<CandidateEvidence> candidateMeasurements;
     std::vector<CandidateRepeatEvidence> candidateRepeats;
     std::vector<TrainingRejection> rejected;
     std::vector<CandidateRecoveryEvidence> recoveries;
