@@ -18,6 +18,33 @@
 namespace NMSDK::TimeLearner {
 namespace {
 bool Finite(double value) { return Detail::Finite(value); }
+void ValidateInputTraversal(const VerificationProtocol& protocol,const BoundedTrainingConfig& config)
+{
+    switch(config.inputTraversal)
+    {
+    case InputTraversalPolicy::Sequential:return;
+    case InputTraversalPolicy::ClassicCandidateRoundRobin:
+        if(protocol.routing!=ProbeRouting::ClassicBurst)
+            throw std::invalid_argument("round_robin_input_traversal_requires_classic");
+        break;
+    default:throw std::invalid_argument("unknown_input_traversal_policy");
+    }
+    if(!config.maximumTraversalSeedElements)
+        throw std::invalid_argument("round_robin_seed_budget_is_zero");
+    const auto contexts=config.capacitanceSearch?config.capacitanceSearch->maximumContexts:1;
+    auto remaining=config.maximumTraversalSeedElements;
+    for(std::size_t input=0;input+1<config.bounds.size();++input)
+    {
+        const auto& bound=config.bounds[input];
+        const auto lengths=std::min(config.maximumCandidatesPerInput,
+            std::size_t(std::int64_t(bound.maximumLength)-bound.minimumLength+1));
+        const auto normalizers=config.normalization==Normalization::SynapseCount?
+            std::size_t(bound.maximumSynapses-bound.minimumSynapses+1):config.maximumCandidatesPerInput;
+        if(lengths>remaining/contexts || normalizers>remaining/contexts-lengths)
+            throw std::invalid_argument("round_robin_seed_inventory_exceeds_declared_budget");
+        remaining-=contexts*(lengths+normalizers);
+    }
+}
 template<class T> void UniquePush(std::vector<T>& values,T value)
 { if(std::find(values.begin(),values.end(),value)==values.end())values.push_back(value); }
 double AmplitudeTolerance(const BoundedTrainingConfig& config,const CapturedInputReference& reference)
@@ -100,6 +127,12 @@ void ValidateCapacitanceSearchPolicy(const CapacitanceSearchPolicy& policy)
         policy.subdivisionDepth>20 || policy.maximumContexts<2 || policy.maximumContexts>4096 ||
         !policy.maximumMembranes || !policy.maximumCursorElements)
         throw std::invalid_argument("invalid_capacitance_search_policy");
+}
+
+void ValidateNativeInputTraversalConfiguration(const BoundedTrainingConfig& config)
+{
+    if(config.inputTraversal!=InputTraversalPolicy::Sequential || config.maximumTraversalSeedElements!=131072)
+        throw std::invalid_argument("native_input_traversal_requires_versioned_configuration_codec");
 }
 void ValidateCapacitanceSearchPolicy(const BoundedTrainingConfig& config,ProbeRouting routing)
 {
@@ -194,6 +227,7 @@ void ValidateBoundedTrainingInputs(const VerificationProtocol& protocol,const Bo
     if(protocol.schemaVersion==4 && config.invalidMeasurementRecovery!=InvalidMeasurementRecovery::RetrySameCandidate)
         throw std::invalid_argument("composite_recovery_policy_not_implemented");
     ValidateCapacitanceSearchPolicy(config,protocol.routing);
+    ValidateInputTraversal(protocol,config);
     if(!ParametersLegal(protocol,config,initial))throw std::invalid_argument("initial_parameters_outside_search_domain");
 }
 void ValidateCandidateWindowTrainingConfiguration(const VerificationProtocol& protocol,const BoundedTrainingConfig& config,
@@ -206,6 +240,7 @@ void ValidateCandidateWindowTrainingConfiguration(const VerificationProtocol& pr
         config.invalidMeasurementRecovery!=InvalidMeasurementRecovery::AdvanceRejectedCandidateWindow)
         throw std::invalid_argument("composite_recovery_policy_not_implemented");
     ValidateCapacitanceSearchPolicy(config,protocol.routing);
+    ValidateInputTraversal(protocol,config);
     if(!ParametersLegal(protocol,config,initial))throw std::invalid_argument("initial_parameters_outside_search_domain");
 }
 
@@ -262,7 +297,7 @@ void BoundedTrainingSession::InitializeDecisionState()
     // and Branch in reverse order; several bursts may precede AdvanceInput().
     for(std::size_t i=0;i+1<current.size();++i)
         order.push_back(references.Protocol().routing==ProbeRouting::ClassicBurst?i:current.size()-2-i);
-    if(order.empty())BeginVerification();else BeginInput();
+    if(order.empty())BeginVerification();else BeginInputSweep();
 }
 
 bool BoundedTrainingSession::Legal(const std::vector<InputParameters>& parameters) const
@@ -295,6 +330,7 @@ bool BoundedTrainingSession::PrepareCandidate(std::vector<InputParameters>& para
 
 void BoundedTrainingSession::BeginInput()
 {
+    inputSearch.historicalBestProposal.reset();
     inputSearch.capacitanceContexts.clear();inputSearch.activeCapacitanceContext=inputSearch.nextCapacitanceContext=0;inputSearch.issuedJointCandidates.clear();
     const auto index=order.at(position);const auto& b=config.bounds[index];const auto& p=current[index];
     inputSearch.background=current;inputSearch.cursor.lengths.clear();inputSearch.cursor.counts.clear();inputSearch.cursor.resistances.clear();inputSearch.best.reset();anchor.reset();anchorTrial.clear();
@@ -380,6 +416,84 @@ void BoundedTrainingSession::BeginInput()
             inputSearch.capacitanceContexts.push_back({std::move(next),scale,false});
         }
     }
+}
+
+bool BoundedTrainingSession::RoundRobinInputs() const
+{return config.inputTraversal==InputTraversalPolicy::ClassicCandidateRoundRobin;}
+
+void BoundedTrainingSession::BeginInputSweep()
+{
+    if(RoundRobinInputs())
+    {
+        suspendedInputs.clear();suspendedInputs.resize(order.size());
+        completedInputs.assign(order.size(),false);
+        inputSearch=InputSearchState{};
+    }
+    BeginInput();
+}
+
+void BoundedTrainingSession::RebaseClassicInputSearch()
+{
+    const auto input=order.at(position);
+    if(inputSearch.background.size()!=current.size())throw std::logic_error("input_search_background_dimensions");
+    // Enumeration coordinates may survive. Measurements cannot survive ANY
+    // intervening edit, including a binding/preview realization with unchanged
+    // scalar parameters. This epoch is controller-owned, not a model snapshot.
+    const bool changed=inputSearch.suspendedAtEpoch!=epoch;
+    const auto rebase=[&](std::vector<InputParameters>& proposal) {
+        if(proposal.size()!=current.size())throw std::logic_error("input_search_proposal_dimensions");
+        const auto owned=proposal[input];proposal=current;proposal[input]=owned;
+    };
+    rebase(inputSearch.background);
+    inputSearch.backgroundCapacitance=RestoreClassicDendriteCapacitance(
+        inputSearch.backgroundCapacitance,currentCapacitance,input+1);
+    if(!changed)return;
+    if(inputSearch.best)inputSearch.historicalBestProposal=inputSearch.best;
+    inputSearch.best.reset();inputSearch.candidateMeasurements.clear();
+    const auto rebaseCursor=[&](CandidateCursor& cursor) {
+        // These vectors are proposal/enumeration state, never public evidence.
+        for(auto& proposal:cursor.n0Priority)rebase(proposal);
+        for(auto& proposal:cursor.issuedN0Candidates)rebase(proposal);
+        for(auto& proposal:cursor.n1RejectedCandidates)rebase(proposal);
+        if(cursor.n1RecoveryGeometry)rebase(*cursor.n1RecoveryGeometry);
+        cursor.lengthMeasurements.clear();cursor.resistanceMeasurements.clear();
+        cursor.n0GeometryTurns.clear();cursor.domainReady=false;
+        cursor.domainScope.clear();cursor.candidateResistanceScope.clear();
+        // Keep finite traversal positions and charged allowances. A future N1
+        // action must ask the native adapter for a fresh effective domain.
+        cursor.domainLocalTurnsRemaining=0;
+    };
+    rebaseCursor(inputSearch.cursor);
+    for(auto& context:inputSearch.capacitanceContexts)rebaseCursor(context.suspended);
+    for(auto& issued:inputSearch.issuedJointCandidates)
+        if(issued.modelScope.empty())
+        {
+            rebase(issued.parameters);
+            issued.capacitance=RestoreClassicDendriteCapacitance(issued.capacitance,currentCapacitance,input+1);
+        }
+}
+
+void BoundedTrainingSession::SelectRoundRobinInput()
+{
+    if(pending || armed || compositeArmed || !inputSearch.candidateMeasurements.empty())
+        throw std::logic_error("input_yield_requires_closed_candidate");
+    for(std::size_t step=1;step<=order.size();++step)
+    {
+        const auto next=(position+step)%order.size();
+        if(completedInputs.at(next))continue;
+        if(next==position)return;
+        inputSearch.suspendedAtEpoch=epoch;
+        suspendedInputs[position]=std::move(inputSearch);position=next;
+        anchor.reset();anchorTrial.clear();
+        if(suspendedInputs[position])
+        {
+            inputSearch=std::move(*suspendedInputs[position]);suspendedInputs[position].reset();
+            RebaseClassicInputSearch();phase=Phase::Candidate;
+        }
+        else {inputSearch=InputSearchState{};BeginInput();}
+        return;
+    }
+    BeginVerification();
 }
 
 void BoundedTrainingSession::SelectCapacitanceContext(std::size_t index)
@@ -977,6 +1091,11 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
 
 void BoundedTrainingSession::AdvanceInput()
 {
+    if(RoundRobinInputs())
+    {
+        anchor.reset();anchorTrial.clear();completedInputs.at(position)=true;
+        SelectRoundRobinInput();return;
+    }
     anchor.reset();anchorTrial.clear();++position;
     if(position==order.size())BeginVerification();else BeginInput();
 }
@@ -1027,7 +1146,7 @@ void BoundedTrainingSession::FinishVerification()
         // the declared iteration budget is explicitly budget exhaustion.
         if(order.empty()){Stop(TrainingStatus::SearchUnresolved,"no_adjustable_inputs_outside_tolerance");return;}
         if(++sweep>=config.maximumSweeps){Stop(TrainingStatus::BudgetExhausted,"maximum_sweeps_exhausted");return;}
-        verification.reset();status=TrainingStatus::Searching;position=0;BeginInput();return;
+        verification.reset();status=TrainingStatus::Searching;position=0;BeginInputSweep();return;
     }
 }
 
@@ -1098,9 +1217,18 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
         }
         if(exhausted)
         {
-            if(!inputSearch.best){Stop(TrainingStatus::SearchUnresolved,"no_measured_candidate_in_declared_search");return {};}
-            candidate=inputSearch.best->fullParameters;inputSearch.restoringBest=true;
-            candidateCapacitance=RestoreTrainingCapacitance(inputSearch.best->capacitance,currentCapacitance);
+            const auto* selected=inputSearch.best?&*inputSearch.best:
+                RoundRobinInputs() && inputSearch.historicalBestProposal?&*inputSearch.historicalBestProposal:nullptr;
+            if(!selected){Stop(TrainingStatus::SearchUnresolved,"no_measured_candidate_in_declared_search");return {};}
+            candidate=selected->fullParameters;inputSearch.restoringBest=true;
+            if(RoundRobinInputs())
+            {
+                // Old coordinates are only a proposal. Never roll back another
+                // input, including its active/dormant capacitance corrections.
+                candidate=current;candidate[order.at(position)]=selected->parameters;
+                candidateCapacitance=RestoreClassicDendriteCapacitance(selected->capacitance,currentCapacitance,order.at(position)+1);
+            }
+            else candidateCapacitance=RestoreTrainingCapacitance(selected->capacitance,currentCapacitance);
             if(!PrepareCandidate(candidate))
             {rejected.push_back({{},"best_candidate_no_longer_legal"});Stop(TrainingStatus::InvalidModel);return {};}
         }
@@ -1532,7 +1660,11 @@ void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasureme
     // Global ranking and the independent final-verification gate are unchanged.
     PrioritizeN0Neighbors(e);
     if(inputSearch.restoringBest || (e.withinTiming && e.withinAmplitude))AdvanceInput();
-    else {phase=Phase::Candidate;anchor.reset();anchorTrial.clear();AdvanceCapacitanceContext();}
+    else
+    {
+        phase=Phase::Candidate;anchor.reset();anchorTrial.clear();AdvanceCapacitanceContext();
+        if(RoundRobinInputs())SelectRoundRobinInput();
+    }
 }
 
 void BoundedTrainingSession::RecordIncompleteCandidateRepeats(const std::string& reason)

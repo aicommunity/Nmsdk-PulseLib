@@ -38,6 +38,7 @@ void PreservedBaseline(const TrainingCapacitanceWitness& previous,const Training
 
 void NativeTrainingService::Start(NativeTrainingPlan value,const NativeTrainingAdapter& a,double modelTime,double wallTime)
 {
+    ValidateNativeInputTraversalConfiguration(value.search);
     if(value.terminalSelection) {
         ValidateNativeTerminalSelectionPolicy(*value.terminalSelection);
         Require(terminalJournal.size()<NativeTerminalSelectionPolicy::MaximumJournalEntries,
@@ -462,6 +463,7 @@ void NativeTrainingService::InvalidateTarget()
 void NativeTrainingService::RestoreBoundary(NativeTrainingPlan value,std::vector<NativeProbeResult> refs,
     std::vector<NativeProbeResult> finals,const std::string& revision,std::size_t epoch,std::size_t sessions)
 {
+    ValidateNativeInputTraversalConfiguration(value.search);
     Require(!Active(state) && state!=NativeTrainingState::Finalizing,"native_boundary_import_requires_idle_controller");
     Require(!value.terminalSelection,"terminal_selection_requires_versioned_import");
     const auto proof=ReplayNativeTrainingProof(value.protocol,value.search.tolerances,refs,finals,revision,epoch,
@@ -484,6 +486,7 @@ void NativeTrainingService::RestoreStoppedBoundary(NativeTrainingPlan value,std:
     const std::string& captureRevision,std::size_t captureEpoch,bool complete,
     TrainingStatus terminal,const std::string& diagnostic)
 {
+    ValidateNativeInputTraversalConfiguration(value.search);
     Require(!Active(state) && state!=NativeTrainingState::Finalizing,"native_boundary_import_requires_idle_controller");
     Require(!value.terminalSelection,"terminal_selection_requires_versioned_import");
     Require(sessions>0 && !revision.empty() && !diagnostic.empty() &&

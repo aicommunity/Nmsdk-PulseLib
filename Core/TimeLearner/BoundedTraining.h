@@ -10,6 +10,10 @@ namespace NMSDK::TimeLearner {
 enum class TrainingStatus { Searching, Verifying, Exact, SearchUnresolved, BudgetExhausted,
     InvalidModel, InvalidObservation, ExternalStop };
 enum class InvalidMeasurementRecovery { RetrySameCandidate, AdvanceUnassignedBurst, AdvanceRejectedCandidateWindow };
+// Sequential preserves historical bounded-controller declarations. The opt-in
+// Classic mode yields only at a completed candidate (including all repeats),
+// never between an anchor and its input or in the middle of a native burst.
+enum class InputTraversalPolicy { Sequential, ClassicCandidateRoundRobin };
 struct InputSearchBounds {
     int minimumLength=1,maximumLength=1,minimumSynapses=1,maximumSynapses=128;
     double minimumResistance=0.,maximumResistance=0.;
@@ -55,9 +59,17 @@ struct BoundedTrainingConfig {
     // One input shares this finite allowance across all C contexts and sweeps;
     // improvements, revisits and invalid observations never replenish it.
     std::size_t maximumN0LengthProposals=0;
+    InputTraversalPolicy inputTraversal=InputTraversalPolicy::Sequential;
+    // Aggregate initial L/Ns/Rs seed storage across retained input/C cursors.
+    // Measurement history remains bounded separately by the global budgets.
+    std::size_t maximumTraversalSeedElements=131072;
 };
 void ValidateN0LengthProposalBudget(const BoundedTrainingConfig& configuration);
 void ValidateInvalidMeasurementRecovery(InvalidMeasurementRecovery policy,std::size_t invalidAllowance);
+// Until the native declaration/evidence codecs bind the new opt-in policy,
+// reject it at native admission/export rather than silently serializing it as
+// Sequential. The pure decision controller supports the policy independently.
+void ValidateNativeInputTraversalConfiguration(const BoundedTrainingConfig& configuration);
 enum class TrainingActionKind { Edit, Probe, ResistanceDomain };
 struct TrainingAction {
     TrainingActionKind kind=TrainingActionKind::Probe;
@@ -268,6 +280,10 @@ private:
         std::optional<TrainingCapacitance> backgroundCapacitance;
         std::size_t candidates=0;
         std::optional<CandidateEvidence> best;
+        // Coordinates only after a background change. Its old residuals must
+        // not rank/accept a point in the current graph; remeasure the proposal.
+        std::optional<CandidateEvidence> historicalBestProposal;
+        std::size_t suspendedAtEpoch=0;
         bool restoringBest=false;
         CandidateCursor cursor;
         // Only inactive C cursors are suspended; the active one is cursor.
@@ -277,6 +293,8 @@ private:
         std::vector<CandidateEvidence> candidateMeasurements;
     };
     InputSearchState inputSearch;
+    std::vector<std::optional<InputSearchState>> suspendedInputs;
+    std::vector<bool> completedInputs;
     void SelectCapacitanceContext(std::size_t index);
     void AdvanceCapacitanceContext();
     std::optional<TrainingCapacitance> CandidateCapacitance(const std::vector<InputParameters>& parameters) const;
@@ -293,6 +311,10 @@ private:
     std::unique_ptr<FinalVerificationSession> verification;
     std::size_t verificationInvalidAccounted=0;
     void BeginInput();
+    void BeginInputSweep();
+    void SelectRoundRobinInput();
+    void RebaseClassicInputSearch();
+    bool RoundRobinInputs() const;
     void InitializeDecisionState();
     void ArmTyped(std::size_t,const PreparedCompositeMeasurement&,const CandidateWindowReferenceSet*);
     void ConsumeTyped(const ValidatedCompositeMeasurement&,const std::string&,const CandidateWindowReferenceSet*);

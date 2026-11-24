@@ -91,6 +91,7 @@ QJsonObject CompositeTrainingProtocolBinding(const VerificationProtocol& p) {
         {"geometry_policy",QJsonArray{int(g.schemaVersion),double(g.maximumInputs),double(g.maximumSamples),double(g.maximumTotalSamples),g.repeatabilityAbsolute}}};
 }
 QJsonObject EncodeCompositeRuntimePlan(const NativeTrainingPlan& p) {
+    ValidateNativeInputTraversalConfiguration(p.search);
     ValidateCompositeMeasurementContract(p.protocol);Require(bool(p.composite));const auto& c=p.search;
     Require(c.normalization==Normalization::SynapseCount || c.normalization==Normalization::TipResistance);
     Require(c.invalidMeasurementRecovery==InvalidMeasurementRecovery::RetrySameCandidate);

@@ -71,6 +71,7 @@ void ValidateDeclaration(const NativeTrainingPlan& plan) {
         "candidate_window_runtime2_budget_relations");
 }
 QJsonObject Search(const BoundedTrainingConfig& search) {
+    ValidateNativeInputTraversalConfiguration(search);
     QJsonArray bounds;for(const auto& bound:search.bounds)bounds.append(QJsonObject{
         {"minimum_length",bound.minimumLength},{"maximum_length",bound.maximumLength},
         {"minimum_synapses",bound.minimumSynapses},{"maximum_synapses",bound.maximumSynapses},

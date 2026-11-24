@@ -295,6 +295,7 @@ static QJsonObject EncodeNativeTrainingStateImpl(const NativeTrainingService& se
         EncodeNativeCompositeTrainingState(service,actualModelRevision,actualParameters);
     const auto parameters=Parameters;
     const auto& cfg=service.Configuration();
+    ValidateNativeInputTraversalConfiguration(cfg);
     const auto& history=service.CapacitanceHistory();
     const auto encodeCapacitance=CapacitanceParameters;
     const auto trialWitness=[&](const std::string& trial,const std::string& revision,

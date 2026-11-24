@@ -227,6 +227,7 @@ CapacitanceSearchPolicy DecodeCapacitanceSearchPolicy(const QJsonObject& object)
 }
 QJsonObject EncodeConfiguredNativeTraining(const ConfiguredNativeTraining& c)
 {
+    ValidateNativeInputTraversalConfiguration(c.search);
     MakeConfiguredNativeTrainingPlan(c);
     if(c.terminalSelection) {
         auto base=c;base.terminalSelection.reset();auto result=EncodeConfiguredNativeTraining(base);

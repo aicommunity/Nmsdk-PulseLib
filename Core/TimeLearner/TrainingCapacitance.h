@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include <map>
 #include <optional>
 #include <string>
@@ -34,4 +35,10 @@ bool TrainingCapacitanceReadbackMatches(const std::optional<TrainingCapacitance>
 // Paths absent from that candidate return to C0, never inherit a later trim.
 std::optional<TrainingCapacitance> RestoreTrainingCapacitance(
     const std::optional<TrainingCapacitance>& historical,const std::optional<TrainingCapacitance>& current);
+// Proposal for one independent Classic path, including its dormant segments.
+// Retain every other path's CURRENT correction. Same C0 origin/policy and full
+// historical path retention remain mandatory. This is not a measured model.
+std::optional<TrainingCapacitance> RestoreClassicDendriteCapacitance(
+    const std::optional<TrainingCapacitance>& historical,const std::optional<TrainingCapacitance>& current,
+    std::size_t dendrite);
 }

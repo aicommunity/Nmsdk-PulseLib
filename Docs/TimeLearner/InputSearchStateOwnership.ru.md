@@ -40,7 +40,66 @@ bracket и ранги относятся к прежнему revision. Их не
 
 Будущий вариант чередования должен иметь явный версионированный выбор режима,
 сохранять воспроизводимость существующих конфигураций, общие ограничения
-поиска и независимую финальную проверку. Здесь такой режим не реализован.
+поиска и независимую финальную проверку. Механический коммит сам по себе
+такого режима не вводил; отдельный последующий кандидат описан ниже.
+
+## Отдельный кандидат ядра: ClassicCandidateRoundRobin
+
+После механического выделения состояния подготовлен отдельный opt-in-кандидат
+`InputTraversalPolicy::ClassicCandidateRoundRobin`. Значение по умолчанию
+`Sequential` сохраняется. Новый выбор пока доступен непосредственно в C++
+конфигурации ядра; native JSON/configured learner ещё не подключены. Это
+не выпущенный рекомендуемый режим и не доказанная совместимость с legacy.
+До подключения кодеков native Start/import/export отклоняют этот выбор
+явной диагностикой: его нельзя молча сохранить или загрузить как Sequential.
+
+Квант обхода — полностью измеренный кандидат, включая пару anchor/input,
+всю штатную пачку и требуемые повторы. Внутри незавершённой пробы переключения
+нет. Classic посещает входы 0,…,M−2 по кругу; опорный M−1 остаётся фиксированным.
+Branch сохраняет обратный последовательный порядок и отклоняет новый выбор.
+
+```text
+after a complete candidate:
+    record actual observation and charge common budgets
+    if locally exact or freshly remeasured final local proposal:
+        mark this input locally finished
+    save this input's finite cursors and candidate count
+    choose the next unfinished Classic input
+
+on return after another model edit:
+    keep finite enumeration positions and already charged allowances
+    use CURRENT parameters and C corrections of all other inputs
+    clear measured brackets, local ranks and effective resistance domains
+    keep an old selected coordinate only as a proposal requiring new probes
+
+after all local searches:
+    perform fresh independent final verification of every input
+```
+
+Любое изменение epoch между визитами инвалидирует локальные измерения,
+даже если скалярные L/Ns/Rs не изменились: мог измениться binding физического
+preview. Публичная история сохраняет исходные revisions и не переписывается
+под новый фон. Проекции разрешены только для перечислительных/предлагаемых
+координат. Новый effective Rs domain запрашивается у адаптера заново.
+
+Исторический лучший кандидат после смены фона не ранжируется как свежий.
+Если новый поиск исчерпан, его собственные координаты могут быть предъявлены
+повторно; параметры остальных входов сохраняются текущими. Для C используется
+`RestoreClassicDendriteCapacitance`: сохраняются реальные поправки остальных
+путей, включая dormant-сегменты и соседние имена `Dendrite1_`/`Dendrite10_`.
+Потеря истории путей, смена C0 origin либо политики остаются ошибками.
+
+Бюджеты проб, edits, invalid, N0-предложений длины не возобновляются при
+переключении. Кандидатный лимит хранится на вход до конца sweep. Новый sweep
+разрешается только общей политикой после отрицательной полной проверки.
+`maximumTraversalSeedElements` ограничивает суммарный начальный запас L/Ns/Rs
+в сохранённых входных/C-курсорах; история отдельно ограничена бюджетами проб.
+
+Такой квант отличается от legacy-переключения по отдельным пачкам. Его
+научный эффект необходимо измерить отдельно. Подготовлены адресные decision
+сценарии M=1,2,4,6, N0/N1, повторов, C-контекстов, общего бюджета, fresh final
+gate и смены фона. Компиляция, выполнение, native-подключение, сериализация
+нового выбора и физическое сравнение ещё не подтверждены.
 
 ## Проверка
 

@@ -77,4 +77,17 @@ std::optional<TrainingCapacitance> RestoreTrainingCapacitance(
         result.membraneScales.try_emplace(path,1.);
     return result;
 }
+std::optional<TrainingCapacitance> RestoreClassicDendriteCapacitance(
+    const std::optional<TrainingCapacitance>& historical,const std::optional<TrainingCapacitance>& current,
+    std::size_t dendrite)
+{
+    if(!dendrite)throw std::invalid_argument("invalid_classic_capacitance_owner");
+    const auto restored=RestoreTrainingCapacitance(historical,current);
+    if(!restored)return {};
+    auto result=*current;
+    const auto prefix="Dendrite"+std::to_string(dendrite)+"_";
+    for(const auto& [path,scale]:restored->membraneScales)
+        if(path.starts_with(prefix))result.membraneScales[path]=scale;
+    return result;
+}
 }
