@@ -6,6 +6,7 @@
 #include <QPushButton>
 
 #include "../../../../Rdk/GUI/Qt/IComponentControllerWidget.h"
+#include "../../../../Rdk/GUI/Qt/UParameterFormEdits.h"
 #include "../../../../Rdk/GUI/Qt/UComponentGuiContext.h"
 #include "../../../../Rdk/GUI/Qt/UVisualControllerWidget.h"
 
@@ -26,6 +27,7 @@ private slots:
 
 private:
     UComponentGuiContext m_context;
+    UParameterFormEdits m_edits;
 
     QCheckBox* m_needToTrainCheck = nullptr;
     QDoubleSpinBox* m_delaySpin = nullptr;

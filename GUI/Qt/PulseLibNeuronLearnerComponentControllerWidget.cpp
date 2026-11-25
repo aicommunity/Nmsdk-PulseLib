@@ -1,4 +1,5 @@
 #include "PulseLibNeuronLearnerComponentControllerWidget.h"
+#include <QToolTip>
 
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -108,6 +109,7 @@ QString PulseLibNeuronLearnerComponentControllerWidget::componentGuiId() const
 void PulseLibNeuronLearnerComponentControllerWidget::refreshFromModel(bool force)
 {
     Q_UNUSED(force);
+    m_edits.clear();
     if(m_context.componentLongName.isEmpty())
         return;
 
@@ -150,6 +152,18 @@ void PulseLibNeuronLearnerComponentControllerWidget::refreshFromModel(bool force
     m_experimentModeCheck->setChecked(learner->ExperimentMode.GetData());
     m_experimentNumSpin->setValue(learner->ExperimentNum.GetData());
     m_enableDebugCheck->setChecked(learner->EnableDebug.GetData());
+    m_edits.remember(m_calculateModeCombo, m_calculateModeCombo->currentData().toInt());
+    m_edits.remember(m_needToTrainCheck, m_needToTrainCheck->isChecked());
+    m_edits.remember(m_delaySpin, m_delaySpin->value());
+    m_edits.remember(m_spikesFrequencySpin, m_spikesFrequencySpin->value());
+    m_edits.remember(m_numInputDendriteSpin, m_numInputDendriteSpin->value());
+    m_edits.remember(m_maxDendriteLengthSpin, m_maxDendriteLengthSpin->value());
+    m_edits.remember(m_useFixedThresholdCheck, m_useFixedThresholdCheck->isChecked());
+    m_edits.remember(m_thresholdSpin, m_thresholdSpin->value());
+    m_edits.remember(m_synapseResistanceStepSpin, m_synapseResistanceStepSpin->value());
+    m_edits.remember(m_experimentModeCheck, m_experimentModeCheck->isChecked());
+    m_edits.remember(m_experimentNumSpin, m_experimentNumSpin->value());
+    m_edits.remember(m_enableDebugCheck, m_enableDebugCheck->isChecked());
 }
 
 void PulseLibNeuronLearnerComponentControllerWidget::onApplyClicked()
@@ -166,22 +180,26 @@ void PulseLibNeuronLearnerComponentControllerWidget::onApplyClicked()
     if(!learner)
         return;
 
-    learner->SetCalculateMode(m_calculateModeCombo->currentData().toInt());
-    learner->SetIsNeedToTrain(m_needToTrainCheck->isChecked());
-    learner->SetDelay(m_delaySpin->value());
-    learner->SetSpikesFrequency(m_spikesFrequencySpin->value());
-    learner->SetNumInputDendrite(m_numInputDendriteSpin->value());
-    learner->SetMaxDendriteLength(m_maxDendriteLengthSpin->value());
-    learner->SetUseFixedLTZThreshold(m_useFixedThresholdCheck->isChecked());
-    if(m_useFixedThresholdCheck->isChecked())
-        learner->SetFixedLTZThreshold(m_thresholdSpin->value());
+    const bool useFixed = m_useFixedThresholdCheck->isChecked();
+    m_edits.apply(m_calculateModeCombo, learner->CalculateMode, m_calculateModeCombo->currentData().toInt());
+    m_edits.apply(m_needToTrainCheck, learner->IsNeedToTrain, m_needToTrainCheck->isChecked());
+    m_edits.apply(m_delaySpin, learner->Delay, m_delaySpin->value());
+    m_edits.apply(m_spikesFrequencySpin, learner->SpikesFrequency, m_spikesFrequencySpin->value());
+    m_edits.apply(m_numInputDendriteSpin, learner->NumInputDendrite, m_numInputDendriteSpin->value());
+    m_edits.apply(m_maxDendriteLengthSpin, learner->MaxDendriteLength, m_maxDendriteLengthSpin->value());
+    if(useFixed)
+        m_edits.apply(m_thresholdSpin, learner->FixedLTZThreshold, m_thresholdSpin->value());
     else
-        learner->SetTrainingLTZThreshold(m_thresholdSpin->value());
-    learner->SetSynapseResistanceStep(m_synapseResistanceStepSpin->value());
-    learner->SetExperimentMode(m_experimentModeCheck->isChecked());
-    learner->SetExperimentNum(m_experimentNumSpin->value());
-    learner->SetEnableDebug(m_enableDebugCheck->isChecked());
+        m_edits.apply(m_thresholdSpin, learner->TrainingLTZThreshold, m_thresholdSpin->value());
+    m_edits.apply(m_useFixedThresholdCheck, learner->UseFixedLTZThreshold, useFixed);
+    m_edits.apply(m_synapseResistanceStepSpin, learner->SynapseResistanceStep, m_synapseResistanceStepSpin->value());
+    m_edits.apply(m_experimentModeCheck, learner->ExperimentMode, m_experimentModeCheck->isChecked());
+    m_edits.apply(m_experimentNumSpin, learner->ExperimentNum, m_experimentNumSpin->value());
+    m_edits.apply(m_enableDebugCheck, learner->EnableDebug, m_enableDebugCheck->isChecked());
+    const QString failed = m_edits.failedField();
     refreshFromModel(true);
+    if (!failed.isEmpty())
+        QToolTip::showText(m_applyButton->mapToGlobal(QPoint()), tr("Could not apply %1").arg(failed), m_applyButton);
 }
 
 void PulseLibNeuronLearnerComponentControllerWidget::onResetClicked()

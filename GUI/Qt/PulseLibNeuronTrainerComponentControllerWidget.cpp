@@ -1,4 +1,5 @@
 #include "PulseLibNeuronTrainerComponentControllerWidget.h"
+#include <QToolTip>
 
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -98,6 +99,7 @@ QString PulseLibNeuronTrainerComponentControllerWidget::componentGuiId() const
 void PulseLibNeuronTrainerComponentControllerWidget::refreshFromModel(bool force)
 {
     Q_UNUSED(force);
+    m_edits.clear();
 
     if(m_context.componentLongName.isEmpty())
         return;
@@ -129,6 +131,11 @@ void PulseLibNeuronTrainerComponentControllerWidget::refreshFromModel(bool force
     m_spikesFrequencySpin->setValue(spikesFrequency);
     m_useFixedThresholdCheck->setChecked(useFixed);
     m_thresholdSpin->setValue(ltzThreshold);
+    m_edits.remember(m_needToTrainCheck, m_needToTrainCheck->isChecked());
+    m_edits.remember(m_delaySpin, m_delaySpin->value());
+    m_edits.remember(m_spikesFrequencySpin, m_spikesFrequencySpin->value());
+    m_edits.remember(m_useFixedThresholdCheck, m_useFixedThresholdCheck->isChecked());
+    m_edits.remember(m_thresholdSpin, m_thresholdSpin->value());
 }
 
 void PulseLibNeuronTrainerComponentControllerWidget::onApplyClicked()
@@ -147,18 +154,19 @@ void PulseLibNeuronTrainerComponentControllerWidget::onApplyClicked()
 
     const bool useFixed = m_useFixedThresholdCheck->isChecked();
 
-    // Apply to component via setters to preserve internal consistency.
-    positionTrainer->SetNeedToTrain(m_needToTrainCheck->isChecked());
-    positionTrainer->SetDelay(m_delaySpin->value());
-    positionTrainer->SetSpikesFrequency(m_spikesFrequencySpin->value());
-
-    positionTrainer->SetUseFixedLTZThreshold(useFixed);
+    m_edits.apply(m_needToTrainCheck, positionTrainer->IsNeedToTrain, m_needToTrainCheck->isChecked());
+    m_edits.apply(m_delaySpin, positionTrainer->Delay, m_delaySpin->value());
+    m_edits.apply(m_spikesFrequencySpin, positionTrainer->SpikesFrequency, m_spikesFrequencySpin->value());
     if(useFixed)
-        positionTrainer->SetFixedLTZThreshold(m_thresholdSpin->value());
+        m_edits.apply(m_thresholdSpin, positionTrainer->FixedLTZThreshold, m_thresholdSpin->value());
     else
-        positionTrainer->SetTrainingLTZThreshold(m_thresholdSpin->value());
+        m_edits.apply(m_thresholdSpin, positionTrainer->TrainingLTZThreshold, m_thresholdSpin->value());
+    m_edits.apply(m_useFixedThresholdCheck, positionTrainer->UseFixedLTZThreshold, useFixed);
 
+    const QString failed = m_edits.failedField();
     refreshFromModel(true);
+    if (!failed.isEmpty())
+        QToolTip::showText(m_applyButton->mapToGlobal(QPoint()), tr("Could not apply %1").arg(failed), m_applyButton);
 }
 
 void PulseLibNeuronTrainerComponentControllerWidget::onToggleEngineControlClicked()
