@@ -1,4 +1,5 @@
 #include "PulseLibNeuronTrainerComponentControllerWidget.h"
+#include <QToolTip>
 
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -9,7 +10,6 @@
 #include "../../../../Rdk/Deploy/Include/rdk_init.h"
 
 #include "../../Core/NNeuronTrainer.h"
-#include "../../Core/NModel.h"
 #include "../../../../Rdk/GUI/Qt/UGEngineControlWidget.h"
 
 namespace
@@ -98,18 +98,21 @@ QString PulseLibNeuronTrainerComponentControllerWidget::componentGuiId() const
 void PulseLibNeuronTrainerComponentControllerWidget::refreshFromModel(bool force)
 {
     Q_UNUSED(force);
+    m_edits.clear();
+    m_applyButton->setEnabled(false);
 
     if(m_context.componentLongName.isEmpty())
         return;
 
-    RDK::UELockPtr<NMSDK::NModel> model = RDK::GetModelLock<NMSDK::NModel>();
+    auto model = RDK::GetModelLock<RDK::UContainer>(m_context.channelIndex);
     if(!model)
         return;
 
     auto positionTrainer = RDK::dynamic_pointer_cast<NMSDK::NNeuronTrainer>(
-        model->GetComponentL(m_context.componentLongName.toLocal8Bit().constData()));
+        model->GetComponentL(m_context.componentLongName.toUtf8().constData(), true));
     if(!positionTrainer)
         return;
+    m_applyButton->setEnabled(true);
 
     const bool needToTrain = positionTrainer->IsNeedToTrain.GetData();
     const double delay = positionTrainer->Delay.GetData();
@@ -129,6 +132,11 @@ void PulseLibNeuronTrainerComponentControllerWidget::refreshFromModel(bool force
     m_spikesFrequencySpin->setValue(spikesFrequency);
     m_useFixedThresholdCheck->setChecked(useFixed);
     m_thresholdSpin->setValue(ltzThreshold);
+    m_edits.remember(m_needToTrainCheck, m_needToTrainCheck->isChecked());
+    m_edits.remember(m_delaySpin, m_delaySpin->value());
+    m_edits.remember(m_spikesFrequencySpin, m_spikesFrequencySpin->value());
+    m_edits.remember(m_useFixedThresholdCheck, m_useFixedThresholdCheck->isChecked());
+    m_edits.remember(m_thresholdSpin, m_thresholdSpin->value());
 }
 
 void PulseLibNeuronTrainerComponentControllerWidget::onApplyClicked()
@@ -136,29 +144,30 @@ void PulseLibNeuronTrainerComponentControllerWidget::onApplyClicked()
     if(m_context.componentLongName.isEmpty())
         return;
 
-    RDK::UELockPtr<NMSDK::NModel> model = RDK::GetModelLock<NMSDK::NModel>();
+    auto model = RDK::GetModelLock<RDK::UContainer>(m_context.channelIndex);
     if(!model)
         return;
 
     auto positionTrainer = RDK::dynamic_pointer_cast<NMSDK::NNeuronTrainer>(
-        model->GetComponentL(m_context.componentLongName.toLocal8Bit().constData()));
+        model->GetComponentL(m_context.componentLongName.toUtf8().constData(), true));
     if(!positionTrainer)
         return;
 
     const bool useFixed = m_useFixedThresholdCheck->isChecked();
 
-    // Apply to component via setters to preserve internal consistency.
-    positionTrainer->SetNeedToTrain(m_needToTrainCheck->isChecked());
-    positionTrainer->SetDelay(m_delaySpin->value());
-    positionTrainer->SetSpikesFrequency(m_spikesFrequencySpin->value());
-
-    positionTrainer->SetUseFixedLTZThreshold(useFixed);
+    m_edits.apply(m_needToTrainCheck, positionTrainer->IsNeedToTrain, m_needToTrainCheck->isChecked());
+    m_edits.apply(m_delaySpin, positionTrainer->Delay, m_delaySpin->value());
+    m_edits.apply(m_spikesFrequencySpin, positionTrainer->SpikesFrequency, m_spikesFrequencySpin->value());
     if(useFixed)
-        positionTrainer->SetFixedLTZThreshold(m_thresholdSpin->value());
+        m_edits.apply(m_thresholdSpin, positionTrainer->FixedLTZThreshold, m_thresholdSpin->value());
     else
-        positionTrainer->SetTrainingLTZThreshold(m_thresholdSpin->value());
+        m_edits.apply(m_thresholdSpin, positionTrainer->TrainingLTZThreshold, m_thresholdSpin->value());
+    m_edits.apply(m_useFixedThresholdCheck, positionTrainer->UseFixedLTZThreshold, useFixed);
 
+    const QString failed = m_edits.failedField();
     refreshFromModel(true);
+    if (!failed.isEmpty())
+        QToolTip::showText(m_applyButton->mapToGlobal(QPoint()), tr("Could not apply %1").arg(failed), m_applyButton);
 }
 
 void PulseLibNeuronTrainerComponentControllerWidget::onToggleEngineControlClicked()
