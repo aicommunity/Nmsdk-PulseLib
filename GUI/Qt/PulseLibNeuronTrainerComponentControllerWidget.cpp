@@ -10,7 +10,6 @@
 #include "../../../../Rdk/Deploy/Include/rdk_init.h"
 
 #include "../../Core/NNeuronTrainer.h"
-#include "../../Core/NModel.h"
 #include "../../../../Rdk/GUI/Qt/UGEngineControlWidget.h"
 
 namespace
@@ -100,18 +99,20 @@ void PulseLibNeuronTrainerComponentControllerWidget::refreshFromModel(bool force
 {
     Q_UNUSED(force);
     m_edits.clear();
+    m_applyButton->setEnabled(false);
 
     if(m_context.componentLongName.isEmpty())
         return;
 
-    RDK::UELockPtr<NMSDK::NModel> model = RDK::GetModelLock<NMSDK::NModel>();
+    auto model = RDK::GetModelLock<RDK::UContainer>(m_context.channelIndex);
     if(!model)
         return;
 
     auto positionTrainer = RDK::dynamic_pointer_cast<NMSDK::NNeuronTrainer>(
-        model->GetComponentL(m_context.componentLongName.toLocal8Bit().constData()));
+        model->GetComponentL(m_context.componentLongName.toUtf8().constData(), true));
     if(!positionTrainer)
         return;
+    m_applyButton->setEnabled(true);
 
     const bool needToTrain = positionTrainer->IsNeedToTrain.GetData();
     const double delay = positionTrainer->Delay.GetData();
@@ -143,12 +144,12 @@ void PulseLibNeuronTrainerComponentControllerWidget::onApplyClicked()
     if(m_context.componentLongName.isEmpty())
         return;
 
-    RDK::UELockPtr<NMSDK::NModel> model = RDK::GetModelLock<NMSDK::NModel>();
+    auto model = RDK::GetModelLock<RDK::UContainer>(m_context.channelIndex);
     if(!model)
         return;
 
     auto positionTrainer = RDK::dynamic_pointer_cast<NMSDK::NNeuronTrainer>(
-        model->GetComponentL(m_context.componentLongName.toLocal8Bit().constData()));
+        model->GetComponentL(m_context.componentLongName.toUtf8().constData(), true));
     if(!positionTrainer)
         return;
 

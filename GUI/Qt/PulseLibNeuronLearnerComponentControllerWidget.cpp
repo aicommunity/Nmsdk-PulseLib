@@ -8,7 +8,6 @@
 #include <QVBoxLayout>
 
 #include "../../../../Rdk/Deploy/Include/rdk_init.h"
-#include "../../Core/NModel.h"
 #include "../../Core/NNeuronLearner.h"
 
 PulseLibNeuronLearnerComponentControllerWidget::PulseLibNeuronLearnerComponentControllerWidget(QWidget* parent,
@@ -110,17 +109,19 @@ void PulseLibNeuronLearnerComponentControllerWidget::refreshFromModel(bool force
 {
     Q_UNUSED(force);
     m_edits.clear();
+    m_applyButton->setEnabled(false);
     if(m_context.componentLongName.isEmpty())
         return;
 
-    RDK::UELockPtr<NMSDK::NModel> model = RDK::GetModelLock<NMSDK::NModel>();
+    auto model = RDK::GetModelLock<RDK::UContainer>(m_context.channelIndex);
     if(!model)
         return;
 
     auto learner = RDK::dynamic_pointer_cast<NMSDK::NNeuronLearner>(
-        model->GetComponentL(m_context.componentLongName.toLocal8Bit().constData()));
+        model->GetComponentL(m_context.componentLongName.toUtf8().constData(), true));
     if(!learner)
         return;
+    m_applyButton->setEnabled(true);
 
     QSignalBlocker b1(m_calculateModeCombo);
     QSignalBlocker b2(m_needToTrainCheck);
@@ -171,12 +172,12 @@ void PulseLibNeuronLearnerComponentControllerWidget::onApplyClicked()
     if(m_context.componentLongName.isEmpty())
         return;
 
-    RDK::UELockPtr<NMSDK::NModel> model = RDK::GetModelLock<NMSDK::NModel>();
+    auto model = RDK::GetModelLock<RDK::UContainer>(m_context.channelIndex);
     if(!model)
         return;
 
     auto learner = RDK::dynamic_pointer_cast<NMSDK::NNeuronLearner>(
-        model->GetComponentL(m_context.componentLongName.toLocal8Bit().constData()));
+        model->GetComponentL(m_context.componentLongName.toUtf8().constData(), true));
     if(!learner)
         return;
 
