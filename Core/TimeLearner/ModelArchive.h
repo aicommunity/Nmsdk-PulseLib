@@ -14,6 +14,11 @@ RDK_LIB_TYPE QJsonArray CaptureModelImageDefinitions(RDK::UEPtr<RDK::UContainer>
 // Validate the closed native definitions and hash their parameter/graph
 // semantics. Incidental XML formatting and temporary root names are excluded.
 RDK_LIB_TYPE QString ModelImageDefinitionsFingerprint(const QJsonArray& definitions);
+// Compare two complete archive representations without changing either one.
+// Verify original archive/snapshot digests and identities, then compare every
+// XML token through Rdk's portable scalar-type spelling contract. All other
+// fields remain exact. Does not import a graph or attest a training result.
+RDK_LIB_TYPE bool SamePortableModelArchive(const QJsonObject& first,const QJsonObject& second);
 // Same-storage native Save/Load construction for a speculative boundary edit.
 // Preserves the physical graph/ports and initializes fresh dynamics. This is
 // neither Alloc/Copy nor a dynamic checkpoint or a training-result certificate.

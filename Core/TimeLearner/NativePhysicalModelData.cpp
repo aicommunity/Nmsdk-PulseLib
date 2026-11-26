@@ -42,6 +42,17 @@ QJsonObject Signed(QJsonObject document)
 {
     document.remove("sha256");document["sha256"]=NmsdkTools::CanonicalModelDataSha256(document);return document;
 }
+bool SameNativeTransition(QJsonObject actual,QJsonObject expected)
+{
+    if(!actual["neuron"].isObject() || !expected["neuron"].isObject() ||
+       !NmsdkTools::SamePortableModelArchive(actual["neuron"].toObject(),expected["neuron"].toObject()))return false;
+    // The input digest was verified before replaying the native transition.
+    // Only the independently checked archive representation may differ. Source
+    // DATA, conversion/threshold records, parameters and every other field stay
+    // exact, so this neither repeats a conversion nor grants proof authority.
+    actual["neuron"]=expected["neuron"];actual.remove("sha256");expected.remove("sha256");
+    return actual==expected;
+}
 bool SoloKind(const QString& kind)
 {return kind=="timelearner_completed_state" || kind=="timelearner_stopped_state";}
 bool DiagnosticKind(const QString& kind)
@@ -180,7 +191,7 @@ std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativePhysicalModelData(
         Require(document["threshold"].isDouble(),"invalid_threshold_candidate_value");
         auto candidate=ThresholdPhysicalData(Object(document["source_recognition_data"]),document["threshold"].toDouble(),
             storage,environment,implementation);
-        Require(candidate.document==document,"physical_model_native_threshold_candidate_mismatch");
+        Require(SameNativeTransition(candidate.document,document),"physical_model_native_threshold_candidate_mismatch");
         return std::move(candidate.prepared);
     }
     if(document["schema_version"]==QJsonValue(2))
@@ -193,7 +204,7 @@ std::unique_ptr<PreparedNativePhysicalModelData> PrepareNativePhysicalModelData(
         auto converted=ConvertPhysicalData(Object(document["source_model_data"]),
             DecodeNativeRecognitionSpec(Object(document["conversion_spec"])),Amplitudes(document["reference_amplitudes"]),
             storage,environment,implementation);
-        Require(converted.document==document,"physical_model_native_conversion_mismatch");
+        Require(SameNativeTransition(converted.document,document),"physical_model_native_conversion_mismatch");
         return std::move(converted.prepared);
     }
     Keys(document,{"kind","schema_version","data_only","dynamic_checkpoint","certificate","implementation_id",

@@ -357,6 +357,20 @@ void CheckSnapshot(const QJsonObject& snapshot,const std::set<QString>& inherite
     CheckXmlNode(xml, "$", nodes,inheritedFeedback);
 }
 
+bool SamePortableSnapshot(QJsonObject first,QJsonObject second)
+{
+    CheckSnapshot(first);CheckSnapshot(second);
+    USerStorageXML left,right;
+    if(!left.Load(first["native_xml"].toString().toStdString(),GraphRoot) ||
+       !right.Load(second["native_xml"].toString().toStdString(),GraphRoot) ||
+       !left.SamePortableSerialization(right))return false;
+    // Original XML bytes and their digests have already been checked. The
+    // complete token comparison above is mandatory before comparing the rest.
+    for(auto* snapshot:{&first,&second})
+    {snapshot->remove("native_xml");snapshot->remove("native_xml_sha256");}
+    return first==second;
+}
+
 std::map<QString, UIPropertyOutput*> BoundaryOutputs(const QJsonObject& identity,
                                                     const ModelBoundarySources& sources)
 {
@@ -783,6 +797,41 @@ UEPtr<UContainer> ImportDatasetSnapshot(const QJsonObject& snapshot,UEPtr<UStora
     Lease candidate{storage,LoadSnapshot(snapshot,storage,environment)};
     if(!dynamic_pointer_cast<NMSDK::NDatasetMatrix>(candidate.object))Fail("unsupported_auxiliary_graph","NDatasetMatrix required");
     return candidate.Release();
+}
+
+bool SamePortableModelArchive(const QJsonObject& first,const QJsonObject& second)
+{
+    const auto validHeader=[](QJsonObject archive) {
+        const auto digest=archive.take("sha256");const int version=archive["schema_version"].toInt();
+        return digest.isString() && digest.toString()==CanonicalModelDataSha256(archive) &&
+            (version==1 || version==2) && archive["schema_version"]==QJsonValue(version) &&
+            archive["kind"]==QJsonValue("timelearner_model_archive") &&
+            archive["encoding"]==QJsonValue(QString("native-xml-and-model-identity-v%1").arg(version)) &&
+            archive["dynamic_checkpoint"]==QJsonValue(false) && archive["graph"].isObject() &&
+            archive["class_definitions"].isArray();
+    };
+    if(!validHeader(first) || !validHeader(second))return false;
+    try
+    {
+        if(!SamePortableSnapshot(first["graph"].toObject(),second["graph"].toObject()))return false;
+        const auto left=first["class_definitions"].toArray(),right=second["class_definitions"].toArray();
+        if(left.size()!=right.size())return false;
+        for(int index=0;index<left.size();++index)
+        {
+            if(!left[index].isObject() || !right[index].isObject())return false;
+            auto a=left[index].toObject(),b=right[index].toObject();
+            if(!a["snapshot"].isObject() || !b["snapshot"].isObject() ||
+               !SamePortableSnapshot(a["snapshot"].toObject(),b["snapshot"].toObject()))return false;
+            a.remove("snapshot");b.remove("snapshot");if(a!=b)return false;
+        }
+        auto a=first,b=second;
+        // Replace only the representations whose complete comparison passed.
+        // Metadata, definitions' order/dependencies and unknown fields remain
+        // exact; neither a comparison view nor a new digest is persisted.
+        a["graph"]=b["graph"];a["class_definitions"]=b["class_definitions"];
+        a.remove("sha256");b.remove("sha256");return a==b;
+    }
+    catch(const ModelArchiveError&){return false;}
 }
 
 void PrepareModelArchive(const QJsonObject& archive,UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,const QString& implementationId)
