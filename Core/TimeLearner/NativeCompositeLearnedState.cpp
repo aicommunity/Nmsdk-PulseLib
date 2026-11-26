@@ -199,7 +199,7 @@ template<unsigned Protocol,unsigned Summary> QJsonObject CompositeSummary(const 
     if(search) {
         for(const auto& e:search->Evidence()){const auto& current=find(e.trialId,true);const auto& anchor=find(e.anchorTrialId,true);
             QJsonObject c{{"input_index",Count(e.inputIndex)},{"model_epoch",Count(e.modelEpoch)},{"parameters",Parameters({e.parameters}).at(0)},
-                {"measurement_purpose",Text(TrainingMeasurementPurposeName(e.purpose))},
+                {"measurement_purpose",QString::fromLatin1(TrainingMeasurementPurposeName(e.purpose))},
                 {"full_parameters",Parameters(e.fullParameters)},{"model_revision",Text(e.modelRevision)},{"trial_id",Text(e.trialId)},
                 {"anchor_trial_id",Text(e.anchorTrialId)},{"timing_low",e.timingResidualLow},{"timing_high",e.timingResidualHigh},
                 {"amplitude_residual",e.amplitudeResidual},{"within_timing",e.withinTiming},{"within_amplitude",e.withinAmplitude},
