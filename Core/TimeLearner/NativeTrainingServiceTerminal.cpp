@@ -66,6 +66,7 @@ void NativeTrainingService::FinalizeMeasuredBoundary(const NativeTrainingAdapter
         event["search_terminal_epoch"]=double(sourceEpoch);event["search_terminal_revision"]=QString::fromStdString(sourceRevision);
         event["search_terminal_parameters"]=TerminalParameters(sourceParameters);
         event["selected"]=QJsonObject{{"serial",double(selection.serial)},{"sweep",double(selection.sweep)},
+            {"measurement_purpose",QString::fromLatin1(TrainingMeasurementPurposeName(selection.candidate.purpose))},
             {"input_index",double(selection.candidate.inputIndex)},
             {"input_position",double(selection.inputPosition)},{"trial_id",QString::fromStdString(selection.candidate.trialId)},
             {"anchor_trial_id",QString::fromStdString(selection.candidate.anchorTrialId)},

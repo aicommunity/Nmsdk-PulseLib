@@ -405,6 +405,7 @@ static QJsonObject EncodeNativeTrainingStateImpl(const NativeTrainingService& se
         for(const auto& e:search->Evidence())
         {
             QJsonObject candidate{{"input_index",Count(e.inputIndex)},
+            {"measurement_purpose",Text(TrainingMeasurementPurposeName(e.purpose))},
             {"model_epoch",Count(e.modelEpoch)},{"parameters",parameters({e.parameters}).at(0)},
             {"full_parameters",parameters(e.fullParameters)},
             {"model_revision",Text(e.modelRevision)},{"trial_id",Text(e.trialId)},{"anchor_trial_id",Text(e.anchorTrialId)},

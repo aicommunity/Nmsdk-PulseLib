@@ -18,6 +18,10 @@
 namespace NMSDK::TimeLearner {
 namespace {
 bool Finite(double value) { return Detail::Finite(value); }
+std::size_t SaturatingAdd(std::size_t a,std::size_t b)
+{return b>std::numeric_limits<std::size_t>::max()-a?std::numeric_limits<std::size_t>::max():a+b;}
+std::size_t SaturatingMultiply(std::size_t a,std::size_t b)
+{return a && b>std::numeric_limits<std::size_t>::max()/a?std::numeric_limits<std::size_t>::max():a*b;}
 void ValidateInputTraversal(const VerificationProtocol& protocol,const BoundedTrainingConfig& config)
 {
     ValidateNativeInputTraversalConfiguration(config,protocol.routing);
@@ -346,7 +350,9 @@ bool BoundedTrainingSession::PrepareCandidate(std::vector<InputParameters>& para
 
 void BoundedTrainingSession::BeginInput()
 {
-    inputSearch.historicalBestProposal.reset();
+    inputSearch.visitBestEvidence.reset();inputSearch.retainedVisitProposals.clear();
+    inputSearch.selectingProposals=inputSearch.selectionDomainReady=false;
+    inputSearch.selectionCursor=0;inputSearch.selectionDomainScope.clear();
     inputSearch.capacitanceContexts.clear();inputSearch.activeCapacitanceContext=inputSearch.nextCapacitanceContext=0;inputSearch.issuedJointCandidates.clear();
     const auto index=order.at(position);const auto& b=config.bounds[index];const auto& p=current[index];
     inputSearch.background=current;inputSearch.cursor.lengths.clear();inputSearch.cursor.counts.clear();inputSearch.cursor.resistances.clear();inputSearch.best.reset();anchor.reset();anchorTrial.clear();
@@ -439,6 +445,7 @@ bool BoundedTrainingSession::RoundRobinInputs() const
 
 void BoundedTrainingSession::BeginInputSweep()
 {
+    classicSelectionOnly=false;
     if(RoundRobinInputs())
     {
         suspendedInputs.clear();suspendedInputs.resize(order.size());
@@ -464,8 +471,7 @@ void BoundedTrainingSession::RebaseClassicInputSearch()
     inputSearch.backgroundCapacitance=RestoreClassicDendriteCapacitance(
         inputSearch.backgroundCapacitance,currentCapacitance,input+1);
     if(!changed)return;
-    if(inputSearch.best)inputSearch.historicalBestProposal=inputSearch.best;
-    inputSearch.best.reset();inputSearch.candidateMeasurements.clear();
+    inputSearch.best.reset();inputSearch.visitBestEvidence.reset();inputSearch.candidateMeasurements.clear();
     const auto rebaseCursor=[&](CandidateCursor& cursor) {
         // These vectors are proposal/enumeration state, never public evidence.
         for(auto& proposal:cursor.n0Priority)rebase(proposal);
@@ -498,7 +504,7 @@ void BoundedTrainingSession::SelectRoundRobinInput()
         const auto next=(position+step)%order.size();
         if(completedInputs.at(next))continue;
         if(next==position)return;
-        inputSearch.suspendedAtEpoch=epoch;
+        RetainClassicVisitProposal();inputSearch.suspendedAtEpoch=epoch;
         suspendedInputs[position]=std::move(inputSearch);position=next;
         anchor.reset();anchorTrial.clear();
         if(suspendedInputs[position])
@@ -511,6 +517,115 @@ void BoundedTrainingSession::SelectRoundRobinInput()
         return;
     }
     BeginVerification();
+}
+
+bool BoundedTrainingSession::SameClassicProposal(std::size_t a,std::size_t b,std::size_t input) const
+{
+    const auto& first=evidence.at(a);const auto& second=evidence.at(b);
+    return first.parameters==second.parameters && EquivalentTrainingCapacitance(
+        RestoreClassicDendriteCapacitance(first.capacitance,currentCapacitance,input+1),
+        RestoreClassicDendriteCapacitance(second.capacitance,currentCapacitance,input+1));
+}
+
+void BoundedTrainingSession::RetainClassicVisitProposal()
+{
+    if(!inputSearch.visitBestEvidence)return;
+    const auto input=order.at(position),proposal=*inputSearch.visitBestEvidence;
+    if(std::none_of(inputSearch.retainedVisitProposals.begin(),inputSearch.retainedVisitProposals.end(),
+        [&](auto previous){return SameClassicProposal(previous,proposal,input);}))
+        inputSearch.retainedVisitProposals.push_back(proposal);
+    // At most one reference per measured visit, bounded by the original
+    // exploration count. No extra full graph/C map is copied for a proposal.
+    inputSearch.visitBestEvidence.reset();
+}
+
+bool BoundedTrainingSession::CanAffordClassicExploration() const
+{
+    const auto repeats=config.normalization==Normalization::SynapseCount?config.n0CandidateRepeats:1;
+    const auto pair=SaturatingMultiply(2,repeats);
+    // Prospective exploration plus independent all-input verification. For
+    // every unfinished input reserve one fresh pair per visit proposal and a
+    // measured restoration of the selected point. Unknown inputs also need a
+    // first exploration pair. This is a conservative upper bound, not credit.
+    auto requiredProbes=SaturatingAdd(pair,current.size());
+    std::size_t requiredEdits=1;
+    for(std::size_t p=0;p<order.size();++p)
+    {
+        if(completedInputs.at(p))continue;
+        const InputSearchState* state=p==position?&inputSearch:
+            suspendedInputs.at(p)?&*suspendedInputs[p]:nullptr;
+        std::size_t count=state?state->retainedVisitProposals.size():0;
+        if(state && state->visitBestEvidence && std::none_of(state->retainedVisitProposals.begin(),
+            state->retainedVisitProposals.end(),[&](auto previous) {
+                return SameClassicProposal(previous,*state->visitBestEvidence,order[p]);}))
+            count=SaturatingAdd(count,1);
+        if(p==position)count=SaturatingAdd(count,1); // the prospective visit winner
+        else if(!count)
+        {
+            count=1;requiredProbes=SaturatingAdd(requiredProbes,pair);
+            requiredEdits=SaturatingAdd(requiredEdits,1);
+        }
+        const auto measurements=SaturatingAdd(count,1); // rechecks + restore
+        requiredProbes=SaturatingAdd(requiredProbes,SaturatingMultiply(pair,measurements));
+        requiredEdits=SaturatingAdd(requiredEdits,measurements);
+    }
+    return requiredProbes<=config.maximumProbes-probes && requiredEdits<=config.maximumEdits-edits;
+}
+
+void BoundedTrainingSession::BeginClassicProposalSelection()
+{
+    RetainClassicVisitProposal();
+    inputSearch.selectingProposals=true;inputSearch.selectionCursor=0;
+    inputSearch.selectionDomainReady=false;inputSearch.selectionDomainScope.clear();
+    inputSearch.best.reset();inputSearch.restoringBest=false;
+    anchor.reset();anchorTrial.clear();inputSearch.candidateMeasurements.clear();
+}
+
+void BoundedTrainingSession::RejectClassicSelectionProposal(const std::string& reason)
+{
+    rejected.push_back({{},"proposal_selection:"+reason});pending.reset();
+    inputSearch.selectionDomainReady=false;inputSearch.selectionDomainScope.clear();
+    if(inputSearch.restoringBest)Stop(TrainingStatus::SearchUnresolved,"selected_proposal_no_longer_admissible");
+    else ++inputSearch.selectionCursor;
+}
+
+BoundedTrainingSession::DynamicCandidate BoundedTrainingSession::NextClassicSelectionCandidate(
+    std::vector<InputParameters>& candidate,std::optional<TrainingCapacitance>& capacitance)
+{
+    while(true)
+    {
+        const auto input=order.at(position);
+        const bool restore=inputSearch.selectionCursor==inputSearch.retainedVisitProposals.size();
+        if(restore && !inputSearch.best)
+        {
+            Stop(classicSelectionOnly?TrainingStatus::BudgetExhausted:TrainingStatus::SearchUnresolved,
+                classicSelectionOnly?"cyclic_selection_has_no_admissible_proposal":"no_measured_candidate_in_declared_search");
+            return DynamicCandidate::Exhausted;
+        }
+        const auto& proposal=restore?*inputSearch.best:
+            evidence.at(inputSearch.retainedVisitProposals.at(inputSearch.selectionCursor));
+        candidate=current;candidate[input]=proposal.parameters;
+        capacitance=RestoreClassicDendriteCapacitance(proposal.capacitance,currentCapacitance,input+1);
+        inputSearch.restoringBest=restore;
+        if(!PrepareCandidate(candidate))
+        {
+            RejectClassicSelectionProposal("historical_coordinates_no_longer_legal");
+            if(status!=TrainingStatus::Searching)return DynamicCandidate::Exhausted;
+            continue;
+        }
+        if(requireResistanceDomains && !inputSearch.selectionDomainReady)
+        {
+            // Every recheck/restoration is assessed against the CURRENT graph.
+            // Do not reuse the old interval or silently clip the old Rs.
+            pending=TrainingAction{TrainingActionKind::ResistanceDomain,++serial,input,epoch,
+                config.runId,{},revision,candidate,false};
+            pending->capacitance=capacitance;
+            pending->purpose=restore?TrainingMeasurementPurpose::SelectedStateRestore:
+                TrainingMeasurementPurpose::ProposalRecheck;
+            return DynamicCandidate::NeedDomain;
+        }
+        return DynamicCandidate::Candidate;
+    }
 }
 
 void BoundedTrainingSession::SelectCapacitanceContext(std::size_t index)
@@ -1035,7 +1150,10 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
         assessment.capacitance!=pending->capacitance)
     {rejected.push_back({{},"resistance_domain_context_mismatch:"+assessment.reason});Stop(TrainingStatus::InvalidModel);return;}
     if(assessment.status==ResistanceDomainStatus::Unavailable)
-    {rejected.push_back({{},"resistance_domain_unavailable:"+assessment.reason});pending.reset();if(!FallbackRejectedN1Geometry())AdvanceDomainGeometry();AdvanceCapacitanceContext();return;}
+    {
+        if(inputSearch.selectingProposals){RejectClassicSelectionProposal("resistance_domain_unavailable:"+assessment.reason);return;}
+        rejected.push_back({{},"resistance_domain_unavailable:"+assessment.reason});pending.reset();if(!FallbackRejectedN1Geometry())AdvanceDomainGeometry();AdvanceCapacitanceContext();return;
+    }
     if(assessment.status!=ResistanceDomainStatus::Available || assessment.previewModelRevision.empty())
     {rejected.push_back({{},"resistance_domain_unsupported:"+assessment.reason});Stop(TrainingStatus::InvalidModel);return;}
     const auto& bound=config.bounds.at(pending->inputIndex);
@@ -1045,7 +1163,18 @@ void BoundedTrainingSession::AssessedDomain(std::size_t actionSerial,const Resis
         assessment.maximumResistance<assessment.minimumResistance)
     {rejected.push_back({{},"invalid_resistance_domain_interval"});Stop(TrainingStatus::InvalidModel);return;}
     if(low>high)
-    {rejected.push_back({{},"resistance_domain_outside_declared_box"});pending.reset();if(!FallbackRejectedN1Geometry())AdvanceDomainGeometry();AdvanceCapacitanceContext();return;}
+    {
+        if(inputSearch.selectingProposals){RejectClassicSelectionProposal("resistance_domain_outside_declared_box");return;}
+        rejected.push_back({{},"resistance_domain_outside_declared_box"});pending.reset();if(!FallbackRejectedN1Geometry())AdvanceDomainGeometry();AdvanceCapacitanceContext();return;
+    }
+    if(inputSearch.selectingProposals)
+    {
+        const double resistance=pending->parameters.at(pending->inputIndex).resistance;
+        if(resistance<low || resistance>high)
+        {RejectClassicSelectionProposal("historical_resistance_outside_fresh_domain");return;}
+        inputSearch.selectionDomainReady=true;inputSearch.selectionDomainScope=assessment.previewModelRevision;
+        pending.reset();return;
+    }
     inputSearch.cursor.domainGeometry=pending->parameters;inputSearch.cursor.domainScope=assessment.previewModelRevision;inputSearch.cursor.resistances.clear();
     const auto canAppend=[&] {
         if(inputSearch.capacitanceContexts.empty())return true;
@@ -1188,7 +1317,19 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
         std::vector<InputParameters> candidate;
         auto candidateCapacitance=RestoreTrainingCapacitance(inputSearch.backgroundCapacitance,currentCapacitance);
         bool exhausted=inputSearch.candidates>=config.maximumCandidatesPerInput;
-        if(inputSearch.capacitanceContexts.empty())
+        if(RoundRobinInputs() && !inputSearch.selectingProposals)
+        {
+            if(!exhausted && !classicSelectionOnly && !CanAffordClassicExploration())classicSelectionOnly=true;
+            if(exhausted || classicSelectionOnly)BeginClassicProposalSelection();
+        }
+        if(inputSearch.selectingProposals)
+        {
+            const auto next=NextClassicSelectionCandidate(candidate,candidateCapacitance);
+            if(next==DynamicCandidate::NeedDomain)return pending;
+            if(next==DynamicCandidate::Exhausted)return {};
+            exhausted=false;
+        }
+        else if(inputSearch.capacitanceContexts.empty())
         {
             if(!exhausted && requireResistanceDomains)
             {
@@ -1234,8 +1375,9 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
         }
         if(exhausted)
         {
-            const auto* selected=inputSearch.best?&*inputSearch.best:
-                RoundRobinInputs() && inputSearch.historicalBestProposal?&*inputSearch.historicalBestProposal:nullptr;
+            if(RoundRobinInputs())
+            {BeginClassicProposalSelection();return NextAction();}
+            const auto* selected=inputSearch.best?&*inputSearch.best:nullptr;
             if(!selected){Stop(TrainingStatus::SearchUnresolved,"no_measured_candidate_in_declared_search");return {};}
             candidate=selected->fullParameters;inputSearch.restoringBest=true;
             if(RoundRobinInputs())
@@ -1249,13 +1391,15 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
             if(!PrepareCandidate(candidate))
             {rejected.push_back({{},"best_candidate_no_longer_legal"});Stop(TrainingStatus::InvalidModel);return {};}
         }
-        else ++inputSearch.candidates;
+        else if(!inputSearch.selectingProposals)++inputSearch.candidates;
         phase=Phase::Anchor;anchor.reset();anchorTrial.clear();inputSearch.candidateMeasurements.clear();
         // A compatibility graph can have the same L/Ns/Rs but different
         // effective stimulus bindings. Realize the assessed geometry explicitly
         // before treating its normalized preview scope as a measured point.
-        const bool realizePreview=requireResistanceDomains && !inputSearch.restoringBest && inputSearch.cursor.domainReady &&
-            candidate==inputSearch.cursor.domainGeometry && inputSearch.cursor.domainScope!=revision;
+        const bool realizePreview=requireResistanceDomains && (inputSearch.selectingProposals?
+            inputSearch.selectionDomainReady && inputSearch.selectionDomainScope!=revision:
+            !inputSearch.restoringBest && inputSearch.cursor.domainReady &&
+                candidate==inputSearch.cursor.domainGeometry && inputSearch.cursor.domainScope!=revision);
         if(candidate!=current || candidateCapacitance!=currentCapacitance || realizePreview)
         {
             if(edits>=config.maximumEdits || epoch==std::numeric_limits<std::size_t>::max())
@@ -1263,7 +1407,10 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
                 "model_epoch_exhausted":"maximum_edits_exhausted");return {};}
             pending=TrainingAction{TrainingActionKind::Edit,++serial,order.at(position),epoch,
                 config.runId,{},revision,std::move(candidate),false};
-            pending->capacitance=std::move(candidateCapacitance);return pending;
+            pending->capacitance=std::move(candidateCapacitance);
+            pending->purpose=inputSearch.restoringBest?TrainingMeasurementPurpose::SelectedStateRestore:
+                inputSearch.selectingProposals?TrainingMeasurementPurpose::ProposalRecheck:TrainingMeasurementPurpose::Exploration;
+            return pending;
         }
     }
     if(phase==Phase::Verify)
@@ -1281,6 +1428,9 @@ std::optional<TrainingAction> BoundedTrainingSession::NextAction()
             config.runId+"/search/"+std::to_string(actionSerial),revision,current,false};
     }
     pending->capacitance=currentCapacitance;
+    pending->purpose=phase==Phase::Verify?TrainingMeasurementPurpose::FinalVerification:
+        inputSearch.restoringBest?TrainingMeasurementPurpose::SelectedStateRestore:
+        inputSearch.selectingProposals?TrainingMeasurementPurpose::ProposalRecheck:TrainingMeasurementPurpose::Exploration;
     return pending;
 }
 
@@ -1322,6 +1472,9 @@ void BoundedTrainingSession::DeclineEdit(std::size_t actionSerial,const std::str
     if(!pending || pending->kind!=TrainingActionKind::Edit || pending->serial!=actionSerial || reason.empty())
         throw std::logic_error("unrequested_training_edit_rejection");
     rejected.push_back({{},"edit_rejected:"+reason});
+    if(inputSearch.selectingProposals)
+    {Stop(unchangedModelRevision==revision?TrainingStatus::SearchUnresolved:TrainingStatus::InvalidModel,
+        "proposal_selection_edit_rejected:"+reason);return;}
     if(unchangedModelRevision!=revision || unchangedModelRevision.empty() || inputSearch.restoringBest)
     {Stop(TrainingStatus::InvalidModel);return;}
     pending.reset();armed.reset();compositeArmed.reset();anchor.reset();anchorTrial.clear();phase=Phase::Candidate;
@@ -1399,6 +1552,8 @@ void BoundedTrainingSession::Consume(const ProbeObservation& observation,const s
             }
             else
             {
+                if(inputSearch.selectingProposals)
+                {++inputSearch.selectionCursor;inputSearch.selectionDomainReady=false;inputSearch.selectionDomainScope.clear();}
                 phase=Phase::Candidate;AdvanceCapacitanceContext();
                 recovery->disposition=CandidateRecoveryDisposition::CursorAdvanced;
             }
@@ -1562,8 +1717,12 @@ void BoundedTrainingSession::RejectCandidateWindow(const RejectedCompositeMeasur
             Stop(TrainingStatus::SearchUnresolved,"restored_best_candidate_has_rejected_window");
             e.disposition=CandidateRecoveryDisposition::RestoredBestStop;
         } else {
-            if(!PrioritizeN0LengthNeighborhood())PrioritizeRejectedN0BranchLength();
-            PrioritizeRejectedN1();
+            if(inputSearch.selectingProposals) {
+                ++inputSearch.selectionCursor;inputSearch.selectionDomainReady=false;inputSearch.selectionDomainScope.clear();
+            } else {
+                if(!PrioritizeN0LengthNeighborhood())PrioritizeRejectedN0BranchLength();
+                PrioritizeRejectedN1();
+            }
             phase=Phase::Candidate;AdvanceCapacitanceContext();
             e.disposition=CandidateRecoveryDisposition::CursorAdvanced;
         }
@@ -1583,11 +1742,12 @@ void BoundedTrainingSession::RejectTyped(const std::string& reason,const Candida
 
 void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasurement& measurement)
 {
-    const auto trial=pending->trialId;pending.reset();armed.reset();compositeArmed.reset();
+    const auto trial=pending->trialId;const auto purpose=pending->purpose;
+    pending.reset();armed.reset();compositeArmed.reset();
     if(phase==Phase::Anchor){anchor=measurement;anchorTrial=trial;phase=Phase::Input;return;}
     if(!anchor)throw std::logic_error("missing_same_revision_anchor");
     const auto index=order.at(position);const auto& reference=references.Inputs()[index];
-    CandidateEvidence e;e.inputIndex=index;e.modelEpoch=epoch;e.parameters=current[index];
+    CandidateEvidence e;e.inputIndex=index;e.modelEpoch=epoch;e.parameters=current[index];e.purpose=purpose;
     e.fullParameters=current;
     e.capacitance=currentCapacitance;
     e.modelRevision=revision;e.trialId=trial;e.anchorTrialId=anchorTrial;
@@ -1611,7 +1771,7 @@ void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasureme
     e.withinTiming=std::max(std::fabs(e.timingResidualLow),std::fabs(e.timingResidualHigh))<=config.tolerances.sync;
     e.withinAmplitude=std::fabs(e.amplitudeResidual)<=AmplitudeTolerance(config,reference);
     evidence.push_back(e);
-    if(requireResistanceDomains && !inputSearch.restoringBest && !inputSearch.cursor.candidateResistanceScope.empty())
+    if(requireResistanceDomains && !inputSearch.selectingProposals && !inputSearch.restoringBest && !inputSearch.cursor.candidateResistanceScope.empty())
     {
         inputSearch.cursor.resistanceMeasurements.push_back({inputSearch.cursor.candidateResistanceScope,e});
         if(e.withinTiming && !e.withinAmplitude && inputSearch.cursor.domainYieldPending && !inputSearch.cursor.domainLocalTurnUsed)
@@ -1662,7 +1822,7 @@ void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasureme
         e.withinTiming=group.withinTiming;e.withinAmplitude=group.withinAmplitude;
         candidateRepeats.push_back(std::move(group));inputSearch.candidateMeasurements.clear();
     }
-    PrioritizeMeasuredLength(e);
+    if(!inputSearch.selectingProposals)PrioritizeMeasuredLength(e);
     const bool improved=!inputSearch.best || Rank(e,config,reference)<Rank(*inputSearch.best,config,reference);
     if(improved)
     {
@@ -1671,12 +1831,20 @@ void BoundedTrainingSession::AcceptValidatedScalar(const ValidatedProbeMeasureme
         {Stop(TrainingStatus::InvalidModel,"measured_boundary_selection_serial_exhausted");return;}
         MeasuredCandidateSelection selected{previous+1,sweep,position,e};
         inputSearch.best=e;selectedMeasuredBoundary=std::move(selected);
+        if(RoundRobinInputs() && !inputSearch.selectingProposals)inputSearch.visitBestEvidence=evidence.size()-1;
     }
     // A different timing-ready geometry may start far from the amplitude
     // target. Its local search must not be gated by another geometry's best.
     // Global ranking and the independent final-verification gate are unchanged.
-    PrioritizeN0Neighbors(e);
-    if(inputSearch.restoringBest || (e.withinTiming && e.withinAmplitude))AdvanceInput();
+    if(!inputSearch.selectingProposals)PrioritizeN0Neighbors(e);
+    if(inputSearch.selectingProposals && !inputSearch.restoringBest)
+    {
+        // Only fresh, same-background rechecks compete in inputSearch.best.
+        // None of their old residuals has been read or granted authority.
+        ++inputSearch.selectionCursor;inputSearch.selectionDomainReady=false;inputSearch.selectionDomainScope.clear();
+        phase=Phase::Candidate;anchor.reset();anchorTrial.clear();
+    }
+    else if(inputSearch.restoringBest || (e.withinTiming && e.withinAmplitude))AdvanceInput();
     else
     {
         phase=Phase::Candidate;anchor.reset();anchorTrial.clear();AdvanceCapacitanceContext();
@@ -1747,5 +1915,16 @@ const char* TrainingStatusName(TrainingStatus status)
     case TrainingStatus::ExternalStop:return "external_stop";
     }
     return "unknown";
+}
+
+const char* TrainingMeasurementPurposeName(TrainingMeasurementPurpose purpose)
+{
+    switch(purpose) {
+    case TrainingMeasurementPurpose::Exploration:return "exploration";
+    case TrainingMeasurementPurpose::ProposalRecheck:return "proposal_recheck";
+    case TrainingMeasurementPurpose::SelectedStateRestore:return "selected_state_restore";
+    case TrainingMeasurementPurpose::FinalVerification:return "final_verification";
+    }
+    throw std::invalid_argument("unknown_training_measurement_purpose");
 }
 }

@@ -79,6 +79,8 @@ void ValidateNativeInputTraversalConfiguration(const BoundedTrainingConfig& conf
 // Numeric/routing preflight only; grants no reference/measurement authority.
 void ValidateInputTraversalConfiguration(const VerificationProtocol& protocol,const BoundedTrainingConfig& configuration);
 enum class TrainingActionKind { Edit, Probe, ResistanceDomain };
+enum class TrainingMeasurementPurpose { Exploration, ProposalRecheck, SelectedStateRestore, FinalVerification };
+const char* TrainingMeasurementPurposeName(TrainingMeasurementPurpose purpose);
 struct TrainingAction {
     TrainingActionKind kind=TrainingActionKind::Probe;
     std::size_t serial=0,inputIndex=0,modelEpoch=0;
@@ -86,6 +88,7 @@ struct TrainingAction {
     std::vector<InputParameters> parameters;
     bool finalVerification=false;
     std::optional<TrainingCapacitance> capacitance={};
+    TrainingMeasurementPurpose purpose=TrainingMeasurementPurpose::Exploration;
 };
 struct CandidateEvidence {
     std::size_t inputIndex=0,modelEpoch=0;
@@ -97,6 +100,7 @@ struct CandidateEvidence {
     bool withinTiming=false,withinAmplitude=false;
     std::vector<InputParameters> fullParameters;
     std::optional<TrainingCapacitance> capacitance={};
+    TrainingMeasurementPurpose purpose=TrainingMeasurementPurpose::Exploration;
 };
 // The controller's completed local ranking decision, retained after moving to
 // the next input. This is evidence for a future native graph checkpoint, not a
@@ -289,9 +293,14 @@ private:
         std::size_t candidates=0;
         std::size_t candidatesInVisit=0;
         std::optional<CandidateEvidence> best;
-        // Coordinates only after a background change. Its old residuals must
-        // not rank/accept a point in the current graph; remeasure the proposal.
-        std::optional<CandidateEvidence> historicalBestProposal;
+        // Indices into immutable attempt evidence, not graph checkpoints.
+        // Keep the best coordinates from EACH completed visit. Historical
+        // residuals never enter ranking after another input changes the graph.
+        std::optional<std::size_t> visitBestEvidence;
+        std::vector<std::size_t> retainedVisitProposals;
+        bool selectingProposals=false,selectionDomainReady=false;
+        std::size_t selectionCursor=0;
+        std::string selectionDomainScope;
         std::size_t suspendedAtEpoch=0;
         bool restoringBest=false;
         CandidateCursor cursor;
@@ -304,6 +313,9 @@ private:
     InputSearchState inputSearch;
     std::vector<std::optional<InputSearchState>> suspendedInputs;
     std::vector<bool> completedInputs;
+    // Once the remaining budget is reserved for selection, no input may
+    // spend it on new exploration. It is never replenished at a revisit.
+    bool classicSelectionOnly=false;
     void SelectCapacitanceContext(std::size_t index);
     void AdvanceCapacitanceContext();
     std::optional<TrainingCapacitance> CandidateCapacitance(const std::vector<InputParameters>& parameters) const;
@@ -323,6 +335,10 @@ private:
     void BeginInputSweep();
     void SelectRoundRobinInput();
     void RebaseClassicInputSearch();
+    bool SameClassicProposal(std::size_t a,std::size_t b,std::size_t input) const;
+    void RetainClassicVisitProposal();
+    bool CanAffordClassicExploration() const;
+    void BeginClassicProposalSelection();
     bool RoundRobinInputs() const;
     void InitializeDecisionState();
     void ArmTyped(std::size_t,const PreparedCompositeMeasurement&,const CandidateWindowReferenceSet*);
@@ -335,6 +351,9 @@ private:
     bool PrepareCandidate(std::vector<InputParameters>& parameters) const;
     bool NextCandidate(std::vector<InputParameters>& parameters);
     enum class DynamicCandidate { Candidate, NeedDomain, Exhausted };
+    DynamicCandidate NextClassicSelectionCandidate(std::vector<InputParameters>&,
+        std::optional<TrainingCapacitance>&);
+    void RejectClassicSelectionProposal(const std::string& reason);
     DynamicCandidate NextDomainCandidate(std::vector<InputParameters>& parameters);
     void AdvanceDomainGeometry();
     void PrioritizeMeasuredLength(const CandidateEvidence& measurement);
