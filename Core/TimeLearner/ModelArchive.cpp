@@ -309,6 +309,30 @@ void CheckXmlNode(USerStorageXML& xml, const QString& path, const std::map<QStri
             if(!xml.SelectNode(section)) continue;
             const auto count = xml.GetNumNodes(i.key().toStdString());
             if(count > 1) Fail("duplicate_archive_parameter", path + ":" + i.key());
+            if(count==1)
+            {
+                const auto parameter=i.value().toObject();
+                const auto data=parameter["data"].toObject();
+                // Native readers select the actual property's C++ type and
+                // may ignore a contradictory XML Type tag. Validate scalar
+                // declarations before loading even a resigned DATA1 archive.
+                if(!parameter["binding"].toBool() && xml.SelectNode(i.key().toStdString()))
+                {
+                    const auto type=xml.GetNodeAttribute("Type");
+                    const auto kind=data["type"].toString();
+                    auto domain=UXmlIntegralDomain::Nominal;
+                    if(kind=="signed_integer")domain=UXmlIntegralDomain::SignedValue;
+                    if(kind=="unsigned_integer")domain=UXmlIntegralDomain::UnsignedValue;
+                    if(domain!=UXmlIntegralDomain::Nominal &&
+                       (!SamePortableXmlType(type,type,domain,xml.GetNodeText()) ||
+                        QString::fromStdString(xml.GetNodeText())!=data["value"].toString()))
+                        Fail("archive_parameter_type_or_value_mismatch",path+":"+i.key());
+                    const char* scalar=kind=="binary64"?"double":kind=="boolean"?"bool":kind=="utf8"?"std::string":nullptr;
+                    if(scalar && !SamePortableXmlType(type,scalar))
+                        Fail("archive_parameter_type_or_value_mismatch",path+":"+i.key());
+                    xml.SelectUp();
+                }
+            }
             present = present || count == 1; xml.SelectUp();
         }
         if(!present && !(i.key()=="FeedbackGain" && inheritedFeedback.count(path)))
@@ -360,10 +384,41 @@ void CheckSnapshot(const QJsonObject& snapshot,const std::set<QString>& inherite
 bool SamePortableSnapshot(QJsonObject first,QJsonObject second)
 {
     CheckSnapshot(first);CheckSnapshot(second);
+    if(first["identity"]!=second["identity"] || first["component_name"]!=second["component_name"])return false;
+    // ModelIdentity already describes integer properties as exact signed or
+    // unsigned values, not C++ ABI layouts. Apply that owner contract only to
+    // those verified scalar fields. Dynamic state and unknown nodes remain
+    // nominal; no property-name whitelist or global long/u64 alias is used.
+    USerStorageXML::PortableIntegralFields fields;
+    std::map<QString,QJsonObject> nodes;
+    for(const auto& entry:first["identity"].toObject()["model"].toObject()["nodes"].toArray())
+    {const auto node=entry.toObject();nodes.emplace(node["path"].toString(),node);}
+    std::function<void(const QString&,std::vector<std::string>)> collect;
+    collect=[&](const QString& path,std::vector<std::string> xmlPath) {
+        const auto found=nodes.find(path);if(found==nodes.end())Fail("unexpected_archive_node",path);
+        const auto parameters=found->second["parameters"].toObject();
+        for(auto i=parameters.begin();i!=parameters.end();++i)
+        {
+            const auto parameter=i.value().toObject();if(parameter["binding"].toBool())continue;
+            const auto kind=parameter["data"].toObject()["type"].toString();
+            if(kind!="signed_integer" && kind!="unsigned_integer")continue;
+            for(const auto* section:{"Parameters","State"})
+            {
+                auto field=xmlPath;field.push_back(section);field.push_back(i.key().toStdString());
+                fields.emplace(std::move(field),kind=="signed_integer"?UXmlIntegralDomain::SignedValue:UXmlIntegralDomain::UnsignedValue);
+            }
+        }
+        for(const auto& child:found->second["child_order"].toArray())
+        {
+            auto next=xmlPath;next.push_back("Components");next.push_back(child.toString().toStdString());
+            collect(path+"."+child.toString(),std::move(next));
+        }
+    };
+    collect("$",{GraphRoot,first["component_name"].toString().toStdString()});
     USerStorageXML left,right;
     if(!left.Load(first["native_xml"].toString().toStdString(),GraphRoot) ||
        !right.Load(second["native_xml"].toString().toStdString(),GraphRoot) ||
-       !left.SamePortableSerialization(right))return false;
+       !left.SamePortableSerialization(right,fields))return false;
     // Original XML bytes and their digests have already been checked. The
     // complete token comparison above is mandatory before comparing the rest.
     for(auto* snapshot:{&first,&second})
