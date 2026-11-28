@@ -426,6 +426,44 @@ bool SamePortableSnapshot(QJsonObject first,QJsonObject second)
     return first==second;
 }
 
+// A class image is a definition, not an input-buffer checkpoint. The native
+// NPMembraneBio feedback consumer sums this disconnected matrix, so its empty
+// buffer and one exact zero are the same neutral input. Copy/Take/Load can
+// produce either extent. Canonicalize only this private XML copy; never change
+// the live graph, shared prototype, connected input or other native classes.
+QJsonObject CanonicalPrivateMembraneImage(QJsonObject snapshot,const QString& nativeClass)
+{
+    CheckSnapshot(snapshot);
+    if(nativeClass!="NPMembraneBio" || snapshot["component_class"]!=QJsonValue(nativeClass))return snapshot;
+    const auto model=snapshot["identity"].toObject()["model"].toObject();
+    const QJsonValue endpoint("$:InputFeedbackSignal");
+    for(const auto& entry:model["bindings"].toArray())
+    {
+        const auto binding=entry.toObject();
+        if(binding["target"]==endpoint || binding["source"]==endpoint)return snapshot;
+    }
+    USerStorageXML xml;
+    if(!xml.Load(snapshot["native_xml"].toString().toStdString(),GraphRoot) ||
+       !xml.SelectNode(snapshot["component_name"].toString().toStdString()) ||
+       xml.GetNumNodes("State")!=1 || !xml.SelectNode("State") ||
+       xml.GetNumNodes("InputFeedbackSignal")!=1 || !xml.SelectNode("InputFeedbackSignal"))return snapshot;
+    const auto type=xml.GetNodeAttribute("Type");
+    bool valid=false;
+    const double value=QString::fromStdString(xml.GetNodeText()).toDouble(&valid);
+    if((type!="MDMatrix<d>" && type!="MDMatrix<double>") || xml.GetNumNodes()!=0 ||
+       xml.GetNodeAttribute("PType")!=std::to_string(ptInput|ptPubState) ||
+       xml.GetNodeAttribute("IoType")!="17" || xml.GetNodeAttribute("Rows")!="1" ||
+       xml.GetNodeAttribute("Cols")!="1" || !valid || !std::isfinite(value) || value!=0.)return snapshot;
+    if(!xml.SetNodeAttribute("Rows","0") || !xml.SetNodeAttribute("Cols","0") || !xml.SetNodeText(""))
+        Fail("archive_serialization_failed","private membrane neutral feedback");
+    xml.SelectRoot();std::string bytes;
+    if(!xml.Save(bytes))Fail("archive_serialization_failed","private membrane native XML Save");
+    snapshot["native_xml"]=QString::fromStdString(bytes);
+    snapshot["native_xml_sha256"]=XmlDigest(snapshot["native_xml"].toString());
+    CheckSnapshot(snapshot);
+    return snapshot;
+}
+
 std::map<QString, UIPropertyOutput*> BoundaryOutputs(const QJsonObject& identity,
                                                     const ModelBoundarySources& sources)
 {
@@ -570,13 +608,8 @@ QJsonObject ImageSnapshot(UEPtr<UStorage> storage, UEPtr<UEnvironment> environme
     // A pooled native-required instance can already be initialized. Init alone
     // does not guarantee a fresh reset state for this private image snapshot.
     object->SetEnvironment(environment); InitializeAndResetNative(object);
-    // Copy/pooled objects can retain a different disconnected-input extent
-    // (for example a zero 1x1 feedback input versus an empty native-loaded
-    // input). Images are model definitions, not dynamic checkpoints. Use the
-    // same native Load/Init/Reset representation as the imported image and
-    // verify the entire effective physical identity, rather than patching
-    // individual input/state properties or changing the shared prototype.
-    return RestSnapshot(object);
+    auto snapshot=RestSnapshot(object);
+    return CanonicalPrivateMembraneImage(snapshot,source.kind=="derived_image"?source.base:name);
 }
 QJsonArray ImageDefinitions(UEPtr<UStorage> storage,UEPtr<UEnvironment> environment,
     const QJsonObject& identity,const std::vector<std::string>& additionalImageRoots)
@@ -875,8 +908,13 @@ bool SamePortableModelArchive(const QJsonObject& first,const QJsonObject& second
         {
             if(!left[index].isObject() || !right[index].isObject())return false;
             auto a=left[index].toObject(),b=right[index].toObject();
-            if(!a["snapshot"].isObject() || !b["snapshot"].isObject() ||
-               !SamePortableSnapshot(a["snapshot"].toObject(),b["snapshot"].toObject()))return false;
+            if(!a["snapshot"].isObject() || !b["snapshot"].isObject())return false;
+            const auto imageClass=[](const QJsonObject& definition) {
+                return definition["kind"]==QJsonValue("derived_image")?
+                    definition["base_class"].toString():definition["name"].toString();
+            };
+            if(!SamePortableSnapshot(CanonicalPrivateMembraneImage(a["snapshot"].toObject(),imageClass(a)),
+                                     CanonicalPrivateMembraneImage(b["snapshot"].toObject(),imageClass(b))))return false;
             a.remove("snapshot");b.remove("snapshot");if(a!=b)return false;
         }
         auto a=first,b=second;
