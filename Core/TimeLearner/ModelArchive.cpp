@@ -448,12 +448,18 @@ QJsonObject CanonicalPrivateMembraneImage(QJsonObject snapshot,const QString& na
        xml.GetNumNodes("State")!=1 || !xml.SelectNode("State") ||
        xml.GetNumNodes("InputFeedbackSignal")!=1 || !xml.SelectNode("InputFeedbackSignal"))return snapshot;
     const auto type=xml.GetNodeAttribute("Type");
+    const auto rows=xml.GetNodeAttribute("Rows"),cols=xml.GetNodeAttribute("Cols");
+    const auto text=xml.GetNodeText();
     bool valid=false;
-    const double value=QString::fromStdString(xml.GetNodeText()).toDouble(&valid);
+    const double value=QString::fromStdString(text).toDouble(&valid);
+    const bool empty=rows=="0" && cols=="0" && text.empty();
+    const bool neutralScalar=rows=="1" && cols=="1" && valid && std::isfinite(value) && value==0.;
     if((type!="MDMatrix<d>" && type!="MDMatrix<double>") || xml.GetNumNodes()!=0 ||
        xml.GetNodeAttribute("PType")!=std::to_string(ptInput|ptPubState) ||
-       xml.GetNodeAttribute("IoType")!="17" || xml.GetNodeAttribute("Rows")!="1" ||
-       xml.GetNodeAttribute("Cols")!="1" || !valid || !std::isfinite(value) || value!=0.)return snapshot;
+       xml.GetNodeAttribute("IoType")!="17" || (!empty && !neutralScalar))return snapshot;
+    // Serialize both neutral representations through the same XML path. The
+    // native parser expands empty string nodes on Load; doing this only for
+    // the scalar cache makes unrelated empty tags differ on the next export.
     if(!xml.SetNodeAttribute("Rows","0") || !xml.SetNodeAttribute("Cols","0") || !xml.SetNodeText(""))
         Fail("archive_serialization_failed","private membrane neutral feedback");
     xml.SelectRoot();std::string bytes;
